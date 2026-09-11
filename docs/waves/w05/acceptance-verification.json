@@ -1,0 +1,130 @@
+{
+  "date": "2026-09-11",
+  "status": "PASS",
+  "acceptanceSource": "acceptance.md",
+  "modelAcceptedByUser": true,
+  "productImplementationAllowed": true,
+  "r17BusinessScenariosPassed": false,
+  "runtimeTree": "3564c3512223f897591331c0fa471cc5a56d5095",
+  "runtimeMatchesW04": true,
+  "localChecks": {
+    "phpunit": {
+      "exitCode": 0,
+      "seconds": 6.33
+    },
+    "phpstan": {
+      "exitCode": 0,
+      "seconds": 4.08
+    },
+    "lint": {
+      "exitCode": 0,
+      "seconds": 0.61
+    },
+    "cs": {
+      "exitCode": 0,
+      "seconds": 1.59
+    },
+    "inventory": {
+      "exitCode": 0,
+      "seconds": 0.06
+    },
+    "runtime": {
+      "exitCode": 0,
+      "seconds": 2.42
+    },
+    "topology": {
+      "exitCode": 0,
+      "seconds": 6.2
+    }
+  },
+  "phpunit": {
+    "tests": 132,
+    "assertions": 622
+  },
+  "lintFiles": 241,
+  "csFiles": 263,
+  "csChanges": 0,
+  "localDocumentLinks": 35,
+  "canonicalSyncFiles": 12,
+  "postman": {
+    "date": "2026-09-11",
+    "result": "passed",
+    "requests": 99,
+    "folders": 15,
+    "scripts": 144,
+    "waves": 35,
+    "schemaValidation": "not-run",
+    "schemaUrl": "https://schema.postman.com/json/collection/v2.1.0/collection.json",
+    "checks": [
+      "JSON parse",
+      "unique IDs and method/path pairs",
+      "Markdown/registry/collection parity",
+      "module ownership and module-plan parity",
+      "RaBit API base and contract paths",
+      "route declaration ownership and proposed status",
+      "raw/structured URL parity",
+      "all variable references declared",
+      "empty exported credentials",
+      "numeric JSON version fields",
+      "auth and idempotency headers",
+      "endpoint-specific multipart fields and boundary",
+      "platform requests blocked by default",
+      "wave primary coverage and ordered dependencies",
+      "wave metadata and review/acceptance completeness",
+      "module/wave Postman item equality",
+      "existing source paths and document links"
+    ],
+    "liveApiRequestsExecuted": false,
+    "sha256": {
+      "build.py": "a144b1db8d90256761e6da791c2c6f5d09a5af447882b9ad6da36d84cbbc1b36",
+      "validate.py": "b2c3f2e56cf6b3d444b6d4086d88aa345084f6733e0c2b0a5fcc94db46d1fc2b",
+      "validate-postman.cjs": "1a55325f9338e83a13831b89e00bb29f54f9ce340728fd9b53e318d0e14cf510",
+      "../04-bitrix-modules/README.md": "613768eb910f8d0cb843fd334fec2fac58304e481c3cfa0281b280790c300c33",
+      "../04-bitrix-modules/backend-waves.json": "803bb94f9d0753a1968db0c972c4e5d8de2e88b5820bbf00274d1bafb2b36671",
+      "../04-bitrix-modules/backend-waves.md": "6e22b280d96919364ea0501c4f082a7b444afe55cd690ff91d2dfd3a5eb4a8ab",
+      "../04-bitrix-modules/render-waves.py": "680c4ba76c20337bd1f5959a6594881e79945661b89ca69d4eb2b700c3b0fb3d",
+      "README.md": "b855f98451d76ec7f9c839bf0bae4902fd2da42223b85a522407a3b96162beb9",
+      "endpoints.json": "58028565ccea0b1775ed0aaf9be843fe71ef4a3dadc94c32a7aecb6e6adf3933",
+      "postman/MoreFoto.postman_collection.json": "59e199ca229506cb88fe3cd6b1c2ccbcbf7c8544e9a9c10493323955d78a594e",
+      "postman/MoreFoto.backend-waves.postman_collection.json": "79fe2153ea2b9f4c17af3104141221fa2f61251639b3bf29187a4b8b2bef83ed",
+      "postman/MoreFoto.local.postman_environment.json": "9c53cda2ba915e1b89db56a07b283393a4a330a44b68c59abbd146a372b077e0",
+      "postman/MoreFoto.stage.postman_environment.json": "483036adf64f81b2b68af757f5860f28ac2558d127969dec71cd63eebcbd7f54"
+    },
+    "sourceSha256": {
+      "../rebit-p2p/api/public/local/modules/rebit.notification/lib/Presentation/Controller/LeadController.php": "10c5f85fd19e52e5cf35178ed381c3846827b83334a88a55f78ab18a76e29438",
+      "../rebit-p2p/api/public/local/modules/rebit.share/lib/Presentation/Controller/FileController.php": "7f92be8b21a05ff3b4df1770cc274a3cf57ad06a620ccecc12839f3c1362c5ea",
+      "frontend/docker/production/nginx/conf.d/default.conf": "c20e75288aa1e57441cdc69141bd1f83fe503113a7cd0bf5069028ec416b27d7",
+      "frontend/src/api/auth.ts": "ffa1ba50525be372eeae024d61f15edcf73ba2839580f6744791fed37a9a9127",
+      "frontend/src/modules/morefoto/commerce/types.ts": "b8bf7f99980f4f2447da7e3431795df5231f257e9b66839567c1db5cef132cc9",
+      "frontend/src/modules/morefoto/curator/service.ts": "fecd1d43d86266df9e3cc2a3bd9aaef91b147b1a4af75bd913f701243c878eef",
+      "frontend/src/modules/morefoto/curator/types.ts": "43a47ea9af39ce0611d4b79634bac98a028b8be18d9047583f20f3fea07ec745",
+      "frontend/src/modules/morefoto/gallery/types.ts": "6bbf431c1a59e0bdfa7d3dc1acee398f119d83c36bddde64a9196589292ef177",
+      "frontend/src/modules/morefoto/handoff/types.ts": "ab9a0153c6679f51c8b2b8b87b90b726c89a5bc90c5e64786d9b602755e84282",
+      "frontend/src/modules/morefoto/management/types.ts": "4194d765b3709d7d5c9c89b7a73131134631ff5c2194416c1203c7f49adcb157",
+      "frontend/src/modules/morefoto/orders/delivery/service.ts": "8f522e18c39cea2dd15210cfb03efab2236d05eabaa2df954d33bf020d1af743",
+      "frontend/src/modules/morefoto/orders/services/checkout.ts": "c7264e7beac9314ccd6677f197b614ff9c391b280e9aae09825319e7242570ee",
+      "frontend/src/modules/morefoto/orders/services/payment.ts": "17a73c266441075efa2f96464854e6596b490c0993998c7c5950c08212d0e4e7",
+      "frontend/src/modules/morefoto/organization/types.ts": "6ba7e105a1f37078d76ace2fb3ddcdfc8aaf82a2c658c242cb224354bf54fb9f",
+      "frontend/src/modules/morefoto/photos/service.ts": "87795c9d5f62a0e78854717b15712c8e0bde0850166a5b9c5e0f4565829b43e4",
+      "frontend/src/modules/morefoto/production/types.ts": "6d404bd5e75354ef10e24b1a6cfb3c6c471113d22635bca5ad376b9336ad2ac2",
+      "frontend/src/modules/morefoto/services/cabinet.ts": "51ad1a1bcf496257ec4371a4dbd318a76edaa8da2a3a50399cbdc6a0bea38d22",
+      "frontend/src/modules/morefoto/settlement/types.ts": "3854e2f3e5da27ac510ca3a96ce8d7487cbb528b56475dff6989918ff678118d",
+      "frontend/src/modules/morefoto/shipping/types.ts": "c73785f3e0a4652680f09e37e26413231af94bed517d0376c1460e30c914980d"
+    },
+    "postmanScriptValidation": {
+      "scriptsParsed": 144,
+      "positiveFixtures": 99,
+      "negativeFixtures": 198,
+      "idempotencyRepeatChecks": 43,
+      "platformGuardChecks": 14,
+      "platformContractNegativeFixtures": 2,
+      "note": "Offline script fixtures only; no API requests or Postman UI import were executed."
+    }
+  },
+  "notes": [
+    "PHP tests log two existing mutable DTO metadata cache warnings; all 132 tests pass.",
+    "W02/W03 real Bitrix/MySQL/HTTP checks and W04 restore evidence remain in their wave packages; unchanged integration runners were not repeated.",
+    "GitHub CI is blocked by billing, not reported as passing.",
+    "No production deployment, production migrations or external deliveries."
+  ]
+}
