@@ -5,7 +5,7 @@ ifneq (,$(wildcard $(ENV_FILE)))
     export $(shell sed 's/=.*//' $(ENV_FILE))
 endif
 
-init: api-clear docker-down-clear docker-pull docker-build docker-up cron-up queue-up
+init: api-clear docker-down-clear docker-pull docker-build docker-up cron-up
 up: docker-up
 down: docker-down
 restart: down up
@@ -134,7 +134,12 @@ consume-audit-once:
 
 PORT ?= 22
 DEPLOY_USER ?= deploy
-STACK_NAME ?= rabit-api
+STACK_NAME ?=
+RUNTIME_DATA_DIR ?=
+MYSQL_VOLUME_NAME ?=
+RABBITMQ_VOLUME_NAME ?=
+CRON_ENV_CONFIG_NAME ?=
+AUDIT_CONSUMER_REPLICAS ?= 0
 REMOTE ?= $(DEPLOY_USER)@$(HOST)
 RELEASE_DIR ?= rabit-api_$(BUILD_NUMBER)
 LINK_DIR ?= rabit-api
@@ -143,8 +148,8 @@ COMPOSE_DST ?= docker-compose.yml
 APP_DEBUG ?= 0
 APP_ENV ?= production
 KEEP_RELEASES ?= 2
-BITRIX_HOST_DIR ?= /srv/rabit-api/bitrix
-LOGS_HOST_DIR ?= /srv/rabit-api/logs
+BITRIX_HOST_DIR ?= $(RUNTIME_DATA_DIR)/bitrix
+LOGS_HOST_DIR ?= $(RUNTIME_DATA_DIR)/logs
 BACKEND_ENV_CONFIG_NAME ?= rebit_backend_env_$(BUILD_NUMBER)
 REBIT_ENCRYPTION_KEY_SECRET_NAME ?= rebit_encryption_key_$(BUILD_NUMBER)
 REBIT_GEETEST_CAPTCHA_KEY_SECRET_NAME ?= rebit_geetest_captcha_key_$(BUILD_NUMBER)
@@ -161,7 +166,12 @@ deploy-check-env: \
 	guard-HOST \
 	guard-BUILD_NUMBER \
 	guard-REGISTRY \
-	guard-IMAGE_TAG
+	guard-IMAGE_TAG \
+	guard-STACK_NAME \
+	guard-RUNTIME_DATA_DIR \
+	guard-MYSQL_VOLUME_NAME \
+	guard-RABBITMQ_VOLUME_NAME \
+	guard-CRON_ENV_CONFIG_NAME
 
 # --- Build ---
 # Собирает Docker-образы для production
@@ -200,8 +210,8 @@ push-api:
 #
 # Требуемые переменные:
 #   HOST, PORT, DEPLOY_USER, BUILD_NUMBER, REGISTRY, IMAGE_TAG
-# Опционально (для docker login на сервере):
-#   REGISTRY_HOST, REGISTRY_USER, TOKEN_GIT_HUB
+# Авторизация registry должна быть заранее настроена у DEPLOY_USER на SSH target.
+# deploy использует существующие Docker credentials и не выполняет docker login.
 # Опционально (если нужно переопределить versioned Swarm names):
 #   BACKEND_ENV_CONFIG_NAME, REBIT_ENCRYPTION_KEY_SECRET_NAME,
 #   REBIT_GEETEST_CAPTCHA_KEY_SECRET_NAME, REBIT_MYSQL_PASSWORD_SECRET_NAME,
@@ -211,19 +221,29 @@ push-api:
 # Пример:
 #   HOST=1.2.3.4 PORT=22 DEPLOY_USER=deploy BUILD_NUMBER=42 \
 #   REGISTRY=ghcr.io/rebit-pro IMAGE_TAG=abc12345 \
-#   REGISTRY_HOST=ghcr.io REGISTRY_USER=user TOKEN_GIT_HUB=ghp_xxx \
 #   make deploy
 deploy: deploy-check-env
+	ssh $(REMOTE) -p $(PORT) 'bash -s' < deploy/swarm-verify-local-data-node.sh
 	scp -P $(PORT) $(COMPOSE_SRC) api/deploy/bitrix-settings-extra.php $(REMOTE):~/
 	ssh $(REMOTE) -p $(PORT) ' \
-		docker network create --driver=overlay traefik-public 2>/dev/null || true \
+		export DOCKER_HOST=unix:///var/run/docker.sock && unset DOCKER_CONTEXT \
+		&& { docker network create --driver=overlay traefik-public 2>/dev/null || true; } \
 		&& rm -rf $(RELEASE_DIR) && mkdir $(RELEASE_DIR) \
 		&& mv ~/docker-compose-production.yml $(RELEASE_DIR)/$(COMPOSE_DST) \
-		&& mkdir -p $(BITRIX_HOST_DIR) \
+		&& test -f "$(BITRIX_HOST_DIR)/modules/main/include/prolog_before.php" \
+		&& test -d "$(RUNTIME_DATA_DIR)/upload" \
+		&& docker volume inspect "$(MYSQL_VOLUME_NAME)" >/dev/null \
+		&& docker volume inspect "$(RABBITMQ_VOLUME_NAME)" >/dev/null \
 		&& mv ~/bitrix-settings-extra.php $(BITRIX_HOST_DIR)/.settings_extra.php \
 		&& mkdir -p $(LOGS_HOST_DIR)/logstash \
 		&& cd $(RELEASE_DIR) \
-		&& printf "REGISTRY=%s\nIMAGE_TAG=%s\nBACKEND_ENV_CONFIG_NAME=%s\nREBIT_ENCRYPTION_KEY_SECRET_NAME=%s\nREBIT_GEETEST_CAPTCHA_KEY_SECRET_NAME=%s\nREBIT_MYSQL_PASSWORD_SECRET_NAME=%s\nREBIT_MYSQL_ROOT_PASSWORD_SECRET_NAME=%s\nREBIT_SMTP_PASSWORD_SECRET_NAME=%s\nREBIT_RABBITMQ_PASSWORD_SECRET_NAME=%s\nREBIT_TELEGRAM_BOT_TOKEN_SECRET_NAME=%s\n" \
+		&& printf "STACK_NAME=%s\nRUNTIME_DATA_DIR=%s\nMYSQL_VOLUME_NAME=%s\nRABBITMQ_VOLUME_NAME=%s\nCRON_ENV_CONFIG_NAME=%s\nAUDIT_CONSUMER_REPLICAS=%s\nREGISTRY=%s\nIMAGE_TAG=%s\nBACKEND_ENV_CONFIG_NAME=%s\nREBIT_ENCRYPTION_KEY_SECRET_NAME=%s\nREBIT_GEETEST_CAPTCHA_KEY_SECRET_NAME=%s\nREBIT_MYSQL_PASSWORD_SECRET_NAME=%s\nREBIT_MYSQL_ROOT_PASSWORD_SECRET_NAME=%s\nREBIT_SMTP_PASSWORD_SECRET_NAME=%s\nREBIT_RABBITMQ_PASSWORD_SECRET_NAME=%s\nREBIT_TELEGRAM_BOT_TOKEN_SECRET_NAME=%s\n" \
+			"$(STACK_NAME)" \
+			"$(RUNTIME_DATA_DIR)" \
+			"$(MYSQL_VOLUME_NAME)" \
+			"$(RABBITMQ_VOLUME_NAME)" \
+			"$(CRON_ENV_CONFIG_NAME)" \
+			"$(AUDIT_CONSUMER_REPLICAS)" \
 			"$(REGISTRY)" \
 			"$(IMAGE_TAG)" \
 			"$(BACKEND_ENV_CONFIG_NAME)" \
@@ -234,18 +254,17 @@ deploy: deploy-check-env
 			"$(REBIT_SMTP_PASSWORD_SECRET_NAME)" \
 			"$(REBIT_RABBITMQ_PASSWORD_SECRET_NAME)" \
 			"$(REBIT_TELEGRAM_BOT_TOKEN_SECRET_NAME)" > .env \
-		&& env | LC_ALL=C sort | grep -E "^[A-Z0-9_]+_(CONFIG|SECRET)_NAME=" | grep -Ev "^(BACKEND_ENV_CONFIG_NAME|REBIT_ENCRYPTION_KEY_SECRET_NAME|REBIT_GEETEST_CAPTCHA_KEY_SECRET_NAME|REBIT_MYSQL_PASSWORD_SECRET_NAME|REBIT_MYSQL_ROOT_PASSWORD_SECRET_NAME|REBIT_SMTP_PASSWORD_SECRET_NAME|REBIT_RABBITMQ_PASSWORD_SECRET_NAME|REBIT_TELEGRAM_BOT_TOKEN_SECRET_NAME)=" >> .env || true \
+		&& { env | LC_ALL=C sort | grep -E "^[A-Z0-9_]+_(CONFIG|SECRET)_NAME=" | grep -Ev "^(BACKEND_ENV_CONFIG_NAME|CRON_ENV_CONFIG_NAME|REBIT_ENCRYPTION_KEY_SECRET_NAME|REBIT_GEETEST_CAPTCHA_KEY_SECRET_NAME|REBIT_MYSQL_PASSWORD_SECRET_NAME|REBIT_MYSQL_ROOT_PASSWORD_SECRET_NAME|REBIT_SMTP_PASSWORD_SECRET_NAME|REBIT_RABBITMQ_PASSWORD_SECRET_NAME|REBIT_TELEGRAM_BOT_TOKEN_SECRET_NAME)=" >> .env || true; } \
 		&& cd ~ && ln -sfn $(RELEASE_DIR) $(LINK_DIR) \
-		&& if [ -n "$(TOKEN_GIT_HUB)" ]; then echo "$(TOKEN_GIT_HUB)" | docker login $(REGISTRY_HOST) -u $(REGISTRY_USER) --password-stdin; fi \
 		&& docker pull $(REGISTRY)/rabit-api-nginx:$(IMAGE_TAG) \
 		&& docker pull $(REGISTRY)/rabit-api-php-fpm:$(IMAGE_TAG) \
 		&& docker pull $(REGISTRY)/rabit-api-php-cli:$(IMAGE_TAG) \
 		&& cd $(LINK_DIR) && set -a && . ./.env && set +a \
-		&& docker stack deploy --with-registry-auth --prune --resolve-image=never -c $(COMPOSE_DST) $(STACK_NAME)'
+		&& docker stack deploy --with-registry-auth --resolve-image=never -c $(COMPOSE_DST) $(STACK_NAME)'
 	ssh $(REMOTE) -p $(PORT) ' \
 		cd ~ && ls -d rabit-api_* 2>/dev/null | sort -t_ -k2 -n | head -n -$(KEEP_RELEASES) | xargs -r rm -rf'
 	ssh $(REMOTE) -p $(PORT) ' \
-		docker image prune --force \
+		unset DOCKER_CONTEXT && docker --host unix:///var/run/docker.sock image prune --force \
 		|| { status=$$?; printf "[deploy][warn] docker image prune failed with exit %s; deployment is already applied, continuing.\n" "$$status" >&2; true; }'
 #	@echo "Waiting for services to start..."
 #	sleep 15
@@ -253,12 +272,8 @@ deploy: deploy-check-env
 
 # --- Migrate (production) ---
 api-migrate-deploy:
-	ssh $(REMOTE) -p $(PORT) 'docker run --rm \
-		-v /srv/rabit-api/bitrix:/app/public/bitrix \
-		-v /srv/rabit-api/upload:/app/public/upload \
-		--network $(STACK_NAME)_default \
-		$(REGISTRY)/rabit-api-php-cli:$(IMAGE_TAG) \
-		php /app/public/local/modules/sprint.migration/tools/migrate.php up'
+	@printf '%s\n' 'Production migrations require a reviewed one-shot Swarm service with the exact config/secrets/mounts. See docs/waves/w04/README.md.' >&2
+	@exit 1
 
 # --- Rollback ---
 # Откатывает на указанный билд
@@ -267,11 +282,12 @@ api-migrate-deploy:
 #
 # Пример:
 #   HOST=1.2.3.4 ROLLBACK_BUILD_NUMBER=41 make rollback
-rollback:
+rollback: guard-HOST guard-STACK_NAME
+	ssh $(REMOTE) -p $(PORT) 'bash -s' < deploy/swarm-verify-local-data-node.sh
 	@if [ -z "$(ROLLBACK_BUILD_NUMBER)" ]; then echo "Set ROLLBACK_BUILD_NUMBER"; exit 1; fi
 	ssh $(REMOTE) -p $(PORT) 'test -d rabit-api_$(ROLLBACK_BUILD_NUMBER)'
 	ssh $(REMOTE) -p $(PORT) 'ln -sfn rabit-api_$(ROLLBACK_BUILD_NUMBER) $(LINK_DIR)'
-	ssh $(REMOTE) -p $(PORT) 'cd $(LINK_DIR) && set -a && . ./.env && set +a && docker stack deploy --with-registry-auth --prune --resolve-image=never -c $(COMPOSE_DST) $(STACK_NAME)'
+	ssh $(REMOTE) -p $(PORT) 'export DOCKER_HOST=unix:///var/run/docker.sock && unset DOCKER_CONTEXT && cd $(LINK_DIR) && set -a && . ./.env && set +a && docker stack deploy --with-registry-auth --resolve-image=never -c $(COMPOSE_DST) $(STACK_NAME)'
 
 php-cli:
 	docker compose run --rm api-php-cli bash

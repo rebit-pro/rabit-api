@@ -124,6 +124,7 @@ services:
             SHELL: /bin/sh
 
     api-audit-consumer:
+        profiles: [audit]
         <<: *api-consumer-service
         command: ["php", "public/local/bin/bitrix-console", "app:audit:consume"]
 
@@ -173,7 +174,11 @@ services:
 
 volumes:
     api-mysql:
+        external: true
+        name: ${MYSQL_VOLUME_NAME:?Select the existing MySQL volume or explicitly provision a new one}
     rabbitmq-data:
+        external: true
+        name: ${RABBITMQ_VOLUME_NAME:?Select the existing RabbitMQ volume or explicitly provision a new one}
 
 networks:
     traefik-public:

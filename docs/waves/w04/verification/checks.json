@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "phpVersion": "8.4.23",
+  "lintFiles": 2,
+  "phpCsFixerChangedFiles": 0,
+  "pythonSyntaxFiles": 4,
+  "shellSyntaxFiles": 2,
+  "makeDeployDryRunSyntax": true,
+  "remoteCommandBodiesParsed": 4,
+  "deploymentCommandsExecuted": false,
+  "sourceReferences": {
+    "w04": {
+      "commit": "f751e5db9c4af2172f0e7f82933d03173c015b7e",
+      "uncommittedChangesIncluded": true
+    },
+    "w02": {
+      "commit": "235186058ee5dfc6b1d093f8717dd81462581a02",
+      "uncommittedChangesIncluded": false
+    },
+    "w03": {
+      "commit": "f751e5db9c4af2172f0e7f82933d03173c015b7e",
+      "uncommittedChangesIncluded": true
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "sourceCommit": "bb63087f5920959affa22969d305b045656536b2",
+  "parentWave": "codex/w03-upload-ownership",
+  "parentCommit": "d2826f7",
+  "phpunit": {
+    "tests": 132,
+    "assertions": 622
+  },
+  "phpstan": "PASS",
+  "phpLintFiles": 241,
+  "csCheckedFiles": 263,
+  "csChanges": 0,
+  "routerRoutes": 6,
+  "foundationMigrations": 9,
+  "inventoryOperations": 99,
+  "inventoryWaves": 35,
+  "bootstrapServices": 47,
+  "bootstrapResolvedSingletons": 11,
+  "proxyHttpScenarioGroups": 12,
+  "topologyScenarios": 8,
+  "publisherScenarios": 7,
+  "registryTokenPreview": "PASS",
+  "restoreEvidence": "../verification/restore.json",
+  "verificationNote": "Full PHP/HTTP/bootstrap gate ran before the final Makefile-only registry fix; targeted runtime/Compose/deploy-preview gate reran after it. No PHP sources changed between those runs.",
+  "githubActions": "W02 jobs not started: account billing locked; local results do not certify CI.",
+  "productionUsed": false,
+  "deliveriesExecuted": false
+}

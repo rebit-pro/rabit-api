@@ -27,7 +27,7 @@ EOF
 }
 
 log() {
-    printf '[swarm-runtime] %s\n' "$1"
+    printf '[swarm-runtime] %s\n' "$1" >&2
 }
 
 fail() {

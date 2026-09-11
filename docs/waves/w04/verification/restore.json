@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "databaseEngine": "8.0.45",
+  "separateNamedVolumes": true,
+  "emptyRestoreTarget": true,
+  "dumpFlags": [
+    "single-transaction",
+    "routines",
+    "triggers",
+    "events",
+    "set-gtid-purged=OFF",
+    "no-tablespaces"
+  ],
+  "verified": [
+    "row-and-owner",
+    "file-sha256",
+    "fixture-migration-history",
+    "routine",
+    "trigger",
+    "disabled-event",
+    "source-stopped-before-assertions"
+  ],
+  "elapsedSeconds": 40.73,
+  "syntheticSchemaOnly": true,
+  "realBitrixDatabase": false,
+  "portsPublished": false,
+  "networkUsed": false,
+  "productionUsed": false
+}
