@@ -366,6 +366,7 @@ namespace {
         /** @return array<string, mixed>|false */
         public static function GetFileArray(int $fileId, bool|string $uploadDir = false): array|false {}
         public static function GetPath(int $fileId): ?string {}
+        public static function Delete(int $fileId): void {}
     }
     function RegisterModule(string $moduleId): void {}
     function UnRegisterModule(string $moduleId): void {}

@@ -17,7 +17,7 @@ final class ValidationHelper
     {
         if (null === self::$validator) {
             self::$validator = Validation::createValidatorBuilder()
-                ->enableAnnotationMapping()
+                ->enableAttributeMapping()
                 ->getValidator()
             ;
         }
@@ -33,7 +33,7 @@ final class ValidationHelper
         $violations = self::getValidator()->validate($dto);
         if ($violations->count() > 0) {
             throw new ValidationHttpException(
-                sprintf('Validation failed: %s', (string)$violations),
+                'Ошибка валидации данных.',
             );
         }
     }

@@ -5,58 +5,100 @@ declare(strict_types=1);
 namespace Rebit\Share\Domain\File\Service;
 
 use Bitrix\Main\Data\ManagedCache;
+use Rebit\Share\Domain\File\Exception\FileUploadFailedException;
+use Rebit\Share\Domain\File\Repository\UploadedFileOwnerRepository;
 
 final readonly class UploadedFileOwnershipService
 {
-    private const string CACHE_KEY_PREFIX = 'rebit_share_upload_owner_';
+    private const string CACHE_KEY_PREFIX = 'rebit_share_upload_owner_v2_';
     private const int CACHE_TTL = 3600;
 
     public function __construct(
+        private UploadedFileOwnerRepository $repository,
         private ManagedCache $cache,
     ) {}
 
     public function remember(int $fileId, int $userId, string $moduleId): void
     {
-        $this->cache->set(
-            $this->buildCacheKey($fileId),
-            [
-                'userId' => $userId,
-                'moduleId' => $moduleId,
-            ],
-        );
+        if (0 >= $fileId || 0 >= $userId || '' === $moduleId) {
+            throw new FileUploadFailedException('Некорректные данные владельца файла.');
+        }
+
+        $this->repository->add($fileId, $userId, $moduleId);
+        // A cache failure cannot invalidate a successful durable ownership write.
+        try {
+            $key = $this->buildCacheKey($fileId);
+            $this->cache->clean($key);
+            $this->cache->read(self::CACHE_TTL, $key);
+            $this->cache->set($key, ['userId' => $userId, 'moduleId' => $moduleId]);
+        } catch (\Throwable) {
+            // The database remains authoritative; resolve() can rebuild this entry.
+        }
     }
 
     /**
-     * @return null|array{
-     *     userId: int,
-     *     moduleId: string,
-     * }
+     * Legacy files without an ownership row are deliberately unresolved.
+     *
+     * @return null|array{userId: int, moduleId: string}
      */
     public function resolve(int $fileId): ?array
     {
-        $cacheKey = $this->buildCacheKey($fileId);
-
-        if (!$this->cache->read(self::CACHE_TTL, $cacheKey)) {
+        if (0 >= $fileId) {
             return null;
         }
 
-        $payload = $this->cache->get($cacheKey);
+        $key = $this->buildCacheKey($fileId);
+        $cacheUsable = true;
+        try {
+            if ($this->cache->read(self::CACHE_TTL, $key)) {
+                $cached = $this->cache->get($key);
+                if (is_array($cached)
+                    && is_int($cached['userId'] ?? null) && 0 < $cached['userId']
+                    && is_string($cached['moduleId'] ?? null) && '' !== $cached['moduleId']) {
+                    return ['userId' => $cached['userId'], 'moduleId' => $cached['moduleId']];
+                }
+                $this->cache->clean($key);
+                $this->cache->read(self::CACHE_TTL, $key);
+            }
+        } catch (\Throwable) {
+            $cacheUsable = false;
+        }
 
-        if (!is_array($payload)) {
+        /** @var array{
+         *     USER_ID: int|string,
+         *     MODULE_ID: string,
+         * }|false $row */
+        $row = $this->repository->findByFileId($fileId)->fetch();
+        if (false === $row) {
+            return null;
+        }
+        $userId = (int)$row['USER_ID'];
+        $moduleId = (string)$row['MODULE_ID'];
+        if (0 >= $userId || '' === $moduleId) {
             return null;
         }
 
-        $userId = $payload['userId'] ?? null;
-        $moduleId = $payload['moduleId'] ?? null;
-
-        if (!is_int($userId) || !is_string($moduleId) || '' === $moduleId) {
-            return null;
+        $owner = ['userId' => $userId, 'moduleId' => $moduleId];
+        if ($cacheUsable) {
+            try {
+                $this->cache->set($key, $owner);
+            } catch (\Throwable) {
+                // Cache availability never changes the durable authorization result.
+            }
         }
 
-        return [
-            'userId' => $userId,
-            'moduleId' => $moduleId,
-        ];
+        return $owner;
+    }
+
+    public function isOwnedBy(int $fileId, int $userId, string $moduleId): bool
+    {
+        if (0 >= $userId || '' === $moduleId) {
+            return false;
+        }
+
+        $owner = $this->resolve($fileId);
+
+        return null !== $owner && $userId === $owner['userId'] && $moduleId === $owner['moduleId'];
     }
 
     private function buildCacheKey(int $fileId): string

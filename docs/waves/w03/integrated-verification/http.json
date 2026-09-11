@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "scenarios": [
+    "text",
+    "pdf",
+    "server-metadata",
+    "untrusted-client-mime",
+    "basename-only",
+    "missing-file",
+    "multi-file",
+    "extra-file-field",
+    "zero-size",
+    "missing-module",
+    "array-module",
+    "path-module",
+    "long-module",
+    "forbidden-content",
+    "extension-mismatch",
+    "maximum-size",
+    "oversize",
+    "invalid-file-and-parameters-safe-including-debug",
+    "lead-scalar-and-optional-file-no-delivery"
+  ],
+  "realPhpMultipart": true,
+  "realBitrixClasses": true,
+  "realJsonExceptionResponse": true,
+  "externalNetwork": false,
+  "deliveries": 0,
+  "databaseUsed": false
+}

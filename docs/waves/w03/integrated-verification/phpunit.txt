@@ -1,0 +1,14 @@
+PHPUnit 12.5.14 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.4.23
+Configuration: /app/phpunit.xml
+
+[2026-09-11T16:18:20.855556+03:00] todo.WARNING: Кеширование не readonly объекта без метода __clone! {"class":"Rebit\\Share\\Infrastructure\\Dto\\Metadata\\DtoClassMetadata"} {"durationMs":165.232,"requestId":"6aa3ff9cd10f78.37800100","method":"CLI"}
+[2026-09-11T16:18:20.856436+03:00] todo.WARNING: Кеширование не readonly объекта без метода __clone! {"class":"Rebit\\Share\\Infrastructure\\Dto\\Metadata\\DtoParameterMetadata"} {"durationMs":165.355,"requestId":"6aa3ff9cd10f78.37800100","method":"CLI"}
+...............................................................  63 / 132 ( 47%)
+............................................................... 126 / 132 ( 95%)
+......                                                          132 / 132 (100%)
+
+Time: 00:05.324, Memory: 22.00 MB
+
+OK (132 tests, 622 assertions)

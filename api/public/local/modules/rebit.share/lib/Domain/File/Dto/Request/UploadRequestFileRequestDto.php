@@ -12,6 +12,8 @@ final readonly class UploadRequestFileRequestDto implements RequestFileDtoInterf
     public function __construct(
         #[Assert\NotBlank]
         #[Assert\Type('string')]
+        #[Assert\Length(max: 50)]
+        #[Assert\Regex('/\A[a-z][a-z0-9]*(?:\.[a-z0-9]+)*\z/D')]
         public string $moduleId, // MODULE_ID для \CFile::SaveFile
 
         #[Assert\NotBlank]

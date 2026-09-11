@@ -7,6 +7,8 @@ namespace Rebit\Share\Infrastructure\Controller\Responses;
 use Rebit\Share\Infrastructure\Bitrix\ControllerJson;
 use Rebit\Share\Infrastructure\Controller\Serializers\CommonSerializer;
 use Rebit\Share\Shared\Exception\HttpException;
+use Rebit\Share\Shared\Exception\ValidationHttpException;
+use Rebit\Share\Domain\File\Exception\InvalidFileException;
 
 /**
  * Класс для формирования Json-ответа API, если произошло исключение.
@@ -22,14 +24,18 @@ final class JsonExceptionResponse extends AbstractResponse
 
     protected function buildResponse(): ControllerJson
     {
-        $code = $this->exception instanceof HttpException
-            ? $this->exception->getCode()
-            : 500;
+        $code = match (true) {
+            $this->exception instanceof InvalidFileException => 400,
+            $this->exception instanceof HttpException => $this->exception->getCode(),
+            default => 500,
+        };
 
         $error = [
-            'message' => $this->exception instanceof HttpException || $this->debug
-                ? $this->exception->getMessage()
-                : 'Server Error',
+            'message' => match (true) {
+                $this->exception instanceof InvalidFileException => 'Некорректный файл или параметры загрузки.',
+                $this->exception instanceof HttpException, $this->debug => $this->exception->getMessage(),
+                default => 'Server Error',
+            },
         ];
 
         $content = [
@@ -37,7 +43,8 @@ final class JsonExceptionResponse extends AbstractResponse
             'error' => $error,
         ];
 
-        if ($this->debug) {
+        if ($this->debug && !$this->exception instanceof InvalidFileException
+            && !$this->exception instanceof ValidationHttpException) {
             $content['error']['debug'] = [
                 'type' => get_class($this->exception),
                 'file' => $this->exception->getFile(),
