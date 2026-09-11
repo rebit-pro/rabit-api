@@ -1,0 +1,87 @@
+--- a/docs/03-database/README.md
++++ b/docs/03-database/README.md
+@@ -14 +14 @@
+-- Общие контракты находятся в rebit.share/lib/Application/Contract/; они не возвращают ORM Result, ReadModel или форму UF-полей. Эти правила не создают таблиц и не утверждают поля заранее.
++- Общие технические контракты находятся в `rebit.share/lib/Application/Contract/`, предметные межмодульные — в `rebit.share/lib/Contracts/<Domain>/`. Оба вида не возвращают ORM Result, ReadModel или форму UF-полей. Эти правила не создают таблиц и не утверждают поля заранее.
+--- a/docs/04-bitrix-modules/README.md
++++ b/docs/04-bitrix-modules/README.md
+@@ -69 +69 @@
+-Между модулями используется существующий каталог **`rebit.share/lib/Application/Contract/`** (единственное число). Контракт реализует адаптер поставщика в `Infrastructure`. Потребитель получает интерфейс через DI. Не вводить параллельные `Contracts`/`lib/Contracts`, не читать чужую ORM и не вызывать чужой UseCase вместо узкого контракта. `ServiceLocator` — только bootstrap/DI; для interface-key с ручной сборкой — `constructor`.
++Для общих технических контрактов используется **`rebit.share/lib/Application/Contract/`** (единственное число; namespace `Rebit\Share\Application\Contract`). Предметные межмодульные интерфейсы/DTO/события размещаются отдельно в **`rebit.share/lib/Contracts/<Domain>/`** (множественное число; namespace `Rebit\Share\Contracts\<Domain>`), например `Order`, `Payment`, `Media`. Контракт реализует адаптер поставщика в `Infrastructure`; потребитель получает интерфейс через DI. Внутренние порты/DTO остаются в своём модуле. Не читать чужую ORM и не вызывать чужой UseCase вместо узкого контракта. `ServiceLocator` — только bootstrap/DI; для interface-key с ручной сборкой — `constructor`.
+--- a/docs/04-bitrix-modules/backend-waves.json
++++ b/docs/04-bitrix-modules/backend-waves.json
+@@ -210 +210 @@
+-        "Один владелец записи; Share/Application/Contract; Result/массивы без Objectify; ReadModel только для зависимых выборок до маппера."
++        "Один владелец записи; технические контракты `rebit.share/lib/Application/Contract/`, предметные `rebit.share/lib/Contracts/<Domain>/`; Result/массивы без Objectify; ReadModel только для зависимых выборок до маппера."
+--- a/docs/04-bitrix-modules/backend-waves.md
++++ b/docs/04-bitrix-modules/backend-waves.md
+@@ -80 +80 @@
+-3. Method/path/action/RequestDto/InputDto/OutputDto, роль/область всех ID, DI и эффективный router. Контракт между модулями — `rebit.share/lib/Application/Contract/`; interface-key с ручной сборкой — `constructor`. ServiceLocator только bootstrap/DI.
++3. Method/path/action/RequestDto/InputDto/OutputDto, роль/область всех ID, DI и эффективный router. Общие технические контракты — `rebit.share/lib/Application/Contract/`, предметные межмодульные — `rebit.share/lib/Contracts/<Domain>/`; interface-key с ручной сборкой — `constructor`. ServiceLocator только bootstrap/DI.
+@@ -290 +290 @@
+-- Один владелец записи; Share/Application/Contract; Result/массивы без Objectify; ReadModel только для зависимых выборок до маппера.
++- Один владелец записи; технические контракты `rebit.share/lib/Application/Contract/`, предметные `rebit.share/lib/Contracts/<Domain>/`; Result/массивы без Objectify; ReadModel только для зависимых выборок до маппера.
+--- a/docs/04-bitrix-modules/render-waves.py
++++ b/docs/04-bitrix-modules/render-waves.py
+@@ -86 +86 @@
+-3. Method/path/action/RequestDto/InputDto/OutputDto, роль/область всех ID, DI и эффективный router. Контракт между модулями — `rebit.share/lib/Application/Contract/`; interface-key с ручной сборкой — `constructor`. ServiceLocator только bootstrap/DI.
++3. Method/path/action/RequestDto/InputDto/OutputDto, роль/область всех ID, DI и эффективный router. Общие технические контракты — `rebit.share/lib/Application/Contract/`, предметные межмодульные — `rebit.share/lib/Contracts/<Domain>/`; interface-key с ручной сборкой — `constructor`. ServiceLocator только bootstrap/DI.
+--- a/docs/05-rest-api/README.md
++++ b/docs/05-rest-api/README.md
+@@ -35 +35 @@
+-Межмодульная работа: routes.php модуля → Presentation/Controller → RequestDto → свой Application UseCase. Чужие данные/действия доступны через контракт в **rebit.share/lib/Application/Contract/** и адаптер у поставщика. Существующий путь Contract сохраняется; параллельные Contracts или lib/Contracts не вводятся. ORM другого модуля, прямой вызов чужого UseCase и внутренние HTTP-вызовы по этой карте не нужны. Атомарность заказа, резерва возврата, переноса и версии печати обеспечивает сервер; браузерные Web Locks её не заменяют.
++Межмодульная работа: routes.php модуля → Presentation/Controller → RequestDto → свой Application UseCase. Чужие предметные данные/действия доступны через контракт в **`rebit.share/lib/Contracts/<Domain>/`** и адаптер у поставщика. Общие технические контракты (кеш, сообщения, файловые операции, разрешение токена) остаются в **`rebit.share/lib/Application/Contract/`**. Внутренние порты и DTO остаются в модуле-владельце. ORM другого модуля, прямой вызов чужого UseCase и внутренние HTTP-вызовы по этой карте не нужны. Атомарность заказа, резерва возврата, переноса и версии печати обеспечивает сервер; браузерные Web Locks её не заменяют.
+--- a/docs/05-rest-api/build.py
++++ b/docs/05-rest-api/build.py
+@@ -16 +16,2 @@
+-    "contractsPath": "api/public/local/modules/rebit.share/lib/Application/Contract/",
++    "technicalContractsPath": "api/public/local/modules/rebit.share/lib/Application/Contract/",
++    "domainContractsPath": "api/public/local/modules/rebit.share/lib/Contracts/",
+@@ -674 +675 @@
+-Межмодульная работа: routes.php модуля → Presentation/Controller → RequestDto → свой Application UseCase. Чужие данные/действия доступны через контракт в **rebit.share/lib/Application/Contract/** и адаптер у поставщика. Существующий путь Contract сохраняется; параллельные Contracts или lib/Contracts не вводятся. ORM другого модуля, прямой вызов чужого UseCase и внутренние HTTP-вызовы по этой карте не нужны. Атомарность заказа, резерва возврата, переноса и версии печати обеспечивает сервер; браузерные Web Locks её не заменяют.
++Межмодульная работа: routes.php модуля → Presentation/Controller → RequestDto → свой Application UseCase. Чужие предметные данные/действия доступны через контракт в **`rebit.share/lib/Contracts/<Domain>/`** и адаптер у поставщика. Общие технические контракты (кеш, сообщения, файловые операции, разрешение токена) остаются в **`rebit.share/lib/Application/Contract/`**. Внутренние порты и DTO остаются в модуле-владельце. ORM другого модуля, прямой вызов чужого UseCase и внутренние HTTP-вызовы по этой карте не нужны. Атомарность заказа, резерва возврата, переноса и версии печати обеспечивает сервер; браузерные Web Locks её не заменяют.
+--- a/docs/05-rest-api/endpoints.json
++++ b/docs/05-rest-api/endpoints.json
+@@ -18 +18,2 @@
+-    "contractsPath": "api/public/local/modules/rebit.share/lib/Application/Contract/",
++    "technicalContractsPath": "api/public/local/modules/rebit.share/lib/Application/Contract/",
++    "domainContractsPath": "api/public/local/modules/rebit.share/lib/Contracts/",
+--- a/docs/05-rest-api/validate.py
++++ b/docs/05-rest-api/validate.py
+@@ -64 +64,2 @@
+-    assert backend["contractsPath"]=="api/public/local/modules/rebit.share/lib/Application/Contract/"
++    assert backend["technicalContractsPath"]=="api/public/local/modules/rebit.share/lib/Application/Contract/"
++    assert backend["domainContractsPath"]=="api/public/local/modules/rebit.share/lib/Contracts/"
+--- a/docs/05-rest-api/verification.json
++++ b/docs/05-rest-api/verification.json
+@@ -8 +8 @@
+-  "schemaValidation": "passed",
++  "schemaValidation": "not-run",
+@@ -31,2 +31,2 @@
+-    "build.py": "bf0df56fb56d7177b9c4a19b40391d640b52da7271f1385d4b78a5f0a0e20283",
+-    "validate.py": "c562ed6670ea288862746fadf8ab2cdcf90c4c1023e3757db965c0a8b5d0e802",
++    "build.py": "264e619f7b046cd8af856a715836bf8bfb5ddd8ba68b15725ed64aa367066833",
++    "validate.py": "b2c3f2e56cf6b3d444b6d4086d88aa345084f6733e0c2b0a5fcc94db46d1fc2b",
+@@ -34,6 +34,6 @@
+-    "../04-bitrix-modules/README.md": "4e108b7357fa4c87292b48c2842d98eb37a88f402464f6684ba00038a0bb110f",
+-    "../04-bitrix-modules/backend-waves.json": "9acc9fd07edeee86b487491e93aee75620dee7f59e15325744978daff2289d6a",
+-    "../04-bitrix-modules/backend-waves.md": "e95a07176d73bd4438e95c5ebf22f770ebb400b1c928f4ac142d389678fa4cef",
+-    "../04-bitrix-modules/render-waves.py": "d6d494011c45f07257b0a35695a675a21832fa7d85ec4596a4230a68fadcc692",
+-    "README.md": "4481796f8daa70505cc0eb5fe9f5c51897f85a1158911e07b20e81a56eaa5a6d",
+-    "endpoints.json": "eb49b78ab230e1457f626bc2cf480e4f491fe6838ed0c30142c1bb224203c28e",
++    "../04-bitrix-modules/README.md": "613768eb910f8d0cb843fd334fec2fac58304e481c3cfa0281b280790c300c33",
++    "../04-bitrix-modules/backend-waves.json": "dd7387ec25846abaf647d2f626a2b819d8e08e9f9ce9201cfcad155101db8a1f",
++    "../04-bitrix-modules/backend-waves.md": "65b852d2a65093a87e09d9ceb71df3225039fda0e77cbb5332f5688c42af4a97",
++    "../04-bitrix-modules/render-waves.py": "68a6cfaf3f4c8d7086db16776fa9e7b6b34334b16a8985d2daad071b17b2574b",
++    "README.md": "e138904af28aa0134baf799dcbba0ba0e561093320ff26e6041e3a07c821083d",
++    "endpoints.json": "3d714e9f0380302ce9f6aa9a3a6dc99f7831dd5d64b6b37e43c8399ef088f6a7",
+@@ -65,9 +64,0 @@
+-  },
+-  "postmanScriptValidation": {
+-    "scriptsParsed": 144,
+-    "positiveFixtures": 99,
+-    "negativeFixtures": 198,
+-    "idempotencyRepeatChecks": 43,
+-    "platformGuardChecks": 14,
+-    "platformContractNegativeFixtures": 2,
+-    "note": "Offline script fixtures only; no API requests or Postman UI import were executed."
