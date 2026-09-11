@@ -1,0 +1,103 @@
+{
+  "capturedOn": "2026-09-11",
+  "sourceProject": "MoreFoto",
+  "sourceRootAtCapture": "/home/user/MoreFoto",
+  "sourceHead": null,
+  "sourceGitStatus": "notAGitRepository",
+  "contentAuthority": "SHA-256 identifies the source files actually read. No Git revision is available for this MoreFoto directory.",
+  "baseWave": "W04",
+  "baseCommit": "4f8c97e9bacda771bae57dcf377e186dd2d744db",
+  "r17Status": "awaitingBusinessReview",
+  "decisionStatus": {
+    "D01": "open",
+    "D02": "open",
+    "D03": "open",
+    "D04": "open",
+    "D05": "open",
+    "D06": "open",
+    "D07": "open",
+    "D08": "open",
+    "D09": "open",
+    "D10": "open",
+    "D11": "open",
+    "D12": "open"
+  },
+  "userInstruction": "Новых ответов нет — подготовить предложения",
+  "files": [
+    {
+      "path": "docs/01-scenario/Решения по ответам.md",
+      "sha256": "3642bdae3203fc45cd6eb4455dbbb94eb8b1bf45c02ea5f182798d89891430fb",
+      "bytes": 7810
+    },
+    {
+      "path": "docs/02-domain/README.md",
+      "sha256": "413d6232d069270a2178b4206675b08d532db5dd2f219e258865a7cffc4fcb47",
+      "bytes": 2603
+    },
+    {
+      "path": "docs/03-database/README.md",
+      "sha256": "8e976661eb8694cefc1ca3b61e39a6fb90e83fb0784afd6861498eb576da1a79",
+      "bytes": 3536
+    },
+    {
+      "path": "docs/04-bitrix-modules/README.md",
+      "sha256": "613768eb910f8d0cb843fd334fec2fac58304e481c3cfa0281b280790c300c33",
+      "bytes": 24731
+    },
+    {
+      "path": "docs/04-bitrix-modules/backend-waves.md",
+      "sha256": "65b852d2a65093a87e09d9ceb71df3225039fda0e77cbb5332f5688c42af4a97",
+      "bytes": 93184
+    },
+    {
+      "path": "docs/05-rest-api/README.md",
+      "sha256": "e138904af28aa0134baf799dcbba0ba0e561093320ff26e6041e3a07c821083d",
+      "bytes": 107245
+    },
+    {
+      "path": "docs/05-rest-api/build.py",
+      "sha256": "264e619f7b046cd8af856a715836bf8bfb5ddd8ba68b15725ed64aa367066833",
+      "bytes": 137204
+    },
+    {
+      "path": "docs/05-rest-api/endpoints.json",
+      "sha256": "3d714e9f0380302ce9f6aa9a3a6dc99f7831dd5d64b6b37e43c8399ef088f6a7",
+      "bytes": 123700
+    },
+    {
+      "path": "docs/frontend/releases/R17-business-review.md",
+      "sha256": "ca256c96fa4c8e35f2645c5e14e517b73bcf6f4db5f062673f3b083fb9ca7917",
+      "bytes": 5474
+    },
+    {
+      "path": "docs/frontend/business-review/decisions.md",
+      "sha256": "d9018de353bcce756af411ae049477b5988eaae15b218f629d9fd6ebd3d8f711",
+      "bytes": 8206
+    },
+    {
+      "path": "docs/frontend/business-review/feedback.md",
+      "sha256": "420538d9575b25ce5c1ae6a73800359819146c45fe0d0061892a8501726b4429",
+      "bytes": 6835
+    },
+    {
+      "path": "docs/frontend/business-review/contracts.md",
+      "sha256": "fce6f99ce58c2ec283cb5213fdbb6bfc677832ede1dcfb35904ae78fd2f664a1",
+      "bytes": 23308
+    },
+    {
+      "path": "docs/frontend/business-review/routes-and-access.md",
+      "sha256": "253ee597b2bbb8df3caa66c34cd71564c8026de355eaea5ce8c75a63bac0114d",
+      "bytes": 10737
+    },
+    {
+      "path": "frontend/src/modules/morefoto/organization/types.ts",
+      "sha256": "6ba7e105a1f37078d76ace2fb3ddcdfc8aaf82a2c658c242cb224354bf54fb9f",
+      "bytes": 1950
+    },
+    {
+      "path": "frontend/src/modules/morefoto/management/types.ts",
+      "sha256": "4194d765b3709d7d5c9c89b7a73131134631ff5c2194416c1203c7f49adcb157",
+      "bytes": 1626
+    }
+  ]
+}

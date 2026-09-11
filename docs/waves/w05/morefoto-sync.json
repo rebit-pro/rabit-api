@@ -1,0 +1,67 @@
+{
+  "status": "PASS",
+  "date": "2026-09-11",
+  "sourceRoot": "/home/user/MoreFoto",
+  "files": [
+    {
+      "path": "docs/02-domain/README.md",
+      "beforeSha256": "413d6232d069270a2178b4206675b08d532db5dd2f219e258865a7cffc4fcb47",
+      "afterSha256": "1eb1c564112ede202daa3162cb1e3772648970d48f85cd4028550eda4ea90a30"
+    },
+    {
+      "path": "docs/03-database/README.md",
+      "beforeSha256": "8e976661eb8694cefc1ca3b61e39a6fb90e83fb0784afd6861498eb576da1a79",
+      "afterSha256": "06aebc98867182adb4884a658983938b34b90b2e3d46f085bf0cd4d824b622ea"
+    },
+    {
+      "path": "docs/04-bitrix-modules/backend-waves.json",
+      "beforeSha256": "dd7387ec25846abaf647d2f626a2b819d8e08e9f9ce9201cfcad155101db8a1f",
+      "afterSha256": "803bb94f9d0753a1968db0c972c4e5d8de2e88b5820bbf00274d1bafb2b36671"
+    },
+    {
+      "path": "docs/04-bitrix-modules/backend-waves.md",
+      "beforeSha256": "65b852d2a65093a87e09d9ceb71df3225039fda0e77cbb5332f5688c42af4a97",
+      "afterSha256": "6e22b280d96919364ea0501c4f082a7b444afe55cd690ff91d2dfd3a5eb4a8ab"
+    },
+    {
+      "path": "docs/04-bitrix-modules/render-waves.py",
+      "beforeSha256": "68a6cfaf3f4c8d7086db16776fa9e7b6b34334b16a8985d2daad071b17b2574b",
+      "afterSha256": "680c4ba76c20337bd1f5959a6594881e79945661b89ca69d4eb2b700c3b0fb3d"
+    },
+    {
+      "path": "docs/05-rest-api/README.md",
+      "beforeSha256": "e138904af28aa0134baf799dcbba0ba0e561093320ff26e6041e3a07c821083d",
+      "afterSha256": "b855f98451d76ec7f9c839bf0bae4902fd2da42223b85a522407a3b96162beb9"
+    },
+    {
+      "path": "docs/05-rest-api/build.py",
+      "beforeSha256": "264e619f7b046cd8af856a715836bf8bfb5ddd8ba68b15725ed64aa367066833",
+      "afterSha256": "a144b1db8d90256761e6da791c2c6f5d09a5af447882b9ad6da36d84cbbc1b36"
+    },
+    {
+      "path": "docs/05-rest-api/endpoints.json",
+      "beforeSha256": "3d714e9f0380302ce9f6aa9a3a6dc99f7831dd5d64b6b37e43c8399ef088f6a7",
+      "afterSha256": "58028565ccea0b1775ed0aaf9be843fe71ef4a3dadc94c32a7aecb6e6adf3933"
+    },
+    {
+      "path": "docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json",
+      "beforeSha256": "2d5c4aae62c2868e0dbeaa6edfe60515e6694ed039ad0afdee9dd0a76f3a9950",
+      "afterSha256": "79fe2153ea2b9f4c17af3104141221fa2f61251639b3bf29187a4b8b2bef83ed"
+    },
+    {
+      "path": "docs/05-rest-api/postman/MoreFoto.postman_collection.json",
+      "beforeSha256": "ad92de6e7305f1954f3e8cc1ccee73a26317fbdc2186d96520a18715a4b2bf99",
+      "afterSha256": "59e199ca229506cb88fe3cd6b1c2ccbcbf7c8544e9a9c10493323955d78a594e"
+    },
+    {
+      "path": "docs/05-rest-api/verification.json",
+      "beforeSha256": "bee5f59e245b820b130fa6161a911530063ed2cf8ba67ffb19e608a27d37d4af",
+      "afterSha256": "ef99bd062acbb6995a4059679caae4a31cd1e85502248eed54da27f4fda667ba"
+    },
+    {
+      "path": "docs/frontend/business-review/decisions.md",
+      "beforeSha256": "d9018de353bcce756af411ae049477b5988eaae15b218f629d9fd6ebd3d8f711",
+      "afterSha256": "d32172e85a753866454cb02b994eb48f4285530081fa8a598c1173cc5203042c"
+    }
+  ]
+}
