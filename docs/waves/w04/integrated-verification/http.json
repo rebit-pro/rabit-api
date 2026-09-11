@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "apiSource": "/tmp/rabit-api-w04/api",
+  "scenarios": [
+    "allowed-origin-patch-preflight-and-header-allowlist",
+    "unapproved-origin-denied",
+    "patch-real-json-mapper",
+    "json-and-dto-errors-with-cors",
+    "text-upload",
+    "pdf-upload",
+    "missing-file",
+    "multiple-files",
+    "empty-file",
+    "invalid-module",
+    "forbidden-type",
+    "oversize-file"
+  ],
+  "multipartGate": "passed",
+  "fixtureRoutesOnly": true,
+  "realKernelRequestAndMappers": true,
+  "cookieDecoderBypassed": true,
+  "databaseUsed": false,
+  "deliveriesExecuted": false,
+  "productionUsed": false
+}
