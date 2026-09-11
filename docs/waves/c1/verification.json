@@ -1,0 +1,55 @@
+{
+  "wave": "C1",
+  "status": "PASS",
+  "baseCommit": "2ac4ef9b3e4b63d734fc3dda5240cab50a550d44",
+  "dependsOn": [
+    "A6"
+  ],
+  "unlocks": [
+    "C2"
+  ],
+  "legacyWave": "W07 (часть хранения)",
+  "independence": {
+    "accessInstalledInFixture": false,
+    "overlappingFilesWithB1": [],
+    "globalComposerAndRoutesChanged": false
+  },
+  "checks": {
+    "phpunit": {
+      "tests": 151,
+      "assertions": 646
+    },
+    "integration": {
+      "checks": 31,
+      "evidence": "integration.json"
+    },
+    "phpstan": "PASS level 5",
+    "phplint": 260
+  },
+  "sourceSha256": {
+    "api/public/local/modules/morefoto.organization/.settings.php": "1ca7e41fef8caf237bb19694cd3a6e358a03dbdd54e1b0aa1ac33f3eb372a0ac",
+    "api/public/local/modules/morefoto.organization/di/institution.php": "07921172873b48c39e7313a5af1c15a903f57455f90afa922121134769cede5f",
+    "api/public/local/modules/morefoto.organization/include.php": "8e92ce9c4b04cb71082a9f21819428b47dbb23dab164edc8b25fa4c1db0bbb77",
+    "api/public/local/modules/morefoto.organization/install/index.php": "7e2cd2ccdbf6c8a73adf1dd1b14599737fe87cbba44549c06903facd5f6e8903",
+    "api/public/local/modules/morefoto.organization/lib/Application/Institution/Dto/InstitutionOutputDto.php": "b830d822f1ed70dbc89ed9045158b9d2e858cf4e5725d07aefe7bab1adcba676",
+    "api/public/local/modules/morefoto.organization/lib/Application/Institution/Dto/InstitutionPageOutputDto.php": "4f56a8d2d4c8652e096b9f33d4b36fd90f21d462686f895167c0578479b265ea",
+    "api/public/local/modules/morefoto.organization/lib/Application/Institution/Dto/ListInstitutionsInputDto.php": "cae8159f6b8fb1db25b8dc782a136d80218c5f10a594f0883ff47dac4a0a2ab4",
+    "api/public/local/modules/morefoto.organization/lib/Application/Institution/UseCase/CreateInstitutionUseCase.php": "320633bee3794f187912e436e0cfa4e18d86e95df70b2bfaeb4d28643f0c4a9b",
+    "api/public/local/modules/morefoto.organization/lib/Application/Institution/UseCase/GetInstitutionUseCase.php": "4d11c13f8b45475ebf6ba2c2bb87109fb2068694f2a46256209c65ba2f4a791c",
+    "api/public/local/modules/morefoto.organization/lib/Application/Institution/UseCase/ListInstitutionsUseCase.php": "5c9cdfbd5b2ec339fd917c74be949157c97c0d0e0ac6c3c66abbc129af7138e0",
+    "api/public/local/modules/morefoto.organization/lib/Application/Institution/UseCase/UpdateInstitutionUseCase.php": "a4b75e21ab0c3f0fbc51d2dbbd71931a1cdd2bfbdd5f7598532bad1c12f4b2d3",
+    "api/public/local/modules/morefoto.organization/lib/Domain/Institution/Exception/InstitutionNotFoundException.php": "83c4d369a4b26b6e5a1f51dd4dfa63fa18382c736b41196a161271f13dc06f42",
+    "api/public/local/modules/morefoto.organization/lib/Domain/Institution/Exception/InstitutionStorageException.php": "e0a17e7e7f0c8f8a0ad9d193dca5874a4ab38aff4564033cc0360719f568fdf3",
+    "api/public/local/modules/morefoto.organization/lib/Domain/Institution/Exception/InstitutionVersionConflictException.php": "cc7151a55b5ab55d4677717da56214326968a60157e1ac75d72551f47711b3d6",
+    "api/public/local/modules/morefoto.organization/lib/Domain/Institution/Exception/InvalidInstitutionException.php": "e6ff56d0d939e92afe70df415cdbd5d59e383d6820de054490cea83208529f39",
+    "api/public/local/modules/morefoto.organization/lib/Domain/Institution/Orm/InstitutionTable.php": "838fb4c3d2e979a1d0c07a5bf9e07c21da8e2d266c04c9ccc1b711f8ea4eb652",
+    "api/public/local/modules/morefoto.organization/lib/Domain/Institution/Repository/InstitutionRepository.php": "ac3e896d8e71fd112c8020c8edd792ba5dbb3d64505040d091680f93b638a88e",
+    "api/public/local/modules/morefoto.organization/lib/Domain/Institution/ValueObject/InstitutionDetails.php": "a6e39cfb8835a48e0e8c8e1ec0c985c0b60588e2a329d3c3cddd805be49ce17c",
+    "api/public/local/modules/morefoto.organization/lib/Domain/Institution/ValueObject/InstitutionId.php": "63e2943052ac2e3ece80885f362b02775817ceb25d4c70ce181f6d701fcfdcbe",
+    "api/public/local/modules/morefoto.organization/tests/Unit/InstitutionInputTest.php": "96c8108f357ab5f5ced89aa8d5767b3508e3727295501cc58cb0c3767b97afa0",
+    "api/public/local/modules/morefoto.organization/tests/bootstrap.php": "e5700b11f08be669df43abb31ecb8ae23dd17c3d01fedc8924715bde77b5de69",
+    "api/public/local/php_interface/migrations.foundation/Version20260911210001.php": "56fedac74254981217c24db93256076c2c124844d8c433563ef24d7760c30ea9",
+    "api/tools/run-c1-institutions-integration.sh": "63b36d3a2e5d130609355fb145aa938eef06ae6205583200de9296f2defb6b64",
+    "api/tools/verify-c1-institutions.php": "7f2f4652d11a6c36ab5116dbcaf99f5adb6aae44abfb45055ba4e41335b2e501"
+  }
+}
