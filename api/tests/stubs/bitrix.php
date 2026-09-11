@@ -205,3 +205,15 @@ namespace Bitrix\Main\ORM\Data;
 if (!class_exists(Result::class)) {
     class Result extends \Bitrix\Main\Result {}
 }
+
+namespace Bitrix\Main\ORM\Query;
+
+if (!class_exists(Result::class)) {
+    class Result
+    {
+        public function fetch(): array|false
+        {
+            return false;
+        }
+    }
+}

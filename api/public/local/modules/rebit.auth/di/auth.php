@@ -28,8 +28,15 @@ use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
 use Rebit\Share\Infrastructure\HttpClient\RebitHttpClientFactory;
 use Rebit\Share\Shared\Enum\LogChannelEnum;
 use Rebit\Share\Shared\Facade\Log;
+use Rebit\Auth\Infrastructure\Adapter\IdentityGateway;
+use Rebit\Share\Application\Contract\Auth\IdentityGatewayInterface;
 
 return [
+    IdentityGatewayInterface::class => [
+        'constructor' => static fn(): IdentityGatewayInterface => new IdentityGateway(
+            ServiceLocator::getInstance()->get(UserRepository::class),
+        ),
+    ],
     ClockInterface::class => [
         'constructor' => static fn(): ClockInterface => new SystemClock(),
     ],

@@ -40,6 +40,7 @@ try {
             true,
         );
     }
+    $autoload->addPsr4('Morefoto\Access\\', $apiRoot . '/public/local/modules/morefoto.access/lib/', true);
     require_once $kernelRoot . '/modules/main/lib/loader.php';
     Loader::registerNamespace('Bitrix\Main', $kernelRoot . '/modules/main/lib');
     spl_autoload_register([Loader::class, 'autoLoad']);
@@ -54,7 +55,7 @@ try {
 
     $locator = ServiceLocator::getInstance();
     $registered = [];
-    foreach (['rebit.share', 'rebit.auth', 'rebit.notification', 'rebit.leadhunter'] as $module) {
+    foreach (['rebit.share', 'rebit.auth', 'rebit.notification', 'rebit.leadhunter', 'morefoto.access'] as $module) {
         $settings = require $apiRoot . '/public/local/modules/' . $module . '/.settings.php';
         foreach ($settings['services']['value'] ?? [] as $id => $definition) {
             $check(!isset($registered[$id]), 'Service registered by two providers: ' . $id);
@@ -71,6 +72,11 @@ try {
 
     // These constructors are side-effect-free. Auth methods, controllers, queues and file storage are not executed.
     $targets = [
+        'Rebit\Share\Application\Contract\Auth\IdentityGatewayInterface',
+        'Rebit\Share\Contracts\Access\AccessGuardInterface',
+        'Morefoto\Access\Application\Profile\UseCase\GetProfileUseCase',
+        'Morefoto\Access\Application\Bootstrap\UseCase\BootstrapOrganizerUseCase',
+        'Morefoto\Access\Presentation\Console\BootstrapOrganizerCommand',
         'Rebit\Share\Application\Contract\Cache\CacheCleanerInterface',
         'Rebit\Share\Application\Contract\Auth\TokenResolverInterface',
         'Rebit\Auth\Application\Auth\Contract\TokenGeneratorInterface',
@@ -113,7 +119,8 @@ try {
         $check(method_exists($controller[0], $controller[1]), 'Route action does not exist.');
         $routes[] = $route->getUri();
     }
-    $check(6 === count($routes), 'Foundation route inventory changed.');
+    $check(7 === count($routes), 'Active foundation + W06 route inventory changed.');
+    $check(in_array('/api/v1/me', $routes, true), 'W06 profile route disappeared.');
     $check(in_array('/api/v1/lead', $routes, true), 'Lead route disappeared.');
     // Isolated disable rehearsal: only the unchanged Auth/Share route providers remain.
     $disabledRouter = new Router();

@@ -7,6 +7,11 @@ kernel_root="${W02_KERNEL_ROOT:-/home/user/rebit-p2p/api/public/bitrix}"
 vendor_root="${W02_VENDOR_ROOT:-/home/user/rebit-p2p/api/vendor}"
 php_image="${W02_PHP_IMAGE:-rabit-api-php-cli:20260911-074507}"
 mysql_image="${W02_MYSQL_IMAGE:-mysql:8.0}"
+verifier="${RABIT_INTEGRATION_VERIFIER:-tools/verify-w02-auth-integration.php}"
+case "$verifier" in
+    tools/verify-w02-auth-integration.php|tools/verify-w06-access.php) ;;
+    *) printf 'Unknown integration verifier.\n' >&2; exit 1 ;;
+esac
 network=rabit-w02-tests
 container=rabit-w02-mysql
 network_created=0
@@ -55,5 +60,5 @@ docker run --rm --read-only --network "$network" --tmpfs /tmp:rw,nosuid,size=256
     --mount "type=bind,source=$vendor_root,target=/app/vendor,readonly" \
     --mount "type=bind,source=$kernel_root/modules,target=/kernel/modules,readonly" \
     --workdir /app "$php_image" -d short_open_tag=1 -d date.timezone=UTC \
-    tools/verify-w02-auth-integration.php "$@" \
+    "$verifier" "$@" \
     | awk 'json || /^\{/ { json=1; print; next } { print > "/dev/stderr" }'

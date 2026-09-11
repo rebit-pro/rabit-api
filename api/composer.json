@@ -74,7 +74,8 @@
             "Rebit\\Auth\\": "public/local/modules/rebit.auth/lib/",
             "Rebit\\Share\\": "public/local/modules/rebit.share/lib/",
             "Rebit\\Leadhunter\\": "public/local/modules/rebit.leadhunter/lib/",
-            "Rebit\\Notification\\": "public/local/modules/rebit.notification/lib/"
+            "Rebit\\Notification\\": "public/local/modules/rebit.notification/lib/",
+            "Morefoto\\Access\\": "public/local/modules/morefoto.access/lib/"
         }
     },
     "autoload-dev": {
@@ -83,7 +84,8 @@
             "Rebit\\Share\\Tests\\": "public/local/modules/rebit.share/tests/",
             "Rebit\\Dev\\": "public/local/modules/rebit.dev/lib/",
             "Rebit\\Leadhunter\\Tests\\": "public/local/modules/rebit.leadhunter/tests/",
-            "Rebit\\Notification\\Tests\\": "public/local/modules/rebit.notification/tests/"
+            "Rebit\\Notification\\Tests\\": "public/local/modules/rebit.notification/tests/",
+            "Morefoto\\Access\\Tests\\": "public/local/modules/morefoto.access/tests/"
         }
     },
     "config": {
