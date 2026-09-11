@@ -3,10 +3,10 @@
   "phpVersion": "8.4.23",
   "lintFiles": 2,
   "phpCsFixerChangedFiles": 0,
-  "pythonSyntaxFiles": 3,
-  "shellSyntaxFiles": 1,
+  "pythonSyntaxFiles": 4,
+  "shellSyntaxFiles": 2,
   "makeDeployDryRunSyntax": true,
-  "remoteCommandBodiesParsed": 3,
+  "remoteCommandBodiesParsed": 4,
   "deploymentCommandsExecuted": false,
   "sourceReferences": {
     "w04": {

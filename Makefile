@@ -224,9 +224,11 @@ push-api:
 #   REGISTRY_HOST=ghcr.io REGISTRY_USER=user TOKEN_GIT_HUB=ghp_xxx \
 #   make deploy
 deploy: deploy-check-env
+	ssh $(REMOTE) -p $(PORT) 'bash -s' < deploy/swarm-verify-local-data-node.sh
 	scp -P $(PORT) $(COMPOSE_SRC) api/deploy/bitrix-settings-extra.php $(REMOTE):~/
 	ssh $(REMOTE) -p $(PORT) ' \
-		docker network create --driver=overlay traefik-public 2>/dev/null || true \
+		export DOCKER_HOST=unix:///var/run/docker.sock && unset DOCKER_CONTEXT \
+		&& { docker network create --driver=overlay traefik-public 2>/dev/null || true; } \
 		&& rm -rf $(RELEASE_DIR) && mkdir $(RELEASE_DIR) \
 		&& mv ~/docker-compose-production.yml $(RELEASE_DIR)/$(COMPOSE_DST) \
 		&& test -f "$(BITRIX_HOST_DIR)/modules/main/include/prolog_before.php" \
@@ -264,7 +266,7 @@ deploy: deploy-check-env
 	ssh $(REMOTE) -p $(PORT) ' \
 		cd ~ && ls -d rabit-api_* 2>/dev/null | sort -t_ -k2 -n | head -n -$(KEEP_RELEASES) | xargs -r rm -rf'
 	ssh $(REMOTE) -p $(PORT) ' \
-		docker image prune --force \
+		unset DOCKER_CONTEXT && docker --host unix:///var/run/docker.sock image prune --force \
 		|| { status=$$?; printf "[deploy][warn] docker image prune failed with exit %s; deployment is already applied, continuing.\n" "$$status" >&2; true; }'
 #	@echo "Waiting for services to start..."
 #	sleep 15
@@ -283,10 +285,11 @@ api-migrate-deploy:
 # Пример:
 #   HOST=1.2.3.4 ROLLBACK_BUILD_NUMBER=41 make rollback
 rollback: guard-HOST guard-STACK_NAME
+	ssh $(REMOTE) -p $(PORT) 'bash -s' < deploy/swarm-verify-local-data-node.sh
 	@if [ -z "$(ROLLBACK_BUILD_NUMBER)" ]; then echo "Set ROLLBACK_BUILD_NUMBER"; exit 1; fi
 	ssh $(REMOTE) -p $(PORT) 'test -d rabit-api_$(ROLLBACK_BUILD_NUMBER)'
 	ssh $(REMOTE) -p $(PORT) 'ln -sfn rabit-api_$(ROLLBACK_BUILD_NUMBER) $(LINK_DIR)'
-	ssh $(REMOTE) -p $(PORT) 'cd $(LINK_DIR) && set -a && . ./.env && set +a && docker stack deploy --with-registry-auth --resolve-image=never -c $(COMPOSE_DST) $(STACK_NAME)'
+	ssh $(REMOTE) -p $(PORT) 'export DOCKER_HOST=unix:///var/run/docker.sock && unset DOCKER_CONTEXT && cd $(LINK_DIR) && set -a && . ./.env && set +a && docker stack deploy --with-registry-auth --resolve-image=never -c $(COMPOSE_DST) $(STACK_NAME)'
 
 php-cli:
 	docker compose run --rm api-php-cli bash

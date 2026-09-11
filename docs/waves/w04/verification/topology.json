@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "scenarios": [
+    "single-local-db-node",
+    "multi-node",
+    "foreign-db-node",
+    "missing-db-label",
+    "drained-node",
+    "down-node",
+    "worker-target",
+    "inactive-swarm"
+  ],
+  "realDockerCliFormatting": true,
+  "syntheticUnixEngineApi": true,
+  "readOnlyEngineRequests": true,
+  "liveDockerDaemonUsed": false,
+  "productionUsed": false
+}
