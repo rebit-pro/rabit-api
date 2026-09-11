@@ -1,0 +1,146 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to an undefined static method Rebit\\Share\\Infrastructure\\Controller\\BaseJsonController\:\:__construct\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: public/local/modules/rebit.auth/lib/Presentation/Controller/AuthController.php
+
+		-
+			message: '#^Variable \$currentUser on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: public/local/modules/rebit.share/lib/Infrastructure/Bitrix/ControllerBuilder.php
+
+		-
+			message: '#^Method Rebit\\Share\\Infrastructure\\Interface\\SerializerInterface\:\:serialize\(\) invoked with 2 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: public/local/modules/rebit.share/lib/Infrastructure/Bitrix/ControllerJson.php
+
+		-
+			message: '''
+				#^PHPDoc tag @param has invalid value \(Event\{
+				    moduleId\: string,
+				    type\: string,
+				    parameters\: array\{
+				        action\: Action,
+				        controller\: AbstractController,
+				        result\: HttpResponse,
+				    \}
+				\} \$event\)\: Unexpected token "\{", expected variable at offset 88 on line 4$#
+			'''
+			identifier: phpDoc.parseError
+			count: 1
+			path: public/local/modules/rebit.share/lib/Infrastructure/Controller/Filters/LoggerFilter.php
+
+		-
+			message: '''
+				#^PHPDoc tag @param has invalid value \(Event\{
+				    moduleId\: string,
+				    type\: string,
+				    parameters\: array\{
+				        action\: Action,
+				        controller\: AbstractController,
+				    \}
+				\} \$event\)\: Unexpected token "\{", expected variable at offset 84 on line 4$#
+			'''
+			identifier: phpDoc.parseError
+			count: 1
+			path: public/local/modules/rebit.share/lib/Infrastructure/Controller/Filters/LoggerFilter.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Validator\\ValidatorBuilder\:\:enableAnnotationMapping\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: public/local/modules/rebit.share/lib/Infrastructure/Controller/Request/RequestFileToDtoMapper.php
+
+		-
+			message: '#^Parameter \#1 \$data of static method Rebit\\Share\\Shared\\Helper\\ArrayToDtoMapper\<object\>\:\:mapList\(\) expects array\<int, array\<string, mixed\>\>, array\<string, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: public/local/modules/rebit.share/lib/Infrastructure/Controller/Request/RequestToCollectionMapper.php
+
+		-
+			message: '#^Call to an undefined method ReflectionFunctionAbstract\:\:getDeclaringClass\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: public/local/modules/rebit.share/lib/Infrastructure/Dto/Metadata/DtoMetadataService.php
+
+		-
+			message: '#^Match expression does not handle remaining value\: string$#'
+			identifier: match.unhandled
+			count: 1
+			path: public/local/modules/rebit.share/lib/Infrastructure/Dto/Metadata/DtoMetadataService.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Validator\\ValidatorBuilder\:\:enableAnnotationMapping\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: public/local/modules/rebit.share/lib/Infrastructure/Helpers/ValidationHelper.php
+
+		-
+			message: '#^PHPDoc tag @return with type T is not subtype of native type object\.$#'
+			identifier: return.phpDocType
+			count: 1
+			path: public/local/modules/rebit.share/lib/Infrastructure/Interface/RequestMapperInterface.php
+
+		-
+			message: '#^Invalid type definition detected in type alias ALoggerRecord\.$#'
+			identifier: typeAlias.invalidType
+			count: 1
+			path: public/local/modules/rebit.share/lib/Infrastructure/Logger/CommonLoggerProcessor.php
+
+		-
+			message: '#^PHPDoc tag @param for parameter \$record contains unresolvable type\.$#'
+			identifier: parameter.unresolvableType
+			count: 1
+			path: public/local/modules/rebit.share/lib/Infrastructure/Logger/CommonLoggerProcessor.php
+
+		-
+			message: '#^PHPDoc tag @return contains unresolvable type\.$#'
+			identifier: return.unresolvableType
+			count: 1
+			path: public/local/modules/rebit.share/lib/Infrastructure/Logger/CommonLoggerProcessor.php
+
+		-
+			message: '#^PHPDoc type for property Rebit\\Share\\Infrastructure\\Logger\\CommonLoggerProcessor\:\:\$record contains unresolvable type\.$#'
+			identifier: property.unresolvableType
+			count: 1
+			path: public/local/modules/rebit.share/lib/Infrastructure/Logger/CommonLoggerProcessor.php
+
+		-
+			message: '#^Call to an undefined static method Rebit\\Share\\Infrastructure\\Controller\\BaseJsonController\:\:__construct\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: public/local/modules/rebit.share/lib/Presentation/Controller/FileController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: public/local/modules/rebit.share/lib/Shared/Facade/Log.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<string, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: public/local/modules/rebit.share/lib/Shared/Helper/ArrayToDtoMapper.php
+
+		-
+			message: '#^Unsafe usage of new static\(\)\.$#'
+			identifier: new.static
+			count: 1
+			path: public/local/modules/rebit.share/lib/Shared/ValueObject/AbstractDateRange.php
+
+		-
+			message: '#^Call to an undefined method DateTimeInterface\:\:setTime\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: public/local/modules/rebit.share/lib/Shared/ValueObject/DateRange.php
+
+		-
+			message: '#^Call to an undefined static method Rebit\\Leadhunter\\Domain\\LeadHunt\\Entity\\Table\\ExternalLeadTable\:\:delete\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: public/local/modules/rebit.leadhunter/lib/Infrastructure/LeadHunt/Repository/BitrixExternalLeadRepository.php

@@ -1,0 +1,243 @@
+services:
+    api:
+        image: ${REGISTRY}/rabit-api-nginx:${IMAGE_TAG}
+        networks:
+          - traefik-public
+          - default
+        volumes:
+          - type: bind
+            source: /srv/rabit-api/bitrix
+            target: /app/public/bitrix
+          - type: bind
+            source: /srv/rabit-api/upload
+            target: /app/public/upload
+        deploy:
+          labels:
+            - traefik.enable=true
+            - traefik.docker.network=traefik-public
+            - traefik.http.routers.rabit-api.rule=Host(`api.rebit-pro.ru`)
+            - traefik.http.services.rabit-api.loadBalancer.server.port=80
+            - traefik.http.routers.rabit-api.middlewares=secure-headers
+            - traefik.http.routers.rabit-api.entryPoints=https
+            - traefik.http.routers.rabit-api.tls=true
+            - traefik.http.routers.rabit-api.tls.certResolver=letsEncrypt
+          mode: replicated
+          replicas: 2
+          update_config:
+            parallelism: 1
+            delay: 5s
+            order: start-first
+            failure_action: rollback
+          rollback_config:
+            parallelism: 1
+            order: stop-first
+        healthcheck:
+          test: [ "CMD", "curl", "-f", "http://localhost/health" ]
+          interval: 10s
+          timeout: 5s
+          retries: 3
+          start_period: 30s
+          start_interval: 5s
+    api-php-fpm:
+        image: ${REGISTRY}/rabit-api-php-fpm:${IMAGE_TAG}
+        environment:
+          REDIS_HOST: ${REDIS_HOST:-redis}
+          REDIS_PORT: ${REDIS_PORT:-6379}
+        configs:
+          - source: rebit_backend_env
+            target: /app/public/.env
+        secrets:
+          - source: rebit_encryption_key
+            target: rebit_encryption_key
+          - source: rebit_geetest_captcha_key
+            target: rebit_geetest_captcha_key
+          - source: rebit_smtp_password
+            target: rebit_smtp_password
+          - source: rebit_rabbitmq_password
+            target: rebit_rabbitmq_password
+          - source: rebit_telegram_bot_token
+            target: rebit_telegram_bot_token
+        volumes:
+          - type: bind
+            source: /srv/rabit-api/bitrix
+            target: /app/public/bitrix
+          - type: bind
+            source: /srv/rabit-api/upload
+            target: /app/public/upload
+          - type: bind
+            source: /srv/rabit-api/logs
+            target: /app/logs
+        deploy:
+          mode: replicated
+          replicas: 2
+          update_config:
+            parallelism: 1
+            delay: 5s
+            order: start-first
+            failure_action: rollback
+          rollback_config:
+            parallelism: 1
+            order: stop-first
+        healthcheck:
+          test: [ "CMD-SHELL", "cgi-fcgi -bind -connect 127.0.0.1:9000 /ping || kill -0 1" ]
+          interval: 10s
+          timeout: 5s
+          retries: 3
+          start_period: 15s
+    api-cron:
+        image: ${REGISTRY}/rabit-api-php-cli:${IMAGE_TAG}
+        command: ["sh", "-lc", "exec /usr/local/bin/supercronic /etc/supercronic/crontab"]
+        environment:
+          REDIS_HOST: ${REDIS_HOST:-redis}
+          REDIS_PORT: ${REDIS_PORT:-6379}
+          SHELL: /bin/sh
+        configs:
+          - source: rebit_backend_env
+            target: /app/public/.env
+        secrets:
+          - source: rebit_encryption_key
+            target: rebit_encryption_key
+          - source: rebit_geetest_captcha_key
+            target: rebit_geetest_captcha_key
+          - source: rebit_smtp_password
+            target: rebit_smtp_password
+          - source: rebit_rabbitmq_password
+            target: rebit_rabbitmq_password
+          - source: rebit_telegram_bot_token
+            target: rebit_telegram_bot_token
+        volumes:
+          - type: bind
+            source: /srv/rabit-api/bitrix
+            target: /app/public/bitrix
+          - type: bind
+            source: /srv/rabit-api/upload
+            target: /app/public/upload
+          - type: bind
+            source: /srv/rabit-api/logs
+            target: /app/logs
+        deploy:
+          mode: replicated
+          replicas: 1
+          update_config:
+            parallelism: 1
+            delay: 5s
+            order: stop-first
+          restart_policy:
+            condition: on-failure
+            delay: 5s
+            max_attempts: 3
+    api-audit-consumer:
+        image: ${REGISTRY}/rabit-api-php-cli:${IMAGE_TAG}
+        command: ["php", "public/local/bin/bitrix-console", "app:audit:consume"]
+        configs:
+          - source: rebit_backend_env
+            target: /app/public/.env
+        secrets:
+          - source: rebit_encryption_key
+            target: rebit_encryption_key
+          - source: rebit_rabbitmq_password
+            target: rebit_rabbitmq_password
+        volumes:
+          - type: bind
+            source: /srv/rabit-api/bitrix
+            target: /app/public/bitrix
+          - type: bind
+            source: /srv/rabit-api/upload
+            target: /app/public/upload
+          - type: bind
+            source: /srv/rabit-api/logs
+            target: /app/logs
+        deploy:
+          mode: replicated
+          replicas: 1
+          update_config:
+            parallelism: 1
+            delay: 10s
+            order: stop-first
+          restart_policy:
+            condition: any
+            delay: 5s
+    rabbitmq:
+        image: rabbitmq:3.13-management-alpine
+        entrypoint:
+          - /bin/sh
+          - -c
+          - |
+            export RABBITMQ_DEFAULT_PASS=$$(cat /run/secrets/rebit_rabbitmq_password)
+            exec docker-entrypoint.sh rabbitmq-server
+        environment:
+          RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-rebit}
+          RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-rebit}
+        secrets:
+          - source: rebit_rabbitmq_password
+            target: rebit_rabbitmq_password
+        volumes:
+          - rabbitmq-data:/var/lib/rabbitmq
+        deploy:
+          mode: replicated
+          replicas: 1
+          placement:
+            constraints: [node.labels.db == db]
+          restart_policy:
+            condition: on-failure
+            delay: 10s
+            max_attempts: 3
+    api-memcached:
+        image: memcached:1.6-alpine
+        command: memcached -m 64
+        deploy:
+            mode: replicated
+            replicas: 1
+    api-mysql:
+        image: percona:8.0
+        environment:
+            MYSQL_DATABASE: ${MYSQL_DATABASE:-app}
+            MYSQL_USER: ${MYSQL_USER:-app}
+            MYSQL_PASSWORD_FILE: /run/secrets/rebit_mysql_password
+            MYSQL_ROOT_PASSWORD_FILE: /run/secrets/rebit_mysql_root_password
+        secrets:
+            - source: rebit_mysql_password
+              target: rebit_mysql_password
+            - source: rebit_mysql_root_password
+              target: rebit_mysql_root_password
+        volumes:
+            - api-mysql:/var/lib/mysql
+        deploy:
+            placement:
+                constraints: [ node.labels.db == db ]
+            endpoint_mode: dnsrr
+volumes:
+    api-mysql:
+    rabbitmq-data:
+configs:
+    rebit_backend_env:
+        external: true
+        name: ${BACKEND_ENV_CONFIG_NAME}
+secrets:
+    rebit_encryption_key:
+        external: true
+        name: ${REBIT_ENCRYPTION_KEY_SECRET_NAME}
+    rebit_geetest_captcha_key:
+        external: true
+        name: ${REBIT_GEETEST_CAPTCHA_KEY_SECRET_NAME}
+    rebit_mysql_password:
+        external: true
+        name: ${REBIT_MYSQL_PASSWORD_SECRET_NAME}
+    rebit_mysql_root_password:
+        external: true
+        name: ${REBIT_MYSQL_ROOT_PASSWORD_SECRET_NAME}
+    rebit_smtp_password:
+        external: true
+        name: ${REBIT_SMTP_PASSWORD_SECRET_NAME}
+    rebit_rabbitmq_password:
+        external: true
+        name: ${REBIT_RABBITMQ_PASSWORD_SECRET_NAME}
+    rebit_telegram_bot_token:
+        external: true
+        name: ${REBIT_TELEGRAM_BOT_TOKEN_SECRET_NAME}
+networks:
+    traefik-public:
+        external: true
+    default:
+        driver: overlay
+        attachable: true

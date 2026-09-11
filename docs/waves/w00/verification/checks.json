@@ -1,0 +1,82 @@
+{
+  "checkedAt": "2026-09-11T10:42:09.482413+00:00",
+  "phpImage": "rabit-api-php-cli:20260911-074507",
+  "network": "none",
+  "checkout": "/home/user/rabit-api",
+  "dependencies": "Unchanged composer.lock; existing vendor mounted read-only",
+  "kernel": "Existing licensed Bitrix mounted read-only; not included in repository",
+  "results": {
+    "phpunit": {
+      "exitCode": 0,
+      "command": [
+        "vendor/bin/phpunit",
+        "--colors=never"
+      ],
+      "summary": "PHPUnit 12.5.14 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.4.23\nConfiguration: /app/phpunit.xml\n\n[2026-09-11T13:41:59.405716+03:00] todo.WARNING: Кеширование не readonly объекта без метода __clone! {\"class\":\"Rebit\\\\Share\\\\Infrastructure\\\\Dto\\\\Metadata\\\\DtoClassMetadata\"} \n[2026-09-11T13:41:59.405842+03:00] todo.WARNING: Кеширование не readonly объекта без метода __clone! {\"class\":\"Rebit\\\\Share\\\\Infrastructure\\\\Dto\\\\Metadata\\\\DtoParameterMetadata\"} \n................................................................. 65 / 84 ( 77%)\n...................                                               84 / 84 (100%)\n\nTime: 00:02.077, Memory: 20.00 MB\n\nOK (84 tests, 300 assertions)\n"
+    },
+    "phpstan": {
+      "exitCode": 0,
+      "command": [
+        "vendor/bin/phpstan",
+        "analyse",
+        "--configuration=phpstan.neon",
+        "--no-progress"
+      ],
+      "summary": "\n [OK] No errors                                                                 \n\n"
+    },
+    "lint": {
+      "exitCode": 0,
+      "command": [
+        "vendor/bin/phplint",
+        "--no-cache"
+      ],
+      "summary": "........................................................ 57 / 222 ( 25%)\n.........................................................114 / 222 ( 51%)\n.........................................................171 / 222 ( 77%)\n....................................................\n\nphplint 9.7.1@69ec670 by overtrue and contributors.\n\nRuntime       : PHP 8.4.23\nConfiguration : /app/.phplint.yml\n\n\nTime: 92 ms, Memory: 8.0 MiB, Cache: 0 hit, 222 misses, Processes: 23\n\n [OK] 222 files                                                                 \n\n"
+    },
+    "cs-check": {
+      "exitCode": 0,
+      "command": [
+        "vendor/bin/php-cs-fixer",
+        "fix",
+        "--config=public/local/php-cs-fixer.php",
+        "--dry-run",
+        "--format=json",
+        "--allow-risky=yes",
+        "--using-cache=no"
+      ],
+      "filesNeedingChanges": 0
+    },
+    "router": {
+      "exitCode": 0,
+      "command": [
+        "tools/verify-w00-router.php"
+      ]
+    },
+    "router-lint": {
+      "exitCode": 0,
+      "command": [
+        "-l",
+        "tools/verify-w00-router.php"
+      ],
+      "summary": "No syntax errors detected in tools/verify-w00-router.php\n"
+    },
+    "router-style": {
+      "exitCode": 0,
+      "command": [
+        "vendor/bin/php-cs-fixer",
+        "fix",
+        "--config=public/local/php-cs-fixer.php",
+        "--dry-run",
+        "--format=json",
+        "--allow-risky=yes",
+        "--using-cache=no",
+        "tools/verify-w00-router.php"
+      ],
+      "filesNeedingChanges": 0
+    },
+    "inventory": {
+      "exitCode": 0,
+      "endpoints": 99,
+      "currentRoutes": 6
+    }
+  }
+}

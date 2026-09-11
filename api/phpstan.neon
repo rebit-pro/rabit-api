@@ -1,0 +1,35 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 5
+    tmpDir: var/phpstan
+    paths:
+        - public/local/modules
+    scanFiles:
+        - phpstan/bitrix-stubs.php
+    excludePaths:
+        analyseAndScan:
+            - public/local/modules/sprint.migration
+            - public/local/modules/rebit.auth/install
+            - public/local/modules/rebit.dev/install
+            - public/local/modules/rebit.leadhunter/install
+            - public/local/modules/rebit.notification/install
+            - public/local/modules/rebit.share/install
+            - public/local/modules/rebit.auth/tests
+            - public/local/modules/rebit.leadhunter/tests
+            - public/local/modules/rebit.notification/tests
+            - public/local/modules/rebit.share/tests
+    ignoreErrors:
+        # Общий trait сохранён для будущих репозиториев; после удаления P2P клиентов пока нет.
+        -
+            identifier: trait.unused
+            path: public/local/modules/rebit.share/lib/Infrastructure/Repository/RepositoryExceptionTrait.php
+        # Побочные ошибки от неполных Bitrix-стабов (ковариантность, контравариантность и т.д.)
+        -
+            message: '#Bitrix\\#'
+            reportUnmatched: false
+        -
+            message: '#does not extend any class#'
+            reportUnmatched: false
+    reportUnmatchedIgnoredErrors: false

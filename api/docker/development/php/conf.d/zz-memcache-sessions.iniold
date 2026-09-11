@@ -1,0 +1,25 @@
+[Session]
+session.save_handler = memcache
+session.save_path = "tcp://api-memcached:11211"
+memcache.hash_strategy = "consistent"
+memcache.allow_failover = 1
+memcache.max_failover_attempts = 20
+memcache.chunk_size = 32768
+memcache.default_port = 11211
+
+; Общие настройки сессий
+session.cookie_httponly = 1
+session.use_strict_mode = 1
+session.use_only_cookies = 1
+session.cookie_lifetime = 86400
+session.gc_maxlifetime = 86400
+
+; Используйте имя домена вместо localhost
+session.cookie_domain = .orteka.localhost
+
+; Для HTTPS (если используете)
+session.cookie_secure = Off
+
+; Совместимость с современными браузерами
+session.cookie_samesite = Lax
+

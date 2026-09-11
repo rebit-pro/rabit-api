@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+<channel>
+  <title>Заказы на FL.ru (Фри-ланс)</title>
+  <link>https://www.fl.ru</link>
+  <description>Заказы/Предложения на сайте www.fl.ru</description>
+  <item>
+    <title><![CDATA[Доработать сайт на Битрикс (бюджет: 50 000 &#8381;)]]></title>
+    <link>https://www.fl.ru/projects/1000001/dorabotat-sayt-na-bitriks.html</link>
+    <description><![CDATA[Нужно доработать каталог интернет-магазина на 1С-Битрикс.]]></description>
+    <pubDate>Mon, 13 Jul 2026 10:00:00 GMT</pubDate>
+    <guid>https://www.fl.ru/projects/1000001/dorabotat-sayt-na-bitriks.html</guid>
+  </item>
+  <item>
+    <title><![CDATA[Сайт под ключ для стоматологии]]></title>
+    <link>https://www.fl.ru/projects/1000002/sayt-pod-klyuch-dlya-stomatologii.html</link>
+    <description><![CDATA[Нужен сайт-визитка под ключ: дизайн, вёрстка, наполнение.]]></description>
+    <pubDate>Mon, 13 Jul 2026 09:30:00 GMT</pubDate>
+    <guid>https://www.fl.ru/projects/1000002/sayt-pod-klyuch-dlya-stomatologii.html</guid>
+  </item>
+  <item>
+    <title><![CDATA[Заказ без guid]]></title>
+    <link>https://www.fl.ru/projects/1000003/zakaz-bez-guid.html</link>
+    <pubDate>некорректная дата</pubDate>
+  </item>
+</channel>
+</rss>

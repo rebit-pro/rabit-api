@@ -1,0 +1,16 @@
+/.idea
+public/upload
+public/bitrix
+vendor
+var
+logs
+tests
+phpstan.neon
+phpstan-baseline.neon
+phpunit.xml
+
+# Local configuration must never enter a build context.
+.env
+.env.*
+**/.env
+**/.env.*

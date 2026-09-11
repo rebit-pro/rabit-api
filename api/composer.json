@@ -1,0 +1,94 @@
+{
+    "name": "rabit/api",
+    "description": "RaBit API — backend foundation for MoreFoto",
+    "type": "project",
+    "license": "proprietary",
+    "version": "1.0.0",
+    "require": {
+        "php": "^8.4",
+        "ext-curl": "*",
+        "ext-intl": "*",
+        "ext-json": "*",
+        "ext-libxml": "*",
+        "ext-mbstring": "*",
+        "ext-openssl": "*",
+        "ext-simplexml": "*",
+        "ballen/distical": "^3.1",
+        "doctrine/annotations": "^1.13",
+        "elasticsearch/elasticsearch": "^7.16",
+        "google/apiclient": "^2.0",
+        "graylog2/gelf-php": "~1.5",
+        "hflabs/dadata": "^24.4",
+        "lcobucci/jwt": "^4.3",
+        "librevlad/fiona": "^0.1.1",
+        "monolog/monolog": "^2.10",
+        "mpdf/mpdf": "^8.1",
+        "myclabs/deep-copy": "^1.11",
+        "php-amqplib/php-amqplib": "^3.7",
+        "php-di/slim-bridge": "^3.4",
+        "php-http/message-factory": "^1.0",
+        "phpdocumentor/reflection-docblock": "^5.6",
+        "phpoffice/phpspreadsheet": "^1.9",
+        "pixel418/markdownify": "dev-fix-php8.3",
+        "predis/predis": "^3.0",
+        "psr/container": "2.*",
+        "psr/log": "^2.0",
+        "ramsey/uuid": "^4.7",
+        "setasign/fpdi": "^2.3",
+        "slim/psr7": "^1.6",
+        "slim/slim": "^4.0",
+        "symfony/cache": "^6.4 || ^7.0",
+        "symfony/console": "^6.3 || ^7.1",
+        "symfony/dotenv": "^7.2",
+        "symfony/lock": "^8.0",
+        "symfony/property-access": "^7.1",
+        "symfony/serializer": "^6.4 || ^7.0",
+        "symfony/validator": "^6.4 || ^7.0",
+        "symfony/yaml": "^7.2",
+        "webmozart/assert": "^1.11",
+        "yandex/geo": "^1.1",
+        "symfony/messenger": "^8.0",
+        "symfony/amqp-messenger": "^8.0",
+        "symfony/event-dispatcher": "^8.0"
+    },
+    "require-dev": {
+        "roave/security-advisories": "dev-latest",
+        "dg/bypass-finals": "^1.6",
+        "friendsofphp/php-cs-fixer": "^3.88.2",
+        "overtrue/phplint": "^9.5",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^12.0"
+    },
+    "scripts": {
+        "server": "php -S localhost:8000 -t public",
+        "app": "php public/local/bin/bitrix-console --ansi",
+        "lint": "phplint",
+        "cs-check": "php-cs-fixer fix --config=public/local/php-cs-fixer.php --dry-run --diff --verbose --allow-risky=yes",
+        "cs-fix": "php-cs-fixer fix --config=public/local/php-cs-fixer.php --verbose --allow-risky=yes",
+        "phpstan": "phpstan analyse --configuration=phpstan.neon",
+        "test": "phpunit --colors=always",
+        "test-coverage": "phpunit --colors=always --coverage-html var/coverage"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rebit\\Auth\\": "public/local/modules/rebit.auth/lib/",
+            "Rebit\\Share\\": "public/local/modules/rebit.share/lib/",
+            "Rebit\\Leadhunter\\": "public/local/modules/rebit.leadhunter/lib/",
+            "Rebit\\Notification\\": "public/local/modules/rebit.notification/lib/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Rebit\\Auth\\Tests\\": "public/local/modules/rebit.auth/tests/",
+            "Rebit\\Share\\Tests\\": "public/local/modules/rebit.share/tests/",
+            "Rebit\\Dev\\": "public/local/modules/rebit.dev/lib/",
+            "Rebit\\Leadhunter\\Tests\\": "public/local/modules/rebit.leadhunter/tests/",
+            "Rebit\\Notification\\Tests\\": "public/local/modules/rebit.notification/tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    }
+}

@@ -1,0 +1,54 @@
+name: "RaBit API — PR checks"
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+permissions:
+  contents: read
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+jobs:
+  api-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: "🐘 Setup PHP"
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: amqp, sockets, sodium, intl, mbstring, curl, json, openssl, simplexml, gd, zip, bcmath, dom, xml, xmlreader, xmlwriter, fileinfo
+          tools: composer:v2
+      - name: "📦 Cache Composer dependencies"
+        uses: actions/cache@v4
+        with:
+          path: |
+            api/vendor
+            ~/.composer/cache
+          key: composer-${{ hashFiles('api/composer.lock') }}
+          restore-keys: composer-
+      - name: "📦 Install dependencies"
+        working-directory: api
+        run: composer install --prefer-dist --no-progress --no-interaction
+      - name: "🔍 Lint (phplint)"
+        working-directory: api
+        run: composer lint
+      - name: "🎨 CS Check (php-cs-fixer)"
+        working-directory: api
+        run: composer cs-check
+      - name: "🔬 Static analysis (phpstan)"
+        working-directory: api
+        run: composer phpstan
+      - name: "🧪 Tests (phpunit)"
+        working-directory: api
+        run: composer test
+
+  inventory-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check W00 API and Postman snapshot (offline)
+        run: python3 tools/verify-w00-inventory.py

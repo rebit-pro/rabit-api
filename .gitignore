@@ -1,0 +1,60 @@
+# General
+/xxx
+/.vscode
+/.idea
+.env
+
+# PHP
+**.php-cs-fixer.cache
+**.htaccess
+**test.php
+
+# Dumps
+/dump.sql.7z
+/dump.sql.7z:Zone.Identifier
+
+# Logs
+/logs/
+/api/logs/*
+!/api/logs/.gitkeep
+!/api/logs/logstash/
+/api/logs/logstash/*
+!/api/logs/logstash/.gitkeep
+
+# API
+**/vendor/
+/api/var/*
+!/api/var/.gitkeep
+/api/tcp
+/api/log/
+/api/public/bitrix/
+/api/public/upload/
+/api/public/include/
+/api/public/local/routes/*
+!/api/public/local/routes/.gitkeep
+!/api/public/local/routes/rabit-api.php
+/api/public/local/composer.lock
+
+# Docs
+/docs/*
+!/docs/.gitkeep
+!/docs/api.md
+!/docs/domain.md
+!/docs/modules.md
+!/docs/scenario.md
+
+# RaBit API current documentation
+!/docs/README.md
+!/docs/architecture.md
+!/docs/audit-rabit-api.md
+
+# Versioned wave review packages and deployment reports
+!/docs/waves/
+!/docs/deployments/
+# Never publish local runtime configuration
+.env.*
+!.env.example
+**/.env.*
+!**/.env.example
+
+!/docs/database.md
