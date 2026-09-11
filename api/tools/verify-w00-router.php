@@ -124,6 +124,7 @@ try {
         'Version20260715120001.php',
         'Version20260820120001.php',
         'Version20260911120001.php',
+        'Version20260911130001.php',
     ];
     $migrationFiles = glob($publicRoot . $migrationConfig['migration_dir'] . '/*.php');
     $check(false !== $migrationFiles, 'Cannot enumerate foundation migrations.');

@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "phases": [
+    {
+      "status": "PASS",
+      "mode": "write",
+      "phpVersion": "8.4.23",
+      "database": "rabit_w03",
+      "realBitrixOrm": true,
+      "realManagedCache": true,
+      "legacyUnownedDenied": true,
+      "productionSettingsLoaded": false
+    },
+    {
+      "status": "PASS",
+      "mode": "read-after-restart",
+      "phpVersion": "8.4.23",
+      "database": "rabit_w03",
+      "realBitrixOrm": true,
+      "realManagedCache": true,
+      "legacyUnownedDenied": true,
+      "productionSettingsLoaded": false
+    },
+    {
+      "status": "PASS",
+      "mysqlFixture": "rabit_w03",
+      "newPhpProcess": true,
+      "cacheClearAndOfflineFallback": true,
+      "ownerImmutable": true,
+      "legacyAndForeignDenied": true,
+      "productionSettingsLoaded": false,
+      "hostPorts": false,
+      "persistentVolumes": false
+    }
+  ]
+}

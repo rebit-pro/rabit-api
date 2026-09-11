@@ -40,6 +40,11 @@ namespace {
                 return $fileId;
             }
 
+            public static function Delete(int $fileId): void
+            {
+                unset(self::$mockFiles[$fileId]);
+            }
+
             public static function GetPath(int $fileId): string
             {
                 return (string)(self::$mockFiles[$fileId]['SRC'] ?? '');

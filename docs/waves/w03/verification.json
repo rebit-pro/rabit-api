@@ -1,0 +1,94 @@
+{
+  "wave": "W03",
+  "timestampUtc": "2026-09-11T13:14:07.436217+00:00",
+  "base": "f751e5d",
+  "status": "PASS",
+  "checks": {
+    "phpunit": {
+      "status": "PASS",
+      "exitCode": 0,
+      "output": "PHPUnit 12.5.14 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.4.23\nConfiguration: /app/phpunit.xml\n\n[2026-09-11T16:13:55.516193+03:00] todo.WARNING: Кеширование не readonly объекта без метода __clone! {\"class\":\"Rebit\\\\Share\\\\Infrastructure\\\\Dto\\\\Metadata\\\\DtoClassMetadata\"} {\"durationMs\":276.057,\"requestId\":\"6aa3fe937e45e8.26635458\",\"method\":\"CLI\"}\n[2026-09-11T16:13:55.517396+03:00] todo.WARNING: Кеширование не readonly объекта без метода __clone! {\"class\":\"Rebit\\\\Share\\\\Infrastructure\\\\Dto\\\\Metadata\\\\DtoParameterMetadata\"} {\"durationMs\":276.24,\"requestId\":\"6aa3fe937e45e8.26635458\",\"method\":\"CLI\"}\nTime: 00:02.150, Memory: 20.00 MB\n\nOK (99 tests, 536 assertions)\n"
+    },
+    "phpstan": {
+      "status": "PASS",
+      "exitCode": 0,
+      "output": "\n [OK] No errors                                                                 \n\n"
+    },
+    "phplint": {
+      "status": "PASS",
+      "exitCode": 0,
+      "output": "........................................................ 57 / 229 ( 24%)\n.........................................................114 / 229 ( 49%)\n.........................................................171 / 229 ( 74%)\n.........................................................228 / 229 ( 99%)\n..\n\nphplint 9.7.1@69ec670 by overtrue and contributors.\n\nRuntime       : PHP 8.4.23\nConfiguration : /app/.phplint.yml\n\n\nTime: 100 ms, Memory: 8.0 MiB, Cache: 0 hit, 229 misses, Processes: 23\n\n [OK] 229 files                                                                 \n\n"
+    },
+    "style_changed": {
+      "status": "PASS",
+      "exitCode": 0,
+      "output": "\nFound 0 of 16 files that can be fixed in 0.374 seconds, 60.00 MB memory used\nPHP CS Fixer 3.94.2 7th Gear by Fabien Potencier, Dariusz Ruminski and contributors.\nPHP runtime: 8.4.23\nLoaded config default from \"public/local/php-cs-fixer.php\".\nRunning analysis on 19 cores with 10 files per process.\nPaths from configuration have been overridden by paths provided as command arguments.\n  0/16 [░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   0%\n  2/16 [▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░]  12%\n 16/16 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%\n\n"
+    },
+    "router": {
+      "status": "PASS",
+      "exitCode": 0,
+      "output": "{\n    \"status\": \"PASS\",\n    \"phpVersion\": \"8.4.23\",\n    \"routingConfig\": [\n        \"rabit-api.php\"\n    ],\n    \"routes\": [\n        {\n            \"method\": \"POST\",\n            \"path\": \"/api/v1/auth/login\",\n            \"controller\": \"Rebit\\\\Auth\\\\Presentation\\\\Controller\\\\AuthController\",\n            \"action\": \"loginAction\"\n        },\n        {\n            \"method\": \"POST\",\n            \"path\": \"/api/v1/auth/register/request-code\",\n            \"controller\": \"Rebit\\\\Auth\\\\Presentation\\\\Controller\\\\AuthController\",\n            \"action\": \"requestRegistrationCodeAction\"\n        },\n        {\n            \"method\": \"POST\",\n            \"path\": \"/api/v1/auth/register/confirm\",\n            \"controller\": \"Rebit\\\\Auth\\\\Presentation\\\\Controller\\\\AuthController\",\n            \"action\": \"confirmRegistrationAction\"\n        },\n        {\n            \"method\": \"POST\",\n            \"path\": \"/api/v1/auth/logout\",\n            \"controller\": \"Rebit\\\\Auth\\\\Presentation\\\\Controller\\\\AuthController\",\n            \"action\": \"logoutAction\"\n        },\n        {\n            \"method\": \"POST\",\n            \"path\": \"/api/v1/share/file/upload/\",\n            \"controller\": \"Rebit\\\\Share\\\\Presentation\\\\Controller\\\\FileController\",\n            \"action\": \"uploadAction\"\n        },\n        {\n            \"method\": \"POST\",\n            \"path\": \"/api/v1/lead\",\n            \"controller\": \"Rebit\\\\Notification\\\\Presentation\\\\Controller\\\\LeadController\",\n            \"action\": \"submitAction\"\n        }\n    ],\n    \"migrationConfig\": {\n        \"directory\": \"/local/php_interface/migrations.foundation\",\n        \"historyTable\": \"sprint_migration_versions\"\n    },\n    \"migrations\": [\n        \"Version20260321120016.php\",\n        \"Version20260323120001.php\",\n        \"Version20260326120008.php\",\n        \"Version20260326120009.php\",\n        \"Version20260713120001.php\",\n        \"Version20260715120001.php\",\n        \"Version20260820120001.php\",\n        \"Version20260911130001.php\"\n    ],\n    \"controllersExecuted\": false,\n    \"migrationsExecuted\": false\n}\n"
+    },
+    "inventory": {
+      "status": "PASS",
+      "exitCode": 0,
+      "output": "{\n  \"result\": \"passed\",\n  \"endpoints\": 99,\n  \"originalEndpoints\": 97,\n  \"platformEndpoints\": 2,\n  \"currentBackendSourceRoutes\": 6,\n  \"moduleFolders\": 15,\n  \"waveFolders\": 35,\n  \"platformGuards\": 4,\n  \"postmanScriptsExecuted\": false,\n  \"liveApiRequestsExecuted\": false,\n  \"sha256\": {\n    \"endpoints.json\": \"eb49b78ab230e1457f626bc2cf480e4f491fe6838ed0c30142c1bb224203c28e\",\n    \"backend-waves.md\": \"e95a07176d73bd4438e95c5ebf22f770ebb400b1c928f4ac142d389678fa4cef\",\n    \"postman/MoreFoto.postman_collection.json\": \"ad92de6e7305f1954f3e8cc1ccee73a26317fbdc2186d96520a18715a4b2bf99\",\n    \"postman/MoreFoto.backend-waves.postman_collection.json\": \"2d5c4aae62c2868e0dbeaa6edfe60515e6694ed039ad0afdee9dd0a76f3a9950\"\n  }\n}\n"
+    },
+    "ownership": {
+      "status": "PASS",
+      "exitCode": 0,
+      "output": "{\n    \"status\": \"PASS\",\n    \"mode\": \"write\",\n    \"phpVersion\": \"8.4.23\",\n    \"database\": \"rabit_w03\",\n    \"realBitrixOrm\": true,\n    \"realManagedCache\": true,\n    \"legacyUnownedDenied\": true,\n    \"productionSettingsLoaded\": false\n}\n{\n    \"status\": \"PASS\",\n    \"mode\": \"read-after-restart\",\n    \"phpVersion\": \"8.4.23\",\n    \"database\": \"rabit_w03\",\n    \"realBitrixOrm\": true,\n    \"realManagedCache\": true,\n    \"legacyUnownedDenied\": true,\n    \"productionSettingsLoaded\": false\n}\n{\"status\": \"PASS\", \"mysqlFixture\": \"rabit_w03\", \"newPhpProcess\": true, \"cacheClearAndOfflineFallback\": true, \"ownerImmutable\": true, \"legacyAndForeignDenied\": true, \"productionSettingsLoaded\": false, \"hostPorts\": false, \"persistentVolumes\": false}\n"
+    },
+    "changed_php_syntax": {
+      "status": "PASS",
+      "exitCode": 0,
+      "output": "No syntax errors detected in phpstan/bitrix-stubs.php\nNo syntax errors detected in public/local/modules/rebit.share/di/file.php\nNo syntax errors detected in public/local/modules/rebit.share/lib/Domain/File/Dto/Request/UploadRequestFileRequestDto.php\nNo syntax errors detected in public/local/modules/rebit.share/lib/Domain/File/Service/FileUploadService.php\nNo syntax errors detected in public/local/modules/rebit.share/lib/Domain/File/Service/UploadedFileOwnershipService.php\nNo syntax errors detected in public/local/modules/rebit.share/lib/Infrastructure/Controller/Request/RequestFileToDtoMapper.php\nNo syntax errors detected in public/local/modules/rebit.share/lib/Infrastructure/Controller/Responses/JsonExceptionResponse.php\nNo syntax errors detected in public/local/modules/rebit.share/lib/Infrastructure/Helpers/ValidationHelper.php\nNo syntax errors detected in tests/stubs/bitrix-global.php\nNo syntax errors detected in tools/verify-w00-router.php\nNo syntax errors detected in public/local/modules/rebit.share/lib/Domain/File/Entity/Table/UploadedFileOwnerTable.php\nNo syntax errors detected in public/local/modules/rebit.share/lib/Domain/File/Repository/UploadedFileOwnerRepository.php\nNo syntax errors detected in public/local/modules/rebit.share/lib/Infrastructure/File/TechnicalUploadValidator.php\nNo syntax errors detected in public/local/modules/rebit.share/tests/Domain/File/W03FileUploadTest.php\nNo syntax errors detected in public/local/php_interface/migrations.foundation/Version20260911130001.php\nNo syntax errors detected in tools/verify-w03-ownership.php\nNo syntax errors detected in tools/w03/bootstrap.php\nNo syntax errors detected in tools/w03/upload-fixture.php\n"
+    },
+    "http_upload": {
+      "status": "PASS",
+      "command": "python3 tools/verify-w03-upload.py --kernel /path/to/bitrix --vendor /path/to/api/vendor",
+      "scenarios": 19,
+      "realPhpMultipart": true,
+      "realBitrixClasses": true,
+      "realJsonExceptionResponse": true,
+      "debugValidationErrorsChecked": true,
+      "leadOptionalAttachmentChecked": true,
+      "externalNetwork": false,
+      "deliveries": 0,
+      "databaseUsed": false
+    },
+    "diff_check": {
+      "status": "PASS",
+      "exitCode": 0,
+      "output": ""
+    }
+  },
+  "sourceSha256": {
+    "api/phpstan/bitrix-stubs.php": "0fa75790baa6c7631bf5e6ece0dadb30ed551b1353e1c5e3a38a2d0bf19a3946",
+    "api/public/local/modules/rebit.share/di/file.php": "444c9061317202ef9ecfee4fb048788a3dde3298ec7ef533f6a7f0e9d16e2a7b",
+    "api/public/local/modules/rebit.share/lib/Domain/File/Dto/Request/UploadRequestFileRequestDto.php": "a41649f1152d2b95b94862123232951029ec92a5d53bc797426b7996aecbacd7",
+    "api/public/local/modules/rebit.share/lib/Domain/File/Entity/Table/UploadedFileOwnerTable.php": "7b244983d40798d3231c8600df0efb7bb7aa31cd1d78b0d4f4f55539192436d5",
+    "api/public/local/modules/rebit.share/lib/Domain/File/Repository/UploadedFileOwnerRepository.php": "ecfee60fb31a1490d133d88310d2c72a65f2331d2d8500620848d6fac8484447",
+    "api/public/local/modules/rebit.share/lib/Domain/File/Service/FileUploadService.php": "3ddc31f57de8a4294875afa19c48154c3518cbd1c6b2f2103b4d7bc5e08a5c9f",
+    "api/public/local/modules/rebit.share/lib/Domain/File/Service/UploadedFileOwnershipService.php": "fca7b899b4a5578042d86460a29dcaab0afc5b972045fc8b757d67f1a9ae19f1",
+    "api/public/local/modules/rebit.share/lib/Infrastructure/Controller/Request/RequestFileToDtoMapper.php": "de492d5891b69fabc8a1c7e8385633e5a37e754de4e6925476fc1dcc3237f02d",
+    "api/public/local/modules/rebit.share/lib/Infrastructure/Controller/Responses/JsonExceptionResponse.php": "77757ed349800f5f84f8e399d80df5b5af31ae8edbbf479303c1ec4399d18545",
+    "api/public/local/modules/rebit.share/lib/Infrastructure/File/TechnicalUploadValidator.php": "1de6441d033e3a914545a2e42cf8c688ba013050ce7c47a2da0303d6353a1742",
+    "api/public/local/modules/rebit.share/lib/Infrastructure/Helpers/ValidationHelper.php": "a929241728991a002cc82749869181de79209a53d811288324ae61e657324b30",
+    "api/public/local/modules/rebit.share/tests/Domain/File/W03FileUploadTest.php": "2c33a1984a402cbe4b79091472a4b553108eeb755f00255d7221695c4398c129",
+    "api/public/local/php_interface/migrations.foundation/Version20260911130001.php": "eb65ab78b254557a839e6ee65ba9d32f3f9ffdc6eb0d8baa5add296c9622eb17",
+    "api/tests/stubs/bitrix-global.php": "a5938eb8822666f04c4a0c5ddc701ec6a687f89c61714b7678ca6fb4bf18236d",
+    "api/tools/verify-w00-router.php": "61af539d2f43080fdc11a39fef807c3e895dd93bf09367434654ead195622ad4",
+    "api/tools/verify-w03-ownership.php": "a5da326f0c6b7da34111a0ce2a77a98a1246ddfd0bdd7e1810a98d533bea8627",
+    "api/tools/w03/bootstrap.php": "755c41f5ad0fd81198eddd8dd4f66f9c389ec9cc4a096e4adc2a2c4fa9a09f2e",
+    "api/tools/w03/upload-fixture.php": "f87edfbc339c4f07d5bc0bbbabcec0ef77d8ccc95a3e0680ffe82ac10d729f73",
+    "tools/verify-w03-ownership.py": "51ad4110d2419e6c8f3dc4384a8ebaeb262afe0af2f55d9a093cc185f30411d9",
+    "tools/verify-w03-upload.py": "99534e1fd87fbd6f08dd956b8ad5307d2455926278d4c193cd9ae9096d5a57da"
+  },
+  "limitations": [
+    "CFile SaveFile/Delete orchestration uses a unit double; real storage is not touched.",
+    "Actual ORM/MySQL/cache and two PHP processes verified in fresh isolated fixtures.",
+    "The W04 nginx/FPM check is independent and belongs to W04.",
+    "W03 source is based on W01; combined W02 stack must be verified after rebase."
+  ]
+}

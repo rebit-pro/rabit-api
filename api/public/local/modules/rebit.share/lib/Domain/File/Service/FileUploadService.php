@@ -38,7 +38,12 @@ final readonly class FileUploadService
             throw new FileUploadFailedException('Ошибка загрузки файла(ов).');
         }
 
-        $this->ownershipService->remember($fileId, $userId, $dto->moduleId);
+        try {
+            $this->ownershipService->remember($fileId, $userId, $dto->moduleId);
+        } catch (FileUploadFailedException $exception) {
+            \CFile::Delete($fileId);
+            throw $exception;
+        }
 
         $src = (string)\CFile::GetPath($fileId);
 

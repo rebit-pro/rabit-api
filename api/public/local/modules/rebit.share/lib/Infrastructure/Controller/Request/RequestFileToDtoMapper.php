@@ -15,8 +15,6 @@ use Rebit\Share\Shared\Interface\RequestFileDtoInterface;
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
-use Symfony\Component\Serializer\Exception\ExtraAttributesException;
-use Symfony\Component\Serializer\Exception\MissingConstructorArgumentsException;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
@@ -24,7 +22,8 @@ use Symfony\Component\Serializer\Normalizer\BackedEnumNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
-use Symfony\Component\Validator\Validation;
+use Rebit\Share\Infrastructure\File\TechnicalUploadValidator;
+use Rebit\Share\Infrastructure\Helpers\ValidationHelper;
 
 /**
  * Мапит multipart/form-data запрос в DTO, помеченные интерфейсом FileDtoInterface.
@@ -65,40 +64,23 @@ final readonly class RequestFileToDtoMapper implements RequestMapperInterface
         }
 
         $contentType = (string)$this->request->getHeader('Content-Type');
-        if ('' === $contentType || false === stripos($contentType, 'multipart/form-data')) {
-            throw new InvalidFileException('Ожидается заголовок Content-Type: multipart/form-data.');
+        if (1 !== preg_match('/^multipart\/form-data(?:\s*;|$)/i', $contentType)) {
+            throw new InvalidFileException('Ожидается multipart/form-data.');
         }
 
-        $file = $this->request->getFile('file') ?? [];
-        if ([] === $file) {
-            throw new InvalidFileException('Файл не передан.');
-        }
-
-        if (is_array($file['name'] ?? null)) {
+        $files = $this->request->getFileList()->getValues();
+        if (1 !== count($files) || !is_array($files['file'] ?? null)) {
             throw new InvalidFileException('Ожидается один файл в поле file.');
         }
 
-        $error = (int)($file['error'] ?? UPLOAD_ERR_NO_FILE);
-        if (UPLOAD_ERR_OK !== $error) {
-            throw new InvalidFileException('Ошибка загрузки файла (error=' . $error . ').');
+        $moduleId = $this->request->getPost('moduleId');
+        if (!is_string($moduleId) || '' === $moduleId) {
+            throw new ValidationHttpException('Параметр moduleId не передан или некорректен.');
         }
 
-        $moduleId = (string)$this->request->getPost('moduleId');
-        if ('' === $moduleId) {
-            throw new InvalidFileException('Параметр moduleId не передан.');
-        }
-
+        $metadata = (new TechnicalUploadValidator())->validate($files['file']);
         $requestData = RequestHelper::collectRequestValues($this->request);
-        $inputData = array_merge(
-            $requestData,
-            [
-                'moduleId' => $moduleId,
-                'name' => (string)($file['name'] ?? ''),
-                'type' => (string)($file['type'] ?? ''),
-                'tmpName' => (string)($file['tmp_name'] ?? ''),
-                'size' => (int)($file['size'] ?? 0),
-            ],
-        );
+        $inputData = array_merge($requestData, $metadata, ['moduleId' => $moduleId]);
 
         if (!$this->denormalizer->supportsDenormalization($inputData, $className)) {
             throw new RequestParameterException("Cannot denormalize into {$className}");
@@ -112,42 +94,16 @@ final readonly class RequestFileToDtoMapper implements RequestMapperInterface
                 null,
                 ['allow_extra_attributes' => false],
             );
-        } catch (MissingConstructorArgumentsException $e) {
-            $missingFields = implode(', ', $e->getMissingConstructorArguments());
-            throw new ValidationHttpException('В запросе не были переданы поля: ' . $missingFields);
-        } catch (ExtraAttributesException $e) {
-            $extraFields = implode(', ', $e->getExtraAttributes());
+        } catch (ExceptionInterface $exception) {
             throw new ValidationHttpException(
-                sprintf(
-                    'В запросе переданы поля, отсутствующие в DTO (%s):  %s',
-                    $className,
-                    $extraFields,
-                ),
+                'Некорректные параметры загрузки.',
+                previous: $exception instanceof \Exception ? $exception : null,
             );
         }
 
-        $this->validate($dto);
+        ValidationHelper::validate($dto);
 
         return $dto;
-    }
-
-    /**
-     * Валидация DTO.
-     *
-     * @throws ValidationHttpException
-     */
-    private function validate(RequestFileDtoInterface $dto): void
-    {
-        $validator = Validation::createValidatorBuilder()
-            ->enableAnnotationMapping()
-            ->getValidator()
-        ;
-
-        $errors = $validator->validate($dto);
-
-        if (count($errors) > 0) {
-            throw new ValidationHttpException($errors);
-        }
     }
 
     private function createDenormalizer(): DenormalizerInterface
