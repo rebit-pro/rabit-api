@@ -61,3 +61,7 @@ python3 tools/verify-wave-graph.py docs/waves/a7/graph.json
 [Отчёт проверок](verification.json), [переносимый patch исходников MoreFoto](morefoto-plan.patch) и [before/after хеши](morefoto-sync.json) позволяют проверить канон без копирования больших generated JSON в PR. MoreFoto не Git-репозиторий; SHA его коммита не выдумывается. Patch применяется из корня MoreFoto (`git apply --unidiff-zero --check`, затем `git apply --unidiff-zero`); перед применением сверить before-хеши. Затем выполнить команды генерации из канонического backend-waves.md. Generated артефакты подтверждены after-хешами.
 
 Замороженные docs/waves/w00 и tools/verify-w00-inventory.py не меняются. Проверки плана/Postman выполняются без HTTP; они не доказывают работу продуктового API.
+
+## Совместимость текущего набора
+
+[Отчёт независимости B1/C1/E1/A7](cohort-verification.json): общих изменённых файлов нет; все 24 порядка слияния дают одно дерево. Временное объединение проходит PHPUnit (207 тестов, 778 assertions) и PHPStan. Ветки продуктовых PR остаются отдельными от main; общий checkout использован только для проверки. Самостоятельные native-проверки C1 (31) и E1 (51) выполнялись без B1.
