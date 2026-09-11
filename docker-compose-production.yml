@@ -6,10 +6,10 @@ services:
           - default
         volumes:
           - type: bind
-            source: /srv/rabit-api/bitrix
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/bitrix
             target: /app/public/bitrix
           - type: bind
-            source: /srv/rabit-api/upload
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/upload
             target: /app/public/upload
         deploy:
           labels:
@@ -59,13 +59,13 @@ services:
             target: rebit_telegram_bot_token
         volumes:
           - type: bind
-            source: /srv/rabit-api/bitrix
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/bitrix
             target: /app/public/bitrix
           - type: bind
-            source: /srv/rabit-api/upload
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/upload
             target: /app/public/upload
           - type: bind
-            source: /srv/rabit-api/logs
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/logs
             target: /app/logs
         deploy:
           mode: replicated
@@ -92,7 +92,7 @@ services:
           REDIS_PORT: ${REDIS_PORT:-6379}
           SHELL: /bin/sh
         configs:
-          - source: rebit_backend_env
+          - source: rebit_cron_env
             target: /app/public/.env
         secrets:
           - source: rebit_encryption_key
@@ -107,13 +107,13 @@ services:
             target: rebit_telegram_bot_token
         volumes:
           - type: bind
-            source: /srv/rabit-api/bitrix
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/bitrix
             target: /app/public/bitrix
           - type: bind
-            source: /srv/rabit-api/upload
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/upload
             target: /app/public/upload
           - type: bind
-            source: /srv/rabit-api/logs
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/logs
             target: /app/logs
         deploy:
           mode: replicated
@@ -139,17 +139,17 @@ services:
             target: rebit_rabbitmq_password
         volumes:
           - type: bind
-            source: /srv/rabit-api/bitrix
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/bitrix
             target: /app/public/bitrix
           - type: bind
-            source: /srv/rabit-api/upload
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/upload
             target: /app/public/upload
           - type: bind
-            source: /srv/rabit-api/logs
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/logs
             target: /app/logs
         deploy:
           mode: replicated
-          replicas: 1
+          replicas: ${AUDIT_CONSUMER_REPLICAS:-0}
           update_config:
             parallelism: 1
             delay: 10s
@@ -208,11 +208,18 @@ services:
             endpoint_mode: dnsrr
 volumes:
     api-mysql:
+        external: true
+        name: ${MYSQL_VOLUME_NAME:?Select the existing MySQL volume or explicitly provision a new one}
     rabbitmq-data:
+        external: true
+        name: ${RABBITMQ_VOLUME_NAME:?Select the existing RabbitMQ volume or explicitly provision a new one}
 configs:
     rebit_backend_env:
         external: true
-        name: ${BACKEND_ENV_CONFIG_NAME}
+        name: ${BACKEND_ENV_CONFIG_NAME:?Select the web runtime config}
+    rebit_cron_env:
+        external: true
+        name: ${CRON_ENV_CONFIG_NAME:?Select the existing LeadHunter cron runtime config}
 secrets:
     rebit_encryption_key:
         external: true

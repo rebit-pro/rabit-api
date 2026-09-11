@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "publisherScenarios": [
+    "missing-optional",
+    "primary-and-legacy",
+    "immutable",
+    "missing-required",
+    "not-manager",
+    "inactive-swarm",
+    "unreadable-required"
+  ],
+  "composeScenarios": [
+    "development",
+    "production",
+    "missing-volume-guards",
+    "runtime-and-cron-guards",
+    "legacy-stack-preservation"
+  ],
+  "realSecretFilesRead": false,
+  "swarmMutationsExecuted": false,
+  "servicesStarted": false
+}
