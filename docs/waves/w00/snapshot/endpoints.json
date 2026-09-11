@@ -1,0 +1,3647 @@
+{
+  "version": "0.3.0",
+  "date": "2026-09-11",
+  "canonicalPrefix": "/api/v1",
+  "backend": {
+    "name": "RaBit API",
+    "slug": "rabit-api",
+    "checkout": "/home/user/rebit-p2p",
+    "baseModules": [
+      "rebit.share",
+      "rebit.auth"
+    ],
+    "retainedModules": [
+      "rebit.notification",
+      "rebit.leadhunter"
+    ],
+    "businessModulesStatus": "proposed",
+    "contractsPath": "api/public/local/modules/rebit.share/lib/Application/Contract/",
+    "repositoryPath": "lib/Domain/<Aggregate>/Repository/",
+    "readModelPath": "lib/Domain/<Aggregate>/Repository/ReadModel/"
+  },
+  "status": "design-proposal",
+  "wavePlan": "../04-bitrix-modules/backend-waves.json",
+  "modules": {
+    "auth": [
+      "rebit.auth",
+      "Вход и сессия",
+      "Существующий модуль. Учетные записи и Bearer-сессии; публичная регистрация не входит в сценарий MoreFoto.",
+      "frontend/src/api/auth.ts"
+    ],
+    "access": [
+      "morefoto.access",
+      "Сотрудники и доступ",
+      "Предлагаемый владелец ролей MoreFoto, permissions, активности и назначений. Аутентификация и токены остаются в rebit.auth; отзыв всех сессий и управление учётной записью требуют отдельного контракта.",
+      "frontend/src/modules/morefoto/management/types.ts"
+    ],
+    "organization": [
+      "morefoto.organization",
+      "Учреждения, съёмки, группы и обзор",
+      "Учреждения, съёмки, группы и ролевые проекции. Финансовые итоги читает через контракт settlement.",
+      "frontend/src/modules/morefoto/organization/types.ts"
+    ],
+    "media": [
+      "morefoto.media",
+      "Фотографии и галерея",
+      "Материалы съёмки, защищённые превью, коды, обложки и перенос полного набора ребёнка. Оригиналы не публикуются в галерее.",
+      "frontend/src/modules/morefoto/photos/service.ts"
+    ],
+    "commerce": [
+      "morefoto.commerce",
+      "Каталог, расчёт и заказы",
+      "Товары, групповые условия, серверный расчёт и неизменяемый снимок покупки. Корзина и черновики до оформления остаются на клиенте.",
+      "frontend/src/modules/morefoto/commerce/types.ts"
+    ],
+    "handoff": [
+      "morefoto.handoff",
+      "Ссылки и списки сотрудников",
+      "Проверка и факт передачи ссылки, история сроков; заявки на перенос детей сотрудников. Изменяет группу/фото через контракты владельцев.",
+      "frontend/src/modules/morefoto/handoff/types.ts"
+    ],
+    "payments": [
+      "morefoto.payments",
+      "Оплата и чеки",
+      "Попытки платежа, сверка провайдера, чеки и фискальная доставка. Результат возврата передаёт settlement через контракт.",
+      "frontend/src/modules/morefoto/orders/services/payment.ts"
+    ],
+    "files": [
+      "morefoto.files",
+      "Файлы и повторная выдача",
+      "Права на оригиналы, подготовка файла/ZIP, журнал выдачи и отправки писем. Срок и отзыв проверяются при каждом получении.",
+      "frontend/src/modules/morefoto/orders/delivery/service.ts"
+    ],
+    "support": [
+      "morefoto.support",
+      "Обращения и продление",
+      "Обращения покупателей, ответы и согласование продления через контракт handoff/organization. Не хранит копию финансового состояния.",
+      "frontend/src/modules/morefoto/curator/types.ts"
+    ],
+    "settlement": [
+      "morefoto.settlement",
+      "Исправления, возвраты и исполнение",
+      "История исправлений, резервы и распределение возвратов, hold/перепечатка, решения по позднему платежу, финансовые итоги.",
+      "frontend/src/modules/morefoto/settlement/types.ts"
+    ],
+    "production": [
+      "morefoto.production",
+      "Печать и комплектация",
+      "Планы, неизменяемые версии печати, разница отпечатков и комплектация пакетов. Учитывает актуальные ограничения settlement.",
+      "frontend/src/modules/morefoto/production/types.ts"
+    ],
+    "shipping": [
+      "morefoto.shipping",
+      "Готовность и передача в учреждение",
+      "Готовность конкретной версии, партии передачи в рамках одной съёмки и учреждения, история доставки.",
+      "frontend/src/modules/morefoto/shipping/types.ts"
+    ],
+    "share": [
+      "rebit.share",
+      "Техническая загрузка файлов",
+      "Существующий общий upload с Bearer. Инвентаризация платформы: не заменяет защищённое хранение оригиналов и права morefoto.media/files; до использования нужен аудит mapper и ownership.",
+      "../rebit-p2p/api/public/local/modules/rebit.share/lib/Presentation/Controller/FileController.php"
+    ],
+    "notification": [
+      "rebit.notification",
+      "Заявки сайта и доставка",
+      "Существующий публичный приём лидов: Telegram и резервный email. Будущую доставку MoreFoto подключать внутренним контрактом; владельцы PAY/FIL/SUP остаются продуктовыми модулями.",
+      "../rebit-p2p/api/public/local/modules/rebit.notification/lib/Presentation/Controller/LeadController.php"
+    ],
+    "platform": [
+      "platform.nginx",
+      "Диагностика фронтенда",
+      "Существующий инфраструктурный маршрут; не Bitrix-модуль и не проверка готовности API или базы.",
+      "frontend/docker/production/nginx/conf.d/default.conf"
+    ]
+  },
+  "endpoints": [
+    {
+      "module": "auth",
+      "id": "AUTH-01",
+      "method": "POST",
+      "path": "/auth/login",
+      "title": "Вход сотрудника",
+      "roles": "Гость",
+      "output": "token, expiresAt, user{id,email,name}",
+      "body": {
+        "email": "{{login_email}}",
+        "password": "{{login_password}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "GeeTest проверяется в LoginUseCase: при включённой серверной капче добавить captcha{lot_number,captcha_output,pass_token,gen_time} с актуальным результатом виджета. В реальном UserDto нет role: получить её через ACC-01. Демо-пароль фронтенда не является серверным доступом.",
+      "status": "К",
+      "save": {
+        "staff_token": "token",
+        "token_expires_at": "expiresAt",
+        "current_user_id": "user.id"
+      },
+      "sample": {
+        "token": "example-token-not-valid",
+        "expiresAt": "2026-10-01T12:00:00+03:00",
+        "user": {
+          "id": 1,
+          "email": "qa@example.test",
+          "name": "Тест"
+        }
+      },
+      "source": "frontend/src/api/auth.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/rebit.auth/routes.php",
+      "implementationWave": "W02",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "auth",
+      "id": "AUTH-02",
+      "method": "POST",
+      "path": "/auth/logout",
+      "title": "Завершить сессию",
+      "roles": "О/К/Р/В",
+      "output": "data: []",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "Фактический контроллер возвращает 200 и data: [], а не 204.",
+      "status": "К",
+      "save": {},
+      "sample": [],
+      "source": "frontend/src/api/auth.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/rebit.auth/routes.php",
+      "implementationWave": "W02",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "auth",
+      "id": "AUTH-03",
+      "method": "POST",
+      "path": "/auth/register/request-code",
+      "title": "Запросить код регистрации (унаследовано)",
+      "roles": "Гость",
+      "output": "email, codeExpiresAt, resendAvailableAt",
+      "body": {
+        "email": "{{registration_email}}",
+        "password": "{{registration_password}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Есть в rebit.auth, но /register MoreFoto перенаправляет на /login. Не использовать для выдачи служебной роли; запрос может отправить настоящее письмо. Включён для инвентаризации существующего API.",
+      "status": "Н",
+      "save": {},
+      "sample": {
+        "email": "registration@example.test",
+        "codeExpiresAt": "2026-10-01T12:10:00+03:00",
+        "resendAvailableAt": "2026-10-01T12:01:00+03:00"
+      },
+      "source": "frontend/src/api/auth.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "inheritedAuth",
+      "routeFile": "api/public/local/modules/rebit.auth/routes.php",
+      "implementationWave": "W00",
+      "verificationWaves": [
+        "W01",
+        "W02",
+        "W34"
+      ]
+    },
+    {
+      "module": "auth",
+      "id": "AUTH-04",
+      "method": "POST",
+      "path": "/auth/register/confirm",
+      "title": "Подтвердить регистрацию (унаследовано)",
+      "roles": "Гость",
+      "output": "token, expiresAt, user",
+      "body": {
+        "email": "{{registration_email}}",
+        "code": "{{registration_code}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Создаёт реальную учётную запись в подключённом backend; для MoreFoto сценарий не принят. Токен намеренно не заменяет staff_token.",
+      "status": "Н",
+      "save": {},
+      "sample": {},
+      "source": "frontend/src/api/auth.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "inheritedAuth",
+      "routeFile": "api/public/local/modules/rebit.auth/routes.php",
+      "implementationWave": "W00",
+      "verificationWaves": [
+        "W01",
+        "W02",
+        "W34"
+      ]
+    },
+    {
+      "module": "access",
+      "id": "ACC-01",
+      "method": "GET",
+      "path": "/me",
+      "title": "Профиль и права текущего сотрудника",
+      "roles": "О/К/Р/В",
+      "output": "id, name, email, role, active, accessRevision, permissions",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "current_user_id": "id",
+        "staff_role": "role"
+      },
+      "sample": {
+        "id": 1,
+        "name": "Тест",
+        "email": "qa@example.test",
+        "role": "organizer",
+        "active": true,
+        "accessRevision": 1,
+        "permissions": []
+      },
+      "source": "frontend/src/modules/morefoto/management/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.access/routes.php",
+      "implementationWave": "W06",
+      "verificationWaves": [
+        "W09",
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "access",
+      "id": "ACC-02",
+      "method": "GET",
+      "path": "/users",
+      "title": "Список сотрудников",
+      "roles": "О",
+      "output": "items<User>, meta",
+      "body": null,
+      "code": 200,
+      "query": [
+        [
+          "q",
+          "",
+          "Поиск по имени/email"
+        ],
+        [
+          "role",
+          "",
+          "organizer/curator/head/teacher"
+        ],
+        [
+          "active",
+          "",
+          "true/false"
+        ]
+      ],
+      "note": "",
+      "status": "П",
+      "save": {},
+      "sample": {
+        "items": []
+      },
+      "source": "frontend/src/modules/morefoto/management/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.access/routes.php",
+      "implementationWave": "W09",
+      "verificationWaves": [
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "access",
+      "id": "ACC-03",
+      "method": "GET",
+      "path": "/users/{user_id}",
+      "title": "Карточка сотрудника и назначения",
+      "roles": "О",
+      "output": "id, name, email, role, active, revision, assignmentSignature, institutionIds, groupIds",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "user_revision": "revision",
+        "assignment_signature": "assignmentSignature"
+      },
+      "sample": {
+        "id": 10,
+        "name": "Куратор тест",
+        "email": "curator@example.test",
+        "role": "curator",
+        "active": true,
+        "revision": 1,
+        "assignmentSignature": "assignment-example",
+        "institutionIds": [],
+        "groupIds": []
+      },
+      "source": "frontend/src/modules/morefoto/management/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.access/routes.php",
+      "implementationWave": "W09",
+      "verificationWaves": [
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "access",
+      "id": "ACC-04",
+      "method": "POST",
+      "path": "/users",
+      "title": "Создать сотрудника",
+      "roles": "О",
+      "output": "id, revision, assignmentSignature",
+      "body": {
+        "name": "Куратор тест",
+        "email": "curator@example.test",
+        "role": "curator",
+        "active": true,
+        "institutionIds": [],
+        "groupIds": [],
+        "replaceAssignments": false
+      },
+      "code": 201,
+      "query": [],
+      "note": "Предложение: учетная запись создаётся штатным механизмом Битрикс; способ первичной выдачи/восстановления пароля — D08. Пароль не придумывается и не возвращается этим API.",
+      "status": "П",
+      "save": {
+        "user_id": "id",
+        "user_revision": "revision"
+      },
+      "sample": {
+        "id": 10,
+        "revision": 1,
+        "assignmentSignature": "assignment-example"
+      },
+      "source": "frontend/src/modules/morefoto/management/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.access/routes.php",
+      "implementationWave": "W09",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "access",
+      "id": "ACC-05",
+      "method": "PATCH",
+      "path": "/users/{user_id}",
+      "title": "Изменить сотрудника, доступ и назначения",
+      "roles": "О",
+      "output": "id, revision, accessRevision, assignmentSignature",
+      "body": {
+        "name": "Куратор тест",
+        "email": "curator@example.test",
+        "role": "curator",
+        "active": true,
+        "institutionIds": [],
+        "groupIds": [],
+        "replaceAssignments": false,
+        "assignmentSignature": "{{assignment_signature}}",
+        "revision": "{{user_revision}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Назначения проверяются атомарно. replaceAssignments=true требует осознанной замены занятых назначений. Смена роли/active/области отзывает прежние сессии.",
+      "status": "П",
+      "save": {
+        "user_revision": "revision",
+        "assignment_signature": "assignmentSignature"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/management/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.access/routes.php",
+      "implementationWave": "W09",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "access",
+      "id": "ACC-06",
+      "method": "GET",
+      "path": "/users/assignment-options",
+      "title": "Данные формы назначений",
+      "roles": "О",
+      "output": "institutions, groups, staff, assignmentSignature",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "Статический путь зарегистрировать до /users/{user_id}. Проекция включает конфликты назначений; доступна только организатору.",
+      "status": "П",
+      "save": {
+        "assignment_signature": "assignmentSignature"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/management/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.access/routes.php",
+      "implementationWave": "W09",
+      "verificationWaves": [
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "organization",
+      "id": "ORG-01",
+      "method": "GET",
+      "path": "/cabinet/scope",
+      "title": "Область кабинета и обзор",
+      "roles": "О/К/Р/В",
+      "output": "institutions, shoots, groups, dashboard, totals?, groupTotals?, now",
+      "body": null,
+      "code": 200,
+      "query": [
+        [
+          "institutionId",
+          "",
+          "Учреждение"
+        ],
+        [
+          "shootId",
+          "",
+          "Съёмка"
+        ]
+      ],
+      "note": "Р/В без родителей и позиций заказов; В без денег. Источник loadCabinetScope, DashboardData, ScopeSnapshot.",
+      "status": "П",
+      "save": {},
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/services/cabinet.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.organization/routes.php",
+      "implementationWave": "W33",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "organization",
+      "id": "ORG-02",
+      "method": "GET",
+      "path": "/institutions",
+      "title": "Список учреждений",
+      "roles": "О/К/Р",
+      "output": "items<Institution>, meta",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {},
+      "sample": {
+        "items": []
+      },
+      "source": "frontend/src/modules/morefoto/organization/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.organization/routes.php",
+      "implementationWave": "W07",
+      "verificationWaves": [
+        "W09",
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "organization",
+      "id": "ORG-03",
+      "method": "POST",
+      "path": "/institutions",
+      "title": "Создать учреждение",
+      "roles": "О",
+      "output": "id, revision",
+      "body": {
+        "name": "Тестовый детский сад",
+        "address": "Тестовый адрес",
+        "curatorId": null,
+        "headId": null
+      },
+      "code": 201,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "institution_id": "id",
+        "institution_revision": "revision"
+      },
+      "sample": {
+        "id": "institution-example",
+        "revision": 1
+      },
+      "source": "frontend/src/modules/morefoto/organization/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.organization/routes.php",
+      "implementationWave": "W07",
+      "verificationWaves": [
+        "W09",
+        "W34"
+      ]
+    },
+    {
+      "module": "organization",
+      "id": "ORG-04",
+      "method": "GET",
+      "path": "/institutions/{institution_id}",
+      "title": "Карточка учреждения",
+      "roles": "О/К/Р",
+      "output": "id, name, address, revision, shoots, groups, summary",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "institution_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/organization/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.organization/routes.php",
+      "implementationWave": "W07",
+      "verificationWaves": [
+        "W18",
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "organization",
+      "id": "ORG-05",
+      "method": "PATCH",
+      "path": "/institutions/{institution_id}",
+      "title": "Изменить учреждение",
+      "roles": "О",
+      "output": "id, revision",
+      "body": {
+        "name": "Тестовый детский сад",
+        "address": "Тестовый адрес",
+        "curatorId": null,
+        "headId": null,
+        "revision": "{{institution_revision}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "institution_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/organization/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.organization/routes.php",
+      "implementationWave": "W07",
+      "verificationWaves": [
+        "W09",
+        "W34"
+      ]
+    },
+    {
+      "module": "organization",
+      "id": "ORG-06",
+      "method": "GET",
+      "path": "/institutions/{institution_id}/shoots",
+      "title": "Съёмки учреждения",
+      "roles": "О/К/Р",
+      "output": "items<Shoot>, meta",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {},
+      "sample": {
+        "items": []
+      },
+      "source": "frontend/src/modules/morefoto/organization/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.organization/routes.php",
+      "implementationWave": "W08",
+      "verificationWaves": [
+        "W09",
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "organization",
+      "id": "ORG-07",
+      "method": "POST",
+      "path": "/institutions/{institution_id}/shoots",
+      "title": "Создать отдельную съёмку",
+      "roles": "О",
+      "output": "id, revision",
+      "body": {
+        "name": "Тестовая осенняя съёмка",
+        "date": "2026-10-01"
+      },
+      "code": 201,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "shoot_id": "id",
+        "shoot_revision": "revision"
+      },
+      "sample": {
+        "id": "shoot-example",
+        "revision": 1
+      },
+      "source": "frontend/src/modules/morefoto/organization/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.organization/routes.php",
+      "implementationWave": "W08",
+      "verificationWaves": [
+        "W09",
+        "W34"
+      ]
+    },
+    {
+      "module": "organization",
+      "id": "ORG-08",
+      "method": "GET",
+      "path": "/shoots/{shoot_id}",
+      "title": "Съёмка и группы",
+      "roles": "О",
+      "output": "id, institutionId, name, date, revision, groups",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "shoot_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/organization/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.organization/routes.php",
+      "implementationWave": "W08",
+      "verificationWaves": [
+        "W18",
+        "W31",
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "organization",
+      "id": "ORG-09",
+      "method": "PATCH",
+      "path": "/shoots/{shoot_id}",
+      "title": "Изменить съёмку",
+      "roles": "О",
+      "output": "id, revision",
+      "body": {
+        "name": "Тестовая осенняя съёмка",
+        "date": "2026-10-01",
+        "revision": "{{shoot_revision}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "shoot_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/organization/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.organization/routes.php",
+      "implementationWave": "W08",
+      "verificationWaves": [
+        "W09",
+        "W34"
+      ]
+    },
+    {
+      "module": "organization",
+      "id": "ORG-10",
+      "method": "POST",
+      "path": "/shoots/{shoot_id}/groups",
+      "title": "Создать группу",
+      "roles": "О",
+      "output": "id, revision",
+      "body": {
+        "name": "Тестовая группа",
+        "groupKind": "regular",
+        "teacherId": null
+      },
+      "code": 201,
+      "query": [],
+      "note": "groupKind=regular/staff; повторная съёмка имеет собственные группы. Идентификатор не заменяется названием.",
+      "status": "П",
+      "save": {
+        "group_id": "id",
+        "group_revision": "revision"
+      },
+      "sample": {
+        "id": "group-example",
+        "revision": 1
+      },
+      "source": "frontend/src/modules/morefoto/organization/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.organization/routes.php",
+      "implementationWave": "W08",
+      "verificationWaves": [
+        "W09",
+        "W31",
+        "W34"
+      ]
+    },
+    {
+      "module": "organization",
+      "id": "ORG-11",
+      "method": "GET",
+      "path": "/groups/{group_id}",
+      "title": "Группа и ролевой обзор",
+      "roles": "О/К/Р/В",
+      "output": "id, institutionId, shootId, name, kind, state, revision, closesAt, dashboard, totals?",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "Служебная проекция фильтруется по роли; для В нет денежных итогов.",
+      "status": "П",
+      "save": {
+        "group_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/organization/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.organization/routes.php",
+      "implementationWave": "W33",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "organization",
+      "id": "ORG-12",
+      "method": "PATCH",
+      "path": "/groups/{group_id}",
+      "title": "Изменить группу",
+      "roles": "О",
+      "output": "id, revision",
+      "body": {
+        "revision": "{{group_revision}}",
+        "name": "Тестовая группа",
+        "teacherId": null
+      },
+      "code": 200,
+      "query": [],
+      "note": "Тип существующей группы и родительская съёмка не меняются этим методом; даты продаж меняются сценариями handoff/support.",
+      "status": "П",
+      "save": {
+        "group_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/organization/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.organization/routes.php",
+      "implementationWave": "W08",
+      "verificationWaves": [
+        "W09",
+        "W31",
+        "W34"
+      ]
+    },
+    {
+      "module": "media",
+      "id": "MED-01",
+      "method": "GET",
+      "path": "/public/galleries/{gallery_token}",
+      "title": "Открыть галерею",
+      "roles": "Галерея",
+      "output": "groupId, institutionName, groupName, shootName, audience, state, sentAt, closesAt, referenceNow, children, curator, delivery",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "preparing не возвращает снимки. Оригиналы, сведения о покупателях и ключи заказов не выдаются. Ссылки thumb/preview только на защищённые версии.",
+      "status": "П",
+      "save": {
+        "group_id": "groupId"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/gallery/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.media/routes.php",
+      "implementationWave": "W15",
+      "verificationWaves": [
+        "W18",
+        "W31",
+        "W34"
+      ]
+    },
+    {
+      "module": "media",
+      "id": "MED-02",
+      "method": "GET",
+      "path": "/shoots/{shoot_id}/photos",
+      "title": "Материалы съёмки",
+      "roles": "О",
+      "output": "items<ManagedPhoto>, groups, covers, revision, meta",
+      "body": null,
+      "code": 200,
+      "query": [
+        [
+          "groupId",
+          "{{group_id}}",
+          "Группа"
+        ],
+        [
+          "childCode",
+          "",
+          "Код ребёнка"
+        ],
+        [
+          "assigned",
+          "",
+          "true/false"
+        ]
+      ],
+      "note": "",
+      "status": "П",
+      "save": {
+        "photos_revision": "revision"
+      },
+      "sample": {
+        "items": [],
+        "groups": [],
+        "covers": {},
+        "revision": 1
+      },
+      "source": "frontend/src/modules/morefoto/photos/service.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.media/routes.php",
+      "implementationWave": "W10",
+      "verificationWaves": [
+        "W11",
+        "W17",
+        "W34"
+      ]
+    },
+    {
+      "module": "media",
+      "id": "MED-03",
+      "method": "POST",
+      "path": "/shoots/{shoot_id}/photos",
+      "title": "Загрузить оригинал",
+      "roles": "О",
+      "output": "id, status, revision",
+      "body": {
+        "file": "<local file>",
+        "groupId": "{{group_id}}",
+        "fingerprint": "{{file_fingerprint}}"
+      },
+      "code": 202,
+      "query": [],
+      "note": "Предложение вместо browser-only preparePhoto: multipart file; сервер проверяет формат/размер/хэш, хранит оригинал приватно, ставит генерацию превью в очередь. JPEG/PNG/WebP, 25 МиБ/40 Мп — текущие ограничения мока. Один запрос на файл, очередь UI до 50. Повтор загрузки по ключу/fingerprint не создаёт дубль.",
+      "status": "П",
+      "save": {
+        "photo_id": "id",
+        "photo_revision": "revision"
+      },
+      "sample": {
+        "id": "photo-example",
+        "status": "processing",
+        "revision": 1
+      },
+      "source": "frontend/src/modules/morefoto/photos/service.ts",
+      "format": "multipart",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.media/routes.php",
+      "implementationWave": "W10",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "media",
+      "id": "MED-04",
+      "method": "GET",
+      "path": "/photos/{photo_id}",
+      "title": "Статус обработки и данные фотографии",
+      "roles": "О",
+      "output": "id, status, shootId, groupId, originalGroupId, childCode, code, revision, thumbSrc?, previewSrc?, error?",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "status=processing/ready/failed/duplicate; при duplicate возвращается existingPhotoId. Ждать ready перед назначением/публикацией.",
+      "status": "П",
+      "save": {
+        "photo_revision": "revision"
+      },
+      "sample": {
+        "id": "photo-example",
+        "status": "ready",
+        "shootId": "shoot-example",
+        "groupId": "group-example",
+        "originalGroupId": "group-example",
+        "childCode": null,
+        "code": "",
+        "revision": 1
+      },
+      "source": "frontend/src/modules/morefoto/photos/service.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.media/routes.php",
+      "implementationWave": "W10",
+      "verificationWaves": [
+        "W11",
+        "W17",
+        "W34"
+      ]
+    },
+    {
+      "module": "media",
+      "id": "MED-05",
+      "method": "POST",
+      "path": "/groups/{group_id}/photo-assignments",
+      "title": "Назначить кадры ребёнку",
+      "roles": "О",
+      "output": "photoIds, childCode, revision",
+      "body": {
+        "shootId": "{{shoot_id}}",
+        "revision": "{{photos_revision}}",
+        "photoIds": [
+          "{{photo_id}}"
+        ],
+        "childCode": "A"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Одна группа, preparing, без заказов; childCode 1–3 латинские буквы. Все выбранные ID должны существовать в этой группе.",
+      "status": "П",
+      "save": {
+        "photos_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/photos/service.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.media/routes.php",
+      "implementationWave": "W11",
+      "verificationWaves": [
+        "W18",
+        "W34"
+      ]
+    },
+    {
+      "module": "media",
+      "id": "MED-06",
+      "method": "PUT",
+      "path": "/groups/{group_id}/cover",
+      "title": "Назначить обложку",
+      "roles": "О",
+      "output": "photoId, revision",
+      "body": {
+        "revision": "{{photos_revision}}",
+        "photoId": "{{photo_id}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Обложка только из кадров группы, назначенных ребёнку, до открытия и появления заказов.",
+      "status": "П",
+      "save": {
+        "photos_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/photos/service.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.media/routes.php",
+      "implementationWave": "W11",
+      "verificationWaves": [
+        "W18",
+        "W34"
+      ]
+    },
+    {
+      "module": "media",
+      "id": "MED-07",
+      "method": "POST",
+      "path": "/shoots/{shoot_id}/child-transfers",
+      "title": "Перенести полный набор ребёнка",
+      "roles": "О",
+      "output": "photoIds, fromGroupId, toGroupId, childCode, revision",
+      "body": {
+        "fromGroupId": "{{group_id}}",
+        "toGroupId": "{{target_group_id}}",
+        "childCode": "A",
+        "targetCode": "B",
+        "expectedPhotoIds": [
+          "{{photo_id}}"
+        ],
+        "revision": "{{photos_revision}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Одна съёмка, одинаковый тип групп, свободный целевой код, полный актуальный набор. Исходные ID/originalGroupId сохраняются. Льготный перенос — HND-11.",
+      "status": "П",
+      "save": {
+        "photos_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/photos/service.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.media/routes.php",
+      "implementationWave": "W17",
+      "verificationWaves": [
+        "W24",
+        "W34"
+      ]
+    },
+    {
+      "module": "commerce",
+      "id": "COM-01",
+      "method": "GET",
+      "path": "/catalog/products",
+      "title": "Каталог организатора",
+      "roles": "О",
+      "output": "items<Product>, revision, meta",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "catalog_revision": "revision"
+      },
+      "sample": {
+        "items": [],
+        "revision": 1
+      },
+      "source": "frontend/src/modules/morefoto/commerce/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.commerce/routes.php",
+      "implementationWave": "W12",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "commerce",
+      "id": "COM-02",
+      "method": "POST",
+      "path": "/catalog/products",
+      "title": "Создать товар",
+      "roles": "О",
+      "output": "id, revision",
+      "body": {
+        "name": "Отпечаток 10×15",
+        "description": "Тестовая продукция",
+        "kind": "physical",
+        "price": 25000,
+        "printCount": 1,
+        "format": "10×15",
+        "unit": "шт.",
+        "staffDiscount": true,
+        "active": true
+      },
+      "code": 201,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "product_id": "id",
+        "catalog_revision": "revision"
+      },
+      "sample": {
+        "id": "product-example",
+        "revision": 2
+      },
+      "source": "frontend/src/modules/morefoto/commerce/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.commerce/routes.php",
+      "implementationWave": "W12",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "commerce",
+      "id": "COM-03",
+      "method": "PATCH",
+      "path": "/catalog/products/{product_id}",
+      "title": "Изменить товар",
+      "roles": "О",
+      "output": "id, revision",
+      "body": {
+        "name": "Отпечаток 10×15",
+        "description": "Тестовая продукция",
+        "kind": "physical",
+        "price": 25000,
+        "printCount": 1,
+        "format": "10×15",
+        "unit": "шт.",
+        "staffDiscount": true,
+        "active": true,
+        "revision": "{{catalog_revision}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "price — целые копейки (в UI строка рублей), printCount — целое число. Тип physical/digital/bundle. Выключение active вместо несуществующего сценария удаления.",
+      "status": "П",
+      "save": {
+        "catalog_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/commerce/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.commerce/routes.php",
+      "implementationWave": "W12",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "commerce",
+      "id": "COM-04",
+      "method": "GET",
+      "path": "/catalog/conditions",
+      "title": "Общие условия продажи",
+      "roles": "О",
+      "output": "revision, products, giftThreshold, giftForStaff",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "conditions_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/commerce/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.commerce/routes.php",
+      "implementationWave": "W13",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "commerce",
+      "id": "COM-05",
+      "method": "PUT",
+      "path": "/catalog/conditions",
+      "title": "Сохранить общие условия",
+      "roles": "О",
+      "output": "revision",
+      "body": {
+        "revision": "{{conditions_revision}}",
+        "catalogRevision": "{{catalog_revision}}",
+        "products": [
+          {
+            "id": "{{product_id}}",
+            "price": 25000,
+            "active": true,
+            "staffDiscount": true
+          }
+        ],
+        "giftEnabled": true,
+        "giftThreshold": 200000,
+        "giftForStaff": false
+      },
+      "code": 200,
+      "query": [],
+      "note": "PUT заменяет весь проверенный набор условий. Цены/порог здесь тестовые; D02/D04/D05 открыты.",
+      "status": "П",
+      "save": {
+        "conditions_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/commerce/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.commerce/routes.php",
+      "implementationWave": "W13",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "commerce",
+      "id": "COM-06",
+      "method": "GET",
+      "path": "/groups/{group_id}/conditions",
+      "title": "Условия группы для редактора",
+      "roles": "О",
+      "output": "revision, catalogRevision, conditionsRevision, inherit, products, giftThreshold, giftForStaff",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "group_conditions_revision": "revision",
+        "catalog_revision": "catalogRevision",
+        "conditions_revision": "conditionsRevision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/commerce/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.commerce/routes.php",
+      "implementationWave": "W13",
+      "verificationWaves": [
+        "W18",
+        "W19",
+        "W34"
+      ]
+    },
+    {
+      "module": "commerce",
+      "id": "COM-07",
+      "method": "PUT",
+      "path": "/groups/{group_id}/conditions",
+      "title": "Сохранить условия группы",
+      "roles": "О",
+      "output": "revision, conditionsRevision",
+      "body": {
+        "revision": "{{group_conditions_revision}}",
+        "catalogRevision": "{{catalog_revision}}",
+        "products": [
+          {
+            "id": "{{product_id}}",
+            "price": 25000,
+            "active": true,
+            "staffDiscount": true
+          }
+        ],
+        "giftEnabled": true,
+        "giftThreshold": 200000,
+        "giftForStaff": false,
+        "conditionsRevision": "{{conditions_revision}}",
+        "inherit": false
+      },
+      "code": 200,
+      "query": [],
+      "note": "inherit=true берёт общие условия. Эффективный прайс и льготу рассчитывает сервер; изменение инвалидирует подготовку ссылки/расчёт заказа.",
+      "status": "П",
+      "save": {
+        "group_conditions_revision": "revision",
+        "conditions_revision": "conditionsRevision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/commerce/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.commerce/routes.php",
+      "implementationWave": "W13",
+      "verificationWaves": [
+        "W18",
+        "W19",
+        "W34"
+      ]
+    },
+    {
+      "module": "commerce",
+      "id": "COM-08",
+      "method": "GET",
+      "path": "/public/galleries/{gallery_token}/catalog",
+      "title": "Действующий прайс покупателя",
+      "roles": "Галерея",
+      "output": "products, giftThreshold, giftForStaff, revision, conditionsRevision, capabilities, purchaseTerms",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "capabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается.",
+      "status": "П",
+      "save": {
+        "catalog_revision": "revision",
+        "conditions_revision": "conditionsRevision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/commerce/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.commerce/routes.php",
+      "implementationWave": "W15",
+      "verificationWaves": [
+        "W18",
+        "W21",
+        "W34"
+      ]
+    },
+    {
+      "module": "commerce",
+      "id": "COM-09",
+      "method": "POST",
+      "path": "/public/galleries/{gallery_token}/quotes",
+      "title": "Проверить корзину и рассчитать итог",
+      "roles": "Галерея",
+      "output": "quote: CartQuote, quoteToken, expiresAt",
+      "body": {
+        "lines": [
+          {
+            "photoId": "{{photo_id}}",
+            "productId": "{{product_id}}",
+            "quantity": 1
+          }
+        ]
+      },
+      "code": 200,
+      "query": [],
+      "note": "Не создаёт заказ. Вход только ID и quantity; childCode, скидки, подарок и суммы выводит сервер. Для bundle передаётся выбранный photoId ребёнка; сервер нормализует состав. Клиент не подписывает JSON сам.",
+      "status": "П",
+      "save": {
+        "quote_token": "quoteToken"
+      },
+      "sample": {
+        "quote": {
+          "lines": [],
+          "total": 25000,
+          "subtotal": 25000,
+          "discount": 0,
+          "giftSaving": 0,
+          "gifts": [],
+          "count": 1,
+          "invalid": [],
+          "revision": 1,
+          "conditionsRevision": 1
+        },
+        "quoteToken": "opaque-quote-example",
+        "expiresAt": "2026-10-01T12:15:00+03:00"
+      },
+      "source": "frontend/src/modules/morefoto/commerce/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.commerce/routes.php",
+      "implementationWave": "W15",
+      "verificationWaves": [
+        "W18",
+        "W31",
+        "W34"
+      ]
+    },
+    {
+      "module": "commerce",
+      "id": "COM-10",
+      "method": "POST",
+      "path": "/public/galleries/{gallery_token}/orders",
+      "title": "Оформить заказ из проверенной корзины",
+      "roles": "Галерея",
+      "output": "id, number, accessKey, paymentStatus, productionStatus, quote, buyer, version",
+      "body": {
+        "lines": [
+          {
+            "photoId": "{{photo_id}}",
+            "productId": "{{product_id}}",
+            "quantity": 1
+          }
+        ],
+        "buyer": {
+          "name": "Тестовый покупатель",
+          "phone": "+79990000000",
+          "email": "buyer@example.test",
+          "comment": "Тестовый заказ",
+          "receiptChannel": "email",
+          "reviewed": true
+        },
+        "quoteToken": "{{quote_token}}"
+      },
+      "code": 201,
+      "query": [],
+      "note": "Новый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно.",
+      "status": "П",
+      "save": {
+        "order_id": "id",
+        "order_key": "accessKey",
+        "order_version": "version"
+      },
+      "sample": {
+        "id": "order-example",
+        "number": "MF-EXAMPLE",
+        "groupId": "group-example",
+        "paymentStatus": "unpaid",
+        "productionStatus": "not-started",
+        "version": "order-version-example",
+        "accessKey": "example-private-key-not-valid",
+        "quote": {
+          "lines": [],
+          "total": 25000,
+          "subtotal": 25000,
+          "discount": 0,
+          "giftSaving": 0,
+          "gifts": [],
+          "count": 1,
+          "invalid": [],
+          "revision": 1,
+          "conditionsRevision": 1
+        },
+        "buyer": {
+          "name": "Тестовый покупатель",
+          "phone": "+79990000000",
+          "email": "buyer@example.test",
+          "comment": "Тестовый заказ",
+          "receiptChannel": "email"
+        }
+      },
+      "source": "frontend/src/modules/morefoto/orders/services/checkout.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.commerce/routes.php",
+      "implementationWave": "W16",
+      "verificationWaves": [
+        "W18",
+        "W34"
+      ]
+    },
+    {
+      "module": "commerce",
+      "id": "COM-11",
+      "method": "GET",
+      "path": "/public/orders/current",
+      "title": "Заказ покупателя по личному ключу",
+      "roles": "Заказ",
+      "output": "id, number, groupId, buyer, quote, paymentStatus, productionStatus, paidAt?, latePayment?, version, period",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "X-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников.",
+      "status": "П",
+      "save": {
+        "order_id": "id",
+        "order_version": "version"
+      },
+      "sample": {
+        "id": "order-example",
+        "number": "MF-EXAMPLE",
+        "groupId": "group-example",
+        "paymentStatus": "unpaid",
+        "productionStatus": "not-started",
+        "version": "order-version-example"
+      },
+      "source": "frontend/src/modules/morefoto/commerce/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.commerce/routes.php",
+      "implementationWave": "W16",
+      "verificationWaves": [
+        "W19",
+        "W22",
+        "W24",
+        "W29",
+        "W30",
+        "W31",
+        "W32",
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "commerce",
+      "id": "COM-12",
+      "method": "GET",
+      "path": "/orders",
+      "title": "Поиск служебных заказов",
+      "roles": "О/К",
+      "output": "items<StaffOrder>, meta",
+      "body": null,
+      "code": 200,
+      "query": [
+        [
+          "q",
+          "",
+          "Номер/контакт"
+        ],
+        [
+          "institutionId",
+          "",
+          "Учреждение"
+        ],
+        [
+          "shootId",
+          "",
+          "Съёмка"
+        ],
+        [
+          "groupId",
+          "",
+          "Группа"
+        ],
+        [
+          "paymentStatus",
+          "",
+          "unpaid/pending/declined/paid"
+        ],
+        [
+          "productionStatus",
+          "",
+          "Статус исполнения"
+        ],
+        [
+          "dateFrom",
+          "",
+          "YYYY-MM-DD"
+        ],
+        [
+          "dateTo",
+          "",
+          "YYYY-MM-DD, включительно по МСК"
+        ],
+        [
+          "late",
+          "",
+          "true/false"
+        ],
+        [
+          "settlement",
+          "",
+          "hold/refund/needs-reprint"
+        ]
+      ],
+      "note": "Только своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора.",
+      "status": "П",
+      "save": {},
+      "sample": {
+        "items": []
+      },
+      "source": "frontend/src/modules/morefoto/curator/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.commerce/routes.php",
+      "implementationWave": "W16",
+      "verificationWaves": [
+        "W19",
+        "W22",
+        "W24",
+        "W29",
+        "W30",
+        "W31",
+        "W32",
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "commerce",
+      "id": "COM-13",
+      "method": "GET",
+      "path": "/orders/{order_id}",
+      "title": "Служебная карточка заказа",
+      "roles": "О/К",
+      "output": "StaffOrder, period, version, correctionPhotos",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "correctionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается.",
+      "status": "П",
+      "save": {
+        "order_version": "version"
+      },
+      "sample": {
+        "id": "order-example",
+        "number": "MF-EXAMPLE",
+        "groupId": "group-example",
+        "paymentStatus": "unpaid",
+        "productionStatus": "not-started",
+        "version": "order-version-example",
+        "period": {},
+        "correctionPhotos": []
+      },
+      "source": "frontend/src/modules/morefoto/commerce/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.commerce/routes.php",
+      "implementationWave": "W16",
+      "verificationWaves": [
+        "W17",
+        "W19",
+        "W22",
+        "W24",
+        "W29",
+        "W30",
+        "W31",
+        "W32",
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "handoff",
+      "id": "HND-01",
+      "method": "GET",
+      "path": "/group-links",
+      "title": "Ссылки и сроки по доступной области",
+      "roles": "О/К/Р/В",
+      "output": "items<LinkGroup>, meta",
+      "body": null,
+      "code": 200,
+      "query": [
+        [
+          "institutionId",
+          "",
+          "Учреждение"
+        ],
+        [
+          "shootId",
+          "",
+          "Съёмка"
+        ],
+        [
+          "state",
+          "",
+          "preparing/open/closed"
+        ]
+      ],
+      "note": "",
+      "status": "П",
+      "save": {},
+      "sample": {
+        "items": []
+      },
+      "source": "frontend/src/modules/morefoto/handoff/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.handoff/routes.php",
+      "implementationWave": "W18",
+      "verificationWaves": [
+        "W31",
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "handoff",
+      "id": "HND-02",
+      "method": "GET",
+      "path": "/groups/{group_id}/link",
+      "title": "Подготовка, ссылка и история группы",
+      "roles": "О/К/Р/В",
+      "output": "groupId, galleryToken, revision, signature, prepared, problems, sentAt, closesAt, history",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "gallery_token": "galleryToken",
+        "link_revision": "revision",
+        "link_signature": "signature"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/handoff/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.handoff/routes.php",
+      "implementationWave": "W18",
+      "verificationWaves": [
+        "W31",
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "handoff",
+      "id": "HND-03",
+      "method": "POST",
+      "path": "/groups/{group_id}/link-preparations",
+      "title": "Подтвердить проверку перед открытием",
+      "roles": "О",
+      "output": "revision, signature, prepared",
+      "body": {
+        "revision": "{{link_revision}}",
+        "signature": "{{link_signature}}",
+        "photosReviewed": true,
+        "conditionsReviewed": true,
+        "staffReviewed": true,
+        "confirmed": true
+      },
+      "code": 200,
+      "query": [],
+      "note": "Актуальны все фотографии, условия и списки; проблемы блокируют проверку.",
+      "status": "П",
+      "save": {
+        "link_revision": "revision",
+        "link_signature": "signature"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/handoff/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.handoff/routes.php",
+      "implementationWave": "W18",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "handoff",
+      "id": "HND-04",
+      "method": "POST",
+      "path": "/groups/{group_id}/link-transmissions",
+      "title": "Отметить фактическую передачу ссылки",
+      "roles": "О/К/В",
+      "output": "revision, sentAt, closesAt, deliveryAt",
+      "body": {
+        "revision": "{{link_revision}}",
+        "signature": "{{link_signature}}",
+        "sentAt": "{{sent_at}}",
+        "confirmed": true
+      },
+      "code": 200,
+      "query": [],
+      "note": "Фиксирует факт ручной отправки в чат. Не отправляет сообщение. Семь календарных дней от sentAt; повтор не сдвигает срок.",
+      "status": "П",
+      "save": {
+        "link_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/handoff/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.handoff/routes.php",
+      "implementationWave": "W18",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "handoff",
+      "id": "HND-05",
+      "method": "POST",
+      "path": "/groups/{group_id}/link-date-corrections",
+      "title": "Исправить дату передачи",
+      "roles": "О/К",
+      "output": "revision, sentAt, closesAt, deliveryAt",
+      "body": {
+        "reason": "Проверка сценария на тестовом окружении",
+        "confirmed": true,
+        "revision": "{{link_revision}}",
+        "signature": "{{link_signature}}",
+        "sentAt": "{{sent_at}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Сохраняются старые даты и причина; пересчитываются сроки, учитываются продления.",
+      "status": "П",
+      "save": {
+        "link_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/handoff/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.handoff/routes.php",
+      "implementationWave": "W18",
+      "verificationWaves": [
+        "W31",
+        "W34"
+      ]
+    },
+    {
+      "module": "handoff",
+      "id": "HND-06",
+      "method": "GET",
+      "path": "/staff-requests",
+      "title": "Списки детей сотрудников",
+      "roles": "О/К/В",
+      "output": "items<StaffRequest>, meta",
+      "body": null,
+      "code": 200,
+      "query": [
+        [
+          "institutionId",
+          "",
+          "Учреждение"
+        ],
+        [
+          "shootId",
+          "",
+          "Съёмка"
+        ],
+        [
+          "status",
+          "",
+          "submitted/clarification/transferred"
+        ]
+      ],
+      "note": "Воспитатель видит собственные списки в назначенной области.",
+      "status": "П",
+      "save": {},
+      "sample": {
+        "items": []
+      },
+      "source": "frontend/src/modules/morefoto/handoff/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.handoff/routes.php",
+      "implementationWave": "W14",
+      "verificationWaves": [
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "handoff",
+      "id": "HND-07",
+      "method": "POST",
+      "path": "/staff-requests",
+      "title": "Подать список сотрудников",
+      "roles": "О/В",
+      "output": "id, revision, status",
+      "body": {
+        "institutionId": "{{institution_id}}",
+        "shootId": "{{shoot_id}}",
+        "rows": [
+          {
+            "id": "row-1",
+            "groupId": "{{group_id}}",
+            "code": "A001"
+          }
+        ],
+        "comment": "Тестовый список"
+      },
+      "code": 201,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "staff_request_id": "id",
+        "staff_request_revision": "revision"
+      },
+      "sample": {
+        "id": "staff-request-example",
+        "revision": 1,
+        "status": "submitted"
+      },
+      "source": "frontend/src/modules/morefoto/handoff/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.handoff/routes.php",
+      "implementationWave": "W14",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "handoff",
+      "id": "HND-08",
+      "method": "GET",
+      "path": "/staff-requests/{staff_request_id}",
+      "title": "Карточка списка",
+      "roles": "О/К/В",
+      "output": "id, rows, revision, status, history, results?",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "staff_request_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/handoff/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.handoff/routes.php",
+      "implementationWave": "W14",
+      "verificationWaves": [
+        "W17",
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "handoff",
+      "id": "HND-09",
+      "method": "PUT",
+      "path": "/staff-requests/{staff_request_id}",
+      "title": "Исправить и повторно подать свой список",
+      "roles": "О/В",
+      "output": "id, revision, status",
+      "body": {
+        "institutionId": "{{institution_id}}",
+        "shootId": "{{shoot_id}}",
+        "rows": [
+          {
+            "id": "row-1",
+            "groupId": "{{group_id}}",
+            "code": "A001"
+          }
+        ],
+        "comment": "Тестовый список",
+        "revision": "{{staff_request_revision}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Только автор и допустимое состояние; после transferred редактирование запрещено.",
+      "status": "П",
+      "save": {
+        "staff_request_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/handoff/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.handoff/routes.php",
+      "implementationWave": "W14",
+      "verificationWaves": [
+        "W17",
+        "W34"
+      ]
+    },
+    {
+      "module": "handoff",
+      "id": "HND-10",
+      "method": "GET",
+      "path": "/staff-requests/{staff_request_id}/transfer-preview",
+      "title": "Проверить полный набор перед переносом",
+      "roles": "О/К",
+      "output": "targetGroupId, bundles, signature, hasOrders, revision",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "Сервер находит все фотографии по кодам строк, проверяет актуальность исходной группы и свободные целевые коды.",
+      "status": "П",
+      "save": {
+        "staff_transfer_signature": "signature",
+        "staff_request_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/handoff/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.handoff/routes.php",
+      "implementationWave": "W17",
+      "verificationWaves": [
+        "W24",
+        "W34"
+      ]
+    },
+    {
+      "module": "handoff",
+      "id": "HND-11",
+      "method": "POST",
+      "path": "/staff-requests/{staff_request_id}/transfers",
+      "title": "Подтвердить льготный перенос",
+      "roles": "О/К",
+      "output": "id, revision, status, results",
+      "body": {
+        "reason": "Проверка сценария на тестовом окружении",
+        "confirmed": true,
+        "revision": "{{staff_request_revision}}",
+        "signature": "{{staff_transfer_signature}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Атомарный перенос полного набора в staff-группу одной съёмки, без дублей; сохраняет photoId/originalGroupId. Повтор не переносит заново.",
+      "status": "П",
+      "save": {
+        "staff_request_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/handoff/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.handoff/routes.php",
+      "implementationWave": "W17",
+      "verificationWaves": [
+        "W24",
+        "W34"
+      ]
+    },
+    {
+      "module": "handoff",
+      "id": "HND-12",
+      "method": "POST",
+      "path": "/staff-requests/{staff_request_id}/clarifications",
+      "title": "Запросить уточнение списка",
+      "roles": "О/К",
+      "output": "id, revision, status",
+      "body": {
+        "revision": "{{staff_request_revision}}",
+        "comment": "Уточните исходную группу и номер фотографии.",
+        "confirmed": true
+      },
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "staff_request_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/handoff/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.handoff/routes.php",
+      "implementationWave": "W14",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "payments",
+      "id": "PAY-01",
+      "method": "POST",
+      "path": "/public/orders/current/payment-attempts",
+      "title": "Начать или получить ожидающую попытку оплаты",
+      "roles": "Заказ",
+      "output": "id, status, amount, redirectUrl?, created, orderVersion",
+      "body": {
+        "orderVersion": "{{order_version}}",
+        "precedingAttemptId": null,
+        "quoteToken": "{{payment_quote_token}}"
+      },
+      "code": 202,
+      "query": [],
+      "note": "При pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера.",
+      "status": "П",
+      "save": {
+        "payment_attempt_id": "id",
+        "order_version": "orderVersion"
+      },
+      "sample": {
+        "id": "attempt-example",
+        "status": "pending",
+        "amount": 25000,
+        "created": true,
+        "orderVersion": "order-version-2"
+      },
+      "source": "frontend/src/modules/morefoto/orders/services/payment.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
+      "implementationWave": "W19",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "payments",
+      "id": "PAY-02",
+      "method": "GET",
+      "path": "/public/orders/current/payment-attempts/{payment_attempt_id}",
+      "title": "Проверить результат оплаты",
+      "roles": "Заказ",
+      "output": "id, status, amount, orderVersion, latePayment",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "Чтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод.",
+      "status": "П",
+      "save": {
+        "order_version": "orderVersion"
+      },
+      "sample": {
+        "id": "attempt-example",
+        "status": "pending",
+        "amount": 25000,
+        "orderVersion": "order-version-2",
+        "latePayment": false
+      },
+      "source": "frontend/src/modules/morefoto/orders/services/payment.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
+      "implementationWave": "W19",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "payments",
+      "id": "PAY-03",
+      "method": "GET",
+      "path": "/public/orders/current/payment-quote",
+      "title": "Актуальные условия оплаты созданного заказа",
+      "roles": "Заказ",
+      "output": "quote, quoteToken, orderVersion, canPay, precedingAttemptId",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "Чтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок.",
+      "status": "П",
+      "save": {
+        "payment_quote_token": "quoteToken",
+        "order_version": "orderVersion"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/orders/services/payment.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
+      "implementationWave": "W19",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "payments",
+      "id": "PAY-04",
+      "method": "GET",
+      "path": "/public/orders/current/receipt",
+      "title": "Состояние чека и доступные каналы",
+      "roles": "Заказ",
+      "output": "status, availableChannels, channel, sentAt?, lastError?, receiptUrl?",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "status=pending/sent/failed; receiptUrl только при готовом чеке. MAX доступен только при подтверждённой интеграции; email — базовый канал.",
+      "status": "П",
+      "save": {},
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/orders/services/payment.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
+      "implementationWave": "W21",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "payments",
+      "id": "PAY-05",
+      "method": "POST",
+      "path": "/public/orders/current/receipt-deliveries",
+      "title": "Повторно отправить чек",
+      "roles": "Заказ",
+      "output": "id, status",
+      "body": {
+        "channel": "email"
+      },
+      "code": 202,
+      "query": [],
+      "note": "Принятие в очередь не равно отправке; результат PAY-06.",
+      "status": "П",
+      "save": {
+        "receipt_delivery_id": "id"
+      },
+      "sample": {
+        "id": "receipt-delivery-example",
+        "status": "pending"
+      },
+      "source": "frontend/src/modules/morefoto/orders/services/payment.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
+      "implementationWave": "W21",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "payments",
+      "id": "PAY-06",
+      "method": "GET",
+      "path": "/public/orders/current/receipt-deliveries/{receipt_delivery_id}",
+      "title": "Результат отправки чека",
+      "roles": "Заказ",
+      "output": "id, channel, status, sentAt?, error?",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {},
+      "sample": {
+        "id": "receipt-delivery-example",
+        "channel": "email",
+        "status": "pending"
+      },
+      "source": "frontend/src/modules/morefoto/orders/services/payment.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
+      "implementationWave": "W21",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "payments",
+      "id": "PAY-07",
+      "method": "POST",
+      "path": "/webhooks/{provider}/payments",
+      "title": "Входящий результат: payments",
+      "roles": "Провайдер",
+      "output": "acknowledged",
+      "body": {
+        "providerEventId": "{{provider_event_id}}",
+        "providerObjectId": "{{provider_object_id}}",
+        "status": "{{provider_status}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Эскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.",
+      "status": "И",
+      "save": {},
+      "sample": {
+        "acknowledged": true
+      },
+      "source": "frontend/src/modules/morefoto/orders/services/payment.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
+      "implementationWave": "W19",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "payments",
+      "id": "PAY-08",
+      "method": "POST",
+      "path": "/webhooks/{provider}/refunds",
+      "title": "Входящий результат: refunds",
+      "roles": "Провайдер",
+      "output": "acknowledged",
+      "body": {
+        "providerEventId": "{{provider_event_id}}",
+        "providerObjectId": "{{provider_object_id}}",
+        "status": "{{provider_status}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Эскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.",
+      "status": "И",
+      "save": {},
+      "sample": {
+        "acknowledged": true
+      },
+      "source": "frontend/src/modules/morefoto/orders/services/payment.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
+      "implementationWave": "W23",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "payments",
+      "id": "PAY-09",
+      "method": "POST",
+      "path": "/webhooks/{provider}/receipts",
+      "title": "Входящий результат: receipts",
+      "roles": "Провайдер",
+      "output": "acknowledged",
+      "body": {
+        "providerEventId": "{{provider_event_id}}",
+        "providerObjectId": "{{provider_object_id}}",
+        "status": "{{provider_status}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Эскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.",
+      "status": "И",
+      "save": {},
+      "sample": {
+        "acknowledged": true
+      },
+      "source": "frontend/src/modules/morefoto/orders/services/payment.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
+      "implementationWave": "W21",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "files",
+      "id": "FIL-01",
+      "method": "GET",
+      "path": "/public/orders/current/files",
+      "title": "Доступные электронные фотографии",
+      "roles": "Заказ",
+      "output": "state, expiresAt, items, canDownload",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "state=unpaid/review/refund/revoked/empty/expired/available. Только купленные/подарочные и не отозванные файлы; срок календарный месяц от paidAt по рабочему D10.",
+      "status": "П",
+      "save": {},
+      "sample": {
+        "state": "available",
+        "expiresAt": "2026-11-01T12:00:00+03:00",
+        "items": [],
+        "canDownload": true
+      },
+      "source": "frontend/src/modules/morefoto/orders/delivery/service.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.files/routes.php",
+      "implementationWave": "W25",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "files",
+      "id": "FIL-02",
+      "method": "POST",
+      "path": "/public/orders/current/downloads",
+      "title": "Подготовить отдельный файл или ZIP",
+      "roles": "Заказ",
+      "output": "id, status, kind",
+      "body": {
+        "photoIds": [
+          "{{photo_id}}"
+        ],
+        "kind": "file"
+      },
+      "code": 202,
+      "query": [],
+      "note": "Для ZIP: kind=zip, photoIds опустить (все доступные файлы) либо передать разрешённое подмножество. Для file ровно один ID. Готовятся оригиналы без водяного знака; текущий мок выдаёт только WebP-превью.",
+      "status": "П",
+      "save": {
+        "download_id": "id"
+      },
+      "sample": {
+        "id": "download-example",
+        "status": "pending",
+        "kind": "file"
+      },
+      "source": "frontend/src/modules/morefoto/orders/delivery/service.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.files/routes.php",
+      "implementationWave": "W25",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "files",
+      "id": "FIL-03",
+      "method": "GET",
+      "path": "/public/orders/current/downloads/{download_id}",
+      "title": "Статус подготовки файла",
+      "roles": "Заказ",
+      "output": "id, status, expiresAt, filename?, error?",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "status=pending/ready/failed/expired. expiresAt ограничен также сроком исходного права на файлы.",
+      "status": "П",
+      "save": {},
+      "sample": {
+        "id": "download-example",
+        "status": "pending",
+        "expiresAt": "2026-10-01T12:15:00+03:00"
+      },
+      "source": "frontend/src/modules/morefoto/orders/delivery/service.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.files/routes.php",
+      "implementationWave": "W25",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "files",
+      "id": "FIL-04",
+      "method": "GET",
+      "path": "/public/orders/current/downloads/{download_id}/content",
+      "title": "Скачать подготовленный оригинал или ZIP",
+      "roles": "Заказ",
+      "output": "binary; Content-Type, Content-Disposition",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "Проверить ключ, право, отзыв и срок повторно перед выдачей. Не отдавать постоянный публичный URL. Save response to file в Postman.",
+      "status": "П",
+      "save": {},
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/orders/delivery/service.ts",
+      "format": "binary",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.files/routes.php",
+      "implementationWave": "W25",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "files",
+      "id": "FIL-05",
+      "method": "POST",
+      "path": "/public/orders/current/file-deliveries",
+      "title": "Повторно отправить письмо с файлами",
+      "roles": "Заказ",
+      "output": "id, status",
+      "body": {
+        "channel": "email"
+      },
+      "code": 202,
+      "query": [],
+      "note": "Только на подтверждённый email заказа и в действующем сроке; другой адрес меняет куратор через FIL-07.",
+      "status": "П",
+      "save": {
+        "file_delivery_id": "id"
+      },
+      "sample": {
+        "id": "file-delivery-example",
+        "status": "pending"
+      },
+      "source": "frontend/src/modules/morefoto/orders/delivery/service.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.files/routes.php",
+      "implementationWave": "W26",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "files",
+      "id": "FIL-06",
+      "method": "GET",
+      "path": "/public/orders/current/file-deliveries/{file_delivery_id}",
+      "title": "Результат отправки файлов",
+      "roles": "Заказ",
+      "output": "id, status, sentAt?, error?",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {},
+      "sample": {
+        "id": "file-delivery-example",
+        "status": "pending"
+      },
+      "source": "frontend/src/modules/morefoto/orders/delivery/service.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.files/routes.php",
+      "implementationWave": "W26",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "files",
+      "id": "FIL-07",
+      "method": "POST",
+      "path": "/orders/{order_id}/file-recoveries",
+      "title": "Восстановить получение после проверки адресата",
+      "roles": "О/К",
+      "output": "id, status, orderVersion",
+      "body": {
+        "reason": "Проверка сценария на тестовом окружении",
+        "confirmed": true,
+        "orderVersion": "{{order_version}}",
+        "email": "buyer@example.test",
+        "verified": true,
+        "supportId": null
+      },
+      "code": 202,
+      "query": [],
+      "note": "Создаёт операцию отправки; месяц доступа не продлевает. Способ проверки получателя требует D07. result sent/failed от клиента не принимается.",
+      "status": "П",
+      "save": {
+        "recovery_id": "id",
+        "order_version": "orderVersion"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/orders/delivery/service.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.files/routes.php",
+      "implementationWave": "W27",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "files",
+      "id": "FIL-08",
+      "method": "GET",
+      "path": "/orders/{order_id}/file-recoveries/{recovery_id}",
+      "title": "Результат восстановления",
+      "roles": "О/К",
+      "output": "id, status, sentAt?, error?, orderVersion",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "order_version": "orderVersion"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/orders/delivery/service.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.files/routes.php",
+      "implementationWave": "W27",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "support",
+      "id": "SUP-01",
+      "method": "POST",
+      "path": "/public/orders/current/support-requests",
+      "title": "Создать обращение покупателя",
+      "roles": "Заказ",
+      "output": "id, number, revision, status",
+      "body": {
+        "topic": "files",
+        "photoId": "{{photo_id}}",
+        "replyEmail": "buyer@example.test",
+        "message": "Не получается получить файл из тестового заказа."
+      },
+      "code": 201,
+      "query": [],
+      "note": "topic=extension/files/receipt/payment/correction/other. message 10–2000 символов; photoId необязателен, при наличии только из заказа.",
+      "status": "П",
+      "save": {
+        "support_id": "id",
+        "support_revision": "revision"
+      },
+      "sample": {
+        "id": "support-example",
+        "number": "SUP-EXAMPLE",
+        "revision": 1,
+        "status": "received"
+      },
+      "source": "frontend/src/modules/morefoto/curator/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.support/routes.php",
+      "implementationWave": "W28",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "support",
+      "id": "SUP-02",
+      "method": "GET",
+      "path": "/public/orders/current/support-requests",
+      "title": "История обращений своего заказа",
+      "roles": "Заказ",
+      "output": "items<BuyerSupportRequest>, meta",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "Только текст ответа и разрешённая история покупателю; без внутренних данных сотрудников.",
+      "status": "П",
+      "save": {},
+      "sample": {
+        "items": []
+      },
+      "source": "frontend/src/modules/morefoto/curator/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.support/routes.php",
+      "implementationWave": "W28",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "support",
+      "id": "SUP-03",
+      "method": "GET",
+      "path": "/support-requests",
+      "title": "Рабочий список обращений",
+      "roles": "О/К",
+      "output": "items<CaseItem>, meta",
+      "body": null,
+      "code": 200,
+      "query": [
+        [
+          "q",
+          "",
+          "Номер/текст"
+        ],
+        [
+          "institutionId",
+          "",
+          "Учреждение"
+        ],
+        [
+          "shootId",
+          "",
+          "Съёмка"
+        ],
+        [
+          "groupId",
+          "",
+          "Группа"
+        ],
+        [
+          "status",
+          "",
+          "received/in-progress/resolved"
+        ],
+        [
+          "topic",
+          "",
+          "Тема"
+        ],
+        [
+          "dateFrom",
+          "",
+          "YYYY-MM-DD"
+        ],
+        [
+          "dateTo",
+          "",
+          "YYYY-MM-DD"
+        ]
+      ],
+      "note": "",
+      "status": "П",
+      "save": {},
+      "sample": {
+        "items": []
+      },
+      "source": "frontend/src/modules/morefoto/curator/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.support/routes.php",
+      "implementationWave": "W28",
+      "verificationWaves": [
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "support",
+      "id": "SUP-04",
+      "method": "GET",
+      "path": "/support-requests/{support_id}",
+      "title": "Карточка обращения",
+      "roles": "О/К",
+      "output": "id, revision, request, order, history, groupRevision",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "support_revision": "revision",
+        "group_revision": "groupRevision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/curator/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.support/routes.php",
+      "implementationWave": "W28",
+      "verificationWaves": [
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "support",
+      "id": "SUP-05",
+      "method": "POST",
+      "path": "/support-requests/{support_id}/replies",
+      "title": "Ответить и изменить статус обращения",
+      "roles": "О/К",
+      "output": "id, revision, status",
+      "body": {
+        "revision": "{{support_revision}}",
+        "status": "in-progress",
+        "comment": "Проверяем доступность файлов вашего заказа."
+      },
+      "code": 200,
+      "query": [],
+      "note": "status=in-progress/resolved; история не перезаписывается. Реальная доставка ответа требует канала, связанного с D09.",
+      "status": "П",
+      "save": {
+        "support_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/curator/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.support/routes.php",
+      "implementationWave": "W28",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "support",
+      "id": "SUP-06",
+      "method": "POST",
+      "path": "/support-requests/{support_id}/group-extensions",
+      "title": "Согласовать продление группы",
+      "roles": "О/К",
+      "output": "id, revision, groupRevision, closesAt, deliveryAt",
+      "body": {
+        "reason": "Проверка сценария на тестовом окружении",
+        "confirmed": true,
+        "revision": "{{support_revision}}",
+        "groupRevision": "{{group_revision}}",
+        "closesAt": "{{extension_closes_at}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Обращение связано с заказом этой группы; новая дата позже текущего закрытия и now. Обновить всю группу/доставку, сохранить историю и обе версии, перепроверить производство.",
+      "status": "П",
+      "save": {
+        "support_revision": "revision",
+        "group_revision": "groupRevision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/curator/service.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.support/routes.php",
+      "implementationWave": "W31",
+      "verificationWaves": [
+        "W32",
+        "W34"
+      ]
+    },
+    {
+      "module": "settlement",
+      "id": "SET-01",
+      "method": "GET",
+      "path": "/orders/{order_id}/settlement",
+      "title": "Итоги, ограничения и история сопровождения",
+      "roles": "О/К",
+      "output": "version, totals, corrections, refunds, decisions, hold, needsReprint, allowedActions",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "order_version": "version"
+      },
+      "sample": {
+        "version": "order-version-example",
+        "totals": {
+          "paid": 25000,
+          "refunded": 0,
+          "pending": 0,
+          "net": 25000
+        },
+        "corrections": [],
+        "refunds": [],
+        "decisions": [],
+        "hold": false,
+        "needsReprint": false,
+        "allowedActions": []
+      },
+      "source": "frontend/src/modules/morefoto/settlement/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.settlement/routes.php",
+      "implementationWave": "W22",
+      "verificationWaves": [
+        "W23",
+        "W24",
+        "W29",
+        "W30",
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "settlement",
+      "id": "SET-02",
+      "method": "POST",
+      "path": "/orders/{order_id}/contact-corrections",
+      "title": "Исправить контакты оплаченного заказа",
+      "roles": "О/К",
+      "output": "id, version",
+      "body": {
+        "reason": "Проверка сценария на тестовом окружении",
+        "confirmed": true,
+        "version": "{{order_version}}",
+        "supportId": null,
+        "verified": true,
+        "name": "Тестовый покупатель",
+        "email": "buyer@example.test",
+        "phone": "+79990000000"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Снимок покупки остаётся; сохраняются before/after и проверка получателя. Только paid.",
+      "status": "П",
+      "save": {
+        "order_version": "version"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/settlement/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.settlement/routes.php",
+      "implementationWave": "W22",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "settlement",
+      "id": "SET-03",
+      "method": "POST",
+      "path": "/orders/{order_id}/line-corrections",
+      "title": "Исправить кадр или уменьшить количество",
+      "roles": "О/К",
+      "output": "id, version, hold, needsReprint",
+      "body": {
+        "reason": "Проверка сценария на тестовом окружении",
+        "confirmed": true,
+        "version": "{{order_version}}",
+        "supportId": null,
+        "lineId": "{{order_line_id}}",
+        "photoId": "{{photo_id}}",
+        "quantity": 1
+      },
+      "code": 200,
+      "query": [],
+      "note": "Кадр того же ребёнка; quantity 0 удаляет позицию из исполнения. Увеличение — отдельная покупка. До печати hold, после — needsReprint; исправление не подтверждает возврат денег само.",
+      "status": "П",
+      "save": {
+        "order_version": "version"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/settlement/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.settlement/routes.php",
+      "implementationWave": "W22",
+      "verificationWaves": [
+        "W24",
+        "W29",
+        "W30",
+        "W34"
+      ]
+    },
+    {
+      "module": "settlement",
+      "id": "SET-04",
+      "method": "POST",
+      "path": "/orders/{order_id}/refunds",
+      "title": "Запросить возврат",
+      "roles": "О/К",
+      "output": "id, status, amount, allocations, version",
+      "body": {
+        "reason": "Проверка сценария на тестовом окружении",
+        "confirmed": true,
+        "version": "{{order_version}}",
+        "supportId": null,
+        "mode": "amount",
+        "amount": 10000,
+        "lineIds": [],
+        "files": "keep",
+        "production": "keep"
+      },
+      "code": 202,
+      "query": [],
+      "note": "mode=amount/lines; при lines сумма по lineIds вычисляется сервером. files=keep/selected/all: selected отзывает фото выбранных lineIds, keep сохраняет, all отзывает все права. production=keep/hold. Зарезервировать сумму атомарно; paid − confirmed − pending ограничивает следующий возврат. Платёжный адаптер вызывается через контракт payments.",
+      "status": "П",
+      "save": {
+        "refund_id": "id",
+        "order_version": "version"
+      },
+      "sample": {
+        "id": "refund-example",
+        "status": "pending",
+        "amount": 10000,
+        "allocations": {},
+        "version": "order-version-2"
+      },
+      "source": "frontend/src/modules/morefoto/settlement/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.settlement/routes.php",
+      "implementationWave": "W23",
+      "verificationWaves": [
+        "W25",
+        "W29",
+        "W34"
+      ]
+    },
+    {
+      "module": "settlement",
+      "id": "SET-05",
+      "method": "GET",
+      "path": "/orders/{order_id}/refunds/{refund_id}",
+      "title": "Результат возврата",
+      "roles": "О/К",
+      "output": "id, status, amount, allocations, history, version",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "order_version": "version"
+      },
+      "sample": {
+        "id": "refund-example",
+        "status": "pending",
+        "amount": 10000,
+        "allocations": {},
+        "history": [],
+        "version": "order-version-2"
+      },
+      "source": "frontend/src/modules/morefoto/settlement/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.settlement/routes.php",
+      "implementationWave": "W23",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "settlement",
+      "id": "SET-06",
+      "method": "POST",
+      "path": "/orders/{order_id}/refunds/{refund_id}/retries",
+      "title": "Повторить неуспешный возврат",
+      "roles": "О/К",
+      "output": "id, status, version",
+      "body": {
+        "reason": "Проверка сценария на тестовом окружении",
+        "confirmed": true,
+        "version": "{{order_version}}"
+      },
+      "code": 202,
+      "query": [],
+      "note": "Только failed; повторно проверить доступный остаток и распределение. pending нельзя дублировать. Результат — через провайдера PAY-08.",
+      "status": "П",
+      "save": {
+        "refund_id": "id",
+        "order_version": "version"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/settlement/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.settlement/routes.php",
+      "implementationWave": "W23",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "settlement",
+      "id": "SET-07",
+      "method": "POST",
+      "path": "/orders/{order_id}/fulfilment-decisions",
+      "title": "Согласовать исполнение или необходимость возврата",
+      "roles": "О/К",
+      "output": "id, version, hold, needsReprint, decision",
+      "body": {
+        "reason": "Проверка сценария на тестовом окружении",
+        "confirmed": true,
+        "version": "{{order_version}}",
+        "supportId": null,
+        "decision": "fulfil"
+      },
+      "code": 200,
+      "query": [],
+      "note": "decision=fulfil/refund. Решение refund — основание запустить SET-04, само денег не возвращает. Pending возврат/нулевой остаток блокируют fulfil. Поздний платёж сохраняется paid + latePayment.",
+      "status": "П",
+      "save": {
+        "order_version": "version"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/settlement/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.settlement/routes.php",
+      "implementationWave": "W24",
+      "verificationWaves": [
+        "W25",
+        "W29",
+        "W30",
+        "W32",
+        "W34"
+      ]
+    },
+    {
+      "module": "production",
+      "id": "PRD-01",
+      "method": "GET",
+      "path": "/production/groups",
+      "title": "Очередь групп и планов печати",
+      "roles": "О/К",
+      "output": "items<ProductionGroup>, editable, meta",
+      "body": null,
+      "code": 200,
+      "query": [
+        [
+          "institutionId",
+          "",
+          "Учреждение"
+        ],
+        [
+          "shootId",
+          "",
+          "Съёмка"
+        ]
+      ],
+      "note": "",
+      "status": "П",
+      "save": {},
+      "sample": {
+        "items": [],
+        "editable": true
+      },
+      "source": "frontend/src/modules/morefoto/production/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.production/routes.php",
+      "implementationWave": "W29",
+      "verificationWaves": [
+        "W30",
+        "W31",
+        "W32",
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "production",
+      "id": "PRD-02",
+      "method": "GET",
+      "path": "/groups/{group_id}/production",
+      "title": "Актуальный план, задание и история",
+      "roles": "О/К",
+      "output": "plan, job, revision, signature, editable",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "Plan содержит physical rows, excluded, digitalCount, closed; электронные позиции не печатаются.",
+      "status": "П",
+      "save": {
+        "production_revision": "revision",
+        "production_signature": "signature"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/production/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.production/routes.php",
+      "implementationWave": "W29",
+      "verificationWaves": [
+        "W30",
+        "W31",
+        "W32",
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "production",
+      "id": "PRD-03",
+      "method": "POST",
+      "path": "/groups/{group_id}/production/versions",
+      "title": "Сформировать новую версию задания",
+      "roles": "О",
+      "output": "jobId, versionNumber, revision",
+      "body": {
+        "reason": "Проверка сценария на тестовом окружении",
+        "confirmed": true,
+        "revision": "{{production_revision}}",
+        "signature": "{{production_signature}}"
+      },
+      "code": 201,
+      "query": [],
+      "note": "Только закрытая группа. Версия фиксирует снимок plan и разницу runRows/surplus; старые версии не переписываются.",
+      "status": "П",
+      "save": {
+        "production_job_id": "jobId",
+        "production_version": "versionNumber",
+        "production_revision": "revision"
+      },
+      "sample": {
+        "jobId": "print-job-example",
+        "versionNumber": 1,
+        "revision": 1
+      },
+      "source": "frontend/src/modules/morefoto/production/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.production/routes.php",
+      "implementationWave": "W29",
+      "verificationWaves": [
+        "W31",
+        "W34"
+      ]
+    },
+    {
+      "module": "production",
+      "id": "PRD-04",
+      "method": "GET",
+      "path": "/production/jobs/{production_job_id}/versions/{production_version}",
+      "title": "Конкретная версия задания",
+      "roles": "О/К",
+      "output": "jobId, versionNumber, plan, runRows, surplus, packages, revision, signature",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "",
+      "status": "П",
+      "save": {
+        "production_revision": "revision",
+        "production_signature": "signature"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/production/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.production/routes.php",
+      "implementationWave": "W29",
+      "verificationWaves": [
+        "W30",
+        "W32",
+        "W34"
+      ]
+    },
+    {
+      "module": "production",
+      "id": "PRD-05",
+      "method": "POST",
+      "path": "/production/jobs/{production_job_id}/versions/{production_version}/starts",
+      "title": "Передать версию в печать",
+      "roles": "О",
+      "output": "jobId, versionNumber, revision, startedAt",
+      "body": {
+        "reason": "Проверка сценария на тестовом окружении",
+        "confirmed": true,
+        "revision": "{{production_revision}}",
+        "signature": "{{production_signature}}"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Учитываются ранее напечатанные позиции, новые исправления/возвраты, hold и разрешение перепечатки. Повтор не запускает второй тираж.",
+      "status": "П",
+      "save": {
+        "production_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/production/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.production/routes.php",
+      "implementationWave": "W30",
+      "verificationWaves": [
+        "W31",
+        "W34"
+      ]
+    },
+    {
+      "module": "production",
+      "id": "PRD-06",
+      "method": "PUT",
+      "path": "/production/jobs/{production_job_id}/versions/{production_version}/packages/{order_id}",
+      "title": "Отметить или снять комплектацию заказа",
+      "roles": "О",
+      "output": "orderId, packed, revision",
+      "body": {
+        "reason": "Проверка сценария на тестовом окружении",
+        "confirmed": true,
+        "revision": "{{production_revision}}",
+        "signature": "{{production_signature}}",
+        "packed": true
+      },
+      "code": 200,
+      "query": [],
+      "note": "packed=false снимает отметку пока правила версии позволяют; только заказ этой версии, готовый физический состав.",
+      "status": "П",
+      "save": {
+        "production_revision": "revision"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/production/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.production/routes.php",
+      "implementationWave": "W30",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "production",
+      "id": "PRD-07",
+      "method": "GET",
+      "path": "/production/jobs/{production_job_id}/versions/{production_version}/export",
+      "title": "Экспорт задания печати",
+      "roles": "О/К",
+      "output": "CSV UTF-8; Content-Disposition",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "Экспорт конкретной версии не меняет статус и не запускает печать. prints=quantity×printCount. Сохранять связь с исходной группой сотрудников. Экранировать CSV-формулы.",
+      "status": "П",
+      "save": {},
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/production/types.ts",
+      "format": "csv",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.production/routes.php",
+      "implementationWave": "W29",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "shipping",
+      "id": "SHP-01",
+      "method": "GET",
+      "path": "/delivery",
+      "title": "Готовность, партии и история передачи",
+      "roles": "О/К/Р/В",
+      "output": "editable, staff, groups, batches, transfers, now",
+      "body": null,
+      "code": 200,
+      "query": [
+        [
+          "institutionId",
+          "",
+          "Учреждение"
+        ],
+        [
+          "shootId",
+          "",
+          "Съёмка"
+        ]
+      ],
+      "note": "Р/В — только агрегаты по своей области, без PrintRow, покупателей и содержимого пакетов. Для форм взять group.signature и batch.signature в разные переменные.",
+      "status": "П",
+      "save": {},
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/shipping/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.shipping/routes.php",
+      "implementationWave": "W32",
+      "verificationWaves": [
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "shipping",
+      "id": "SHP-02",
+      "method": "POST",
+      "path": "/groups/{group_id}/ready-marks",
+      "title": "Отметить готовность группы",
+      "roles": "О",
+      "output": "groupId, readyAt, signature",
+      "body": {
+        "signature": "{{delivery_group_signature}}",
+        "date": "{{ready_at}}",
+        "responsible": "Тестовый комплектовщик",
+        "comment": "Пакеты проверены",
+        "confirmed": true
+      },
+      "code": 200,
+      "query": [],
+      "note": "Готовность привязана к актуальной версии печати; все физические пакеты должны быть собраны.",
+      "status": "П",
+      "save": {
+        "delivery_group_signature": "signature"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/shipping/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.shipping/routes.php",
+      "implementationWave": "W32",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "shipping",
+      "id": "SHP-03",
+      "method": "POST",
+      "path": "/groups/{group_id}/ready-cancellations",
+      "title": "Снять готовность",
+      "roles": "О",
+      "output": "groupId, signature",
+      "body": {
+        "signature": "{{delivery_group_signature}}",
+        "comment": "Нужна повторная проверка комплектации",
+        "confirmed": true
+      },
+      "code": 200,
+      "query": [],
+      "note": "Только до передачи в учреждение; история сохраняется.",
+      "status": "П",
+      "save": {
+        "delivery_group_signature": "signature"
+      },
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/shipping/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.shipping/routes.php",
+      "implementationWave": "W32",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "shipping",
+      "id": "SHP-04",
+      "method": "POST",
+      "path": "/delivery/transfers",
+      "title": "Зафиксировать передачу партии",
+      "roles": "О",
+      "output": "id, number, transferredAt",
+      "body": {
+        "batchId": "{{delivery_batch_id}}",
+        "signature": "{{delivery_batch_signature}}",
+        "date": "{{transferred_at}}",
+        "responsible": "Тестовый курьер",
+        "receiver": "Тестовый получатель",
+        "comment": "Тестовая передача",
+        "confirmed": true
+      },
+      "code": 201,
+      "query": [],
+      "note": "Актуальные готовые группы одной съёмки/учреждения, включая сотрудников. Нельзя смешивать партии или возвращать переданное снятием ready.",
+      "status": "П",
+      "save": {
+        "transfer_id": "id"
+      },
+      "sample": {
+        "id": "transfer-example",
+        "number": "DLV-EXAMPLE",
+        "transferredAt": "2026-10-10T12:00:00+03:00"
+      },
+      "source": "frontend/src/modules/morefoto/shipping/types.ts",
+      "format": "json",
+      "idem": true,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.shipping/routes.php",
+      "implementationWave": "W32",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "shipping",
+      "id": "SHP-05",
+      "method": "GET",
+      "path": "/delivery/transfers/{transfer_id}",
+      "title": "Документ и история передачи",
+      "roles": "О/К/Р/В",
+      "output": "id, number, institutionId, shootId, at, responsible, receiver, groups",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "Р/В возвращается TransferSummary с количеством пакетов/отпечатков; детальные строки только О/К.",
+      "status": "П",
+      "save": {},
+      "sample": {},
+      "source": "frontend/src/modules/morefoto/shipping/types.ts",
+      "format": "json",
+      "idem": false,
+      "scope": "product",
+      "routeFile": "api/public/local/modules/morefoto.shipping/routes.php",
+      "implementationWave": "W32",
+      "verificationWaves": [
+        "W33",
+        "W34"
+      ]
+    },
+    {
+      "module": "platform",
+      "id": "INF-01",
+      "method": "GET",
+      "path": "/health",
+      "title": "Доступность контейнера фронтенда",
+      "roles": "Гость",
+      "output": "text/plain: alive",
+      "body": null,
+      "code": 200,
+      "query": [],
+      "note": "Адрес относительно base_url без api_prefix. Ничего не говорит о платежах, БД, авторизации или реализации новых REST-маршрутов.",
+      "status": "К",
+      "save": {},
+      "sample": {},
+      "source": "frontend/docker/production/nginx/conf.d/default.conf",
+      "format": "text",
+      "idem": false,
+      "scope": "frontendInventory",
+      "routeFile": "frontend/docker/production/nginx/conf.d/default.conf",
+      "implementationWave": "W00",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "share",
+      "id": "SHR-01",
+      "method": "POST",
+      "path": "/share/file/upload/",
+      "title": "Загрузить технический файл",
+      "roles": "Bearer",
+      "output": "id, name, size, type, src",
+      "body": {
+        "moduleId": "{{upload_module_id}}",
+        "file": "<local file>"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Фактический путь имеет завершающий слэш. multipart: обязательны moduleId и один file; name/type/tmpName/size формирует сервер. Bearer подтверждает личность без продуктовой роли. Это существующий CFile upload, не MED-03 и не защищённая выдача FIL-04. Маршрут найден, live не проверен: mapper вызывает отсутствующий enableAnnotationMapping(), а InvalidFileException сейчас превращается в 500; права ownership и приватность требуют отдельной волны. Не загружать оригиналы MoreFoto через этот маршрут.",
+      "status": "Ф",
+      "save": {
+        "uploaded_file_id": "id"
+      },
+      "sample": {
+        "id": 1,
+        "name": "example.txt",
+        "size": 12,
+        "type": "text/plain",
+        "src": "/upload/example.txt"
+      },
+      "source": "../rebit-p2p/api/public/local/modules/rebit.share/lib/Presentation/Controller/FileController.php",
+      "format": "multipart",
+      "idem": false,
+      "scope": "platformInventory",
+      "routeFile": "api/public/local/modules/rebit.share/routes.php",
+      "implementationWave": "W03",
+      "verificationWaves": [
+        "W34"
+      ]
+    },
+    {
+      "module": "notification",
+      "id": "NTF-01",
+      "method": "POST",
+      "path": "/lead",
+      "title": "Передать заявку сайта",
+      "roles": "Гость",
+      "output": "accepted: true",
+      "body": {
+        "name": "{{lead_name}}",
+        "phone": "{{lead_phone}}",
+        "description": "{{lead_description}}",
+        "email": "{{lead_email}}",
+        "company": "",
+        "page": "{{lead_page}}",
+        "source": "{{lead_source}}",
+        "file": "<optional local file>"
+      },
+      "code": 200,
+      "query": [],
+      "note": "Публичный синхронный endpoint, без очереди и идемпотентности: повтор может отправить дубль. name: 2–120, phone: 6–40 (цифры, +, пробелы, скобки, дефис), description: 10–3000 символов; email опционален до 180, source до 40. company — honeypot: непустое значение даёт 200 без доставки. source сейчас не передаётся в сообщение и не выбирает получателя. Один file опционален, по умолчанию до 15 МиБ (REBIT_NOTIFICATION_LEAD_MAX_FILE_MB); MIME по содержимому: pdf/doc/docx/xls/xlsx/txt/zip/png/jpg. 200 {data:{accepted:true}} не гарантирует доставку вложения: после успеха текста ошибка файла не меняет ответ. Ошибки валидации 400; ненастроенный Telegram 503, отказ текста 502, успешный резервный email возвращает 200. Текущая ошибка: {data:[],error:{message}}. Этот endpoint не принимает обращения SUP-01 и не является общим публичным send-notification API.",
+      "status": "Ф",
+      "save": {},
+      "sample": {
+        "accepted": true
+      },
+      "source": "../rebit-p2p/api/public/local/modules/rebit.notification/lib/Presentation/Controller/LeadController.php",
+      "format": "multipart",
+      "idem": false,
+      "scope": "platformInventory",
+      "routeFile": "api/public/local/modules/rebit.notification/routes.php",
+      "implementationWave": "W00",
+      "verificationWaves": [
+        "W01",
+        "W03",
+        "W20",
+        "W34"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+/srv/rabit-api/logs/logstash/*.log {
+    su deploy deploy
+    daily
+    rotate 30
+    maxage 5
+    maxsize 50M
+    missingok
+    notifempty
+    compress
+    copytruncate
+    create 0664 deploy deploy
+}

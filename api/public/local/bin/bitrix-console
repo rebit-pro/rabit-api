@@ -1,0 +1,98 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Точка входа CLI-консоли RaBit API.
+ *
+ * В отличие от стандартного bitrix/bitrix.php, резолвит команды
+ * через ServiceLocator (DI), что позволяет использовать constructor injection.
+ *
+ * Команды регистрируются в секции `console.commands` файла .settings.php каждого модуля.
+ *
+ * Использование:
+ *   php local/bin/bitrix-console list
+ */
+
+declare(strict_types=1);
+
+$_SERVER['DOCUMENT_ROOT'] = realpath(__DIR__ . '/../../');
+
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/cli/bootstrap.php';
+
+use Bitrix\Main\Config\Configuration;
+use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Command\Command;
+
+/**
+ * @param class-string<Command> $commandClass
+ */
+function canInstantiateCommandWithoutDependencies(string $commandClass): bool
+{
+    $reflection = new ReflectionClass($commandClass);
+    $constructor = $reflection->getConstructor();
+
+    if (null === $constructor) {
+        return true;
+    }
+
+    foreach ($constructor->getParameters() as $parameter) {
+        if (!$parameter->isOptional()) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+$application = new Application('RaBit API Console', '1.0.0');
+
+$serviceLocator = ServiceLocator::getInstance();
+
+/**
+ * Двухпроходная загрузка:
+ * 1) includeModule для всех модулей с консольными командами — регистрируем DI-сервисы
+ * 2) Резолвим и добавляем команды — все межмодульные зависимости уже доступны
+ *
+ * @var array<string, list<class-string<Command>>> $moduleCommands
+ */
+$moduleCommands = [];
+
+foreach (ModuleManager::getInstalledModules() as $moduleId => $_) {
+    $config = Configuration::getInstance($moduleId)->get('console');
+
+    if (!isset($config['commands']) || !is_array($config['commands'])) {
+        continue;
+    }
+
+    if (!Loader::includeModule($moduleId)) {
+        continue;
+    }
+
+    $moduleCommands[$moduleId] = $config['commands'];
+}
+
+foreach ($moduleCommands as $commands) {
+    foreach ($commands as $commandClass) {
+        if (!is_a($commandClass, Command::class, true)) {
+            continue;
+        }
+
+        try {
+            /** @var Command $command */
+            $command = $serviceLocator->get($commandClass);
+        } catch (Throwable $exception) {
+            if (!canInstantiateCommandWithoutDependencies($commandClass)) {
+                throw $exception;
+            }
+
+            $command = new $commandClass();
+        }
+
+        $application->add($command);
+    }
+}
+
+$application->run();

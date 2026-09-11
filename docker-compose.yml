@@ -1,0 +1,181 @@
+name: rabit-api
+
+x-api-cli-environment: &api-cli-environment
+    APP_DEBUG: ${APP_DEBUG:-1}
+    APP_ENV: ${APP_ENV:-local}
+    REDIS_HOST: ${REDIS_HOST:-redis}
+    REDIS_PORT: ${REDIS_PORT:-6379}
+    REBIT_ENCRYPTION_KEY: ${REBIT_ENCRYPTION_KEY}
+    REBIT_AUTH_REGISTRATION_CODE_TTL_MINUTES: ${REBIT_AUTH_REGISTRATION_CODE_TTL_MINUTES:-15}
+    REBIT_AUTH_REGISTRATION_RESEND_COOLDOWN_SECONDS: ${REBIT_AUTH_REGISTRATION_RESEND_COOLDOWN_SECONDS:-60}
+    REBIT_AUTH_REGISTRATION_MAX_ATTEMPTS: ${REBIT_AUTH_REGISTRATION_MAX_ATTEMPTS:-5}
+    REBIT_AUTH_MAIL_EVENT_SITE_ID: ${REBIT_AUTH_MAIL_EVENT_SITE_ID:-s1}
+    REBIT_SMTP_HOST: ${REBIT_SMTP_HOST:-mailpit}
+    REBIT_SMTP_PORT: ${REBIT_SMTP_PORT:-1025}
+    REBIT_SMTP_ENCRYPTION: ${REBIT_SMTP_ENCRYPTION:-none}
+    REBIT_SMTP_USERNAME: ${REBIT_SMTP_USERNAME:-}
+    REBIT_SMTP_PASSWORD: ${REBIT_SMTP_PASSWORD:-}
+    REBIT_SMTP_FROM_EMAIL: ${REBIT_SMTP_FROM_EMAIL:-noreply@rebit-p2p.loc}
+    REBIT_SMTP_FROM_NAME: ${REBIT_SMTP_FROM_NAME:-RaBit API}
+    REBIT_SMTP_TLS_CERTCHECK: ${REBIT_SMTP_TLS_CERTCHECK:-off}
+    REBIT_GEETEST_ENABLED: ${REBIT_GEETEST_ENABLED:-0}
+    REBIT_GEETEST_BYPASS: ${REBIT_GEETEST_BYPASS:-1}
+    REBIT_GEETEST_CAPTCHA_ID: ${REBIT_GEETEST_CAPTCHA_ID:-}
+    REBIT_GEETEST_CAPTCHA_KEY: ${REBIT_GEETEST_CAPTCHA_KEY:-}
+    REBIT_GEETEST_API_URL: ${REBIT_GEETEST_API_URL:-https://gcaptcha4.geetest.com}
+    MESSENGER_TRANSPORT_DSN: amqp://${RABBITMQ_USER:-rebit}:${RABBITMQ_PASSWORD:-rebit}@rabbitmq:5672/${RABBITMQ_VHOST:-rebit}
+
+x-api-cli-service: &api-cli-service
+    build:
+        context: api/docker
+        dockerfile: development/php-cli/Dockerfile
+    extra_hosts:
+        - "host.docker.internal:host-gateway"
+        - "api.rebit-p2p.loc:host-gateway"
+        - "rebit-p2p.loc:host-gateway"
+    volumes:
+        - ./api:/app
+        - ${TRAEFIK_CERT_PATH:-/home/user/traefik/certs/rebit-p2p.loc.pem}:/usr/local/share/ca-certificates/rebit-p2p.loc.crt:ro
+        - ./api/docker/common/php/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
+    environment:
+        <<: *api-cli-environment
+
+x-api-consumer-service: &api-consumer-service
+    <<: *api-cli-service
+    restart: unless-stopped
+    depends_on:
+        - rabbitmq
+
+services:
+    api:
+        build:
+            context: api/docker
+            dockerfile: development/nginx/Dockerfile
+        volumes:
+            - ./api:/app
+        networks:
+            - traefik-public
+            - default
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=traefik-public
+            - traefik.http.routers.rabit-api.rule=Host(`api.rebit-p2p.loc`) || Host(`www.api.rebit-p2p.loc`)
+            - traefik.http.routers.rabit-api.entryPoints=https
+            - traefik.http.routers.rabit-api.tls=true
+            - traefik.http.services.rabit-api.loadBalancer.server.port=80
+            - traefik.http.middlewares.rabit-api-redirect.redirectRegex.permanent=true
+            - traefik.http.middlewares.rabit-api-redirect.redirectRegex.regex=^(https?://)www\.api\.rebit-p2p\.loc/(.*)$$
+            - traefik.http.middlewares.rabit-api-redirect.redirectRegex.replacement=$${1}api.rebit-p2p.loc/$${2}
+            - traefik.http.routers.rabit-api.middlewares=rabit-api-redirect
+
+    api-php-fpm:
+        build:
+            context: api/docker
+            dockerfile: development/php-fpm/Dockerfile
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+            - "api.rebit-p2p.loc:host-gateway"
+            - "rebit-p2p.loc:host-gateway"
+        ports:  # Добавьте это!
+            - "3307:3307"
+            #- "9003:9003"  # Добавьте эту строку
+        volumes:
+            - ./api:/app
+            - ${TRAEFIK_CERT_PATH:-/home/user/traefik/certs/rebit-p2p.loc.pem}:/usr/local/share/ca-certificates/rebit-p2p.loc.crt:ro
+            - ./api/docker/common/php/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
+        environment:
+            APP_DEBUG: ${APP_DEBUG:-1}
+            APP_ENV: ${APP_ENV:-local}
+            REDIS_HOST: ${REDIS_HOST:-redis}
+            REDIS_PORT: ${REDIS_PORT:-6379}
+            REBIT_ENCRYPTION_KEY: ${REBIT_ENCRYPTION_KEY}
+            REBIT_AUTH_REGISTRATION_CODE_TTL_MINUTES: ${REBIT_AUTH_REGISTRATION_CODE_TTL_MINUTES:-15}
+            REBIT_AUTH_REGISTRATION_RESEND_COOLDOWN_SECONDS: ${REBIT_AUTH_REGISTRATION_RESEND_COOLDOWN_SECONDS:-60}
+            REBIT_AUTH_REGISTRATION_MAX_ATTEMPTS: ${REBIT_AUTH_REGISTRATION_MAX_ATTEMPTS:-5}
+            REBIT_AUTH_MAIL_EVENT_SITE_ID: ${REBIT_AUTH_MAIL_EVENT_SITE_ID:-s1}
+            REBIT_SMTP_HOST: ${REBIT_SMTP_HOST:-mailpit}
+            REBIT_SMTP_PORT: ${REBIT_SMTP_PORT:-1025}
+            REBIT_SMTP_ENCRYPTION: ${REBIT_SMTP_ENCRYPTION:-none}
+            REBIT_SMTP_USERNAME: ${REBIT_SMTP_USERNAME:-}
+            REBIT_SMTP_PASSWORD: ${REBIT_SMTP_PASSWORD:-}
+            REBIT_SMTP_FROM_EMAIL: ${REBIT_SMTP_FROM_EMAIL:-noreply@rebit-p2p.loc}
+            REBIT_SMTP_FROM_NAME: ${REBIT_SMTP_FROM_NAME:-RaBit API}
+            REBIT_SMTP_TLS_CERTCHECK: ${REBIT_SMTP_TLS_CERTCHECK:-off}
+            REBIT_GEETEST_ENABLED: ${REBIT_GEETEST_ENABLED:-0}
+            REBIT_GEETEST_BYPASS: ${REBIT_GEETEST_BYPASS:-1}
+            REBIT_GEETEST_CAPTCHA_ID: ${REBIT_GEETEST_CAPTCHA_ID:-}
+            REBIT_GEETEST_CAPTCHA_KEY: ${REBIT_GEETEST_CAPTCHA_KEY:-}
+            REBIT_GEETEST_API_URL: ${REBIT_GEETEST_API_URL:-https://gcaptcha4.geetest.com}
+            MESSENGER_TRANSPORT_DSN: amqp://${RABBITMQ_USER:-rebit}:${RABBITMQ_PASSWORD:-rebit}@rabbitmq:5672/${RABBITMQ_VHOST:-rebit}
+            PHP_IDE_CONFIG: "serverName=API"
+
+    api-php-cli:
+        <<: *api-cli-service
+        environment:
+            <<: *api-cli-environment
+            XDEBUG_MODE: off
+
+    api-cron:
+        <<: *api-cli-service
+        restart: unless-stopped
+        command: ["sh", "-lc", "exec /usr/local/bin/supercronic /app/docker/common/cron/crontab"]
+        environment:
+            <<: *api-cli-environment
+            SHELL: /bin/sh
+
+    api-audit-consumer:
+        <<: *api-consumer-service
+        command: ["php", "public/local/bin/bitrix-console", "app:audit:consume"]
+
+    api-mysql:
+        build:
+            context: api/docker
+            dockerfile: development/mysql/Dockerfile
+        restart: always
+        environment:
+            MYSQL_DATABASE: ${MYSQL_DATABASE:-app}
+            MYSQL_USER: ${MYSQL_USER:-app}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+        volumes:
+            - api-mysql:/var/lib/mysql
+        ports:
+            - "33069:3306"
+
+    api-memcached:
+        image: memcached:latest
+        restart: always
+        command: memcached -m 64m -vv
+        ports:
+            - "11212:11211"
+        networks:
+            - default
+
+    mailpit:
+        image: axllent/mailpit:v1.27
+        restart: unless-stopped
+        ports:
+            - "1025:1025"
+            - "8025:8025"
+
+    rabbitmq:
+        image: rabbitmq:3.13-management-alpine
+        restart: unless-stopped
+        ports:
+            - "${RABBITMQ_EXTERNAL_PORT:-5672}:5672"
+            - "${RABBITMQ_MANAGEMENT_EXTERNAL_PORT:-15672}:15672"
+        environment:
+            RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-rebit}
+            RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-rebit}
+            RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-rebit}
+        volumes:
+            - rabbitmq-data:/var/lib/rabbitmq
+
+volumes:
+    api-mysql:
+    rabbitmq-data:
+
+networks:
+    traefik-public:
+        external: true
+        driver: bridge

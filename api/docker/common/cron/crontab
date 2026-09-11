@@ -1,0 +1,7 @@
+# Supercronic crontab — фоновые задачи RaBit API
+
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# ScanLeads — мониторинг внешних площадок (fl.ru) с отправкой в Telegram каждые 5 минут.
+*/5 * * * * cd /app/public && php local/bin/bitrix-console app:leadhunter:scan 2>&1

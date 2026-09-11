@@ -1,0 +1,9 @@
+path: ./public/local/modules
+jobs: 10
+cache-dir: var/phplint
+extensions:
+  - php
+exclude:
+  - sprint.migration
+  - vendor
+  - install
