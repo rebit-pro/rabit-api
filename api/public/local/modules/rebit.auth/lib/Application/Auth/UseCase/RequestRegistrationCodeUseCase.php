@@ -6,6 +6,8 @@ namespace Rebit\Auth\Application\Auth\UseCase;
 
 use Bitrix\Main\Type\DateTime;
 use Random\RandomException;
+use Rebit\Auth\Application\Auth\Contract\ClockInterface;
+use Rebit\Auth\Application\Auth\Contract\AuthTransactionInterface;
 use Rebit\Auth\Application\Auth\Contract\RegistrationConfirmationMailerInterface;
 use Rebit\Auth\Application\Auth\Dto\Request\RequestRegistrationCodeRequestDto;
 use Rebit\Auth\Application\Auth\Dto\Result\RequestRegistrationCodeResultDto;
@@ -24,7 +26,13 @@ final readonly class RequestRegistrationCodeUseCase
         private RegistrationConfirmationMailerInterface $registrationConfirmationMailer,
         private int $codeTtlMinutes,
         private int $resendCooldownSeconds,
-    ) {}
+        private ClockInterface $clock,
+        private AuthTransactionInterface $transaction,
+    ) {
+        if (0 >= $codeTtlMinutes || 0 > $resendCooldownSeconds) {
+            throw new \InvalidArgumentException('Registration lifetime configuration is invalid.');
+        }
+    }
 
     /**
      * @throws HttpException
@@ -33,15 +41,44 @@ final readonly class RequestRegistrationCodeUseCase
      */
     public function execute(RequestRegistrationCodeRequestDto $dto): RequestRegistrationCodeResultDto
     {
+        [$email, $code, $expiresAt, $resendAvailableAt] = $this->transaction->run(
+            fn(): array => $this->prepareRegistration($dto),
+        );
+        // Transport is outside the database transaction; retry uses the normal cooldown.
+        $this->registrationConfirmationMailer->sendConfirmationCode($email, $code, $expiresAt);
+
+        return new RequestRegistrationCodeResultDto(
+            email: $email,
+            codeExpiresAt: $expiresAt->format('c'),
+            resendAvailableAt: $resendAvailableAt->format('c'),
+        );
+    }
+
+    /** @return array{string, string, DateTime, DateTime} */
+    private function prepareRegistration(RequestRegistrationCodeRequestDto $dto): array
+    {
         $email = self::normalizeEmail($dto->email);
+        $existingConfirmation = $this->registrationConfirmationRepository->findByEmail($email, forUpdate: true);
         $existingUser = $this->userRepository->findByEmail($email);
+        if (null !== $existingUser) {
+            $existingUser = $this->userRepository->findByIdForUpdate($existingUser->id);
+        }
 
         if (null !== $existingUser && true === $existingUser->isActive) {
             throw new HttpException('Пользователь с таким email уже зарегистрирован.', 409);
         }
 
-        $existingConfirmation = $this->registrationConfirmationRepository->findByEmail($email);
-        $nowTimestamp = time();
+        if (null !== $existingUser && (!$existingUser->isPendingRegistration || $email !== self::normalizeEmail($existingUser->email))) {
+            throw new HttpException('Регистрация для этого пользователя недоступна.', 409);
+        }
+        if (null !== $existingConfirmation && (
+            null === $existingUser
+            || $existingUser->id !== $existingConfirmation->userId
+            || null !== $existingConfirmation->confirmedAt
+        )) {
+            throw new HttpException('Регистрация для этого пользователя недоступна.', 409);
+        }
+        $nowTimestamp = $this->clock->now();
 
         if (
             null !== $existingConfirmation
@@ -88,13 +125,7 @@ final readonly class RequestRegistrationCodeUseCase
             );
         }
 
-        $this->registrationConfirmationMailer->sendConfirmationCode($email, $code, $expiresAt);
-
-        return new RequestRegistrationCodeResultDto(
-            email: $email,
-            codeExpiresAt: $expiresAt->format('c'),
-            resendAvailableAt: $resendAvailableAt->format('c'),
-        );
+        return [$email, $code, $expiresAt, $resendAvailableAt];
     }
 
     private static function normalizeEmail(string $email): string

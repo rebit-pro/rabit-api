@@ -3,6 +3,11 @@
 declare(strict_types=1);
 
 use Bitrix\Main\DI\ServiceLocator;
+use Rebit\Auth\Application\Auth\Contract\ClockInterface;
+use Rebit\Auth\Application\Auth\Contract\AuthTransactionInterface;
+use Rebit\Auth\Infrastructure\Adapter\SystemClock;
+use Rebit\Auth\Infrastructure\Adapter\BitrixAuthTransaction;
+use Rebit\Share\Application\Contract\Auth\TokenRevokerInterface;
 use Rebit\Auth\Application\Auth\Contract\CaptchaVerifierInterface;
 use Rebit\Auth\Application\Auth\Contract\LoginUserRepositoryInterface;
 use Rebit\Auth\Application\Auth\Contract\RegistrationConfirmationMailerInterface;
@@ -25,6 +30,15 @@ use Rebit\Share\Shared\Enum\LogChannelEnum;
 use Rebit\Share\Shared\Facade\Log;
 
 return [
+    ClockInterface::class => [
+        'constructor' => static fn(): ClockInterface => new SystemClock(),
+    ],
+    AuthTransactionInterface::class => [
+        'constructor' => static fn(): AuthTransactionInterface => new BitrixAuthTransaction(),
+    ],
+    TokenRevokerInterface::class => [
+        'constructor' => static fn(): TokenRevokerInterface => ServiceLocator::getInstance()->get(UserRepository::class),
+    ],
     UserRepository::class => [
         'className' => UserRepository::class,
     ],
@@ -38,6 +52,7 @@ return [
     ],
     RegistrationConfirmationRepository::class => [
         'className' => RegistrationConfirmationRepository::class,
+        'constructorParams' => static fn(): array => [ServiceLocator::getInstance()->get(ClockInterface::class)],
     ],
     RegistrationCodeGenerator::class => [
         'className' => RegistrationCodeGenerator::class,
@@ -73,6 +88,7 @@ return [
         'constructor' => static function(): TokenResolverInterface {
             return new TokenResolver(
                 ServiceLocator::getInstance()->get(UserRepository::class),
+                ServiceLocator::getInstance()->get(ClockInterface::class),
             );
         },
     ],
@@ -83,12 +99,13 @@ return [
             ServiceLocator::getInstance()->get(TokenGeneratorInterface::class),
             ServiceLocator::getInstance()->get(CaptchaVerifierInterface::class),
             (int)(getenv('REBIT_TOKEN_TTL_HOURS') ?: 24),
+            ServiceLocator::getInstance()->get(ClockInterface::class),
         ],
     ],
     LogoutUseCase::class => [
         'className' => LogoutUseCase::class,
         'constructorParams' => static fn(): array => [
-            ServiceLocator::getInstance()->get(UserRepository::class),
+            ServiceLocator::getInstance()->get(TokenRevokerInterface::class),
         ],
     ],
     RequestRegistrationCodeUseCase::class => [
@@ -100,6 +117,8 @@ return [
             ServiceLocator::getInstance()->get(RegistrationConfirmationMailerInterface::class),
             (int)(getenv('REBIT_AUTH_REGISTRATION_CODE_TTL_MINUTES') ?: 15),
             (int)(getenv('REBIT_AUTH_REGISTRATION_RESEND_COOLDOWN_SECONDS') ?: 60),
+            ServiceLocator::getInstance()->get(ClockInterface::class),
+            ServiceLocator::getInstance()->get(AuthTransactionInterface::class),
         ],
     ],
     ConfirmRegistrationUseCase::class => [
@@ -110,6 +129,8 @@ return [
             ServiceLocator::getInstance()->get(TokenGeneratorInterface::class),
             (int)(getenv('REBIT_TOKEN_TTL_HOURS') ?: 24),
             (int)(getenv('REBIT_AUTH_REGISTRATION_MAX_ATTEMPTS') ?: 5),
+            ServiceLocator::getInstance()->get(ClockInterface::class),
+            ServiceLocator::getInstance()->get(AuthTransactionInterface::class),
         ],
     ],
     AuthController::class => [

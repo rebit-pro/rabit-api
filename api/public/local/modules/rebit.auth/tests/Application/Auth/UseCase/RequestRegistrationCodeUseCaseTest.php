@@ -6,6 +6,8 @@ namespace Rebit\Auth\Tests\Application\Auth\UseCase;
 
 use Bitrix\Main\Type\DateTime;
 use PHPUnit\Framework\TestCase;
+use Rebit\Auth\Tests\Support\FrozenClock;
+use Rebit\Auth\Tests\Support\ImmediateTransaction;
 use Rebit\Auth\Application\Auth\Contract\RegistrationConfirmationMailerInterface;
 use Rebit\Auth\Application\Auth\Dto\Request\RequestRegistrationCodeRequestDto;
 use Rebit\Auth\Application\Auth\Dto\Result\RequestRegistrationCodeResultDto;
@@ -38,6 +40,8 @@ final class RequestRegistrationCodeUseCaseTest extends TestCase
             registrationConfirmationMailer: $registrationConfirmationMailer,
             codeTtlMinutes: self::CODE_TTL_MINUTES,
             resendCooldownSeconds: self::RESEND_COOLDOWN_SECONDS,
+            clock: new FrozenClock(),
+            transaction: new ImmediateTransaction(),
         );
     }
 
@@ -124,7 +128,7 @@ final class RequestRegistrationCodeUseCaseTest extends TestCase
 
         $userRepository
             ->expects($this->once())
-            ->method('findByEmail')
+            ->method('findByIdForUpdate')
             ->willReturn(new UserRegistrationState(
                 id: 10,
                 email: 'user@example.com',
@@ -132,6 +136,8 @@ final class RequestRegistrationCodeUseCaseTest extends TestCase
                 isActive: true,
             ))
         ;
+
+        $userRepository->method('findByEmail')->willReturn(new UserRegistrationState(11, 'user@example.com', 'User', false, true));
 
         $this->expectException(HttpException::class);
         $this->expectExceptionMessage('Пользователь с таким email уже зарегистрирован.');
@@ -157,12 +163,13 @@ final class RequestRegistrationCodeUseCaseTest extends TestCase
 
         $userRepository
             ->expects($this->once())
-            ->method('findByEmail')
+            ->method('findByIdForUpdate')
             ->willReturn(new UserRegistrationState(
                 id: 11,
                 email: 'user@example.com',
                 name: 'user@example.com',
                 isActive: false,
+                isPendingRegistration: true,
             ))
         ;
 
@@ -174,14 +181,16 @@ final class RequestRegistrationCodeUseCaseTest extends TestCase
                 userId: 11,
                 email: 'user@example.com',
                 codeHash: 'hash',
-                codeExpiresAt: DateTime::createFromTimestamp(time() + 600),
-                resendAvailableAt: DateTime::createFromTimestamp(time() + 30),
+                codeExpiresAt: DateTime::createFromTimestamp((new FrozenClock())->now() + 600),
+                resendAvailableAt: DateTime::createFromTimestamp((new FrozenClock())->now() + 30),
                 attempts: 0,
                 confirmedAt: null,
                 createdAt: new DateTime(),
                 updatedAt: new DateTime(),
             ))
         ;
+
+        $userRepository->method('findByEmail')->willReturn(new UserRegistrationState(11, 'user@example.com', 'User', false, true));
 
         $this->expectException(HttpException::class);
         $this->expectExceptionCode(429);

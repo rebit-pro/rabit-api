@@ -6,6 +6,7 @@ namespace Rebit\Auth\Tests\Application\Auth\UseCase;
 
 use Bitrix\Main\Type\DateTime;
 use PHPUnit\Framework\TestCase;
+use Rebit\Auth\Tests\Support\FrozenClock;
 use Rebit\Auth\Application\Auth\Contract\CaptchaVerifierInterface;
 use Rebit\Auth\Application\Auth\Contract\LoginUserRepositoryInterface;
 use Rebit\Auth\Application\Auth\Contract\TokenGeneratorInterface;
@@ -33,6 +34,7 @@ final class LoginUseCaseTest extends TestCase
             tokenGenerator: $tokenGenerator,
             captchaVerifier: $captchaVerifier ?? $this->createStub(CaptchaVerifierInterface::class),
             tokenTtlHours: self::TOKEN_TTL_HOURS,
+            clock: new FrozenClock(),
         );
     }
 
@@ -277,8 +279,8 @@ final class LoginUseCaseTest extends TestCase
 
         self::assertNotNull($capturedExpiresAt);
         /** @var DateTime $capturedExpiresAt */
-        $expectedMin = time() + (23 * 3600);
-        $expectedMax = time() + (25 * 3600);
+        $expectedMin = (new FrozenClock())->now() + (23 * 3600);
+        $expectedMax = (new FrozenClock())->now() + (25 * 3600);
         self::assertGreaterThanOrEqual($expectedMin, $capturedExpiresAt->getTimestamp());
         self::assertLessThanOrEqual($expectedMax, $capturedExpiresAt->getTimestamp());
     }

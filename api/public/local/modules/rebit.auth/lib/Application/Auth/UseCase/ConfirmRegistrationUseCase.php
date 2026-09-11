@@ -6,6 +6,8 @@ namespace Rebit\Auth\Application\Auth\UseCase;
 
 use Bitrix\Main\Type\DateTime;
 use Random\RandomException;
+use Rebit\Auth\Application\Auth\Contract\ClockInterface;
+use Rebit\Auth\Application\Auth\Contract\AuthTransactionInterface;
 use Rebit\Auth\Application\Auth\Contract\TokenGeneratorInterface;
 use Rebit\Auth\Application\Auth\Dto\Request\ConfirmRegistrationRequestDto;
 use Rebit\Auth\Application\Auth\Dto\Result\LoginResultDto;
@@ -23,7 +25,13 @@ final readonly class ConfirmRegistrationUseCase
         private TokenGeneratorInterface $tokenGenerator,
         private int $tokenTtlHours,
         private int $maxAttempts,
-    ) {}
+        private ClockInterface $clock,
+        private AuthTransactionInterface $transaction,
+    ) {
+        if (0 >= $tokenTtlHours || 0 >= $maxAttempts) {
+            throw new \InvalidArgumentException('Confirmation lifetime configuration is invalid.');
+        }
+    }
 
     /**
      * @throws HttpException
@@ -32,14 +40,25 @@ final readonly class ConfirmRegistrationUseCase
      */
     public function execute(ConfirmRegistrationRequestDto $dto): LoginResultDto
     {
+        $result = $this->transaction->run(fn(): HttpException|LoginResultDto => $this->confirm($dto));
+        if ($result instanceof HttpException) {
+            throw $result;
+        }
+
+        return $result;
+    }
+
+    private function confirm(ConfirmRegistrationRequestDto $dto): HttpException|LoginResultDto
+    {
         $email = self::normalizeEmail($dto->email);
-        $confirmation = $this->registrationConfirmationRepository->findByEmail($email);
+        $confirmation = $this->registrationConfirmationRepository->findByEmail($email, forUpdate: true);
+        $now = $this->clock->now();
 
         if (null === $confirmation || null !== $confirmation->confirmedAt) {
             throw new HttpException('Код подтверждения не найден. Запросите новый.', 404);
         }
 
-        if ($confirmation->codeExpiresAt->getTimestamp() < time()) {
+        if ($confirmation->codeExpiresAt->getTimestamp() <= $now) {
             throw new HttpException('Срок действия кода истёк. Запросите новый.', 410);
         }
 
@@ -50,24 +69,27 @@ final readonly class ConfirmRegistrationUseCase
         if (!password_verify($dto->code, $confirmation->codeHash)) {
             $this->registrationConfirmationRepository->incrementAttempts($confirmation->id);
 
-            throw new HttpException('Неверный код подтверждения.', 400);
+            // Commit the failed attempt before returning the public error.
+            return new HttpException('Неверный код подтверждения.', 400);
         }
 
-        $user = $this->userRepository->findById($confirmation->userId);
+        $user = $this->userRepository->findByIdForUpdate($confirmation->userId);
 
         if (null === $user) {
             throw new HttpException('Пользователь для подтверждения не найден.', 404);
         }
 
-        if (false === $user->isActive) {
-            $this->userRepository->activateUser($user->id);
+        if ($user->isActive || !$user->isPendingRegistration || $email !== self::normalizeEmail($user->email)) {
+            throw new HttpException('Регистрация для этого пользователя недоступна.', 409);
         }
+
+        $this->userRepository->activateUser($user->id);
 
         $this->registrationConfirmationRepository->markConfirmed($confirmation->id);
 
         $token = $this->tokenGenerator->generate();
         $expiresAt = DateTime::createFromTimestamp(
-            time() + ($this->tokenTtlHours * 3600),
+            $now + ($this->tokenTtlHours * 3600),
         );
 
         $this->userRepository->updateToken($user->id, $token, $expiresAt);

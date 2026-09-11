@@ -123,6 +123,7 @@ try {
         'Version20260713120001.php',
         'Version20260715120001.php',
         'Version20260820120001.php',
+        'Version20260911120001.php',
     ];
     $migrationFiles = glob($publicRoot . $migrationConfig['migration_dir'] . '/*.php');
     $check(false !== $migrationFiles, 'Cannot enumerate foundation migrations.');
@@ -131,7 +132,7 @@ try {
         $migrationFiles,
     );
     sort($actualMigrations);
-    $check($expectedMigrations === $actualMigrations, 'Expected exactly seven foundation migrations.');
+    $check($expectedMigrations === $actualMigrations, 'Unexpected foundation migration set; every new migration must be reviewed.');
 
     echo json_encode(
         [

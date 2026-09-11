@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Rebit\Auth\Infrastructure\Adapter;
 
+use Rebit\Auth\Application\Auth\Contract\ClockInterface;
 use Rebit\Auth\Domain\User\Repository\UserRepository;
 use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
 use Rebit\Share\Shared\Exception\HttpException;
@@ -17,6 +18,7 @@ final readonly class TokenResolver implements TokenResolverInterface
 {
     public function __construct(
         private UserRepository $repository,
+        private ClockInterface $clock,
     ) {}
 
     /**
@@ -25,13 +27,17 @@ final readonly class TokenResolver implements TokenResolverInterface
      */
     public function resolveUserId(string $token): int
     {
+        if ('' === $token) {
+            throw new HttpException('Unauthorized', 401);
+        }
+
         $userToken = $this->repository->findByToken($token);
 
         if (null === $userToken) {
             throw new HttpException('Unauthorized', 401);
         }
 
-        if (null !== $userToken->expiresAt && $userToken->expiresAt->getTimestamp() < time()) {
+        if (null === $userToken->expiresAt || $userToken->expiresAt->getTimestamp() <= $this->clock->now()) {
             throw new HttpException('Token expired', 401);
         }
 

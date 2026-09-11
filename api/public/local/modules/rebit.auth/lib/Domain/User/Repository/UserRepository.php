@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace Rebit\Auth\Domain\User\Repository;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserTable;
 use Rebit\Auth\Application\Auth\Contract\LoginUserRepositoryInterface;
 use Rebit\Auth\Domain\User\Entity\UserCredentials;
 use Rebit\Auth\Domain\User\Entity\UserRegistrationState;
 use Rebit\Auth\Domain\User\Entity\UserToken;
+use Rebit\Auth\Domain\User\Service\TokenExpirationParser;
+use Rebit\Share\Application\Contract\Auth\TokenRevokerInterface;
 use Rebit\Share\Shared\Exception\RepositoryException;
 use Rebit\Share\Shared\Repository\RepositoryExceptionTrait;
 
-final readonly class UserRepository implements LoginUserRepositoryInterface
+final readonly class UserRepository implements LoginUserRepositoryInterface, TokenRevokerInterface
 {
     use RepositoryExceptionTrait;
 
@@ -22,24 +25,31 @@ final readonly class UserRepository implements LoginUserRepositoryInterface
      */
     public function findByToken(string $token): ?UserToken
     {
-        return $this->query(function() use ($token): ?UserToken {
+        if ('' === $token) {
+            return null;
+        }
+
+        return $this->query(static function() use ($token): ?UserToken {
             $row = UserTable::query()
-                ->setSelect(['ID', 'UF_TOKEN_EXPIRES_AT'])
+                ->setSelect(['ID', 'UF_TOKEN', 'UF_TOKEN_EXPIRES_AT', 'UF_AUTH_REGISTRATION_PENDING'])
                 ->where('UF_TOKEN', $token)
+                ->where('ACTIVE', 'Y')
                 ->setLimit(1)
                 ->exec()
                 ->fetch()
             ;
 
-            if (false === $row) {
+            if (false === $row || 1 === (int)($row['UF_AUTH_REGISTRATION_PENDING'] ?? 0)) {
+                return null;
+            }
+
+            if (!hash_equals((string)$row['UF_TOKEN'], $token)) {
                 return null;
             }
 
             return new UserToken(
                 userId: (int)$row['ID'],
-                expiresAt: $row['UF_TOKEN_EXPIRES_AT'] instanceof DateTime
-                    ? $row['UF_TOKEN_EXPIRES_AT']
-                    : null,
+                expiresAt: TokenExpirationParser::parse($row['UF_TOKEN_EXPIRES_AT']),
             );
         });
     }
@@ -51,7 +61,7 @@ final readonly class UserRepository implements LoginUserRepositoryInterface
     {
         return $this->query(function() use ($email): ?UserCredentials {
             $row = UserTable::query()
-                ->setSelect(['ID', 'PASSWORD', 'EMAIL', 'NAME'])
+                ->setSelect(['ID', 'PASSWORD', 'EMAIL', 'NAME', 'UF_AUTH_REGISTRATION_PENDING'])
                 ->enablePrivateFields()
                 ->where('EMAIL', $email)
                 ->where('ACTIVE', 'Y')
@@ -60,7 +70,7 @@ final readonly class UserRepository implements LoginUserRepositoryInterface
                 ->fetch()
             ;
 
-            if (false === $row) {
+            if (false === $row || 1 === (int)($row['UF_AUTH_REGISTRATION_PENDING'] ?? 0)) {
                 return null;
             }
 
@@ -80,7 +90,7 @@ final readonly class UserRepository implements LoginUserRepositoryInterface
     {
         return $this->query(function() use ($email): ?UserRegistrationState {
             $row = UserTable::query()
-                ->setSelect(['ID', 'EMAIL', 'NAME', 'ACTIVE'])
+                ->setSelect(['ID', 'EMAIL', 'NAME', 'ACTIVE', 'UF_AUTH_REGISTRATION_PENDING'])
                 ->where('EMAIL', $email)
                 ->setLimit(1)
                 ->exec()
@@ -96,6 +106,7 @@ final readonly class UserRepository implements LoginUserRepositoryInterface
                 email: (string)$row['EMAIL'],
                 name: (string)$row['NAME'],
                 isActive: 'Y' === (string)$row['ACTIVE'],
+                isPendingRegistration: 1 === (int)($row['UF_AUTH_REGISTRATION_PENDING'] ?? 0),
             );
         });
     }
@@ -107,7 +118,7 @@ final readonly class UserRepository implements LoginUserRepositoryInterface
     {
         return $this->query(function() use ($userId): ?UserRegistrationState {
             $row = UserTable::query()
-                ->setSelect(['ID', 'EMAIL', 'NAME', 'ACTIVE'])
+                ->setSelect(['ID', 'EMAIL', 'NAME', 'ACTIVE', 'UF_AUTH_REGISTRATION_PENDING'])
                 ->where('ID', $userId)
                 ->setLimit(1)
                 ->exec()
@@ -123,6 +134,7 @@ final readonly class UserRepository implements LoginUserRepositoryInterface
                 email: (string)$row['EMAIL'],
                 name: (string)$row['NAME'],
                 isActive: 'Y' === (string)$row['ACTIVE'],
+                isPendingRegistration: 1 === (int)($row['UF_AUTH_REGISTRATION_PENDING'] ?? 0),
             );
         });
     }
@@ -138,6 +150,7 @@ final readonly class UserRepository implements LoginUserRepositoryInterface
             'EMAIL' => $email,
             'NAME' => $name,
             'ACTIVE' => 'N',
+            'UF_AUTH_REGISTRATION_PENDING' => 1,
             'PASSWORD' => $password,
             'CONFIRM_PASSWORD' => $password,
         ]);
@@ -156,7 +169,6 @@ final readonly class UserRepository implements LoginUserRepositoryInterface
     {
         $this->updateUser($userId, [
             'NAME' => $name,
-            'ACTIVE' => 'N',
             'PASSWORD' => $password,
             'CONFIRM_PASSWORD' => $password,
         ]);
@@ -169,6 +181,7 @@ final readonly class UserRepository implements LoginUserRepositoryInterface
     {
         $this->updateUser($userId, [
             'ACTIVE' => 'Y',
+            'UF_AUTH_REGISTRATION_PENDING' => 0,
         ]);
     }
 
@@ -176,7 +189,7 @@ final readonly class UserRepository implements LoginUserRepositoryInterface
     {
         $this->updateUser($userId, [
             'UF_TOKEN' => $token,
-            'UF_TOKEN_EXPIRES_AT' => $expiresAt->toString(),
+            'UF_TOKEN_EXPIRES_AT' => TokenExpirationParser::format($expiresAt),
         ]);
     }
 
@@ -191,8 +204,52 @@ final readonly class UserRepository implements LoginUserRepositoryInterface
         ]);
     }
 
+    /** Current read: plain ORM re-read could retain a stale REPEATABLE READ snapshot. */
+    public function findByIdForUpdate(int $userId): ?UserRegistrationState
+    {
+        return $this->query(static function() use ($userId): ?UserRegistrationState {
+            /** @var array{
+             *     ID: int|string,
+             *     EMAIL: string,
+             *     NAME: null|string,
+             *     ACTIVE: string,
+             *     UF_AUTH_REGISTRATION_PENDING: null|int|string,
+             * }|false $row */
+            $row = Application::getConnection()->query(sprintf(
+                'SELECT u.ID, u.EMAIL, u.NAME, u.ACTIVE, uf.UF_AUTH_REGISTRATION_PENDING FROM b_user u LEFT JOIN b_uts_user uf ON uf.VALUE_ID = u.ID WHERE u.ID = %d FOR UPDATE',
+                $userId,
+            ))->fetch();
+            if (false === $row) {
+                return null;
+            }
+
+            return new UserRegistrationState(
+                id: (int)$row['ID'],
+                email: $row['EMAIL'],
+                name: (string)$row['NAME'],
+                isActive: 'Y' === $row['ACTIVE'],
+                isPendingRegistration: 1 === (int)$row['UF_AUTH_REGISTRATION_PENDING'],
+            );
+        });
+    }
+
+    public function revokeToken(int $userId, string $token): void
+    {
+        if ('' === $token) {
+            return;
+        }
+        $this->query(static function() use ($userId, $token): void {
+            $connection = Application::getConnection();
+            $connection->queryExecute(sprintf(
+                "UPDATE b_uts_user SET UF_TOKEN = '', UF_TOKEN_EXPIRES_AT = NULL WHERE VALUE_ID = %d AND BINARY UF_TOKEN = '%s'",
+                $userId,
+                $connection->getSqlHelper()->forSql($token),
+            ));
+        });
+    }
+
     /**
-     * @param array<string, bool|string> $fields
+     * @param array<string, bool|int|string> $fields
      *
      * @throws RepositoryException
      */

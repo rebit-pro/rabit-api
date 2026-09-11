@@ -31,11 +31,11 @@ final class LogoutUseCaseTest extends TestCase
 
         $this->userRepository
             ->expects($this->once())
-            ->method('clearToken')
-            ->with($userId)
+            ->method('revokeToken')
+            ->with($userId, 'current-token')
         ;
 
-        $this->useCase->execute($userId);
+        $this->useCase->execute($userId, 'current-token');
     }
 
     public function testLogoutCallsClearTokenWithCorrectUserId(): void
@@ -44,13 +44,13 @@ final class LogoutUseCaseTest extends TestCase
 
         $this->userRepository
             ->expects($this->once())
-            ->method('clearToken')
+            ->method('revokeToken')
             ->willReturnCallback(function(int $userId) use (&$capturedUserId): void {
                 $capturedUserId = $userId;
             })
         ;
 
-        $this->useCase->execute(99);
+        $this->useCase->execute(99, 'current-token');
 
         self::assertSame(99, $capturedUserId);
     }

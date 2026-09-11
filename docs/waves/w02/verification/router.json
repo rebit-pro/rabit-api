@@ -1,0 +1,61 @@
+{
+    "status": "PASS",
+    "phpVersion": "8.4.23",
+    "routingConfig": [
+        "rabit-api.php"
+    ],
+    "routes": [
+        {
+            "method": "POST",
+            "path": "/api/v1/auth/login",
+            "controller": "Rebit\\Auth\\Presentation\\Controller\\AuthController",
+            "action": "loginAction"
+        },
+        {
+            "method": "POST",
+            "path": "/api/v1/auth/register/request-code",
+            "controller": "Rebit\\Auth\\Presentation\\Controller\\AuthController",
+            "action": "requestRegistrationCodeAction"
+        },
+        {
+            "method": "POST",
+            "path": "/api/v1/auth/register/confirm",
+            "controller": "Rebit\\Auth\\Presentation\\Controller\\AuthController",
+            "action": "confirmRegistrationAction"
+        },
+        {
+            "method": "POST",
+            "path": "/api/v1/auth/logout",
+            "controller": "Rebit\\Auth\\Presentation\\Controller\\AuthController",
+            "action": "logoutAction"
+        },
+        {
+            "method": "POST",
+            "path": "/api/v1/share/file/upload/",
+            "controller": "Rebit\\Share\\Presentation\\Controller\\FileController",
+            "action": "uploadAction"
+        },
+        {
+            "method": "POST",
+            "path": "/api/v1/lead",
+            "controller": "Rebit\\Notification\\Presentation\\Controller\\LeadController",
+            "action": "submitAction"
+        }
+    ],
+    "migrationConfig": {
+        "directory": "/local/php_interface/migrations.foundation",
+        "historyTable": "sprint_migration_versions"
+    },
+    "migrations": [
+        "Version20260321120016.php",
+        "Version20260323120001.php",
+        "Version20260326120008.php",
+        "Version20260326120009.php",
+        "Version20260713120001.php",
+        "Version20260715120001.php",
+        "Version20260820120001.php",
+        "Version20260911120001.php"
+    ],
+    "controllersExecuted": false,
+    "migrationsExecuted": false
+}

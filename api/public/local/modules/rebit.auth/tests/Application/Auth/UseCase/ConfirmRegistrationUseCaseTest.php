@@ -6,6 +6,8 @@ namespace Rebit\Auth\Tests\Application\Auth\UseCase;
 
 use Bitrix\Main\Type\DateTime;
 use PHPUnit\Framework\TestCase;
+use Rebit\Auth\Tests\Support\FrozenClock;
+use Rebit\Auth\Tests\Support\ImmediateTransaction;
 use Rebit\Auth\Application\Auth\Contract\TokenGeneratorInterface;
 use Rebit\Auth\Application\Auth\Dto\Request\ConfirmRegistrationRequestDto;
 use Rebit\Auth\Application\Auth\Dto\Result\LoginResultDto;
@@ -35,6 +37,8 @@ final class ConfirmRegistrationUseCaseTest extends TestCase
             tokenGenerator: $tokenGenerator,
             tokenTtlHours: self::TOKEN_TTL_HOURS,
             maxAttempts: self::MAX_ATTEMPTS,
+            clock: new FrozenClock(),
+            transaction: new ImmediateTransaction(),
         );
     }
 
@@ -46,8 +50,8 @@ final class ConfirmRegistrationUseCaseTest extends TestCase
             userId: 15,
             email: 'user@example.com',
             codeHash: password_hash($code, PASSWORD_DEFAULT),
-            codeExpiresAt: DateTime::createFromTimestamp(time() + 600),
-            resendAvailableAt: DateTime::createFromTimestamp(time() - 1),
+            codeExpiresAt: DateTime::createFromTimestamp((new FrozenClock())->now() + 600),
+            resendAvailableAt: DateTime::createFromTimestamp((new FrozenClock())->now() - 1),
             attempts: 0,
             confirmedAt: null,
             createdAt: new DateTime(),
@@ -67,13 +71,14 @@ final class ConfirmRegistrationUseCaseTest extends TestCase
 
         $userRepository
             ->expects($this->once())
-            ->method('findById')
+            ->method('findByIdForUpdate')
             ->with(15)
             ->willReturn(new UserRegistrationState(
                 id: 15,
                 email: 'user@example.com',
                 name: 'user@example.com',
                 isActive: false,
+                isPendingRegistration: true,
             ))
         ;
 
@@ -127,8 +132,8 @@ final class ConfirmRegistrationUseCaseTest extends TestCase
             userId: 16,
             email: 'user@example.com',
             codeHash: password_hash('123456', PASSWORD_DEFAULT),
-            codeExpiresAt: DateTime::createFromTimestamp(time() + 600),
-            resendAvailableAt: DateTime::createFromTimestamp(time() - 1),
+            codeExpiresAt: DateTime::createFromTimestamp((new FrozenClock())->now() + 600),
+            resendAvailableAt: DateTime::createFromTimestamp((new FrozenClock())->now() - 1),
             attempts: 0,
             confirmedAt: null,
             createdAt: new DateTime(),
@@ -179,8 +184,8 @@ final class ConfirmRegistrationUseCaseTest extends TestCase
                 userId: 17,
                 email: 'user@example.com',
                 codeHash: password_hash('123456', PASSWORD_DEFAULT),
-                codeExpiresAt: DateTime::createFromTimestamp(time() - 5),
-                resendAvailableAt: DateTime::createFromTimestamp(time() - 1),
+                codeExpiresAt: DateTime::createFromTimestamp((new FrozenClock())->now() - 5),
+                resendAvailableAt: DateTime::createFromTimestamp((new FrozenClock())->now() - 1),
                 attempts: 0,
                 confirmedAt: null,
                 createdAt: new DateTime(),

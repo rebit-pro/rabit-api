@@ -11,5 +11,6 @@ final readonly class UserRegistrationState
         public string $email,
         public string $name,
         public bool $isActive,
+        public bool $isPendingRegistration = false,
     ) {}
 }
