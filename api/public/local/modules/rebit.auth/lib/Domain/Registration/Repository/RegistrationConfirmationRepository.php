@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rebit\Auth\Domain\Registration\Repository;
 
 use Bitrix\Main\Application;
+use Rebit\Auth\Application\Auth\Contract\ClockInterface;
 use Bitrix\Main\Type\DateTime;
 use Rebit\Auth\Domain\Registration\Entity\RegistrationConfirmation;
 use Rebit\Share\Shared\Exception\RepositoryException;
@@ -16,16 +17,19 @@ final readonly class RegistrationConfirmationRepository
 
     private const string TABLE_NAME = 'rebit_auth_registration_confirmation';
 
+    public function __construct(private ClockInterface $clock) {}
+
     /**
      * @throws RepositoryException
      */
-    public function findByEmail(string $email): ?RegistrationConfirmation
+    public function findByEmail(string $email, bool $forUpdate = false): ?RegistrationConfirmation
     {
-        return $this->query(function() use ($email): ?RegistrationConfirmation {
+        return $this->query(function() use ($email, $forUpdate): ?RegistrationConfirmation {
             $connection = Application::getConnection();
             $helper = $connection->getSqlHelper();
             $emailSql = $helper->forSql($email);
 
+            // Keep SQL DATETIME raw: fetch() localizes it through the Bitrix culture.
             /** @var array{
              *     ID: int|string,
              *     UF_USER_ID: int|string,
@@ -41,11 +45,12 @@ final readonly class RegistrationConfirmationRepository
              */
             $row = $connection->query(
                 sprintf(
-                    'SELECT ID, UF_USER_ID, UF_EMAIL, UF_CODE_HASH, UF_CODE_EXPIRES_AT, UF_RESEND_AVAILABLE_AT, UF_ATTEMPTS, UF_CONFIRMED_AT, UF_CREATED_AT, UF_UPDATED_AT FROM %s WHERE UF_EMAIL = \'%s\' LIMIT 1',
+                    'SELECT ID, UF_USER_ID, UF_EMAIL, UF_CODE_HASH, UF_CODE_EXPIRES_AT, UF_RESEND_AVAILABLE_AT, UF_ATTEMPTS, UF_CONFIRMED_AT, UF_CREATED_AT, UF_UPDATED_AT FROM %s WHERE UF_EMAIL = \'%s\' LIMIT 1%s',
                     self::TABLE_NAME,
                     $emailSql,
+                    $forUpdate ? ' FOR UPDATE' : '',
                 ),
-            )->fetch();
+            )->fetchRaw();
 
             if (false === $row) {
                 return null;
@@ -53,7 +58,7 @@ final readonly class RegistrationConfirmationRepository
 
             $confirmedAt = null;
             if (null !== $row['UF_CONFIRMED_AT'] && '' !== (string)$row['UF_CONFIRMED_AT']) {
-                $confirmedAt = new DateTime((string)$row['UF_CONFIRMED_AT']);
+                $confirmedAt = new DateTime((string)$row['UF_CONFIRMED_AT'], 'Y-m-d H:i:s');
             }
 
             return new RegistrationConfirmation(
@@ -61,12 +66,12 @@ final readonly class RegistrationConfirmationRepository
                 userId: (int)$row['UF_USER_ID'],
                 email: (string)$row['UF_EMAIL'],
                 codeHash: (string)$row['UF_CODE_HASH'],
-                codeExpiresAt: new DateTime((string)$row['UF_CODE_EXPIRES_AT']),
-                resendAvailableAt: new DateTime((string)$row['UF_RESEND_AVAILABLE_AT']),
+                codeExpiresAt: new DateTime((string)$row['UF_CODE_EXPIRES_AT'], 'Y-m-d H:i:s'),
+                resendAvailableAt: new DateTime((string)$row['UF_RESEND_AVAILABLE_AT'], 'Y-m-d H:i:s'),
                 attempts: (int)$row['UF_ATTEMPTS'],
                 confirmedAt: $confirmedAt,
-                createdAt: new DateTime((string)$row['UF_CREATED_AT']),
-                updatedAt: new DateTime((string)$row['UF_UPDATED_AT']),
+                createdAt: new DateTime((string)$row['UF_CREATED_AT'], 'Y-m-d H:i:s'),
+                updatedAt: new DateTime((string)$row['UF_UPDATED_AT'], 'Y-m-d H:i:s'),
             );
         });
     }
@@ -84,7 +89,7 @@ final readonly class RegistrationConfirmationRepository
         $this->query(function() use ($userId, $email, $codeHash, $codeExpiresAt, $resendAvailableAt): void {
             $connection = Application::getConnection();
             $helper = $connection->getSqlHelper();
-            $now = new DateTime();
+            $now = DateTime::createFromTimestamp($this->clock->now());
 
             $connection->queryExecute(
                 sprintf(
@@ -124,7 +129,7 @@ final readonly class RegistrationConfirmationRepository
                     $helper->forSql($codeHash),
                     $helper->forSql($this->formatDateTime($codeExpiresAt)),
                     $helper->forSql($this->formatDateTime($resendAvailableAt)),
-                    $helper->forSql($this->formatDateTime(new DateTime())),
+                    $helper->forSql($this->formatDateTime(DateTime::createFromTimestamp($this->clock->now()))),
                     $id,
                 ),
             );
@@ -144,7 +149,7 @@ final readonly class RegistrationConfirmationRepository
                 sprintf(
                     'UPDATE %s SET UF_ATTEMPTS = UF_ATTEMPTS + 1, UF_UPDATED_AT = \'%s\' WHERE ID = %d',
                     self::TABLE_NAME,
-                    $helper->forSql($this->formatDateTime(new DateTime())),
+                    $helper->forSql($this->formatDateTime(DateTime::createFromTimestamp($this->clock->now()))),
                     $id,
                 ),
             );
@@ -159,7 +164,7 @@ final readonly class RegistrationConfirmationRepository
         $this->query(function() use ($id): void {
             $connection = Application::getConnection();
             $helper = $connection->getSqlHelper();
-            $confirmedAt = $this->formatDateTime(new DateTime());
+            $confirmedAt = $this->formatDateTime(DateTime::createFromTimestamp($this->clock->now()));
 
             $connection->queryExecute(
                 sprintf(

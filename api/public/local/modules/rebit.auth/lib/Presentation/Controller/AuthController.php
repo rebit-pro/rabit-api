@@ -81,7 +81,11 @@ final class AuthController extends BaseJsonController implements AuthenticatedCo
      */
     public function logoutAction(): ControllerJson
     {
-        $this->logoutUseCase->execute($this->getAuthUserId());
+        $header = (string)$this->getRequest()->getHeader('Authorization');
+        if (!str_starts_with($header, 'Bearer ') || 7 === strlen($header)) {
+            throw new HttpException('Unauthorized', 401);
+        }
+        $this->logoutUseCase->execute($this->getAuthUserId(), substr($header, 7));
 
         return $this->json([]);
     }

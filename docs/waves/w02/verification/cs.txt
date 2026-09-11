@@ -1,0 +1,10 @@
+
+Found 0 of 258 files that can be fixed in 0.382 seconds, 42.00 MB memory used
+PHP CS Fixer 3.94.2 7th Gear by Fabien Potencier, Dariusz Ruminski and contributors.
+PHP runtime: 8.4.23
+Loaded config default from "public/local/php-cs-fixer.php".
+Running analysis on 19 cores with 10 files per process.
+Using cache file "/app/public/local/../../var/.php-cs-fixer.cache".
+   0/258 [░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   0%
+ 233/258 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░]  90%
+ 258/258 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%

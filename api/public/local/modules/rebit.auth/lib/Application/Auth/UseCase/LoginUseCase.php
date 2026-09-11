@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rebit\Auth\Application\Auth\UseCase;
 
 use Bitrix\Main\Type\DateTime;
+use Rebit\Auth\Application\Auth\Contract\ClockInterface;
 use Rebit\Auth\Application\Auth\Contract\CaptchaVerifierInterface;
 use Rebit\Auth\Application\Auth\Contract\LoginUserRepositoryInterface;
 use Rebit\Auth\Application\Auth\Contract\TokenGeneratorInterface;
@@ -22,7 +23,12 @@ final readonly class LoginUseCase
         private TokenGeneratorInterface $tokenGenerator,
         private CaptchaVerifierInterface $captchaVerifier,
         private int $tokenTtlHours,
-    ) {}
+        private ClockInterface $clock,
+    ) {
+        if (0 >= $tokenTtlHours) {
+            throw new \InvalidArgumentException('Token lifetime must be positive.');
+        }
+    }
 
     /**
      * @throws HttpException
@@ -45,7 +51,7 @@ final readonly class LoginUseCase
 
         $token = $this->tokenGenerator->generate();
         $expiresAt = DateTime::createFromTimestamp(
-            time() + ($this->tokenTtlHours * 3600),
+            $this->clock->now() + ($this->tokenTtlHours * 3600),
         );
 
         $this->userRepository->updateToken($user->id, $token, $expiresAt);
