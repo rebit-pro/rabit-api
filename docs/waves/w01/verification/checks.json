@@ -1,0 +1,77 @@
+{
+  "checkedAt": "2026-09-11T11:19:47.608286+00:00",
+  "phpImage": "rabit-api-php-cli:20260911-074507",
+  "network": "none",
+  "kernel": "Existing licensed Bitrix mounted read-only; no production/bootstrap/DB",
+  "dependencies": "Existing locked vendor mounted read-only",
+  "results": {
+    "phpunit": {
+      "exitCode": 0,
+      "command": [
+        "vendor/bin/phpunit",
+        "--colors=never"
+      ],
+      "output": "PHPUnit 12.5.14 by Sebastian Bergmann and contributors.\n\nRuntime:       PHP 8.4.23\nConfiguration: /app/phpunit.xml\n\n[2026-09-11T14:19:44.757903+03:00] todo.WARNING: Кеширование не readonly объекта без метода __clone! {\"class\":\"Rebit\\\\Share\\\\Infrastructure\\\\Dto\\\\Metadata\\\\DtoClassMetadata\"} {\"durationMs\":109.714,\"requestId\":\"6aa3e3d0b93943.15451468\",\"method\":\"CLI\"}\n[2026-09-11T14:19:44.758788+03:00] todo.WARNING: Кеширование не readonly объекта без метода __clone! {\"class\":\"Rebit\\\\Share\\\\Infrastructure\\\\Dto\\\\Metadata\\\\DtoParameterMetadata\"} {\"durationMs\":109.826,\"requestId\":\"6aa3e3d0b93943.15451468\",\"method\":\"CLI\"}\n................................................................. 65 / 95 ( 68%)\n..............................                                    95 / 95 (100%)\n\nTime: 00:02.240, Memory: 20.00 MB\n\nOK (95 tests, 521 assertions)\n"
+    },
+    "phpstan": {
+      "exitCode": 0,
+      "command": [
+        "vendor/bin/phpstan",
+        "analyse",
+        "--configuration=phpstan.neon",
+        "--no-progress"
+      ],
+      "output": "\n [OK] No errors                                                                 \n\n"
+    },
+    "lint": {
+      "exitCode": 0,
+      "command": [
+        "vendor/bin/phplint",
+        "--no-cache"
+      ],
+      "output": "........................................................ 57 / 225 ( 25%)\n.........................................................114 / 225 ( 50%)\n.........................................................171 / 225 ( 76%)\n.......................................................\n\nphplint 9.7.1@69ec670 by overtrue and contributors.\n\nRuntime       : PHP 8.4.23\nConfiguration : /app/.phplint.yml\n\n\nTime: 102 ms, Memory: 8.0 MiB, Cache: 0 hit, 225 misses, Processes: 23\n\n [OK] 225 files                                                                 \n\n"
+    },
+    "cs-check": {
+      "exitCode": 0,
+      "command": [
+        "vendor/bin/php-cs-fixer",
+        "fix",
+        "--config=public/local/php-cs-fixer.php",
+        "--dry-run",
+        "--format=json",
+        "--allow-risky=yes",
+        "--using-cache=no"
+      ],
+      "output": "Files needing changes: 0"
+    },
+    "http": {
+      "exitCode": 0,
+      "command": [
+        "tools/verify-w01-http-logs.php"
+      ],
+      "output": "{\n    \"status\": \"PASS\",\n    \"phpVersion\": \"8.4.23\",\n    \"realBitrixClasses\": 5,\n    \"requestResponseRecords\": 7,\n    \"exceptionFinalization\": true,\n    \"outboundPayloadPreserved\": true,\n    \"bufferedFailureRecords\": 3,\n    \"requestPayloadReads\": 0,\n    \"responsePayloadReadsByLogger\": 0,\n    \"databaseBootstrapExecuted\": false,\n    \"liveHttpRequestsExecuted\": false\n}\n"
+    },
+    "exception": {
+      "exitCode": 0,
+      "command": [
+        "tools/verify-w01-exception-log.php"
+      ],
+      "output": "{\n    \"status\": \"PASS\",\n    \"phpVersion\": \"8.4.23\",\n    \"realKernelFactory\": true,\n    \"earlyBootstrap\": true,\n    \"safeFileBytes\": true,\n    \"rotation\": true,\n    \"requestCorrelation\": true,\n    \"composerLoaded\": false,\n    \"databaseUsed\": false,\n    \"networkUsed\": false\n}\n"
+    },
+    "router": {
+      "exitCode": 0,
+      "command": [
+        "tools/verify-w00-router.php"
+      ],
+      "output": "{\n    \"status\": \"PASS\",\n    \"phpVersion\": \"8.4.23\",\n    \"routingConfig\": [\n        \"rabit-api.php\"\n    ],\n    \"routes\": [\n        {\n            \"method\": \"POST\",\n            \"path\": \"/api/v1/auth/login\",\n            \"controller\": \"Rebit\\\\Auth\\\\Presentation\\\\Controller\\\\AuthController\",\n            \"action\": \"loginAction\"\n        },\n        {\n            \"method\": \"POST\",\n            \"path\": \"/api/v1/auth/register/request-code\",\n            \"controller\": \"Rebit\\\\Auth\\\\Presentation\\\\Controller\\\\AuthController\",\n            \"action\": \"requestRegistrationCodeAction\"\n        },\n        {\n            \"method\": \"POST\",\n            \"path\": \"/api/v1/auth/register/confirm\",\n            \"controller\": \"Rebit\\\\Auth\\\\Presentation\\\\Controller\\\\AuthController\",\n            \"action\": \"confirmRegistrationAction\"\n        },\n        {\n            \"method\": \"POST\",\n            \"path\": \"/api/v1/auth/logout\",\n            \"controller\": \"Rebit\\\\Auth\\\\Presentation\\\\Controller\\\\AuthController\",\n            \"action\": \"logoutAction\"\n        },\n        {\n            \"method\": \"POST\",\n            \"path\": \"/api/v1/share/file/upload/\",\n            \"controller\": \"Rebit\\\\Share\\\\Presentation\\\\Controller\\\\FileController\",\n            \"action\": \"uploadAction\"\n        },\n        {\n            \"method\": \"POST\",\n            \"path\": \"/api/v1/lead\",\n            \"controller\": \"Rebit\\\\Notification\\\\Presentation\\\\Controller\\\\LeadController\",\n            \"action\": \"submitAction\"\n        }\n    ],\n    \"migrationConfig\": {\n        \"directory\": \"/local/php_interface/migrations.foundation\",\n        \"historyTable\": \"sprint_migration_versions\"\n    },\n    \"migrations\": [\n        \"Version20260321120016.php\",\n        \"Version20260323120001.php\",\n        \"Version20260326120008.php\",\n        \"Version20260326120009.php\",\n        \"Version20260713120001.php\",\n        \"Version20260715120001.php\",\n        \"Version20260820120001.php\"\n    ],\n    \"controllersExecuted\": false,\n    \"migrationsExecuted\": false\n}\n"
+    },
+    "inventory": {
+      "exitCode": 0,
+      "output": "{\n  \"result\": \"passed\",\n  \"endpoints\": 99,\n  \"originalEndpoints\": 97,\n  \"platformEndpoints\": 2,\n  \"currentBackendSourceRoutes\": 6,\n  \"moduleFolders\": 15,\n  \"waveFolders\": 35,\n  \"platformGuards\": 4,\n  \"postmanScriptsExecuted\": false,\n  \"liveApiRequestsExecuted\": false,\n  \"sha256\": {\n    \"endpoints.json\": \"eb49b78ab230e1457f626bc2cf480e4f491fe6838ed0c30142c1bb224203c28e\",\n    \"backend-waves.md\": \"e95a07176d73bd4438e95c5ebf22f770ebb400b1c928f4ac142d389678fa4cef\",\n    \"postman/MoreFoto.postman_collection.json\": \"ad92de6e7305f1954f3e8cc1ccee73a26317fbdc2186d96520a18715a4b2bf99\",\n    \"postman/MoreFoto.backend-waves.postman_collection.json\": \"2d5c4aae62c2868e0dbeaa6edfe60515e6694ed039ad0afdee9dd0a76f3a9950\"\n  }\n}\n"
+    },
+    "diff-check": {
+      "exitCode": 0,
+      "output": ""
+    }
+  }
+}

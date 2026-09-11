@@ -395,3 +395,50 @@ namespace Bitrix\Main\ORM\Objectify {
         public function offsetUnset(mixed $offset): void {}
     }
 }
+
+namespace Bitrix\Main\Diag {
+    abstract class ExceptionHandlerLog
+    {
+        public const UNCAUGHT_EXCEPTION = 0;
+        public const CAUGHT_EXCEPTION = 1;
+        public const IGNORED_ERROR = 2;
+        public const LOW_PRIORITY_ERROR = 3;
+        public const ASSERTION = 4;
+        public const FATAL = 5;
+        /** @return string */
+        public static function logTypeToString($logType) {}
+        /** @return string */
+        public static function logTypeToLevel($logType) {}
+        abstract public function write($exception, $logType);
+        /** @param array<string, mixed> $options */
+        abstract public function initialize(array $options);
+    }
+
+    class FileExceptionHandlerLog extends ExceptionHandlerLog
+    {
+        /** @var \Psr\Log\LoggerInterface */
+        protected $logger;
+        /** @param array<string, mixed> $options */
+        public function initialize(array $options) {}
+        public function write($exception, $logType) {}
+    }
+
+    interface LogFormatterInterface
+    {
+        /** @param array<string, mixed> $context */
+        public function format($message, array $context = []): string;
+    }
+
+    abstract class Logger extends \Psr\Log\AbstractLogger
+    {
+        /** @param array<string, mixed> $context */
+        public function log($level, string|\Stringable $message, array $context = []): void {}
+        /** @return $this */
+        public function setFormatter(LogFormatterInterface $formatter) {}
+    }
+
+    class FileLogger extends Logger
+    {
+        public function __construct(string $fileName, ?int $maxSize = null) {}
+    }
+}

@@ -10,20 +10,15 @@ use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\HttpResponse;
-use Rebit\Share\Infrastructure\Controller\AbstractController;
+use Rebit\Share\Infrastructure\Logger\LogSanitizer;
+use Rebit\Share\Infrastructure\Logger\RequestIdGenerator;
 use Rebit\Share\Shared\Enum\LogChannelEnum;
 use Rebit\Share\Shared\Facade\Log;
-use Rebit\Share\Infrastructure\Helpers\RequestHelper;
-use Bitrix\Main\Engine\Response\Json;
 
-/**
- * Логирует входящий запрос и его результаты.
- *
- * Канал логирования определяется автоматически по namespace контроллера,
- * если не передан явно. Например: Rebit\Auth\... → LogChannelEnum::auth
- */
+/** HTTP diagnostics never read request values, headers or response content. */
 final class LoggerFilter extends Base
 {
+    /** @param array<array-key, mixed> $extraData */
     public function __construct(
         private readonly ?LogChannelEnum $channel = null,
         private readonly array $extraData = [],
@@ -31,98 +26,41 @@ final class LoggerFilter extends Base
         parent::__construct();
     }
 
-    /**
-     * Логируем входящий запрос
-     *
-     * @param Event{
-     *     moduleId: string,
-     *     type: string,
-     *     parameters: array{
-     *         action: Action,
-     *         controller: AbstractController,
-     *     }
-     * } $event
-     */
     public function onBeforeAction(Event $event): ?EventResult
     {
-        /** @var Controller $controller */
-        $controller = $event->getParameter('controller');
-        $channel = $this->resolveChannel($controller);
-
-        $data = $this->extractRequestData($controller);
-        Log::channel($channel)->info('REQUEST', array_merge($data, $this->extraData));
+        $this->write('REQUEST', $event);
 
         return null;
     }
 
-    /**
-     * Логируем результат запроса
-     *
-     * @param Event{
-     *     moduleId: string,
-     *     type: string,
-     *     parameters: array{
-     *         action: Action,
-     *         controller: AbstractController,
-     *         result: HttpResponse,
-     *     }
-     * } $event
-     *
-     * @throws \JsonException
-     */
     public function onAfterAction(Event $event): ?EventResult
     {
-        /** @var Controller $controller */
-        $controller = $event->getParameter('controller');
-        /** @var HttpResponse $response */
-        $response = $event->getParameter('result');
-        $channel = $this->resolveChannel($controller);
-
-        $requestData = $this->extractRequestData($controller);
-        $responseData = $this->extractResponseData($response);
-        $payload = array_merge($requestData, [
-            'response' => $responseData,
-        ]);
-
-        Log::channel($channel)->info('RESPONSE', array_merge($payload, $this->extraData));
+        $this->write('RESPONSE', $event);
 
         return null;
     }
 
-    /**
-     * Определяет канал: явно переданный или автоматически по namespace контроллера.
-     */
-    private function resolveChannel(Controller $controller): LogChannelEnum
+    private function write(string $message, Event $event): void
     {
-        return $this->channel ?? LogChannelEnum::resolveFromClassName($controller::class);
-    }
-
-    /**
-     * @return array{
-     *     request: array<string, mixed>,
-     * }
-     */
-    private function extractRequestData(Controller $controller): array
-    {
-        $request = $controller->getRequest();
-
-        return [
-            'request' => RequestHelper::collectRequestValues($request),
-        ];
-    }
-
-    /**
-     * Если ответ json, то возвращаем декодированный массив, иначе массив с текстом ответа.
-     *
-     * @throws \JsonException
-     */
-    private function extractResponseData(HttpResponse $response): array
-    {
-        $content = $response->getContent();
-        if (!$response instanceof Json) {
-            return [$content];
+        $controller = $event->getParameter('controller');
+        if (!$controller instanceof Controller) {
+            return;
         }
 
-        return json_decode($content, true, flags: JSON_THROW_ON_ERROR) ?? [];
+        $sanitizer = new LogSanitizer();
+        $context = $sanitizer->context($this->extraData);
+        $context['controller'] = $controller::class;
+        $action = $event->getParameter('action');
+        $context['operation'] = $controller::class . ($action instanceof Action ? '::' . $action->getName() : '');
+        $context['method'] = $controller->getRequest()->getRequestMethod();
+        $context['requestId'] = RequestIdGenerator::getRequestId();
+        $context['durationMs'] = RequestIdGenerator::getDurationMs();
+        $response = $event->getParameter('result');
+        if ($response instanceof HttpResponse) {
+            $context['httpStatus'] = $response->getStatus();
+        }
+
+        $channel = $this->channel ?? LogChannelEnum::resolveFromClassName($controller::class);
+        Log::channel($channel)->info($message, $sanitizer->context($context));
     }
 }

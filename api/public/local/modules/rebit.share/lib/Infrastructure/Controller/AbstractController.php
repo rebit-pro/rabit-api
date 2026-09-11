@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace Rebit\Share\Infrastructure\Controller;
 
 use Bitrix\Main\ArgumentTypeException;
+use Rebit\Share\Infrastructure\Logger\LogSanitizer;
+use Rebit\Share\Infrastructure\Logger\RequestIdGenerator;
+use Rebit\Share\Shared\Enum\LogChannelEnum;
+use Rebit\Share\Shared\Facade\Log;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Response;
@@ -126,6 +130,17 @@ abstract class AbstractController extends Controller
 
             $response->setContent($responseException->getContent());
             $response->setStatus($responseException->getStatus());
+
+            $sanitizer = new LogSanitizer();
+            $context = $sanitizer->exception($this->thrownException);
+            $context['controller'] = static::class;
+            $context['operation'] = static::class . '::' . ($this->actionMethodName ?? 'unknown');
+            $context['httpStatus'] = $responseException->getStatus();
+            $context['requestId'] = RequestIdGenerator::getRequestId();
+            $context['durationMs'] = RequestIdGenerator::getDurationMs();
+            Log::channel(LogChannelEnum::resolveFromClassName(static::class))
+                ->error('HTTP_EXCEPTION', $sanitizer->context($context))
+            ;
         }
     }
 

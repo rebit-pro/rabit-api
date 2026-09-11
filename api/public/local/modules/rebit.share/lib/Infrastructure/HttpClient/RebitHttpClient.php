@@ -8,6 +8,8 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
 use Psr\Log\LoggerInterface;
+use Rebit\Share\Infrastructure\Logger\LogSanitizer;
+use Rebit\Share\Infrastructure\Logger\RequestIdGenerator;
 use Rebit\Share\Infrastructure\HttpClient\Exception\HttpClientException;
 
 final class RebitHttpClient
@@ -100,18 +102,13 @@ final class RebitHttpClient
 
         $body = $this->prepareBody($data, $headers);
 
-        $this->logger->debug('HTTP Request', [
-            'method' => $method,
-            'url' => $url,
-            'headers' => $headers,
-            'body' => $body,
-        ]);
+        $this->logger->debug('HTTP Request', $this->logContext($method));
 
         $result = 'GET' === $method
             ? $this->httpClient->get($url)
             : $this->httpClient->post($url, $body);
 
-        return $this->handleResponse($result, $url, $method);
+        return $this->handleResponse($result, $method);
     }
 
     /**
@@ -165,34 +162,22 @@ final class RebitHttpClient
      *
      * @throws HttpClientException
      */
-    private function handleResponse(false|string $result, string $url, string $method): array
+    private function handleResponse(false|string $result, string $method): array
     {
         $status = $this->httpClient->getStatus();
         $errors = $this->httpClient->getError();
 
-        $this->logger->debug('HTTP Response', [
-            'status' => $status,
-            'url' => $url,
-            'method' => $method,
-            'response' => $result,
-        ]);
+        $this->logger->debug('HTTP Response', $this->logContext($method, $status));
 
         if (false === $result || [] !== $errors) {
             $errorMessage = implode('; ', $errors);
-            $this->logger->error('HTTP Request failed', [
-                'url' => $url,
-                'errors' => $errors,
-            ]);
+            $this->logger->error('HTTP Request failed', $this->logContext($method, $status));
 
             throw new HttpClientException("HTTP request failed: {$errorMessage}");
         }
 
         if ($status >= 400) {
-            $this->logger->error('HTTP Error response', [
-                'url' => $url,
-                'status' => $status,
-                'body' => $result,
-            ]);
+            $this->logger->error('HTTP Error response', $this->logContext($method, $status));
 
             throw new HttpClientException("HTTP error: status {$status}", $status);
         }
@@ -220,5 +205,17 @@ final class RebitHttpClient
                 previous: $e,
             );
         }
+    }
+
+    /** @return array<string, bool|float|int|string> */
+    private function logContext(string $method, int $status = 0): array
+    {
+        return (new LogSanitizer())->context([
+            'operation' => self::class . '::request',
+            'method' => $method,
+            'httpStatus' => $status,
+            'requestId' => RequestIdGenerator::getRequestId(),
+            'durationMs' => RequestIdGenerator::getDurationMs(),
+        ]);
     }
 }

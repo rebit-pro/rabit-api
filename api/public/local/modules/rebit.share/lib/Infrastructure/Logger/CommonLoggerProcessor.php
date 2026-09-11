@@ -4,53 +4,27 @@ declare(strict_types=1);
 
 namespace Rebit\Share\Infrastructure\Logger;
 
-use Bitrix\Main\Application;
-
-/**
- * Общий процессор для логов, автоматически добавляет в контекст запроса информацию о запросе.
- *
- *  @phpstan-type ALoggerRecord array{
- *     message: string,
- *     context: mixed[],
- *     level: Logger::DEBUG|Logger::INFO|Logger::NOTICE|Logger::WARNING|Logger::ERROR|Logger::CRITICAL|Logger::ALERT|Logger::EMERGENCY,
- *     level_name: string,
- *     channel: string,
- *     datetime: \DateTimeImmutable,
- *     extra: mixed[]
- * }
- */
-final class CommonLoggerProcessor
+/** Metadata and the same redaction policy apply to every configured log sink. */
+final readonly class CommonLoggerProcessor
 {
-    /**
-     * @param ALoggerRecord $record
-     */
+    /** @param array<string, mixed> $record Monolog 2 record. */
     public function __construct(
         private array $record,
     ) {}
 
-    /**
-     * ```
-     * ALoggerRecord['extra'] + array {
-     *     method: string,
-     *     uri: string,
-     *     ip: string,
-     *     userAgent: string,
-     *     requestId: string,
-     * }
-     * ```
-     *
-     * @return ALoggerRecord
-     */
+    /** @return array<string, mixed> */
     public function __invoke(): array
     {
-        $request = Application::getInstance()->getContext()->getRequest();
+        $record = $this->record;
+        $sanitizer = new LogSanitizer();
+        $record['message'] = $sanitizer->message($record['message']);
+        $record['context'] = $sanitizer->context($record['context']);
+        $extra = $sanitizer->context($record['extra']);
+        $extra['requestId'] = RequestIdGenerator::getRequestId();
+        $extra['durationMs'] = RequestIdGenerator::getDurationMs();
+        $extra['method'] = $_SERVER['REQUEST_METHOD'] ?? 'CLI';
+        $record['extra'] = $sanitizer->context($extra);
 
-        $this->record['extra']['method'] = $request->getRequestMethod();
-        $this->record['extra']['uri'] = $request->getRequestUri();
-        $this->record['extra']['ip'] = $request->getServer()->getRemoteAddr();
-        $this->record['extra']['userAgent'] = $request->getServer()->getUserAgent();
-        $this->record['extra']['requestId'] = RequestIdGenerator::getRequestId();
-
-        return $this->record;
+        return $record;
     }
 }

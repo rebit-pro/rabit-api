@@ -25,7 +25,8 @@ final class HttpDebugLoggerFactory
 
         $bufferedLogger = new Logger($logger->getName());
 
-        foreach ($logger->getProcessors() as $processor) {
+        // pushProcessor prepends: reverse the copy to preserve execution order.
+        foreach (array_reverse($logger->getProcessors()) as $processor) {
             $bufferedLogger->pushProcessor($processor);
         }
 

@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "openBlockingFindings": 0,
+  "resolvedFinding": "Preserve Monolog processor execution order when copying to HTTP debug buffer; regression test verifies secret removal after warning flush.",
+  "scope": "Current PHP application logging and early Bitrix exception sink; documented metadata trust boundary and runtime limitations remain."
+}

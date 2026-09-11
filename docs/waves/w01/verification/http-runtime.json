@@ -1,0 +1,13 @@
+{
+    "status": "PASS",
+    "phpVersion": "8.4.23",
+    "realBitrixClasses": 5,
+    "requestResponseRecords": 7,
+    "exceptionFinalization": true,
+    "outboundPayloadPreserved": true,
+    "bufferedFailureRecords": 3,
+    "requestPayloadReads": 0,
+    "responsePayloadReadsByLogger": 0,
+    "databaseBootstrapExecuted": false,
+    "liveHttpRequestsExecuted": false
+}
