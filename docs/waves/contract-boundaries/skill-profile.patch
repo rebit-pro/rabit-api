@@ -1,0 +1,10 @@
+--- a/rebit-bitrix/references/data-access-and-contracts.md
++++ b/rebit-bitrix/references/data-access-and-contracts.md
+@@ -47,5 +47,6 @@
+ - В RaBit API `docs/README.md`, `docs/architecture.md` и `docs/audit-rabit-api.md` описывают фактическую основу и ограничения. Текущие Auth/File не являются готовой реализацией ролей, организаций, объектных прав и сессий MoreFoto.
+ - Явное правило нового чтения: SQL сложного запроса либо ORM D7 с Result и массивными строками; без `fetchCollection()`/`fetchObject()` ради данных. ReadModel ограничен правилами выше.
+-- Общие контракты: `rebit.share/lib/Application/Contract/` (единственное число, согласовано в инструкциях checkout). Не вводить параллельный `Contracts`; реализация контракта принадлежит поставщику. Auth разрешает пользователя, модуль сценария проверяет право на конкретный ресурс.
++- Общие технические контракты: `rebit.share/lib/Application/Contract/` (единственное число), namespace `Rebit\Share\Application\Contract`. Существующие Cache/Messenger/File и Auth/TokenResolver остаются здесь.
++- Предметные межмодульные контракты: `rebit.share/lib/Contracts/<Domain>/` (множественное число), namespace `Rebit\Share\Contracts\<Domain>`. Здесь публичные интерфейсы/DTO/события предметного взаимодействия; реализация и DI принадлежат поставщику. Внутренние порты и DTO остаются в собственном модуле. Auth разрешает пользователя, модуль сценария проверяет право на конкретный ресурс.
+ - Текущие HTTP-маршруты публикует versioned реестр `api/public/local/routes/rabit-api.php`; новые модули добавляются туда явно. `local/.settings_extra.php` включает централизованные настройки. Установка/удаление модуля сама по себе не меняет readonly-реестр.
+ - Default-миграции основы — `api/public/local/php_interface/migrations.foundation/`; исторический `migrations/` не является активным набором. Переименование/выделение проекта не подразумевает разрешение удалять БД, переносить тома или выполнять deployment.
