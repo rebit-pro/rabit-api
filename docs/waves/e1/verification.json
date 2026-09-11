@@ -1,0 +1,84 @@
+{
+  "wave": "E1",
+  "base": "2ac4ef9b3e4b63d734fc3dda5240cab50a550d44",
+  "verifiedAt": "2026-09-11T18:48:32.892811+00:00",
+  "checks": {
+    "phpunit": {
+      "exitCode": 0,
+      "status": "passed"
+    },
+    "phpstan": {
+      "exitCode": 0,
+      "status": "passed"
+    },
+    "style": {
+      "exitCode": 0,
+      "status": "passed"
+    },
+    "lint": {
+      "exitCode": 0,
+      "status": "passed"
+    },
+    "shellSyntax": {
+      "exitCode": 0,
+      "status": "passed"
+    }
+  },
+  "phpunit": {
+    "tests": 156,
+    "assertions": 660
+  },
+  "nativeIntegration": {
+    "checks": 51,
+    "evidence": "integration.json"
+  },
+  "phpLintFiles": 268,
+  "styleFiles": 31,
+  "sourceHashes": {
+    "public/local/modules/morefoto.commerce/.settings.php": "sha256:da9d139bc392099fdd5fbd3689a34d40f55fe993aa403b679b7d2fe4764e4857",
+    "public/local/modules/morefoto.commerce/di/catalog.php": "sha256:eae79185737ad1cf1d69b69bdb7d47d7da828d4d47e5678a44b9612aa4cdbd48",
+    "public/local/modules/morefoto.commerce/include.php": "sha256:ba03dcac61edb6b2cb69a2b959b4732d4e79014077aedb15c255ce75e3a28946",
+    "public/local/modules/morefoto.commerce/install/index.php": "sha256:89bda637be12fd46edf5015443d30fbee472ac36731b93c2191a72b37d9b0769",
+    "public/local/modules/morefoto.commerce/lib/Application/Catalog/Contract/CatalogTransactionInterface.php": "sha256:04251f3415e953c60eedb67b1b735b74a1a27442597003e14562f50c400ab7e5",
+    "public/local/modules/morefoto.commerce/lib/Application/Catalog/Contract/ProductIdGeneratorInterface.php": "sha256:97bb72049f6d3928f528bce14ee2a6ffcdaf6e73da984661048f0a79e4cc75b1",
+    "public/local/modules/morefoto.commerce/lib/Application/Catalog/Dto/CatalogMutationOutputDto.php": "sha256:73116aaf181a144fdc2ecc4162a096fc01fd5536bbe71ab9dbd016b4571598c8",
+    "public/local/modules/morefoto.commerce/lib/Application/Catalog/Dto/ListProductsInputDto.php": "sha256:8195ce6aab473f1efbef8ad50e61824796e310b408abd3682ff0785d0b9d8684",
+    "public/local/modules/morefoto.commerce/lib/Application/Catalog/Dto/ListProductsOutputDto.php": "sha256:7976b910c337609e927e424531af1d173403564079d1cdc67b38d3ef76b6d903",
+    "public/local/modules/morefoto.commerce/lib/Application/Catalog/Dto/ProductInputDto.php": "sha256:c6d83c5da65b0f0a6e8ab1296f9d3586b98bc2fef2d2656be5a6c1e271626263",
+    "public/local/modules/morefoto.commerce/lib/Application/Catalog/Dto/ProductOutputDto.php": "sha256:99deb21a3a9e8ab024e396fbd0678b9674ee50e57108985f6929fe52b7e4808f",
+    "public/local/modules/morefoto.commerce/lib/Application/Catalog/Dto/UpdateProductInputDto.php": "sha256:1eccfedaed1cc1a58d8b8b04f1c187b5d331ee6d255e01377cc9d467a996e218",
+    "public/local/modules/morefoto.commerce/lib/Application/Catalog/UseCase/CreateProductUseCase.php": "sha256:72a78f1b0769fcc35103812eb88db7758f8725225f1892b4f0207629886955d1",
+    "public/local/modules/morefoto.commerce/lib/Application/Catalog/UseCase/ListProductsUseCase.php": "sha256:393ff55f758d1c07218ce9fbc84de6c5d5b9482664371091fcb93e592c59001e",
+    "public/local/modules/morefoto.commerce/lib/Application/Catalog/UseCase/UpdateProductUseCase.php": "sha256:e6c4cdbb7249002a354c4d63014829c1e58f279d5e0ca7acdb834a7748c4f242",
+    "public/local/modules/morefoto.commerce/lib/Domain/Catalog/Enum/ProductKind.php": "sha256:e032ed0db0301ac96d0be6df16ef06422d707836c487ed163cda5f2ab72387d5",
+    "public/local/modules/morefoto.commerce/lib/Domain/Catalog/Exception/CatalogException.php": "sha256:f28189921c392fa4855da243083058e1151e9164eec71ad33d4c59297eb22c82",
+    "public/local/modules/morefoto.commerce/lib/Domain/Catalog/Exception/CatalogRevisionConflictException.php": "sha256:6ccf869a1c7f04a692a0b01b1349bf13f9c95ca08a0cfc35529e23233d269857",
+    "public/local/modules/morefoto.commerce/lib/Domain/Catalog/Exception/CatalogStorageException.php": "sha256:8d3fad705ca46fdc04392879904da8ff8861a037c108bdf2726f706ef15f75bd",
+    "public/local/modules/morefoto.commerce/lib/Domain/Catalog/Exception/InvalidProductException.php": "sha256:90b769f7eaacc26855ee004a6dcae73ecab81ce6cb18b9736f870b08607c84ba",
+    "public/local/modules/morefoto.commerce/lib/Domain/Catalog/Exception/ProductNotFoundException.php": "sha256:223c9734988afbe0478c3eb55144fc760dcb5d96ab0857b59c91d1dd3c3c60c8",
+    "public/local/modules/morefoto.commerce/lib/Domain/Catalog/Repository/CatalogRepository.php": "sha256:9542e3958563e14f090ff51e99f98ada07854cee1c00dae01c3417dd7103937e",
+    "public/local/modules/morefoto.commerce/lib/Domain/Catalog/ValueObject/ProductDetails.php": "sha256:6c318f83b271f43340f0c30af934197a9b53ab33bbeaefbc357b8dc4e5208a56",
+    "public/local/modules/morefoto.commerce/lib/Domain/Catalog/ValueObject/ProductId.php": "sha256:5f978fa1389048967ff7cba9dc9a07d98f9585708014c8e412824d48c44d9f41",
+    "public/local/modules/morefoto.commerce/lib/Infrastructure/Adapter/BitrixCatalogTransaction.php": "sha256:723fada83743dc47643372912be59a1d6b905e58b5bf1f81219163865a39ffcb",
+    "public/local/modules/morefoto.commerce/lib/Infrastructure/Adapter/ProductIdGenerator.php": "sha256:c50518ac3feb4db946b59e0bae81e27dae7ad1d89dee4c3cabd4d94166640018",
+    "public/local/modules/morefoto.commerce/tests/Unit/CatalogTest.php": "sha256:c9d97c34e0538c8b577ec0bdd523b0f60e226084e8542df95cbc61790b12bd2d",
+    "public/local/modules/morefoto.commerce/tests/bitrix-result.php": "sha256:be8bbd52591204960ff843e47fb046f2d4c0030b907079ed3b205851fe2be98a",
+    "public/local/modules/morefoto.commerce/tests/bootstrap.php": "sha256:cfd63584e0b51bbad14b3f40a5174a974377e5e2c1f744e72bfe88d714cfba18",
+    "public/local/php_interface/migrations.foundation/Version20260911220001.php": "sha256:df994233554c16e9a3d1c4c53a57607ae41aa09c59e0d61f1201bb2b3b44d140",
+    "tools/run-e1-catalog-integration.sh": "sha256:92da58d49152042fc3758d6ef72636e781fff62c4cf7084c047a781c3c7eb43e",
+    "tools/verify-e1-catalog-integration.php": "sha256:bb6dd87984222e8c3fb5490a7c684b252b7f8e65aa874fa35d59ad4ddb4e75b0"
+  },
+  "scope": "Main plus independent E1 only; no B1/C1 code, HTTP or deployment. Native database fixture covers real persistence and transaction locking.",
+  "postReview": {
+    "change": "Replace manual UUID generation with installed ramsey/uuid; same tested ProductId contract.",
+    "checks": {
+      "generatorUnit": {
+        "tests": 1,
+        "assertions": 2,
+        "status": "passed"
+      },
+      "generatorStyle": "passed"
+    },
+    "nativeIntegration": "51 checks passed before this isolated generator simplification; not repeated."
+  }
+}
