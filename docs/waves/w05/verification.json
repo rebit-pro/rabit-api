@@ -1,0 +1,84 @@
+{
+  "verifiedOn": "2026-09-11",
+  "status": "PASS",
+  "scope": "W05 proposal documents; not product implementation or business acceptance",
+  "baseCommit": "4f8c97e9bacda771bae57dcf377e186dd2d744db",
+  "checks": {
+    "markdownLinks": {
+      "status": "PASS",
+      "files": 6,
+      "localLinks": 19,
+      "anchors": 2
+    },
+    "sourceIntegrity": {
+      "status": "PASS",
+      "sha256Files": 15,
+      "sourceGitRevision": null,
+      "note": "MoreFoto source directory has no Git repository; SHA-256 pins the actual source files."
+    },
+    "decisionGate": {
+      "status": "PASS",
+      "openDecisions": 12,
+      "r17": "awaitingBusinessReview",
+      "w05Accepted": false,
+      "productImplementationAllowed": false
+    },
+    "summaryExamples": {
+      "status": "PASS",
+      "jsonExamples": 2,
+      "checks": [
+        "disjoint field sets",
+        "integer minor units",
+        "net amount equation",
+        "timestamp with offset"
+      ],
+      "liveEndpointTested": false
+    },
+    "calendarExamples": {
+      "status": "PASS",
+      "examples": [
+        "7 days from handoff",
+        "7 days from closing",
+        "January 31 to February 28",
+        "leap year February 29"
+      ],
+      "businessApproval": false,
+      "implementationTested": false
+    },
+    "frozenW00Inventory": {
+      "result": "passed",
+      "endpoints": 99,
+      "originalEndpoints": 97,
+      "platformEndpoints": 2,
+      "currentBackendSourceRoutes": 6,
+      "moduleFolders": 15,
+      "waveFolders": 35,
+      "platformGuards": 4,
+      "postmanScriptsExecuted": false,
+      "liveApiRequestsExecuted": false,
+      "sha256": {
+        "endpoints.json": "eb49b78ab230e1457f626bc2cf480e4f491fe6838ed0c30142c1bb224203c28e",
+        "backend-waves.md": "e95a07176d73bd4438e95c5ebf22f770ebb400b1c928f4ac142d389678fa4cef",
+        "postman/MoreFoto.postman_collection.json": "ad92de6e7305f1954f3e8cc1ccee73a26317fbdc2186d96520a18715a4b2bf99",
+        "postman/MoreFoto.backend-waves.postman_collection.json": "2d5c4aae62c2868e0dbeaa6edfe60515e6694ed039ad0afdee9dd0a76f3a9950"
+      }
+    },
+    "diffScope": {
+      "status": "PASS",
+      "scope": "documentation only",
+      "phpSourcesChanged": false,
+      "migrationsAdded": false,
+      "gitDiffCheck": "PASS",
+      "ignoredChaptersExplicitlyTracked": [
+        "docs/02-domain/README.md",
+        "docs/03-database/README.md"
+      ]
+    }
+  },
+  "phpUnitTests": {
+    "run": false,
+    "reason": "No PHP/runtime changes; previous W04 results are not reported as W05 test runs."
+  },
+  "productionChanged": false,
+  "canonicalMoreFotoChanged": false
+}
