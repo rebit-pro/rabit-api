@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rebit\Share\Shared\Facade;
 
 use Bitrix\Main\Config\Configuration;
+use Rebit\Share\Infrastructure\Logger\CommonLoggerProcessor;
 use Monolog\Formatter\FormatterInterface;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\AbstractProcessingHandler;
@@ -87,6 +88,8 @@ final class Log
     {
         $configs = Configuration::getInstance()->get('monolog') ?? self::getDefaultConfig();
         $logger = new Logger($channel->value);
+        // Registered first: Monolog runs it last, after configured processors.
+        $logger->pushProcessor(static fn(array $record): array => (new CommonLoggerProcessor($record))());
 
         foreach ($configs as $config) {
             /** @var AbstractProcessingHandler $handler */

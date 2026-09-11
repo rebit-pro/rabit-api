@@ -19,4 +19,13 @@ final class RequestIdGenerator
 
         return self::$requestId;
     }
+
+    /** Elapsed time since PHP accepted the request; shared by separate filters. */
+    public static function getDurationMs(): float
+    {
+        $now = microtime(true);
+        $startedAt = $_SERVER['REQUEST_TIME_FLOAT'] ?? $now;
+
+        return round(max(0.0, $now - (float)$startedAt) * 1000, 3);
+    }
 }

@@ -1,0 +1,12 @@
+{
+    "status": "PASS",
+    "phpVersion": "8.4.23",
+    "realKernelFactory": true,
+    "earlyBootstrap": true,
+    "safeFileBytes": true,
+    "rotation": true,
+    "requestCorrelation": true,
+    "composerLoaded": false,
+    "databaseUsed": false,
+    "networkUsed": false
+}

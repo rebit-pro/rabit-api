@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rebit\Share\Infrastructure\Telegram;
 
 use Psr\Log\LoggerInterface;
+use Rebit\Share\Infrastructure\Logger\LogSanitizer;
 
 /**
  * Низкоуровневый клиент Telegram Bot API.
@@ -46,7 +47,7 @@ final readonly class TelegramBotApiClient
         $handle = curl_init($this->buildMethodUrl($method));
 
         if (false === $handle) {
-            $this->logger->error('Не удалось инициализировать запрос в Telegram', ['method' => $method]);
+            $this->logger->error('Не удалось инициализировать запрос в Telegram', (new LogSanitizer())->context(['method' => $method]));
 
             return false;
         }
@@ -67,16 +68,13 @@ final readonly class TelegramBotApiClient
 
         $response = curl_exec($handle);
         $status = (int)curl_getinfo($handle, CURLINFO_HTTP_CODE);
-        $error = curl_error($handle);
         curl_close($handle);
 
         if (!is_string($response) || 200 !== $status) {
-            $this->logger->error('Не удалось отправить запрос в Telegram', [
+            $this->logger->error('Не удалось отправить запрос в Telegram', (new LogSanitizer())->context([
                 'method' => $method,
                 'status' => $status,
-                'error' => $error,
-                'response' => is_string($response) ? mb_substr($response, 0, 500) : '',
-            ]);
+            ]));
 
             return false;
         }
@@ -84,10 +82,9 @@ final readonly class TelegramBotApiClient
         $decoded = json_decode($response, true);
 
         if (!is_array($decoded) || true !== ($decoded['ok'] ?? false)) {
-            $this->logger->error('Telegram отклонил запрос', [
+            $this->logger->error('Telegram отклонил запрос', (new LogSanitizer())->context([
                 'method' => $method,
-                'response' => mb_substr($response, 0, 500),
-            ]);
+            ]));
 
             return false;
         }
