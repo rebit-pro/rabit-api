@@ -26,9 +26,9 @@ A7 меняет правила, граф и генераторы. В runtime н�
 | Сейчас | Что работает отдельно | Зависимости | Что разблокирует |
 | --- | --- | --- | --- |
 | B1 / PR #8 | Профиль и серверная политика доступа | A3, A5, A6 в main | C2, B2, E2; у каждого остаются свои другие зависимости |
-| C1 | Внутренние create/update/get/list учреждения, HL, UUID/CAS, поиск/пагинация, DI | A6 в main | C2 |
-| E1 | Внутренние create/update/list Product, БД/global catalogRevision, DI, пустой каталог | A6 в main | E2 |
-| A7 | Проверяемое правило и граф | A6 в main | Не является runtime-блокером |
+| [C1 / PR #9](https://github.com/rebit-pro/rabit-api/pull/9) | Внутренние create/update/get/list учреждения, HL, UUID/CAS, поиск/пагинация, DI | A6 в main | C2 |
+| [E1 / PR #10](https://github.com/rebit-pro/rabit-api/pull/10) | Внутренние create/update/list Product, БД/global catalogRevision, DI, пустой каталог | A6 в main | E2 |
+| [A7 / PR #11](https://github.com/rebit-pro/rabit-api/pull/11) | Проверяемое правило и граф | A6 в main | Не является runtime-блокером |
 
 ```mermaid
 graph LR
