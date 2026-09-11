@@ -1,0 +1,86 @@
+{
+  "date": "2026-09-11",
+  "source": "/home/user/MoreFoto",
+  "sourceIsGitRepository": false,
+  "backup": "/tmp/rabit-a7-morefoto-before",
+  "digestDefinition": "SHA256 of UTF-8 sorted lines path + NUL + file sha256 (or - for absent) + LF, over files listed here",
+  "beforeDigest": "e0e97c77d96406f54008496311103c54576e7cc08970dc2fc8e191c64f46818a",
+  "afterDigest": "4a860aa931bfca418b341fa81d805700f42f8143fc412a75d909923a3f368ea6",
+  "patchSha256": "f1521a5ee98e47f9330c1ff5b4df012bb2620768d5a8b8f749e4334f004662dd",
+  "patchCheck": "Applied to isolated before copy; all six source after hashes match. Generated artifacts rebuilt and validated separately.",
+  "files": [
+    {
+      "path": "docs/04-bitrix-modules/backend-waves.json",
+      "kind": "source",
+      "beforeSha256": "803bb94f9d0753a1968db0c972c4e5d8de2e88b5820bbf00274d1bafb2b36671",
+      "afterSha256": "74735f220c158c721250839c973522a8abe79b8ef3710341c59bd18b15a051a1"
+    },
+    {
+      "path": "docs/04-bitrix-modules/render-waves.py",
+      "kind": "source",
+      "beforeSha256": "680c4ba76c20337bd1f5959a6594881e79945661b89ca69d4eb2b700c3b0fb3d",
+      "afterSha256": "bc3ae6569f68102f8f489d10ef88d472b8eb13d91a47cf9aa6034417c230aea3"
+    },
+    {
+      "path": "docs/04-bitrix-modules/wave_graph.py",
+      "kind": "source",
+      "beforeSha256": null,
+      "afterSha256": "9f8bc41f8eb11965db55e822765831621c7e1e60544f737e96d8e8c2547de6bd"
+    },
+    {
+      "path": "docs/04-bitrix-modules/README.md",
+      "kind": "source",
+      "beforeSha256": "613768eb910f8d0cb843fd334fec2fac58304e481c3cfa0281b280790c300c33",
+      "afterSha256": "b5ff17d9aa62b50e21516122c7d6db5abe1b8e978947a05c06139935f938e8ef"
+    },
+    {
+      "path": "docs/05-rest-api/build.py",
+      "kind": "source",
+      "beforeSha256": "a144b1db8d90256761e6da791c2c6f5d09a5af447882b9ad6da36d84cbbc1b36",
+      "afterSha256": "988968ccb0b9e14255880f561bcc7ec7f37f4b1b7741224aa824bf0457432881"
+    },
+    {
+      "path": "docs/05-rest-api/validate.py",
+      "kind": "source",
+      "beforeSha256": "b2c3f2e56cf6b3d444b6d4086d88aa345084f6733e0c2b0a5fcc94db46d1fc2b",
+      "afterSha256": "3fc1c1fdcd9f7fe16b33e9d61ff611c707eea67878f94fc8fc82136acf7d77ed"
+    },
+    {
+      "path": "docs/04-bitrix-modules/backend-waves.md",
+      "kind": "generated",
+      "beforeSha256": "6e22b280d96919364ea0501c4f082a7b444afe55cd690ff91d2dfd3a5eb4a8ab",
+      "afterSha256": "dc7608d43d722879e84e9bbea23b4f7bf065362b339d908d05a8c029ecb6a3fd"
+    },
+    {
+      "path": "docs/05-rest-api/README.md",
+      "kind": "generated",
+      "beforeSha256": "b855f98451d76ec7f9c839bf0bae4902fd2da42223b85a522407a3b96162beb9",
+      "afterSha256": "56a8a75a679b61dd502933dd3659df36d3f3c83aa8eb75e2e4a55c1ac90866c4"
+    },
+    {
+      "path": "docs/05-rest-api/endpoints.json",
+      "kind": "generated",
+      "beforeSha256": "58028565ccea0b1775ed0aaf9be843fe71ef4a3dadc94c32a7aecb6e6adf3933",
+      "afterSha256": "db88d2caf7f07676bd930e76f3e1eff2f0c6d09f653fdfa7bbc14d613015265d"
+    },
+    {
+      "path": "docs/05-rest-api/verification.json",
+      "kind": "generated",
+      "beforeSha256": "ef99bd062acbb6995a4059679caae4a31cd1e85502248eed54da27f4fda667ba",
+      "afterSha256": "a15cb5af82203860b33a37fe6e63d30fa6dde280dba7288ec92d2b8325797fdc"
+    },
+    {
+      "path": "docs/05-rest-api/postman/MoreFoto.postman_collection.json",
+      "kind": "generated",
+      "beforeSha256": "59e199ca229506cb88fe3cd6b1c2ccbcbf7c8544e9a9c10493323955d78a594e",
+      "afterSha256": "77944665e044974bc675d5b33835d78121c9c3f8136b03deddd545baf31d66bd"
+    },
+    {
+      "path": "docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json",
+      "kind": "generated",
+      "beforeSha256": "79fe2153ea2b9f4c17af3104141221fa2f61251639b3bf29187a4b8b2bef83ed",
+      "afterSha256": "6fc28bd5a9978a2ad6dafa75109a3c9d5fd841b3f9b94428c9f97a3df23eabcf"
+    }
+  ],
+  "patchFormat": "Unified diff without context; apply with git apply --unidiff-zero after checking before hashes."
+}
