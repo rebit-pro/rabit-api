@@ -14,7 +14,8 @@
     "production",
     "missing-volume-guards",
     "runtime-and-cron-guards",
-    "legacy-stack-preservation"
+    "legacy-stack-preservation",
+    "registry-token-not-in-deploy-dry-run"
   ],
   "realSecretFilesRead": false,
   "swarmMutationsExecuted": false,

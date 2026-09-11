@@ -210,8 +210,8 @@ push-api:
 #
 # Требуемые переменные:
 #   HOST, PORT, DEPLOY_USER, BUILD_NUMBER, REGISTRY, IMAGE_TAG
-# Опционально (для docker login на сервере):
-#   REGISTRY_HOST, REGISTRY_USER, TOKEN_GIT_HUB
+# Авторизация registry должна быть заранее настроена у DEPLOY_USER на SSH target.
+# deploy использует существующие Docker credentials и не выполняет docker login.
 # Опционально (если нужно переопределить versioned Swarm names):
 #   BACKEND_ENV_CONFIG_NAME, REBIT_ENCRYPTION_KEY_SECRET_NAME,
 #   REBIT_GEETEST_CAPTCHA_KEY_SECRET_NAME, REBIT_MYSQL_PASSWORD_SECRET_NAME,
@@ -221,7 +221,6 @@ push-api:
 # Пример:
 #   HOST=1.2.3.4 PORT=22 DEPLOY_USER=deploy BUILD_NUMBER=42 \
 #   REGISTRY=ghcr.io/rebit-pro IMAGE_TAG=abc12345 \
-#   REGISTRY_HOST=ghcr.io REGISTRY_USER=user TOKEN_GIT_HUB=ghp_xxx \
 #   make deploy
 deploy: deploy-check-env
 	ssh $(REMOTE) -p $(PORT) 'bash -s' < deploy/swarm-verify-local-data-node.sh
@@ -257,7 +256,6 @@ deploy: deploy-check-env
 			"$(REBIT_TELEGRAM_BOT_TOKEN_SECRET_NAME)" > .env \
 		&& { env | LC_ALL=C sort | grep -E "^[A-Z0-9_]+_(CONFIG|SECRET)_NAME=" | grep -Ev "^(BACKEND_ENV_CONFIG_NAME|CRON_ENV_CONFIG_NAME|REBIT_ENCRYPTION_KEY_SECRET_NAME|REBIT_GEETEST_CAPTCHA_KEY_SECRET_NAME|REBIT_MYSQL_PASSWORD_SECRET_NAME|REBIT_MYSQL_ROOT_PASSWORD_SECRET_NAME|REBIT_SMTP_PASSWORD_SECRET_NAME|REBIT_RABBITMQ_PASSWORD_SECRET_NAME|REBIT_TELEGRAM_BOT_TOKEN_SECRET_NAME)=" >> .env || true; } \
 		&& cd ~ && ln -sfn $(RELEASE_DIR) $(LINK_DIR) \
-		&& if [ -n "$(TOKEN_GIT_HUB)" ]; then echo "$(TOKEN_GIT_HUB)" | docker login $(REGISTRY_HOST) -u $(REGISTRY_USER) --password-stdin; fi \
 		&& docker pull $(REGISTRY)/rabit-api-nginx:$(IMAGE_TAG) \
 		&& docker pull $(REGISTRY)/rabit-api-php-fpm:$(IMAGE_TAG) \
 		&& docker pull $(REGISTRY)/rabit-api-php-cli:$(IMAGE_TAG) \

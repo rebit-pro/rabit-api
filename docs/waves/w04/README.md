@@ -70,6 +70,8 @@ Publisher проверяется с подставным Docker и синтет�
 
 Статический production manifest всё ещё ссылается на SMTP/Telegram secret objects. «Optional для publisher» не означает «условный mount в Compose»: перед выпуском нужны существующие согласованные references либо отдельно отревьюенный override, исключающий ненужный mount. Не создавать пустой объект и не подменять путь сообщением об ошибке. Повторное использование текущих immutable objects не требует запуска publisher.
 
+Авторизация registry должна быть заранее настроена у `DEPLOY_USER` на SSH target. Deploy использует существующие Docker credentials и `--with-registry-auth`; сам `docker login` не выполняет и `TOKEN_GIT_HUB` в SSH-команду не подставляет. Синтетический токен проверяется через `make --dry-run`: его нет в stdout/stderr и сформированных командах.
+
 Licensed Bitrix, production environment и credential artifacts не входят в Git. Сборка nginx использует локально предоставленный `.htpasswd`; его значение не помещается в отчёты или исходники. Проверить необходимые сборочные артефакты и digest до запуска production-рецепта.
 
 ## Backup, restore и откат

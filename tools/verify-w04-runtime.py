@@ -163,9 +163,21 @@ def verify_compose(directory):
     check("*/5 * * * * cd /app/public && php local/bin/bitrix-console app:leadhunter:scan" in cron, "LeadHunter scan cadence changed")
     guarded = run(["make", "ENV_FILE=/dev/null", "deploy-check-env", "HOST=fixture.invalid", "BUILD_NUMBER=fixture", "REGISTRY=fixture.invalid", "IMAGE_TAG=fixture"], env)
     check(guarded.returncode != 0 and "STACK_NAME" in guarded.stdout, "Deployment has an implicit stack name")
+    synthetic_token = "SYNTHETIC_TOKEN_W04_MUST_NOT_ENTER_SSH"
+    deploy_preview = run([
+        "make", "--dry-run", "ENV_FILE=/dev/null", "deploy",
+        "HOST=fixture.invalid", "BUILD_NUMBER=fixture", "REGISTRY=fixture.invalid", "IMAGE_TAG=fixture",
+        "STACK_NAME=fixture", "RUNTIME_DATA_DIR=/fixture",
+        "MYSQL_VOLUME_NAME=fixture_mysql", "RABBITMQ_VOLUME_NAME=fixture_rabbitmq",
+        "CRON_ENV_CONFIG_NAME=fixture_cron", "TOKEN_GIT_HUB=" + synthetic_token,
+    ], env)
+    check(deploy_preview.returncode == 0, "Deployment preview failed")
+    check(synthetic_token not in deploy_preview.stdout + deploy_preview.stderr,
+          "Registry token entered deployment command arguments/output")
+    check("docker login" not in deploy_preview.stdout, "Deploy must use preconfigured registry credentials")
     migration = run(["make", "ENV_FILE=/dev/null", "api-migrate-deploy"], env)
     check(migration.returncode != 0, "Unsafe production migration shortcut remains enabled")
-    return ["development", "production", "missing-volume-guards", "runtime-and-cron-guards", "legacy-stack-preservation"]
+    return ["development", "production", "missing-volume-guards", "runtime-and-cron-guards", "legacy-stack-preservation", "registry-token-not-in-deploy-dry-run"]
 
 
 def main():
