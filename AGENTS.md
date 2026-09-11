@@ -94,7 +94,8 @@ FooGatewayInterface::class => [
 |----------|--------------------------------------------------------------|
 | Application вход/выход | `*InputDto` / `*OutputDto`                                   |
 | Controller / API | `*RequestDto` (implements `RequestDtoInterface`)             |
-| Межмодульный | `rebit.share/lib/Application/Contract/<Domain>/Dto/`        |
+| Общий технический | `rebit.share/lib/Application/Contract/<Capability>/` |
+| Предметный межмодульный | `rebit.share/lib/Contracts/<Domain>/Dto/` |
 | Cache | `Application/<Domain>/Enum/*CacheEnum` (value=ключ, `ttl()`) |
 
 ## Профиль RaBit API
@@ -104,7 +105,8 @@ FooGatewayInterface::class => [
 - Frontend и продуктовый план MoreFoto находятся в соседнем `../MoreFoto`. Карта модулей: `docs/04-bitrix-modules/README.md`, API: `docs/05-rest-api/README.md` именно этого соседнего проекта.
 - Текущая архитектура основы: `docs/architecture.md`. Планируемые `morefoto.*` не считать реализованными по документации.
 - Для нового чтения — SQL сложного запроса или ORM D7 с Result и массивными строками; без Objectify-коллекций. Result не передаётся в HTTP, кеш и межмодульные контракты.
-- Общие контракты размещены в `rebit.share/lib/Application/Contract/` (единственное число).
+- Общие технические контракты размещены в `rebit.share/lib/Application/Contract/` (единственное число): кеш, транспорт сообщений, файловые операции, разрешение токена. Namespace: `Rebit\Share\Application\Contract\...`.
+- Предметные межмодульные контракты размещаются в `rebit.share/lib/Contracts/<Domain>/` (множественное число), например `Order`, `Payment`, `Media`. Namespace: `Rebit\Share\Contracts\<Domain>\...`. Здесь только публичные интерфейсы/DTO/события; реализация и DI принадлежат модулю-поставщику. Внутренние порты и DTO остаются в своём модуле.
 - Новые миграции добавлять в активный `api/public/local/php_interface/migrations.foundation/`; исторический `migrations/` не является набором по умолчанию.
 
 ## Волны и pull requests
