@@ -1,0 +1,47 @@
+{
+  "date": "2026-09-12",
+  "result": "PASS",
+  "baseMain": "83528338146828176eaa59b954c0c85942d986da",
+  "testedHeads": {
+    "C2": "d4027abf8bedebf6991b346d52cee1e1f0b0bb90",
+    "E2": "b5f54444021faabc86b7dc6c01ff5d8e7471080a"
+  },
+  "mergeOrders": [
+    {
+      "heads": [
+        "d4027abf8bedebf6991b346d52cee1e1f0b0bb90",
+        "b5f54444021faabc86b7dc6c01ff5d8e7471080a"
+      ],
+      "tree": "1de57a7647b33be2c213b270cb0b9bec90e192d6"
+    },
+    {
+      "heads": [
+        "b5f54444021faabc86b7dc6c01ff5d8e7471080a",
+        "d4027abf8bedebf6991b346d52cee1e1f0b0bb90"
+      ],
+      "tree": "1de57a7647b33be2c213b270cb0b9bec90e192d6"
+    }
+  ],
+  "identicalTrees": true,
+  "testedApiTree": "7bbdac7d0e8265448d281a5cee03f481eebfeb37",
+  "phpunit": {
+    "tests": 249,
+    "assertions": 854
+  },
+  "phpstan": "PASS",
+  "native": {
+    "C2": {
+      "status": "PASS",
+      "checks": 136
+    },
+    "E2": {
+      "status": "passed",
+      "checks": 95
+    }
+  },
+  "limitations": [
+    "Native suites run against the combined code on separate disposable module-specific databases; not one production install",
+    "CLI Router/Controller/DI tests; no Nginx/FPM or frontend",
+    "No remote publication, production migration or deployment"
+  ]
+}

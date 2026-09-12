@@ -28,7 +28,7 @@ bash tools/run-w02-auth-integration.sh
 
 Для runner нужны `W02_VENDOR_ROOT`, доступный PHP CLI image, read-only Bitrix kernel и Docker/MySQL 8. Проверка создаёт отдельную internal Docker network и БД на tmpfs без опубликованных портов; данные рабочего окружения не используются. [Native-сценарии](../../../api/tools/verify-c2-institutions-api.php) используют настоящие Router, Controller.run, DI, main validation, Auth, HL/ORM и MySQL. Raw JSON передаётся через HttpRequest-подкласс, поскольку CLI не читает php://input как HTTP. Это не сквозной прогон Nginx/PHP-FPM или frontend.
 
-Итоговые результаты — в [verification.json](verification.json). [Результаты слияния предшественников](merged-predecessors.json) подтверждают исходную базу. GitHub Actions остаётся отключённым, YAML сохранён. Развёртывание не выполнялось.
+Итоговые результаты — в [verification.json](verification.json). [Совместная проверка с E2](cohort-verification.json): оба порядка слияния дают одно дерево; PHPUnit 249/854, PHPStan и обе native suites (136/95) проходят на объединённом коде. [Результаты слияния предшественников](merged-predecessors.json) подтверждают исходную базу. GitHub Actions остаётся отключённым, YAML сохранён. Развёртывание не выполнялось.
 
 ## Контракт и план
 
