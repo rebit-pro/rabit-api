@@ -1,0 +1,93 @@
+{
+  "status": "PASS",
+  "wave": "W06",
+  "baseCommit": "2ac4ef9b3e4b63d734fc3dda5240cab50a550d44",
+  "php": "8.4.23",
+  "tests": {
+    "phpunit": {
+      "tests": 164,
+      "assertions": 716,
+      "status": "PASS"
+    },
+    "phpstan": {
+      "level": 5,
+      "status": "PASS"
+    },
+    "phplint": {
+      "files": 267,
+      "status": "PASS"
+    },
+    "phpCsFixer": {
+      "changedPhpFiles": 34,
+      "status": "PASS"
+    },
+    "integration": {
+      "checks": 50,
+      "status": "PASS",
+      "evidence": "integration.json"
+    },
+    "bootstrap": {
+      "registeredServices": 57,
+      "compiledRoutes": 7,
+      "status": "PASS"
+    },
+    "composerValidate": "PASS; existing version-field warning",
+    "frozenW00Inventory": "PASS; 99 operations, 35 waves, historical six-route snapshot",
+    "w04Runtime": "PASS",
+    "w04Topology": "PASS",
+    "shellSyntax": "PASS",
+    "gitDiffCheck": "PASS"
+  },
+  "githubActions": {
+    "name": "RaBit API — PR checks",
+    "path": ".github/workflows/makefile.yml",
+    "state": "disabled_manually"
+  },
+  "limitations": [
+    "No full prolog or nginx/FPM request in W06 integration fixture.",
+    "No live deployment or R17 business acceptance.",
+    "Institution/group assignment storage is not part of W06; non-organizer scope stays empty.",
+    "Existing DTO metadata cache log warnings remain outside W06."
+  ],
+  "sourceSha256": {
+    "api/composer.json": "a063205be2d05a31b361210af35c87e371fb9ff7938d6c581835818103b820de",
+    "api/phpstan.neon": "2b13353dd6c244bd303b1c2d1b9b77105727b03e358e4eb36208902114626b37",
+    "api/public/local/modules/morefoto.access/.settings.php": "bc5f974f6c39563685b1021cf99c836911abf2acc9fb583f0292b36950da76a9",
+    "api/public/local/modules/morefoto.access/di/access.php": "0fa4f9474c25a05bced7a09984b8928f76539135a39f49341dc7ed1902430264",
+    "api/public/local/modules/morefoto.access/include.php": "74023779d1f6a5e326f90a545caaf6677e6f529bcfd5f9be934ea58618f92769",
+    "api/public/local/modules/morefoto.access/install/index.php": "f92d8e20890f70b898df64c02d066b32a7778d939a97f8488918b384c2ad4023",
+    "api/public/local/modules/morefoto.access/lib/Application/Authorization/Dto/StaffContextOutputDto.php": "f4f1842650a5239ef88792bf29ae5df55bd750d3d517bb3d14b30d5de9b12624",
+    "api/public/local/modules/morefoto.access/lib/Application/Authorization/Service/StaffAuthorization.php": "a6bfeb70a335c54078f330c18d1542066c3a0df82a69194eb6722d1829a4ba10",
+    "api/public/local/modules/morefoto.access/lib/Application/Bootstrap/UseCase/BootstrapOrganizerUseCase.php": "d293ec2e5ae283235d15095e02a48c43a16388241490ec8f25c97c7c151a4fc9",
+    "api/public/local/modules/morefoto.access/lib/Application/Profile/Dto/ProfileOutputDto.php": "9aefb26286a84d158ee6d0862a99bd00605daa40f9415f9b5e3c2f5ab204e30a",
+    "api/public/local/modules/morefoto.access/lib/Application/Profile/UseCase/GetProfileUseCase.php": "76c760615d825f2146b0fb55c8a88925bc5d881ee589360d0a6113be7c103d7b",
+    "api/public/local/modules/morefoto.access/lib/Domain/Staff/Entity/StaffProfile.php": "e2cbc45afd743053934e8bf762ffcc93b931656fd8b755fdd93676201ab81da4",
+    "api/public/local/modules/morefoto.access/lib/Domain/Staff/Enum/PermissionEnum.php": "a81461f0aadb89ab015240909b27378fdf9afb8dc8998703bde3dd022ff3e1c8",
+    "api/public/local/modules/morefoto.access/lib/Domain/Staff/Enum/RoleEnum.php": "65f7492cc1e5cb0902f295fb21b9851f2c33ae7015ed623b57bae3ee44d04f24",
+    "api/public/local/modules/morefoto.access/lib/Domain/Staff/Exception/AccessStorageException.php": "b5978fd0d7640c76fef37f04924d19366aeac2f22e17ca013d13ae4f4755fd4c",
+    "api/public/local/modules/morefoto.access/lib/Domain/Staff/Orm/StaffProfileTable.php": "e4843ff3ff16e2a4c30d88bca1288a686cefc5b1e9e2f0b00e0cba856b6a3c63",
+    "api/public/local/modules/morefoto.access/lib/Domain/Staff/Repository/AccessStateRepository.php": "69d3293b33fb3908c1d2579a1a5703e8fbf1a1bedeb954f4d89547a7a964355d",
+    "api/public/local/modules/morefoto.access/lib/Domain/Staff/Repository/StaffProfileRepository.php": "57115aac3f33488fb390e6dba24ce2be601fca40ca2503da6c44c4ac6d4ead6c",
+    "api/public/local/modules/morefoto.access/lib/Domain/Staff/Service/PermissionPolicy.php": "027a0b25237ba344868fce3249d17553ce4051d29faaab6f9c73aad92dfc0ad9",
+    "api/public/local/modules/morefoto.access/lib/Infrastructure/Adapter/AccessGuard.php": "4d6a141cfe17777dabfe2eeaa69c25229c043f9c99936d914e4b4453e815be7d",
+    "api/public/local/modules/morefoto.access/lib/Presentation/Console/BootstrapOrganizerCommand.php": "f155121cf6d307d7ebe96ece2120c782c19bc3a54ca3a8be714bd2cc1e6b8d73",
+    "api/public/local/modules/morefoto.access/lib/Presentation/Controller/ProfileController.php": "1ef6bb9ab6b867dca2fd2d82d6173169a37cb3f621ff113753fc192eb420fb29",
+    "api/public/local/modules/morefoto.access/routes.php": "f1b64661552919b9050c6020eee69df2611941a8dff4599822ee36f61a5630a4",
+    "api/public/local/modules/morefoto.access/tests/Unit/BootstrapOrganizerCommandTest.php": "3987fe0d027668d4773952418a0d0418c060d5a08c670c1f4bd1a024e9ab64f6",
+    "api/public/local/modules/morefoto.access/tests/Unit/GetProfileUseCaseTest.php": "13ed9a35395676d8fa87733ea6cd008e45889c25051ddad02ec036a96d2c3052",
+    "api/public/local/modules/morefoto.access/tests/Unit/PermissionPolicyTest.php": "c635e891599281f8a82a6d16c6e8e67d0c7a2895d3845fe1266ea8be3eabc982",
+    "api/public/local/modules/rebit.auth/di/auth.php": "828e24089f37d10004464bb735a5fd64a606731b8dee58f56b52bb8d292d3071",
+    "api/public/local/modules/rebit.auth/lib/Infrastructure/Adapter/IdentityGateway.php": "50a728c5c413ad5a20f9132bd181fe46442dab671e0d8319d7d8291ebc180576",
+    "api/public/local/modules/rebit.share/lib/Application/Contract/Auth/Dto/IdentityOutputDto.php": "7236ca66b78b50756aed83c9fc422cd13f7af1191325f7ac5e45a8cb01dff603",
+    "api/public/local/modules/rebit.share/lib/Application/Contract/Auth/IdentityGatewayInterface.php": "a58fc4ca899b8209e376561eb391934e5db5d530f9cb34ca3dbc6090c2b0ac30",
+    "api/public/local/modules/rebit.share/lib/Contracts/Access/AccessGuardInterface.php": "9f418e69aa7b60488bb773da8533bde87e03a563cdd8d53f5b71fe4b0a97e808",
+    "api/public/local/php_interface/init.php": "0b52e1551ab59b8615225ca3eca70898d61471606a251abe2bd8107a29474a1b",
+    "api/public/local/php_interface/migrations.foundation/Version20260911200001.php": "1e6ef34ae48d70769b864ee6f623f29292791a5226af6ef87eff7dc6401f6ed9",
+    "api/public/local/routes/rabit-api.php": "9bf3f333e907e646a67dd9d5535dc63191bacb8dbe665c0de355ce6b9d27973b",
+    "api/tests/stubs/bitrix.php": "fed5215d4db34df3b806e94c7e63f9b1237a3203ed72ffdc5ea6c8956b44eb8f",
+    "api/tools/run-w02-auth-integration.sh": "ec6d3dd773df925c8b0276bb75b6502fd08b2a025bca5c94d05f299838783c14",
+    "api/tools/run-w06-access-integration.sh": "edc4504aacec3af460b9f07dbab57ad7aaa107110f94fb6b136b84fbcca61363",
+    "api/tools/verify-w04-bootstrap.php": "c23fca489c1bce5cadd91f2297f13bf03e3314ee9148e6f32a2c9fb24e904fc0",
+    "api/tools/verify-w06-access.php": "2469397c468b877df04d3332f05f62beff048d2eef9dfe4a1ad1638d28fe4478"
+  }
+}

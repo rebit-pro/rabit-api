@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "phpVersion": "8.4.23",
+  "sourceRoot": "/app",
+  "realKernelServiceLocator": true,
+  "shareBootstrapAlias": true,
+  "registeredServices": 57,
+  "resolvedSingletons": {
+    "Rebit\\Share\\Application\\Contract\\Auth\\IdentityGatewayInterface": "Rebit\\Auth\\Infrastructure\\Adapter\\IdentityGateway",
+    "Rebit\\Share\\Contracts\\Access\\AccessGuardInterface": "Morefoto\\Access\\Infrastructure\\Adapter\\AccessGuard",
+    "Morefoto\\Access\\Application\\Profile\\UseCase\\GetProfileUseCase": "Morefoto\\Access\\Application\\Profile\\UseCase\\GetProfileUseCase",
+    "Morefoto\\Access\\Application\\Bootstrap\\UseCase\\BootstrapOrganizerUseCase": "Morefoto\\Access\\Application\\Bootstrap\\UseCase\\BootstrapOrganizerUseCase",
+    "Morefoto\\Access\\Presentation\\Console\\BootstrapOrganizerCommand": "Morefoto\\Access\\Presentation\\Console\\BootstrapOrganizerCommand",
+    "Rebit\\Share\\Application\\Contract\\Cache\\CacheCleanerInterface": "Rebit\\Share\\Infrastructure\\Bitrix\\Cache\\BitrixCacheCleaner",
+    "Rebit\\Share\\Application\\Contract\\Auth\\TokenResolverInterface": "Rebit\\Auth\\Infrastructure\\Adapter\\TokenResolver",
+    "Rebit\\Auth\\Application\\Auth\\Contract\\TokenGeneratorInterface": "Rebit\\Auth\\Infrastructure\\Adapter\\TokenGenerator",
+    "Rebit\\Auth\\Application\\Auth\\Contract\\RegistrationConfirmationMailerInterface": "Rebit\\Auth\\Infrastructure\\Adapter\\BitrixMailEventRegistrationConfirmationMailer",
+    "Rebit\\Auth\\Application\\Auth\\UseCase\\LoginUseCase": "Rebit\\Auth\\Application\\Auth\\UseCase\\LoginUseCase",
+    "Rebit\\Auth\\Application\\Auth\\UseCase\\LogoutUseCase": "Rebit\\Auth\\Application\\Auth\\UseCase\\LogoutUseCase",
+    "Rebit\\Auth\\Application\\Auth\\UseCase\\RequestRegistrationCodeUseCase": "Rebit\\Auth\\Application\\Auth\\UseCase\\RequestRegistrationCodeUseCase",
+    "Rebit\\Auth\\Application\\Auth\\UseCase\\ConfirmRegistrationUseCase": "Rebit\\Auth\\Application\\Auth\\UseCase\\ConfirmRegistrationUseCase",
+    "Rebit\\Auth\\Application\\Auth\\Contract\\ClockInterface": "Rebit\\Auth\\Infrastructure\\Adapter\\SystemClock",
+    "Rebit\\Auth\\Application\\Auth\\Contract\\AuthTransactionInterface": "Rebit\\Auth\\Infrastructure\\Adapter\\BitrixAuthTransaction",
+    "Rebit\\Share\\Application\\Contract\\Auth\\TokenRevokerInterface": "Rebit\\Auth\\Domain\\User\\Repository\\UserRepository"
+  },
+  "compiledRoutes": [
+    "/api/v1/auth/login",
+    "/api/v1/auth/register/request-code",
+    "/api/v1/auth/register/confirm",
+    "/api/v1/auth/logout",
+    "/api/v1/share/file/upload/",
+    "/api/v1/lead",
+    "/api/v1/me"
+  ],
+  "disabledNotificationRouteFixture": true,
+  "migrationDirectory": "/local/php_interface/migrations.foundation",
+  "installedModulesOrMigrations": false,
+  "businessMethodsExecuted": false,
+  "databaseUsed": false,
+  "networkUsed": false
+}

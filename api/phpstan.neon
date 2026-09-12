@@ -10,6 +10,8 @@ parameters:
         - phpstan/bitrix-stubs.php
     excludePaths:
         analyseAndScan:
+            - public/local/modules/morefoto.access/install
+            - public/local/modules/morefoto.access/tests
             - public/local/modules/sprint.migration
             - public/local/modules/rebit.auth/install
             - public/local/modules/rebit.dev/install
