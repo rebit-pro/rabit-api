@@ -1,0 +1,200 @@
+{
+  "status": "PASS",
+  "base": "2ac4ef9b3e4b63d734fc3dda5240cab50a550d44",
+  "testedCommits": {
+    "B1": "2d04d09b0c4155754d8843c8e9a628e21de5ca36",
+    "C1": "807096c0f83e25e99a54aa74f101cb0a32201f9c",
+    "E1": "28f6907501cf71f1fbe66b9741c5186d6192cd91",
+    "A7": "80f86cb7c64424550d34b77e6616e44155e968c4"
+  },
+  "pairwiseFileOverlap": {
+    "B1+C1": [],
+    "B1+E1": [],
+    "B1+A7": [],
+    "C1+E1": [],
+    "C1+A7": [],
+    "E1+A7": []
+  },
+  "mergeOrders": [
+    [
+      "B1",
+      "C1",
+      "E1",
+      "A7"
+    ],
+    [
+      "B1",
+      "C1",
+      "A7",
+      "E1"
+    ],
+    [
+      "B1",
+      "E1",
+      "C1",
+      "A7"
+    ],
+    [
+      "B1",
+      "E1",
+      "A7",
+      "C1"
+    ],
+    [
+      "B1",
+      "A7",
+      "C1",
+      "E1"
+    ],
+    [
+      "B1",
+      "A7",
+      "E1",
+      "C1"
+    ],
+    [
+      "C1",
+      "B1",
+      "E1",
+      "A7"
+    ],
+    [
+      "C1",
+      "B1",
+      "A7",
+      "E1"
+    ],
+    [
+      "C1",
+      "E1",
+      "B1",
+      "A7"
+    ],
+    [
+      "C1",
+      "E1",
+      "A7",
+      "B1"
+    ],
+    [
+      "C1",
+      "A7",
+      "B1",
+      "E1"
+    ],
+    [
+      "C1",
+      "A7",
+      "E1",
+      "B1"
+    ],
+    [
+      "E1",
+      "B1",
+      "C1",
+      "A7"
+    ],
+    [
+      "E1",
+      "B1",
+      "A7",
+      "C1"
+    ],
+    [
+      "E1",
+      "C1",
+      "B1",
+      "A7"
+    ],
+    [
+      "E1",
+      "C1",
+      "A7",
+      "B1"
+    ],
+    [
+      "E1",
+      "A7",
+      "B1",
+      "C1"
+    ],
+    [
+      "E1",
+      "A7",
+      "C1",
+      "B1"
+    ],
+    [
+      "A7",
+      "B1",
+      "C1",
+      "E1"
+    ],
+    [
+      "A7",
+      "B1",
+      "E1",
+      "C1"
+    ],
+    [
+      "A7",
+      "C1",
+      "B1",
+      "E1"
+    ],
+    [
+      "A7",
+      "C1",
+      "E1",
+      "B1"
+    ],
+    [
+      "A7",
+      "E1",
+      "B1",
+      "C1"
+    ],
+    [
+      "A7",
+      "E1",
+      "C1",
+      "B1"
+    ]
+  ],
+  "mergeOrderCount": 24,
+  "identicalTree": "6d42ed334c25235a053b795ab896af73775835de",
+  "scope": "Temporary verification only. No feature branch or main merged; each PR retains its own main base.",
+  "combinedChecks": {
+    "phpunit": {
+      "status": "PASS",
+      "tests": 207,
+      "assertions": 778
+    },
+    "phpstan": {
+      "status": "PASS",
+      "level": 5
+    },
+    "baselineDiagnostics": "Two existing Share DTO metadata logger warnings; no PHPUnit warnings or failures."
+  },
+  "individualChecks": {
+    "C1": {
+      "phpunitTests": 151,
+      "phpunitAssertions": 646,
+      "nativeBitrixMysqlChecks": 31,
+      "report": "docs/waves/c1/verification.json"
+    },
+    "E1": {
+      "phpunitTests": 156,
+      "phpunitAssertions": 660,
+      "nativeBitrixMysqlChecks": 51,
+      "report": "docs/waves/e1/verification.json"
+    }
+  },
+  "reproduction": [
+    "Resolve each testedCommits SHA and compare git diff --name-only BASE SHA pairwise.",
+    "For each permutation, run git merge-tree --write-tree against BASE then each wave, creating temporary commits with git commit-tree; all 24 final trees must match identicalTree.",
+    "In a detached temporary worktree of that tree, use the project PHP 8.4 image and an isolated Composer autoload generated for the combined checkout; run vendor/bin/phpunit and vendor/bin/phpstan analyse --configuration=phpstan.neon.",
+    "Run each wave native fixture independently from main plus only its own diff as documented in that wave."
+  ],
+  "evidenceScope": "A7 tested SHA precedes this evidence-only addition and PR links. Runtime code, graph and verifier are unchanged. Temporary combined tests supplement independent checks; they do not authorize merging or deploying."
+}
