@@ -7,7 +7,6 @@ declare(strict_types=1);
  * Подключаются в tests/bootstrap.php.
  */
 
-
 namespace Bitrix\Main\Type;
 
 if (!class_exists(Date::class)) {
@@ -81,7 +80,7 @@ if (!class_exists(Json::class)) {
     {
         public static function encode(mixed $data): string
         {
-            return (string) json_encode($data, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+            return (string)json_encode($data, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         }
 
         public static function decode(string $data): mixed
@@ -94,14 +93,22 @@ if (!class_exists(Json::class)) {
 /**
  * Стабы Bitrix ORM — нужны, т.к. EO_*-классы генерируются только в рантайме Bitrix.
  */
+
 namespace Bitrix\Main;
 
 if (!class_exists(Result::class)) {
     class Result
     {
-        public function isSuccess(): bool { return true; }
+        public function isSuccess(): bool
+        {
+            return true;
+        }
+
         /** @return array<string> */
-        public function getErrorMessages(): array { return []; }
+        public function getErrorMessages(): array
+        {
+            return [];
+        }
     }
 }
 
@@ -144,12 +151,26 @@ if (!class_exists(Cache::class)) {
      */
     class Cache
     {
-        public static function createInstance(): self { return new self(); }
+        public static function createInstance(): self
+        {
+            return new self();
+        }
+
         public function noOutput(): void {}
-        public function startDataCache(int $ttl = 0, string $key = '', string $dir = ''): bool { return true; }
+
+        public function startDataCache(int $ttl = 0, string $key = '', string $dir = ''): bool
+        {
+            return true;
+        }
+
         public function endDataCache(mixed $vars = null): void {}
+
         public function abortDataCache(): void {}
-        public function getVars(): mixed { return null; }
+
+        public function getVars(): mixed
+        {
+            return null;
+        }
     }
 }
 
@@ -166,13 +187,9 @@ if (!class_exists(ManagedCache::class)) {
             return null;
         }
 
-        public function set(string $uniqueId, mixed $val): void
-        {
-        }
+        public function set(string $uniqueId, mixed $val): void {}
 
-        public function clean(string $uniqueId, string $tableId = ''): void
-        {
-        }
+        public function clean(string $uniqueId, string $tableId = ''): void {}
     }
 }
 
@@ -198,7 +215,6 @@ if (!class_exists(Configuration::class)) {
         }
     }
 }
-
 
 namespace Bitrix\Main\ORM\Data;
 
