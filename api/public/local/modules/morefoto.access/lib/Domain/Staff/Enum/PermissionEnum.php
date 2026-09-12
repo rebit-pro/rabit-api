@@ -13,4 +13,5 @@ enum PermissionEnum: string
     case SHOOT_READ = 'shoot.read';
     case GROUP_READ = 'group.read';
     case ORGANIZATION_MANAGE = 'organization.manage';
+    case CATALOG_MANAGE = 'catalog.manage';
 }

@@ -18,18 +18,22 @@ final readonly class UpdateProductUseCase
 
     public function execute(UpdateProductInputDto $input): CatalogMutationOutputDto
     {
-        return $this->transaction->execute(function() use ($input): CatalogMutationOutputDto {
-            $revision = $this->repository->lockRevision(true);
-            if ($input->revision !== $revision) {
-                throw new CatalogRevisionConflictException('Catalog changed; reload before updating.');
-            }
-            $row = $this->repository->find($input->id)->fetch();
-            if (false === $row) {
-                throw new ProductNotFoundException('Product not found.');
-            }
-            $this->repository->update($input->id, $input->apply(ProductOutputDto::fromRow($row)));
+        return $this->transaction->execute(fn(): CatalogMutationOutputDto => $this->executeWithinTransaction($input));
+    }
 
-            return new CatalogMutationOutputDto($input->id->value, $this->repository->advanceRevision($revision));
-        });
+    /** Caller owns the transaction; this participant never commits or rolls back. */
+    public function executeWithinTransaction(UpdateProductInputDto $input): CatalogMutationOutputDto
+    {
+        $revision = $this->repository->lockRevision(true);
+        if ($input->revision !== $revision) {
+            throw new CatalogRevisionConflictException('Catalog changed; reload before updating.');
+        }
+        $row = $this->repository->find($input->id)->fetch();
+        if (false === $row) {
+            throw new ProductNotFoundException('Product not found.');
+        }
+        $this->repository->update($input->id, $input->apply(ProductOutputDto::fromRow($row)));
+
+        return new CatalogMutationOutputDto($input->id->value, $this->repository->advanceRevision($revision));
     }
 }

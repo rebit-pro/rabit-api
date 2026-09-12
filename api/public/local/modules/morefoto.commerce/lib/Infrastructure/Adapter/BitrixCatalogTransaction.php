@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Morefoto\Commerce\Infrastructure\Adapter;
 
 use Bitrix\Main\Application;
+use Rebit\Share\Contracts\Access\CatalogAccessException;
 use Morefoto\Commerce\Application\Catalog\Contract\CatalogTransactionInterface;
 use Morefoto\Commerce\Domain\Catalog\Exception\CatalogException;
 use Morefoto\Commerce\Domain\Catalog\Exception\CatalogStorageException;
@@ -29,7 +30,7 @@ final readonly class BitrixCatalogTransaction implements CatalogTransactionInter
             if ($started) {
                 $connection->rollbackTransaction();
             }
-            if ($exception instanceof CatalogException) {
+            if ($exception instanceof CatalogException || $exception instanceof CatalogAccessException) {
                 throw $exception;
             }
             throw new CatalogStorageException('Catalogue persistence failed.', 0, $exception);
