@@ -1,5 +1,8 @@
 # Загрузить переменные окружения; ENV_FILE=/dev/null отключает локальный .env.
 ENV_FILE ?= .env
+ifneq (,$(filter test-e2e e2e-up e2e-test e2e-down,$(MAKECMDGOALS)))
+    override ENV_FILE := /dev/null
+endif
 ifneq (,$(wildcard $(ENV_FILE)))
     include $(ENV_FILE)
     export $(shell sed 's/=.*//' $(ENV_FILE))
@@ -294,3 +297,17 @@ php-cli:
 
 php-fpm:
 	docker compose exec api-php-fpm bash
+
+# Real frontend/API browser gate. Does not load application .env; use ENV_FILE=/dev/null.
+.PHONY: test-e2e e2e-up e2e-test e2e-down
+test-e2e:
+	python3 tools/run-browser-e2e.py run
+
+e2e-up:
+	python3 tools/run-browser-e2e.py up
+
+e2e-test:
+	python3 tools/run-browser-e2e.py test --state "$(E2E_STATE)"
+
+e2e-down:
+	python3 tools/run-browser-e2e.py down --state "$(E2E_STATE)"

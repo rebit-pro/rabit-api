@@ -43,7 +43,7 @@ final class CatalogController extends BaseJsonController implements Authenticate
     public function listAction(): ControllerJson
     {
         return $this->respond(function(): ControllerJson {
-            $input = $this->requests->list($this->getRequest()->getQueryList()->toArray(), (string)$this->getRequest()::getInput());
+            $input = $this->requests->list($this->queryParameters(), (string)$this->getRequest()::getInput());
             $output = $this->catalog->list($this->getAuthUserId(), $this->token(), $input->input);
 
             return $this->json($this->responses->data($output), ['page' => $output->page, 'pageSize' => $output->pageSize, 'total' => $output->total]);
@@ -53,7 +53,7 @@ final class CatalogController extends BaseJsonController implements Authenticate
     public function createAction(): ControllerJson
     {
         return $this->respond(function(): ControllerJson {
-            $input = $this->requests->create((string)$this->getRequest()::getInput(), $this->getRequest()->getHeader('Content-Type') ?? '', $this->getRequest()->getHeader('Idempotency-Key') ?? '', $this->getRequest()->getQueryList()->toArray());
+            $input = $this->requests->create((string)$this->getRequest()::getInput(), $this->getRequest()->getHeader('Content-Type') ?? '', $this->getRequest()->getHeader('Idempotency-Key') ?? '', $this->queryParameters());
             $output = $this->catalog->create($this->getAuthUserId(), $this->token(), $input->idempotencyKey, $input->input);
 
             return $this->json(['id' => $output->id, 'revision' => $output->revision])->setStatus(201)->addHeader('Location', '/api/v1/catalog/products/' . $output->id);
@@ -63,7 +63,7 @@ final class CatalogController extends BaseJsonController implements Authenticate
     public function updateAction(string $product_id): ControllerJson
     {
         return $this->respond(function() use ($product_id): ControllerJson {
-            $input = $this->requests->update((string)$this->getRequest()::getInput(), $this->getRequest()->getHeader('Content-Type') ?? '', $this->getRequest()->getHeader('Idempotency-Key') ?? '', $product_id, $this->getRequest()->getQueryList()->toArray());
+            $input = $this->requests->update((string)$this->getRequest()::getInput(), $this->getRequest()->getHeader('Content-Type') ?? '', $this->getRequest()->getHeader('Idempotency-Key') ?? '', $product_id, $this->queryParameters());
             $output = $this->catalog->update($this->getAuthUserId(), $this->token(), $input->idempotencyKey, $input->input);
 
             return $this->json(['id' => $output->id, 'revision' => $output->revision]);
@@ -75,6 +75,16 @@ final class CatalogController extends BaseJsonController implements Authenticate
         $filters = [new BearerTokenFilter($this->tokens), new LoggerFilter()];
 
         return ['list' => ['prefilters' => $filters], 'create' => ['prefilters' => $filters], 'update' => ['prefilters' => $filters]];
+    }
+
+    /** @return array<string, mixed> */
+    private function queryParameters(): array
+    {
+        // The full Bitrix router adds path variables to getQueryList(). Only the original URL contains client query parameters.
+        $query = [];
+        parse_str((string)parse_url((string)$this->getRequest()->getRequestUri(), PHP_URL_QUERY), $query);
+
+        return $query;
     }
 
     private function token(): string

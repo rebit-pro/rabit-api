@@ -59,6 +59,13 @@ final class E2Http
         if (null === $route) {
             return ['status' => 404, 'body' => [], 'cacheControl' => null, 'location' => null];
         }
+        // Match the stock routing_index.php behavior: path arguments are also added to GET before the controller runs.
+        $routedQuery = $query;
+        foreach ($route->getParametersValues()->getValues() as $name => $value) {
+            $routedQuery[$name] = $value;
+        }
+        $request = new E2HttpRequest($server, $routedQuery, [], [], []);
+        Application::getInstance()->getContext()->initialize($request, new HttpResponse(), $server);
         [$class, $methodName] = $route->getController();
         if (CatalogController::class !== $class) {
             throw new RuntimeException('Expected native Commerce route.');

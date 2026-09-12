@@ -1,0 +1,178 @@
+{
+  "recordedAt": "2026-09-12T13:38:13.001213+00:00",
+  "status": "blocked-before-runtime-acceptance",
+  "baseCommit": "895fee9873cd62316579d18512c8b2e3315c3d62",
+  "branch": "codex/a8-real-e2e",
+  "dependencies": {
+    "B1": "merged",
+    "E2": "merged"
+  },
+  "checks": {
+    "waveGraph": {
+      "waves": 40,
+      "endpoints": 99,
+      "legacyWaves": 35,
+      "readyFromMain": [
+        "A8",
+        "C3"
+      ],
+      "blocked": [
+        "C4",
+        "B2",
+        "D1",
+        "D2",
+        "E3",
+        "F1",
+        "E4",
+        "E5",
+        "D3",
+        "F2",
+        "G1",
+        "H1",
+        "G2",
+        "I1",
+        "I2",
+        "I3",
+        "J1",
+        "J2",
+        "J3",
+        "K1",
+        "L1",
+        "L2",
+        "K2",
+        "M1",
+        "N1",
+        "N2"
+      ],
+      "negativeFixtures": [
+        "cycle",
+        "unknown dependency",
+        "unmerged dependency started",
+        "open decision started",
+        "stale unlocks",
+        "duplicate endpoint owner",
+        "missing legacy mapping",
+        "stacked PR permitted",
+        "browser gate disabled",
+        "visual gate disabled"
+      ]
+    },
+    "canonicalApi": {
+      "date": "2026-09-11",
+      "result": "passed",
+      "requests": 99,
+      "folders": 15,
+      "scripts": 144,
+      "waves": 40,
+      "schemaValidation": "not-run",
+      "schemaUrl": "https://schema.postman.com/json/collection/v2.1.0/collection.json",
+      "checks": [
+        "JSON parse",
+        "unique IDs and method/path pairs",
+        "Markdown/registry/collection parity",
+        "module ownership and module-plan parity",
+        "RaBit API base and contract paths",
+        "route declaration ownership and proposed status",
+        "raw/structured URL parity",
+        "all variable references declared",
+        "empty exported credentials",
+        "numeric JSON version fields",
+        "auth and idempotency headers",
+        "endpoint-specific multipart fields and boundary",
+        "platform requests blocked by default",
+        "wave primary coverage, acyclic dependencies and independent readiness",
+        "wave metadata and review/acceptance completeness",
+        "module/wave Postman item equality",
+        "existing source paths and document links"
+      ],
+      "liveApiRequestsExecuted": false
+    },
+    "postmanOffline": {
+      "scriptsParsed": 144,
+      "positiveFixtures": 99,
+      "negativeFixtures": 198,
+      "idempotencyRepeatChecks": 43,
+      "platformGuardChecks": 14,
+      "platformContractNegativeFixtures": 2,
+      "note": "Offline script fixtures only; no API requests or Postman UI import were executed."
+    },
+    "phpSyntax": {
+      "status": "passed",
+      "files": 3,
+      "runtime": "PHP 8.3.6 local",
+      "limitation": "Syntax only; does not replace project PHP 8.4 checks"
+    },
+    "frontend": {
+      "status": "passed",
+      "node": "v24.15.0",
+      "commands": [
+        "npm ci --no-audit --no-fund",
+        "npm run lint:fix",
+        "npm run check",
+        "npm run test:commerce",
+        "VITE_API_URL= VITE_API_MOCKS_ENABLED=false npm run build"
+      ],
+      "unitTests": 150,
+      "liveScenariosDefined": 14,
+      "liveScenariosExecuted": 0,
+      "logs": {
+        "lint-fix-final": {
+          "path": "frontend/reports/a8-recovery/lint-fix-final.log",
+          "sha256": "fb5be27f121cbcbc9297aee64ce632a678375cd6bd7050f0b7ead7c16831f976"
+        },
+        "check-final": {
+          "path": "frontend/reports/a8-recovery/check-final.log",
+          "sha256": "beb5edf6e458c0bfa5dce2e9208600ec0c4f4615e02479df11fc3615960ee35d"
+        },
+        "unit-final": {
+          "path": "frontend/reports/a8-recovery/unit-final.log",
+          "sha256": "1e81e8729e397d81a6e21c6648bf7fd6a8820684fa25ed77530d802bc8c541f7"
+        },
+        "build-final": {
+          "path": "frontend/reports/a8-recovery/build-final.log",
+          "sha256": "9802904b9cd45bc00054df14a06509bc95d971fbd735a99a5c0eb370b4d419fa"
+        }
+      }
+    },
+    "pythonSyntax": {
+      "status": "passed",
+      "files": [
+        "tools/run-browser-e2e.py",
+        "tools/verify-wave-graph.py"
+      ]
+    },
+    "makeDryRun": {
+      "status": "passed",
+      "command": "make -n test-e2e"
+    },
+    "gitDiffCheck": {
+      "status": "passed",
+      "note": "Whitespace-only cleanup in imported files after frontend checks"
+    }
+  },
+  "pending": [
+    "PHP 8.4 lint, formatting, PHPStan, PHPUnit",
+    "native Bitrix/MySQL catalog regression",
+    "fresh real browser E2E through nginx/FPM/MySQL",
+    "desktop/mobile visual inspection",
+    "demo Cucumber regression"
+  ],
+  "blocker": {
+    "component": "Docker Desktop 4.71.0",
+    "observedError": "initializing Inference manager: dockerInference: The file cannot be accessed by the system",
+    "engine": "unavailable",
+    "approval": "Automatic approval review rejected forced Docker Desktop shutdown because it can affect other local containers; explicit user permission requested and pending."
+  },
+  "previousRun": {
+    "date": "2026-09-12",
+    "sourceTask": "01a090f8-c183-7291-9aec-97948fe6b762",
+    "reportedRealE2EPassed": 13,
+    "reusedAsCurrentEvidence": false,
+    "note": "Interrupted worktree in /tmp disappeared after restart; code recovered from recorded edits. Runtime tests must be rerun."
+  },
+  "deployment": false,
+  "merged": false,
+  "knownInheritedWarnings": [
+    "npm peer dependency warning: vite-plugin-inspect 0.8.9 (via devtools) declares Vite 5/6, existing frontend uses Vite 7.2.2. No dependency upgrade included."
+  ]
+}

@@ -1,0 +1,170 @@
+.morefoto-app {
+  --mf-control-height: 48px;
+  --mf-table-header: 44px;
+  --mf-table-row: 52px;
+  --mf-table-row-compact: 44px;
+  --mf-control-compact: 40px;
+  --mf-touch-size: 44px;
+  --mf-icon-size: 22px;
+  --mf-text-control: 1rem;
+  --mf-text-small: 0.8125rem;
+  --mf-space-1: 4px;
+  --mf-space-2: 8px;
+  --mf-space-3: 12px;
+  --mf-space-4: 16px;
+  --mf-space-6: 24px;
+  --mf-space-8: 32px;
+  --mf-radius-field: 4px;
+  --mf-radius-button: 4px;
+  --mf-focus-width: 2px;
+  --mf-focus-offset: 3px;
+
+  .v-input {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+  .v-input--density-default,
+  .v-input--density-comfortable {
+    --v-input-control-height: var(--mf-control-height);
+    --v-input-padding-top: 0px;
+  }
+  .v-input--density-compact {
+    --v-input-control-height: var(--mf-control-compact);
+    --v-input-padding-top: 0px;
+  }
+  .v-field {
+    border-radius: var(--mf-radius-field);
+  }
+  .v-field:not(.v-field--disabled) .v-label.v-field-label {
+    opacity: 1;
+  }
+  .v-field:not(.v-field--disabled):not(.v-field--focused):not(.v-field--error) .v-label.v-field-label {
+    color: rgb(var(--v-theme-lightText));
+  }
+  .v-field--variant-outlined {
+    --v-field-padding-start: var(--mf-space-3);
+    --v-field-padding-end: var(--mf-space-3);
+    --v-field-padding-top: 0px;
+    --v-field-padding-bottom: 0px;
+    --v-field-input-padding-top: var(--mf-space-2);
+    --v-field-input-padding-bottom: var(--mf-space-2);
+  }
+  .v-textarea {
+    --v-input-padding-top: var(--mf-space-3);
+  }
+  .v-textarea .v-field--variant-outlined {
+    --v-field-input-padding-top: var(--mf-space-3);
+    --v-field-input-padding-bottom: var(--mf-space-3);
+  }
+  .v-field__input,
+  .v-text-field input,
+  .v-textarea textarea {
+    font-size: var(--mf-text-control);
+    line-height: 1.5;
+  }
+  .v-field__input {
+    min-height: var(--v-input-control-height);
+  }
+  .v-field__outline {
+    --v-field-border-opacity: 0.65;
+  }
+  .v-input__details {
+    padding-inline: var(--mf-space-3);
+    padding-top: var(--mf-space-1);
+    font-size: var(--mf-text-small);
+    min-height: 0;
+  }
+  .v-messages {
+    font-size: var(--mf-text-small);
+    line-height: 1.45;
+  }
+  .v-field__clearable {
+    opacity: 1;
+  }
+  .v-field__clearable > .v-icon {
+    min-width: var(--mf-touch-size);
+    min-height: min(var(--mf-touch-size), var(--v-input-control-height));
+    font-size: var(--mf-icon-size);
+  }
+  .v-selection-control {
+    --v-selection-control-size: var(--mf-touch-size);
+    min-height: var(--mf-touch-size);
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .v-selection-control .v-label {
+    opacity: 1;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    line-height: 1.5;
+    padding-block: var(--mf-space-2);
+  }
+  .v-btn {
+    flex: 0 0 auto;
+    text-transform: none;
+    letter-spacing: normal;
+    border-radius: var(--mf-radius-button);
+    font-size: var(--mf-text-control);
+    line-height: 1.5;
+    min-height: var(--mf-control-height);
+    height: auto;
+    max-width: 100%;
+    padding: var(--mf-space-2) var(--mf-space-4);
+    white-space: normal;
+  }
+  .v-btn:not(.v-btn--icon) {
+    height: auto;
+  }
+  .v-btn--density-compact {
+    min-height: var(--mf-control-compact);
+    padding-block: var(--mf-space-1);
+  }
+  .v-btn__content {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+  .v-btn.v-btn--icon {
+    min-width: var(--mf-touch-size);
+    min-height: var(--mf-touch-size);
+    width: var(--mf-touch-size);
+    height: var(--mf-touch-size);
+    padding: 0;
+    flex: 0 0 var(--mf-touch-size);
+  }
+  .v-btn--icon .v-icon {
+    font-size: var(--mf-icon-size);
+  }
+  .v-btn--variant-flat:not(.v-btn--icon):hover {
+    transform: none;
+  }
+  a:focus-visible,
+  button:focus-visible,
+  summary:focus-visible,
+  [role="button"]:focus-visible {
+    outline: var(--mf-focus-width) solid rgb(var(--v-theme-primary));
+    outline-offset: var(--mf-focus-offset);
+  }
+}
+.mf-ui-overlay {
+  font-family: Arial, sans-serif;
+  .v-list-item-title {
+    white-space: normal;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  .v-list-item {
+    min-height: var(--mf-touch-size);
+  }
+}
+@media (pointer: coarse), (max-width: 767px) {
+  .morefoto-app {
+    --mf-control-compact: var(--mf-touch-size);
+  }
+}
+
+.morefoto-app .mf-form-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--mf-space-4); }
+.morefoto-app .mf-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mf-space-3); }
