@@ -83,6 +83,35 @@ final readonly class UserRepository implements LoginUserRepositoryInterface, Tok
         });
     }
 
+    /** Current read serialized with privileged identity changes and session revocation. */
+    public function findActiveByEmailForUpdate(string $email): ?UserCredentials
+    {
+        return $this->query(static function() use ($email): ?UserCredentials {
+            $connection = Application::getConnection();
+            /** @var array{
+             *     ID: int|string,
+             *     PASSWORD: string,
+             *     EMAIL: string,
+             *     NAME: null|string,
+             *     UF_AUTH_REGISTRATION_PENDING: null|int|string,
+             * }|false $row */
+            $row = $connection->query(sprintf(
+                "SELECT u.ID, u.PASSWORD, u.EMAIL, u.NAME, uf.UF_AUTH_REGISTRATION_PENDING FROM b_user u LEFT JOIN b_uts_user uf ON uf.VALUE_ID = u.ID WHERE u.EMAIL = '%s' AND u.ACTIVE = 'Y' LIMIT 1 FOR UPDATE",
+                $connection->getSqlHelper()->forSql($email),
+            ))->fetch();
+            if (false === $row || 1 === (int)($row['UF_AUTH_REGISTRATION_PENDING'] ?? 0)) {
+                return null;
+            }
+
+            return new UserCredentials(
+                id: (int)$row['ID'],
+                passwordHash: $row['PASSWORD'],
+                email: $row['EMAIL'],
+                name: (string)$row['NAME'],
+            );
+        });
+    }
+
     /**
      * @throws RepositoryException
      */
@@ -187,10 +216,18 @@ final readonly class UserRepository implements LoginUserRepositoryInterface, Tok
 
     public function updateToken(int $userId, string $token, DateTime $expiresAt): void
     {
-        $this->updateUser($userId, [
-            'UF_TOKEN' => $token,
-            'UF_TOKEN_EXPIRES_AT' => TokenExpirationParser::format($expiresAt),
-        ]);
+        // Token fields belong to Auth. CUser::Update opens a nested transaction and
+        // can leave it open on a storage exception, preventing the caller rollback.
+        $this->query(static function() use ($userId, $token, $expiresAt): void {
+            $connection = Application::getConnection();
+            $helper = $connection->getSqlHelper();
+            $connection->queryExecute(sprintf(
+                "INSERT INTO b_uts_user (VALUE_ID, UF_TOKEN, UF_TOKEN_EXPIRES_AT) VALUES (%d, '%s', '%s') ON DUPLICATE KEY UPDATE UF_TOKEN = VALUES(UF_TOKEN), UF_TOKEN_EXPIRES_AT = VALUES(UF_TOKEN_EXPIRES_AT)",
+                $userId,
+                $helper->forSql($token),
+                $helper->forSql(TokenExpirationParser::format($expiresAt)),
+            ));
+        });
     }
 
     /**

@@ -2,4 +2,4 @@
 
 declare(strict_types=1);
 
-return ['services' => ['value' => require __DIR__ . '/di/institution.php', 'readonly' => true]];
+return ['services' => ['value' => array_merge(require __DIR__ . '/di/institution.php', require __DIR__ . '/di/http.php'), 'readonly' => true]];

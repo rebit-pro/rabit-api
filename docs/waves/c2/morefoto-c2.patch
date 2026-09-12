@@ -1,0 +1,73 @@
+--- a/docs/04-bitrix-modules/README.md
++++ b/docs/04-bitrix-modules/README.md
+@@ -110 +110 @@
+-A1–A6 (W00–W05) слиты; B1 (W06) на ревью в PR #8. Сейчас независимы **C1 — внутренние учреждения** и **E1 — внутренний каталог**; у них нет HTTP и зависимости от B1. Защищённые C2/E2 начинаются после merge B1 и своего внутреннего среза. C3 добавляет реальные съёмки/группы, затем C4 — полный ORG-04. Минимальные назначения Access входят в C2/C3; B2 добавляет управление сотрудниками. A7 фиксирует правило и не является runtime-блокером.
++A1–A7, B1, C1 и E1 слиты в `main` (PR #8–11 проверены и объединены 12.09.2026). От этой базы независимо выполняются **C2 — защищённые учреждения и назначения** и **E2 — защищённый каталог**. Каждая ветка содержит только свой diff; C2 и E2 не зависят друг от друга. C3 добавляет реальные съёмки/группы, затем C4 — полный ORG-04. Минимальные назначения Access входят в C2/C3; B2 добавляет управление сотрудниками. A7 фиксирует правило и не является runtime-блокером.
+--- a/docs/04-bitrix-modules/backend-waves.json
++++ b/docs/04-bitrix-modules/backend-waves.json
+@@ -4 +4 @@
+-  "date": "2026-09-11",
++  "date": "2026-09-12",
+@@ -9 +9 @@
+-    "commit": "2ac4ef9b3e4b63d734fc3dda5240cab50a550d44",
++    "commit": "83528338146828176eaa59b954c0c85942d986da",
+@@ -16 +16,5 @@
+-      "A6"
++      "A6",
++      "A7",
++      "B1",
++      "C1",
++      "E1"
+@@ -18,4 +22,8 @@
+-    "review": {
+-      "B1": "https://github.com/rebit-pro/rabit-api/pull/8"
+-    },
+-    "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main."
++    "review": {},
++    "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
++    "mergedPullRequests": {
++      "B1": "https://github.com/rebit-pro/rabit-api/pull/8",
++      "C1": "https://github.com/rebit-pro/rabit-api/pull/9",
++      "E1": "https://github.com/rebit-pro/rabit-api/pull/10",
++      "A7": "https://github.com/rebit-pro/rabit-api/pull/11"
++    }
+@@ -361 +369 @@
+-      "deliveryState": "inProgress",
++      "deliveryState": "merged",
+@@ -405 +413 @@
+-      "deliveryState": "review",
++      "deliveryState": "merged",
+@@ -447 +455 @@
+-      "deliveryState": "inProgress",
++      "deliveryState": "merged",
+@@ -486 +494 @@
+-      "deliveryState": "inProgress",
++      "deliveryState": "merged",
+@@ -533 +541 @@
+-      "deliveryState": "planned",
++      "deliveryState": "inProgress",
+@@ -838 +846 @@
+-      "deliveryState": "planned",
++      "deliveryState": "inProgress",
+--- a/docs/04-bitrix-modules/wave_graph.py
++++ b/docs/04-bitrix-modules/wave_graph.py
+@@ -85 +85,2 @@
+-        wave(data, "C1")["deliveryState"] = "planned"
++        if wave(data, "C1")["deliveryState"] != "merged":
++            wave(data, "C1")["deliveryState"] = "planned"
+@@ -90,2 +91,5 @@
+-    rejects("unmerged dependency started", lambda data: wave(data, "C2").update(deliveryState="inProgress"))
+-    rejects("open decision started", lambda data: wave(data, "E1").update(decisionGates=["D02"]))
++    merged_ids = {item["id"] for item in plan["waves"] if item["deliveryState"] == "merged"}
++    blocked_id = next(item["id"] for item in plan["waves"] if item["id"] not in merged_ids and not set(item["dependsOn"]) <= merged_ids)
++    ready_id = next(item["id"] for item in plan["waves"] if item["id"] not in merged_ids and set(item["dependsOn"]) <= merged_ids)
++    rejects("unmerged dependency started", lambda data: wave(data, blocked_id).update(deliveryState="inProgress"))
++    rejects("open decision started", lambda data: wave(data, ready_id).update(deliveryState="inProgress", decisionGates=["D99"]))
+--- a/docs/05-rest-api/build.py
++++ b/docs/05-rest-api/build.py
+@@ -101 +101,4 @@
+-add("organization","ORG-02","GET","/institutions","Список учреждений","О/К/Р","items<Institution>, meta",sample=list_sample)
++add("organization","ORG-02","GET","/institutions","Список учреждений","О/К/Р","items<ManagedInstitution>, assignmentSignature, meta",
++    query=[("q","","Буквальный префикс имени"),("page","1","Страница от 1"),("pageSize","50","Размер страницы 1–100")],
++    sample={"items":[],"assignmentSignature":"a1"}, save={"assignment_signature":"assignmentSignature"},
++    note="C2: записи содержат id/name/address/revision/curatorId/headId; фильтр области применяется до пагинации. Пустая область curator/head возвращает пустой список. Реальная глобальная assignmentSignature позволяет создать или перечитать назначение до B2/ACC-06; пустое создание без назначений подписи не требует. Полная карточка ORG-04 остаётся C4.")

@@ -1,0 +1,98 @@
+{
+  "date": "2026-09-12",
+  "repository": "rebit-pro/rabit-api",
+  "result": "PASS",
+  "main": "83528338146828176eaa59b954c0c85942d986da",
+  "testedTree": "6478815052c769994b08a75bd34b1a105fc59906",
+  "predecessors": [
+    {
+      "wave": "B1",
+      "pr": 8,
+      "head": "a4d303ce33b34efe5852189b8fc8c77a56a958be",
+      "phpunit": {
+        "tests": 164,
+        "assertions": 716
+      },
+      "nativeChecks": 50
+    },
+    {
+      "wave": "C1",
+      "pr": 9,
+      "head": "807096c0f83e25e99a54aa74f101cb0a32201f9c",
+      "phpunit": {
+        "tests": 151,
+        "assertions": 646
+      },
+      "nativeChecks": 31
+    },
+    {
+      "wave": "E1",
+      "pr": 10,
+      "head": "28f6907501cf71f1fbe66b9741c5186d6192cd91",
+      "phpunit": {
+        "tests": 156,
+        "assertions": 660
+      },
+      "nativeChecks": 51
+    },
+    {
+      "wave": "A7",
+      "pr": 11,
+      "head": "ee4587c241e595db76a1bd81c5a78b1ead8e9228",
+      "graph": {
+        "waves": 39,
+        "endpoints": 99,
+        "legacyWaves": 35,
+        "negativeFixtures": 8
+      }
+    }
+  ],
+  "combined": {
+    "mergeOrders": 24,
+    "identicalTrees": true,
+    "phpunit": {
+      "tests": 207,
+      "assertions": 778
+    },
+    "phpstan": "PASS"
+  },
+  "phpBranchesChecks": [
+    "PHPUnit",
+    "PHPStan",
+    "PHP CS Fixer",
+    "PHP lint",
+    "native Bitrix/MySQL integration"
+  ],
+  "githubActions": "disabled_manually; YAML preserved",
+  "merged": [
+    {
+      "number": 8,
+      "state": "MERGED",
+      "mergedAt": "2026-09-12T08:49:07Z",
+      "mergeCommit": "9befde41bf3fd04ea7e1772f524fb7e537dcfa23",
+      "url": "https://github.com/rebit-pro/rabit-api/pull/8"
+    },
+    {
+      "number": 9,
+      "state": "MERGED",
+      "mergedAt": "2026-09-12T08:49:13Z",
+      "mergeCommit": "31bfb2c4202e75437b1c3d038d92afdbfbd79a7d",
+      "url": "https://github.com/rebit-pro/rabit-api/pull/9"
+    },
+    {
+      "number": 10,
+      "state": "MERGED",
+      "mergedAt": "2026-09-12T08:49:19Z",
+      "mergeCommit": "b32d6da3a6559d833afeff7582e73d98f95f049f",
+      "url": "https://github.com/rebit-pro/rabit-api/pull/10"
+    },
+    {
+      "number": 11,
+      "state": "MERGED",
+      "mergedAt": "2026-09-12T08:49:25Z",
+      "mergeCommit": "83528338146828176eaa59b954c0c85942d986da",
+      "url": "https://github.com/rebit-pro/rabit-api/pull/11"
+    }
+  ],
+  "productionMigrationsExecuted": false
+}

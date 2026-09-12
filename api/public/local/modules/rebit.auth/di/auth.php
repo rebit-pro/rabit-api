@@ -107,6 +107,7 @@ return [
             ServiceLocator::getInstance()->get(CaptchaVerifierInterface::class),
             (int)(getenv('REBIT_TOKEN_TTL_HOURS') ?: 24),
             ServiceLocator::getInstance()->get(ClockInterface::class),
+            ServiceLocator::getInstance()->get(AuthTransactionInterface::class),
         ],
     ],
     LogoutUseCase::class => [
