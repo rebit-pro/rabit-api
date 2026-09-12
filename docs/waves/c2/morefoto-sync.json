@@ -4,7 +4,7 @@
   "sourceIsGitRepository": false,
   "baseMain": "83528338146828176eaa59b954c0c85942d986da",
   "changes": "Merged predecessors; independent C2/E2 readiness; ORG-02 editor projection and initial assignmentSignature. No new endpoints or business decisions.",
-  "patchSha256": "ff08bd9a027d345fc47638d7b5058bea041093aa4b755362da9776fec4dec440",
+  "patchSha256": "aed4342bb51c7047e4d796b550f0aa71fd5a1a6de5336d61fdcd1c82b75d8501",
   "sources": {
     "docs/04-bitrix-modules/README.md": {
       "before": "b5ff17d9aa62b50e21516122c7d6db5abe1b8e978947a05c06139935f938e8ef",
@@ -74,5 +74,7 @@
     }
   ],
   "replayMatched": 10,
-  "liveApiRequestsExecuted": false
+  "liveApiRequestsExecuted": false,
+  "patchFormat": "Unified diff with zero context; apply with git apply --unidiff-zero.",
+  "patchReplaySourceFiles": 4
 }

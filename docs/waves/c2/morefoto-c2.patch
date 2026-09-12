@@ -1,41 +1,24 @@
 --- a/docs/04-bitrix-modules/README.md
 +++ b/docs/04-bitrix-modules/README.md
-@@ -107,7 +107,7 @@
- 
- Каждый PR создаётся от актуального `main` и направлен в `main`. Все его runtime/compile/schema зависимости уже должны находиться в main; draft и незамерженная ветка не удовлетворяют зависимости. Готовые волны выполняются одновременно, заблокированные пропускаются. Stacked PR, перенос чужого незамерженного кода, allow-all и фиктивный fallback запрещены. Независимость проверяется на main плюс только собственный diff. При изменении base повторяются затронутые проверки.
- 
+@@ -110 +110 @@
 -A1–A6 (W00–W05) слиты; B1 (W06) на ревью в PR #8. Сейчас независимы **C1 — внутренние учреждения** и **E1 — внутренний каталог**; у них нет HTTP и зависимости от B1. Защищённые C2/E2 начинаются после merge B1 и своего внутреннего среза. C3 добавляет реальные съёмки/группы, затем C4 — полный ORG-04. Минимальные назначения Access входят в C2/C3; B2 добавляет управление сотрудниками. A7 фиксирует правило и не является runtime-блокером.
 +A1–A7, B1, C1 и E1 слиты в `main` (PR #8–11 проверены и объединены 12.09.2026). От этой базы независимо выполняются **C2 — защищённые учреждения и назначения** и **E2 — защищённый каталог**. Каждая ветка содержит только свой diff; C2 и E2 не зависят друг от друга. C3 добавляет реальные съёмки/группы, затем C4 — полный ORG-04. Минимальные назначения Access входят в C2/C3; B2 добавляет управление сотрудниками. A7 фиксирует правило и не является runtime-блокером.
- 
- Утверждённые в A6 рекомендации D07/D08/D10 разрешают реализацию; бизнес-проверка R17 остаётся отдельной приёмкой. D02 не блокирует пустое редактируемое хранилище Product, но его ассортимент/цены не считаются утверждёнными и коммерческие условия E3 остаются зависимыми от решений. Открытые решения остальных направлений сохраняются.
- 
 --- a/docs/04-bitrix-modules/backend-waves.json
 +++ b/docs/04-bitrix-modules/backend-waves.json
-@@ -1,24 +1,32 @@
- {
-   "version": 2,
-   "planStatus": "active",
+@@ -4 +4 @@
 -  "date": "2026-09-11",
 +  "date": "2026-09-12",
-   "endpointCount": 99,
-   "backend": "RaBit API",
-   "baseline": {
-     "branch": "main",
+@@ -9 +9 @@
 -    "commit": "2ac4ef9b3e4b63d734fc3dda5240cab50a550d44",
 +    "commit": "83528338146828176eaa59b954c0c85942d986da",
-     "mergedWaves": [
-       "A1",
-       "A2",
-       "A3",
-       "A4",
-       "A5",
+@@ -16 +16,5 @@
 -      "A6"
 +      "A6",
 +      "A7",
 +      "B1",
 +      "C1",
 +      "E1"
-     ],
+@@ -18,4 +22,8 @@
 -    "review": {
 -      "B1": "https://github.com/rebit-pro/rabit-api/pull/8"
 -    },
@@ -48,76 +31,31 @@
 +      "E1": "https://github.com/rebit-pro/rabit-api/pull/10",
 +      "A7": "https://github.com/rebit-pro/rabit-api/pull/11"
 +    }
-   },
-   "acceptedImplementationDecisions": [
-     "D07",
-@@ -358,7 +366,7 @@
-       ],
-       "activation": "Обязательное правило работы принято пользователем 11.09.2026; документ не включает runtime или внешние эффекты.",
-       "legacyIds": [],
+@@ -361 +369 @@
 -      "deliveryState": "inProgress",
 +      "deliveryState": "merged",
-       "unlocks": [],
-       "inputBoundary": "Принятое пользователем правило независимых PR и исторический план. Код других волн не требуется.",
-       "outputBoundary": "Без новых публичных HTTP-операций; Каждый PR независимо проверяется и вливается в main; направление и номер заменяют последовательную очередь.",
-@@ -402,7 +410,7 @@
-       "legacyIds": [
-         "W06"
-       ],
+@@ -405 +413 @@
 -      "deliveryState": "review",
 +      "deliveryState": "merged",
-       "unlocks": [
-         "C2",
-         "B2",
-@@ -444,7 +452,7 @@
-       "legacyIds": [
-         "W07"
-       ],
+@@ -447 +455 @@
 -      "deliveryState": "inProgress",
 +      "deliveryState": "merged",
-       "unlocks": [
-         "C2"
-       ],
-@@ -483,7 +491,7 @@
-       "legacyIds": [
-         "W12"
-       ],
+@@ -486 +494 @@
 -      "deliveryState": "inProgress",
 +      "deliveryState": "merged",
-       "unlocks": [
-         "E2"
-       ],
-@@ -530,7 +538,7 @@
-       "legacyIds": [
-         "W07"
-       ],
+@@ -533 +541 @@
 -      "deliveryState": "planned",
 +      "deliveryState": "inProgress",
-       "unlocks": [
-         "C3"
-       ],
-@@ -835,7 +843,7 @@
-       "legacyIds": [
-         "W12"
-       ],
+@@ -838 +846 @@
 -      "deliveryState": "planned",
 +      "deliveryState": "inProgress",
-       "unlocks": [
-         "E3"
-       ],
 --- a/docs/04-bitrix-modules/wave_graph.py
 +++ b/docs/04-bitrix-modules/wave_graph.py
-@@ -82,13 +82,17 @@
-         return next(item for item in data["waves"] if item["id"] == wid)
-     def cycle(data):
-         wave(data, "C1")["dependsOn"].append("C2")
+@@ -85 +85,2 @@
 -        wave(data, "C1")["deliveryState"] = "planned"
 +        if wave(data, "C1")["deliveryState"] != "merged":
 +            wave(data, "C1")["deliveryState"] = "planned"
-         for item in data["waves"]:
-             item["unlocks"] = [other["id"] for other in data["waves"] if item["id"] in other["dependsOn"]]
-     rejects("cycle", cycle)
-     rejects("unknown dependency", lambda data: wave(data, "E1")["dependsOn"].append("Z9"))
+@@ -90,2 +91,5 @@
 -    rejects("unmerged dependency started", lambda data: wave(data, "C2").update(deliveryState="inProgress"))
 -    rejects("open decision started", lambda data: wave(data, "E1").update(decisionGates=["D02"]))
 +    merged_ids = {item["id"] for item in plan["waves"] if item["deliveryState"] == "merged"}
@@ -125,20 +63,11 @@
 +    ready_id = next(item["id"] for item in plan["waves"] if item["id"] not in merged_ids and set(item["dependsOn"]) <= merged_ids)
 +    rejects("unmerged dependency started", lambda data: wave(data, blocked_id).update(deliveryState="inProgress"))
 +    rejects("open decision started", lambda data: wave(data, ready_id).update(deliveryState="inProgress", decisionGates=["D99"]))
-     rejects("stale unlocks", lambda data: wave(data, "C1").update(unlocks=[]))
-     rejects("duplicate endpoint owner", lambda data: wave(data, "E1")["endpointIds"].append("ACC-01"))
-     rejects("missing legacy mapping", lambda data: wave(data, "B1").update(legacyIds=[]))
 --- a/docs/05-rest-api/build.py
 +++ b/docs/05-rest-api/build.py
-@@ -98,7 +98,10 @@
-     "institutions, shoots, groups, dashboard, totals?, groupTotals?, now",query=[("institutionId","","Учреждение"),("shootId","","Съёмка")],
-     note="Р/В без родителей и позиций заказов; В без денег. Источник loadCabinetScope, DashboardData, ScopeSnapshot.",
-     source="frontend/src/modules/morefoto/services/cabinet.ts")
+@@ -101 +101,4 @@
 -add("organization","ORG-02","GET","/institutions","Список учреждений","О/К/Р","items<Institution>, meta",sample=list_sample)
 +add("organization","ORG-02","GET","/institutions","Список учреждений","О/К/Р","items<ManagedInstitution>, assignmentSignature, meta",
 +    query=[("q","","Буквальный префикс имени"),("page","1","Страница от 1"),("pageSize","50","Размер страницы 1–100")],
 +    sample={"items":[],"assignmentSignature":"a1"}, save={"assignment_signature":"assignmentSignature"},
 +    note="C2: записи содержат id/name/address/revision/curatorId/headId; фильтр области применяется до пагинации. Пустая область curator/head возвращает пустой список. Реальная глобальная assignmentSignature позволяет создать или перечитать назначение до B2/ACC-06; пустое создание без назначений подписи не требует. Полная карточка ORG-04 остаётся C4.")
- institution={"name":"Тестовый детский сад","address":"Тестовый адрес","curatorId":None,"headId":None,"assignmentSignature":"{{assignment_signature}}","replaceAssignments":False}
- add("organization","ORG-03","POST","/institutions","Создать учреждение",O,"id, revision",institution,code=201,
-     save={"institution_id":"id","institution_revision":"revision"},sample={"id":"institution-example","revision":1})
