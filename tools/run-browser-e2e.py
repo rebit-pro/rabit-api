@@ -194,7 +194,7 @@ def main():
     parser.add_argument("--state", type=Path)
     parser.add_argument("--kernel", default=os.environ.get("E2E_KERNEL_ROOT", "/home/user/rebit-p2p/api/public/bitrix"))
     parser.add_argument("--vendor", default=os.environ.get("E2E_VENDOR_ROOT", "/home/user/rebit-p2p/api/vendor"))
-    parser.add_argument("--php-cli", default=os.environ.get("E2E_PHP_CLI_IMAGE", "rabit-api-php-cli:20260911-074507"))
+    parser.add_argument("--php-cli", default=os.environ.get("E2E_PHP_CLI_IMAGE", "rabit-api-php-fpm:20260911-074507"))
     parser.add_argument("--php-fpm", default=os.environ.get("E2E_PHP_FPM_IMAGE", "rabit-api-php-fpm:20260911-074507"))
     parser.add_argument("--nginx", default=os.environ.get("E2E_NGINX_IMAGE", "rabit-api-nginx:20260911-074507"))
     parser.add_argument("--mysql", default=os.environ.get("E2E_MYSQL_IMAGE", "mysql:8.0"))

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Bitrix\Main\DI\ServiceLocator;
 use Morefoto\Access\Application\Bootstrap\UseCase\BootstrapOrganizerUseCase;
+use Bitrix\Main\Loader;
 
 // Only called by the disposable Docker runner. Never loads the application's .env or database.
 $fixture = require __DIR__ . '/../fixtures/w02/bootstrap.php';
@@ -22,7 +23,7 @@ ob_start();
 try {
     foreach (['20260323120001', '20260326120008', '20260911120001', '20260911200001', '20260911220001', '20260912220001'] as $id) {
         require_once '/app/public/local/php_interface/migrations.foundation/Version' . $id . '.php';
-        $class = 'Sprint\\Migration\\Version' . $id;
+        $class = 'Sprint\Migration\Version' . $id;
         (new $class())->up();
     }
     require '/app/public/local/modules/morefoto.commerce/install/index.php';
@@ -31,7 +32,7 @@ try {
     ob_end_clean();
 }
 foreach (['rebit.share', 'rebit.auth', 'morefoto.access', 'morefoto.commerce'] as $module) {
-    if (!\Bitrix\Main\Loader::includeModule($module)) {
+    if (!Loader::includeModule($module)) {
         throw new RuntimeException('Cannot load fixture module.');
     }
 }

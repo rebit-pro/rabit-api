@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import { nextTick, watch } from 'vue';
-const props = defineProps<{
-  open: boolean;
-  title: string;
-  busy: boolean;
-  error: string;
-  restored: boolean;
-  saveLabel?: string;
-  focusHeading?: boolean;
-  footerHint?: string;
-  canReset?: boolean;
-  fieldsDisabled?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    open: boolean;
+    title: string;
+    busy: boolean;
+    error: string;
+    restored: boolean;
+    saveLabel?: string;
+    focusHeading?: boolean;
+    footerHint?: string;
+    canReset?: boolean;
+    fieldsDisabled?: boolean;
+  }>(),
+  { canReset: true }
+);
 const emit = defineEmits<{ close: []; save: []; reset: [] }>();
 let opener: HTMLElement | null = null;
 watch(

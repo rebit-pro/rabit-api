@@ -1,6 +1,6 @@
 {
-  "recordedAt": "2026-09-12T13:38:13.001213+00:00",
-  "status": "blocked-before-runtime-acceptance",
+  "recordedAt": "2026-09-12T14:08:57.053048+00:00",
+  "status": "waiting-for-full-demo-regression",
   "baseCommit": "895fee9873cd62316579d18512c8b2e3315c3d62",
   "branch": "codex/a8-real-e2e",
   "dependencies": {
@@ -98,39 +98,39 @@
     },
     "phpSyntax": {
       "status": "passed",
-      "files": 3,
-      "runtime": "PHP 8.3.6 local",
-      "limitation": "Syntax only; does not replace project PHP 8.4 checks"
+      "files": 353,
+      "runtime": "PHP 8.4.25",
+      "evidence": {
+        "path": "api/var/e2e/rabit-e2e-156efdea4a96/php-lint.log",
+        "sha256": "df89bb2417aa2e106d5493877b0e31cba2efe0d890046257aab66fc88933f26b"
+      }
     },
     "frontend": {
       "status": "passed",
-      "node": "v24.15.0",
+      "runtime": "Node 22.14.0 in pinned Playwright image",
       "commands": [
         "npm ci --no-audit --no-fund",
-        "npm run lint:fix",
         "npm run check",
         "npm run test:commerce",
         "VITE_API_URL= VITE_API_MOCKS_ENABLED=false npm run build"
       ],
       "unitTests": 150,
-      "liveScenariosDefined": 14,
-      "liveScenariosExecuted": 0,
       "logs": {
-        "lint-fix-final": {
-          "path": "frontend/reports/a8-recovery/lint-fix-final.log",
-          "sha256": "fb5be27f121cbcbc9297aee64ce632a678375cd6bd7050f0b7ead7c16831f976"
+        "install": {
+          "path": "api/var/e2e/rabit-e2e-156efdea4a96/npm-ci.log",
+          "sha256": "6e57c5b174d91638e2361e59b9df0f95f92ce961eae985836025a1d0300e6839"
         },
-        "check-final": {
-          "path": "frontend/reports/a8-recovery/check-final.log",
+        "check": {
+          "path": "frontend/reports/a8-recovery/can-reset-check.log",
           "sha256": "beb5edf6e458c0bfa5dce2e9208600ec0c4f4615e02479df11fc3615960ee35d"
         },
-        "unit-final": {
-          "path": "frontend/reports/a8-recovery/unit-final.log",
-          "sha256": "1e81e8729e397d81a6e21c6648bf7fd6a8820684fa25ed77530d802bc8c541f7"
+        "unit": {
+          "path": "frontend/reports/a8-recovery/can-reset-unit.log",
+          "sha256": "c9b134976da4d4798fd525549188ff839656a1eede856d404e0414fc2ab02221"
         },
-        "build-final": {
-          "path": "frontend/reports/a8-recovery/build-final.log",
-          "sha256": "9802904b9cd45bc00054df14a06509bc95d971fbd735a99a5c0eb370b4d419fa"
+        "build": {
+          "path": "api/var/e2e/rabit-e2e-156efdea4a96/build-final.log",
+          "sha256": "f69d9cebc94f2d101d89372db631476460aaf00dde92105eb80075c1287646d1"
         }
       }
     },
@@ -148,21 +148,98 @@
     "gitDiffCheck": {
       "status": "passed",
       "note": "Whitespace-only cleanup in imported files after frontend checks"
+    },
+    "phpStyle": {
+      "status": "passed",
+      "changedPhpFiles": 3,
+      "configuration": "api/public/local/php-cs-fixer.php",
+      "evidence": {
+        "path": "api/var/a8-validation/php-style.log",
+        "sha256": "2738ae380501935aff0d15fd337b10a54e6d1712946870c6f346002ff8c5aaf0"
+      }
+    },
+    "phpstan": {
+      "status": "passed",
+      "errors": 0,
+      "evidence": {
+        "path": "api/var/e2e/rabit-e2e-156efdea4a96/phpstan.log",
+        "sha256": "0b488d0da8351230956de7891f1988cea88cb424d7bd206daae1f7bec0482c8a"
+      }
+    },
+    "phpunit": {
+      "status": "passed",
+      "tests": 249,
+      "assertions": 854,
+      "evidence": {
+        "path": "api/var/e2e/rabit-e2e-156efdea4a96/phpunit.log",
+        "sha256": "5e2b320112fc5d4da06ce654351d02e3bb564636b1c9001efaa8fee042b5c6f9"
+      }
+    },
+    "nativeCatalog": {
+      "status": "passed",
+      "checks": 95,
+      "runtime": {
+        "php": "8.4.25",
+        "bitrix": "25.750.0",
+        "mysql": "8.0.45"
+      },
+      "report": "native-catalog.json"
+    },
+    "realBrowser": {
+      "status": "passed",
+      "command": "make e2e-up && make e2e-test E2E_STATE=<state.json> && make e2e-down E2E_STATE=<state.json>",
+      "stats": {
+        "startTime": "2026-09-12T14:04:01.851Z",
+        "duration": 39334.712,
+        "expected": 14,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "retries": 0,
+      "mocks": false,
+      "database": "new disposable real Bitrix/MySQL database",
+      "report": {
+        "path": "frontend/reports/e2e-live/results.json",
+        "sha256": "1915b78f6118af2311c354016dde44bf82ee7ba0c852c1b2ee6f4fa173b06659"
+      },
+      "log": {
+        "path": "api/var/e2e/rabit-e2e-156efdea4a96/browser.log",
+        "sha256": "d08fd6632b7879be0ceb2adc483a4b4bcca6002960888c5c7b41b0aa3677b8cb"
+      },
+      "cleanup": {
+        "stopped": true,
+        "errors": []
+      }
+    },
+    "visual": {
+      "status": "passed",
+      "screenshots": 10,
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 1000
+        },
+        {
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "pageErrors": 0,
+      "assetFailures": 0,
+      "horizontalOverflow": false,
+      "report": "visual.json"
+    },
+    "demo": {
+      "status": "running",
+      "scenariosDefined": 451,
+      "stepsDefined": 1537,
+      "firstRun": "Interrupted after the shared AdminDialog canReset regression was found; final full run uses explicit default=true."
     }
   },
   "pending": [
-    "PHP 8.4 lint, formatting, PHPStan, PHPUnit",
-    "native Bitrix/MySQL catalog regression",
-    "fresh real browser E2E through nginx/FPM/MySQL",
-    "desktop/mobile visual inspection",
-    "demo Cucumber regression"
+    "Full demo Cucumber regression after fixing shared canReset default"
   ],
-  "blocker": {
-    "component": "Docker Desktop 4.71.0",
-    "observedError": "initializing Inference manager: dockerInference: The file cannot be accessed by the system",
-    "engine": "unavailable",
-    "approval": "Automatic approval review rejected forced Docker Desktop shutdown because it can affect other local containers; explicit user permission requested and pending."
-  },
   "previousRun": {
     "date": "2026-09-12",
     "sourceTask": "01a090f8-c183-7291-9aec-97948fe6b762",
@@ -173,6 +250,22 @@
   "deployment": false,
   "merged": false,
   "knownInheritedWarnings": [
-    "npm peer dependency warning: vite-plugin-inspect 0.8.9 (via devtools) declares Vite 5/6, existing frontend uses Vite 7.2.2. No dependency upgrade included."
+    "npm peer dependency warning: vite-plugin-inspect 0.8.9 (via devtools) declares Vite 5/6, existing frontend uses Vite 7.2.2. No dependency upgrade included.",
+    "Build references absent auth-pattern-dark.svg from legacy dark auth styles; the current live login uses different markup. No asset failures occurred in the verified flow."
+  ],
+  "recovery": {
+    "docker": "recovered with explicit user approval",
+    "engineVersion": "29.4.1",
+    "temporarySockets": "Both stale socket parent directories were moved to backups before restart; no image or database reset.",
+    "worktree": "Recovered code was verified again; previous task results are not counted."
+  },
+  "fixedDuringAcceptance": [
+    "Stock Bitrix route parameters are no longer treated as query parameters by CatalogController.",
+    "Digital product creation no longer validates hidden print count.",
+    "Shared AdminDialog defaults canReset to true so demo conflict recovery remains available.",
+    "Live E2E selects Vuetify product type via its standard keyboard interaction."
+  ],
+  "knownUiLimitations": [
+    "The invalid-password API message is currently English; login rejection and retry work."
   ]
 }

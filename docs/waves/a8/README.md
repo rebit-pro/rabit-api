@@ -8,7 +8,11 @@
 
 ## Текущее состояние
 
-A8 восстановлена в постоянном worktree после потери временной копии. Это **draft для сохранения и ревью**, обязательная runtime-приёмка ещё не завершена. Docker Desktop падает до запуска движка; свежие Bitrix/MySQL и browser E2E не выполнены. Исторические 13 успешных E2E не заменяют повторный прогон восстановленного кода. Фактические проверки — [verification.json](verification.json), порядок продолжения — [resume.md](resume.md).
+На восстановленном коде заново выполнены PHP 8.4 lint (353 файла), PHPStan, PHPUnit (249 тестов / 854 assertions), native Bitrix/MySQL (95 проверок), frontend check/unit (150 тестов) и production build. На новой базе прошли все 14 реальных E2E без повторов и пропусков. Просмотрены 10 снимков desktop 1440×1000 / mobile 390×844: вход, ошибка, каталог, редактор, нижние поля, меню и выход. Ошибок JavaScript, загрузки ресурсов и горизонтального скролла нет; тестовый стенд удалён.
+
+Полный demo-регресс после исправления общего диалога ещё выполняется. A8 будет готова к ревью после его успешного завершения. Фактические проверки — [verification.json](verification.json), снимки и наблюдения — [visual.json](visual.json), дальнейшая работа — [resume.md](resume.md).
+
+Реальные проверки выявили и помогли исправить разбор PATCH query/path, проверку скрытого количества отпечатков при выборе электронной продукции и значение `canReset` общего редактора: прежние demo-экраны снова показывают загрузку актуальных данных после конфликта. [Неблокирующие замечания](known-issues.md) зафиксированы отдельно.
 
 ## Воспроизведение
 
@@ -16,7 +20,7 @@ A8 восстановлена в постоянном worktree после пот
 
 По умолчанию берутся `/home/user/rebit-p2p/api/public/bitrix` и `/home/user/rebit-p2p/api/vendor`. Другие каталоги задаются `E2E_KERNEL_ROOT`/`E2E_VENDOR_ROOT` или аргументами `--kernel`/`--vendor` скрипта.
 
-Образы: `mcr.microsoft.com/playwright:v1.52.0-jammy`, `mysql:8.0`, `nginx:1.29-alpine` и локальные `rabit-api-php-cli`, `rabit-api-php-fpm`, `rabit-api-nginx` с тегом `20260911-074507`. Собственные образы задаются через `E2E_PHP_CLI_IMAGE`, `E2E_PHP_FPM_IMAGE`, `E2E_NGINX_IMAGE`, `E2E_MYSQL_IMAGE`. Для npm ci нужен доступ к registry; backend-тесты работают без внешней сети. Node/Chromium ограничены двумя CPU и 3 ГиБ памяти; MySQL — 1 ГиБ, PHP-проверки — 1,5 ГиБ. Браузерный набор выполняется одним worker.
+Образы: `mcr.microsoft.com/playwright:v1.52.0-jammy`, `mysql:8.0`, `nginx:1.29-alpine` и локальные `rabit-api-php-fpm` и `rabit-api-nginx` с тегом `20260911-074507`. Образ FPM содержит PHP CLI и Composer; проверки CLI используют его с переопределённой точкой входа. Собственные образы задаются через `E2E_PHP_CLI_IMAGE`, `E2E_PHP_FPM_IMAGE`, `E2E_NGINX_IMAGE`, `E2E_MYSQL_IMAGE`. Для npm ci нужен доступ к registry; backend-тесты работают без внешней сети. Node/Chromium ограничены двумя CPU и 3 ГиБ памяти; MySQL — 1 ГиБ, PHP-проверки — 1,5 ГиБ. Браузерный набор выполняется одним worker.
 
 ```sh
 make test-e2e

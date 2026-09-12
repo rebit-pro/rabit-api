@@ -93,7 +93,7 @@ test('ошибки полей и серверный 422 оставляют ре�
   await expect(page.getByLabel('Название продукции', { exact: true })).toHaveValue('A8 Валидация');
   await page.getByLabel('Описание', { exact: true }).fill('Исправленное описание');
   await page.getByLabel('Отпечатков в единице', { exact: true }).fill('');
-  await page.getByRole('combobox', { name: 'Тип продукции', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Тип продукции', exact: true }).press('Enter');
   await page.getByRole('option', { name: 'Электронный кадр', exact: true }).click();
   await expect(page.getByLabel('Отпечатков в единице', { exact: true })).toHaveCount(0);
   await saveProduct(page);

@@ -130,7 +130,7 @@
     },
     "e2e/live/catalog.spec.ts": {
       "beforeSha256": null,
-      "afterSha256": "7abf81208da3f126f2fd463411ecd1ce096f51a30ef7d13c7b9a04c1bdd1c0bd"
+      "afterSha256": "c8061aeb026a4a6395035931bb396932ccc43b9f336975fad329ab817fc9af35"
     },
     "e2e/live/helpers.ts": {
       "beforeSha256": null,
@@ -1186,7 +1186,7 @@
     },
     "src/modules/morefoto/management/components/AdminDialog.vue": {
       "beforeSha256": "821dd805a269177d3d8142dd91e88110c25fa34fe18a771b5184b124e47d7bc3",
-      "afterSha256": "a707a6d0dd15e742fa541ececa80178bcb204e73e2157eaa6530947c6900ae50"
+      "afterSha256": "3c3f68982ef61021b13e3aed823eb6c8df3f210f29c0f4a25ddc0265d87d92ee"
     },
     "src/modules/morefoto/management/components/ConditionsFields.vue": {
       "beforeSha256": "59d42e2c077239747b511dc7dae819a80fa0068195705ae7721e0b8982f3a4d8",

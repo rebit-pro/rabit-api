@@ -22,5 +22,5 @@
       "afterSha256": "02a4f3b66767f7f68a7eb28d2021967f34b4d35780c3dee986eb06d848602ba5"
     }
   },
-  "note": "Graph/validator before from main; renderer/module overview before reconstructed from retained A7/C2 diffs. Browser evidence requires a fresh run."
+  "note": "Graph/validator before from main; renderer/module overview before reconstructed from retained A7/C2 diffs. Current browser evidence is recorded in verification.json."
 }
