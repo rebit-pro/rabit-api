@@ -1,0 +1,161 @@
+{
+  "wave": "E2",
+  "status": "PASS",
+  "baseCommit": "83528338146828176eaa59b954c0c85942d986da",
+  "recordedAt": "2026-09-12T09:40:59.820639+00:00",
+  "environment": {
+    "phpImage": "rabit-api-php-cli:20260911-074507",
+    "php": "8.4.23",
+    "bitrix": "25.750.0",
+    "mysql": "8.0.45",
+    "vendorReadOnly": "/tmp/rabit-w06-vendor",
+    "kernelReadOnly": "/home/user/rebit-p2p/api/public/bitrix",
+    "sourceReadOnly": "/tmp/rabit-e2-catalog-api/api",
+    "unitContainer": "read-only; network none; tmpfs /tmp and /app/var",
+    "nativeContainer": "internal rabit-e2-tests network; disposable tmpfs MySQL; no host ports"
+  },
+  "checks": {
+    "phpunit": {
+      "status": "PASS",
+      "tests": 245,
+      "assertions": 832
+    },
+    "phpstan": {
+      "status": "PASS",
+      "configuration": "api/phpstan.neon"
+    },
+    "configuredPhplint": {
+      "status": "PASS",
+      "files": 334
+    },
+    "changedPhpLint": {
+      "status": "PASS",
+      "files": 37
+    },
+    "changedPhpStyle": {
+      "status": "PASS",
+      "files": 37,
+      "fixesNeeded": 0
+    },
+    "shellSyntax": {
+      "status": "PASS"
+    },
+    "diffCheck": {
+      "status": "PASS"
+    },
+    "nativeE2": {
+      "status": "PASS",
+      "checks": 95,
+      "evidence": "integration.json",
+      "command": "E2_VENDOR_ROOT=/tmp/rabit-w06-vendor bash api/tools/run-e2-catalog-integration.sh"
+    },
+    "nativeW06Regression": {
+      "status": "PASS",
+      "checks": 50,
+      "evidence": "access-regression.json",
+      "command": "W02_VENDOR_ROOT=/tmp/rabit-w06-vendor bash api/tools/run-w06-access-integration.sh"
+    }
+  },
+  "commandsInsideApi": {
+    "phpunit": [
+      "vendor/bin/phpunit",
+      "--colors=never"
+    ],
+    "phpstan": [
+      "vendor/bin/phpstan",
+      "analyse",
+      "--configuration=phpstan.neon",
+      "--no-progress",
+      "--memory-limit=512M"
+    ],
+    "style": [
+      "vendor/bin/php-cs-fixer",
+      "fix",
+      "--config=public/local/php-cs-fixer.php",
+      "--dry-run",
+      "--diff",
+      "--verbose",
+      "--allow-risky=yes",
+      "--using-cache=no",
+      "--path-mode=intersection",
+      "<changed PHP files: 37>"
+    ],
+    "lint": [
+      "vendor/bin/phplint",
+      "--no-cache"
+    ],
+    "shell": [
+      "bash",
+      "-n",
+      "api/tools/run-e2-catalog-integration.sh"
+    ],
+    "diff": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "style-all-changed": [
+      "vendor/bin/php-cs-fixer",
+      "fix",
+      "--config=public/local/php-cs-fixer.php",
+      "--dry-run",
+      "--diff",
+      "--verbose",
+      "--allow-risky=yes",
+      "--using-cache=no",
+      "--path-mode=override",
+      "<changed PHP files: 37>"
+    ],
+    "lint-all-changed": [
+      "-r",
+      "foreach (array_slice($argv, 1) as $file) { passthru(PHP_BINARY . \" -l \" . escapeshellarg($file), $code); if (0 !== $code) { exit($code); } }",
+      "<changed PHP files: 37>"
+    ]
+  },
+  "notes": [
+    "Native HTTP uses the real central registry, Router, Controller.run, filters and DI; only CLI raw input is supplied by an HttpRequest test subclass.",
+    "Concurrency uses independent PHP worker processes and real MySQL locks; a wrapper pauses immediately before or after the real Access guard to coordinate each race.",
+    "Unit log retains two pre-existing Share metadata logger warnings; PHP CS Fixer retains the existing visibility_required rule deprecation.",
+    "No nginx/FPM network request, production deployment or external integration was performed."
+  ],
+  "sourceSha256": {
+    "api/public/local/modules/morefoto.access/.settings.php": "ee16ad12e2cbb537c178500d57b497eb7dd705bdc1a5cf747f923ed5f9305b67",
+    "api/public/local/modules/morefoto.access/di/catalog.php": "9e4b3a4e154097ed49ba85c445e0ae20b283a10a1cf0d0bb6feb2a4b8c7e00c4",
+    "api/public/local/modules/morefoto.access/lib/Domain/Staff/Enum/PermissionEnum.php": "ba14d5030fbfca11ee1e2a8a9cb5f90e3048d606e739ac85152dd1f8e3535fb3",
+    "api/public/local/modules/morefoto.access/lib/Domain/Staff/Repository/CatalogAccessRepository.php": "4f87eca97af75e059ac0c8ea1457ffd16d07abdf0dd35ab3bac11b4a0ecaf5a6",
+    "api/public/local/modules/morefoto.access/lib/Infrastructure/Adapter/CatalogAccessGuard.php": "d73239a2608e409553f9a630c50a756dd14d43d720617929e247f79227a8e2d5",
+    "api/public/local/modules/morefoto.commerce/.settings.php": "8de2861d7f5ea2e76c90f447f5af69f41515838942c67036c1d0e1e981d2fa2e",
+    "api/public/local/modules/morefoto.commerce/di/catalog-api.php": "1a8fcf7740706b52bcd176a5063de93d91d9c760a27c61c009bd0b4b160be73b",
+    "api/public/local/modules/morefoto.commerce/lib/Application/Catalog/Service/AuthorizedCatalog.php": "4608e40c32232b79ad453ccd6cb063859b4781672177bfd75d839f64f374afe8",
+    "api/public/local/modules/morefoto.commerce/lib/Application/Catalog/Service/CatalogPayloadHash.php": "cae47da8f0bb73b8cadb48a9bb1078253a628821591161c1090fa290403da715",
+    "api/public/local/modules/morefoto.commerce/lib/Application/Catalog/UseCase/CreateProductUseCase.php": "0216d952b8f3667968cb2e9b367a930a5350bfaeb20aa3e1cc7ccac62ce63ece",
+    "api/public/local/modules/morefoto.commerce/lib/Application/Catalog/UseCase/ListProductsUseCase.php": "8cc8d028ccf5323ef221e596bc0619bd925d2170c31e7c5189764611e325b92d",
+    "api/public/local/modules/morefoto.commerce/lib/Application/Catalog/UseCase/UpdateProductUseCase.php": "4cfd3e7504f489b7c9335a24d9f192db29bfa02345222d020fc697321c61bc6e",
+    "api/public/local/modules/morefoto.commerce/lib/Domain/Catalog/Exception/IdempotencyConflictException.php": "5418d6ef5e37aa4c482be46210451c54f24c64c6bdd7284e2f9c1e886f162044",
+    "api/public/local/modules/morefoto.commerce/lib/Domain/Catalog/Exception/MalformedCatalogJsonException.php": "b422990ed44f6d4d83f2ee5f154dfa093bae49cd59dfc1e2789cd4324eb73307",
+    "api/public/local/modules/morefoto.commerce/lib/Domain/Catalog/Repository/CatalogIdempotencyRepository.php": "680b9f21072a0fc7604e0776c64d617807a9989e190b888256c81366beee482e",
+    "api/public/local/modules/morefoto.commerce/lib/Domain/Catalog/Repository/CatalogRepository.php": "ef2aa5139f25260d7ab9e14b8c904fe4dcb22f11034a5f4228ca5d154e436775",
+    "api/public/local/modules/morefoto.commerce/lib/Domain/Catalog/ValueObject/IdempotencyKey.php": "7da4e21eb676759837d80417f0f4114d003e45049aaee4e69f8bd2c9e87b66f7",
+    "api/public/local/modules/morefoto.commerce/lib/Infrastructure/Adapter/BitrixCatalogTransaction.php": "df69052525cd8b7f2cba12960b36795e3e420d4090afb57974833284aaf80949",
+    "api/public/local/modules/morefoto.commerce/lib/Infrastructure/Adapter/CatalogTokenResolver.php": "a7bb20869957815c335f955818c8c7f4af7d5c3c7b23e67d7f80d003ec3e79c3",
+    "api/public/local/modules/morefoto.commerce/lib/Presentation/Controller/CatalogController.php": "bf003764211414c8db858b5f2f6a7b9f4a5fd3cfc55f578d314c29749c87b15a",
+    "api/public/local/modules/morefoto.commerce/lib/Presentation/Mapper/CatalogResponseMapper.php": "b640b8d0b2a0b5e2815caf1bfc6a6ecdea70647d58354628e88e19d8639ec371",
+    "api/public/local/modules/morefoto.commerce/lib/Presentation/Request/CatalogRequestFactory.php": "207d7f7f013c75ccc477e6f6c0982e46032214da13496934e74c689b39e0958e",
+    "api/public/local/modules/morefoto.commerce/lib/Presentation/Request/CreateProductRequestDto.php": "b0d1479a52283cfa896cbb61d3d8b545670a5943c69ec5d030c3ec9c5853e18f",
+    "api/public/local/modules/morefoto.commerce/lib/Presentation/Request/ListProductsRequestDto.php": "66ccba6640908f2d9d12a8e6be12eb60a923969f2b70de48fdeeacd420f6c4c5",
+    "api/public/local/modules/morefoto.commerce/lib/Presentation/Request/UpdateProductRequestDto.php": "1a66cc789eb791fe9b9e5c402119a637ed9c743ecb45bd788a6512c02914031b",
+    "api/public/local/modules/morefoto.commerce/routes.php": "fe424f78a574c3a36eef55aa4bce4ff418d2c6db72014ce47c66e06f515dbc87",
+    "api/public/local/modules/morefoto.commerce/tests/Unit/CatalogApiTest.php": "f71486da15c473caf9f91d16d1637a725515b4e6b7a54cff245d882b8cf3c0b3",
+    "api/public/local/modules/rebit.share/lib/Contracts/Access/CatalogAccessException.php": "2605f7813510bcfc5a24fa108aade2f1aa30593c74910c884be12201a566b47a",
+    "api/public/local/modules/rebit.share/lib/Contracts/Access/CatalogAccessGuardInterface.php": "162fef5bcd458561f98fa7530ab7a18718db7ea553d5976f25e1d64601f8b758",
+    "api/public/local/php_interface/init.php": "9c09b24b05e0e00341e244534724748dd2f4ea1c5a7b630b084b594d7441d61d",
+    "api/public/local/php_interface/migrations.foundation/Version20260912220001.php": "0f44af45e41d69f3174890c69a42d2d83e5fdbfb75839213afa1e9eabea92110",
+    "api/public/local/routes/rabit-api.php": "eca25df4668f008e674f9a66cceba72c4085271f2f75e61189f53f6d72d85190",
+    "api/tools/fixtures/e2/connect.php": "84a12b5b743233be16c8b30de8ce345f1bd0a2b6bc8c052c808ccfef68c861d2",
+    "api/tools/fixtures/e2/http.php": "80d2749f88580b8e8000290d9ff0e851b699c991c316333040e410fc0316bbd5",
+    "api/tools/fixtures/e2/worker.php": "42421c4b38bb9f723c0849a40a29ce6f71b3f5101776e5f37ee9fe0328939f09",
+    "api/tools/run-e2-catalog-integration.sh": "9296da2d41d79286649eb5feae67bf577465392e0e53e9951f4b5ab003835eb0",
+    "api/tools/verify-e2-catalog-api.php": "6b447f8158f639fbea323af0457be45c54727896219c246f62dc018287e18554",
+    "api/tools/verify-w06-access.php": "f17f3ab472d12f82eabb42db503ccf24c6fcded19874c0fdaab0586781fdb320"
+  }
+}

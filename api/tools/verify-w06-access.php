@@ -196,7 +196,7 @@ try {
     $assert([
         'id' => $id, 'name' => 'organizer', 'email' => 'organizer@example.invalid', 'role' => 'organizer',
         'active' => true, 'accessRevision' => 1,
-        'permissions' => ['profile.read', 'staff.manage', 'institution.read', 'shoot.read', 'group.read', 'organization.manage'],
+        'permissions' => ['profile.read', 'staff.manage', 'institution.read', 'shoot.read', 'group.read', 'organization.manage', 'catalog.manage'],
     ] === $body['data'], 'real serializer emits exact ACC-01 payload without secrets');
     $assert(401 === $request(null)[0], 'missing Bearer is rejected by actual filter');
     $assert(401 === $request('W06BeforeGrant')[0], 'revoked Bearer is rejected by actual filter');

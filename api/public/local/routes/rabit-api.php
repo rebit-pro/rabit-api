@@ -11,4 +11,6 @@ return static function(RoutingConfigurator $routes): void {
         $configure = require __DIR__ . '/../modules/' . $moduleId . '/routes.php';
         $configure($routes);
     }
+    $configureCommerce = require __DIR__ . '/../modules/morefoto.commerce/routes.php';
+    $configureCommerce($routes);
 };

@@ -17,19 +17,23 @@ final readonly class ListProductsUseCase
 
     public function execute(ListProductsInputDto $input): ListProductsOutputDto
     {
-        return $this->transaction->execute(function() use ($input): ListProductsOutputDto {
-            $revision = $this->repository->lockRevision(false);
-            if (null !== $input->revision && $input->revision !== $revision) {
-                throw new CatalogRevisionConflictException('Catalog changed; restart pagination.');
-            }
-            $total = $this->repository->count();
-            $result = $this->repository->list(($input->page - 1) * $input->pageSize, $input->pageSize);
-            $items = [];
-            while (false !== ($row = $result->fetch())) {
-                $items[] = ProductOutputDto::fromRow($row);
-            }
+        return $this->transaction->execute(fn(): ListProductsOutputDto => $this->executeWithinTransaction($input));
+    }
 
-            return new ListProductsOutputDto($items, $revision, $input->page, $input->pageSize, $total);
-        });
+    /** Caller owns the transaction; this participant never commits or rolls back. */
+    public function executeWithinTransaction(ListProductsInputDto $input, bool $byName = false): ListProductsOutputDto
+    {
+        $revision = $this->repository->lockRevision(false);
+        if (null !== $input->revision && $input->revision !== $revision) {
+            throw new CatalogRevisionConflictException('Catalog changed; restart pagination.');
+        }
+        $total = $this->repository->count();
+        $result = $this->repository->list(($input->page - 1) * $input->pageSize, $input->pageSize, $byName);
+        $items = [];
+        while (false !== ($row = $result->fetch())) {
+            $items[] = ProductOutputDto::fromRow($row);
+        }
+
+        return new ListProductsOutputDto($items, $revision, $input->page, $input->pageSize, $total);
     }
 }

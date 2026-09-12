@@ -26,9 +26,9 @@ final readonly class CatalogRepository
         return (int)$row['REVISION'];
     }
 
-    public function list(int $offset, int $limit): Result
+    public function list(int $offset, int $limit, bool $byName = false): Result
     {
-        return Application::getConnection()->query('SELECT ' . self::FIELDS . ' FROM b_hlbd_mf_product ORDER BY ID ASC LIMIT ' . $limit . ' OFFSET ' . $offset);
+        return Application::getConnection()->query('SELECT ' . self::FIELDS . ' FROM b_hlbd_mf_product ORDER BY ' . ($byName ? 'UF_NAME ASC, ID ASC' : 'ID ASC') . ' LIMIT ' . $limit . ' OFFSET ' . $offset);
     }
 
     public function find(ProductId $id): Result

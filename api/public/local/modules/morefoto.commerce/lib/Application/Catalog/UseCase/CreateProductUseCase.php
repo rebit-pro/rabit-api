@@ -20,12 +20,16 @@ final readonly class CreateProductUseCase
 
     public function execute(ProductInputDto $input): CatalogMutationOutputDto
     {
-        return $this->transaction->execute(function() use ($input): CatalogMutationOutputDto {
-            $revision = $this->repository->lockRevision(true);
-            $id = $this->ids->generate();
-            $this->repository->add($id, $input->details);
+        return $this->transaction->execute(fn(): CatalogMutationOutputDto => $this->executeWithinTransaction($input));
+    }
 
-            return new CatalogMutationOutputDto($id->value, $this->repository->advanceRevision($revision));
-        });
+    /** Caller owns the transaction; this participant never commits or rolls back. */
+    public function executeWithinTransaction(ProductInputDto $input): CatalogMutationOutputDto
+    {
+        $revision = $this->repository->lockRevision(true);
+        $id = $this->ids->generate();
+        $this->repository->add($id, $input->details);
+
+        return new CatalogMutationOutputDto($id->value, $this->repository->advanceRevision($revision));
     }
 }
