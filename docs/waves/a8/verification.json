@@ -1,6 +1,6 @@
 {
-  "recordedAt": "2026-09-12T14:08:57.053048+00:00",
-  "status": "waiting-for-full-demo-regression",
+  "recordedAt": "2026-09-12T14:51:53.332052+00:00",
+  "status": "passed-ready-for-review",
   "baseCommit": "895fee9873cd62316579d18512c8b2e3315c3d62",
   "branch": "codex/a8-real-e2e",
   "dependencies": {
@@ -107,7 +107,10 @@
     },
     "frontend": {
       "status": "passed",
-      "runtime": "Node 22.14.0 in pinned Playwright image",
+      "runtime": [
+        "Node22.14.0 in pinned Playwright image for isolated gate/build/unit",
+        "Node24.15.0 in WSL for final lint/types after R16 test-only navigation fix"
+      ],
       "commands": [
         "npm ci --no-audit --no-fund",
         "npm run check",
@@ -121,7 +124,7 @@
           "sha256": "6e57c5b174d91638e2361e59b9df0f95f92ce961eae985836025a1d0300e6839"
         },
         "check": {
-          "path": "frontend/reports/a8-recovery/can-reset-check.log",
+          "path": "frontend/reports/a8-recovery/R16-navigation-check.log",
           "sha256": "beb5edf6e458c0bfa5dce2e9208600ec0c4f4615e02479df11fc3615960ee35d"
         },
         "unit": {
@@ -231,15 +234,20 @@
       "report": "visual.json"
     },
     "demo": {
-      "status": "running",
-      "scenariosDefined": 451,
-      "stepsDefined": 1537,
-      "firstRun": "Interrupted after the shared AdminDialog canReset regression was found; final full run uses explicit default=true."
+      "status": "passed",
+      "scenarios": 451,
+      "steps": 1537,
+      "report": "demo.json",
+      "execution": "Full coverage from recorded primary runs and explicit follow-ups; see demo.json for failures, OOM and reruns."
+    },
+    "canonicalPatch": {
+      "status": "passed",
+      "files": 5,
+      "baselineVerified": true,
+      "appliesExactly": true
     }
   },
-  "pending": [
-    "Full demo Cucumber regression after fixing shared canReset default"
-  ],
+  "pending": [],
   "previousRun": {
     "date": "2026-09-12",
     "sourceTask": "01a090f8-c183-7291-9aec-97948fe6b762",
@@ -263,9 +271,23 @@
     "Stock Bitrix route parameters are no longer treated as query parameters by CatalogController.",
     "Digital product creation no longer validates hidden print count.",
     "Shared AdminDialog defaults canReset to true so demo conflict recovery remains available.",
-    "Live E2E selects Vuetify product type via its standard keyboard interaction."
+    "Live E2E selects Vuetify product type via its standard keyboard interaction.",
+    "R16 demo test waits for request-card navigation before recording the URL and changing the staff role."
   ],
   "knownUiLimitations": [
-    "The invalid-password API message is currently English; login rejection and retry work."
-  ]
+    "The invalid-password API message is currently English; login rejection and retry work.",
+    "Demo R12 returned a different conflict message in the accelerated two-worker run, then passed the one-worker rerun without app changes. Cause is not established; see demo.json and known-issues.md."
+  ],
+  "verifiedSource": {
+    "algorithm": "sha256 over sorted tracked runtime paths, NUL, per-file sha256, newline",
+    "files": 1230,
+    "sha256": "a7b20bf0aff355de2262c42f272e19e3fb7a9c561272c542e3011aefda0229ab",
+    "includes": [
+      "frontend/",
+      "api/",
+      "tools/",
+      "Makefile"
+    ],
+    "note": "Includes final AdminDialog default and keyboard E2E step. Documentation-only updates after runtime tests are excluded."
+  }
 }

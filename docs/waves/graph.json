@@ -418,7 +418,7 @@
       ],
       "activation": "Live-кабинет включает каталог и профиль. Остальные продуктовые экраны остаются в отдельно включаемом demo-режиме до их собственных волн.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "review",
       "unlocks": [],
       "inputBoundary": "B1 и E2 уже слиты в main. Существующий frontend импортируется из локального MoreFoto без runtime-данных и секретов.",
       "outputBoundary": "Работающий браузерный путь AUTH-01/02, ACC-01 и COM-01/02/03 без новых API ID. Правило браузерной приёмки — merge gate, а не runtime-зависимость следующих волн.",

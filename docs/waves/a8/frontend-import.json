@@ -202,7 +202,7 @@
     },
     "e2e/steps/review/review.steps.ts": {
       "beforeSha256": "6861023153f9a23089523a4e1b9167acdd60a316f0cae9a69acc13eedf1ee0c1",
-      "afterSha256": "6861023153f9a23089523a4e1b9167acdd60a316f0cae9a69acc13eedf1ee0c1"
+      "afterSha256": "fbe48ced674d956d4e9bd41fb3d0f87b1e0ee6e280c05b013a023a6fb04f207d"
     },
     "e2e/steps/review/visual.steps.ts": {
       "beforeSha256": "f784661ff331ce6837372ca81aa78d959a6aa0a1cdcd3a9cc325b6ab3077fb66",
@@ -2268,6 +2268,7 @@
     "docker/production/nginx/conf.d/default.conf",
     "e2e/features/commerce/delivery.feature",
     "e2e/features/dashboard.feature",
+    "e2e/steps/review/review.steps.ts",
     "env.d.ts",
     "eslint.config.js",
     "package-lock.json",
