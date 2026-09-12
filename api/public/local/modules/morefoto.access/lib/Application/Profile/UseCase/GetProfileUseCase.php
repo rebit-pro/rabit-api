@@ -23,8 +23,9 @@ final readonly class GetProfileUseCase
         $profile = $context->profile;
         $permissions = [];
         $institutionIds = $this->authorization->institutionIds($profile);
+        $groupIds = $this->authorization->groupIds($profile);
         foreach (PermissionEnum::cases() as $permission) {
-            if ($this->policy->allows($profile, $permission, institutionIds: $institutionIds)) {
+            if ($this->policy->allows($profile, $permission, institutionIds: $institutionIds, groupIds: $groupIds)) {
                 $permissions[] = $permission->value;
             }
         }

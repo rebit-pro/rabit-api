@@ -35,12 +35,18 @@ final readonly class InstitutionOperationRepository
         $c->queryExecute("INSERT INTO mf_institution_operation(actor_id,operation,idempotency_key,payload_hash,result_json,created_at) VALUES({$actor},'{$operation}','{$key}','{$hash}','{$result}',UTC_TIMESTAMP())");
     }
 
-    public function record(int $id, int $from, int $to, int $actor, string $operationId, string $delta): void
+    public function record(int $id, int $from, int $to, int $actor, string $operationId, string $delta, string $aggregateType = 'institution'): void
     {
         $c = Application::getConnection();
         $h = $c->getSqlHelper();
         $operationId = $h->forSql($operationId);
+        if (!in_array($aggregateType, ['institution', 'shoot', 'group'], true)) {
+            throw new \InvalidArgumentException('Invalid organization aggregate type.');
+        }
         $delta = $h->forSql($delta);
-        $c->queryExecute("INSERT INTO b_hlbd_mf_organization_change(UF_AGGREGATE_ID,UF_FROM_REVISION,UF_TO_REVISION,UF_ACTOR_ID,UF_OPERATION_ID,UF_DELTA,UF_OCCURRED_AT) VALUES({$id},{$from},{$to},{$actor},'{$operationId}','{$delta}',UTC_TIMESTAMP())");
+        // C2 remains deployable during the additive migration; its rows use the schema default.
+        $typeColumn = 'institution' === $aggregateType ? '' : 'UF_AGGREGATE_TYPE,';
+        $typeValue = 'institution' === $aggregateType ? '' : "'{$aggregateType}',";
+        $c->queryExecute("INSERT INTO b_hlbd_mf_organization_change({$typeColumn}UF_AGGREGATE_ID,UF_FROM_REVISION,UF_TO_REVISION,UF_ACTOR_ID,UF_OPERATION_ID,UF_DELTA,UF_OCCURRED_AT) VALUES({$typeValue}{$id},{$from},{$to},{$actor},'{$operationId}','{$delta}',UTC_TIMESTAMP())");
     }
 }

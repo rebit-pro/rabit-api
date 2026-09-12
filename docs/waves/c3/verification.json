@@ -1,0 +1,91 @@
+{
+  "wave": "C3",
+  "status": "backend-verified; browser acceptance pending",
+  "date": "2026-09-13",
+  "branch": "codex/c3-shoots-groups-calendar",
+  "base": "895fee9873cd62316579d18512c8b2e3315c3d62",
+  "independence": {
+    "dependency": "C2 merged in main (PR12)",
+    "decisions": [
+      "D08 accepted",
+      "D10 accepted"
+    ],
+    "A8": "PR14 open, a88e61d7e168eef139956da6aa753e83e5dd00b8; no unmerged frontend or harness imported",
+    "mainCheckoutClean": true
+  },
+  "checks": {
+    "phpunit": {
+      "status": "passed",
+      "tests": 341,
+      "assertions": 1089,
+      "php": "8.4.25"
+    },
+    "nativeC3": {
+      "status": "passed",
+      "checks": 192,
+      "report": "native.json",
+      "bitrix": "25.750.0",
+      "mysql": "8.0.45",
+      "transport": "native Router/controllers/filters/serializer; CLI seam only for php://input, not browser E2E"
+    },
+    "nativeC2": {
+      "status": "passed",
+      "checks": 136,
+      "report": "c2-regression.json"
+    },
+    "nativeE2": {
+      "status": "passed",
+      "checks": 95,
+      "report": "e2-regression.json"
+    },
+    "phpstan": {
+      "status": "passed",
+      "scope": "all configured modules; single-process --debug after parallel OOM; Auth path rechecked after clearToken change",
+      "errors": 0
+    },
+    "phpLint": {
+      "status": "passed",
+      "moduleFiles": 401,
+      "note": "New migration and native fixture PHP executed by the passing native suite; final Auth parsed by PHPStan/PHPUnit/native."
+    },
+    "style": {
+      "status": "passed",
+      "changedPhpFiles": 65,
+      "fixableFiles": 0
+    },
+    "graph": {
+      "status": "passed",
+      "waves": 40,
+      "apiIds": 99,
+      "historicalWaves": 35,
+      "canonicalNegativeFixtures": 10
+    },
+    "postman": {
+      "status": "passed",
+      "scripts": 144,
+      "positiveFixtures": 99,
+      "negativeFixtures": 198,
+      "idempotencyChecks": 43,
+      "liveRequests": false
+    },
+    "browserE2E": {
+      "status": "not-run",
+      "reason": "A8 frontend/E2E base is not merged; merge requested separately."
+    },
+    "visualDesktopMobile": {
+      "status": "not-run",
+      "reason": "Real editor integration follows A8 merge."
+    }
+  },
+  "fixedNativeFindings": [
+    "Native Bitrix Result DATE/DATETIME converted to explicit storage strings before DTO/calendar mapping.",
+    "Calendar idempotency key is validated as 32 lowercase hex, matching durable journal schema.",
+    "Auth clearToken updates only session fields without CUser nested transactions; native SQL fault now rolls back Group/Access/Auth and leaves no transaction open."
+  ],
+  "publication": {
+    "c3PrCreated": false,
+    "merged": false,
+    "deployed": false
+  },
+  "complete": false
+}

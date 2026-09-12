@@ -235,10 +235,14 @@ final readonly class UserRepository implements LoginUserRepositoryInterface, Tok
      */
     public function clearToken(int $userId): void
     {
-        $this->updateUser($userId, [
-            'UF_TOKEN' => '',
-            'UF_TOKEN_EXPIRES_AT' => false,
-        ]);
+        // Keep revocation in the caller's transaction. CUser::Update starts a nested
+        // transaction whose rollback can hide the storage error and leave outer work open.
+        $this->query(static function() use ($userId): void {
+            Application::getConnection()->queryExecute(sprintf(
+                "UPDATE b_uts_user SET UF_TOKEN = '', UF_TOKEN_EXPIRES_AT = NULL WHERE VALUE_ID = %d",
+                $userId,
+            ));
+        });
     }
 
     /** Current read: plain ORM re-read could retain a stale REPEATABLE READ snapshot. */

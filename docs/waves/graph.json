@@ -1,7 +1,7 @@
 {
   "version": 2,
   "planStatus": "active",
-  "date": "2026-09-12",
+  "date": "2026-09-13",
   "endpointCount": 99,
   "backend": "RaBit API",
   "baseline": {
@@ -640,7 +640,7 @@
       "legacyIds": [
         "W08"
       ],
-      "deliveryState": "planned",
+      "deliveryState": "inProgress",
       "unlocks": [
         "C4",
         "B2",

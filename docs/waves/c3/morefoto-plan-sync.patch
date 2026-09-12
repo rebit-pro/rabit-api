@@ -1,0 +1,54 @@
+--- a/docs/05-rest-api/build.py
++++ b/docs/05-rest-api/build.py
+@@ -116,12 +116,14 @@
+     note="Принята A6 (W05): shoots/groups — независимые {items,meta{page,pageSize,total}}, сортировка createdAt desc + id. Summary обязательный: unavailable{reason=dependenciesNotReady} до финансового поставщика либо ready{currency=RUB,paidOrderCount,paidAmount,confirmedRefundAmount,pendingRefundAmount,netAmount,calculatedAt}; суммы целые копейки, net=paid-confirmedRefund. Нули только при реальной пустой выборке. До C3/структурного поставщика полный endpoint не подключается; C4 допускает карточку с unavailable. Сбой подключённого поставщика — 503. AssignmentSignature только в проекции организатора; teacher не имеет ORG-04.")
+ add("organization","ORG-05","PATCH","/institutions/{institution_id}","Изменить учреждение",O,
+     "id, revision",dict(institution,revision=rev("institution_revision")),save={"institution_revision":"revision"})
+-add("organization","ORG-06","GET","/institutions/{institution_id}/shoots","Съёмки учреждения","О/К/Р","items<Shoot>, meta",sample=list_sample)
++add("organization","ORG-06","GET","/institutions/{institution_id}/shoots","Съёмки учреждения","О/К/Р","items<Shoot>, meta",sample=list_sample,
++    query=[("page","1","Страница начиная с 1"),("pageSize","50","Размер страницы: 1–100")],note="Пагинация: page >= 1, pageSize 1–100, по умолчанию 50. Область учреждения проверяется до выборки. Дата съёмки nullable YYYY-MM-DD.")
+ shoot={"name":"Тестовая осенняя съёмка","date":"2026-10-01"}
+ add("organization","ORG-07","POST","/institutions/{institution_id}/shoots","Создать отдельную съёмку",O,"id, revision",shoot,
+     code=201,save={"shoot_id":"id","shoot_revision":"revision"},sample={"id":"shoot-example","revision":1})
+-add("organization","ORG-08","GET","/shoots/{shoot_id}","Съёмка и группы",O,"id, institutionId, name, date, revision, groups",
+-    save={"shoot_revision":"revision"})
++add("organization","ORG-08","GET","/shoots/{shoot_id}","Съёмка и группы",O,"id, institutionId, name, date, revision, groups {items, meta}",
++    query=[("page","1","Страница начиная с 1"),("pageSize","50","Размер страницы: 1–100")],save={"shoot_revision":"revision"},
++    note="Только организатор. page/pageSize относятся к группам (по умолчанию 1/50, максимум 100). Элемент groups.items: id, shootId, name, groupKind, revision, teacherId, status, timezone, sentAt, closesAt, deliveryDueAt; даты календаря nullable ISO 8601 с offset. Нет galleryToken, фотографий и финансовых итогов; полная карточка ORG-11 — N1.")
+ add("organization","ORG-09","PATCH","/shoots/{shoot_id}","Изменить съёмку",O,"id, revision",dict(shoot,revision=rev("shoot_revision")),
+     save={"shoot_revision":"revision"})
+ add("organization","ORG-10","POST","/shoots/{shoot_id}/groups","Создать группу",O,"id, revision",
+@@ -143,6 +145,13 @@
+     if record["id"] == "ORG-08":
+         record["output"] += ", assignmentSignature"
+         record["save"]["assignment_signature"] = "assignmentSignature"
++# C3 implements the accepted D08 reason and bounded structure editor contracts.
++for record in ENDPOINTS:
++    if record["id"] in {"ORG-10", "ORG-12"}:
++        record["body"]["reason"] = None
++        record["note"] += " reason — до 2000 символов; замена/снятие занятого воспитателя требует непустую причину и replaceAssignments=true. Повтор не отзывает новые сессии. teacherId — реальный userId активного сотрудника роли teacher."
++    if record["id"] in {"ORG-07", "ORG-09"}:
++        record["note"] += " date — nullable YYYY-MM-DD; отсутствие поля PATCH сохраняет дату, null очищает. Idempotency-Key привязан к инициатору и операции; иной payload с тем же ключом даёт 409."
+ # Media.
+ add("media","MED-01","GET","/public/galleries/{gallery_token}","Открыть галерею","Галерея",
+     "groupId, institutionName, groupName, shootName, audience, state, sentAt, closesAt, referenceNow, children, curator, delivery",
+--- a/docs/04-bitrix-modules/backend-waves.json
++++ b/docs/04-bitrix-modules/backend-waves.json
+@@ -1,7 +1,7 @@
+ {
+   "version": 2,
+   "planStatus": "active",
+-  "date": "2026-09-12",
++  "date": "2026-09-13",
+   "endpointCount": 99,
+   "backend": "RaBit API",
+   "baseline": {
+@@ -640,7 +640,7 @@
+       "legacyIds": [
+         "W08"
+       ],
+-      "deliveryState": "planned",
++      "deliveryState": "inProgress",
+       "unlocks": [
+         "C4",
+         "B2",
