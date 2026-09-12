@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Run through run-w02-auth-integration.sh. The database must be fresh and isolated.
  * Uses real Bitrix, MySQL, CUser, UF, ORM, migrations and production repositories.
- * Test doubles: deterministic Clock and CAPTCHA/mail/token-generation fault adapters.
+ * Test doubles: deterministic Clock and CAPTCHA/mail/token-generation and pre-commit fault adapters.
  * No network delivery, full prolog, frontend or production configuration is exercised.
  */
 
@@ -14,6 +14,8 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserTable;
 use Rebit\Auth\Application\Auth\Contract\CaptchaVerifierInterface;
 use Rebit\Auth\Application\Auth\Contract\ClockInterface;
+use Rebit\Auth\Application\Auth\Contract\AuthTransactionInterface;
+use Rebit\Auth\Application\Auth\Dto\Result\LoginResultDto;
 use Rebit\Auth\Application\Auth\Contract\RegistrationConfirmationMailerInterface;
 use Rebit\Auth\Application\Auth\Dto\Request\ConfirmRegistrationRequestDto;
 use Rebit\Auth\Application\Auth\Dto\Request\LoginCaptchaRequestDto;
@@ -142,7 +144,7 @@ try {
     $captcha = new class implements CaptchaVerifierInterface {
         public function verify(?LoginCaptchaRequestDto $captcha): void {}
     };
-    $login = new LoginUseCase($repository, new TokenGenerator(), $captcha, 24, $clock);
+    $login = new LoginUseCase($repository, new TokenGenerator(), $captcha, 24, $clock, $transaction);
     $credentials = new LoginRequestDto('w02@example.invalid', 'W02-fixture-password!42');
     $first = $login->execute($credentials);
     $assert($userId === $resolver->resolveUserId($first->token), 'real login token resolves');
@@ -208,26 +210,32 @@ try {
     $wrongCode = '000000' === $mailer->lastCode ? '111111' : '000000';
     $expectHttp(static fn() => $confirm->execute(new ConfirmRegistrationRequestDto('register@example.invalid', $wrongCode)), 400, 'wrong confirmation code rejected');
     $assert(1 === $confirmationRepository->findByEmail('register@example.invalid')?->attempts, 'failed attempt is committed despite public error');
-    $failureHandler = EventManager::getInstance()->addEventHandlerCompatible(
-        'main',
-        'OnAfterUserUpdate',
-        static function(array &$fields) use ($registration, $assert): void {
-            if ($registration->userId !== (int)($fields['ID'] ?? 0) || !isset($fields['UF_TOKEN'])) {
-                return;
-            }
-            $stored = UserTable::query()->setSelect(['UF_TOKEN'])->where('ID', $registration->userId)->exec()->fetch();
-            $assert(false !== $stored && hash_equals($fields['UF_TOKEN'], (string)$stored['UF_TOKEN']), 'token really persisted inside the open transaction before injected fault');
+    // Inject after the real writes but before the real transaction commits.
+    // Token-only persistence intentionally does not dispatch CUser profile events.
+    $failingTransaction = new class($transaction, $assert) implements AuthTransactionInterface {
+        /** @param Closure(bool, string): void $assert */
+        public function __construct(private readonly AuthTransactionInterface $transaction, private readonly Closure $assert) {}
 
-            throw new RuntimeException('W02 controlled failure after token write');
-        },
-    );
+        public function run(callable $operation): mixed
+        {
+            return $this->transaction->run(function() use ($operation): never {
+                $result = $operation();
+                if (!$result instanceof LoginResultDto) {
+                    throw new LogicException('Expected successful confirmation before injected fault.');
+                }
+                $stored = UserTable::query()->setSelect(['UF_TOKEN'])->where('ID', $result->user->id)->exec()->fetch();
+                ($this->assert)(false !== $stored && hash_equals($result->token, (string)$stored['UF_TOKEN']), 'token really persisted inside the open transaction before injected fault');
+
+                throw new RuntimeException('W02 controlled failure after token write');
+            });
+        }
+    };
+    $failingConfirm = new ConfirmRegistrationUseCase($repository, $confirmationRepository, new TokenGenerator(), 24, 5, $clock, $failingTransaction);
     try {
-        $confirm->execute(new ConfirmRegistrationRequestDto('register@example.invalid', $mailer->lastCode));
+        $failingConfirm->execute(new ConfirmRegistrationRequestDto('register@example.invalid', $mailer->lastCode));
         throw new LogicException('Expected controlled failure after token write.');
     } catch (RuntimeException $exception) {
         $assert('W02 controlled failure after token write' === $exception->getMessage(), 'controlled failure occurs after activation confirmation and token writes');
-    } finally {
-        EventManager::getInstance()->removeEventHandler('main', 'OnAfterUserUpdate', $failureHandler);
     }
     $afterFailure = $repository->findById($registration->userId);
     $assert(null !== $afterFailure && !$afterFailure->isActive && $afterFailure->isPendingRegistration, 'transaction rolls back activation and pending marker');
@@ -310,7 +318,7 @@ try {
         'status' => 'PASS', 'phpVersion' => PHP_VERSION, 'kernelVersion' => $fixture['kernelVersion'], 'mysqlVersion' => $sql->server_info,
         'checksPassed' => count($checks), 'checks' => $checks,
         'bootstrapSeam' => 'Isolated CLI context; no full prolog or application init. Real CUser, UF, ORM and production repositories.',
-        'testDoubles' => ['deterministic clock', 'CAPTCHA acceptance', 'mail capture', 'controlled OnAfterUserUpdate failure after token write'],
+        'testDoubles' => ['deterministic clock', 'CAPTCHA acceptance', 'mail capture', 'controlled pre-commit failure after token write'],
         'database' => 'fresh disposable rabit_w02', 'externalNetwork' => false, 'hostPorts' => false,
     ], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), PHP_EOL;
 } catch (Throwable $exception) {

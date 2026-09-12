@@ -7,6 +7,7 @@ namespace Rebit\Auth\Tests\Application\Auth\UseCase;
 use Bitrix\Main\Type\DateTime;
 use PHPUnit\Framework\TestCase;
 use Rebit\Auth\Tests\Support\FrozenClock;
+use Rebit\Auth\Application\Auth\Contract\AuthTransactionInterface;
 use Rebit\Auth\Application\Auth\Contract\CaptchaVerifierInterface;
 use Rebit\Auth\Application\Auth\Contract\LoginUserRepositoryInterface;
 use Rebit\Auth\Application\Auth\Contract\TokenGeneratorInterface;
@@ -16,6 +17,7 @@ use Rebit\Auth\Application\Auth\Dto\Result\LoginResultDto;
 use Rebit\Auth\Application\Auth\UseCase\LoginUseCase;
 use Rebit\Auth\Domain\User\Entity\UserCredentials;
 use Rebit\Share\Shared\Exception\HttpException;
+use Rebit\Share\Shared\Exception\RepositoryException;
 
 /**
  * @internal
@@ -28,13 +30,20 @@ final class LoginUseCaseTest extends TestCase
         LoginUserRepositoryInterface $userRepository,
         TokenGeneratorInterface $tokenGenerator,
         ?CaptchaVerifierInterface $captchaVerifier = null,
+        ?AuthTransactionInterface $transaction = null,
     ): LoginUseCase {
+        if (null === $transaction) {
+            $transaction = $this->createStub(AuthTransactionInterface::class);
+            $transaction->method('run')->willReturnCallback(static fn(callable $operation): mixed => $operation());
+        }
+
         return new LoginUseCase(
             userRepository: $userRepository,
             tokenGenerator: $tokenGenerator,
             captchaVerifier: $captchaVerifier ?? $this->createStub(CaptchaVerifierInterface::class),
             tokenTtlHours: self::TOKEN_TTL_HOURS,
             clock: new FrozenClock(),
+            transaction: $transaction,
         );
     }
 
@@ -69,7 +78,7 @@ final class LoginUseCaseTest extends TestCase
 
         $userRepository
             ->expects($this->once())
-            ->method('findActiveByEmail')
+            ->method('findActiveByEmailForUpdate')
             ->with($email)
             ->willReturn($credentials)
         ;
@@ -110,7 +119,7 @@ final class LoginUseCaseTest extends TestCase
 
         $userRepository
             ->expects($this->once())
-            ->method('findActiveByEmail')
+            ->method('findActiveByEmailForUpdate')
             ->with('unknown@example.com')
             ->willReturn(null)
         ;
@@ -139,7 +148,7 @@ final class LoginUseCaseTest extends TestCase
 
         $userRepository
             ->expects($this->once())
-            ->method('findActiveByEmail')
+            ->method('findActiveByEmailForUpdate')
             ->with('user@example.com')
             ->willReturn($credentials)
         ;
@@ -160,7 +169,7 @@ final class LoginUseCaseTest extends TestCase
         $captchaVerifier = $this->createStub(CaptchaVerifierInterface::class);
 
         $userRepository
-            ->method('findActiveByEmail')
+            ->method('findActiveByEmailForUpdate')
             ->willReturn(null)
         ;
 
@@ -192,7 +201,7 @@ final class LoginUseCaseTest extends TestCase
 
         $userRepository
             ->expects($this->never())
-            ->method('findActiveByEmail')
+            ->method('findActiveByEmailForUpdate')
         ;
 
         $tokenGenerator
@@ -223,7 +232,7 @@ final class LoginUseCaseTest extends TestCase
 
         $userRepository
             ->expects($this->never())
-            ->method('findActiveByEmail')
+            ->method('findActiveByEmailForUpdate')
         ;
 
         $tokenGenerator
@@ -255,7 +264,7 @@ final class LoginUseCaseTest extends TestCase
         $captchaVerifier = $this->createStub(CaptchaVerifierInterface::class);
 
         $userRepository
-            ->method('findActiveByEmail')
+            ->method('findActiveByEmailForUpdate')
             ->willReturn($credentials)
         ;
 
@@ -283,5 +292,145 @@ final class LoginUseCaseTest extends TestCase
         $expectedMax = (new FrozenClock())->now() + (25 * 3600);
         self::assertGreaterThanOrEqual($expectedMin, $capturedExpiresAt->getTimestamp());
         self::assertLessThanOrEqual($expectedMax, $capturedExpiresAt->getTimestamp());
+    }
+
+    public function testCredentialReadAndTokenWriteShareOneTransaction(): void
+    {
+        $insideTransaction = false;
+        $transaction = $this->createMock(AuthTransactionInterface::class);
+        $transaction->expects($this->once())->method('run')->willReturnCallback(
+            static function(callable $operation) use (&$insideTransaction): mixed {
+                $insideTransaction = true;
+                try {
+                    return $operation();
+                } finally {
+                    $insideTransaction = false;
+                }
+            },
+        );
+        $captcha = $this->createMock(CaptchaVerifierInterface::class);
+        $captcha->expects($this->once())->method('verify')->willReturnCallback(
+            static function(LoginCaptchaRequestDto $dto) use (&$insideTransaction): void {
+                self::assertFalse($insideTransaction, 'External captcha runs before the transaction.');
+            },
+        );
+        $credentials = new UserCredentials(1, password_hash('correct', PASSWORD_DEFAULT), 'staff@example.test', 'Staff');
+        $repository = $this->createMock(LoginUserRepositoryInterface::class);
+        $repository->expects($this->never())->method('findActiveByEmail');
+        $repository->expects($this->once())->method('findActiveByEmailForUpdate')->willReturnCallback(
+            static function(string $email) use (&$insideTransaction, $credentials): UserCredentials {
+                self::assertTrue($insideTransaction);
+
+                return $credentials;
+            },
+        );
+        $repository->expects($this->once())->method('updateToken')->willReturnCallback(
+            static function(int $userId, string $token, DateTime $expiresAt) use (&$insideTransaction): void {
+                self::assertTrue($insideTransaction, 'Identity lock must remain held until token persistence.');
+            },
+        );
+        $generator = $this->createStub(TokenGeneratorInterface::class);
+        $generator->method('generate')->willReturn('token-issued-under-lock');
+
+        $result = $this->createUseCase($repository, $generator, $captcha, $transaction)
+            ->execute(new LoginRequestDto('staff@example.test', 'correct', $this->createCaptchaDto()))
+        ;
+
+        self::assertSame('token-issued-under-lock', $result->token);
+        self::assertFalse($insideTransaction);
+    }
+
+    public function testIdentityDisabledBeforeLockCannotIssueToken(): void
+    {
+        $active = true;
+        $transaction = $this->createMock(AuthTransactionInterface::class);
+        $transaction->expects($this->once())->method('run')->willReturnCallback(
+            static function(callable $operation) use (&$active): mixed {
+                $active = false;
+
+                return $operation();
+            },
+        );
+        $credentials = new UserCredentials(1, password_hash('correct', PASSWORD_DEFAULT), 'staff@example.test', 'Staff');
+        $repository = $this->createMock(LoginUserRepositoryInterface::class);
+        $repository->expects($this->never())->method('findActiveByEmail');
+        $repository->expects($this->once())->method('findActiveByEmailForUpdate')->willReturnCallback(
+            static function(string $email) use (&$active, $credentials): ?UserCredentials {
+                return $active ? $credentials : null;
+            },
+        );
+        $repository->expects($this->never())->method('updateToken');
+        $generator = $this->createMock(TokenGeneratorInterface::class);
+        $generator->expects($this->never())->method('generate');
+
+        $this->expectException(HttpException::class);
+        $this->expectExceptionCode(401);
+        $this->createUseCase($repository, $generator, transaction: $transaction)
+            ->execute(new LoginRequestDto('staff@example.test', 'correct', $this->createCaptchaDto()))
+        ;
+    }
+
+    public function testPasswordChangedBeforeLockRejectsOldPassword(): void
+    {
+        $storedPasswordHash = password_hash('old-password', PASSWORD_DEFAULT);
+        $replacementPasswordHash = password_hash('new-password', PASSWORD_DEFAULT);
+        $transaction = $this->createMock(AuthTransactionInterface::class);
+        $transaction->expects($this->once())->method('run')->willReturnCallback(
+            static function(callable $operation) use (&$storedPasswordHash, $replacementPasswordHash): mixed {
+                $storedPasswordHash = $replacementPasswordHash;
+
+                return $operation();
+            },
+        );
+        $repository = $this->createMock(LoginUserRepositoryInterface::class);
+        $repository->expects($this->never())->method('findActiveByEmail');
+        $repository->expects($this->once())->method('findActiveByEmailForUpdate')->willReturnCallback(
+            static function(string $email) use (&$storedPasswordHash): UserCredentials {
+                return new UserCredentials(1, $storedPasswordHash, $email, 'Staff');
+            },
+        );
+        $repository->expects($this->never())->method('updateToken');
+        $generator = $this->createMock(TokenGeneratorInterface::class);
+        $generator->expects($this->never())->method('generate');
+
+        $this->expectException(HttpException::class);
+        $this->expectExceptionCode(401);
+        $this->createUseCase($repository, $generator, transaction: $transaction)
+            ->execute(new LoginRequestDto('staff@example.test', 'old-password', $this->createCaptchaDto()))
+        ;
+    }
+
+    public function testTokenWriteFailureReachesTransactionRollback(): void
+    {
+        $rolledBack = false;
+        $transaction = $this->createMock(AuthTransactionInterface::class);
+        $transaction->expects($this->once())->method('run')->willReturnCallback(
+            static function(callable $operation) use (&$rolledBack): mixed {
+                try {
+                    return $operation();
+                } catch (\Throwable $exception) {
+                    $rolledBack = true;
+
+                    throw $exception;
+                }
+            },
+        );
+        $credentials = new UserCredentials(1, password_hash('correct', PASSWORD_DEFAULT), 'staff@example.test', 'Staff');
+        $repository = $this->createMock(LoginUserRepositoryInterface::class);
+        $repository->method('findActiveByEmailForUpdate')->willReturn($credentials);
+        $failure = new RepositoryException('Token persistence failed.');
+        $repository->expects($this->once())->method('updateToken')->willThrowException($failure);
+        $generator = $this->createStub(TokenGeneratorInterface::class);
+        $generator->method('generate')->willReturn('token-not-returned');
+
+        try {
+            $this->createUseCase($repository, $generator, transaction: $transaction)
+                ->execute(new LoginRequestDto('staff@example.test', 'correct', $this->createCaptchaDto()))
+            ;
+            self::fail('Failed token persistence must not return a session.');
+        } catch (RepositoryException $exception) {
+            self::assertSame($failure, $exception);
+            self::assertTrue($rolledBack);
+        }
     }
 }

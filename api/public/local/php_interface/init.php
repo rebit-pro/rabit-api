@@ -13,6 +13,7 @@ if (file_exists(__DIR__ . '/include/dev.php')) {
 
 Loader::includeModule('rebit.share');
 Loader::includeModule('rebit.auth');
+Loader::includeModule('morefoto.organization');
 Loader::includeModule('rebit.notification');
 
 Loader::includeModule('morefoto.access');

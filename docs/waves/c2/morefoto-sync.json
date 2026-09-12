@@ -1,0 +1,78 @@
+{
+  "date": "2026-09-12",
+  "source": "/home/user/MoreFoto",
+  "sourceIsGitRepository": false,
+  "baseMain": "83528338146828176eaa59b954c0c85942d986da",
+  "changes": "Merged predecessors; independent C2/E2 readiness; ORG-02 editor projection and initial assignmentSignature. No new endpoints or business decisions.",
+  "patchSha256": "ff08bd9a027d345fc47638d7b5058bea041093aa4b755362da9776fec4dec440",
+  "sources": {
+    "docs/04-bitrix-modules/README.md": {
+      "before": "b5ff17d9aa62b50e21516122c7d6db5abe1b8e978947a05c06139935f938e8ef",
+      "after": "d895ffecdddf69c0b93e80274292de5fdf84efa6b7e5d800bc40a0f9a0745ae4"
+    },
+    "docs/04-bitrix-modules/backend-waves.json": {
+      "before": "74735f220c158c721250839c973522a8abe79b8ef3710341c59bd18b15a051a1",
+      "after": "450fe9fdc389cb2e5ee346eba3332bfe9854799887f262ec578079f6b74af241"
+    },
+    "docs/04-bitrix-modules/wave_graph.py": {
+      "before": "9f8bc41f8eb11965db55e822765831621c7e1e60544f737e96d8e8c2547de6bd",
+      "after": "6579678e963d06b2a19ac77a03aa8e67b113d3d7497631b2c62704e37c0c5b18"
+    },
+    "docs/05-rest-api/build.py": {
+      "before": "988968ccb0b9e14255880f561bcc7ec7f37f4b1b7741224aa824bf0457432881",
+      "after": "bbc12d122f7f4a0f706d74e09913f84c0403aa4aa91e519f80cdd1fdf6d3e854"
+    }
+  },
+  "regeneratedFiles": {
+    "docs/04-bitrix-modules/backend-waves.md": "5b0eb7a409fb2694ab8d5c17195d2765d83334bec5af7be7bbf1bb4112761c2d",
+    "docs/05-rest-api/README.md": "e6357dc04ee21b0e81f1f39af04bb0200bd34b38b8ee535eff31c1565b70729c",
+    "docs/05-rest-api/endpoints.json": "749bff2079c4958eca568b5f7c16158bf03da4a8c83dc94a72c90bd4115cf902",
+    "docs/05-rest-api/verification.json": "0871fb4f997bf39fde9b1e5629cad1c7593c79da496cf72fa889b694155ccbfe",
+    "docs/05-rest-api/postman/MoreFoto.postman_collection.json": "2094fa746062e1fc2f484c6b841643b5195ba7a5e752dc0481537ef9261b99c5",
+    "docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json": "fc25693e57610f0c6881f011353c3197302bd0ca17d7dc3228ae2adeaad0672a"
+  },
+  "checks": [
+    {
+      "name": "patch-check",
+      "exitCode": 0
+    },
+    {
+      "name": "patch-apply",
+      "exitCode": 0
+    },
+    {
+      "name": "graph",
+      "exitCode": 0
+    },
+    {
+      "name": "historical-graph",
+      "exitCode": 0
+    },
+    {
+      "name": "render",
+      "exitCode": 0
+    },
+    {
+      "name": "build",
+      "exitCode": 0
+    },
+    {
+      "name": "canonical-validate",
+      "exitCode": 0
+    },
+    {
+      "name": "validate",
+      "exitCode": 0
+    },
+    {
+      "name": "postman",
+      "exitCode": 0
+    },
+    {
+      "name": "canonical-postman",
+      "exitCode": 0
+    }
+  ],
+  "replayMatched": 10,
+  "liveApiRequestsExecuted": false
+}

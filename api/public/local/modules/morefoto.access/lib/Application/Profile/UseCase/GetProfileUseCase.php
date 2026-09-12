@@ -22,9 +22,9 @@ final readonly class GetProfileUseCase
         $identity = $context->identity;
         $profile = $context->profile;
         $permissions = [];
-        // W06 has no persisted assignments. Empty scope is intentional and denies scoped actions.
+        $institutionIds = $this->authorization->institutionIds($profile);
         foreach (PermissionEnum::cases() as $permission) {
-            if ($this->policy->allows($profile, $permission)) {
+            if ($this->policy->allows($profile, $permission, institutionIds: $institutionIds)) {
                 $permissions[] = $permission->value;
             }
         }

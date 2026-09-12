@@ -6,6 +6,7 @@ namespace Morefoto\Access\Application\Authorization\Service;
 
 use Morefoto\Access\Application\Authorization\Dto\StaffContextOutputDto;
 use Morefoto\Access\Domain\Staff\Entity\StaffProfile;
+use Morefoto\Access\Domain\Assignment\Repository\InstitutionAssignmentRepository;
 use Morefoto\Access\Domain\Staff\Enum\PermissionEnum;
 use Morefoto\Access\Domain\Staff\Repository\StaffProfileRepository;
 use Morefoto\Access\Domain\Staff\Service\PermissionPolicy;
@@ -18,6 +19,7 @@ final readonly class StaffAuthorization
         private StaffProfileRepository $profiles,
         private IdentityGatewayInterface $identities,
         private PermissionPolicy $policy,
+        private InstitutionAssignmentRepository $assignments,
     ) {}
 
     /** Re-read every request; singleton services never retain a user's role or scope. */
@@ -35,11 +37,16 @@ final readonly class StaffAuthorization
         return new StaffContextOutputDto($identity, $profile);
     }
 
+    /** @return list<int> */
+    public function institutionIds(StaffProfile $profile): array
+    {
+        return $this->assignments->institutionIds($profile->userId, $profile->role->value);
+    }
+
     public function assertCan(int $userId, PermissionEnum $permission, ?int $institutionId = null, ?int $groupId = null): void
     {
         $context = $this->context($userId);
-        // No assignment storage exists in W06. All non-organizer scopes are deliberately empty.
-        if (!$this->policy->allows($context->profile, $permission, institutionId: $institutionId, groupId: $groupId)) {
+        if (!$this->policy->allows($context->profile, $permission, institutionIds: $this->institutionIds($context->profile), institutionId: $institutionId, groupId: $groupId)) {
             $scoped = in_array($permission, [PermissionEnum::INSTITUTION_READ, PermissionEnum::SHOOT_READ, PermissionEnum::GROUP_READ], true);
             $status = $scoped && (null !== $institutionId || null !== $groupId) ? 404 : 403;
             throw new HttpException(404 === $status ? 'Resource not found.' : 'Action is forbidden.', $status);

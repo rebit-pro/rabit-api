@@ -29,10 +29,11 @@ final readonly class InstitutionRepository
     }
 
     /**
-     * One statement keeps items and total in the same MySQL read snapshot, including an empty last page.
-     * A bounded literal prefix can use ix_mf_institution_name; no claim of indexed substring search.
+     * @param null|list<int> $institutionIds
+     *                                       One statement keeps items and total in the same MySQL read snapshot, including an empty last page.
+     *                                       A bounded literal prefix can use ix_mf_institution_name; no claim of indexed substring search.
      */
-    public function page(string $query, int $limit, int $offset): DatabaseResult
+    public function page(string $query, int $limit, int $offset, ?array $institutionIds = null): DatabaseResult
     {
         if (1 > $limit || 100 < $limit || 0 > $offset || 100 < mb_strlen($query)) {
             throw new \InvalidArgumentException('Invalid page bounds.');
@@ -42,8 +43,17 @@ final readonly class InstitutionRepository
             $prefix = strtr($query, ['\\' => '\\\\', '%' => '\%', '_' => '\_']) . '%';
             $condition = '' === $query ? '1=1' : "UF_NAME LIKE '" . $connection->getSqlHelper()->forSql($prefix) . "'";
 
+            if (null !== $institutionIds) {
+                foreach ($institutionIds as $institutionId) {
+                    if (1 > $institutionId) {
+                        throw new \InvalidArgumentException('Invalid scope.');
+                    }
+                }
+                $condition .= ' AND ID IN (' . ([] === $institutionIds ? '0' : implode(',', $institutionIds)) . ')';
+            }
+
             return $connection->query(<<<SQL
-SELECT page.UF_PUBLIC_ID, page.UF_NAME, page.UF_ADDRESS, page.UF_REVISION, totals.TOTAL
+SELECT page.ID, page.UF_PUBLIC_ID, page.UF_NAME, page.UF_ADDRESS, page.UF_REVISION, totals.TOTAL
 FROM (SELECT COUNT(*) AS TOTAL FROM b_hlbd_mf_institution WHERE {$condition}) AS totals
 LEFT JOIN (
     SELECT ID, UF_PUBLIC_ID, UF_NAME, UF_ADDRESS, UF_REVISION, UF_CREATED_AT

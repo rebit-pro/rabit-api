@@ -15,8 +15,21 @@ use Morefoto\Access\Presentation\Console\BootstrapOrganizerCommand;
 use Morefoto\Access\Presentation\Controller\ProfileController;
 use Rebit\Share\Application\Contract\Auth\IdentityGatewayInterface;
 use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
+use Morefoto\Access\Domain\Assignment\Repository\InstitutionAssignmentRepository;
+use Morefoto\Access\Application\Assignment\Service\InstitutionAccess;
+use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 
 return [
+    InstitutionAssignmentRepository::class => ['className' => InstitutionAssignmentRepository::class],
+    InstitutionAccessInterface::class => [
+        'constructor' => static fn(): InstitutionAccessInterface => new InstitutionAccess(
+            ServiceLocator::getInstance()->get(InstitutionAssignmentRepository::class),
+            ServiceLocator::getInstance()->get(StaffProfileRepository::class),
+            ServiceLocator::getInstance()->get(StaffAuthorization::class),
+            ServiceLocator::getInstance()->get(IdentityGatewayInterface::class),
+            ServiceLocator::getInstance()->get(TokenResolverInterface::class),
+        ),
+    ],
     StaffProfileRepository::class => ['className' => StaffProfileRepository::class],
     AccessStateRepository::class => ['className' => AccessStateRepository::class],
     PermissionPolicy::class => ['className' => PermissionPolicy::class],
@@ -26,6 +39,7 @@ return [
             ServiceLocator::getInstance()->get(StaffProfileRepository::class),
             ServiceLocator::getInstance()->get(IdentityGatewayInterface::class),
             ServiceLocator::getInstance()->get(PermissionPolicy::class),
+            ServiceLocator::getInstance()->get(InstitutionAssignmentRepository::class),
         ],
     ],
     AccessGuardInterface::class => [

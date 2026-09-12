@@ -1,0 +1,50 @@
+{
+  "date": "2026-09-12",
+  "wave": "C2",
+  "result": "PASS",
+  "baseMain": "83528338146828176eaa59b954c0c85942d986da",
+  "independentOf": [
+    "E2"
+  ],
+  "phpunit": {
+    "tests": 211,
+    "assertions": 800
+  },
+  "native": {
+    "checks": 136,
+    "report": "integration.json"
+  },
+  "authRegression": {
+    "checks": 66,
+    "report": "auth-regression.json"
+  },
+  "static": {
+    "result": "PASS",
+    "changedPhpFiles": 38,
+    "phpstan": "PASS",
+    "style": "PASS",
+    "lint": "PASS",
+    "diff": 0
+  },
+  "configuredLintFiles": 332,
+  "canonical": {
+    "report": "morefoto-sync.json",
+    "patchReplayFiles": 10,
+    "waves": 39,
+    "endpoints": 99,
+    "legacyWaves": 35,
+    "graphNegativeFixtures": 8,
+    "postmanScripts": 144,
+    "positiveFixtures": 99,
+    "negativeFixtures": 198,
+    "idempotencyRepeatChecks": 43,
+    "platformGuards": 14
+  },
+  "limitations": [
+    "Native Router/Controller/DI/Bitrix/MySQL through CLI; raw JSON via HttpRequest subclass",
+    "Offline captcha only for concurrent login tests",
+    "No Nginx/FPM/frontend run",
+    "No production migration or deployment"
+  ],
+  "githubActions": "disabled_manually; YAML preserved"
+}

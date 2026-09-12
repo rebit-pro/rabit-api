@@ -82,13 +82,17 @@ def negative_checks(plan):
         return next(item for item in data["waves"] if item["id"] == wid)
     def cycle(data):
         wave(data, "C1")["dependsOn"].append("C2")
-        wave(data, "C1")["deliveryState"] = "planned"
+        if wave(data, "C1")["deliveryState"] != "merged":
+            wave(data, "C1")["deliveryState"] = "planned"
         for item in data["waves"]:
             item["unlocks"] = [other["id"] for other in data["waves"] if item["id"] in other["dependsOn"]]
     rejects("cycle", cycle)
     rejects("unknown dependency", lambda data: wave(data, "E1")["dependsOn"].append("Z9"))
-    rejects("unmerged dependency started", lambda data: wave(data, "C2").update(deliveryState="inProgress"))
-    rejects("open decision started", lambda data: wave(data, "E1").update(decisionGates=["D02"]))
+    merged_ids = {item["id"] for item in plan["waves"] if item["deliveryState"] == "merged"}
+    blocked_id = next(item["id"] for item in plan["waves"] if item["id"] not in merged_ids and not set(item["dependsOn"]) <= merged_ids)
+    ready_id = next(item["id"] for item in plan["waves"] if item["id"] not in merged_ids and set(item["dependsOn"]) <= merged_ids)
+    rejects("unmerged dependency started", lambda data: wave(data, blocked_id).update(deliveryState="inProgress"))
+    rejects("open decision started", lambda data: wave(data, ready_id).update(deliveryState="inProgress", decisionGates=["D99"]))
     rejects("stale unlocks", lambda data: wave(data, "C1").update(unlocks=[]))
     rejects("duplicate endpoint owner", lambda data: wave(data, "E1")["endpointIds"].append("ACC-01"))
     rejects("missing legacy mapping", lambda data: wave(data, "B1").update(legacyIds=[]))

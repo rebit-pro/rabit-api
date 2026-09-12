@@ -11,5 +11,8 @@ interface LoginUserRepositoryInterface
 {
     public function findActiveByEmail(string $email): ?UserCredentials;
 
+    /** Caller owns the transaction; locks identity and token storage until token issuance commits. */
+    public function findActiveByEmailForUpdate(string $email): ?UserCredentials;
+
     public function updateToken(int $userId, string $token, DateTime $expiresAt): void;
 }

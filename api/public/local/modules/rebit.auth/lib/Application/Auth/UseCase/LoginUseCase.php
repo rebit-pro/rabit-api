@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rebit\Auth\Application\Auth\UseCase;
 
 use Bitrix\Main\Type\DateTime;
+use Rebit\Auth\Application\Auth\Contract\AuthTransactionInterface;
 use Rebit\Auth\Application\Auth\Contract\ClockInterface;
 use Rebit\Auth\Application\Auth\Contract\CaptchaVerifierInterface;
 use Rebit\Auth\Application\Auth\Contract\LoginUserRepositoryInterface;
@@ -24,6 +25,7 @@ final readonly class LoginUseCase
         private CaptchaVerifierInterface $captchaVerifier,
         private int $tokenTtlHours,
         private ClockInterface $clock,
+        private AuthTransactionInterface $transaction,
     ) {
         if (0 >= $tokenTtlHours) {
             throw new \InvalidArgumentException('Token lifetime must be positive.');
@@ -39,7 +41,12 @@ final readonly class LoginUseCase
     {
         $this->captchaVerifier->verify($dto->captcha);
 
-        $user = $this->userRepository->findActiveByEmail($dto->email);
+        return $this->transaction->run(fn(): LoginResultDto => $this->login($dto));
+    }
+
+    private function login(LoginRequestDto $dto): LoginResultDto
+    {
+        $user = $this->userRepository->findActiveByEmailForUpdate($dto->email);
 
         if (null === $user) {
             throw new HttpException('Invalid credentials', 401);
