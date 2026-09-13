@@ -16,7 +16,9 @@ GET /api/v1/institutions/{institution_id} (ORG-04) возвращает реал
 
 Карта frontend: InstitutionScreen компонует состояние и прежний редактор; InstitutionOverview показывает реквизиты/назначения/сводку; InstitutionCollection — отдельный список/пагинацию; useInstitutionPage управляет загрузкой, повторами и устаревшими ответами. Demo остаётся отдельным режимом.
 
-Временные ресурсы создаются runner tools/run-browser-e2e.py и очищаются по owner-label. Source patch канонического MoreFoto и SHA256 сгенерированных документов приложены: morefoto-plan-sync.patch/morefoto-sync.json. C4 не опубликована, не слита, deployment не выполнялся.
+Временные ресурсы создаются runner tools/run-browser-e2e.py и очищаются по owner-label. Source patch канонического MoreFoto и SHA256 сгенерированных документов приложены: morefoto-plan-sync.patch/morefoto-sync.json. C4 опубликована в [PR16](https://github.com/rebit-pro/rabit-api/pull/16), ожидает ревью и не слита; deployment не выполнялся.
+
+[Памятка для ручной проверки по всем готовым волнам](../../testing/manual-wave-checklist.md) содержит тестовые входы, подготовленные данные и отдельный локальный стенд, оставленный для проверки 13 сентября 2026.
 
 ## Повторная проверка
 

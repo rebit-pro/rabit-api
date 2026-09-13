@@ -108,10 +108,34 @@
   },
   "sourceManifest": "source-manifest.json",
   "publication": {
-    "status": "PR preparation",
+    "status": "PR open",
+    "url": "https://github.com/rebit-pro/rabit-api/pull/16",
     "merged": false,
     "deployed": false
   },
   "complete": true,
-  "completeMeaning": "Implementation and required local acceptance complete; publication, merge and deployment tracked separately."
+  "completeMeaning": "Implementation and required local acceptance complete; publication, merge and deployment tracked separately.",
+  "manualReview": {
+    "preparedAt": "2026-09-13T08:27:56.243839+00:00",
+    "sourceCommit": "9a78e731332df1cce6c6dba4248ee2caf5d1e3ca",
+    "guide": "../../testing/manual-wave-checklist.md",
+    "url": "http://localhost:42006",
+    "stateFile": "api/var/e2e/rabit-e2e-df39f10033d5/state.json",
+    "browser": {
+      "startTime": "2026-09-13T08:31:36.015Z",
+      "duration": 92739.25099999999,
+      "expected": 33,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "fixtureAccountsVerified": 9,
+    "fixtureRecords": {
+      "institutions": 20,
+      "products": 32
+    },
+    "leftRunningForUser": true,
+    "storage": "Disposable MySQL tmpfs; links and records belong to this run",
+    "backendAndFrontendChecks": "Re-run by up; PHP lint405, PHPStan0, PHPUnit350/1102, frontend check/build and unit155 passed"
+  }
 }
