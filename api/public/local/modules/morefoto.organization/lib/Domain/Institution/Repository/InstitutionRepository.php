@@ -28,6 +28,30 @@ final readonly class InstitutionRepository
         }
     }
 
+    /** Scoped record for ORG-04; native Result is consumed inside the application boundary.
+     * @param null|list<int> $institutionIds
+     */
+    public function visible(InstitutionId $id, ?array $institutionIds): Result
+    {
+        try {
+            $query = InstitutionTable::query()->setSelect(['ID', 'UF_PUBLIC_ID', 'UF_NAME', 'UF_ADDRESS', 'UF_REVISION'])
+                ->where('UF_PUBLIC_ID', $id->value)->setLimit(1)
+            ;
+            if (null !== $institutionIds) {
+                foreach ($institutionIds as $institutionId) {
+                    if (1 > $institutionId) {
+                        throw new \InvalidArgumentException('Invalid institution scope.');
+                    }
+                }
+                $query->whereIn('ID', [] === $institutionIds ? [0] : $institutionIds);
+            }
+
+            return $query->exec();
+        } catch (\Throwable $exception) {
+            throw new InstitutionStorageException('Cannot read visible institution.', 0, $exception);
+        }
+    }
+
     /**
      * @param null|list<int> $institutionIds
      *                                       One statement keeps items and total in the same MySQL read snapshot, including an empty last page.

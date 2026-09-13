@@ -25,6 +25,7 @@ use Rebit\Share\Application\Contract\Auth\Dto\IdentityOutputDto;
 use Rebit\Share\Application\Contract\Auth\IdentityGatewayInterface;
 use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
 use Sprint\Migration\Version20260912210001;
+use Morefoto\Organization\Application\Institution\UseCase\GetInstitutionDetailUseCase;
 
 $checks = [];
 $stage = 'bootstrap';
@@ -87,6 +88,7 @@ try {
     $save = $locator->get(SaveInstitutionUseCase::class);
     $requests = $locator->get(InstitutionRequestFactory::class);
     $tokens = $locator->get(TokenResolverInterface::class);
+    $institutionDetail = $locator->get(GetInstitutionDetailUseCase::class);
     $users = new UserRepository();
     $staff = [];
     $newUser = static function(string $label, ?string $role, bool $staffActive = true, bool $identityActive = true) use ($sql, $users): int {
@@ -115,7 +117,7 @@ try {
     $refresh = static function(string $role) use ($users, $staff): void {
         $users->updateToken($staff[$role], 'C2Token' . $staff[$role], DateTime::createFromTimestamp(time() + 3600));
     };
-    $request = static function(string $action, ?string $bearer, mixed $body = null, ?string $id = null, ?string $key = null, array $query = [], string $contentType = 'application/json', ?SaveInstitutionUseCase $override = null) use ($listing, $save, $requests, $tokens): array {
+    $request = static function(string $action, ?string $bearer, mixed $body = null, ?string $id = null, ?string $key = null, array $query = [], string $contentType = 'application/json', ?SaveInstitutionUseCase $override = null) use ($listing, $save, $requests, $tokens, $institutionDetail): array {
         $values = $_SERVER;
         unset($values['HTTP_AUTHORIZATION']);
         $values['REQUEST_METHOD'] = match ($action) {
@@ -145,7 +147,7 @@ try {
         };
         $http::$input = is_string($body) ? $body : json_encode($body ?? (object)[], JSON_THROW_ON_ERROR);
         Application::getInstance()->getContext()->initialize($http, new HttpResponse(), $server);
-        $controller = new InstitutionController($listing, $override ?? $save, $requests, $tokens);
+        $controller = new InstitutionController($listing, $override ?? $save, $requests, $tokens, $institutionDetail);
         $response = $controller->run($action, [$http->getPostList(), $http->getQueryList()]);
         if (!$response instanceof HttpResponse) {
             $response = new HttpResponse();

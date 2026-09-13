@@ -25,6 +25,7 @@ use Morefoto\Organization\Presentation\Request\InstitutionRequestFactory;
 use Morefoto\Organization\Presentation\Request\StructureRequestFactory;
 use Ramsey\Uuid\Uuid;
 use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
+use Morefoto\Organization\Application\Institution\UseCase\GetInstitutionDetailUseCase;
 
 // CLI transport seam only: supplies php://input, without redefining native Bitrix classes.
 final class C3NativeHttpRequest extends HttpRequest
@@ -114,6 +115,7 @@ return static function(array $context): void {
                 $locator->get(SaveInstitutionUseCase::class),
                 $locator->get(InstitutionRequestFactory::class),
                 $locator->get(TokenResolverInterface::class),
+                $locator->get(GetInstitutionDetailUseCase::class),
             ),
             StructureController::class => new StructureController(
                 $locator->get(ListShootsUseCase::class),

@@ -1,0 +1,71 @@
+--- a/docs/04-bitrix-modules/backend-waves.json
++++ b/docs/04-bitrix-modules/backend-waves.json
+@@ -6,7 +6,7 @@
+   "backend": "RaBit API",
+   "baseline": {
+     "branch": "main",
+-    "commit": "b01be326e607c5cfafaeff587f29048f6802a636",
++    "commit": "8962230accdc8fe913ef0a12211bee14c332fdd2",
+     "mergedWaves": [
+       "A1",
+       "A2",
+@@ -20,7 +20,8 @@
+       "E1",
+       "C2",
+       "E2",
+-      "A8"
++      "A8",
++      "C3"
+     ],
+     "review": {},
+     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
+@@ -31,7 +32,8 @@
+       "A7": "https://github.com/rebit-pro/rabit-api/pull/11",
+       "C2": "https://github.com/rebit-pro/rabit-api/pull/12",
+       "E2": "https://github.com/rebit-pro/rabit-api/pull/13",
+-      "A8": "https://github.com/rebit-pro/rabit-api/pull/14"
++      "A8": "https://github.com/rebit-pro/rabit-api/pull/14",
++      "C3": "https://github.com/rebit-pro/rabit-api/pull/15"
+     }
+   },
+   "acceptedImplementationDecisions": [
+@@ -642,7 +644,7 @@
+       "legacyIds": [
+         "W08"
+       ],
+-      "deliveryState": "review",
++      "deliveryState": "merged",
+       "unlocks": [
+         "C4",
+         "B2",
+@@ -689,7 +691,7 @@
+       "legacyIds": [
+         "W07"
+       ],
+-      "deliveryState": "planned",
++      "deliveryState": "review",
+       "unlocks": [
+         "N1"
+       ],
+--- a/docs/05-rest-api/build.py
++++ b/docs/05-rest-api/build.py
+@@ -106,14 +106,14 @@
+ add("organization","ORG-03","POST","/institutions","Создать учреждение",O,"id, revision",institution,code=201,
+     save={"institution_id":"id","institution_revision":"revision"},sample={"id":"institution-example","revision":1})
+ add("organization","ORG-04","GET","/institutions/{institution_id}","Карточка учреждения","О/К/Р",
+-    "id, name, address, revision, shoots, groups, summary, assignmentSignature?",
++    "id, name, address, revision, curatorId, headId, shoots, groups, summary, assignmentSignature?",
+     query=[("shootsPage","1","Страница съёмок от 1"),("groupsPage","1","Страница групп от 1"),("pageSize","50","Размер обеих страниц 1–100")],
+     save={"institution_revision":"revision","assignment_signature":"assignmentSignature"},
+-    sample={"id":"institution-example","name":"Тестовый детский сад","address":"Тестовый адрес","revision":1,
+-        "shoots":{"items":[],"meta":{"page":1,"pageSize":50,"total":0}},
+-        "groups":{"items":[],"meta":{"page":1,"pageSize":50,"total":0}},
++    sample={"id":"institution-example","name":"Тестовый детский сад","address":"Тестовый адрес","revision":1,"curatorId":None,"headId":None,
++        "shoots":{"items":[],"meta":{"page":1,"pageSize":50,"total":0,"totalPages":0}},
++        "groups":{"items":[],"meta":{"page":1,"pageSize":50,"total":0,"totalPages":0}},
+         "summary":{"availability":"unavailable","reason":"dependenciesNotReady"}},
+-    note="Принята A6 (W05): shoots/groups — независимые {items,meta{page,pageSize,total}}, сортировка createdAt desc + id. Summary обязательный: unavailable{reason=dependenciesNotReady} до финансового поставщика либо ready{currency=RUB,paidOrderCount,paidAmount,confirmedRefundAmount,pendingRefundAmount,netAmount,calculatedAt}; суммы целые копейки, net=paid-confirmedRefund. Нули только при реальной пустой выборке. До C3/структурного поставщика полный endpoint не подключается; C4 допускает карточку с unavailable. Сбой подключённого поставщика — 503. AssignmentSignature только в проекции организатора; teacher не имеет ORG-04.")
++    note="Принята A6 (W05), реализация C4: curatorId/headId — реальные nullable назначения Access. shoots/groups — независимые {items,meta{page,pageSize,total,totalPages}}, сортировка createdAt desc + id. Элементы повторяют проекции Shoot/Group C3; groups содержит группы всех съёмок учреждения, group.shootId указывает на родителя. Summary обязательный: unavailable{reason=dependenciesNotReady} до финансового поставщика либо ready{currency=RUB,paidOrderCount,paidAmount,confirmedRefundAmount,pendingRefundAmount,netAmount,calculatedAt}; суммы целые копейки, net=paid-confirmedRefund. Нули только при реальной пустой выборке. До C3/структурного поставщика полный endpoint не подключается; C4 допускает карточку с unavailable. Сбой подключённого поставщика — 503. AssignmentSignature только в проекции организатора; teacher не имеет ORG-04.")
+ add("organization","ORG-05","PATCH","/institutions/{institution_id}","Изменить учреждение",O,
+     "id, revision",dict(institution,revision=rev("institution_revision")),save={"institution_revision":"revision"})
+ add("organization","ORG-06","GET","/institutions/{institution_id}/shoots","Съёмки учреждения","О/К/Р","items<Shoot>, meta",sample=list_sample,

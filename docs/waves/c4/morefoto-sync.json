@@ -1,0 +1,20 @@
+{
+  "canonicalRoot": "/home/user/MoreFoto",
+  "status": "C4 review; C3 merged PR15",
+  "patch": "morefoto-plan-sync.patch",
+  "patchScope": "Source changes only; regenerate REST/Postman/wave Markdown. Canonical MoreFoto is not a Git repository.",
+  "patchAppliedExactly": true,
+  "generationCommands": [
+    "python3 docs/04-bitrix-modules/render-waves.py",
+    "python3 docs/05-rest-api/build.py"
+  ],
+  "artifacts": {
+    "docs/04-bitrix-modules/backend-waves.json": "728df9f2cbb861d5caae0caf73fc48df49094cebce68d5522feedb90bb27de8e",
+    "docs/04-bitrix-modules/backend-waves.md": "927ad73c8da1ecc2c1a68d4bdb2a21cdf733ea4af6e1609b0a457083944424d9",
+    "docs/05-rest-api/build.py": "1dbaf319fdf8e64d21fc33eb180e0e56ff8b3957087736ab2d3367b8ab091f58",
+    "docs/05-rest-api/README.md": "0e80c487ee0d112a249fdba12727e5195acd1a849275dcf87c5cec957d0a3728",
+    "docs/05-rest-api/endpoints.json": "b88b9d2dfa8ee83279243ad9ff8424c6d105f7e8e97c3b4716596d26f55d8bc0",
+    "docs/05-rest-api/postman/MoreFoto.postman_collection.json": "259a139194639a2605aee09532459ab9ea64ad8988696877e0bfc35db5e257f9",
+    "docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json": "d30281b72e3417a81094ce017a8be713db35307629df709a4b99e308940c1d0e"
+  }
+}

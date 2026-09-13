@@ -281,13 +281,17 @@ test('C3: пагинация съёмок и групп читает незав�
   for (let i = 0; i < 26; i++) events.push(await shoot(page, parent.id, `C3 Съёмка ${String(i).padStart(2, '0')}`));
   await page.goto(`${institutionsPage}/${parent.id}`);
   await expect(page.getByTestId('structure-row')).toHaveCount(25);
-  let pending = page.waitForResponse((response) => response.url().includes(`/institutions/${parent.id}/shoots?page=2`));
-  await page.getByRole('button', { name: 'Следующая', exact: true }).click();
-  const shots = await body(await pending);
+  let pending = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === `/api/v1/institutions/${parent.id}` &&
+      new URL(response.url()).searchParams.get('shootsPage') === '2'
+  );
+  await page.getByTestId('institution-shoots').getByRole('button', { name: 'Следующая', exact: true }).click();
+  const shots = (await body(await pending)).data.shoots;
   expect(shots.meta.page).toBe(2);
   expect(shots.meta.total).toBe(26);
   await expect(page.getByTestId('structure-row')).toHaveCount(1);
-  await expect(row(page, shots.data.items[0].name)).toBeVisible();
+  await expect(row(page, shots.items[0].name)).toBeVisible();
   const event = events[0]!;
   for (let i = 0; i < 26; i++) await group(page, event.id, `C3 Группа ${String(i).padStart(2, '0')}`);
   await page.goto(shootPage(parent.id, event.id));
