@@ -1,4 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router';
+import { isMockApiEnabled } from '@/mocks/config';
 
 const MainRoutes: RouteRecordRaw = {
   path: '/cabinet',
@@ -16,7 +17,10 @@ const MainRoutes: RouteRecordRaw = {
       name: 'Production',
       path: 'production/:groupId?',
       component: () => import('@/modules/morefoto/views/ProductionPage.vue'),
-      meta: { title: 'Производство и комплектация', staffRoles: ['organizer', 'curator'] }
+      meta: {
+        title: 'Производство и комплектация',
+        staffRoles: ['organizer', 'curator']
+      }
     },
     {
       name: 'GroupSummary',
@@ -100,7 +104,10 @@ const MainRoutes: RouteRecordRaw = {
       name: 'OrganizationList',
       path: 'institutions',
       component: () => import('@/modules/morefoto/views/OrganizationListPage.vue'),
-      meta: { title: 'Учреждения', staffRoles: ['organizer'] }
+      meta: {
+        title: 'Учреждения',
+        staffRoles: isMockApiEnabled ? ['organizer'] : ['organizer', 'curator', 'head']
+      }
     },
     {
       name: 'PhotoWorkspace',

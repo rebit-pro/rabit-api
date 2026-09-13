@@ -1,16 +1,16 @@
 {
   "wave": "C3",
-  "status": "backend-verified; browser acceptance pending",
+  "status": "ready-for-review",
   "date": "2026-09-13",
   "branch": "codex/c3-shoots-groups-calendar",
-  "base": "895fee9873cd62316579d18512c8b2e3315c3d62",
+  "base": "b01be326e607c5cfafaeff587f29048f6802a636",
   "independence": {
     "dependency": "C2 merged in main (PR12)",
     "decisions": [
       "D08 accepted",
       "D10 accepted"
     ],
-    "A8": "PR14 open, a88e61d7e168eef139956da6aa753e83e5dd00b8; no unmerged frontend or harness imported",
+    "A8": "PR14 merged in main, b01be326e607c5cfafaeff587f29048f6802a636; C3 rebased and reverified against this base",
     "mainCheckoutClean": true
   },
   "checks": {
@@ -22,7 +22,7 @@
     },
     "nativeC3": {
       "status": "passed",
-      "checks": 192,
+      "checks": 198,
       "report": "native.json",
       "bitrix": "25.750.0",
       "mysql": "8.0.45",
@@ -30,7 +30,7 @@
     },
     "nativeC2": {
       "status": "passed",
-      "checks": 136,
+      "checks": 138,
       "report": "c2-regression.json"
     },
     "nativeE2": {
@@ -50,7 +50,7 @@
     },
     "style": {
       "status": "passed",
-      "changedPhpFiles": 65,
+      "changedPhpFiles": 68,
       "fixableFiles": 0
     },
     "graph": {
@@ -69,23 +69,62 @@
       "liveRequests": false
     },
     "browserE2E": {
-      "status": "not-run",
-      "reason": "A8 frontend/E2E base is not merged; merge requested separately."
+      "status": "passed",
+      "report": "browser.json",
+      "tests": 25,
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "retries": 0,
+      "fixture": "rabit-e2e-828c75a75ea9",
+      "transport": "Chromium -> nginx -> real Bitrix FPM -> isolated MySQL; mocks disabled; fresh database",
+      "ownedFixtureCleaned": true
     },
     "visualDesktopMobile": {
-      "status": "not-run",
-      "reason": "Real editor integration follows A8 merge."
+      "status": "passed",
+      "report": "visual.json",
+      "screenshotsReviewed": 6,
+      "viewports": [
+        "1440x1000",
+        "390x844"
+      ]
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "production build"
+      ],
+      "unitTests": 155
+    },
+    "demoOrganization": {
+      "status": "passed",
+      "report": "demo.json",
+      "tags": "@r07",
+      "scenarios": 21,
+      "steps": 48,
+      "fullDemoSuiteRepeated": false
     }
   },
   "fixedNativeFindings": [
     "Native Bitrix Result DATE/DATETIME converted to explicit storage strings before DTO/calendar mapping.",
     "Calendar idempotency key is validated as 32 lowercase hex, matching durable journal schema.",
-    "Auth clearToken updates only session fields without CUser nested transactions; native SQL fault now rolls back Group/Access/Auth and leaves no transaction open."
+    "Auth clearToken updates only session fields without CUser nested transactions; native SQL fault now rolls back Group/Access/Auth and leaves no transaction open.",
+    "C2/C3 query validation reads original URI because native Bitrix binder injects matched path values into GET. Both valid PATCH and scalar/array query spoof are covered."
   ],
   "publication": {
-    "c3PrCreated": false,
+    "status": "PR preparation",
     "merged": false,
     "deployed": false
   },
-  "complete": false
+  "complete": true,
+  "fixedBrowserFindings": [
+    "Preserve exact pending mutation across 401/403 after a lost committed response.",
+    "Dialog after-enter focus no longer steals focus from an already opened group type combobox."
+  ],
+  "completeMeaning": "Implementation and required local acceptance complete; merge and deployment require separate review/actions.",
+  "sourceManifest": "source-manifest.json"
 }

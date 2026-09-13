@@ -10,6 +10,7 @@ use Bitrix\Main\Loader;
 $fixture = require __DIR__ . '/../fixtures/w02/bootstrap.php';
 $sql = $fixture['connection'];
 ServiceLocator::getInstance()->registerByModuleSettings('main');
+RegisterModuleDependences('main', 'OnUserTypeBuildList', 'main', CUserTypeDate::class, 'GetUserTypeDescription');
 require_once '/kernel/modules/main/install/index.php';
 (new main())->InstallTasks();
 require_once '/kernel/modules/highloadblock/install/index.php';
@@ -21,7 +22,7 @@ foreach (['morefoto.access', 'morefoto.commerce', 'morefoto.organization', 'rebi
 }
 ob_start();
 try {
-    foreach (['20260323120001', '20260326120008', '20260911120001', '20260911200001', '20260911220001', '20260912220001'] as $id) {
+    foreach (['20260323120001', '20260326120008', '20260911120001', '20260911200001', '20260911210001', '20260911220001', '20260912210001', '20260912220001', '20260913010001', '20260913010002'] as $id) {
         require_once '/app/public/local/php_interface/migrations.foundation/Version' . $id . '.php';
         $class = 'Sprint\Migration\Version' . $id;
         (new $class())->up();
@@ -31,12 +32,12 @@ try {
 } finally {
     ob_end_clean();
 }
-foreach (['rebit.share', 'rebit.auth', 'morefoto.access', 'morefoto.commerce'] as $module) {
+foreach (['rebit.share', 'rebit.auth', 'morefoto.access', 'morefoto.commerce', 'morefoto.organization'] as $module) {
     if (!Loader::includeModule($module)) {
         throw new RuntimeException('Cannot load fixture module.');
     }
 }
-foreach (['organizer', 'another-organizer', 'teacher', 'unassigned'] as $name) {
+foreach (['organizer', 'another-organizer', 'teacher', 'unassigned', 'curator', 'head', 'another-teacher'] as $name) {
     $writer = new CUser();
     $id = $writer->Add([
         'LOGIN' => $name . '@example.invalid', 'EMAIL' => $name . '@example.invalid',
@@ -49,7 +50,12 @@ foreach (['organizer', 'another-organizer', 'teacher', 'unassigned'] as $name) {
     if ('organizer' === $name) {
         ServiceLocator::getInstance()->get(BootstrapOrganizerUseCase::class)->execute((int)$id);
     } elseif ('unassigned' !== $name) {
-        $role = 'another-organizer' === $name ? 'organizer' : 'teacher';
+        $role = match ($name) {
+            'another-organizer' => 'organizer',
+            'curator' => 'curator',
+            'head' => 'head',
+            default => 'teacher',
+        };
         $statement = $sql->prepare('INSERT INTO b_hlbd_mf_staff_profile (UF_USER_ID, UF_ROLE, UF_ACTIVE, UF_REVISION, UF_ACCESS_REVISION, UF_CREATED_AT, UF_UPDATED_AT) VALUES (?, ?, 1, 1, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP())');
         $statement->bind_param('is', $id, $role);
         $statement->execute();
@@ -101,4 +107,4 @@ foreach (['bitrix/cache', 'bitrix/managed_cache', 'bitrix/stack_cache', 'bitrix/
     mkdir('/runtime/public/' . $directory, 0777, true);
     chmod('/runtime/public/' . $directory, 0777);
 }
-echo "Disposable Auth/Access/Commerce fixture ready; catalogue is empty.\n";
+echo "Disposable Auth/Access/Commerce/Organization fixture ready; catalogue and institutions are empty.\n";

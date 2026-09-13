@@ -1,0 +1,100 @@
+{
+  "wave": "C3",
+  "status": "passed",
+  "date": "2026-09-13",
+  "fixture": "rabit-e2e-828c75a75ea9",
+  "screenshotsReviewed": 6,
+  "localDirectory": "api/var/c3/visual",
+  "screenshots": [
+    {
+      "name": "desktop-groups.png",
+      "sha256": "e5256129480fc80a9e18c01cdffd7d6221605940dd38ae91bedf354b3d0ede30",
+      "imageSize": {
+        "width": 1440,
+        "height": 1000
+      },
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "review": "passed",
+      "capture": "final 25-test live run"
+    },
+    {
+      "name": "desktop-institutions.png",
+      "sha256": "5345fde479df4dca4a519c7730cf3aa0a2d6dd7b9dc28d6f7e9a73bd448ac5f7",
+      "imageSize": {
+        "width": 1440,
+        "height": 1000
+      },
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "review": "passed",
+      "capture": "final 25-test live run"
+    },
+    {
+      "name": "desktop-shoot-editor.png",
+      "sha256": "c5ad406c313472cce441a71be0508d1d6473c806d0f7615ce4e88b524db6bf1e",
+      "imageSize": {
+        "width": 1440,
+        "height": 1000
+      },
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "review": "passed",
+      "capture": "stable supplemental capture on the final live fixture"
+    },
+    {
+      "name": "desktop-shoots.png",
+      "sha256": "7a5734246f98e78902beed3b65d768d71e925b79589ab16cf6dac0f88bd2312c",
+      "imageSize": {
+        "width": 1440,
+        "height": 1000
+      },
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "review": "passed",
+      "capture": "final 25-test live run"
+    },
+    {
+      "name": "mobile-group-editor.png",
+      "sha256": "b117f8d3acc67ccb96506f7f1c5e2540e7f441f5cfac1f9cc64ee4d8dc36d0e5",
+      "imageSize": {
+        "width": 390,
+        "height": 844
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "passed",
+      "capture": "stable supplemental capture on the final live fixture"
+    },
+    {
+      "name": "mobile-groups.png",
+      "sha256": "0152eae624aff5515c6ee5f67290cae00f488bcbaa1596a658d38227f08f3531",
+      "imageSize": {
+        "width": 390,
+        "height": 899
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "review": "passed",
+      "capture": "final 25-test live run"
+    }
+  ],
+  "findings": [
+    "Desktop institutions, shoots, groups and shoot editor are readable; actions and fields fit.",
+    "Mobile groups and group editor fit 390px; no horizontal overflow; labels and actions do not overlap."
+  ],
+  "method": "Manual image review. Two dialog captures repeated after transitions on the same final fixture; no application change. Functional browser tests retained normal animations.",
+  "limitations": "Screenshots are retained locally, SHA256 is versioned. Visual review covers the six listed states, not pixel-diff automation."
+}

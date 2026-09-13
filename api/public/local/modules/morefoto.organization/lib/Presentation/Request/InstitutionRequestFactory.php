@@ -39,7 +39,7 @@ final readonly class InstitutionRequestFactory
         if (!$create) {
             $allowed[] = 'revision';
         }
-        if ([] !== array_diff(array_keys($data), $allowed) || [] !== $request->getQueryList()->getValues()) {
+        if ([] !== array_diff(array_keys($data), $allowed) || [] !== $this->queryParameters($request)) {
             throw new HttpException('UNKNOWN_FIELD', 422);
         }
         foreach (['name', 'address', 'assignmentSignature'] as $field) {
@@ -85,7 +85,7 @@ final readonly class InstitutionRequestFactory
 
     public function listing(HttpRequest $request): ListInstitutionsInputDto
     {
-        $data = $request->getQueryList()->getValues();
+        $data = $this->queryParameters($request);
         if ([] !== array_diff(array_keys($data), ['q', 'page', 'pageSize'])) {
             throw new HttpException('UNKNOWN_FIELD', 422);
         }
@@ -103,5 +103,15 @@ final readonly class InstitutionRequestFactory
             page: (int)($data['page'] ?? 1),
             pageSize: (int)($data['pageSize'] ?? 50),
         );
+    }
+
+    /** @return array<string,mixed> */
+    private function queryParameters(HttpRequest $request): array
+    {
+        // Bitrix adds matched path parameters to GET; only the original URI contains client query fields.
+        $query = [];
+        parse_str((string)parse_url((string)$request->getRequestUri(), PHP_URL_QUERY), $query);
+
+        return $query;
     }
 }

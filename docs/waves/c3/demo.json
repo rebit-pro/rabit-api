@@ -1,0 +1,192 @@
+{
+  "wave": "C3",
+  "suite": "demo Organization @r07",
+  "status": "passed",
+  "scenarios": 21,
+  "steps": 48,
+  "workers": 1,
+  "command": "npm exec --no -- start-server-and-test e2e:server http://127.0.0.1:4173 'cross-env TS_NODE_PROJECT=tsconfig.e2e.json cucumber-js --config cucumber.mjs --tags @r07 --format json:reports/e2e/c3-organization.json'",
+  "network": "Docker internal network with real NIC; no navigator.onLine override",
+  "firstAttempt": {
+    "result": "21 failed at login; 27 later steps skipped",
+    "cause": "Runner used --network none: Chromium navigator.onLine=false, correctly rejected by demo runtime",
+    "fix": "Use isolated internal network; no application changes"
+  },
+  "items": [
+    {
+      "name": "Учреждение создаётся, редактируется и сохраняется после обновления",
+      "steps": 5,
+      "statuses": [
+        "passed",
+        "passed",
+        "passed",
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Ошибки полей и дубль учреждения объясняются в форме",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Повторная съёмка сохраняет прежние группы и ссылки",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Группа с назначением видна в подготовке галереи",
+      "steps": 3,
+      "statuses": [
+        "passed",
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Папка сотрудников единственна внутри съёмки",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Ошибка сохранения оставляет черновик и повтор не создаёт дубль",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Устаревшая форма не перезаписывает правку из другой вкладки",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Новые назначения действуют в кабинетах всех трёх ролей",
+      "steps": 3,
+      "statuses": [
+        "passed",
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Снятое назначение закрывает учреждение по прямой ссылке",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Изменение учреждений недоступно другим ролям",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Изменение учреждений недоступно другим ролям",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Изменение учреждений недоступно другим ролям",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Изменение учреждений недоступно другим ролям",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Неизвестная съёмка и чужой родитель дают состояние недоступности",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Поиск учреждения очищается с клавиатуры",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Срок сессии проверяется повторно перед сохранением",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Переименование сохраняет прежний оплаченный заказ",
+      "steps": 3,
+      "statuses": [
+        "passed",
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Организатор работает на разных ширинах и с увеличенным текстом",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Организатор работает на разных ширинах и с увеличенным текстом",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Организатор работает на разных ширинах и с увеличенным текстом",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    },
+    {
+      "name": "Организатор работает на разных ширинах и с увеличенным текстом",
+      "steps": 2,
+      "statuses": [
+        "passed",
+        "passed"
+      ]
+    }
+  ],
+  "hookSteps": 42
+}

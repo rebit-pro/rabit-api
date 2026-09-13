@@ -24,8 +24,19 @@ watch(
   },
   { flush: 'sync' }
 );
+function hasControlFocus(): boolean {
+  const active = document.activeElement;
+  return (
+    active instanceof HTMLElement &&
+    active !== opener &&
+    !!active.closest('input, textarea, select, button, a[href], [role="combobox"], [role="option"], [contenteditable="true"]')
+  );
+}
 async function focusFirst() {
+  // The opening transition may finish after the user has already started editing.
+  if (!props.open || hasControlFocus()) return;
   await nextTick();
+  if (!props.open || hasControlFocus()) return;
   document
     .querySelector<HTMLElement>(
       props.focusHeading

@@ -76,7 +76,7 @@ final readonly class StructureRequestFactory
 
     public function listing(HttpRequest $request): StructurePageInputDto
     {
-        $data = $request->getQueryList()->getValues();
+        $data = $this->queryParameters($request);
         if ([] !== array_diff(array_keys($data), ['page', 'pageSize'])) {
             throw new HttpException('UNKNOWN_FIELD', 422);
         }
@@ -110,7 +110,7 @@ final readonly class StructureRequestFactory
             throw new HttpException('JSON_OBJECT_REQUIRED', 400);
         }
         $data = get_object_vars($object);
-        if ([] !== array_diff(array_keys($data), $allowed) || [] !== $request->getQueryList()->getValues()) {
+        if ([] !== array_diff(array_keys($data), $allowed) || [] !== $this->queryParameters($request)) {
             throw new HttpException('UNKNOWN_FIELD', 422);
         }
 
@@ -146,5 +146,15 @@ final readonly class StructureRequestFactory
         }
 
         return $data['revision'];
+    }
+
+    /** @return array<string,mixed> */
+    private function queryParameters(HttpRequest $request): array
+    {
+        // Bitrix adds matched path parameters to GET; only the original URI contains client query fields.
+        $query = [];
+        parse_str((string)parse_url((string)$request->getRequestUri(), PHP_URL_QUERY), $query);
+
+        return $query;
     }
 }

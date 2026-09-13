@@ -121,15 +121,21 @@ try {
         $values['REQUEST_METHOD'] = match ($action) {
             'list' => 'GET', 'create' => 'POST', default => 'PATCH'
         };
-        $values['REQUEST_URI'] = '/api/v1/institutions' . (null === $id ? '' : '/' . $id);
+        $values['QUERY_STRING'] = http_build_query($query);
+        $values['REQUEST_URI'] = '/api/v1/institutions' . (null === $id ? '' : '/' . $id) . ([] === $query ? '' : '?' . $values['QUERY_STRING']);
         $values['CONTENT_TYPE'] = $contentType;
         $values['HTTP_IDEMPOTENCY_KEY'] = $key ?? bin2hex(random_bytes(16));
         if (null !== $bearer) {
             $values['HTTP_AUTHORIZATION'] = 'Bearer ' . $bearer;
         }
         $server = new Server($values);
+        // Native routing_index.php copies matched path parameters into GET before the controller runs.
+        $routedQuery = $query;
+        if (null !== $id) {
+            $routedQuery['institution_id'] = $id;
+        }
         // CLI seam only for php://input; all native request/controller/database behavior remains real.
-        $http = new class($server, $query, [], [], []) extends HttpRequest {
+        $http = new class($server, $routedQuery, [], [], []) extends HttpRequest {
             public static string $input = '';
 
             public static function getInput(): string
@@ -140,7 +146,7 @@ try {
         $http::$input = is_string($body) ? $body : json_encode($body ?? (object)[], JSON_THROW_ON_ERROR);
         Application::getInstance()->getContext()->initialize($http, new HttpResponse(), $server);
         $controller = new InstitutionController($listing, $override ?? $save, $requests, $tokens);
-        $response = $controller->run($action, null === $id ? [] : [['institution_id' => $id]]);
+        $response = $controller->run($action, [$http->getPostList(), $http->getQueryList()]);
         if (!$response instanceof HttpResponse) {
             $response = new HttpResponse();
         }
@@ -194,6 +200,9 @@ try {
         $assert(422 === $request('create', $token('organizer'), $invalid)[0], 'field bounds reject invalid mutation ' . count($checks));
     }
     $assert(1 === (int)$sql->query('SELECT COUNT(*) C FROM b_hlbd_mf_institution')->fetch_assoc()['C'], 'invalid/replayed requests do not leave extra institutions');
+    foreach (['other-id', ['other-id']] as $spoofedId) {
+        $assert(422 === $request('update', $token('organizer'), ['name' => 'Query override', 'revision' => 1], $id, query: ['institution_id' => $spoofedId])[0], 'routed PATCH rejects original query ID override ' . get_debug_type($spoofedId));
+    }
     $stage = 'assignments-and-cas';
     $assign = ['revision' => 1, 'curatorId' => $staff['curator'], 'headId' => $staff['head'], 'assignmentSignature' => 'a1'];
     $assignmentKey = bin2hex(random_bytes(16));

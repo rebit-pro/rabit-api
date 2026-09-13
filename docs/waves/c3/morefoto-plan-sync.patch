@@ -1,3 +1,58 @@
+--- a/docs/04-bitrix-modules/backend-waves.json
++++ b/docs/04-bitrix-modules/backend-waves.json
+@@ -1,12 +1,12 @@
+ {
+   "version": 2,
+   "planStatus": "active",
+-  "date": "2026-09-12",
++  "date": "2026-09-13",
+   "endpointCount": 99,
+   "backend": "RaBit API",
+   "baseline": {
+     "branch": "main",
+-    "commit": "895fee9873cd62316579d18512c8b2e3315c3d62",
++    "commit": "b01be326e607c5cfafaeff587f29048f6802a636",
+     "mergedWaves": [
+       "A1",
+       "A2",
+@@ -19,7 +19,8 @@
+       "C1",
+       "E1",
+       "C2",
+-      "E2"
++      "E2",
++      "A8"
+     ],
+     "review": {},
+     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
+@@ -29,7 +30,8 @@
+       "E1": "https://github.com/rebit-pro/rabit-api/pull/10",
+       "A7": "https://github.com/rebit-pro/rabit-api/pull/11",
+       "C2": "https://github.com/rebit-pro/rabit-api/pull/12",
+-      "E2": "https://github.com/rebit-pro/rabit-api/pull/13"
++      "E2": "https://github.com/rebit-pro/rabit-api/pull/13",
++      "A8": "https://github.com/rebit-pro/rabit-api/pull/14"
+     }
+   },
+   "acceptedImplementationDecisions": [
+@@ -418,7 +420,7 @@
+       ],
+       "activation": "Live-кабинет включает каталог и профиль. Остальные продуктовые экраны остаются в отдельно включаемом demo-режиме до их собственных волн.",
+       "legacyIds": [],
+-      "deliveryState": "review",
++      "deliveryState": "merged",
+       "unlocks": [],
+       "inputBoundary": "B1 и E2 уже слиты в main. Существующий frontend импортируется из локального MoreFoto без runtime-данных и секретов.",
+       "outputBoundary": "Работающий браузерный путь AUTH-01/02, ACC-01 и COM-01/02/03 без новых API ID. Правило браузерной приёмки — merge gate, а не runtime-зависимость следующих волн.",
+@@ -640,7 +642,7 @@
+       "legacyIds": [
+         "W08"
+       ],
+-      "deliveryState": "planned",
++      "deliveryState": "review",
+       "unlocks": [
+         "C4",
+         "B2",
 --- a/docs/05-rest-api/build.py
 +++ b/docs/05-rest-api/build.py
 @@ -116,12 +116,14 @@
@@ -32,23 +87,3 @@
  # Media.
  add("media","MED-01","GET","/public/galleries/{gallery_token}","Открыть галерею","Галерея",
      "groupId, institutionName, groupName, shootName, audience, state, sentAt, closesAt, referenceNow, children, curator, delivery",
---- a/docs/04-bitrix-modules/backend-waves.json
-+++ b/docs/04-bitrix-modules/backend-waves.json
-@@ -1,7 +1,7 @@
- {
-   "version": 2,
-   "planStatus": "active",
--  "date": "2026-09-12",
-+  "date": "2026-09-13",
-   "endpointCount": 99,
-   "backend": "RaBit API",
-   "baseline": {
-@@ -640,7 +640,7 @@
-       "legacyIds": [
-         "W08"
-       ],
--      "deliveryState": "planned",
-+      "deliveryState": "inProgress",
-       "unlocks": [
-         "C4",
-         "B2",

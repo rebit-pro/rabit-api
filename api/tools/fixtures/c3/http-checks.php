@@ -13,12 +13,15 @@ use Bitrix\Main\Routing\RoutingConfigurator;
 use Bitrix\Main\Server;
 use Morefoto\Organization\Application\Institution\Dto\InstitutionMutationInputDto;
 use Morefoto\Organization\Application\Institution\UseCase\SaveInstitutionUseCase;
+use Morefoto\Organization\Application\Institution\UseCase\ListVisibleInstitutionsUseCase;
 use Morefoto\Organization\Application\Structure\UseCase\GetShootUseCase;
 use Morefoto\Organization\Application\Structure\UseCase\ListShootsUseCase;
 use Morefoto\Organization\Application\Structure\UseCase\SaveGroupUseCase;
 use Morefoto\Organization\Application\Structure\UseCase\SaveShootUseCase;
 use Morefoto\Organization\Infrastructure\Routing\StructureRouteParameters;
 use Morefoto\Organization\Presentation\Controller\StructureController;
+use Morefoto\Organization\Presentation\Controller\InstitutionController;
+use Morefoto\Organization\Presentation\Request\InstitutionRequestFactory;
 use Morefoto\Organization\Presentation\Request\StructureRequestFactory;
 use Ramsey\Uuid\Uuid;
 use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
@@ -96,21 +99,35 @@ return static function(array $context): void {
             return ['status' => 404, 'body' => [], 'cache' => null, 'location' => null, 'route' => []];
         }
         $application->setCurrentRoute($route);
-        [$class, $methodName] = $route->getController();
-        if (StructureController::class !== $class) {
-            throw new RuntimeException('Expected a real C3 Structure route.');
+        // Match native routing_index.php: path parameters are also copied to GET before FPM runs the controller.
+        $routedQuery = $query;
+        foreach ($route->getParametersValues()->getValues() as $name => $value) {
+            $routedQuery[$name] = $value;
         }
+        $http = new C3NativeHttpRequest($server, $routedQuery, [], [], []);
+        $application->getContext()->initialize($http, new HttpResponse(), $server);
+        [$class, $methodName] = $route->getController();
         // As in FPM each request gets a fresh controller; application services come from actual module DI.
-        $controller = new StructureController(
-            $locator->get(ListShootsUseCase::class),
-            $locator->get(GetShootUseCase::class),
-            $locator->get(SaveShootUseCase::class),
-            $locator->get(SaveGroupUseCase::class),
-            $locator->get(StructureRequestFactory::class),
-            $locator->get(StructureRouteParameters::class),
-            $locator->get(TokenResolverInterface::class),
-        );
-        $response = $controller->run(substr($methodName, 0, -6), [$route->getParametersValues()->toArray()]);
+        $controller = match ($class) {
+            InstitutionController::class => new InstitutionController(
+                $locator->get(ListVisibleInstitutionsUseCase::class),
+                $locator->get(SaveInstitutionUseCase::class),
+                $locator->get(InstitutionRequestFactory::class),
+                $locator->get(TokenResolverInterface::class),
+            ),
+            StructureController::class => new StructureController(
+                $locator->get(ListShootsUseCase::class),
+                $locator->get(GetShootUseCase::class),
+                $locator->get(SaveShootUseCase::class),
+                $locator->get(SaveGroupUseCase::class),
+                $locator->get(StructureRequestFactory::class),
+                $locator->get(StructureRouteParameters::class),
+                $locator->get(TokenResolverInterface::class),
+            ),
+            default => throw new RuntimeException('Expected a real Organization route.'),
+        };
+        // HttpApplication supplies request dictionaries, not a hand-built array of path IDs.
+        $response = $controller->run(substr($methodName, 0, -6), [$http->getPostList(), $http->getQueryList()]);
         if (!$response instanceof HttpResponse) {
             $response = new HttpResponse();
         }
@@ -132,6 +149,18 @@ return static function(array $context): void {
         ];
     };
     $json = static fn(array $data): string => json_encode($data, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+    $institutionPath = '/api/v1/institutions/' . $institution->id;
+    $assert($locator->get(InstitutionController::class) instanceof InstitutionController, 'C2/C3 HTTP: native DI resolves the institution controller');
+    $institutionPage = $request('GET', '/api/v1/institutions', $bearer, query: ['q' => 'HTTP contract fixture', 'page' => '1', 'pageSize' => '1']);
+    $assert(200 === $institutionPage['status'] && 1 === $institutionPage['body']['meta']['total'] && $institution->id === $institutionPage['body']['data']['items'][0]['id'], 'C2/C3 HTTP: institution list reads original client pagination and search');
+    $institutionPatch = $request('PATCH', $institutionPath, $bearer, $json(['name' => 'HTTP institution renamed', 'revision' => 1]), $key());
+    $assert(200 === $institutionPatch['status'] && $institution->id === $institutionPatch['body']['data']['id'] && 2 === $institutionPatch['body']['data']['revision'], 'C2/C3 HTTP: native request binder accepts matched institution path parameters');
+    foreach (['foreign-id', ['foreign-id']] as $spoofedId) {
+        $institutionSpoof = $request('PATCH', $institutionPath, $bearer, $json(['name' => 'Query override', 'revision' => 2]), $key(), ['institution_id' => $spoofedId]);
+        $assert(422 === $institutionSpoof['status'] && $institution->id === $institutionSpoof['route']['institution_id'], 'C2/C3 HTTP: client query cannot spoof institution ID or bypass unknown-field validation');
+    }
+    $institutionAfterSpoof = $request('GET', '/api/v1/institutions', $bearer, query: ['q' => 'HTTP institution renamed']);
+    $assert(200 === $institutionAfterSpoof['status'] && 1 === $institutionAfterSpoof['body']['meta']['total'] && 2 === $institutionAfterSpoof['body']['data']['items'][0]['revision'], 'C2/C3 HTTP: rejected path query overrides leave institution revision unchanged');
     $unauthorized = $request('GET', $parentPath, null);
     $assert(401 === $unauthorized['status'], 'C3 HTTP: real Bearer prefilter rejects missing token');
     $assert(isset($unauthorized['body']['error']['code'], $unauthorized['body']['error']['message'], $unauthorized['body']['meta']['requestId']) && !isset($unauthorized['body']['data']) && 'no-store' === $unauthorized['cache'], 'C3 HTTP: error envelope and private cache headers are serialized');
