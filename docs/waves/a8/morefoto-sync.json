@@ -1,0 +1,26 @@
+{
+  "baseline": "main 895fee9873cd62316579d18512c8b2e3315c3d62 + retained A7/C2 documentation patches",
+  "files": {
+    "backend-waves.json": {
+      "beforeSha256": "450fe9fdc389cb2e5ee346eba3332bfe9854799887f262ec578079f6b74af241",
+      "afterSha256": "57fc98fab9c2f4f23f80674c48d28181767cf3099f645bb45b6f4335dc36a60f"
+    },
+    "backend-waves.md": {
+      "beforeSha256": "5b0eb7a409fb2694ab8d5c17195d2765d83334bec5af7be7bbf1bb4112761c2d",
+      "afterSha256": "a79327c44b5b8fef618488a72933e7c0d27424de7377a0a1904fe45bc2621874"
+    },
+    "wave_graph.py": {
+      "beforeSha256": "6579678e963d06b2a19ac77a03aa8e67b113d3d7497631b2c62704e37c0c5b18",
+      "afterSha256": "222e990258bfddd8b9f649ab1779fb64c10cae4ea18c70ff802d80a1ed0187af"
+    },
+    "render-waves.py": {
+      "beforeSha256": "bc3ae6569f68102f8f489d10ef88d472b8eb13d91a47cf9aa6034417c230aea3",
+      "afterSha256": "29d9be66994de74bd486e655d1337507d37d801eba618aee0b316eb7f18269d9"
+    },
+    "README.md": {
+      "beforeSha256": "d895ffecdddf69c0b93e80274292de5fdf84efa6b7e5d800bc40a0f9a0745ae4",
+      "afterSha256": "02a4f3b66767f7f68a7eb28d2021967f34b4d35780c3dee986eb06d848602ba5"
+    }
+  },
+  "note": "Graph/validator before from main; renderer/module overview before reconstructed from retained A7/C2 diffs. Current browser evidence is recorded in verification.json."
+}

@@ -6,7 +6,7 @@
   "backend": "RaBit API",
   "baseline": {
     "branch": "main",
-    "commit": "83528338146828176eaa59b954c0c85942d986da",
+    "commit": "895fee9873cd62316579d18512c8b2e3315c3d62",
     "mergedWaves": [
       "A1",
       "A2",
@@ -17,7 +17,9 @@
       "A7",
       "B1",
       "C1",
-      "E1"
+      "E1",
+      "C2",
+      "E2"
     ],
     "review": {},
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
@@ -25,7 +27,9 @@
       "B1": "https://github.com/rebit-pro/rabit-api/pull/8",
       "C1": "https://github.com/rebit-pro/rabit-api/pull/9",
       "E1": "https://github.com/rebit-pro/rabit-api/pull/10",
-      "A7": "https://github.com/rebit-pro/rabit-api/pull/11"
+      "A7": "https://github.com/rebit-pro/rabit-api/pull/11",
+      "C2": "https://github.com/rebit-pro/rabit-api/pull/12",
+      "E2": "https://github.com/rebit-pro/rabit-api/pull/13"
     }
   },
   "acceptedImplementationDecisions": [
@@ -55,7 +59,9 @@
     "stackedPullRequests": false,
     "verifyMainPlusOwnDiff": true,
     "decisionGatesMustBeResolved": true,
-    "readinessNote": "unlocks — прямые потребители. Merge одной волны разблокирует потребителя только после merge остальных dependsOn и решения его открытых decisionGates. inProgress/review не равны merged; A7 не runtime gate."
+    "readinessNote": "unlocks — прямые потребители. Merge одной волны разблокирует потребителя только после merge остальных dependsOn и решения его открытых decisionGates. inProgress/review не равны merged; A7 не runtime gate.",
+    "browserE2ERequired": true,
+    "userFacingVisualCheckRequired": true
   },
   "waves": [
     {
@@ -373,6 +379,52 @@
       "mergeCheck": "Отдельный PR к актуальному main; все dependsOn уже merged. Проверки на main + только этот diff, без файлов/коммитов незамерженных волн; установить миграции и DI своего сценария. Повторить проверку после обновления base."
     },
     {
+      "id": "A8",
+      "title": "Frontend, реальная авторизация и каталог с браузерной приёмкой",
+      "kind": "implementation",
+      "owners": [
+        "frontend",
+        "project.workflow",
+        "morefoto.commerce"
+      ],
+      "dependsOn": [
+        "B1",
+        "E2"
+      ],
+      "decisionGates": [],
+      "endpointIds": [],
+      "verifiesEndpointIds": [
+        "AUTH-01",
+        "AUTH-02",
+        "ACC-01",
+        "COM-01",
+        "COM-02",
+        "COM-03"
+      ],
+      "outcome": "Организатор входит и ведёт каталог через настоящий HTTP API и БД; каждый последующий UI-сценарий проходит браузерную приёмку до merge.",
+      "scope": [
+        "Закрепить существующий MoreFoto frontend в frontend/ этого репозитория, сохранив отдельный mock-регресс.",
+        "Подключить вход, выход, серверный профиль и каталог; сохранять ключ повтора при потере ответа и обрабатывать конфликт ревизии.",
+        "Воспроизводимый изолированный Bitrix/FPM/MySQL/nginx стенд, реальные Playwright E2E и визуальная проверка desktop/mobile. Исправить обнаруженный разбор query/path в PATCH каталога."
+      ],
+      "review": [
+        "Роль и разрешения берутся с сервера; mock-режим не удовлетворяет реальную E2E-проверку.",
+        "Только зависимости из main; учреждений, платежей, оригиналов и внешней CAPTCHA в объёме нет."
+      ],
+      "acceptance": [
+        "Frontend lint/types/build, unit-регресс; API lint/PHPStan/PHPUnit и native каталог.",
+        "Браузер: права, durable create/update, 401/403/409/422, потеря ответа и повтор, пагинация и мобильная форма.",
+        "Визуально проверить вход, каталог и редактор в Chromium; сохранить результаты и способ повторного запуска."
+      ],
+      "activation": "Live-кабинет включает каталог и профиль. Остальные продуктовые экраны остаются в отдельно включаемом demo-режиме до их собственных волн.",
+      "legacyIds": [],
+      "deliveryState": "review",
+      "unlocks": [],
+      "inputBoundary": "B1 и E2 уже слиты в main. Существующий frontend импортируется из локального MoreFoto без runtime-данных и секретов.",
+      "outputBoundary": "Работающий браузерный путь AUTH-01/02, ACC-01 и COM-01/02/03 без новых API ID. Правило браузерной приёмки — merge gate, а не runtime-зависимость следующих волн.",
+      "mergeCheck": "Проверить main плюс только diff A8 на новой изолированной базе; реальный E2E и визуальная проверка desktop/mobile обязательны вместе с backend/frontend проверками."
+    },
+    {
       "id": "B1",
       "title": "Профиль и серверная проверка доступа",
       "kind": "implementation",
@@ -412,6 +464,7 @@
       ],
       "deliveryState": "merged",
       "unlocks": [
+        "A8",
         "C2",
         "B2",
         "E2"
@@ -538,7 +591,7 @@
       "legacyIds": [
         "W07"
       ],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "unlocks": [
         "C3"
       ],
@@ -843,8 +896,9 @@
       "legacyIds": [
         "W12"
       ],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "unlocks": [
+        "A8",
         "E3"
       ],
       "inputBoundary": "Установленные и принятые в main контракты/схема: B1, E1. Открытые decisionGates проверяются отдельно до начала зависимого участка.",

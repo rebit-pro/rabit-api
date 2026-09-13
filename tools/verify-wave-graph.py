@@ -16,6 +16,7 @@ def validate_graph(plan):
     assert policy["baseBranch"] == "main" and policy["dependenciesMustBeMerged"]
     assert policy["verifyMainPlusOwnDiff"] and policy["decisionGatesMustBeResolved"]
     assert policy["stackedPullRequests"] is False
+    assert policy["browserE2ERequired"] and policy["userFacingVisualCheckRequired"]
     merged = {wave["id"] for wave in waves if wave["deliveryState"] == "merged"}
     assert merged == set(plan["baseline"]["mergedWaves"]), "Baseline/state mismatch"
     accepted = set(plan["acceptedImplementationDecisions"])
@@ -97,6 +98,8 @@ def negative_checks(plan):
     rejects("duplicate endpoint owner", lambda data: wave(data, "E1")["endpointIds"].append("ACC-01"))
     rejects("missing legacy mapping", lambda data: wave(data, "B1").update(legacyIds=[]))
     rejects("stacked PR permitted", lambda data: data["mergePolicy"].update(stackedPullRequests=True))
+    rejects("browser gate disabled", lambda data: data["mergePolicy"].update(browserE2ERequired=False))
+    rejects("visual gate disabled", lambda data: data["mergePolicy"].update(userFacingVisualCheckRequired=False))
     return scenarios
 
 

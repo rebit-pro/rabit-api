@@ -1,0 +1,311 @@
+{
+  "status": "passed",
+  "exitCode": 0,
+  "executionMode": "full coverage with documented continuation and manual reruns",
+  "singleGreenRun": false,
+  "scenarios": {
+    "passed": 451,
+    "failed": 0,
+    "skipped": 0,
+    "total": 451
+  },
+  "steps": {
+    "total": 1537,
+    "passed": 1537,
+    "failed": 0,
+    "skipped": 0
+  },
+  "expectedScenarios": 451,
+  "expectedSteps": 1537,
+  "notCompletedScenarios": [],
+  "unexpectedScenarios": [],
+  "excludedScenarios": 0,
+  "retries": 0,
+  "retriesMeaning": "Automatic Cucumber retries; manual repetitions and interrupted restarts are listed separately.",
+  "manualReruns": {
+    "completedScenariosRepeated": 15,
+    "interruptedScenariosRestarted": 2,
+    "uriLines": [
+      "e2e/features/review.feature:12",
+      "e2e/features/review.feature:13",
+      "e2e/features/review.feature:14",
+      "e2e/features/review.feature:15",
+      "e2e/features/review.feature:16",
+      "e2e/features/review.feature:17",
+      "e2e/features/review.feature:18",
+      "e2e/features/review.feature:19",
+      "e2e/features/review.feature:20",
+      "e2e/features/review.feature:21",
+      "e2e/features/review.feature:22",
+      "e2e/features/review.feature:23",
+      "e2e/features/review.feature:48",
+      "e2e/features/review.feature:49",
+      "e2e/features/settlement.feature:40",
+      "e2e/features/settlement.feature:54",
+      "e2e/features/settlement.feature:55"
+    ],
+    "reason": "Confirmed test-only URL navigation wait correction plus one-worker rerun after cgroup OOM; every unfinished or failed scenario and all twelve affected R16 journeys were selected."
+  },
+  "durationSeconds": 2789.506095,
+  "durationExactSeconds": "2789.506095",
+  "durationScope": "Wall clock from main attempt start through continuation finish, including the diagnostic and test-fix pause. Exact Cucumber run durations are included per run.",
+  "runs": [
+    {
+      "name": "main interrupted full attempt",
+      "plannedScenarios": 451,
+      "started": 376,
+      "finished": 374,
+      "scenarios": {
+        "passed": 370,
+        "failed": 4,
+        "skipped": 0,
+        "total": 374
+      },
+      "steps": {
+        "total": 1318,
+        "passed": 1314,
+        "failed": 4,
+        "skipped": 0
+      },
+      "exitCode": 143,
+      "oomKilled": true,
+      "workers": 2,
+      "cucumberDurationNanoseconds": null,
+      "startedAt": "2026-09-12T14:03:41.103253+00:00",
+      "finishedAt": "2026-09-12T14:33:12.348140+00:00",
+      "automaticRetries": 0
+    },
+    {
+      "name": "one-worker continuation and affected R16 scenarios",
+      "plannedScenarios": 92,
+      "started": 92,
+      "finished": 92,
+      "scenarios": {
+        "passed": 92,
+        "failed": 0,
+        "skipped": 0,
+        "total": 92
+      },
+      "steps": {
+        "total": 249,
+        "passed": 249,
+        "failed": 0,
+        "skipped": 0
+      },
+      "exitCode": 0,
+      "oomKilled": false,
+      "workers": 1,
+      "cucumberDurationNanoseconds": "773973000000",
+      "startedAt": "2026-09-12T14:37:04.974887+00:00",
+      "finishedAt": "2026-09-12T14:50:10.609348+00:00",
+      "automaticRetries": 0
+    }
+  ],
+  "initialFailures": [
+    {
+      "key": "e2e/features/review.feature:13",
+      "uri": "e2e/features/review.feature",
+      "line": 13,
+      "name": "Связанный путь R16 — полный льготный набор",
+      "status": "failed",
+      "steps": {
+        "passed": 1,
+        "failed": 1,
+        "skipped": 0,
+        "total": 2
+      },
+      "complete": true,
+      "attempt": 0,
+      "errors": [
+        "locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'Проверить и перенести', exact: true })\n\n    at CustomWorld.<anonymous> (/app/e2e/steps/review/review.steps.ts:42:85)"
+      ],
+      "passedOnManualRerun": true
+    },
+    {
+      "key": "e2e/features/review.feature:48",
+      "uri": "e2e/features/review.feature",
+      "line": 48,
+      "name": "Обзор выпущенных экранов R16 на ширине 768",
+      "status": "failed",
+      "steps": {
+        "passed": 1,
+        "failed": 1,
+        "skipped": 0,
+        "total": 2
+      },
+      "complete": true,
+      "attempt": 0,
+      "errors": [
+        "Error: expect(locator).toHaveCount(expected)\n\nLocator: getByRole('dialog')\nExpected: 0\nReceived: 1\nCall log:\n  - locator._expect with timeout 5000ms\n  - waiting for getByRole('dialog')\n    3 × locator resolved to 1 element\n      - unexpected value \"1\"\n\n    at Proxy.<anonymous> (/app/node_modules/playwright/lib/matchers/expect.js:221:24)\n    at save (file:///app/e2e/steps/review/helpers.ts:37:41)\n    at async Module.produce (file:///app/e2e/steps/review/helpers.ts:158:5)\n    at async CustomWorld.<anonymous> (file:///app/e2e/steps/review/visual.steps.ts:114:5)",
+        "page.screenshot: Target crashed \nCall log:\n  - taking page screenshot\n  - waiting for fonts to load...\n  - fonts loaded\n\n    at CustomWorld.<anonymous> (/app/e2e/support/hooks.ts:28:25)"
+      ],
+      "passedOnManualRerun": true
+    },
+    {
+      "key": "e2e/features/review.feature:49",
+      "uri": "e2e/features/review.feature",
+      "line": 49,
+      "name": "Обзор выпущенных экранов R16 на ширине 1440",
+      "status": "failed",
+      "steps": {
+        "passed": 1,
+        "failed": 1,
+        "skipped": 0,
+        "total": 2
+      },
+      "complete": true,
+      "attempt": 0,
+      "errors": [
+        "page.goto: Page crashed\nCall log:\n  - navigating to \"http://127.0.0.1:4173/cabinet/support\", waiting until \"networkidle\"\n\n    at Module.go (/app/e2e/steps/review/helpers.ts:8:13)\n    at CustomWorld.<anonymous> (/app/e2e/steps/review/visual.steps.ts:107:17)",
+        "page.screenshot: Target crashed \nCall log:\n  - taking page screenshot\n  - waiting for fonts to load...\n  - fonts loaded\n\n    at CustomWorld.<anonymous> (/app/e2e/support/hooks.ts:28:25)"
+      ],
+      "passedOnManualRerun": true
+    },
+    {
+      "key": "e2e/features/settlement.feature:40",
+      "uri": "e2e/features/settlement.feature",
+      "line": 40,
+      "name": "R12 — повтор ошибки не превышает изменившийся остаток",
+      "status": "failed",
+      "steps": {
+        "passed": 1,
+        "failed": 1,
+        "skipped": 0,
+        "total": 2
+      },
+      "complete": true,
+      "attempt": 0,
+      "errors": [
+        "Error: Timed out 5000ms waiting for expect(locator).toContainText(expected)\n\nLocator: locator('.management-error')\nExpected string: \"Остаток изменился\"\nReceived string: \"Данные изменились. Загрузите актуальные данные и проверьте результат ещё раз.\"\nCall log:\n  - locator._expect with timeout 5000ms\n  - waiting for locator('.management-error')\n    6 × locator resolved to <div role=\"alert\" tabindex=\"-1\" data-v-89a3d41a=\"\" class=\"v-alert v-theme--MoreFotoTheme text-error v-alert--density-default v-alert--variant-tonal management-error mb-5\">…</div>\n      - unexpected value \"Данные изменились. Загрузите актуальные данные и проверьте результат ещё раз.\"\n\n    at Proxy.<anonymous> (/app/node_modules/playwright/lib/matchers/expect.js:221:24)\n    at CustomWorld.<anonymous> (file:///app/e2e/steps/settlement/settlement.steps.ts:615:54)"
+      ],
+      "passedOnManualRerun": true
+    }
+  ],
+  "failureAnalysis": [
+    {
+      "keys": [
+        "e2e/features/review.feature:13"
+      ],
+      "classification": "confirmed test navigation race",
+      "action": "Added URL assertion before capturing card path; all twelve affected R16 journeys rerun.",
+      "applicationChange": false
+    },
+    {
+      "keys": [
+        "e2e/features/review.feature:48",
+        "e2e/features/review.feature:49"
+      ],
+      "classification": "browser crashes during demonstrated cgroup OOM",
+      "evidence": "memory.events oom=3 and oom_kill=2, memory.peak=3221237760; one-worker continuation stayed within the same 3 GiB limit.",
+      "applicationChange": false
+    },
+    {
+      "keys": [
+        "e2e/features/settlement.feature:40"
+      ],
+      "classification": "unstable demo conflict-message assertion; root cause unestablished",
+      "observation": "Expected Остаток изменился, received Данные изменились. Passed on manual rerun without application or assertion changes.",
+      "causeEstablished": false,
+      "fixed": false,
+      "applicationChange": false
+    }
+  ],
+  "knownLimitations": [
+    {
+      "key": "e2e/features/settlement.feature:40",
+      "description": "R12 conflict-message assertion passed on manual rerun; the initial mismatch cause remains unestablished and is not attributed to OOM or considered fixed."
+    }
+  ],
+  "cleanup": {
+    "complete": true,
+    "runs": [
+      {
+        "run": "initial-canReset-diagnosis",
+        "containerExitCode": 0,
+        "networkExitCode": 0,
+        "complete": true
+      },
+      {
+        "run": "main",
+        "containerExitCode": 0,
+        "networkExitCode": 0,
+        "complete": true
+      },
+      {
+        "run": "continuation",
+        "containerExitCode": 0,
+        "networkExitCode": 0,
+        "complete": true
+      }
+    ]
+  },
+  "resources": {
+    "mainInitialCpus": 2,
+    "mainFinalCpus": 4,
+    "mainWorkers": 2,
+    "continuationCpus": 4,
+    "continuationWorkers": 1,
+    "memory": "3g",
+    "memorySwap": "3g",
+    "shmSize": "1g",
+    "internalNetworks": true,
+    "cpuAdjustments": [
+      {
+        "at": "2026-09-12T14:18:10.188214+00:00",
+        "container": "rabit-a8-demo-1789221821103250527",
+        "fromCpus": 2.0,
+        "toCpus": 4.0,
+        "workers": 2,
+        "memoryBytes": 3221225472,
+        "memorySwapBytes": 3221225472,
+        "reason": "Parent-approved CPU increase after the live E2E stand was cleaned up; keep two workers and memory limits."
+      }
+    ],
+    "mainOomEvidence": {
+      "at": "2026-09-12T14:31:42.046560+00:00",
+      "state": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": true,
+        "Dead": false,
+        "Pid": 36039,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-12T14:03:41.545766166Z",
+        "FinishedAt": "0001-01-01T00:00:00Z"
+      },
+      "memoryEvents": "low 0\nhigh 0\nmax 6135\noom 3\noom_kill 2\noom_group_kill 0\n"
+    }
+  },
+  "runtime": {
+    "node": "v22.14.0",
+    "playwrightImage": "mcr.microsoft.com/playwright:v1.52.0-jammy",
+    "imageId": "sha256:ff2946177f0756c87482c0ef958b7cfbf389b92525ace78a1c9890281d0d60f4"
+  },
+  "logs": {
+    "mainFull": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/demo-main-full.log",
+    "mainMessages": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/demo-main-messages.ndjson",
+    "mainState": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/demo-main-run-state.json",
+    "continuationFull": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/demo-continuation.log",
+    "continuationJson": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/demo-continuation-cucumber.json",
+    "continuationMessages": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/demo-continuation-messages.ndjson",
+    "continuationState": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/demo-continuation-state.json",
+    "selectionPlan": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/demo-continuation-plan.json",
+    "coverageLedger": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/demo-coverage-ledger.json",
+    "postTestFixCheck": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/R16-navigation-check.log",
+    "mainRawInterruptedSummary": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/demo-main-interrupted-summary.json",
+    "continuationResourceSamples": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/demo-continuation-resource-samples.ndjson",
+    "reportGenerator": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/finalize-demo-report.py"
+  },
+  "coverageLedgerSha256": "3f1a52f131d568fc808f05a0b7a00767b03a861b654c7995ef7104e57fc293b6",
+  "previousCanResetDiagnosticRun": {
+    "status": "interrupted after confirmed application regression; not counted toward final coverage",
+    "fix": "AdminDialog canReset default true, checked before the main attempt and final real E2E",
+    "state": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/demo-first-run-state.json",
+    "diagnosis": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/demo-first-run-diagnosis.json",
+    "log": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/demo-first-run.log",
+    "screenshot": "/home/user/rebit-p2p/api/var/worktrees/a8/frontend/reports/a8-recovery/demo-first-failure-R11.png"
+  }
+}

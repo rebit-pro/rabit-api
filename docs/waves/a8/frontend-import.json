@@ -1,0 +1,2305 @@
+{
+  "source": "/home/user/MoreFoto/frontend",
+  "target": "frontend/",
+  "sourceRepository": false,
+  "userDecision": "User approved frontend/ inside rabit-api in previous task.",
+  "files": {
+    ".dockerignore": {
+      "beforeSha256": "7a9f6a8b1760f7657e094dc063c05ebfeaae6baa0b9b7ec2ef2c2f5bc5494336",
+      "afterSha256": "7a9f6a8b1760f7657e094dc063c05ebfeaae6baa0b9b7ec2ef2c2f5bc5494336"
+    },
+    ".env.example": {
+      "beforeSha256": "5e8e47f3c23b4a9f5327cb46373b53e0878fe04a87c1c1693c5386276ed2bcdb",
+      "afterSha256": "f20392905f9548a807a639665de959ad864cbba2a47d9a407c99d5a0afee2463"
+    },
+    ".gitignore": {
+      "beforeSha256": "daae718cc5c4d1890f0ced0ac282774f687b65290018b5f113ef75e9c0197119",
+      "afterSha256": "4ad97442e22c856e726a9f8cdb9d732e5dbc5fbcf0e0a611d3386308f1c2c8e8"
+    },
+    ".vscode/extensions.json": {
+      "beforeSha256": "70d56b550e796e3ea92922763ae03037a1a94596fda9d737982c75f6a20e88dd",
+      "afterSha256": "70d56b550e796e3ea92922763ae03037a1a94596fda9d737982c75f6a20e88dd"
+    },
+    "README.md": {
+      "beforeSha256": "f35e6a0c4dbc6e3cca3328c13c8e62896695ec62edbeed9134588e28ff145012",
+      "afterSha256": "0efb363951c8198d352bcab492a07c70931b23e2acdf85ec95ccecddb2c607e3"
+    },
+    "cucumber.mjs": {
+      "beforeSha256": "3c3c9c958ecb31010786b4de0f329120b16e065e16372be57937c08742a72b87",
+      "afterSha256": "3c3c9c958ecb31010786b4de0f329120b16e065e16372be57937c08742a72b87"
+    },
+    "docker/development/nginx/Dockerfile": {
+      "beforeSha256": "fbef2b7139cd2c265a8b87b40dd266626a27f8ca4ea6f10c9d703c2be5c4df6e",
+      "afterSha256": "fbef2b7139cd2c265a8b87b40dd266626a27f8ca4ea6f10c9d703c2be5c4df6e"
+    },
+    "docker/development/nginx/conf.d/default.conf": {
+      "beforeSha256": "3a2ea07eb367695ee26a6a7d85dcdecd891785f1fb7a88f7ade170328a6db12f",
+      "afterSha256": "c47bc0dcd9752ecd35852a2f8ca9207bf7c45f6c5630b7d6a2b92ac0717c0359"
+    },
+    "docker/development/node/Dockerfile": {
+      "beforeSha256": "f27ec4cca23fc7b9724f27e86ecd691da763590ad219e79dfc590dbc2f9cbf4d",
+      "afterSha256": "f27ec4cca23fc7b9724f27e86ecd691da763590ad219e79dfc590dbc2f9cbf4d"
+    },
+    "docker/production/nginx/Dockerfile": {
+      "beforeSha256": "cc870200fd5d2d5473f13a309bc11272a6708ebabd220482c495a7dcfaea3b7c",
+      "afterSha256": "cc870200fd5d2d5473f13a309bc11272a6708ebabd220482c495a7dcfaea3b7c"
+    },
+    "docker/production/nginx/conf.d/default.conf": {
+      "beforeSha256": "c20e75288aa1e57441cdc69141bd1f83fe503113a7cd0bf5069028ec416b27d7",
+      "afterSha256": "c4111e40ca8ab19e20303c32488305148e3647bde0fcdd45dcd6ed93e9e92170"
+    },
+    "e2e/features/auth/login.feature": {
+      "beforeSha256": "d683eb603fd584537af3e9e46853d4fc71ff6250649d76446d93a38d0e382392",
+      "afterSha256": "d683eb603fd584537af3e9e46853d4fc71ff6250649d76446d93a38d0e382392"
+    },
+    "e2e/features/commerce/cart.feature": {
+      "beforeSha256": "705b7feed720a7a8e5e083cf4f70ab8d753f640396fe763b8c4a1139a87b40c0",
+      "afterSha256": "705b7feed720a7a8e5e083cf4f70ab8d753f640396fe763b8c4a1139a87b40c0"
+    },
+    "e2e/features/commerce/checkout.feature": {
+      "beforeSha256": "26ce0f785a9b7528eca9ff29b685774050738805d96705adcae61d5654ae7e75",
+      "afterSha256": "26ce0f785a9b7528eca9ff29b685774050738805d96705adcae61d5654ae7e75"
+    },
+    "e2e/features/commerce/delivery.feature": {
+      "beforeSha256": "036fefd5849df115c671792b4f946e199b8b389c39077fe40ad016154071f399",
+      "afterSha256": "0e3d61b927a5af8587d2de0a9c9b31dcfa8b1087135dc026b730159ba9333bfb"
+    },
+    "e2e/features/commerce/payment.feature": {
+      "beforeSha256": "84b5ac23bbcd6bca335c2f5abf8f15139efa0bc74eb615c23cce1987db4c0ef7",
+      "afterSha256": "84b5ac23bbcd6bca335c2f5abf8f15139efa0bc74eb615c23cce1987db4c0ef7"
+    },
+    "e2e/features/curator.feature": {
+      "beforeSha256": "2b9831957ad8d6ca997b551ce9cbf2ad62a721276eb7ad78dcd3608372d4690f",
+      "afterSha256": "2b9831957ad8d6ca997b551ce9cbf2ad62a721276eb7ad78dcd3608372d4690f"
+    },
+    "e2e/features/dashboard.feature": {
+      "beforeSha256": "859da31ae727d5e143ccbeb2fafdf7e9a4ab8b51ab78d4e45428326835f78955",
+      "afterSha256": "aa01bf3b2c78bfed1177ffdf84558f195d541e9520c6f169420914783cb5cd5d"
+    },
+    "e2e/features/gallery/gallery.feature": {
+      "beforeSha256": "9d0c77bb346b5e9f884824ead1344bf82ef2a5281dc62be9f8f8993d8e38f78c",
+      "afterSha256": "9d0c77bb346b5e9f884824ead1344bf82ef2a5281dc62be9f8f8993d8e38f78c"
+    },
+    "e2e/features/handoff.feature": {
+      "beforeSha256": "aa87f74eeaebf1dc4d637c0f306cdae98ed331b67ac7d1ee9f911e95bbf9eb40",
+      "afterSha256": "aa87f74eeaebf1dc4d637c0f306cdae98ed331b67ac7d1ee9f911e95bbf9eb40"
+    },
+    "e2e/features/management/management.feature": {
+      "beforeSha256": "8ae64fecd2099e10efdc1d3054aca326f95bc925eb2f70b0a0dd80e62535785d",
+      "afterSha256": "8ae64fecd2099e10efdc1d3054aca326f95bc925eb2f70b0a0dd80e62535785d"
+    },
+    "e2e/features/organization/organization.feature": {
+      "beforeSha256": "fd3ffdb45b5c614caf9d9f2a9c31141893d3d02463686dcd86750620a33b93b4",
+      "afterSha256": "fd3ffdb45b5c614caf9d9f2a9c31141893d3d02463686dcd86750620a33b93b4"
+    },
+    "e2e/features/photos/photos.feature": {
+      "beforeSha256": "a233ede3b6f5dd3dd5aff155e4f27f99034b166512f6596fc612da8ef323b029",
+      "afterSha256": "a233ede3b6f5dd3dd5aff155e4f27f99034b166512f6596fc612da8ef323b029"
+    },
+    "e2e/features/production.feature": {
+      "beforeSha256": "f3d95fd191eba9b35be30217735bc6e5b9ac82c7fb7f6bd3b68203584aa79a82",
+      "afterSha256": "f3d95fd191eba9b35be30217735bc6e5b9ac82c7fb7f6bd3b68203584aa79a82"
+    },
+    "e2e/features/review.feature": {
+      "beforeSha256": "7729126e45c6d37da58122bcdd69b49ae6add2cb23049a0cd0b36f0e2014270e",
+      "afterSha256": "7729126e45c6d37da58122bcdd69b49ae6add2cb23049a0cd0b36f0e2014270e"
+    },
+    "e2e/features/settlement.feature": {
+      "beforeSha256": "f87ce9ccc315fed52f47b606d689782a25f238ec1e69c5953940412e700f66ff",
+      "afterSha256": "f87ce9ccc315fed52f47b606d689782a25f238ec1e69c5953940412e700f66ff"
+    },
+    "e2e/features/shipping.feature": {
+      "beforeSha256": "3cf5ed20c4cb3c2ea5be671b94b92b6379f36edfe8e3eff3c2dcae3fdcff95c3",
+      "afterSha256": "3cf5ed20c4cb3c2ea5be671b94b92b6379f36edfe8e3eff3c2dcae3fdcff95c3"
+    },
+    "e2e/features/ui/adoption.feature": {
+      "beforeSha256": "c51655cbe96b165c6428fab56ee2ca281364ce3ea347f2b5e88c1fa19ba5a3c9",
+      "afterSha256": "c51655cbe96b165c6428fab56ee2ca281364ce3ea347f2b5e88c1fa19ba5a3c9"
+    },
+    "e2e/features/ui/composite.feature": {
+      "beforeSha256": "f81843661d9445659d8218dea58fee22f45b5829cfa66d46da5cd2f941d15a85",
+      "afterSha256": "f81843661d9445659d8218dea58fee22f45b5829cfa66d46da5cd2f941d15a85"
+    },
+    "e2e/features/ui/fields.feature": {
+      "beforeSha256": "8bf28908250bbd17978536ce46eb1173025583bda7313502467b1aef9f145b43",
+      "afterSha256": "8bf28908250bbd17978536ce46eb1173025583bda7313502467b1aef9f145b43"
+    },
+    "e2e/features/ui/tables.feature": {
+      "beforeSha256": "7ed1162796bf78429ba982338ac6e5d5207886760affe15cb04f8113bb6ee457",
+      "afterSha256": "7ed1162796bf78429ba982338ac6e5d5207886760affe15cb04f8113bb6ee457"
+    },
+    "e2e/live/catalog.spec.ts": {
+      "beforeSha256": null,
+      "afterSha256": "c8061aeb026a4a6395035931bb396932ccc43b9f336975fad329ab817fc9af35"
+    },
+    "e2e/live/helpers.ts": {
+      "beforeSha256": null,
+      "afterSha256": "1a012ff87702db00a52167541fcfbb829b964bdf2edd745ab078f2077c531371"
+    },
+    "e2e/steps/auth/login.steps.ts": {
+      "beforeSha256": "26e43fafbafdcd4170bdf744fc09b56d4678846f3869a42719474dea941e5828",
+      "afterSha256": "26e43fafbafdcd4170bdf744fc09b56d4678846f3869a42719474dea941e5828"
+    },
+    "e2e/steps/commerce/cart.steps.ts": {
+      "beforeSha256": "65002dd032b0adad572a50b990cef54efd5a56fe6fe9b3cb941cd1ca809bbf61",
+      "afterSha256": "65002dd032b0adad572a50b990cef54efd5a56fe6fe9b3cb941cd1ca809bbf61"
+    },
+    "e2e/steps/commerce/checkout.steps.ts": {
+      "beforeSha256": "8fab45de8bafd91a8e31bbf813c40b876ba8541b2c5f33a3d1bcdcd4f5b0c486",
+      "afterSha256": "8fab45de8bafd91a8e31bbf813c40b876ba8541b2c5f33a3d1bcdcd4f5b0c486"
+    },
+    "e2e/steps/commerce/delivery.steps.ts": {
+      "beforeSha256": "1c1f4db8468ceca04e9fa3c6628aa16981ab94116b07e2b4f79f78473cf4ae78",
+      "afterSha256": "1c1f4db8468ceca04e9fa3c6628aa16981ab94116b07e2b4f79f78473cf4ae78"
+    },
+    "e2e/steps/commerce/payment.steps.ts": {
+      "beforeSha256": "ece597ff04b4166b8779ce02939614ecf945b68ef3b8361d8993f18f0852f3ff",
+      "afterSha256": "ece597ff04b4166b8779ce02939614ecf945b68ef3b8361d8993f18f0852f3ff"
+    },
+    "e2e/steps/curator/curator.steps.ts": {
+      "beforeSha256": "cc30d48c75d80ccc55f608a6a11aad17b9ad2d4c9bd444593baad181475128c4",
+      "afterSha256": "cc30d48c75d80ccc55f608a6a11aad17b9ad2d4c9bd444593baad181475128c4"
+    },
+    "e2e/steps/dashboard/dashboard.steps.ts": {
+      "beforeSha256": "97f14681db6d8a2822da20c2e610b3b8854e265563b80f2b4c4d22031083db11",
+      "afterSha256": "97f14681db6d8a2822da20c2e610b3b8854e265563b80f2b4c4d22031083db11"
+    },
+    "e2e/steps/dashboard/fixtures.ts": {
+      "beforeSha256": "a2fb2ff59cc34f7a80126e21a9368f84167c2a8d56c1388c56b636490973c4e3",
+      "afterSha256": "a2fb2ff59cc34f7a80126e21a9368f84167c2a8d56c1388c56b636490973c4e3"
+    },
+    "e2e/steps/gallery/gallery.steps.ts": {
+      "beforeSha256": "08df0d6faa1e3cd82933a51b5819c619bf08b092ea713d60545929e30a0cd114",
+      "afterSha256": "08df0d6faa1e3cd82933a51b5819c619bf08b092ea713d60545929e30a0cd114"
+    },
+    "e2e/steps/handoff/handoff.steps.ts": {
+      "beforeSha256": "3cf2a99651ec7187fb7ba13f1806e53bffe9bf5ed4a29ec3f0a7d123cf436a19",
+      "afterSha256": "3cf2a99651ec7187fb7ba13f1806e53bffe9bf5ed4a29ec3f0a7d123cf436a19"
+    },
+    "e2e/steps/management/management.steps.ts": {
+      "beforeSha256": "bda3430f014de4cbf71fdcc940445930bb93e6baa83906114958a831a34aae22",
+      "afterSha256": "bda3430f014de4cbf71fdcc940445930bb93e6baa83906114958a831a34aae22"
+    },
+    "e2e/steps/organization/organization.steps.ts": {
+      "beforeSha256": "4ea8d056b8ab39a32b3fcdba896a71330d1e0bc3f1ab10bf805f176bc0be1375",
+      "afterSha256": "4ea8d056b8ab39a32b3fcdba896a71330d1e0bc3f1ab10bf805f176bc0be1375"
+    },
+    "e2e/steps/photos/photos.steps.ts": {
+      "beforeSha256": "5b0079e30e0a42d47aab521b8413b486bcc517263786b3c9e622540c307d68db",
+      "afterSha256": "5b0079e30e0a42d47aab521b8413b486bcc517263786b3c9e622540c307d68db"
+    },
+    "e2e/steps/production/fixtures.ts": {
+      "beforeSha256": "5ec9d7dee99bb40b4d3d0ff916c4104727ce73b1ba325d6ac09f8de509a913a8",
+      "afterSha256": "5ec9d7dee99bb40b4d3d0ff916c4104727ce73b1ba325d6ac09f8de509a913a8"
+    },
+    "e2e/steps/production/production.steps.ts": {
+      "beforeSha256": "ac2d3f66c6791399a122792114aeb6bccd38897fffa24d20efffbf4e2726944a",
+      "afterSha256": "ac2d3f66c6791399a122792114aeb6bccd38897fffa24d20efffbf4e2726944a"
+    },
+    "e2e/steps/review/helpers.ts": {
+      "beforeSha256": "1015edcddc38d75cff1c67fbb7f6b051f9b72115780d04086276f0588c71086e",
+      "afterSha256": "1015edcddc38d75cff1c67fbb7f6b051f9b72115780d04086276f0588c71086e"
+    },
+    "e2e/steps/review/review.steps.ts": {
+      "beforeSha256": "6861023153f9a23089523a4e1b9167acdd60a316f0cae9a69acc13eedf1ee0c1",
+      "afterSha256": "fbe48ced674d956d4e9bd41fb3d0f87b1e0ee6e280c05b013a023a6fb04f207d"
+    },
+    "e2e/steps/review/visual.steps.ts": {
+      "beforeSha256": "f784661ff331ce6837372ca81aa78d959a6aa0a1cdcd3a9cc325b6ab3077fb66",
+      "afterSha256": "f784661ff331ce6837372ca81aa78d959a6aa0a1cdcd3a9cc325b6ab3077fb66"
+    },
+    "e2e/steps/settlement/settlement.steps.ts": {
+      "beforeSha256": "57d59700a4f2ec10ba86197b6f7f789ff78f7fc64ec0e9ac0b2ce640ee79f966",
+      "afterSha256": "57d59700a4f2ec10ba86197b6f7f789ff78f7fc64ec0e9ac0b2ce640ee79f966"
+    },
+    "e2e/steps/shipping/shipping.steps.ts": {
+      "beforeSha256": "e765474aab2be37762851151b0f2798afe876c22101d8e8df4c032010f97adeb",
+      "afterSha256": "e765474aab2be37762851151b0f2798afe876c22101d8e8df4c032010f97adeb"
+    },
+    "e2e/steps/ui/adoption.steps.ts": {
+      "beforeSha256": "ebba57ef8f6922af8fe312ed41f1c4ee1357e9d5b6eee42e690ced7443df72bd",
+      "afterSha256": "ebba57ef8f6922af8fe312ed41f1c4ee1357e9d5b6eee42e690ced7443df72bd"
+    },
+    "e2e/steps/ui/composite.steps.ts": {
+      "beforeSha256": "98e5483aafce98df021882b9afa3f1cdcd89baa9134636da2dabed229cdc7ef4",
+      "afterSha256": "98e5483aafce98df021882b9afa3f1cdcd89baa9134636da2dabed229cdc7ef4"
+    },
+    "e2e/steps/ui/fields.steps.ts": {
+      "beforeSha256": "128976231a77a703066b6bf2c6df453e6b9c04b66116ec2fabbcf3d422ca6f67",
+      "afterSha256": "128976231a77a703066b6bf2c6df453e6b9c04b66116ec2fabbcf3d422ca6f67"
+    },
+    "e2e/steps/ui/tables.steps.ts": {
+      "beforeSha256": "612a8966f74d58a5f5483238bb71accfae4614121450e9d71e3211eab92078b3",
+      "afterSha256": "612a8966f74d58a5f5483238bb71accfae4614121450e9d71e3211eab92078b3"
+    },
+    "e2e/support/hooks.ts": {
+      "beforeSha256": "e5085ef26c2584bf6959006409476a524b328896d49170dfe0dfe771437013a7",
+      "afterSha256": "e5085ef26c2584bf6959006409476a524b328896d49170dfe0dfe771437013a7"
+    },
+    "e2e/support/world.ts": {
+      "beforeSha256": "9392dec6002291b729724ed173344e3c86b0e31a4cc37ce1dc0b7077feb90df2",
+      "afterSha256": "9392dec6002291b729724ed173344e3c86b0e31a4cc37ce1dc0b7077feb90df2"
+    },
+    "env.d.ts": {
+      "beforeSha256": "58ecede5e04ad92e1f45d0547b65b7607401249d75ce6b5a0c62717a49bb5b6d",
+      "afterSha256": "b5baf56d4ef2355f168302cb1d74f17b7fc9205633475609cfa51fced944bb1b"
+    },
+    "eslint.config.js": {
+      "beforeSha256": "8ea9dac00a67d29a7fc41764372542a97c4e820496ac972df64417699a342f97",
+      "afterSha256": "a0057361cc35ed5fede96ffc89eb4d3919264a4893f419042239cbbcc63e0b5f"
+    },
+    "index.html": {
+      "beforeSha256": "566ad16235b6ee144c87111e659450186e0fcf790fda268d609b290d0214f942",
+      "afterSha256": "566ad16235b6ee144c87111e659450186e0fcf790fda268d609b290d0214f942"
+    },
+    "package-lock.json": {
+      "beforeSha256": "5443bc73ae04acecc86067a3ef54ba543b5ba5972065e4f86f389f4c1a0ff4af",
+      "afterSha256": "d44649ae52ec5d3b237d199e2539217d2d3b8ba5817d848fedd320bdef6a1961"
+    },
+    "package.json": {
+      "beforeSha256": "c11029502cb69b6257ede9b6691bcff80446a55da9ae7bcd128da89a9bc57128",
+      "afterSha256": "8770750d00342d2d148c9ac9a0341330317209896b001d6da28aa44639f4ce85"
+    },
+    "playwright.config.ts": {
+      "beforeSha256": "e9f1294037fd74eb2605fc243fd1c22770aef657d41e6c07418d83790e9c9706",
+      "afterSha256": "e9f1294037fd74eb2605fc243fd1c22770aef657d41e6c07418d83790e9c9706"
+    },
+    "playwright.live.config.ts": {
+      "beforeSha256": null,
+      "afterSha256": "133782810e619cc696c83c3090b276057eebb9bcf9f0b4de5d95e4db09f3f2f3"
+    },
+    "public/_redirects": {
+      "beforeSha256": "66584af744075248a042165adbdbd6a0551fa708a85650ea1e3e777eee17080c",
+      "afterSha256": "66584af744075248a042165adbdbd6a0551fa708a85650ea1e3e777eee17080c"
+    },
+    "public/assets/images/icon/danger.svg": {
+      "beforeSha256": "fa642cb5d16503ac54b8b072f0a603d26204cce91b170a2e6606ec736e77d775",
+      "afterSha256": "fa642cb5d16503ac54b8b072f0a603d26204cce91b170a2e6606ec736e77d775"
+    },
+    "public/assets/images/icon/success.svg": {
+      "beforeSha256": "75e848e9e89f44258bd3ca7251c87409d223f46c4d2413ef51367568c06c2ccc",
+      "afterSha256": "75e848e9e89f44258bd3ca7251c87409d223f46c4d2413ef51367568c06c2ccc"
+    },
+    "public/assets/images/icon/warning.svg": {
+      "beforeSha256": "7a8229259aa413645abbdd65867cb3cea4b2b90c0e09f371277a6fd83459238a",
+      "afterSha256": "7a8229259aa413645abbdd65867cb3cea4b2b90c0e09f371277a6fd83459238a"
+    },
+    "public/assets/images/products/1.jpg": {
+      "beforeSha256": "e2c234fbce521ff3b4fc903d064821c962540cab13d0de6b94f005cc6b7113bd",
+      "afterSha256": "e2c234fbce521ff3b4fc903d064821c962540cab13d0de6b94f005cc6b7113bd"
+    },
+    "public/assets/images/products/2.jpg": {
+      "beforeSha256": "7cf130b28f54c8b92b86e9cbcea226918697c55766adf4f718d7433230617ac5",
+      "afterSha256": "7cf130b28f54c8b92b86e9cbcea226918697c55766adf4f718d7433230617ac5"
+    },
+    "public/assets/images/products/3.jpg": {
+      "beforeSha256": "21e54a224f0d8dc691a6fac06c23180c46fc9f2e0ac409ace5f3e1db0eaa1c33",
+      "afterSha256": "21e54a224f0d8dc691a6fac06c23180c46fc9f2e0ac409ace5f3e1db0eaa1c33"
+    },
+    "public/assets/images/products/4.jpg": {
+      "beforeSha256": "d02aa6a2a2f187046cbc16a835ec45e05dfbff2872667f125d6cb1b74c362f65",
+      "afterSha256": "d02aa6a2a2f187046cbc16a835ec45e05dfbff2872667f125d6cb1b74c362f65"
+    },
+    "public/assets/images/users/1.jpg": {
+      "beforeSha256": "32ddcd872f1938b12fe6bbb9a16643e7f96ec7c1445912577c29598167b71a5d",
+      "afterSha256": "32ddcd872f1938b12fe6bbb9a16643e7f96ec7c1445912577c29598167b71a5d"
+    },
+    "public/assets/images/users/2.jpg": {
+      "beforeSha256": "1c16a104ddbe391cfb0251c7903e37e275a8958d10300206c825fe9a915d38e2",
+      "afterSha256": "1c16a104ddbe391cfb0251c7903e37e275a8958d10300206c825fe9a915d38e2"
+    },
+    "public/assets/images/users/3.jpg": {
+      "beforeSha256": "0594bd0b5a8ffcf74d10326dc3f9dfd9392c817dc5a90232e54efe5e9deabba5",
+      "afterSha256": "0594bd0b5a8ffcf74d10326dc3f9dfd9392c817dc5a90232e54efe5e9deabba5"
+    },
+    "public/assets/images/users/4.jpg": {
+      "beforeSha256": "76ce6c0cd1602657ca8d1abbf8d12f492a0f64020f6936514f96ef69ffd4dd48",
+      "afterSha256": "76ce6c0cd1602657ca8d1abbf8d12f492a0f64020f6936514f96ef69ffd4dd48"
+    },
+    "public/assets/images/users/5.jpg": {
+      "beforeSha256": "d39d5aaffade6fd5712f6d0a13ccb40e2356ea86bdc02954453cec5b3428d22a",
+      "afterSha256": "d39d5aaffade6fd5712f6d0a13ccb40e2356ea86bdc02954453cec5b3428d22a"
+    },
+    "public/assets/images/users/6.jpg": {
+      "beforeSha256": "5dd5376d9832e24ea55ed0d757ae63318b52dbaa6830751771e7d996162f52cf",
+      "afterSha256": "5dd5376d9832e24ea55ed0d757ae63318b52dbaa6830751771e7d996162f52cf"
+    },
+    "public/assets/images/users/7.jpg": {
+      "beforeSha256": "920a7641a99e0eb55299846c210fc8cc7710719b2e2f27d37f72cb2038dc5e65",
+      "afterSha256": "920a7641a99e0eb55299846c210fc8cc7710719b2e2f27d37f72cb2038dc5e65"
+    },
+    "public/assets/images/users/8.jpg": {
+      "beforeSha256": "101354960f0790eb1278c5aca335152783085d0ade209eed8a420d49ee55ef8b",
+      "afterSha256": "101354960f0790eb1278c5aca335152783085d0ade209eed8a420d49ee55ef8b"
+    },
+    "public/assets/images/users/user.jpg": {
+      "beforeSha256": "2f4634be15f0291fcc109569c4071e2325df5e2d67b6ac86d829b26c3b6d14bf",
+      "afterSha256": "2f4634be15f0291fcc109569c4071e2325df5e2d67b6ac86d829b26c3b6d14bf"
+    },
+    "public/assets/images/users/user2.jpg": {
+      "beforeSha256": "32830a9ca7d53cdd42ab7c0e7d3bc7c5fb0935e46506906e0122601acc54ab6e",
+      "afterSha256": "32830a9ca7d53cdd42ab7c0e7d3bc7c5fb0935e46506906e0122601acc54ab6e"
+    },
+    "public/assets/svg/sprite.svg": {
+      "beforeSha256": "eddb74ad0fefa92f8926a70b66ab2fb1a9e4aed3dc624260d59346ba720a7627",
+      "afterSha256": "408dfb017c9122e92c1f817f11c972ba63c52f06653024d3764b206717d5c307"
+    },
+    "public/demo/gallery-v1/school-1a/0d7ae94b5acb4646dfb7-preview.webp": {
+      "beforeSha256": "e836d564b2335793d077a4a1b1edff6383b105f2bbe4dd00b15e370237f6d963",
+      "afterSha256": "e836d564b2335793d077a4a1b1edff6383b105f2bbe4dd00b15e370237f6d963"
+    },
+    "public/demo/gallery-v1/school-1a/0d7ae94b5acb4646dfb7-thumb.webp": {
+      "beforeSha256": "89ff0134faa3e41ea8830087be1530f9aaccc1e26671c4019a454e5d72d90e86",
+      "afterSha256": "89ff0134faa3e41ea8830087be1530f9aaccc1e26671c4019a454e5d72d90e86"
+    },
+    "public/demo/gallery-v1/school-1a/1565158866acc63b47a6-preview.webp": {
+      "beforeSha256": "69f28d73366cefb8713dd72716ae84cb1a307c4787c6c65cc0885897bf16e617",
+      "afterSha256": "69f28d73366cefb8713dd72716ae84cb1a307c4787c6c65cc0885897bf16e617"
+    },
+    "public/demo/gallery-v1/school-1a/1565158866acc63b47a6-thumb.webp": {
+      "beforeSha256": "c9a4a3c49a0a1fe0287dbe675442e201132d9153ecc8c24a969984bf4c1ac2fb",
+      "afterSha256": "c9a4a3c49a0a1fe0287dbe675442e201132d9153ecc8c24a969984bf4c1ac2fb"
+    },
+    "public/demo/gallery-v1/school-1a/344ed5da612b08a77428-preview.webp": {
+      "beforeSha256": "d3812fe62e710189b6bac3ff6678df477538884071c64914a4f5e27a779ebe50",
+      "afterSha256": "d3812fe62e710189b6bac3ff6678df477538884071c64914a4f5e27a779ebe50"
+    },
+    "public/demo/gallery-v1/school-1a/344ed5da612b08a77428-thumb.webp": {
+      "beforeSha256": "9a2ce733303bea45ebe935c95072e3b899ca1aaed78b291f9c1e5e460ae1c1f3",
+      "afterSha256": "9a2ce733303bea45ebe935c95072e3b899ca1aaed78b291f9c1e5e460ae1c1f3"
+    },
+    "public/demo/gallery-v1/school-1a/39b073ade78a9bd8664d-preview.webp": {
+      "beforeSha256": "0c93f04acfc1286e30541c7349f500de1204247341059425a70214eb89272b46",
+      "afterSha256": "0c93f04acfc1286e30541c7349f500de1204247341059425a70214eb89272b46"
+    },
+    "public/demo/gallery-v1/school-1a/39b073ade78a9bd8664d-thumb.webp": {
+      "beforeSha256": "d3a56bdd7fab50e848864f7ecf4fd533a9b8d12a5cfba6c2ac6a9d6c92a3dabb",
+      "afterSha256": "d3a56bdd7fab50e848864f7ecf4fd533a9b8d12a5cfba6c2ac6a9d6c92a3dabb"
+    },
+    "public/demo/gallery-v1/school-1a/6113e3e96a187ca36f43-preview.webp": {
+      "beforeSha256": "bfce6bc789b842fd256402e139b07d0a2cb82186939a5cdc2e30a898086a1a8f",
+      "afterSha256": "bfce6bc789b842fd256402e139b07d0a2cb82186939a5cdc2e30a898086a1a8f"
+    },
+    "public/demo/gallery-v1/school-1a/6113e3e96a187ca36f43-thumb.webp": {
+      "beforeSha256": "6d9f8e5ca9e59ffd54f77ea8f64fa9c1c04861c189ba256a48faa3a8803d13a0",
+      "afterSha256": "6d9f8e5ca9e59ffd54f77ea8f64fa9c1c04861c189ba256a48faa3a8803d13a0"
+    },
+    "public/demo/gallery-v1/school-1a/62c6d5d95e0170c6889f-preview.webp": {
+      "beforeSha256": "f1392d61de6450ae38c3c109e8602435591b96d4402561e11efd2de149ce2d76",
+      "afterSha256": "f1392d61de6450ae38c3c109e8602435591b96d4402561e11efd2de149ce2d76"
+    },
+    "public/demo/gallery-v1/school-1a/62c6d5d95e0170c6889f-thumb.webp": {
+      "beforeSha256": "5f1b6691d946ff1a989f2dedde98474cbed8ff96b2e92fad012b8f24929686a8",
+      "afterSha256": "5f1b6691d946ff1a989f2dedde98474cbed8ff96b2e92fad012b8f24929686a8"
+    },
+    "public/demo/gallery-v1/school-1a/7b2c86b4a8f0011ae240-preview.webp": {
+      "beforeSha256": "944bb2a6d8fa30f696c2a9492cb8ff05bb931a65dcfc3834d03268e253716394",
+      "afterSha256": "944bb2a6d8fa30f696c2a9492cb8ff05bb931a65dcfc3834d03268e253716394"
+    },
+    "public/demo/gallery-v1/school-1a/7b2c86b4a8f0011ae240-thumb.webp": {
+      "beforeSha256": "08614afac505d12ec66de66ac9e9a7aceb94517f067cf5e8c45db23d9eda4ee0",
+      "afterSha256": "08614afac505d12ec66de66ac9e9a7aceb94517f067cf5e8c45db23d9eda4ee0"
+    },
+    "public/demo/gallery-v1/school-1a/868938f35126a32a8dbf-preview.webp": {
+      "beforeSha256": "085bdc41282d38a9004952c19a410b44dad6c95d8a057d1f33dd716704fbe3e9",
+      "afterSha256": "085bdc41282d38a9004952c19a410b44dad6c95d8a057d1f33dd716704fbe3e9"
+    },
+    "public/demo/gallery-v1/school-1a/868938f35126a32a8dbf-thumb.webp": {
+      "beforeSha256": "03292b77de997622af847664c585d4ec0b1f183005f2ec78dc4229ca7b0c4942",
+      "afterSha256": "03292b77de997622af847664c585d4ec0b1f183005f2ec78dc4229ca7b0c4942"
+    },
+    "public/demo/gallery-v1/school-1a/8799d60ef57fcaa6362b-preview.webp": {
+      "beforeSha256": "6dd82c35295c39a9015c8f86e0ccb007b0666d9a2e36311c04257179c9604047",
+      "afterSha256": "6dd82c35295c39a9015c8f86e0ccb007b0666d9a2e36311c04257179c9604047"
+    },
+    "public/demo/gallery-v1/school-1a/8799d60ef57fcaa6362b-thumb.webp": {
+      "beforeSha256": "a5b5be6258213d481a16493d9b558f1951edbfd3d1e4f2668fde35f3d54e3e22",
+      "afterSha256": "a5b5be6258213d481a16493d9b558f1951edbfd3d1e4f2668fde35f3d54e3e22"
+    },
+    "public/demo/gallery-v1/school-1a/920c9e2695baf09212b4-preview.webp": {
+      "beforeSha256": "5df98c0c02f62c50170e4d06b52dbe9a9d37afd13bbd8e53196a7b060624e88d",
+      "afterSha256": "5df98c0c02f62c50170e4d06b52dbe9a9d37afd13bbd8e53196a7b060624e88d"
+    },
+    "public/demo/gallery-v1/school-1a/920c9e2695baf09212b4-thumb.webp": {
+      "beforeSha256": "5dfbf450172cd0c829d4e463a3cdc676a8e9691b6bf978f87a310611313f9a9f",
+      "afterSha256": "5dfbf450172cd0c829d4e463a3cdc676a8e9691b6bf978f87a310611313f9a9f"
+    },
+    "public/demo/gallery-v1/school-1a/9387678d2a3262686dad-preview.webp": {
+      "beforeSha256": "18ea9e468694175c3619b9b957060d8421bc3c9d98ee72d481ecfa658e7b215e",
+      "afterSha256": "18ea9e468694175c3619b9b957060d8421bc3c9d98ee72d481ecfa658e7b215e"
+    },
+    "public/demo/gallery-v1/school-1a/9387678d2a3262686dad-thumb.webp": {
+      "beforeSha256": "71197c05651f0d2ce773cefe259c897491466fa6b0b9d2aae80f75289585ecdd",
+      "afterSha256": "71197c05651f0d2ce773cefe259c897491466fa6b0b9d2aae80f75289585ecdd"
+    },
+    "public/demo/gallery-v1/school-1a/9d9157884862fc526724-preview.webp": {
+      "beforeSha256": "290c3441d658d73057cf8ceade43820fbc0e59686f4d913f72c53e31bc6ab578",
+      "afterSha256": "290c3441d658d73057cf8ceade43820fbc0e59686f4d913f72c53e31bc6ab578"
+    },
+    "public/demo/gallery-v1/school-1a/9d9157884862fc526724-thumb.webp": {
+      "beforeSha256": "66f8c1a9e322c50c528ada6a1575e6721d318dc6a7c073f4dbbe1e968acb1439",
+      "afterSha256": "66f8c1a9e322c50c528ada6a1575e6721d318dc6a7c073f4dbbe1e968acb1439"
+    },
+    "public/demo/gallery-v1/school-1a/c49b211beddb7a906ac9-preview.webp": {
+      "beforeSha256": "d328aa2d395112855fa864ceeac4ed6638429e1b89b339d35441f5c10c56f42b",
+      "afterSha256": "d328aa2d395112855fa864ceeac4ed6638429e1b89b339d35441f5c10c56f42b"
+    },
+    "public/demo/gallery-v1/school-1a/c49b211beddb7a906ac9-thumb.webp": {
+      "beforeSha256": "88068baafb2ce2f6f6241ddcafb21295628855f604edc941e44fda82055e9e6b",
+      "afterSha256": "88068baafb2ce2f6f6241ddcafb21295628855f604edc941e44fda82055e9e6b"
+    },
+    "public/demo/gallery-v1/school-1a/d190b66c2615114c9179-preview.webp": {
+      "beforeSha256": "f317b8a485989b909eaacb02ad38ffdbeece8644770dad6ff4db22550aa1dff1",
+      "afterSha256": "f317b8a485989b909eaacb02ad38ffdbeece8644770dad6ff4db22550aa1dff1"
+    },
+    "public/demo/gallery-v1/school-1a/d190b66c2615114c9179-thumb.webp": {
+      "beforeSha256": "31b805f5190d0a2298acae6eb5b4ad360a5f908b1d49805f14219602074f9d49",
+      "afterSha256": "31b805f5190d0a2298acae6eb5b4ad360a5f908b1d49805f14219602074f9d49"
+    },
+    "public/demo/gallery-v1/school-1a/ddb2ed770bdb6ea4b619-preview.webp": {
+      "beforeSha256": "452caec1430884084590c4ec1802e0d323bfddeaaadc22cfaa2ac0cec4279cd8",
+      "afterSha256": "452caec1430884084590c4ec1802e0d323bfddeaaadc22cfaa2ac0cec4279cd8"
+    },
+    "public/demo/gallery-v1/school-1a/ddb2ed770bdb6ea4b619-thumb.webp": {
+      "beforeSha256": "12f57aced720835fe65f2bd3c00cb16e82a6cddd94acfa2d1f77e6fa24f58a7a",
+      "afterSha256": "12f57aced720835fe65f2bd3c00cb16e82a6cddd94acfa2d1f77e6fa24f58a7a"
+    },
+    "public/demo/gallery-v1/school-1a/e58498d72e48c955e230-preview.webp": {
+      "beforeSha256": "8cabb21abcdca3e4dd7cc9ab5ac3451db6415b5585d7a4f810c4659ae81d56c6",
+      "afterSha256": "8cabb21abcdca3e4dd7cc9ab5ac3451db6415b5585d7a4f810c4659ae81d56c6"
+    },
+    "public/demo/gallery-v1/school-1a/e58498d72e48c955e230-thumb.webp": {
+      "beforeSha256": "8f16e3ec07aa5b548cca92fd5b8cebf1d612ab56cb171755bff7885fc63fa1b4",
+      "afterSha256": "8f16e3ec07aa5b548cca92fd5b8cebf1d612ab56cb171755bff7885fc63fa1b4"
+    },
+    "public/demo/gallery-v1/sun-stars/06fe2cf470976d563d32-preview.webp": {
+      "beforeSha256": "f4c50c94fec675ec7e191565a68a924d60bcf1b309339d47d13b3ff09902f50b",
+      "afterSha256": "f4c50c94fec675ec7e191565a68a924d60bcf1b309339d47d13b3ff09902f50b"
+    },
+    "public/demo/gallery-v1/sun-stars/06fe2cf470976d563d32-thumb.webp": {
+      "beforeSha256": "945ac42913437779c0e62ef47400f3b2b5b6564c4cad1b8831ec26d7f1761158",
+      "afterSha256": "945ac42913437779c0e62ef47400f3b2b5b6564c4cad1b8831ec26d7f1761158"
+    },
+    "public/demo/gallery-v1/sun-stars/0c12fdfa7ec7e05b8f87-preview.webp": {
+      "beforeSha256": "91c8d942471615d67896b9d04dc16d638e7284ca5e3d9aed0ff53cca7fd9afa0",
+      "afterSha256": "91c8d942471615d67896b9d04dc16d638e7284ca5e3d9aed0ff53cca7fd9afa0"
+    },
+    "public/demo/gallery-v1/sun-stars/0c12fdfa7ec7e05b8f87-thumb.webp": {
+      "beforeSha256": "7cf858c2abebeca7e104dd16f0cbdaffa4b58a95b7eed9bb2ecb91c55551ba0d",
+      "afterSha256": "7cf858c2abebeca7e104dd16f0cbdaffa4b58a95b7eed9bb2ecb91c55551ba0d"
+    },
+    "public/demo/gallery-v1/sun-stars/0f21215dfee629dee643-preview.webp": {
+      "beforeSha256": "75a7aad769ae222c918a3e161a8fa0347c53afd562561e5bc646445b62b44a7e",
+      "afterSha256": "75a7aad769ae222c918a3e161a8fa0347c53afd562561e5bc646445b62b44a7e"
+    },
+    "public/demo/gallery-v1/sun-stars/0f21215dfee629dee643-thumb.webp": {
+      "beforeSha256": "5942b0ca3ecc61c3554371af8d327b56256f1729a2f3872cdd3cbf9eeeb8eb7f",
+      "afterSha256": "5942b0ca3ecc61c3554371af8d327b56256f1729a2f3872cdd3cbf9eeeb8eb7f"
+    },
+    "public/demo/gallery-v1/sun-stars/36f404fa7e3bfac17914-preview.webp": {
+      "beforeSha256": "862404906a244ad4d3496973db1a12a5f026260718710e18f1fd30a7fa6da155",
+      "afterSha256": "862404906a244ad4d3496973db1a12a5f026260718710e18f1fd30a7fa6da155"
+    },
+    "public/demo/gallery-v1/sun-stars/36f404fa7e3bfac17914-thumb.webp": {
+      "beforeSha256": "4549ccb826667b60c2379ae0a4dcaacd1ef9ad5ea3fecfa5a0776822c5ea6808",
+      "afterSha256": "4549ccb826667b60c2379ae0a4dcaacd1ef9ad5ea3fecfa5a0776822c5ea6808"
+    },
+    "public/demo/gallery-v1/sun-stars/39c0ea239e6c4ac49f81-preview.webp": {
+      "beforeSha256": "34e312b77e7166727b2d32fc4a91b9bcbeddf135484d40999030a1b6afcf744b",
+      "afterSha256": "34e312b77e7166727b2d32fc4a91b9bcbeddf135484d40999030a1b6afcf744b"
+    },
+    "public/demo/gallery-v1/sun-stars/39c0ea239e6c4ac49f81-thumb.webp": {
+      "beforeSha256": "aa4c1fde209d3b9a0658002277f3baae64f1c62cb85b2132c216bd7ceb33cd18",
+      "afterSha256": "aa4c1fde209d3b9a0658002277f3baae64f1c62cb85b2132c216bd7ceb33cd18"
+    },
+    "public/demo/gallery-v1/sun-stars/3d60f460cd8c1dedc63a-preview.webp": {
+      "beforeSha256": "b4a47ebd28c7ed45b390a631009cf12bdb783173da01ae39000a99ab76eb5e8b",
+      "afterSha256": "b4a47ebd28c7ed45b390a631009cf12bdb783173da01ae39000a99ab76eb5e8b"
+    },
+    "public/demo/gallery-v1/sun-stars/3d60f460cd8c1dedc63a-thumb.webp": {
+      "beforeSha256": "15adf476e9ea478050041634ee49ddc2298fff5af007436a6d9860cc07b8745f",
+      "afterSha256": "15adf476e9ea478050041634ee49ddc2298fff5af007436a6d9860cc07b8745f"
+    },
+    "public/demo/gallery-v1/sun-stars/4e23db846eea515811ba-preview.webp": {
+      "beforeSha256": "8d3265c5961770fd2cdf505ba21fdce1c7927f00366c01aad64f585c55db820b",
+      "afterSha256": "8d3265c5961770fd2cdf505ba21fdce1c7927f00366c01aad64f585c55db820b"
+    },
+    "public/demo/gallery-v1/sun-stars/4e23db846eea515811ba-thumb.webp": {
+      "beforeSha256": "9ecdc3029e74fe2efcaa4b1c666a94231f0480d762b7e11738db9a21ab7b37bc",
+      "afterSha256": "9ecdc3029e74fe2efcaa4b1c666a94231f0480d762b7e11738db9a21ab7b37bc"
+    },
+    "public/demo/gallery-v1/sun-stars/4f308c8dbbc8942da467-preview.webp": {
+      "beforeSha256": "c63f234423bde797e900d3c75684ef4da77a15df90dd74254a1980850ba73c35",
+      "afterSha256": "c63f234423bde797e900d3c75684ef4da77a15df90dd74254a1980850ba73c35"
+    },
+    "public/demo/gallery-v1/sun-stars/4f308c8dbbc8942da467-thumb.webp": {
+      "beforeSha256": "c20a37db19b973bca2ef180d94cb9163a4d064221ea8cb176867b33ae52c4ba0",
+      "afterSha256": "c20a37db19b973bca2ef180d94cb9163a4d064221ea8cb176867b33ae52c4ba0"
+    },
+    "public/demo/gallery-v1/sun-stars/5eec67e4249393c5ecf1-preview.webp": {
+      "beforeSha256": "0cc103e86993de658406eafb9bed960103a44f583db8797ba878d9e9243d6f94",
+      "afterSha256": "0cc103e86993de658406eafb9bed960103a44f583db8797ba878d9e9243d6f94"
+    },
+    "public/demo/gallery-v1/sun-stars/5eec67e4249393c5ecf1-thumb.webp": {
+      "beforeSha256": "b5389277fa2c98bb4b9c03d88183fc96d727be9f650533fbfe888cd4e4a47ff0",
+      "afterSha256": "b5389277fa2c98bb4b9c03d88183fc96d727be9f650533fbfe888cd4e4a47ff0"
+    },
+    "public/demo/gallery-v1/sun-stars/6576a734cca8b7dfef38-preview.webp": {
+      "beforeSha256": "d377f9908b662339d12e667f0ce13f519298b651ab8b8f1822fcbb804c87d2ec",
+      "afterSha256": "d377f9908b662339d12e667f0ce13f519298b651ab8b8f1822fcbb804c87d2ec"
+    },
+    "public/demo/gallery-v1/sun-stars/6576a734cca8b7dfef38-thumb.webp": {
+      "beforeSha256": "8f900509ed118e71b3fed221e300a75a69a5def23e578d6cdf4f6ea6f3440281",
+      "afterSha256": "8f900509ed118e71b3fed221e300a75a69a5def23e578d6cdf4f6ea6f3440281"
+    },
+    "public/demo/gallery-v1/sun-stars/757798500b251e123870-preview.webp": {
+      "beforeSha256": "b5a67cc0f37102a08ab1c5fe0aa80b96fd6a0b07ab78915c6c6214a1762c4f36",
+      "afterSha256": "b5a67cc0f37102a08ab1c5fe0aa80b96fd6a0b07ab78915c6c6214a1762c4f36"
+    },
+    "public/demo/gallery-v1/sun-stars/757798500b251e123870-thumb.webp": {
+      "beforeSha256": "c0b099fd9703cb5d7ea116bb90c5737a1c41347cc1c3e3b5782a04c1d2a48aac",
+      "afterSha256": "c0b099fd9703cb5d7ea116bb90c5737a1c41347cc1c3e3b5782a04c1d2a48aac"
+    },
+    "public/demo/gallery-v1/sun-stars/9c52ff5d3817eca4388d-preview.webp": {
+      "beforeSha256": "836bc7b0f27a62232c2bcd86a1fdd5ab82d341b7f7e5a32794518092d4593caf",
+      "afterSha256": "836bc7b0f27a62232c2bcd86a1fdd5ab82d341b7f7e5a32794518092d4593caf"
+    },
+    "public/demo/gallery-v1/sun-stars/9c52ff5d3817eca4388d-thumb.webp": {
+      "beforeSha256": "300e1350affeeaf30c99d9c81488e611add444b5b8822b27a421f070389cdb32",
+      "afterSha256": "300e1350affeeaf30c99d9c81488e611add444b5b8822b27a421f070389cdb32"
+    },
+    "public/demo/gallery-v1/sun-stars/9c89928a665ee8cd5f30-preview.webp": {
+      "beforeSha256": "b81461a06604cae21570dc9a2d6cceb16065093946aaa52b5ed330e932262493",
+      "afterSha256": "b81461a06604cae21570dc9a2d6cceb16065093946aaa52b5ed330e932262493"
+    },
+    "public/demo/gallery-v1/sun-stars/9c89928a665ee8cd5f30-thumb.webp": {
+      "beforeSha256": "9a58eed9148b098011bba4110529f94319e9b46c12b11cf18d93067360a81f57",
+      "afterSha256": "9a58eed9148b098011bba4110529f94319e9b46c12b11cf18d93067360a81f57"
+    },
+    "public/demo/gallery-v1/sun-stars/bf51ef8b2f92c315179a-preview.webp": {
+      "beforeSha256": "a77ba52b50fe8b592006b576969ed45dba060c1454c31ecfd83332a9fcb1debb",
+      "afterSha256": "a77ba52b50fe8b592006b576969ed45dba060c1454c31ecfd83332a9fcb1debb"
+    },
+    "public/demo/gallery-v1/sun-stars/bf51ef8b2f92c315179a-thumb.webp": {
+      "beforeSha256": "a5c8616b5fc25255e3d9c63f7d9d3c115a3f773d5a285606fb3f20a2dcb3c2d6",
+      "afterSha256": "a5c8616b5fc25255e3d9c63f7d9d3c115a3f773d5a285606fb3f20a2dcb3c2d6"
+    },
+    "public/demo/gallery-v1/sun-stars/c83daf13a3fe0559bc33-preview.webp": {
+      "beforeSha256": "e2b3927445f8efbfa6df128fb88673269a5757a67b07714b93ab1fd357e82caf",
+      "afterSha256": "e2b3927445f8efbfa6df128fb88673269a5757a67b07714b93ab1fd357e82caf"
+    },
+    "public/demo/gallery-v1/sun-stars/c83daf13a3fe0559bc33-thumb.webp": {
+      "beforeSha256": "7bb071529849ed50e29954dac9d9adf5a224b00afd379ddd74c0f21d471b0a69",
+      "afterSha256": "7bb071529849ed50e29954dac9d9adf5a224b00afd379ddd74c0f21d471b0a69"
+    },
+    "public/demo/gallery-v1/sun-stars/edd672846965dd04813c-preview.webp": {
+      "beforeSha256": "e853c8b69257644707e275e1df366beecbaf7ae0a24bba8a12b10152ac3482d4",
+      "afterSha256": "e853c8b69257644707e275e1df366beecbaf7ae0a24bba8a12b10152ac3482d4"
+    },
+    "public/demo/gallery-v1/sun-stars/edd672846965dd04813c-thumb.webp": {
+      "beforeSha256": "fef3e0c686c50aa5b89daf088f9627ec94348d36f1c6740dbbb7dd9446c40cab",
+      "afterSha256": "fef3e0c686c50aa5b89daf088f9627ec94348d36f1c6740dbbb7dd9446c40cab"
+    },
+    "public/favicon.ico": {
+      "beforeSha256": "8d1d97bd6d265da87dbeb3f6589ea8a05a5b830d17b12876affcbb30e88f6fb4",
+      "afterSha256": "8d1d97bd6d265da87dbeb3f6589ea8a05a5b830d17b12876affcbb30e88f6fb4"
+    },
+    "public/favicon.svg": {
+      "beforeSha256": "c81ecaf68dd3611b6248c7828c7b82b83b5e9193ca900982c0fd3ba952b95c4b",
+      "afterSha256": "c81ecaf68dd3611b6248c7828c7b82b83b5e9193ca900982c0fd3ba952b95c4b"
+    },
+    "public/icons/apple-touch-icon-v1.png": {
+      "beforeSha256": "006d57f9f3c3ee64552db27ff10a17eb668dc425e3166591d33dbe5eb35927dc",
+      "afterSha256": "006d57f9f3c3ee64552db27ff10a17eb668dc425e3166591d33dbe5eb35927dc"
+    },
+    "public/icons/morefoto-16-v1.png": {
+      "beforeSha256": "a4f6c4bd6b6223a8c451dbf08d1cb317ae289f379ba0ccdae1a3d96399e6e216",
+      "afterSha256": "a4f6c4bd6b6223a8c451dbf08d1cb317ae289f379ba0ccdae1a3d96399e6e216"
+    },
+    "public/icons/morefoto-192-v1.png": {
+      "beforeSha256": "64f2847a2f3ee7dc6a189a246c52d4d71e54877bbd832bcb694098f9e9df4b6a",
+      "afterSha256": "64f2847a2f3ee7dc6a189a246c52d4d71e54877bbd832bcb694098f9e9df4b6a"
+    },
+    "public/icons/morefoto-32-v1.png": {
+      "beforeSha256": "96d1297d960bddaa352f298615bd28648286acfa2fd3e472f1e8a806c57ba130",
+      "afterSha256": "96d1297d960bddaa352f298615bd28648286acfa2fd3e472f1e8a806c57ba130"
+    },
+    "public/icons/morefoto-48-v1.png": {
+      "beforeSha256": "71e4a0f56eebd5dbaecf17250e7ff191c4fbdb7d63be6b3546330e7063ba5c85",
+      "afterSha256": "71e4a0f56eebd5dbaecf17250e7ff191c4fbdb7d63be6b3546330e7063ba5c85"
+    },
+    "public/icons/morefoto-512-v1.png": {
+      "beforeSha256": "c209710d47a9705ab522c7adf6c3ccc6d54ea7a76b14d8360d025c33a3c472af",
+      "afterSha256": "c209710d47a9705ab522c7adf6c3ccc6d54ea7a76b14d8360d025c33a3c472af"
+    },
+    "public/icons/morefoto-v1.svg": {
+      "beforeSha256": "c81ecaf68dd3611b6248c7828c7b82b83b5e9193ca900982c0fd3ba952b95c4b",
+      "afterSha256": "c81ecaf68dd3611b6248c7828c7b82b83b5e9193ca900982c0fd3ba952b95c4b"
+    },
+    "public/site.webmanifest": {
+      "beforeSha256": "7092ad2bee894c9bba36e1224f4eb7776334b03d30df7f5d1330122918323eae",
+      "afterSha256": "7092ad2bee894c9bba36e1224f4eb7776334b03d30df7f5d1330122918323eae"
+    },
+    "public/sounds/new-trade.wav": {
+      "beforeSha256": "3dfc01c5d74c24e081344cf900a1a6f97790929a01c75888d3c38745ec0f8590",
+      "afterSha256": "3dfc01c5d74c24e081344cf900a1a6f97790929a01c75888d3c38745ec0f8590"
+    },
+    "scripts/capture-guides.mts": {
+      "beforeSha256": "239dc34a73a217d255c0a855c652b8ba6020a7f80927ad029e4530b9badbcfce",
+      "afterSha256": "e1b9898f30d87b5af6fc3862d787fdf70c58076716ce5253b0cd28074b353eaa"
+    },
+    "scripts/review-inventory.cjs": {
+      "beforeSha256": "4246ed7cfde88bb6f9187348099486c23aaa8b5541b2e9b3bd476b1296911dd3",
+      "afterSha256": "d9374b62c35173fbc0b34cd2a5399fbe6f02d9c13fcccfd14c87dd5dba25e3ae"
+    },
+    "src/App.vue": {
+      "beforeSha256": "63938a5b4666f028748e94d3a10383b028076f9b7df9adcaa0213b114497b58f",
+      "afterSha256": "63938a5b4666f028748e94d3a10383b028076f9b7df9adcaa0213b114497b58f"
+    },
+    "src/api/auth.ts": {
+      "beforeSha256": "ffa1ba50525be372eeae024d61f15edcf73ba2839580f6744791fed37a9a9127",
+      "afterSha256": "5042d12cb0c840842a1b2010cade93e211692d707cd6c2717170b5f43f55051e"
+    },
+    "src/api/exchange.ts": {
+      "beforeSha256": "4c914d04c69280bb6628c832e56180268bfb911ae12e08be23a55b54e672af1c",
+      "afterSha256": "4c914d04c69280bb6628c832e56180268bfb911ae12e08be23a55b54e672af1c"
+    },
+    "src/api/http.ts": {
+      "beforeSha256": "87b7cae59bfabf903d679573f25ada765378fd8ee95d38a18ae59a4f87388bef",
+      "afterSha256": "1b591d0eeb106734ae26c6dcb1c5b6700c405ea6a781e6b09f1dd6b58cb9fd27"
+    },
+    "src/api/identity.ts": {
+      "beforeSha256": "09cfdd4c521d7b2a7a98f9f353120472a1e013a1fb90c46288327278597c96b6",
+      "afterSha256": "09cfdd4c521d7b2a7a98f9f353120472a1e013a1fb90c46288327278597c96b6"
+    },
+    "src/api/wallet.ts": {
+      "beforeSha256": "950eaf37165b00e3c926ce2c4206c27887f3d2631fb76ba58afb2859bfbc4ead",
+      "afterSha256": "950eaf37165b00e3c926ce2c4206c27887f3d2631fb76ba58afb2859bfbc4ead"
+    },
+    "src/assets/images/favicon.svg": {
+      "beforeSha256": "abadd77e77d67d654cfca45794b2167b02fd996468b473c7b01da9ae22e90fe5",
+      "afterSha256": "abadd77e77d67d654cfca45794b2167b02fd996468b473c7b01da9ae22e90fe5"
+    },
+    "src/components/public/PublicTopBar.vue": {
+      "beforeSha256": "3e711100eedaa82dea675ffce156ed6c894ff735d98c2ca6ac30f56c5de50cfe",
+      "afterSha256": "3e711100eedaa82dea675ffce156ed6c894ff735d98c2ca6ac30f56c5de50cfe"
+    },
+    "src/components/shared/AppEmptyState.vue": {
+      "beforeSha256": "190372dc38a9c1a4f671934ca0aab2f041933186afbbc210322eaa53f6ca7110",
+      "afterSha256": "190372dc38a9c1a4f671934ca0aab2f041933186afbbc210322eaa53f6ca7110"
+    },
+    "src/components/shared/CurrencyIcon.vue": {
+      "beforeSha256": "dc83b99741f20929917939abfb60c705331dc692d9ab6073f31695ac5be39615",
+      "afterSha256": "dc83b99741f20929917939abfb60c705331dc692d9ab6073f31695ac5be39615"
+    },
+    "src/components/shared/UiFormCard.vue": {
+      "beforeSha256": "608e06518d459b7c8b69931981ab29002f401255a77ceb2398a3065ad54a6e34",
+      "afterSha256": "608e06518d459b7c8b69931981ab29002f401255a77ceb2398a3065ad54a6e34"
+    },
+    "src/components/shared/UiParentCard.vue": {
+      "beforeSha256": "aca838e7e16f3378dfac8f52d1155c0ef9b9086672d5e92990868ffef0bde3d7",
+      "afterSha256": "aca838e7e16f3378dfac8f52d1155c0ef9b9086672d5e92990868ffef0bde3d7"
+    },
+    "src/components/shared/UiTableCard.vue": {
+      "beforeSha256": "f7366bc950fc4190502c2087f5071e3ec3cdca310773d7dece97ee9b28ddfc53",
+      "afterSha256": "f7366bc950fc4190502c2087f5071e3ec3cdca310773d7dece97ee9b28ddfc53"
+    },
+    "src/composables/useCurrencyFormat.ts": {
+      "beforeSha256": "2ccee3a2c34959c20e550b6410b2ee3d3491fc2f1a43110fc5d8cab048131e7d",
+      "afterSha256": "2ccee3a2c34959c20e550b6410b2ee3d3491fc2f1a43110fc5d8cab048131e7d"
+    },
+    "src/composables/usePolling.ts": {
+      "beforeSha256": "26bb8cf77fd15ebaedd39121f41f7a06db2cfae99d89056fb3d1a78032169ab3",
+      "afterSha256": "26bb8cf77fd15ebaedd39121f41f7a06db2cfae99d89056fb3d1a78032169ab3"
+    },
+    "src/composables/useSeoMeta.ts": {
+      "beforeSha256": "6f09624fdf95f347af253e363dcfa6b3729e2154c1cc2e147624929be5b87a68",
+      "afterSha256": "6f09624fdf95f347af253e363dcfa6b3729e2154c1cc2e147624929be5b87a68"
+    },
+    "src/composables/useThemeHandler.ts": {
+      "beforeSha256": "50f0ecb06cd12aa3533e5655fa5a15dba152a85bbbda2491e018b14d0449930c",
+      "afterSha256": "50f0ecb06cd12aa3533e5655fa5a15dba152a85bbbda2491e018b14d0449930c"
+    },
+    "src/composables/useTradeNotifications.ts": {
+      "beforeSha256": "f1bd9beac2a99723eb33f56c7474eaab8604f07f4f9eb036612d7366a3d73fc2",
+      "afterSha256": "f1bd9beac2a99723eb33f56c7474eaab8604f07f4f9eb036612d7366a3d73fc2"
+    },
+    "src/composables/useTransactionLabels.ts": {
+      "beforeSha256": "0915e8c5d211f86a70a388d5343470b077684a4486a6e417040a680e0c002c13",
+      "afterSha256": "0915e8c5d211f86a70a388d5343470b077684a4486a6e417040a680e0c002c13"
+    },
+    "src/config.ts": {
+      "beforeSha256": "821aae02c965af1f9430a4ea04a50554289c2628ab2351ac9aa9ce2b3a4faf92",
+      "afterSha256": "821aae02c965af1f9430a4ea04a50554289c2628ab2351ac9aa9ce2b3a4faf92"
+    },
+    "src/layouts/blank/BlankLayout.vue": {
+      "beforeSha256": "c90a170ad0b6d9a46627b14166a36f32df21d73b0c3a30ae59b6968cd48d604f",
+      "afterSha256": "c90a170ad0b6d9a46627b14166a36f32df21d73b0c3a30ae59b6968cd48d604f"
+    },
+    "src/layouts/full/FullLayout.vue": {
+      "beforeSha256": "12cde9bf51b7bd78ee234ce934f1879190ac3cbb1968641c0d38e39bcea08e17",
+      "afterSha256": "12cde9bf51b7bd78ee234ce934f1879190ac3cbb1968641c0d38e39bcea08e17"
+    },
+    "src/layouts/full/customizer/CustomizerPanel.vue": {
+      "beforeSha256": "6a02ef903eabdfd1217f1e24f0b8ed911655e0cd9cefb105882a798302311c29",
+      "afterSha256": "6a02ef903eabdfd1217f1e24f0b8ed911655e0cd9cefb105882a798302311c29"
+    },
+    "src/layouts/full/footer/FooterPanel.vue": {
+      "beforeSha256": "b9af94eec0b9b5f473ab126ef9d4ee3e735bfa84dbc3c58badb72e5d0954ec7d",
+      "afterSha256": "b9af94eec0b9b5f473ab126ef9d4ee3e735bfa84dbc3c58badb72e5d0954ec7d"
+    },
+    "src/layouts/full/horizontal-header/HorizontalHeader.vue": {
+      "beforeSha256": "c27306c7c3817141b9f08e514727750ba7b9f78be61bbcf8121c7c9a16faed97",
+      "afterSha256": "c27306c7c3817141b9f08e514727750ba7b9f78be61bbcf8121c7c9a16faed97"
+    },
+    "src/layouts/full/horizontal-sidebar/HorizontalSidebar.vue": {
+      "beforeSha256": "cbfc351160e63df654ed103296ca3a2a7ce78e0334fe3e0bf132d46730e4891f",
+      "afterSha256": "cbfc351160e63df654ed103296ca3a2a7ce78e0334fe3e0bf132d46730e4891f"
+    },
+    "src/layouts/full/horizontal-sidebar/NavCollapse/NavCollapse.vue": {
+      "beforeSha256": "785a49a80ab6e8bdb9206ea85419ab4277bef09e29fdff44a44959798bf951bc",
+      "afterSha256": "785a49a80ab6e8bdb9206ea85419ab4277bef09e29fdff44a44959798bf951bc"
+    },
+    "src/layouts/full/horizontal-sidebar/NavItem/NavItem.vue": {
+      "beforeSha256": "4da2cd072c83e03ce41842199f825179441911255872cf4796f83cbe19283e2f",
+      "afterSha256": "4da2cd072c83e03ce41842199f825179441911255872cf4796f83cbe19283e2f"
+    },
+    "src/layouts/full/horizontal-sidebar/horizontalItems.ts": {
+      "beforeSha256": "250849ff8d2fa971ec1ce9a91ea5bad2ae00e9d6987fb5c301acf157662ec088",
+      "afterSha256": "250849ff8d2fa971ec1ce9a91ea5bad2ae00e9d6987fb5c301acf157662ec088"
+    },
+    "src/layouts/full/logo/LogoDark.vue": {
+      "beforeSha256": "c4967bcf7e09bb07e5f666b72f395e23e536a182705e40efe78583c7925a7114",
+      "afterSha256": "c4967bcf7e09bb07e5f666b72f395e23e536a182705e40efe78583c7925a7114"
+    },
+    "src/layouts/full/logo/LogoLight.vue": {
+      "beforeSha256": "31f57e40f9d27c88c0a0518c9225bd8748d04179c73eef20f530760c9790bfd1",
+      "afterSha256": "31f57e40f9d27c88c0a0518c9225bd8748d04179c73eef20f530760c9790bfd1"
+    },
+    "src/layouts/full/logo/LogoMain.vue": {
+      "beforeSha256": "7c5165d2f47a646431c0beab7bcd935a01468d47e807923d1faac4ffd4364e02",
+      "afterSha256": "7c5165d2f47a646431c0beab7bcd935a01468d47e807923d1faac4ffd4364e02"
+    },
+    "src/layouts/full/vertical-header/NotificationDD.vue": {
+      "beforeSha256": "fbc82426a5c6b369bdaea10a1b9c216ad90f715cc03ad0cd54ce7dd1df5b2eba",
+      "afterSha256": "fbc82426a5c6b369bdaea10a1b9c216ad90f715cc03ad0cd54ce7dd1df5b2eba"
+    },
+    "src/layouts/full/vertical-header/ProfileDD.vue": {
+      "beforeSha256": "ef9ba5ecb708f28f838bf13fbdda55816178c57197982b5c3a044b0eee5f2ba3",
+      "afterSha256": "ef9ba5ecb708f28f838bf13fbdda55816178c57197982b5c3a044b0eee5f2ba3"
+    },
+    "src/layouts/full/vertical-header/VerticalHeader.vue": {
+      "beforeSha256": "70b86b0d0145f9304e93914a34a33edd8bb965299b92251f0ad91c47bf69d95b",
+      "afterSha256": "70b86b0d0145f9304e93914a34a33edd8bb965299b92251f0ad91c47bf69d95b"
+    },
+    "src/layouts/full/vertical-header/data.ts": {
+      "beforeSha256": "9b561da402650697d12ddcd7cb142185aee46ea6ee9cf1d0b36a24b88d78021f",
+      "afterSha256": "9b561da402650697d12ddcd7cb142185aee46ea6ee9cf1d0b36a24b88d78021f"
+    },
+    "src/layouts/full/vertical-sidebar/IconSet.vue": {
+      "beforeSha256": "4d3dcfb764b3d8d503e0fd145080ddf03b461103b2e38a2088658967a2e7610d",
+      "afterSha256": "4d3dcfb764b3d8d503e0fd145080ddf03b461103b2e38a2088658967a2e7610d"
+    },
+    "src/layouts/full/vertical-sidebar/NavCollapse/NavCollapse.vue": {
+      "beforeSha256": "c2c0ace2aeeb4f57cb963fc533ccb749ce56500f386d8109afa0271836fe5b20",
+      "afterSha256": "c2c0ace2aeeb4f57cb963fc533ccb749ce56500f386d8109afa0271836fe5b20"
+    },
+    "src/layouts/full/vertical-sidebar/NavGroup/NavGroup.vue": {
+      "beforeSha256": "8e17e111ed13d9b805042878f4f4790c8477328036ce5bfa3ad25468e891191a",
+      "afterSha256": "8e17e111ed13d9b805042878f4f4790c8477328036ce5bfa3ad25468e891191a"
+    },
+    "src/layouts/full/vertical-sidebar/NavItem/NavItem.vue": {
+      "beforeSha256": "2a1155ccf8e207006d4e86590489ac2b42b0be4f8c476d5e5dc07cb7a9aed742",
+      "afterSha256": "2a1155ccf8e207006d4e86590489ac2b42b0be4f8c476d5e5dc07cb7a9aed742"
+    },
+    "src/layouts/full/vertical-sidebar/VerticalSidebar.vue": {
+      "beforeSha256": "ebdfcfc9288ce12cec2499410f96cf85d7739d0903aa57f2a74e9fcc6cec1cb2",
+      "afterSha256": "ebdfcfc9288ce12cec2499410f96cf85d7739d0903aa57f2a74e9fcc6cec1cb2"
+    },
+    "src/layouts/full/vertical-sidebar/extrabox/ExtraBox.vue": {
+      "beforeSha256": "655a056308680b061a7d10f54e932ba81b281c0232e8e9cf602cfde9e37601c6",
+      "afterSha256": "655a056308680b061a7d10f54e932ba81b281c0232e8e9cf602cfde9e37601c6"
+    },
+    "src/layouts/full/vertical-sidebar/sidebarItem.ts": {
+      "beforeSha256": "37025107f1a42b6300839969a6a3b39f9c6af5c812c63a3ea1b6db14c7042062",
+      "afterSha256": "37025107f1a42b6300839969a6a3b39f9c6af5c812c63a3ea1b6db14c7042062"
+    },
+    "src/main.ts": {
+      "beforeSha256": "64689c5bdcf0fcbdf01aa56d02a56d72a36e85a5d7d74795774070312941c0a9",
+      "afterSha256": "64689c5bdcf0fcbdf01aa56d02a56d72a36e85a5d7d74795774070312941c0a9"
+    },
+    "src/mocks/adapter.ts": {
+      "beforeSha256": "97919f8d1e60cafdde102aef21de0412369355f1222b215d3bbc4ced80af4705",
+      "afterSha256": "97919f8d1e60cafdde102aef21de0412369355f1222b215d3bbc4ced80af4705"
+    },
+    "src/mocks/config.ts": {
+      "beforeSha256": "ddfee231b99ae03ceb33db052b605f1e7c5aaca7e146fdf344843c75221afde7",
+      "afterSha256": "ddfee231b99ae03ceb33db052b605f1e7c5aaca7e146fdf344843c75221afde7"
+    },
+    "src/mocks/database.ts": {
+      "beforeSha256": "0dd07300b267329cf3a6e31a6853241ae3e0505176ce5db7ed3761aa118e874c",
+      "afterSha256": "0dd07300b267329cf3a6e31a6853241ae3e0505176ce5db7ed3761aa118e874c"
+    },
+    "src/mocks/runtime.ts": {
+      "beforeSha256": "de7a90148293045750e574859c3ccc60d83d7666f887a527455f3a195fb86561",
+      "afterSha256": "de7a90148293045750e574859c3ccc60d83d7666f887a527455f3a195fb86561"
+    },
+    "src/modules/morefoto/catalog/api.ts": {
+      "beforeSha256": null,
+      "afterSha256": "810077419b999ca972902eafff8f7176c1d8032a841384f04401f1cea7dabf14"
+    },
+    "src/modules/morefoto/catalog/components/CatalogScreen.vue": {
+      "beforeSha256": null,
+      "afterSha256": "5177edb709ab9dd53df9d6d6ef02fe9135a536ed7c512afeea36a96b010a2ebf"
+    },
+    "src/modules/morefoto/catalog/components/CatalogTable.vue": {
+      "beforeSha256": null,
+      "afterSha256": "0e2f264a7d6bded9fa4a5cee91cc5c501336a901faab8fd54741661f1e772a0c"
+    },
+    "src/modules/morefoto/catalog/useCatalog.ts": {
+      "beforeSha256": null,
+      "afterSha256": "a6a49e0b596a0fcecbeddf5d5c924e7bbb908bbc1d6c12d67c9f8d060427ac59"
+    },
+    "src/modules/morefoto/catalog/useProductEditor.ts": {
+      "beforeSha256": null,
+      "afterSha256": "92c431b910941c24b14f384890c1d6fad96f155ff1acfe1f1f3e1ff4d1f6bd40"
+    },
+    "src/modules/morefoto/commerce/components/CartContents.vue": {
+      "beforeSha256": "023758e39685c60a07b1833cf38aa5f64e4eb359a90de14d8d08c0ca418d0937",
+      "afterSha256": "023758e39685c60a07b1833cf38aa5f64e4eb359a90de14d8d08c0ca418d0937"
+    },
+    "src/modules/morefoto/commerce/components/CartEntry.vue": {
+      "beforeSha256": "4909256a88ae223d54b253f767100352cd23d67e4465ae0fcd6cf34507e11837",
+      "afterSha256": "4909256a88ae223d54b253f767100352cd23d67e4465ae0fcd6cf34507e11837"
+    },
+    "src/modules/morefoto/commerce/components/CartItems.vue": {
+      "beforeSha256": "95a3bd3a4950abd6bfd5f6ca5ccce3760b786f77554845038a52c75eadf16eb9",
+      "afterSha256": "95a3bd3a4950abd6bfd5f6ca5ccce3760b786f77554845038a52c75eadf16eb9"
+    },
+    "src/modules/morefoto/commerce/components/CartLineItem.vue": {
+      "beforeSha256": "992b5f9fc3d4ced08feec6a4e23de50d2ef5bc2e61f8ae4524d250769c586e85",
+      "afterSha256": "992b5f9fc3d4ced08feec6a4e23de50d2ef5bc2e61f8ae4524d250769c586e85"
+    },
+    "src/modules/morefoto/commerce/components/CartScreen.vue": {
+      "beforeSha256": "93f0884ef511724b521eacbf3c9b94c76bdea6dbcb0706569ce406d68d8ee3bc",
+      "afterSha256": "93f0884ef511724b521eacbf3c9b94c76bdea6dbcb0706569ce406d68d8ee3bc"
+    },
+    "src/modules/morefoto/commerce/components/CartSummary.vue": {
+      "beforeSha256": "ff369999cc7c0ac50718dea61d3f382865559f4949d03ee1e3ea2d167d514f49",
+      "afterSha256": "ff369999cc7c0ac50718dea61d3f382865559f4949d03ee1e3ea2d167d514f49"
+    },
+    "src/modules/morefoto/commerce/components/ProductSelector.vue": {
+      "beforeSha256": "43b7ab9b4c292facb47f90d85c3066069392440d250794c14fee34fc77401b84",
+      "afterSha256": "43b7ab9b4c292facb47f90d85c3066069392440d250794c14fee34fc77401b84"
+    },
+    "src/modules/morefoto/commerce/composables/useCart.ts": {
+      "beforeSha256": "435f5fea623fd8941d631df4d873295bf14e613fe99212206aef62f2576ff4d9",
+      "afterSha256": "435f5fea623fd8941d631df4d873295bf14e613fe99212206aef62f2576ff4d9"
+    },
+    "src/modules/morefoto/commerce/mocks/catalog.ts": {
+      "beforeSha256": "448e7791131cdfe192eba3f6a01c1f33c169d0dcf47261b76943cbca949329b9",
+      "afterSha256": "448e7791131cdfe192eba3f6a01c1f33c169d0dcf47261b76943cbca949329b9"
+    },
+    "src/modules/morefoto/commerce/money.ts": {
+      "beforeSha256": "42bbb2afab29b2f36c0b881a78a8dc3e9f88ae8726af38c512ecad10e7be7c83",
+      "afterSha256": "42bbb2afab29b2f36c0b881a78a8dc3e9f88ae8726af38c512ecad10e7be7c83"
+    },
+    "src/modules/morefoto/commerce/services/cart.ts": {
+      "beforeSha256": "c432745bda91d8bfac3a563d0db217d5307d8181cfe84adaeacee2ab2553c59d",
+      "afterSha256": "c432745bda91d8bfac3a563d0db217d5307d8181cfe84adaeacee2ab2553c59d"
+    },
+    "src/modules/morefoto/commerce/services/pricing.ts": {
+      "beforeSha256": "c3e4b737f415f693f37d0f82997082886deaed686bef8daec594d5700a4f00a4",
+      "afterSha256": "c3e4b737f415f693f37d0f82997082886deaed686bef8daec594d5700a4f00a4"
+    },
+    "src/modules/morefoto/commerce/types.ts": {
+      "beforeSha256": "b8bf7f99980f4f2447da7e3431795df5231f257e9b66839567c1db5cef132cc9",
+      "afterSha256": "b8bf7f99980f4f2447da7e3431795df5231f257e9b66839567c1db5cef132cc9"
+    },
+    "src/modules/morefoto/components/DemoAccounts.vue": {
+      "beforeSha256": "e573ec60975cfa4c9a3dbeaffd65cda5ae0ea7fec19cf1ddd7a2d4f92164e552",
+      "afterSha256": "e573ec60975cfa4c9a3dbeaffd65cda5ae0ea7fec19cf1ddd7a2d4f92164e552"
+    },
+    "src/modules/morefoto/components/InstitutionDetails.vue": {
+      "beforeSha256": "b720f9e6f4ad4e18a47b5d9d5db48a941b4aaea11a24011646ba1d0aa7ab3136",
+      "afterSha256": "b720f9e6f4ad4e18a47b5d9d5db48a941b4aaea11a24011646ba1d0aa7ab3136"
+    },
+    "src/modules/morefoto/components/ScopeGroups.vue": {
+      "beforeSha256": "6767142f7e0ea4def8d79ea3a65904efdfd460377fe323ee0cb521faeecb9e67",
+      "afterSha256": "6767142f7e0ea4def8d79ea3a65904efdfd460377fe323ee0cb521faeecb9e67"
+    },
+    "src/modules/morefoto/components/ScopeOverview.vue": {
+      "beforeSha256": "46379efb978c04d5f032b752a36ec754a318ad42e22bfd556aa04ede53184fdb",
+      "afterSha256": "46379efb978c04d5f032b752a36ec754a318ad42e22bfd556aa04ede53184fdb"
+    },
+    "src/modules/morefoto/components/StaffProfile.vue": {
+      "beforeSha256": "3589dbcfbc0d12ae52f317646be56b7ab58e725d3d2e07fccd4950428447245f",
+      "afterSha256": "3589dbcfbc0d12ae52f317646be56b7ab58e725d3d2e07fccd4950428447245f"
+    },
+    "src/modules/morefoto/composables/useCabinetScope.ts": {
+      "beforeSha256": "538d5423611f5b8016e035984c7093478de9693ab14b20f47b538134f020bc28",
+      "afterSha256": "538d5423611f5b8016e035984c7093478de9693ab14b20f47b538134f020bc28"
+    },
+    "src/modules/morefoto/curator/components/CaseDetails.vue": {
+      "beforeSha256": "b9545ee0635e2b5f41e126df96e6133f44046fe41cf85709f540adec382938dd",
+      "afterSha256": "b9545ee0635e2b5f41e126df96e6133f44046fe41cf85709f540adec382938dd"
+    },
+    "src/modules/morefoto/curator/components/CaseEditor.vue": {
+      "beforeSha256": "c6dd68298f5327b803543982f72410b5f0bebebde87af5655217b9f6dd89621a",
+      "afterSha256": "c6dd68298f5327b803543982f72410b5f0bebebde87af5655217b9f6dd89621a"
+    },
+    "src/modules/morefoto/curator/components/CaseFields.vue": {
+      "beforeSha256": "19a1470d32240b99c379f2a58ef25214a392feee073abecffff9c67aa1cca61c",
+      "afterSha256": "19a1470d32240b99c379f2a58ef25214a392feee073abecffff9c67aa1cca61c"
+    },
+    "src/modules/morefoto/curator/components/CuratorScreen.vue": {
+      "beforeSha256": "1112b41ca58d6c64480d3c49475651835d6bb43a2d66fdf1c815bf2b20648308",
+      "afterSha256": "1112b41ca58d6c64480d3c49475651835d6bb43a2d66fdf1c815bf2b20648308"
+    },
+    "src/modules/morefoto/curator/components/ExtensionFields.vue": {
+      "beforeSha256": "daf8d7f4ad50c8844272e0a57ef167fb0baabbcf92c5c742442ad7e1c301dd98",
+      "afterSha256": "daf8d7f4ad50c8844272e0a57ef167fb0baabbcf92c5c742442ad7e1c301dd98"
+    },
+    "src/modules/morefoto/curator/components/OrderPeriod.vue": {
+      "beforeSha256": "ebe1ca8016588f656ac724f17085aecfebd5c3ae99373c0d408c6a7f64118497",
+      "afterSha256": "ebe1ca8016588f656ac724f17085aecfebd5c3ae99373c0d408c6a7f64118497"
+    },
+    "src/modules/morefoto/curator/components/StaffOrderDetails.vue": {
+      "beforeSha256": "0f3dc7d3cba44291c398a67375fd6fda9a53c6036b5a89a49303130aa5fde4e7",
+      "afterSha256": "0f3dc7d3cba44291c398a67375fd6fda9a53c6036b5a89a49303130aa5fde4e7"
+    },
+    "src/modules/morefoto/curator/components/SupportTimeline.vue": {
+      "beforeSha256": "1da800c110f049117622c04c471e2dd24e9e1a4a1aa006c45ae2963e1a2bf263",
+      "afterSha256": "1da800c110f049117622c04c471e2dd24e9e1a4a1aa006c45ae2963e1a2bf263"
+    },
+    "src/modules/morefoto/curator/components/WorkFilters.vue": {
+      "beforeSha256": "74eb3ad3e21d4f5c9049efbc285b0de8c2f0d30154e470d3bdd3c2f96db65eba",
+      "afterSha256": "74eb3ad3e21d4f5c9049efbc285b0de8c2f0d30154e470d3bdd3c2f96db65eba"
+    },
+    "src/modules/morefoto/curator/components/WorkTable.vue": {
+      "beforeSha256": "c6e0b0ca1d2da0ac001c7f6a7f2e58c1f1ecc84f631d382def13f995cce0d82d",
+      "afterSha256": "c6e0b0ca1d2da0ac001c7f6a7f2e58c1f1ecc84f631d382def13f995cce0d82d"
+    },
+    "src/modules/morefoto/curator/curator.css": {
+      "beforeSha256": "a907f603d47b1f3fc912dad9188f67d92ebc15a433c88987f0c9b12ff3ed18f3",
+      "afterSha256": "a907f603d47b1f3fc912dad9188f67d92ebc15a433c88987f0c9b12ff3ed18f3"
+    },
+    "src/modules/morefoto/curator/period.ts": {
+      "beforeSha256": "72e3b75e040e2c6a5bcaf3bf28d4d1160777a9c0261504da555d1d47a523c2fb",
+      "afterSha256": "72e3b75e040e2c6a5bcaf3bf28d4d1160777a9c0261504da555d1d47a523c2fb"
+    },
+    "src/modules/morefoto/curator/rules.ts": {
+      "beforeSha256": "96c099398b8e5dda691c11111b6b0327b855de13eda66e9de2ba142d61ebb81f",
+      "afterSha256": "96c099398b8e5dda691c11111b6b0327b855de13eda66e9de2ba142d61ebb81f"
+    },
+    "src/modules/morefoto/curator/service.ts": {
+      "beforeSha256": "fecd1d43d86266df9e3cc2a3bd9aaef91b147b1a4af75bd913f701243c878eef",
+      "afterSha256": "fecd1d43d86266df9e3cc2a3bd9aaef91b147b1a4af75bd913f701243c878eef"
+    },
+    "src/modules/morefoto/curator/types.ts": {
+      "beforeSha256": "43a47ea9af39ce0611d4b79634bac98a028b8be18d9047583f20f3fea07ec745",
+      "afterSha256": "43a47ea9af39ce0611d4b79634bac98a028b8be18d9047583f20f3fea07ec745"
+    },
+    "src/modules/morefoto/curator/useCaseEditor.ts": {
+      "beforeSha256": "e034c1a09efddf827919835129e914cc66d3af22f8b2192a4689f443bd7a1e30",
+      "afterSha256": "e034c1a09efddf827919835129e914cc66d3af22f8b2192a4689f443bd7a1e30"
+    },
+    "src/modules/morefoto/curator/useCurator.ts": {
+      "beforeSha256": "542d49352fc31d30c7212034223fbc52c4c90fd4bcca001d06f6a15930ba2ea7",
+      "afterSha256": "542d49352fc31d30c7212034223fbc52c4c90fd4bcca001d06f6a15930ba2ea7"
+    },
+    "src/modules/morefoto/curator/useOrderPeriod.ts": {
+      "beforeSha256": "c321a7f4bbe93ee80e1dc0d0f2e0b2c9f3f9a4ddb8d78473ad6ab93f1f9798d0",
+      "afterSha256": "c321a7f4bbe93ee80e1dc0d0f2e0b2c9f3f9a4ddb8d78473ad6ab93f1f9798d0"
+    },
+    "src/modules/morefoto/curator/useWorkFilters.ts": {
+      "beforeSha256": "700871e464b8dd14b04783a5c0144db8869865c0593a2785aa89ce8b6b9d70c1",
+      "afterSha256": "700871e464b8dd14b04783a5c0144db8869865c0593a2785aa89ce8b6b9d70c1"
+    },
+    "src/modules/morefoto/dashboard/components/CuratorContact.vue": {
+      "beforeSha256": "1fc3d07580b5637683ecd49fcdf31698f712bee8e6de815edff403223cdfa370",
+      "afterSha256": "1fc3d07580b5637683ecd49fcdf31698f712bee8e6de815edff403223cdfa370"
+    },
+    "src/modules/morefoto/dashboard/components/DashboardBoard.vue": {
+      "beforeSha256": "a353f0c3b24b6e5db5cd753b9b01f0a672c22cd8d7634fbdb9458062300ffd32",
+      "afterSha256": "a353f0c3b24b6e5db5cd753b9b01f0a672c22cd8d7634fbdb9458062300ffd32"
+    },
+    "src/modules/morefoto/dashboard/components/DashboardFilters.vue": {
+      "beforeSha256": "cc4f673aca5b05cbb98019fed552f8d6c01c33a30cc86e58a2c48ac14d17b507",
+      "afterSha256": "cc4f673aca5b05cbb98019fed552f8d6c01c33a30cc86e58a2c48ac14d17b507"
+    },
+    "src/modules/morefoto/dashboard/components/DashboardGroups.vue": {
+      "beforeSha256": "6391984bb6c503f29ab1a6ca81fe383b75d6b4a36f88431bda6e035c227b3874",
+      "afterSha256": "6391984bb6c503f29ab1a6ca81fe383b75d6b4a36f88431bda6e035c227b3874"
+    },
+    "src/modules/morefoto/dashboard/components/GroupDashboard.vue": {
+      "beforeSha256": "9768506ac761bedcf7eb30a0a7938ac9a0632f8eabe6edaedadcc1431e7faf33",
+      "afterSha256": "9768506ac761bedcf7eb30a0a7938ac9a0632f8eabe6edaedadcc1431e7faf33"
+    },
+    "src/modules/morefoto/dashboard/components/GroupSummary.vue": {
+      "beforeSha256": "d4c9e71c896eca909d9872a378859838276124e1614cafda2f19a8fb5799d342",
+      "afterSha256": "d4c9e71c896eca909d9872a378859838276124e1614cafda2f19a8fb5799d342"
+    },
+    "src/modules/morefoto/dashboard/components/TeacherRequests.vue": {
+      "beforeSha256": "c9685dfd1c8cefea0eeeb2e55335b0099c3347ea71e9f629b123529922632394",
+      "afterSha256": "c9685dfd1c8cefea0eeeb2e55335b0099c3347ea71e9f629b123529922632394"
+    },
+    "src/modules/morefoto/dashboard/rules.ts": {
+      "beforeSha256": "a942ac94c5aa0fcf4f5981c7265f3fd4fdc60a81c91c7b1ca0334757c4f572c3",
+      "afterSha256": "a942ac94c5aa0fcf4f5981c7265f3fd4fdc60a81c91c7b1ca0334757c4f572c3"
+    },
+    "src/modules/morefoto/dashboard/snapshot.ts": {
+      "beforeSha256": "4ebf6e3e2e57683a69a91eefe72b8f846263baaeea5ac28a51f591cfacf7a4ce",
+      "afterSha256": "4ebf6e3e2e57683a69a91eefe72b8f846263baaeea5ac28a51f591cfacf7a4ce"
+    },
+    "src/modules/morefoto/dashboard/types.ts": {
+      "beforeSha256": "09dbb371883fabdcd3883108eb25f87c866400704c5b231c1a0d74a46c59f8a7",
+      "afterSha256": "09dbb371883fabdcd3883108eb25f87c866400704c5b231c1a0d74a46c59f8a7"
+    },
+    "src/modules/morefoto/dashboard/useDashboardFilters.ts": {
+      "beforeSha256": "4db1a3e4763d6b1e291a0cfc38890a3978ac1be1f83bdcbcc3da4f9e49674623",
+      "afterSha256": "4db1a3e4763d6b1e291a0cfc38890a3978ac1be1f83bdcbcc3da4f9e49674623"
+    },
+    "src/modules/morefoto/dashboard/useGroupLink.ts": {
+      "beforeSha256": "fa1eb8b0f55614002ee506103fef0b38c3dcb843861fdc9978b099993b1f3b9c",
+      "afterSha256": "fa1eb8b0f55614002ee506103fef0b38c3dcb843861fdc9978b099993b1f3b9c"
+    },
+    "src/modules/morefoto/gallery/components/GalleryFilters.vue": {
+      "beforeSha256": "094cd0f564e3b2215f19ab1a5e769f2ceb4df5e4c72cd79219bd9e7ab01993fe",
+      "afterSha256": "094cd0f564e3b2215f19ab1a5e769f2ceb4df5e4c72cd79219bd9e7ab01993fe"
+    },
+    "src/modules/morefoto/gallery/components/GalleryGrid.vue": {
+      "beforeSha256": "a316801c4a6ea06ffd37f8cc6652033903567d4009a6bad95bc1fa7e42018eb5",
+      "afterSha256": "a316801c4a6ea06ffd37f8cc6652033903567d4009a6bad95bc1fa7e42018eb5"
+    },
+    "src/modules/morefoto/gallery/components/GalleryHeader.vue": {
+      "beforeSha256": "7c6ffabda91bf02406c8282f1b3bfa7af56b38e662e49f63e525ab4c7cb796f8",
+      "afterSha256": "7c6ffabda91bf02406c8282f1b3bfa7af56b38e662e49f63e525ab4c7cb796f8"
+    },
+    "src/modules/morefoto/gallery/components/GalleryHelp.vue": {
+      "beforeSha256": "3beda4c157fbf29f19f63dc0e9e846d61ef54f95fe3101a62178697bb6fbf4b2",
+      "afterSha256": "3beda4c157fbf29f19f63dc0e9e846d61ef54f95fe3101a62178697bb6fbf4b2"
+    },
+    "src/modules/morefoto/gallery/components/GalleryImage.vue": {
+      "beforeSha256": "19beb868de8f9b2cc3a43168e169d94e92d4429f5eaa5b1c8fb2ead126802e97",
+      "afterSha256": "19beb868de8f9b2cc3a43168e169d94e92d4429f5eaa5b1c8fb2ead126802e97"
+    },
+    "src/modules/morefoto/gallery/components/GalleryScreen.vue": {
+      "beforeSha256": "4208491ff8d650e411d4c36bae10a43dc47221eb9e5d947f968c86ce3add9e3c",
+      "afterSha256": "4208491ff8d650e411d4c36bae10a43dc47221eb9e5d947f968c86ce3add9e3c"
+    },
+    "src/modules/morefoto/gallery/components/PhotoViewer.vue": {
+      "beforeSha256": "f40ff66e44f31540a6d7fcd9b3c5735569a8b6ab75a775154999a4290774002c",
+      "afterSha256": "f40ff66e44f31540a6d7fcd9b3c5735569a8b6ab75a775154999a4290774002c"
+    },
+    "src/modules/morefoto/gallery/composables/useGallery.ts": {
+      "beforeSha256": "1099099d7c81867dc1fe6cc63057ba66e2aa3ee88a7429553b4d801a41b93f22",
+      "afterSha256": "1099099d7c81867dc1fe6cc63057ba66e2aa3ee88a7429553b4d801a41b93f22"
+    },
+    "src/modules/morefoto/gallery/links.ts": {
+      "beforeSha256": "2df4ae9f082d3fe842bf3d2f49b61afce9082527f4a6be2c650a1ec79e020325",
+      "afterSha256": "2df4ae9f082d3fe842bf3d2f49b61afce9082527f4a6be2c650a1ec79e020325"
+    },
+    "src/modules/morefoto/gallery/mocks/photos.ts": {
+      "beforeSha256": "d6a637e837d8e08fb479792f5687eee72a06d95f709eb4e27963abbd0d381cc9",
+      "afterSha256": "d6a637e837d8e08fb479792f5687eee72a06d95f709eb4e27963abbd0d381cc9"
+    },
+    "src/modules/morefoto/gallery/mocks/state.ts": {
+      "beforeSha256": "a3b2123150edb2c5e86d9e93d322a669049072626b21afe2c82e538682f85d9b",
+      "afterSha256": "a3b2123150edb2c5e86d9e93d322a669049072626b21afe2c82e538682f85d9b"
+    },
+    "src/modules/morefoto/gallery/services/gallery.ts": {
+      "beforeSha256": "806206642d31d95989889bb0c691c2e5b692a92c289dc0ee6f679a6da3c726b1",
+      "afterSha256": "806206642d31d95989889bb0c691c2e5b692a92c289dc0ee6f679a6da3c726b1"
+    },
+    "src/modules/morefoto/gallery/types.ts": {
+      "beforeSha256": "6bbf431c1a59e0bdfa7d3dc1acee398f119d83c36bddde64a9196589292ef177",
+      "afterSha256": "6bbf431c1a59e0bdfa7d3dc1acee398f119d83c36bddde64a9196589292ef177"
+    },
+    "src/modules/morefoto/handoff/components/LinkFields.vue": {
+      "beforeSha256": "846869c6478ecfae85deb17cc01a30164ce9b4a32b40b9ae40697ce668313fce",
+      "afterSha256": "846869c6478ecfae85deb17cc01a30164ce9b4a32b40b9ae40697ce668313fce"
+    },
+    "src/modules/morefoto/handoff/components/LinksScreen.vue": {
+      "beforeSha256": "091840fd9bea64fa4e08d13331d8695fd5d714190bbd8c8ec77d5fa33a4d6d50",
+      "afterSha256": "091840fd9bea64fa4e08d13331d8695fd5d714190bbd8c8ec77d5fa33a4d6d50"
+    },
+    "src/modules/morefoto/handoff/components/RequestFields.vue": {
+      "beforeSha256": "735bf626fe380384940ef13c42172d80d028e1fd82de5bdbd5e26f22a08dfd10",
+      "afterSha256": "735bf626fe380384940ef13c42172d80d028e1fd82de5bdbd5e26f22a08dfd10"
+    },
+    "src/modules/morefoto/handoff/components/RequestReview.vue": {
+      "beforeSha256": "40afa2afcd3a457ed0581403123fb75d08e08dd028caae25ee0888c244627420",
+      "afterSha256": "40afa2afcd3a457ed0581403123fb75d08e08dd028caae25ee0888c244627420"
+    },
+    "src/modules/morefoto/handoff/components/StaffRequestsScreen.vue": {
+      "beforeSha256": "91801ce0d2eab7f0c80992fe2b94f5ab0aef4891c73b4d039471154fd68c0cf2",
+      "afterSha256": "91801ce0d2eab7f0c80992fe2b94f5ab0aef4891c73b4d039471154fd68c0cf2"
+    },
+    "src/modules/morefoto/handoff/display.ts": {
+      "beforeSha256": "631898dd6b4f2de2f2de430f4bd00f5e16d939b3db1cf0a07544767b085ca2fc",
+      "afterSha256": "631898dd6b4f2de2f2de430f4bd00f5e16d939b3db1cf0a07544767b085ca2fc"
+    },
+    "src/modules/morefoto/handoff/handoff.css": {
+      "beforeSha256": "d62843f8624bec16e69d7de9e32a5635f30b63e76aaab16bf24cc3d308e7c539",
+      "afterSha256": "5e5cb5672939faf2a4fa7ae58f5944202178ed88a8a20cd0153690f82b6e01c3"
+    },
+    "src/modules/morefoto/handoff/links-service.ts": {
+      "beforeSha256": "92fea6662bcbf0227e26fef93381d7d356448d56d2b64363e1b36392ee6e8f40",
+      "afterSha256": "92fea6662bcbf0227e26fef93381d7d356448d56d2b64363e1b36392ee6e8f40"
+    },
+    "src/modules/morefoto/handoff/requests-service.ts": {
+      "beforeSha256": "0084974be43102b8c44b50d31556f34f949ab0bcf9c92d2171fd2df077c6f92d",
+      "afterSha256": "0084974be43102b8c44b50d31556f34f949ab0bcf9c92d2171fd2df077c6f92d"
+    },
+    "src/modules/morefoto/handoff/rules.ts": {
+      "beforeSha256": "a5c54a1a867321458e25ad9f9e853eb7842947c4f81e5e5f56a82395e715ebc8",
+      "afterSha256": "a5c54a1a867321458e25ad9f9e853eb7842947c4f81e5e5f56a82395e715ebc8"
+    },
+    "src/modules/morefoto/handoff/scope.ts": {
+      "beforeSha256": "c17f98d81474eb9a2bfd592af60fccc4c81123ffb9546f1d6e49eabf71339b7c",
+      "afterSha256": "c17f98d81474eb9a2bfd592af60fccc4c81123ffb9546f1d6e49eabf71339b7c"
+    },
+    "src/modules/morefoto/handoff/service.ts": {
+      "beforeSha256": "17b7f901fb03ef1dbdc4f74c435e6237b51d04d19ca24d95a751862c2b84c635",
+      "afterSha256": "17b7f901fb03ef1dbdc4f74c435e6237b51d04d19ca24d95a751862c2b84c635"
+    },
+    "src/modules/morefoto/handoff/types.ts": {
+      "beforeSha256": "ab9a0153c6679f51c8b2b8b87b90b726c89a5bc90c5e64786d9b602755e84282",
+      "afterSha256": "ab9a0153c6679f51c8b2b8b87b90b726c89a5bc90c5e64786d9b602755e84282"
+    },
+    "src/modules/morefoto/handoff/useHandoff.ts": {
+      "beforeSha256": "5b6b1822a7b281e3a123d1017afbc8fb1092efb08227a6f42f64e6ae4ac5e9e2",
+      "afterSha256": "5b6b1822a7b281e3a123d1017afbc8fb1092efb08227a6f42f64e6ae4ac5e9e2"
+    },
+    "src/modules/morefoto/handoff/useHandoffEditor.ts": {
+      "beforeSha256": "0a732f96990778bf1e6476ae08c195e33823462ed071d3b256c0fd807501fec7",
+      "afterSha256": "0a732f96990778bf1e6476ae08c195e33823462ed071d3b256c0fd807501fec7"
+    },
+    "src/modules/morefoto/layouts/CabinetLayout.vue": {
+      "beforeSha256": "6f0eea49e89845b27ddbd498a33f934c6e543a6b771bdb2f587952ad663fced9",
+      "afterSha256": "a2460538099f1b8141659604b9add5959d4941c84d403fd2fdfb2cf3cdd8b45d"
+    },
+    "src/modules/morefoto/management/commands.ts": {
+      "beforeSha256": "899fbf3ead038e483cfbc0659c35ffb70d90f6c1206a8d066563865cd811b115",
+      "afterSha256": "899fbf3ead038e483cfbc0659c35ffb70d90f6c1206a8d066563865cd811b115"
+    },
+    "src/modules/morefoto/management/components/AdminDialog.vue": {
+      "beforeSha256": "821dd805a269177d3d8142dd91e88110c25fa34fe18a771b5184b124e47d7bc3",
+      "afterSha256": "3c3f68982ef61021b13e3aed823eb6c8df3f210f29c0f4a25ddc0265d87d92ee"
+    },
+    "src/modules/morefoto/management/components/ConditionsFields.vue": {
+      "beforeSha256": "59d42e2c077239747b511dc7dae819a80fa0068195705ae7721e0b8982f3a4d8",
+      "afterSha256": "59d42e2c077239747b511dc7dae819a80fa0068195705ae7721e0b8982f3a4d8"
+    },
+    "src/modules/morefoto/management/components/ManagementScreen.vue": {
+      "beforeSha256": "91a5aa113704d70e380bef2e74d12d1a17dc7879efa200dea46e24b6dec502bc",
+      "afterSha256": "91a5aa113704d70e380bef2e74d12d1a17dc7879efa200dea46e24b6dec502bc"
+    },
+    "src/modules/morefoto/management/components/ProductFields.vue": {
+      "beforeSha256": "8f20cbef6d5acdd4b9b46b0217487346850c62eeea4173fa49691761f6b2f8ae",
+      "afterSha256": "3feeee01842ed233ff3d60134beca4afa3474de9589675e4ce95bfd96c6c34e1"
+    },
+    "src/modules/morefoto/management/components/UserFields.vue": {
+      "beforeSha256": "f013780a30f9b388c618e0064640ce18dc9f9cf26dd8a2d75efb5e8d3217c39b",
+      "afterSha256": "f013780a30f9b388c618e0064640ce18dc9f9cf26dd8a2d75efb5e8d3217c39b"
+    },
+    "src/modules/morefoto/management/rules.ts": {
+      "beforeSha256": "93c7b28cfed4cae62d95d249140768beddee59a3b4c6e0154f92e0cb65fec079",
+      "afterSha256": "93c7b28cfed4cae62d95d249140768beddee59a3b4c6e0154f92e0cb65fec079"
+    },
+    "src/modules/morefoto/management/service.ts": {
+      "beforeSha256": "f154acb0b862e83064ed85c34ca820ff8a2981f8e257c1a6f79921f8149745fb",
+      "afterSha256": "f154acb0b862e83064ed85c34ca820ff8a2981f8e257c1a6f79921f8149745fb"
+    },
+    "src/modules/morefoto/management/types.ts": {
+      "beforeSha256": "4194d765b3709d7d5c9c89b7a73131134631ff5c2194416c1203c7f49adcb157",
+      "afterSha256": "4194d765b3709d7d5c9c89b7a73131134631ff5c2194416c1203c7f49adcb157"
+    },
+    "src/modules/morefoto/management/useManagement.ts": {
+      "beforeSha256": "42af90e9e1d8467327ff844c914e0afee2f14f48723d3a680584c222b552247c",
+      "afterSha256": "42af90e9e1d8467327ff844c914e0afee2f14f48723d3a680584c222b552247c"
+    },
+    "src/modules/morefoto/management/useManagementEditor.ts": {
+      "beforeSha256": "353e908eac0241d2834f4c82f06d1113d6a5bc1935e0077e25f1386d5aa1a214",
+      "afterSha256": "353e908eac0241d2834f4c82f06d1113d6a5bc1935e0077e25f1386d5aa1a214"
+    },
+    "src/modules/morefoto/mocks/adapter.ts": {
+      "beforeSha256": "b7b222abd725fa50da28d2f538e9528f089836823a0859975cd5b3feb021b25e",
+      "afterSha256": "b7b222abd725fa50da28d2f538e9528f089836823a0859975cd5b3feb021b25e"
+    },
+    "src/modules/morefoto/mocks/clock.ts": {
+      "beforeSha256": "53328d3363717c6428f97a3fb5899353c7f7f7e66fe5f12a7e7b2a24c9ab487a",
+      "afterSha256": "53328d3363717c6428f97a3fb5899353c7f7f7e66fe5f12a7e7b2a24c9ab487a"
+    },
+    "src/modules/morefoto/mocks/fixtures.ts": {
+      "beforeSha256": "8957fd6c7bda7a58e7897f696e9662795282f457e44a7a8329d07712d17f8e41",
+      "afterSha256": "8957fd6c7bda7a58e7897f696e9662795282f457e44a7a8329d07712d17f8e41"
+    },
+    "src/modules/morefoto/mocks/runtime.ts": {
+      "beforeSha256": "093f6d2e73be1e0aa57c822de64a9004a5e0695787c2234f7316e5943e2019fb",
+      "afterSha256": "093f6d2e73be1e0aa57c822de64a9004a5e0695787c2234f7316e5943e2019fb"
+    },
+    "src/modules/morefoto/mocks/service.ts": {
+      "beforeSha256": "179a60a013742264019d1ac4262923d425991db59156336df15ffff36789e987",
+      "afterSha256": "179a60a013742264019d1ac4262923d425991db59156336df15ffff36789e987"
+    },
+    "src/modules/morefoto/mocks/storage.ts": {
+      "beforeSha256": "9f64074d0c7c9fa3a0755dbc8251f1761d6b8ccee0348545541886e9372dd1ca",
+      "afterSha256": "9f64074d0c7c9fa3a0755dbc8251f1761d6b8ccee0348545541886e9372dd1ca"
+    },
+    "src/modules/morefoto/orders/components/CheckoutContacts.vue": {
+      "beforeSha256": "c1b1cc63d5ce6323ffb0daf4eda6fdb26aa7756e0085b90174b57928706a7a20",
+      "afterSha256": "c1b1cc63d5ce6323ffb0daf4eda6fdb26aa7756e0085b90174b57928706a7a20"
+    },
+    "src/modules/morefoto/orders/components/CheckoutForm.vue": {
+      "beforeSha256": "f057d1b12ccf573b4a6fee2e20cf14291a62f6e976fe2020a4fa3bb3541b3e10",
+      "afterSha256": "f057d1b12ccf573b4a6fee2e20cf14291a62f6e976fe2020a4fa3bb3541b3e10"
+    },
+    "src/modules/morefoto/orders/components/CheckoutScreen.vue": {
+      "beforeSha256": "b40ffc96feaa15eac0c7dfb28b203a90f591676a8dc7e38bce93acfc95c35a38",
+      "afterSha256": "b40ffc96feaa15eac0c7dfb28b203a90f591676a8dc7e38bce93acfc95c35a38"
+    },
+    "src/modules/morefoto/orders/components/CheckoutTerms.vue": {
+      "beforeSha256": "51e3dd5baf27eba84f29dbe05e2aa92b886fe3a4a55bb84ed010170289032130",
+      "afterSha256": "51e3dd5baf27eba84f29dbe05e2aa92b886fe3a4a55bb84ed010170289032130"
+    },
+    "src/modules/morefoto/orders/components/DemoDeliveryControls.vue": {
+      "beforeSha256": "cf8cc6a5192e44764003c8eb8c6f4e4c921a3689f82e4369d1c263c97a663070",
+      "afterSha256": "cf8cc6a5192e44764003c8eb8c6f4e4c921a3689f82e4369d1c263c97a663070"
+    },
+    "src/modules/morefoto/orders/components/DemoPaymentControls.vue": {
+      "beforeSha256": "fdb6a87de2a2518644b657b6bd4f6455dbbb621259b320ee25c711117cd8e763",
+      "afterSha256": "fdb6a87de2a2518644b657b6bd4f6455dbbb621259b320ee25c711117cd8e763"
+    },
+    "src/modules/morefoto/orders/components/OrderAccessLinks.vue": {
+      "beforeSha256": "64da9a00a337fabf01faa1d1c45ae6a75ca4da00b80a3a780b1cdaded5f543a2",
+      "afterSha256": "64da9a00a337fabf01faa1d1c45ae6a75ca4da00b80a3a780b1cdaded5f543a2"
+    },
+    "src/modules/morefoto/orders/components/OrderAfterSales.vue": {
+      "beforeSha256": "bbb9c59e52de635f2a6eb440b6878a2d1cf685704c6bf2d9470c1be56b8d90fb",
+      "afterSha256": "bbb9c59e52de635f2a6eb440b6878a2d1cf685704c6bf2d9470c1be56b8d90fb"
+    },
+    "src/modules/morefoto/orders/components/OrderComposition.vue": {
+      "beforeSha256": "536c712d9a862562668c8c22bf0a926d896aa5db608928037fca93241950b9a5",
+      "afterSha256": "536c712d9a862562668c8c22bf0a926d896aa5db608928037fca93241950b9a5"
+    },
+    "src/modules/morefoto/orders/components/OrderContacts.vue": {
+      "beforeSha256": "d8222059ac4ddb1ca3b667f8eef5cc51e225f8e2f11863ad2dd2718c42e4a380",
+      "afterSha256": "d8222059ac4ddb1ca3b667f8eef5cc51e225f8e2f11863ad2dd2718c42e4a380"
+    },
+    "src/modules/morefoto/orders/components/OrderDownloads.vue": {
+      "beforeSha256": "9f15848572fdfc5607b95ac617cd64ac1473fec49e51dd2f17ea34fbb1ba9085",
+      "afterSha256": "9f15848572fdfc5607b95ac617cd64ac1473fec49e51dd2f17ea34fbb1ba9085"
+    },
+    "src/modules/morefoto/orders/components/OrderReceipt.vue": {
+      "beforeSha256": "17e1051f3138cbf5553aca276408c62515ec4640e317364f1bbe1f716a9a42b5",
+      "afterSha256": "17e1051f3138cbf5553aca276408c62515ec4640e317364f1bbe1f716a9a42b5"
+    },
+    "src/modules/morefoto/orders/components/OrderScreen.vue": {
+      "beforeSha256": "81e0b2f81e60b00b9ea6cf0f52477491ca0ef02032d7dfa74b10ea74c8d58cc5",
+      "afterSha256": "81e0b2f81e60b00b9ea6cf0f52477491ca0ef02032d7dfa74b10ea74c8d58cc5"
+    },
+    "src/modules/morefoto/orders/components/OrderStatus.vue": {
+      "beforeSha256": "fa040cf5e4fd9de1253878ce7d1fa74905e219cc0fea50ebc3dbe027def7adf6",
+      "afterSha256": "fa040cf5e4fd9de1253878ce7d1fa74905e219cc0fea50ebc3dbe027def7adf6"
+    },
+    "src/modules/morefoto/orders/components/OrderSupport.vue": {
+      "beforeSha256": "388e655cc6527523507a27fd3779551fe789168ad202d516a9043c985cf807c8",
+      "afterSha256": "388e655cc6527523507a27fd3779551fe789168ad202d516a9043c985cf807c8"
+    },
+    "src/modules/morefoto/orders/components/PaymentHistory.vue": {
+      "beforeSha256": "7fa7bd7ade7d287d8e323b80726976029637f045249efba61be8d06914657072",
+      "afterSha256": "7fa7bd7ade7d287d8e323b80726976029637f045249efba61be8d06914657072"
+    },
+    "src/modules/morefoto/orders/components/PaymentPanel.vue": {
+      "beforeSha256": "43e448ffdfffb854909dac9e9583a8d0af90e1cc2455f130d7dbbf9b4bdb060f",
+      "afterSha256": "43e448ffdfffb854909dac9e9583a8d0af90e1cc2455f130d7dbbf9b4bdb060f"
+    },
+    "src/modules/morefoto/orders/components/PaymentScreen.vue": {
+      "beforeSha256": "e43ceeba6545365aed8526d7a47c13c8531945bca8c7a795175e0f44bedb0e59",
+      "afterSha256": "e43ceeba6545365aed8526d7a47c13c8531945bca8c7a795175e0f44bedb0e59"
+    },
+    "src/modules/morefoto/orders/components/PaymentStatus.vue": {
+      "beforeSha256": "398d045139e1ed3917bf1fbbeda0f17a31b53bed75c49ae30dd5d82ecba9969a",
+      "afterSha256": "398d045139e1ed3917bf1fbbeda0f17a31b53bed75c49ae30dd5d82ecba9969a"
+    },
+    "src/modules/morefoto/orders/composables/useCheckout.ts": {
+      "beforeSha256": "1315d109ba673ad673c2face490088503d83181d1499a69c0a8de7640a304698",
+      "afterSha256": "1315d109ba673ad673c2face490088503d83181d1499a69c0a8de7640a304698"
+    },
+    "src/modules/morefoto/orders/composables/useOrder.ts": {
+      "beforeSha256": "179327cae36ab00b04555a9c68a61a681185c7dfd2fba698a91d261b85729593",
+      "afterSha256": "179327cae36ab00b04555a9c68a61a681185c7dfd2fba698a91d261b85729593"
+    },
+    "src/modules/morefoto/orders/composables/useOrderDelivery.ts": {
+      "beforeSha256": "51d194ad5dd6d150a65aea3e869ef0728664f8c444c99b08d8d77e2c28be85d6",
+      "afterSha256": "51d194ad5dd6d150a65aea3e869ef0728664f8c444c99b08d8d77e2c28be85d6"
+    },
+    "src/modules/morefoto/orders/composables/useOrderSupport.ts": {
+      "beforeSha256": "dd4e9735b5668174a6ee752615a1e4c5763e2024cc801bb48d70d50ba643c12a",
+      "afterSha256": "dd4e9735b5668174a6ee752615a1e4c5763e2024cc801bb48d70d50ba643c12a"
+    },
+    "src/modules/morefoto/orders/composables/usePayment.ts": {
+      "beforeSha256": "58a40e730c94fde7a495b6b92f969f2b6ea249c2970c08ca3cd145ac718aa7d6",
+      "afterSha256": "58a40e730c94fde7a495b6b92f969f2b6ea249c2970c08ca3cd145ac718aa7d6"
+    },
+    "src/modules/morefoto/orders/delivery/rules.ts": {
+      "beforeSha256": "5c81cef60adf2fc41e5141462fe86e51b09bc8b27e4f72097520ef632f66bdae",
+      "afterSha256": "5c81cef60adf2fc41e5141462fe86e51b09bc8b27e4f72097520ef632f66bdae"
+    },
+    "src/modules/morefoto/orders/delivery/service.ts": {
+      "beforeSha256": "8f522e18c39cea2dd15210cfb03efab2236d05eabaa2df954d33bf020d1af743",
+      "afterSha256": "8f522e18c39cea2dd15210cfb03efab2236d05eabaa2df954d33bf020d1af743"
+    },
+    "src/modules/morefoto/orders/delivery/types.ts": {
+      "beforeSha256": "4515c37560ccf2a5e95ae93faed73876663f6e523b4247750cd33baf09f5cbb1",
+      "afterSha256": "4515c37560ccf2a5e95ae93faed73876663f6e523b4247750cd33baf09f5cbb1"
+    },
+    "src/modules/morefoto/orders/delivery/zip.ts": {
+      "beforeSha256": "6aac52658f74f51a08917f2a6f2f5f8f94065a87038d116d02fa2ac42bc1f72f",
+      "afterSha256": "6aac52658f74f51a08917f2a6f2f5f8f94065a87038d116d02fa2ac42bc1f72f"
+    },
+    "src/modules/morefoto/orders/formatters.ts": {
+      "beforeSha256": "621fe416bf8eb5408bf8c33ff8f043f248578ee29c8afab129f693a882781893",
+      "afterSha256": "621fe416bf8eb5408bf8c33ff8f043f248578ee29c8afab129f693a882781893"
+    },
+    "src/modules/morefoto/orders/services/checkout.ts": {
+      "beforeSha256": "c7264e7beac9314ccd6677f197b614ff9c391b280e9aae09825319e7242570ee",
+      "afterSha256": "c7264e7beac9314ccd6677f197b614ff9c391b280e9aae09825319e7242570ee"
+    },
+    "src/modules/morefoto/orders/services/entitlements.ts": {
+      "beforeSha256": "5ee123c164e4d9171a15b1bee7d4bbf3cf5dc5484bfee6b9f2d483cea4f6cea1",
+      "afterSha256": "5ee123c164e4d9171a15b1bee7d4bbf3cf5dc5484bfee6b9f2d483cea4f6cea1"
+    },
+    "src/modules/morefoto/orders/services/orders.ts": {
+      "beforeSha256": "6a6145389b93db55520fb7e5e5c88867181c0b6e939953aa05086b0f716809c1",
+      "afterSha256": "6a6145389b93db55520fb7e5e5c88867181c0b6e939953aa05086b0f716809c1"
+    },
+    "src/modules/morefoto/orders/services/payment-rules.ts": {
+      "beforeSha256": "bf947cb0cd5337fe817f527cb67745fbc2bacfb0b28c3d4d33dd62dbc6e4f7b3",
+      "afterSha256": "bf947cb0cd5337fe817f527cb67745fbc2bacfb0b28c3d4d33dd62dbc6e4f7b3"
+    },
+    "src/modules/morefoto/orders/services/payment.ts": {
+      "beforeSha256": "17a73c266441075efa2f96464854e6596b490c0993998c7c5950c08212d0e4e7",
+      "afterSha256": "17a73c266441075efa2f96464854e6596b490c0993998c7c5950c08212d0e4e7"
+    },
+    "src/modules/morefoto/orders/services/validation.ts": {
+      "beforeSha256": "352f18c0d061bdd85db61239251908401ea5b71a33591e3d4d5ee70287b1adf2",
+      "afterSha256": "352f18c0d061bdd85db61239251908401ea5b71a33591e3d4d5ee70287b1adf2"
+    },
+    "src/modules/morefoto/orders/types.ts": {
+      "beforeSha256": "4e9d1f762b0931ef0e9d8ae1b4b86c33a95b08a446243bd35824d04add5fb504",
+      "afterSha256": "4e9d1f762b0931ef0e9d8ae1b4b86c33a95b08a446243bd35824d04add5fb504"
+    },
+    "src/modules/morefoto/organization/components/GroupFields.vue": {
+      "beforeSha256": "56be9dad9524da333e1c99c23f7c1ba57e01c9696b852c7f4ae051146a03727a",
+      "afterSha256": "56be9dad9524da333e1c99c23f7c1ba57e01c9696b852c7f4ae051146a03727a"
+    },
+    "src/modules/morefoto/organization/components/InstitutionFields.vue": {
+      "beforeSha256": "d751313e9a54a23439cc634ae9072d445175cbfd4bffae2c04f22a588cb4731a",
+      "afterSha256": "d751313e9a54a23439cc634ae9072d445175cbfd4bffae2c04f22a588cb4731a"
+    },
+    "src/modules/morefoto/organization/components/OrganizationEditor.vue": {
+      "beforeSha256": "756f2d8233e13626563bb7da366245ff12b2c139401aa3a49ff116dca73e1626",
+      "afterSha256": "756f2d8233e13626563bb7da366245ff12b2c139401aa3a49ff116dca73e1626"
+    },
+    "src/modules/morefoto/organization/components/OrganizationInstitutionScreen.vue": {
+      "beforeSha256": "f4fe8a2d0d84ccc4e0f0c80d50393fca23c6c5f97274c4d9b0ab11292251f8cc",
+      "afterSha256": "f4fe8a2d0d84ccc4e0f0c80d50393fca23c6c5f97274c4d9b0ab11292251f8cc"
+    },
+    "src/modules/morefoto/organization/components/OrganizationListScreen.vue": {
+      "beforeSha256": "03cd37f25b979be1526e9c78f2da70a6e09e3d37ce76fae577987d593a9db84a",
+      "afterSha256": "03cd37f25b979be1526e9c78f2da70a6e09e3d37ce76fae577987d593a9db84a"
+    },
+    "src/modules/morefoto/organization/components/OrganizationLoadState.vue": {
+      "beforeSha256": "c4642ef8bbaa060594b5760796da3db5eb7ae485088b525a59b704991b703811",
+      "afterSha256": "c4642ef8bbaa060594b5760796da3db5eb7ae485088b525a59b704991b703811"
+    },
+    "src/modules/morefoto/organization/components/OrganizationShootScreen.vue": {
+      "beforeSha256": "322c335aef131a6f471e70f57ee18d489a367954d480dedaaed9fbda59294c79",
+      "afterSha256": "322c335aef131a6f471e70f57ee18d489a367954d480dedaaed9fbda59294c79"
+    },
+    "src/modules/morefoto/organization/components/OrganizationTable.vue": {
+      "beforeSha256": "ea4405436f4f0c03cc5337c2c7ce5ad1f0df1eeec2ec23e8b5ed130bdfb4712a",
+      "afterSha256": "ea4405436f4f0c03cc5337c2c7ce5ad1f0df1eeec2ec23e8b5ed130bdfb4712a"
+    },
+    "src/modules/morefoto/organization/components/ShootFields.vue": {
+      "beforeSha256": "fe6745437009b7aac97de2ba4a2e0870873f377be32412fe2a1d4f2ae5969bef",
+      "afterSha256": "fe6745437009b7aac97de2ba4a2e0870873f377be32412fe2a1d4f2ae5969bef"
+    },
+    "src/modules/morefoto/organization/composables/useOrganization.ts": {
+      "beforeSha256": "6bd90d18b87fb337fb9f5e39e1fa87d91ca5b898752828c4e1b969aae54b6a0e",
+      "afterSha256": "6bd90d18b87fb337fb9f5e39e1fa87d91ca5b898752828c4e1b969aae54b6a0e"
+    },
+    "src/modules/morefoto/organization/composables/useOrganizationEditor.ts": {
+      "beforeSha256": "35520339ef115d49a1ed6f8227ae7bd2d78eca9724604e8cdb1f7e4e540fba49",
+      "afterSha256": "35520339ef115d49a1ed6f8227ae7bd2d78eca9724604e8cdb1f7e4e540fba49"
+    },
+    "src/modules/morefoto/organization/repository.ts": {
+      "beforeSha256": "ba5a90b29d892219813b222810bacddfd32e7e19edf40abcf06a33dc5e6e9df6",
+      "afterSha256": "ba5a90b29d892219813b222810bacddfd32e7e19edf40abcf06a33dc5e6e9df6"
+    },
+    "src/modules/morefoto/organization/rules.ts": {
+      "beforeSha256": "7451d0d93c6f70bd5169807a20aecc64d719a200a4d319122362f7199e3e4e48",
+      "afterSha256": "7451d0d93c6f70bd5169807a20aecc64d719a200a4d319122362f7199e3e4e48"
+    },
+    "src/modules/morefoto/organization/service.ts": {
+      "beforeSha256": "fc9dc698807acf617789b12b4f254467a278ae484ce3b4ea6d8047e48795b6bc",
+      "afterSha256": "fc9dc698807acf617789b12b4f254467a278ae484ce3b4ea6d8047e48795b6bc"
+    },
+    "src/modules/morefoto/organization/types.ts": {
+      "beforeSha256": "6ba7e105a1f37078d76ace2fb3ddcdfc8aaf82a2c658c242cb224354bf54fb9f",
+      "afterSha256": "6ba7e105a1f37078d76ace2fb3ddcdfc8aaf82a2c658c242cb224354bf54fb9f"
+    },
+    "src/modules/morefoto/photos/blobs.ts": {
+      "beforeSha256": "fef0495671a75c260fa191e1145b82232f36b9997a6267de59eaddba09c9953b",
+      "afterSha256": "fef0495671a75c260fa191e1145b82232f36b9997a6267de59eaddba09c9953b"
+    },
+    "src/modules/morefoto/photos/components/ChildMoveDialog.vue": {
+      "beforeSha256": "f5334fad582236ceb66ea0d95a3afd3cf27c02b8360d06e131c0b758cb59c2d7",
+      "afterSha256": "f5334fad582236ceb66ea0d95a3afd3cf27c02b8360d06e131c0b758cb59c2d7"
+    },
+    "src/modules/morefoto/photos/components/PhotoCollection.vue": {
+      "beforeSha256": "19b6f669689b4d7bed075ad2ca19b0b3ccf8465ca075c34c59fef1830b4d8042",
+      "afterSha256": "19b6f669689b4d7bed075ad2ca19b0b3ccf8465ca075c34c59fef1830b4d8042"
+    },
+    "src/modules/morefoto/photos/components/PhotoImage.vue": {
+      "beforeSha256": "34845824141fcbddf85342d467ba4e1dc25d6b996885ee4ba4df5f2a39940d5f",
+      "afterSha256": "34845824141fcbddf85342d467ba4e1dc25d6b996885ee4ba4df5f2a39940d5f"
+    },
+    "src/modules/morefoto/photos/components/PhotoPreview.vue": {
+      "beforeSha256": "f8aab8b66ff6dadb9b68d10a89073760e828a1177155c1abe2b26aa351bd7559",
+      "afterSha256": "f8aab8b66ff6dadb9b68d10a89073760e828a1177155c1abe2b26aa351bd7559"
+    },
+    "src/modules/morefoto/photos/components/PhotoUpload.vue": {
+      "beforeSha256": "13c38d02467a6175ce4cc1846587ba362f4ea262a9d7b14a6438ca198fecee9a",
+      "afterSha256": "13c38d02467a6175ce4cc1846587ba362f4ea262a9d7b14a6438ca198fecee9a"
+    },
+    "src/modules/morefoto/photos/components/PhotoWorkspace.vue": {
+      "beforeSha256": "af103df6bd638fb8082b36ee8c10fff10155cd69857a012c7de20b23db9ee3e1",
+      "afterSha256": "af103df6bd638fb8082b36ee8c10fff10155cd69857a012c7de20b23db9ee3e1"
+    },
+    "src/modules/morefoto/photos/components/UploadQueue.vue": {
+      "beforeSha256": "efbed49e1a82a803e442f6bbce3bd8dc65df4d2b7d0939dd343c34299933b184",
+      "afterSha256": "efbed49e1a82a803e442f6bbce3bd8dc65df4d2b7d0939dd343c34299933b184"
+    },
+    "src/modules/morefoto/photos/composables/usePhotoQueue.ts": {
+      "beforeSha256": "cee03b3e1fb23f6cad047d439d4af53f51e48e171d3119ff0ef425b3a831d526",
+      "afterSha256": "cee03b3e1fb23f6cad047d439d4af53f51e48e171d3119ff0ef425b3a831d526"
+    },
+    "src/modules/morefoto/photos/composables/usePhotoWorkspace.ts": {
+      "beforeSha256": "a47ff7028afd1627eded9cbe958cfa76b01509176d9103f21b034fe2dfd45528",
+      "afterSha256": "a47ff7028afd1627eded9cbe958cfa76b01509176d9103f21b034fe2dfd45528"
+    },
+    "src/modules/morefoto/photos/prepare.ts": {
+      "beforeSha256": "c7811c65330ed6dc63dec503b880ada19c28123028f0da431d7c350b5d0b442f",
+      "afterSha256": "c7811c65330ed6dc63dec503b880ada19c28123028f0da431d7c350b5d0b442f"
+    },
+    "src/modules/morefoto/photos/repository.ts": {
+      "beforeSha256": "151979080f2d14ab012652acd6b6a0380b7e7bef86e0ea33a3b7c9c5c2b181c6",
+      "afterSha256": "151979080f2d14ab012652acd6b6a0380b7e7bef86e0ea33a3b7c9c5c2b181c6"
+    },
+    "src/modules/morefoto/photos/rules.ts": {
+      "beforeSha256": "24dcc31d9c4e76ac7dfe908235dce08b38fd54266f737e8b0d09a1ce520cd653",
+      "afterSha256": "24dcc31d9c4e76ac7dfe908235dce08b38fd54266f737e8b0d09a1ce520cd653"
+    },
+    "src/modules/morefoto/photos/service.ts": {
+      "beforeSha256": "87795c9d5f62a0e78854717b15712c8e0bde0850166a5b9c5e0f4565829b43e4",
+      "afterSha256": "87795c9d5f62a0e78854717b15712c8e0bde0850166a5b9c5e0f4565829b43e4"
+    },
+    "src/modules/morefoto/photos/types.ts": {
+      "beforeSha256": "6eb20928e4b8ce035fe2b920cdc4a1eb511ad009bb84fc452603908f178d3dfb",
+      "afterSha256": "6eb20928e4b8ce035fe2b920cdc4a1eb511ad009bb84fc452603908f178d3dfb"
+    },
+    "src/modules/morefoto/production/components/OrderPackages.vue": {
+      "beforeSha256": "1be13f78c67486c881819b5d9192dcc4150f687b092be9d53a2e2dd66fd02bb5",
+      "afterSha256": "1be13f78c67486c881819b5d9192dcc4150f687b092be9d53a2e2dd66fd02bb5"
+    },
+    "src/modules/morefoto/production/components/PrintRows.vue": {
+      "beforeSha256": "a5095ad8dabf32c0a9ea3efdc5fcf5e7f1261a959bec40c0b5c8c37ea13d72ef",
+      "afterSha256": "a5095ad8dabf32c0a9ea3efdc5fcf5e7f1261a959bec40c0b5c8c37ea13d72ef"
+    },
+    "src/modules/morefoto/production/components/ProductionDetail.vue": {
+      "beforeSha256": "16550cdb46958bcb58bdfb228147c67df4b4e5f7f47516e4727b3b80a16473d5",
+      "afterSha256": "16550cdb46958bcb58bdfb228147c67df4b4e5f7f47516e4727b3b80a16473d5"
+    },
+    "src/modules/morefoto/production/components/ProductionDialog.vue": {
+      "beforeSha256": "be75148444731c74b8be159598191f9b35e2685a330e82d35dcf5d3c80023dcb",
+      "afterSha256": "be75148444731c74b8be159598191f9b35e2685a330e82d35dcf5d3c80023dcb"
+    },
+    "src/modules/morefoto/production/components/ProductionQueue.vue": {
+      "beforeSha256": "ae036eb4091549c4ebe25b0b04b0987d896dc5ad73bf88db59188cbc38fe4bd9",
+      "afterSha256": "ae036eb4091549c4ebe25b0b04b0987d896dc5ad73bf88db59188cbc38fe4bd9"
+    },
+    "src/modules/morefoto/production/components/ProductionWorkspace.vue": {
+      "beforeSha256": "1c882be85f79fea46669892582e2eb8c7475b2cc740944ccfd3b75250de2ad39",
+      "afterSha256": "1c882be85f79fea46669892582e2eb8c7475b2cc740944ccfd3b75250de2ad39"
+    },
+    "src/modules/morefoto/production/display.ts": {
+      "beforeSha256": "042d5dc0203a61e7aa9e7aa163effbdf947491ca6e102f6a9ead1e0fdc48be8b",
+      "afterSha256": "042d5dc0203a61e7aa9e7aa163effbdf947491ca6e102f6a9ead1e0fdc48be8b"
+    },
+    "src/modules/morefoto/production/projection.ts": {
+      "beforeSha256": "58952bdc2f44acbdeb05cd02838a84b6fdcac4b567081d244ae562d08813ef13",
+      "afterSha256": "58952bdc2f44acbdeb05cd02838a84b6fdcac4b567081d244ae562d08813ef13"
+    },
+    "src/modules/morefoto/production/rules.ts": {
+      "beforeSha256": "6de1741ab4495cd072ee7340e6fb78f8bce2495b466860e49c4c2137621b6dcc",
+      "afterSha256": "6de1741ab4495cd072ee7340e6fb78f8bce2495b466860e49c4c2137621b6dcc"
+    },
+    "src/modules/morefoto/production/service.ts": {
+      "beforeSha256": "e0189adb398d09abefa043b72d3d20bb9eb9d83c60a60e923b1d5c575670833a",
+      "afterSha256": "e0189adb398d09abefa043b72d3d20bb9eb9d83c60a60e923b1d5c575670833a"
+    },
+    "src/modules/morefoto/production/types.ts": {
+      "beforeSha256": "6d404bd5e75354ef10e24b1a6cfb3c6c471113d22635bca5ad376b9336ad2ac2",
+      "afterSha256": "6d404bd5e75354ef10e24b1a6cfb3c6c471113d22635bca5ad376b9336ad2ac2"
+    },
+    "src/modules/morefoto/production/useProduction.ts": {
+      "beforeSha256": "fbdac9ea547af8269c840ad964dd939c64ae2fef7d0ac24b94d954f39f81f389",
+      "afterSha256": "fbdac9ea547af8269c840ad964dd939c64ae2fef7d0ac24b94d954f39f81f389"
+    },
+    "src/modules/morefoto/production/useProductionCommand.ts": {
+      "beforeSha256": "d0c7955d8fb6a5a8f7ffc856b105268705d187e5b6572ba6ca454a7d69fffdc8",
+      "afterSha256": "d0c7955d8fb6a5a8f7ffc856b105268705d187e5b6572ba6ca454a7d69fffdc8"
+    },
+    "src/modules/morefoto/review/components/ReviewControls.vue": {
+      "beforeSha256": "baab9d1c6d6dd93fd70794c0f19ff972e92ace098615a74b85c726c00a7fd01d",
+      "afterSha256": "baab9d1c6d6dd93fd70794c0f19ff972e92ace098615a74b85c726c00a7fd01d"
+    },
+    "src/modules/morefoto/review/components/ReviewRoutes.vue": {
+      "beforeSha256": "2b6229033a018799d22f3d62fac7c2bee0b70c1f520624760414d1036e582655",
+      "afterSha256": "2b6229033a018799d22f3d62fac7c2bee0b70c1f520624760414d1036e582655"
+    },
+    "src/modules/morefoto/review/components/ReviewSetup.vue": {
+      "beforeSha256": "364dfa4cfdda458e625d990f8b2b69311116b1b2dadd7ef3e1c9de3398454708",
+      "afterSha256": "364dfa4cfdda458e625d990f8b2b69311116b1b2dadd7ef3e1c9de3398454708"
+    },
+    "src/modules/morefoto/review/components/ReviewWorkspace.vue": {
+      "beforeSha256": "6ee39bd12d5672844b7616cbdd348ce640da608a86fc4e4caf68340b83eafe0d",
+      "afterSha256": "6ee39bd12d5672844b7616cbdd348ce640da608a86fc4e4caf68340b83eafe0d"
+    },
+    "src/modules/morefoto/review/fixture.ts": {
+      "beforeSha256": "cfb175a8b1bbf2d78c83a65a183baa494754890f33d58763c24bda9acb97e505",
+      "afterSha256": "cfb175a8b1bbf2d78c83a65a183baa494754890f33d58763c24bda9acb97e505"
+    },
+    "src/modules/morefoto/review/rules.ts": {
+      "beforeSha256": "fb9438419dab9a883682c0c86045858b51a4a1927260a40940b64683def0d852",
+      "afterSha256": "fb9438419dab9a883682c0c86045858b51a4a1927260a40940b64683def0d852"
+    },
+    "src/modules/morefoto/review/service.ts": {
+      "beforeSha256": "fcf21898001b0d84aa19027df7530d7185157b9ce963edc2c7e7090fefb656f6",
+      "afterSha256": "fcf21898001b0d84aa19027df7530d7185157b9ce963edc2c7e7090fefb656f6"
+    },
+    "src/modules/morefoto/review/useReview.ts": {
+      "beforeSha256": "a011a4b755e65056a234dda53912fbea4ba5d2c5bc3de37d1263b6e530e13358",
+      "afterSha256": "a011a4b755e65056a234dda53912fbea4ba5d2c5bc3de37d1263b6e530e13358"
+    },
+    "src/modules/morefoto/services/cabinet.ts": {
+      "beforeSha256": "51ad1a1bcf496257ec4371a4dbd318a76edaa8da2a3a50399cbdc6a0bea38d22",
+      "afterSha256": "51ad1a1bcf496257ec4371a4dbd318a76edaa8da2a3a50399cbdc6a0bea38d22"
+    },
+    "src/modules/morefoto/settlement/command.ts": {
+      "beforeSha256": "ba12e45ac20a1b49d5752563facdb451cc4df062105de316947ae3162cb73515",
+      "afterSha256": "ba12e45ac20a1b49d5752563facdb451cc4df062105de316947ae3162cb73515"
+    },
+    "src/modules/morefoto/settlement/components/ContactCorrectionFields.vue": {
+      "beforeSha256": "0f10a3d08b818e01aea4927b2471ddc643456dacb5010f651a6217b9c4d66665",
+      "afterSha256": "0f10a3d08b818e01aea4927b2471ddc643456dacb5010f651a6217b9c4d66665"
+    },
+    "src/modules/morefoto/settlement/components/LineCorrectionFields.vue": {
+      "beforeSha256": "dd48da343891efd9f7e3c4f736689894666bbe6f0e7be0bc38b0425d8fb090dc",
+      "afterSha256": "dd48da343891efd9f7e3c4f736689894666bbe6f0e7be0bc38b0425d8fb090dc"
+    },
+    "src/modules/morefoto/settlement/components/OperationConfirmation.vue": {
+      "beforeSha256": "90bdb084f495a516e23535184e1e7088386b1031a0383940ff1b18d1302b567b",
+      "afterSha256": "90bdb084f495a516e23535184e1e7088386b1031a0383940ff1b18d1302b567b"
+    },
+    "src/modules/morefoto/settlement/components/RefundFields.vue": {
+      "beforeSha256": "c0bef8168467f42d6ba0264d24dbbd59de32ffb37ffa2eb1e90fe35b868b84bc",
+      "afterSha256": "c0bef8168467f42d6ba0264d24dbbd59de32ffb37ffa2eb1e90fe35b868b84bc"
+    },
+    "src/modules/morefoto/settlement/components/RelatedSettlement.vue": {
+      "beforeSha256": "b234aff763247ab00a987c93f762c984d3429135c73bd03a8ccc40c95037095e",
+      "afterSha256": "b234aff763247ab00a987c93f762c984d3429135c73bd03a8ccc40c95037095e"
+    },
+    "src/modules/morefoto/settlement/components/ResolutionFields.vue": {
+      "beforeSha256": "c108a28b63c23aba1ef809e3463f1814f3d3c23f03590faf47bb2228591e4aac",
+      "afterSha256": "c108a28b63c23aba1ef809e3463f1814f3d3c23f03590faf47bb2228591e4aac"
+    },
+    "src/modules/morefoto/settlement/components/SettlementDialog.vue": {
+      "beforeSha256": "1dd24b60dfed0c35f31ee4dff50e1b1c78ac9c9200e8fd3e9b1000ae2d28af1e",
+      "afterSha256": "1dd24b60dfed0c35f31ee4dff50e1b1c78ac9c9200e8fd3e9b1000ae2d28af1e"
+    },
+    "src/modules/morefoto/settlement/components/SettlementHistory.vue": {
+      "beforeSha256": "9c100c6936b970699cec6e1905aaeadd6489573c05bb11747f783f29f83125a7",
+      "afterSha256": "9c100c6936b970699cec6e1905aaeadd6489573c05bb11747f783f29f83125a7"
+    },
+    "src/modules/morefoto/settlement/components/SettlementPanel.vue": {
+      "beforeSha256": "1fb67f579dc7f13be96928cdf167e01c741cbdba797f4d12e5069974efbd61ba",
+      "afterSha256": "1fb67f579dc7f13be96928cdf167e01c741cbdba797f4d12e5069974efbd61ba"
+    },
+    "src/modules/morefoto/settlement/components/SettlementTotals.vue": {
+      "beforeSha256": "fd0c3d1ba7e1e8e355f9e1a145debc56c9786408de80b9c8180eeaaae602ae93",
+      "afterSha256": "fd0c3d1ba7e1e8e355f9e1a145debc56c9786408de80b9c8180eeaaae602ae93"
+    },
+    "src/modules/morefoto/settlement/rules.ts": {
+      "beforeSha256": "24f5bedaee5c6369c6bb0a3c7d135c428fa5e4a87ed8029abaa2c17ed4b79491",
+      "afterSha256": "24f5bedaee5c6369c6bb0a3c7d135c428fa5e4a87ed8029abaa2c17ed4b79491"
+    },
+    "src/modules/morefoto/settlement/service.ts": {
+      "beforeSha256": "93c5a5cd99bf0ddfd16a567ae57859ca8156ed74af5c8660b3c1df5ea00b2ce5",
+      "afterSha256": "93c5a5cd99bf0ddfd16a567ae57859ca8156ed74af5c8660b3c1df5ea00b2ce5"
+    },
+    "src/modules/morefoto/settlement/types.ts": {
+      "beforeSha256": "3854e2f3e5da27ac510ca3a96ce8d7487cbb528b56475dff6989918ff678118d",
+      "afterSha256": "3854e2f3e5da27ac510ca3a96ce8d7487cbb528b56475dff6989918ff678118d"
+    },
+    "src/modules/morefoto/settlement/useSettlementEditor.ts": {
+      "beforeSha256": "864d0bde7fab300f395a5cf698daf21dbf75b318f8e8a11c09042edb8aa04ee3",
+      "afterSha256": "864d0bde7fab300f395a5cf698daf21dbf75b318f8e8a11c09042edb8aa04ee3"
+    },
+    "src/modules/morefoto/shipping/components/DeliveryDialog.vue": {
+      "beforeSha256": "e9d6e236dae7ca9fc24fa4b04b04b065844b74dc78315d81e88d1abd2ff43b69",
+      "afterSha256": "e9d6e236dae7ca9fc24fa4b04b04b065844b74dc78315d81e88d1abd2ff43b69"
+    },
+    "src/modules/morefoto/shipping/components/DeliveryGroups.vue": {
+      "beforeSha256": "432815e334a76524a6ed8d6820609bce27287475b731c6f785595a07415178aa",
+      "afterSha256": "432815e334a76524a6ed8d6820609bce27287475b731c6f785595a07415178aa"
+    },
+    "src/modules/morefoto/shipping/components/DeliveryWorkspace.vue": {
+      "beforeSha256": "18456460f211f96c65b02185c58a08aaeb69ca5731c0d6e43286b2ad9ddbddde",
+      "afterSha256": "18456460f211f96c65b02185c58a08aaeb69ca5731c0d6e43286b2ad9ddbddde"
+    },
+    "src/modules/morefoto/shipping/components/OrderPhysicalDelivery.vue": {
+      "beforeSha256": "dab577e690741c214b4eeb85357abad172ac4017ff694b22dbf8466d4c64ab71",
+      "afterSha256": "dab577e690741c214b4eeb85357abad172ac4017ff694b22dbf8466d4c64ab71"
+    },
+    "src/modules/morefoto/shipping/components/TransferBatches.vue": {
+      "beforeSha256": "cda44a292bdf9a95121626db1bf84c9cfcc4beab1619c972bf88eba5accace93",
+      "afterSha256": "cda44a292bdf9a95121626db1bf84c9cfcc4beab1619c972bf88eba5accace93"
+    },
+    "src/modules/morefoto/shipping/components/TransferHistory.vue": {
+      "beforeSha256": "de7fd31ffc46e64008faa585fe7b37d297cfb8c007e39740d6a95caa12fffd9e",
+      "afterSha256": "de7fd31ffc46e64008faa585fe7b37d297cfb8c007e39740d6a95caa12fffd9e"
+    },
+    "src/modules/morefoto/shipping/display.ts": {
+      "beforeSha256": "fb0ebb1e2b026664e62eccb091157e3513c3c46cc62f625f4fd8f5c164ab420a",
+      "afterSha256": "fb0ebb1e2b026664e62eccb091157e3513c3c46cc62f625f4fd8f5c164ab420a"
+    },
+    "src/modules/morefoto/shipping/identity.ts": {
+      "beforeSha256": "b0c03582116e0870342f9c74ee0b3224d004a9ccf638a3bdcb59249c8d6a354f",
+      "afterSha256": "b0c03582116e0870342f9c74ee0b3224d004a9ccf638a3bdcb59249c8d6a354f"
+    },
+    "src/modules/morefoto/shipping/projection.ts": {
+      "beforeSha256": "b8f10980036a00d104d91e4213e10be5eb3f9e5a4ad56983a2294e84d05a52be",
+      "afterSha256": "b8f10980036a00d104d91e4213e10be5eb3f9e5a4ad56983a2294e84d05a52be"
+    },
+    "src/modules/morefoto/shipping/rules.ts": {
+      "beforeSha256": "1898a40f66ae91a33622e3be703fd96a82805c2573a1442d7f8d32c172ee7e4d",
+      "afterSha256": "1898a40f66ae91a33622e3be703fd96a82805c2573a1442d7f8d32c172ee7e4d"
+    },
+    "src/modules/morefoto/shipping/service.ts": {
+      "beforeSha256": "06e34c997253195bafeac759e72d07008805ddaebd486efe3374c0c092d6e874",
+      "afterSha256": "06e34c997253195bafeac759e72d07008805ddaebd486efe3374c0c092d6e874"
+    },
+    "src/modules/morefoto/shipping/types.ts": {
+      "beforeSha256": "c73785f3e0a4652680f09e37e26413231af94bed517d0376c1460e30c914980d",
+      "afterSha256": "c73785f3e0a4652680f09e37e26413231af94bed517d0376c1460e30c914980d"
+    },
+    "src/modules/morefoto/shipping/useDelivery.ts": {
+      "beforeSha256": "4f68ded49fd60edebcbcd9ffc679d69edba27f98c1a4ff03e527e9f6bcff528e",
+      "afterSha256": "4f68ded49fd60edebcbcd9ffc679d69edba27f98c1a4ff03e527e9f6bcff528e"
+    },
+    "src/modules/morefoto/shipping/useDeliveryEditor.ts": {
+      "beforeSha256": "c09ab9bc89786919dffd4145641b2c856043156d690e3814ba4aa3253fb3e0cc",
+      "afterSha256": "c09ab9bc89786919dffd4145641b2c856043156d690e3814ba4aa3253fb3e0cc"
+    },
+    "src/modules/morefoto/types.ts": {
+      "beforeSha256": "40a414f8e83b60456e6d3a4fe26fdf7b2d84d5916110f11321577a933267d4e0",
+      "afterSha256": "40a414f8e83b60456e6d3a4fe26fdf7b2d84d5916110f11321577a933267d4e0"
+    },
+    "src/modules/morefoto/ui/components/UiButtonExamples.vue": {
+      "beforeSha256": "8af1dbfcbc921f1e524137dfddf2927b1f3e1fcc7a0bf4052297fb63672bd5d0",
+      "afterSha256": "8af1dbfcbc921f1e524137dfddf2927b1f3e1fcc7a0bf4052297fb63672bd5d0"
+    },
+    "src/modules/morefoto/ui/components/UiClearButton.vue": {
+      "beforeSha256": "e98b2249c0bb4f7dd22b9c2c4ed028c0b3e7dda1d93f0a92d8355674f2331075",
+      "afterSha256": "e98b2249c0bb4f7dd22b9c2c4ed028c0b3e7dda1d93f0a92d8355674f2331075"
+    },
+    "src/modules/morefoto/ui/components/UiCompositeExamples.vue": {
+      "beforeSha256": "83b0cf93fcdf3d99c51624b960b1a0d5da43cb33cc738679844d652e8d8e1db7",
+      "afterSha256": "83b0cf93fcdf3d99c51624b960b1a0d5da43cb33cc738679844d652e8d8e1db7"
+    },
+    "src/modules/morefoto/ui/components/UiDataTable.vue": {
+      "beforeSha256": "176237d3a4b3285175b15d45c5323c20ccfa2286f921504dd9a5943b30a3ca9a",
+      "afterSha256": "176237d3a4b3285175b15d45c5323c20ccfa2286f921504dd9a5943b30a3ca9a"
+    },
+    "src/modules/morefoto/ui/components/UiExamplesScreen.vue": {
+      "beforeSha256": "47213cb1aed765ddf33bf01fe6b9fe4a2b4ee35fdb641cbda1edb58bd5f109a6",
+      "afterSha256": "47213cb1aed765ddf33bf01fe6b9fe4a2b4ee35fdb641cbda1edb58bd5f109a6"
+    },
+    "src/modules/morefoto/ui/components/UiFieldExamples.vue": {
+      "beforeSha256": "22eea303a7d0e20ee7c4e8de9b05706092d60831ca44cf8693329c058337e8b5",
+      "afterSha256": "22eea303a7d0e20ee7c4e8de9b05706092d60831ca44cf8693329c058337e8b5"
+    },
+    "src/modules/morefoto/ui/components/UiPhoneField.vue": {
+      "beforeSha256": "63c93f6efcdda6af1709a933f07cbf75ff8dd4b92201a2a4c49465e3fb16c39d",
+      "afterSha256": "63c93f6efcdda6af1709a933f07cbf75ff8dd4b92201a2a4c49465e3fb16c39d"
+    },
+    "src/modules/morefoto/ui/components/UiQuantityField.vue": {
+      "beforeSha256": "23fa22bc5f9dcc4b14ea0d7dfde2579864d4a26555a3cf80f008439acd23fc96",
+      "afterSha256": "23fa22bc5f9dcc4b14ea0d7dfde2579864d4a26555a3cf80f008439acd23fc96"
+    },
+    "src/modules/morefoto/ui/components/UiSelectionExamples.vue": {
+      "beforeSha256": "12bae658c1a4f499eabc49bdd9c5bb00f1a831b22439b32d3b899266f2e4c98e",
+      "afterSha256": "12bae658c1a4f499eabc49bdd9c5bb00f1a831b22439b32d3b899266f2e4c98e"
+    },
+    "src/modules/morefoto/ui/components/UiTableCell.vue": {
+      "beforeSha256": "ebe091892e746404d58bce438a00c548551b42223c3e473564f702a0072bc7ec",
+      "afterSha256": "ebe091892e746404d58bce438a00c548551b42223c3e473564f702a0072bc7ec"
+    },
+    "src/modules/morefoto/ui/components/UiTableExample.vue": {
+      "beforeSha256": "3f4fcb12ed14da7b866c0cf4f68a012e23ca4ba62da35d0cff15cee861e18d66",
+      "afterSha256": "3f4fcb12ed14da7b866c0cf4f68a012e23ca4ba62da35d0cff15cee861e18d66"
+    },
+    "src/modules/morefoto/ui/components/UiTableRowActions.vue": {
+      "beforeSha256": "0f64f722f9e5dab417782c644744c256b97405357932383015ff01c14cd3e8b3",
+      "afterSha256": "0f64f722f9e5dab417782c644744c256b97405357932383015ff01c14cd3e8b3"
+    },
+    "src/modules/morefoto/ui/composables/useExampleFields.ts": {
+      "beforeSha256": "6bd42b156fe933b99d38ead5d29c6b33028a03fbd76f093fff1d2f165777ad6b",
+      "afterSha256": "6bd42b156fe933b99d38ead5d29c6b33028a03fbd76f093fff1d2f165777ad6b"
+    },
+    "src/modules/morefoto/ui/composables/useTableExample.ts": {
+      "beforeSha256": "cf9f568243bf3a899f371a1b533137e284a2ddb4111c402393c25216538483bc",
+      "afterSha256": "cf9f568243bf3a899f371a1b533137e284a2ddb4111c402393c25216538483bc"
+    },
+    "src/modules/morefoto/ui/defaults.ts": {
+      "beforeSha256": "67cd95fe715fd363a705765cd12709cfe0965a6a2e0917897437a26858c8ac60",
+      "afterSha256": "67cd95fe715fd363a705765cd12709cfe0965a6a2e0917897437a26858c8ac60"
+    },
+    "src/modules/morefoto/ui/field-values.ts": {
+      "beforeSha256": "4aff99d9afcf645573fbe72b2c61606e0dd5e6d058574d0115925343578312e7",
+      "afterSha256": "4aff99d9afcf645573fbe72b2c61606e0dd5e6d058574d0115925343578312e7"
+    },
+    "src/modules/morefoto/ui/table-fixtures.ts": {
+      "beforeSha256": "a6739d014ec33c33b3d90d5d6f59846fcc96bd9cfff78f6892e388563b4850ac",
+      "afterSha256": "a6739d014ec33c33b3d90d5d6f59846fcc96bd9cfff78f6892e388563b4850ac"
+    },
+    "src/modules/morefoto/ui/table-types.ts": {
+      "beforeSha256": "799997e4511379293d8bbd84d21d3a432a90a6a5c14a1c7fb9b7b5a5420c2f40",
+      "afterSha256": "799997e4511379293d8bbd84d21d3a432a90a6a5c14a1c7fb9b7b5a5420c2f40"
+    },
+    "src/modules/morefoto/ui/table-values.ts": {
+      "beforeSha256": "00f2dbc985226e0cfe40caeff1a9414378ba7da0f731f0b7254cfb620c580434",
+      "afterSha256": "00f2dbc985226e0cfe40caeff1a9414378ba7da0f731f0b7254cfb620c580434"
+    },
+    "src/modules/morefoto/ui/types.ts": {
+      "beforeSha256": "e7dd3864f1732f67e1a5a42bfdf7fd675e57ac88b1603830f75cf0d577d1fbf7",
+      "afterSha256": "e7dd3864f1732f67e1a5a42bfdf7fd675e57ac88b1603830f75cf0d577d1fbf7"
+    },
+    "src/modules/morefoto/views/AccessPage.vue": {
+      "beforeSha256": "38211ee3fa4bb5ebcf6d43877381d534d6962d3577d1affeead417903ddb4c5d",
+      "afterSha256": "f880e18f5addb75918aa23cce10f1828b33dc327f2997975531c632dcfead2ec"
+    },
+    "src/modules/morefoto/views/CartPage.vue": {
+      "beforeSha256": "8502e6a4149bcde574e2f8d86e080b8e98eaef2214d08fb13ee37cc990923914",
+      "afterSha256": "8502e6a4149bcde574e2f8d86e080b8e98eaef2214d08fb13ee37cc990923914"
+    },
+    "src/modules/morefoto/views/CatalogPage.vue": {
+      "beforeSha256": "1488a9f226b9e30c1772a2f12333222648f02e0363ac24fbc070e464761b3c5e",
+      "afterSha256": "8b4013469ca7d0ba63685af7fa4238a5e237045cea313f5e9981c64877e4cb7e"
+    },
+    "src/modules/morefoto/views/CheckoutPage.vue": {
+      "beforeSha256": "744056b1539f47543a63696f86a7a374d195094c7afb9207e4a95aee766c4b58",
+      "afterSha256": "744056b1539f47543a63696f86a7a374d195094c7afb9207e4a95aee766c4b58"
+    },
+    "src/modules/morefoto/views/CuratorPage.vue": {
+      "beforeSha256": "52adc0a6601f0a7d0d11ef7a657144924973c419c6f1b1e3288e76b10b5dba44",
+      "afterSha256": "52adc0a6601f0a7d0d11ef7a657144924973c419c6f1b1e3288e76b10b5dba44"
+    },
+    "src/modules/morefoto/views/DeliveryPage.vue": {
+      "beforeSha256": "2e920c09ab2f4bf67215356b6ecca143e51b78dd8e1b37f5dc9f13f42a1988a7",
+      "afterSha256": "2e920c09ab2f4bf67215356b6ecca143e51b78dd8e1b37f5dc9f13f42a1988a7"
+    },
+    "src/modules/morefoto/views/FeatureUnavailablePage.vue": {
+      "beforeSha256": null,
+      "afterSha256": "82a3fa205715669665c1ae28d483d51309e40bc77ef496ac04bf012775179527"
+    },
+    "src/modules/morefoto/views/GalleryPage.vue": {
+      "beforeSha256": "b9a48cfd90f465e1834b6eea91f2d79bcfb8a81d69bd96d3c436d9b3fc20d032",
+      "afterSha256": "b9a48cfd90f465e1834b6eea91f2d79bcfb8a81d69bd96d3c436d9b3fc20d032"
+    },
+    "src/modules/morefoto/views/GroupConditionsPage.vue": {
+      "beforeSha256": "5fe83c0afc08549d2cdfc0616c044c1e26b61d706b8ad380f2eac675169504b4",
+      "afterSha256": "5fe83c0afc08549d2cdfc0616c044c1e26b61d706b8ad380f2eac675169504b4"
+    },
+    "src/modules/morefoto/views/GroupDashboardPage.vue": {
+      "beforeSha256": "314a46f02a4a7dad80bc5e70bd8401ca916968d1fc578758782d5f7a9cb0dc70",
+      "afterSha256": "314a46f02a4a7dad80bc5e70bd8401ca916968d1fc578758782d5f7a9cb0dc70"
+    },
+    "src/modules/morefoto/views/InstitutionPage.vue": {
+      "beforeSha256": "f3e4fa5be4af800768c9ad2f3a55016dfb77f019e59dabc2c2b23e68e3e0fa4a",
+      "afterSha256": "f3e4fa5be4af800768c9ad2f3a55016dfb77f019e59dabc2c2b23e68e3e0fa4a"
+    },
+    "src/modules/morefoto/views/LinksPage.vue": {
+      "beforeSha256": "2ae51c434922e3301b88dd0d9622af90dbe163acfc7bb66fe5a3047e0aba2315",
+      "afterSha256": "2ae51c434922e3301b88dd0d9622af90dbe163acfc7bb66fe5a3047e0aba2315"
+    },
+    "src/modules/morefoto/views/NotFoundPage.vue": {
+      "beforeSha256": "9869e71f6a97ffe8b4684b42566e7fe5bc6e75001ac5e017d0cbd5a1a5b83aa9",
+      "afterSha256": "9869e71f6a97ffe8b4684b42566e7fe5bc6e75001ac5e017d0cbd5a1a5b83aa9"
+    },
+    "src/modules/morefoto/views/OrderPage.vue": {
+      "beforeSha256": "dc6badb48e2668e8b4de9f26c65261fe63e02b1eab49d95880358e108f9e3528",
+      "afterSha256": "dc6badb48e2668e8b4de9f26c65261fe63e02b1eab49d95880358e108f9e3528"
+    },
+    "src/modules/morefoto/views/OrganizationListPage.vue": {
+      "beforeSha256": "3638e4cfe3ecaa01cb753e362833c79e55e9137d3d5bc1ce04a10125e8e2412e",
+      "afterSha256": "3638e4cfe3ecaa01cb753e362833c79e55e9137d3d5bc1ce04a10125e8e2412e"
+    },
+    "src/modules/morefoto/views/OrganizationShootPage.vue": {
+      "beforeSha256": "2be8c0f1e47930a899d6b9a837fba11c4e7243efb3e260a88f6d49e44288e71c",
+      "afterSha256": "2be8c0f1e47930a899d6b9a837fba11c4e7243efb3e260a88f6d49e44288e71c"
+    },
+    "src/modules/morefoto/views/OverviewPage.vue": {
+      "beforeSha256": "1b02ec0bb24547b918c0327c2f812dc0421da45425e0e3d01ad1c76dc58269bd",
+      "afterSha256": "1b02ec0bb24547b918c0327c2f812dc0421da45425e0e3d01ad1c76dc58269bd"
+    },
+    "src/modules/morefoto/views/PaymentPage.vue": {
+      "beforeSha256": "919ba754746b317e38e47212c5aa9f7b1baf0df4d92c723eb740079e7d3d4a9c",
+      "afterSha256": "919ba754746b317e38e47212c5aa9f7b1baf0df4d92c723eb740079e7d3d4a9c"
+    },
+    "src/modules/morefoto/views/PhotoWorkspacePage.vue": {
+      "beforeSha256": "6d2b04ac302c4324bd1ded790e3b27776caebf4296a2590cd7aec1e57a5c03ea",
+      "afterSha256": "6d2b04ac302c4324bd1ded790e3b27776caebf4296a2590cd7aec1e57a5c03ea"
+    },
+    "src/modules/morefoto/views/ProductionPage.vue": {
+      "beforeSha256": "d39d7fd0c134512ac5c898904c97167ab068c427af1f519a511f9795a3091be9",
+      "afterSha256": "d39d7fd0c134512ac5c898904c97167ab068c427af1f519a511f9795a3091be9"
+    },
+    "src/modules/morefoto/views/ProfilePage.vue": {
+      "beforeSha256": "5cd33018f7a17ff0dd7baeef4bd054a473bb20bb68e9c8be58207468374d787c",
+      "afterSha256": "5cd33018f7a17ff0dd7baeef4bd054a473bb20bb68e9c8be58207468374d787c"
+    },
+    "src/modules/morefoto/views/ReviewPage.vue": {
+      "beforeSha256": "54525807d74a0a0fc0c36e7ad2b65144b2930a6db2df0c7522c792ec0c505d4e",
+      "afterSha256": "54525807d74a0a0fc0c36e7ad2b65144b2930a6db2df0c7522c792ec0c505d4e"
+    },
+    "src/modules/morefoto/views/StaffRequestsPage.vue": {
+      "beforeSha256": "f0bac0ba17ccddbd0c8dd118ec350142a9fa2aff1f0592177b3cbe7b5403b767",
+      "afterSha256": "f0bac0ba17ccddbd0c8dd118ec350142a9fa2aff1f0592177b3cbe7b5403b767"
+    },
+    "src/modules/morefoto/views/UiExamplesPage.vue": {
+      "beforeSha256": "3ae5eb75edd50ef6149b71ef84979987cc173ada8c56934144d7d28eb9cf5e14",
+      "afterSha256": "3ae5eb75edd50ef6149b71ef84979987cc173ada8c56934144d7d28eb9cf5e14"
+    },
+    "src/modules/morefoto/views/UsersPage.vue": {
+      "beforeSha256": "fd433f4c8fc88f3963bc3886e209ead5571acfd68b5663d335ebbcd44192273b",
+      "afterSha256": "fd433f4c8fc88f3963bc3886e209ead5571acfd68b5663d335ebbcd44192273b"
+    },
+    "src/plugins/mdi-icon.ts": {
+      "beforeSha256": "499d40997ce008ab8b0e3ca0fcc844cbab9d036138daf2cbf436bd4fccf2cdd7",
+      "afterSha256": "499d40997ce008ab8b0e3ca0fcc844cbab9d036138daf2cbf436bd4fccf2cdd7"
+    },
+    "src/plugins/vuetify.ts": {
+      "beforeSha256": "ff218d52035d2606b45020fe04741632e74d1194906947e9543756255c5e7da7",
+      "afterSha256": "ff218d52035d2606b45020fe04741632e74d1194906947e9543756255c5e7da7"
+    },
+    "src/router/MainRoutes.ts": {
+      "beforeSha256": "38335a02cfa2f7ed6cd06686a9de53afd089db1607a8a728a8584a4c10429159",
+      "afterSha256": "38335a02cfa2f7ed6cd06686a9de53afd089db1607a8a728a8584a4c10429159"
+    },
+    "src/router/PublicRoutes.ts": {
+      "beforeSha256": "b6a1a62178fbfa5cc88053fa10ca38660b2bf769356dc120ba44d642712670c1",
+      "afterSha256": "4e50046d7682e87612db63413682b8ff38f5218eaa2512975c11d20926fbb6d7"
+    },
+    "src/router/index.ts": {
+      "beforeSha256": "8212d00282594364ae471bfdb66a700a0e043ee72ad05a70aa3f80c231386ece",
+      "afterSha256": "32d7da7ef510e5b063acb4666d12f59d321b19621d74777b125f36a8b123cda9"
+    },
+    "src/scss/_override.scss": {
+      "beforeSha256": "7f842228c9a3c371eed7d340c09b0cb9bd4ba617f2106284e177fcd4e95bebc8",
+      "afterSha256": "7f842228c9a3c371eed7d340c09b0cb9bd4ba617f2106284e177fcd4e95bebc8"
+    },
+    "src/scss/_variables.scss": {
+      "beforeSha256": "7e8530c6b4c13e77b29c508ded3c36cbbb2d6ddcff4013971d1b63ecceaa9e0d",
+      "afterSha256": "7e8530c6b4c13e77b29c508ded3c36cbbb2d6ddcff4013971d1b63ecceaa9e0d"
+    },
+    "src/scss/components/_VAlert.scss": {
+      "beforeSha256": "def98bae75c4ccdc616c0f1515686c68cb8c23a239d316c3986f1046082238ca",
+      "afterSha256": "def98bae75c4ccdc616c0f1515686c68cb8c23a239d316c3986f1046082238ca"
+    },
+    "src/scss/components/_VButtons.scss": {
+      "beforeSha256": "e27692c37f8600d71ac3a99f98c5102c365317383e16461908b9bc97fc2e5d45",
+      "afterSha256": "e27692c37f8600d71ac3a99f98c5102c365317383e16461908b9bc97fc2e5d45"
+    },
+    "src/scss/components/_VCard.scss": {
+      "beforeSha256": "4b83559a539f9013c531436752a3e0d912fc5186bb37ab1bb58c8a1d9dd1210c",
+      "afterSha256": "4b83559a539f9013c531436752a3e0d912fc5186bb37ab1bb58c8a1d9dd1210c"
+    },
+    "src/scss/components/_VField.scss": {
+      "beforeSha256": "c7140bbe96a189d2eedbe59f114f48d48c1d38912d9d6b1b2bede6e72e3497f5",
+      "afterSha256": "c7140bbe96a189d2eedbe59f114f48d48c1d38912d9d6b1b2bede6e72e3497f5"
+    },
+    "src/scss/components/_VInput.scss": {
+      "beforeSha256": "990509cf1810a167259d312c3ad98cf5f405d6be5b7c359447f435755840cefd",
+      "afterSha256": "990509cf1810a167259d312c3ad98cf5f405d6be5b7c359447f435755840cefd"
+    },
+    "src/scss/components/_VNavigationDrawer.scss": {
+      "beforeSha256": "aac28f570eed76082a6b99ad90c0ac39ccc916c89151b2923b389cc29ff609b5",
+      "afterSha256": "aac28f570eed76082a6b99ad90c0ac39ccc916c89151b2923b389cc29ff609b5"
+    },
+    "src/scss/components/_VShadow.scss": {
+      "beforeSha256": "b36fd8605029bf99c084fdc072d11900a82ec314d50668c99346e7cdf87713c9",
+      "afterSha256": "b36fd8605029bf99c084fdc072d11900a82ec314d50668c99346e7cdf87713c9"
+    },
+    "src/scss/components/_VTabs.scss": {
+      "beforeSha256": "dd1d9c3eb0bf780ed8168e3cbf80ff9958249443dba48871e7c48a6bb18d6b33",
+      "afterSha256": "dd1d9c3eb0bf780ed8168e3cbf80ff9958249443dba48871e7c48a6bb18d6b33"
+    },
+    "src/scss/components/_VTextField.scss": {
+      "beforeSha256": "99556e5af54cacd0fc99e63578a55afcc6362b25e48b2edfcae402a73b9783cd",
+      "afterSha256": "99556e5af54cacd0fc99e63578a55afcc6362b25e48b2edfcae402a73b9783cd"
+    },
+    "src/scss/components/_VTextarea.scss": {
+      "beforeSha256": "2c9d606564265f3dc74e7c496f5a185c95f7495b996de6e050f79ca5c8af401f",
+      "afterSha256": "2c9d606564265f3dc74e7c496f5a185c95f7495b996de6e050f79ca5c8af401f"
+    },
+    "src/scss/layout/_container.scss": {
+      "beforeSha256": "2e3640cf7e4992026254eb7e02281c6d2086126340ce10de3f0b50af397fc42f",
+      "afterSha256": "2e3640cf7e4992026254eb7e02281c6d2086126340ce10de3f0b50af397fc42f"
+    },
+    "src/scss/layout/_dark.scss": {
+      "beforeSha256": "9e16099784766446a3c6369701f9c6edef15150ef515b48195e91250ea0a9bea",
+      "afterSha256": "9e16099784766446a3c6369701f9c6edef15150ef515b48195e91250ea0a9bea"
+    },
+    "src/scss/layout/_horizontal.scss": {
+      "beforeSha256": "3f4523824409bce74144cb0305390e7e64e4f234a3acf9dab4a81c043add0b37",
+      "afterSha256": "3f4523824409bce74144cb0305390e7e64e4f234a3acf9dab4a81c043add0b37"
+    },
+    "src/scss/layout/_sidebar.scss": {
+      "beforeSha256": "699c6788d20518ab9f30184cc5181bf9abdcb86aadfdcc8e81ba23ff4fac3a54",
+      "afterSha256": "699c6788d20518ab9f30184cc5181bf9abdcb86aadfdcc8e81ba23ff4fac3a54"
+    },
+    "src/scss/layout/_topbar.scss": {
+      "beforeSha256": "b2e7192ccfde747e0e7a2e14df023cdb724ec8f78411730c53ee1050a8356b08",
+      "afterSha256": "b2e7192ccfde747e0e7a2e14df023cdb724ec8f78411730c53ee1050a8356b08"
+    },
+    "src/scss/style.scss": {
+      "beforeSha256": "b30b570149aafc831a05e86d441e31b06835bc481f4a502bd6f3c830bd8e8b91",
+      "afterSha256": "b30b570149aafc831a05e86d441e31b06835bc481f4a502bd6f3c830bd8e8b91"
+    },
+    "src/stores/advertisements.ts": {
+      "beforeSha256": "258805cec587e9e89b2e979d49b5b7ba0e4f30488ab8c93aec0d3bffd0152435",
+      "afterSha256": "258805cec587e9e89b2e979d49b5b7ba0e4f30488ab8c93aec0d3bffd0152435"
+    },
+    "src/stores/auth.ts": {
+      "beforeSha256": "f5abb7291c18270602c6792fbd752045100856a358795d5e1cab64583cc41b67",
+      "afterSha256": "78b256c730bd1a79b771e29726986033eef038a5b0d9c240ddb3c6d6fe3e35b3"
+    },
+    "src/stores/chatScripts.ts": {
+      "beforeSha256": "618630f192b0f94dca25b10e40b306c9d43ab3b89d44313728812499e54f8a10",
+      "afterSha256": "618630f192b0f94dca25b10e40b306c9d43ab3b89d44313728812499e54f8a10"
+    },
+    "src/stores/customizer.ts": {
+      "beforeSha256": "6dfd9203fe6b629f55693bf475160e1d0c6c3c87b63851105d7277177276e7fb",
+      "afterSha256": "6dfd9203fe6b629f55693bf475160e1d0c6c3c87b63851105d7277177276e7fb"
+    },
+    "src/stores/exchange.ts": {
+      "beforeSha256": "2b031fd8405ed0aff4da85562c1b4204d5beadc8a348996b65722cbbf4f244fe",
+      "afterSha256": "2b031fd8405ed0aff4da85562c1b4204d5beadc8a348996b65722cbbf4f244fe"
+    },
+    "src/stores/identity.ts": {
+      "beforeSha256": "ac8205645e7840307a08926dadb35e872a637fb6c04d15916c7f419f7a79c5c5",
+      "afterSha256": "ac8205645e7840307a08926dadb35e872a637fb6c04d15916c7f419f7a79c5c5"
+    },
+    "src/stores/trades.ts": {
+      "beforeSha256": "4f8c2cd6fe41469dc75b935887650e59ae4e14b03981583254885c878489b230",
+      "afterSha256": "4f8c2cd6fe41469dc75b935887650e59ae4e14b03981583254885c878489b230"
+    },
+    "src/stores/wallet.ts": {
+      "beforeSha256": "018898a8abf096e39c93054e36fcc0c8bb940544c5b37cb0fe5214c99482db84",
+      "afterSha256": "018898a8abf096e39c93054e36fcc0c8bb940544c5b37cb0fe5214c99482db84"
+    },
+    "src/styles/_morefoto-ui.scss": {
+      "beforeSha256": "2d92249e40c975022e225f33aefe3fe5ce9f0527f31274b8cf6f071ec07f1784",
+      "afterSha256": "2d92249e40c975022e225f33aefe3fe5ce9f0527f31274b8cf6f071ec07f1784"
+    },
+    "src/styles/morefoto.scss": {
+      "beforeSha256": "ec749248bee5995dcd81a15202318ece498c5c578eb3a79ec44462c196c0710c",
+      "afterSha256": "ec749248bee5995dcd81a15202318ece498c5c578eb3a79ec44462c196c0710c"
+    },
+    "src/theme/DarkTheme.ts": {
+      "beforeSha256": "31cc103077e5a71903286f7c7f8bc30f6fec967d89896dbfd74890e071a1a643",
+      "afterSha256": "31cc103077e5a71903286f7c7f8bc30f6fec967d89896dbfd74890e071a1a643"
+    },
+    "src/theme/LightTheme.ts": {
+      "beforeSha256": "827a5c967f76db75c43c9201c99a17c3a572401e0085ce10eb158095a6b97c4f",
+      "afterSha256": "827a5c967f76db75c43c9201c99a17c3a572401e0085ce10eb158095a6b97c4f"
+    },
+    "src/theme/MoreFotoTheme.ts": {
+      "beforeSha256": "a11ecf1a40132c2a0a88782ae66be7f060d60442c0df4376ff5bd22b5ed7c751",
+      "afterSha256": "a11ecf1a40132c2a0a88782ae66be7f060d60442c0df4376ff5bd22b5ed7c751"
+    },
+    "src/types/index.d.ts": {
+      "beforeSha256": "c7dff524ef06f6154024bd302a1bf54c4bee8ed28dce99a9fb69449fd12b1d5b",
+      "afterSha256": "c7dff524ef06f6154024bd302a1bf54c4bee8ed28dce99a9fb69449fd12b1d5b"
+    },
+    "src/types/themeTypes/ThemeMode.ts": {
+      "beforeSha256": "daa73b15cc11ae9e63f720ec4de3cf2a20b44fe495466bc9cf902cf8892ad99e",
+      "afterSha256": "daa73b15cc11ae9e63f720ec4de3cf2a20b44fe495466bc9cf902cf8892ad99e"
+    },
+    "src/types/themeTypes/ThemeType.ts": {
+      "beforeSha256": "b8f16801a278d2efb82b19fe0f9edcbc1687ccd78b073fd4c3e76d7637b9fa64",
+      "afterSha256": "b8f16801a278d2efb82b19fe0f9edcbc1687ccd78b073fd4c3e76d7637b9fa64"
+    },
+    "src/types/vue_tabler_icon.d.ts": {
+      "beforeSha256": "8999622b92a11bfe971b224b4265ae15ee158f0e46bb59d32d91bb398313e907",
+      "afterSha256": "8999622b92a11bfe971b224b4265ae15ee158f0e46bb59d32d91bb398313e907"
+    },
+    "src/utils/locales/messages.ts": {
+      "beforeSha256": "a2fe4d0afcd920f03065f161eefea846cde0207036dbf87bea52fc4b2e920919",
+      "afterSha256": "a2fe4d0afcd920f03065f161eefea846cde0207036dbf87bea52fc4b2e920919"
+    },
+    "src/utils/locales/ru.json": {
+      "beforeSha256": "87e3b25a41b1b938e945129294c09137d3a70ab4a8bbddb0694436283ebbba71",
+      "afterSha256": "245a6d59e249368ced096da4f052223890e18790e7c204f8f2d5ef03b4f3d15f"
+    },
+    "src/utils/utils.ts": {
+      "beforeSha256": "79e2c2cce236701613e80d86b8d80d238c86cb1ad0ee4dee8b73221e23663acd",
+      "afterSha256": "79e2c2cce236701613e80d86b8d80d238c86cb1ad0ee4dee8b73221e23663acd"
+    },
+    "src/views/authentication/LoginPage.vue": {
+      "beforeSha256": "e2dc270b31c575034f3773feb62ca4e91335ae4e225a8b53cdbb8a876f4ec884",
+      "afterSha256": "e2dc270b31c575034f3773feb62ca4e91335ae4e225a8b53cdbb8a876f4ec884"
+    },
+    "src/views/authentication/RegisterPage.vue": {
+      "beforeSha256": "4441580c096ff280273a6943c869a3e3cd0bf3da795af62beeea1ff76045547a",
+      "afterSha256": "4441580c096ff280273a6943c869a3e3cd0bf3da795af62beeea1ff76045547a"
+    },
+    "src/views/authentication/authForms/AuthLogin.vue": {
+      "beforeSha256": "dadc2403e6c16c4a6686ab7036de75cf2b487ad4b467b5effaf722e38cb75e27",
+      "afterSha256": "48ecdce25555eeca7f4b7918e136c18e747be5ee0ba531af8c69016ab5859252"
+    },
+    "src/views/authentication/authForms/AuthRegister.vue": {
+      "beforeSha256": "196b8b3f371493ec581790b5f09d253206f59eedfc7610a550d17ac7e1ba9fa0",
+      "afterSha256": "196b8b3f371493ec581790b5f09d253206f59eedfc7610a550d17ac7e1ba9fa0"
+    },
+    "src/views/dashboard/DashboardPage.vue": {
+      "beforeSha256": "89a3e280fdee211fb754980307ce641f1bf6adc7a9ff27ed56de047a11e9529c",
+      "afterSha256": "89a3e280fdee211fb754980307ce641f1bf6adc7a9ff27ed56de047a11e9529c"
+    },
+    "src/views/docs/DocumentationPage.vue": {
+      "beforeSha256": "b13f0633d3498b784b9c1e579273441f107cdf2fcb52b189a3e55a02e339de86",
+      "afterSha256": "b13f0633d3498b784b9c1e579273441f107cdf2fcb52b189a3e55a02e339de86"
+    },
+    "src/views/exchange/AdvertisementCreatePage.vue": {
+      "beforeSha256": "f5c4569fe18fbd775b5a38dcc4e15bb97e02c215b5cc1f4821cc543aaa911b35",
+      "afterSha256": "f5c4569fe18fbd775b5a38dcc4e15bb97e02c215b5cc1f4821cc543aaa911b35"
+    },
+    "src/views/exchange/AdvertisementsPage.vue": {
+      "beforeSha256": "4a6610dc89411a703ee6f0e249196c6eeae62c05fa1791dbe5fdfdabcd129927",
+      "afterSha256": "4a6610dc89411a703ee6f0e249196c6eeae62c05fa1791dbe5fdfdabcd129927"
+    },
+    "src/views/exchange/ChatScriptsPage.vue": {
+      "beforeSha256": "62699aa1f7bb437179f12e5ad356ce63f7f13ac0ea03c31a469d06a7e7dba091",
+      "afterSha256": "62699aa1f7bb437179f12e5ad356ce63f7f13ac0ea03c31a469d06a7e7dba091"
+    },
+    "src/views/exchange/OrderBookPage.vue": {
+      "beforeSha256": "28604b63a4e074329ff729314f84b29cbeb2e24f9fe0d2442dc949a9c4a540e8",
+      "afterSha256": "28604b63a4e074329ff729314f84b29cbeb2e24f9fe0d2442dc949a9c4a540e8"
+    },
+    "src/views/exchange/TradeDetailPage.vue": {
+      "beforeSha256": "cac4ad737c4433884a5729ad4c6ff766dd252a918fa3fa9839ea20442573b427",
+      "afterSha256": "cac4ad737c4433884a5729ad4c6ff766dd252a918fa3fa9839ea20442573b427"
+    },
+    "src/views/exchange/TradesPage.vue": {
+      "beforeSha256": "67750db5d952fb1d000391af82c8e79e0765676d3bb374c6163a045b49f7c2a0",
+      "afterSha256": "67750db5d952fb1d000391af82c8e79e0765676d3bb374c6163a045b49f7c2a0"
+    },
+    "src/views/exchange/components/CurrencyPairSelector.vue": {
+      "beforeSha256": "15cf6f96b13e05c059cf091275ea5e5c063b66a8cb688960c4afb74782066bfd",
+      "afterSha256": "15cf6f96b13e05c059cf091275ea5e5c063b66a8cb688960c4afb74782066bfd"
+    },
+    "src/views/exchange/components/OrderBookAccessState.vue": {
+      "beforeSha256": "eee8fc55e31fbb13128055a5933211161f602890e47c63abeeb94dc4d183eba4",
+      "afterSha256": "eee8fc55e31fbb13128055a5933211161f602890e47c63abeeb94dc4d183eba4"
+    },
+    "src/views/exchange/components/OrderBookTable.vue": {
+      "beforeSha256": "62e1d630946e63a9706f578045c702285ed3bc95f73f9e1142c096cc090cb8b6",
+      "afterSha256": "62e1d630946e63a9706f578045c702285ed3bc95f73f9e1142c096cc090cb8b6"
+    },
+    "src/views/exchange/components/TradeChat.vue": {
+      "beforeSha256": "377a256128d7fbd6ed313c57c82aa1b3e9431502dd944547a891af5fe6bca427",
+      "afterSha256": "377a256128d7fbd6ed313c57c82aa1b3e9431502dd944547a891af5fe6bca427"
+    },
+    "src/views/exchange/components/TradeCountdown.vue": {
+      "beforeSha256": "7b0b7e9c16454c1597cc3ef5fe6f7b2c202b1cadc4763b96ea06d8a71a106ba6",
+      "afterSha256": "7b0b7e9c16454c1597cc3ef5fe6f7b2c202b1cadc4763b96ea06d8a71a106ba6"
+    },
+    "src/views/home/HomePage.vue": {
+      "beforeSha256": "c533051de4822ccbef1af3215658585b8a52bccbabe91afcdf2587fd802f79c0",
+      "afterSha256": "c533051de4822ccbef1af3215658585b8a52bccbabe91afcdf2587fd802f79c0"
+    },
+    "src/views/pages/maintenance/error/Error404Page.vue": {
+      "beforeSha256": "85785052617695fa18148c480902381dc3a04cb29fe57cb3aadd6ba2dfaf9286",
+      "afterSha256": "85785052617695fa18148c480902381dc3a04cb29fe57cb3aadd6ba2dfaf9286"
+    },
+    "src/views/profile/ApiConnectionPage.vue": {
+      "beforeSha256": "954180ad0dffcc2dddf33db24af59f9700f61980f8201f2a3d6735482eec128d",
+      "afterSha256": "954180ad0dffcc2dddf33db24af59f9700f61980f8201f2a3d6735482eec128d"
+    },
+    "src/views/profile/ProfilePage.vue": {
+      "beforeSha256": "79320d0daedf2697ecdc16699b58c6280ee1e05f3eb303a9004c3496567315c0",
+      "afterSha256": "79320d0daedf2697ecdc16699b58c6280ee1e05f3eb303a9004c3496567315c0"
+    },
+    "src/views/wallet/BalancesPage.vue": {
+      "beforeSha256": "f7216802d63076a94fc2e9b5fd83ded2f0a20bdf14fead6f5deb85e26eef7b5b",
+      "afterSha256": "f7216802d63076a94fc2e9b5fd83ded2f0a20bdf14fead6f5deb85e26eef7b5b"
+    },
+    "src/views/wallet/CashFlowReportPage.vue": {
+      "beforeSha256": "07ee040e9af3f83d7f7da69a6d67dd5ee4a6d094ddb1f5d92657225d50966985",
+      "afterSha256": "07ee040e9af3f83d7f7da69a6d67dd5ee4a6d094ddb1f5d92657225d50966985"
+    },
+    "src/views/wallet/TransactionsPage.vue": {
+      "beforeSha256": "a3b36127024d19ec1f8e02ad2309ab3590956e10af1be357ab40f66a12796b8e",
+      "afterSha256": "a3b36127024d19ec1f8e02ad2309ab3590956e10af1be357ab40f66a12796b8e"
+    },
+    "tests/commerce/checkout.test.mjs": {
+      "beforeSha256": "543d22b4531effd0f6f57e4a0f5a6b7a4ff521d2954982f930ef5c280fc63bd0",
+      "afterSha256": "543d22b4531effd0f6f57e4a0f5a6b7a4ff521d2954982f930ef5c280fc63bd0"
+    },
+    "tests/commerce/curator.test.mjs": {
+      "beforeSha256": "2d3bdc6cf330f550d5c133d938986f31289c922973f826c9c10b99243376231c",
+      "afterSha256": "2d3bdc6cf330f550d5c133d938986f31289c922973f826c9c10b99243376231c"
+    },
+    "tests/commerce/dashboard.test.mjs": {
+      "beforeSha256": "b603f2631bf05c2e719680e2cc878ac2ca5324a732227c9eec4c10a03b8034e7",
+      "afterSha256": "b603f2631bf05c2e719680e2cc878ac2ca5324a732227c9eec4c10a03b8034e7"
+    },
+    "tests/commerce/delivery.test.mjs": {
+      "beforeSha256": "d7c351b1cfaecb82136a8e8b848d1ad4e8fdd293652aa5dd387c135f6ffe86a1",
+      "afterSha256": "d7c351b1cfaecb82136a8e8b848d1ad4e8fdd293652aa5dd387c135f6ffe86a1"
+    },
+    "tests/commerce/handoff.test.mjs": {
+      "beforeSha256": "5aa61607e520cae7f3d00080fbaa4b3f8081ca720df90ae9adc4c9453d8e667b",
+      "afterSha256": "5aa61607e520cae7f3d00080fbaa4b3f8081ca720df90ae9adc4c9453d8e667b"
+    },
+    "tests/commerce/management.test.mjs": {
+      "beforeSha256": "c25c1962c5156531a16c010aced56d1658169ca127248606021a80ff007d9d44",
+      "afterSha256": "c25c1962c5156531a16c010aced56d1658169ca127248606021a80ff007d9d44"
+    },
+    "tests/commerce/organization.test.mjs": {
+      "beforeSha256": "cd94f95c5575354a61d75e6b74986305c05de7738c57656e7855d1e3c6d6297c",
+      "afterSha256": "cd94f95c5575354a61d75e6b74986305c05de7738c57656e7855d1e3c6d6297c"
+    },
+    "tests/commerce/payment.test.mjs": {
+      "beforeSha256": "80163d82b8b0f80f1d5dfebe55842c9ae5d10c0b013338d00be7d9b9ddac23f7",
+      "afterSha256": "80163d82b8b0f80f1d5dfebe55842c9ae5d10c0b013338d00be7d9b9ddac23f7"
+    },
+    "tests/commerce/photos.test.mjs": {
+      "beforeSha256": "87597dd34cf7ab2744f3b2c1c462b68af1c990f62ce332950ca0fd65ac7c62be",
+      "afterSha256": "87597dd34cf7ab2744f3b2c1c462b68af1c990f62ce332950ca0fd65ac7c62be"
+    },
+    "tests/commerce/pricing.test.mjs": {
+      "beforeSha256": "6facbc1315e7f3317ced7bd7f7f3c8b6f8eb52a3300513adc8e8eb6aab3004c7",
+      "afterSha256": "6facbc1315e7f3317ced7bd7f7f3c8b6f8eb52a3300513adc8e8eb6aab3004c7"
+    },
+    "tests/commerce/production.test.mjs": {
+      "beforeSha256": "982b8ff320c4aa2aac22f66f76bba4ea25632bc4f4ce83b6a32792f01408049e",
+      "afterSha256": "982b8ff320c4aa2aac22f66f76bba4ea25632bc4f4ce83b6a32792f01408049e"
+    },
+    "tests/commerce/review.test.mjs": {
+      "beforeSha256": "b929aa30a812cec0d3d2dd13522c7478ba5d291bd5afa7764dc8efc7891665e1",
+      "afterSha256": "b929aa30a812cec0d3d2dd13522c7478ba5d291bd5afa7764dc8efc7891665e1"
+    },
+    "tests/commerce/settlement.test.mjs": {
+      "beforeSha256": "c4d7fd75b9a77d004d194fcd8371b620496cef9ca62dd8a457ea67c0c8c181af",
+      "afterSha256": "c4d7fd75b9a77d004d194fcd8371b620496cef9ca62dd8a457ea67c0c8c181af"
+    },
+    "tests/commerce/shipping.test.mjs": {
+      "beforeSha256": "cbfeac5a7ab3723d8de8978badb8cfda42668c6da04ff99cc64e8b960c7e7711",
+      "afterSha256": "cbfeac5a7ab3723d8de8978badb8cfda42668c6da04ff99cc64e8b960c7e7711"
+    },
+    "tests/commerce/ui-table.test.mjs": {
+      "beforeSha256": "4e0d9f4c37132998bf8e8a1a31fa2085bf8c8aa25663147ea125bc3538f2afa6",
+      "afterSha256": "4e0d9f4c37132998bf8e8a1a31fa2085bf8c8aa25663147ea125bc3538f2afa6"
+    },
+    "tests/commerce/ui-values.test.mjs": {
+      "beforeSha256": "c1bfe0c7e13a4c27b3c99b8fca35d61d7c570ae7811569755ea5b3e061cba415",
+      "afterSha256": "c1bfe0c7e13a4c27b3c99b8fca35d61d7c570ae7811569755ea5b3e061cba415"
+    },
+    "tsconfig.e2e.json": {
+      "beforeSha256": "175ef5dd9b435db0ae74514deb4b84774ac0e11a8d0e67234a1e021d3b4da821",
+      "afterSha256": "f5a93c7ae2846a2e3e692d648f8db2d2d901e71e0b45b5a668cfa893f3ce4a40"
+    },
+    "tsconfig.json": {
+      "beforeSha256": "04ce2b2555d109413d118e54b900565c35a3ca377f073bcb48e2a4b762e40d06",
+      "afterSha256": "04ce2b2555d109413d118e54b900565c35a3ca377f073bcb48e2a4b762e40d06"
+    },
+    "tsconfig.vite-config.json": {
+      "beforeSha256": "c4cb3991e5e4106ae2285df0c671c4e2bc092bfbba08f2602b445321f4ce92fe",
+      "afterSha256": "c4cb3991e5e4106ae2285df0c671c4e2bc092bfbba08f2602b445321f4ce92fe"
+    },
+    "vite.config.ts": {
+      "beforeSha256": "392a663d22768faddbb2529cb02c7f7cd1c7908f909d8b99c3391557727c302a",
+      "afterSha256": "392a663d22768faddbb2529cb02c7f7cd1c7908f909d8b99c3391557727c302a"
+    }
+  },
+  "added": [
+    "e2e/live/catalog.spec.ts",
+    "e2e/live/helpers.ts",
+    "playwright.live.config.ts",
+    "src/modules/morefoto/catalog/api.ts",
+    "src/modules/morefoto/catalog/components/CatalogScreen.vue",
+    "src/modules/morefoto/catalog/components/CatalogTable.vue",
+    "src/modules/morefoto/catalog/useCatalog.ts",
+    "src/modules/morefoto/catalog/useProductEditor.ts",
+    "src/modules/morefoto/views/FeatureUnavailablePage.vue"
+  ],
+  "modified": [
+    ".env.example",
+    ".gitignore",
+    "README.md",
+    "docker/development/nginx/conf.d/default.conf",
+    "docker/production/nginx/conf.d/default.conf",
+    "e2e/features/commerce/delivery.feature",
+    "e2e/features/dashboard.feature",
+    "e2e/steps/review/review.steps.ts",
+    "env.d.ts",
+    "eslint.config.js",
+    "package-lock.json",
+    "package.json",
+    "public/assets/svg/sprite.svg",
+    "scripts/capture-guides.mts",
+    "scripts/review-inventory.cjs",
+    "src/api/auth.ts",
+    "src/api/http.ts",
+    "src/modules/morefoto/handoff/handoff.css",
+    "src/modules/morefoto/layouts/CabinetLayout.vue",
+    "src/modules/morefoto/management/components/AdminDialog.vue",
+    "src/modules/morefoto/management/components/ProductFields.vue",
+    "src/modules/morefoto/views/AccessPage.vue",
+    "src/modules/morefoto/views/CatalogPage.vue",
+    "src/router/PublicRoutes.ts",
+    "src/router/index.ts",
+    "src/stores/auth.ts",
+    "src/utils/locales/ru.json",
+    "src/views/authentication/authForms/AuthLogin.vue",
+    "tsconfig.e2e.json"
+  ],
+  "count": 561,
+  "excluded": [
+    "node_modules",
+    "dist",
+    "reports",
+    "test-results",
+    ".git",
+    ".env",
+    ".env.* except .env.example"
+  ],
+  "normalization": "Five imported files received whitespace/newline-only cleanup required by git diff --check; no behavior changed."
+}

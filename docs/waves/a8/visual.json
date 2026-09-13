@@ -1,0 +1,63 @@
+{
+  "status": "passed",
+  "errors": [],
+  "assetFailures": [],
+  "horizontalOverflow": false,
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "inspectedAt": "2026-09-12T14:08:57.053048+00:00",
+  "review": "Screenshots viewed: labels, controls, dialog footer/body scrolling, catalogue layout, menu and logout are readable and reachable on both viewports.",
+  "screenshots": [
+    {
+      "path": "frontend/reports/e2e-live/visual/01-login-desktop.png",
+      "sha256": "f20a636d00c04624610915b55c9b2b56d47c224fd6ab2573d5d40d326ad29cc5"
+    },
+    {
+      "path": "frontend/reports/e2e-live/visual/02-login-mobile.png",
+      "sha256": "238115baea5217ec1a3f9f82b2f769a389f768fca41ab7f514969a4bc21dd06f"
+    },
+    {
+      "path": "frontend/reports/e2e-live/visual/03-login-error-mobile.png",
+      "sha256": "24d393ee88797a1c95a1ff94ca9d3c80a76710098e1a507891994df015524c97"
+    },
+    {
+      "path": "frontend/reports/e2e-live/visual/04-catalog-desktop.png",
+      "sha256": "f59cc00fd1b1fc06cefe88f87775687f8dc009ec0071fd17e714772ba07519a1"
+    },
+    {
+      "path": "frontend/reports/e2e-live/visual/05-editor-desktop.png",
+      "sha256": "ca00fb47e621878acca67ef530acedb6f22abafd67c95dcf9665b139b0425ae8"
+    },
+    {
+      "path": "frontend/reports/e2e-live/visual/06-editor-mobile-top.png",
+      "sha256": "0d66340517e5da7a2c791a9184d0c8f944b47ed1986cbfac1db6533f39c8f86a"
+    },
+    {
+      "path": "frontend/reports/e2e-live/visual/07-editor-mobile-bottom.png",
+      "sha256": "d0ae643ffcc3ec8a74daedbd71bc53a5f9331fbe5079c4d65f27f827c82cee87"
+    },
+    {
+      "path": "frontend/reports/e2e-live/visual/08-catalog-mobile.png",
+      "sha256": "106f370b91ccdeb149fe138bcb9134302bdecc6513ab29a57db495c5d8e3d072"
+    },
+    {
+      "path": "frontend/reports/e2e-live/visual/09-menu-mobile.png",
+      "sha256": "3bbfac1d5a30a13b58bc1ce2e15d1eff1ffed85e75cff7b0845b1aec6602e91c"
+    },
+    {
+      "path": "frontend/reports/e2e-live/visual/10-logout-mobile.png",
+      "sha256": "238115baea5217ec1a3f9f82b2f769a389f768fca41ab7f514969a4bc21dd06f"
+    }
+  ],
+  "notes": [
+    "Invalid-credentials response is currently displayed in English (existing API text); localization is a follow-up."
+  ]
+}

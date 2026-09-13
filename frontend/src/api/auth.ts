@@ -1,0 +1,74 @@
+import api from './http';
+import type { StaffRole } from '@/modules/morefoto/types';
+
+export interface GeeTestCaptchaPayload {
+  lot_number: string;
+  captcha_output: string;
+  pass_token: string;
+  gen_time: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+  captcha?: GeeTestCaptchaPayload;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+}
+
+export interface RequestRegistrationCodeResponse {
+  email: string;
+  codeExpiresAt: string;
+  resendAvailableAt: string;
+}
+
+export interface ConfirmRegistrationRequest {
+  email: string;
+  code: string;
+}
+
+export interface AuthUser {
+  role?: StaffRole;
+  permissions?: string[];
+  accessRevision?: number;
+  id: number;
+  email: string;
+  name: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  expiresAt: string;
+  user: AuthUser;
+}
+
+export interface StaffProfile extends AuthUser {
+  role: StaffRole;
+  active: boolean;
+  permissions: string[];
+  accessRevision: number;
+}
+
+export const authApi = {
+  me(): Promise<StaffProfile> {
+    return api.get('/api/v1/me').then((r) => r.data);
+  },
+  login(data: LoginRequest): Promise<LoginResponse> {
+    return api.post('/api/v1/auth/login', data).then((r) => r.data);
+  },
+
+  requestRegistrationCode(data: RegisterRequest): Promise<RequestRegistrationCodeResponse> {
+    return api.post('/api/v1/auth/register/request-code', data).then((r) => r.data);
+  },
+
+  confirmRegistration(data: ConfirmRegistrationRequest): Promise<LoginResponse> {
+    return api.post('/api/v1/auth/register/confirm', data).then((r) => r.data);
+  },
+
+  logout(): Promise<void> {
+    return api.post('/api/v1/auth/logout');
+  }
+};

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="MoreFoto">
+  <rect width="64" height="64" rx="14" fill="#24658A"/>
+  <defs>
+    <clipPath id="photo">
+      <rect x="14" y="16" width="36" height="32" rx="4"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#photo)" fill="#C3DFF3">
+    <circle cx="41" cy="26" r="4"/>
+    <path d="M12 39c8-9 15-9 23-2s14 7 19 0v14H12z"/>
+  </g>
+  <rect x="12" y="14" width="40" height="36" rx="6" fill="none" stroke="#FFFFFF" stroke-width="4"/>
+</svg>

@@ -1,0 +1,293 @@
+{
+  "recordedAt": "2026-09-12T14:51:53.332052+00:00",
+  "status": "passed-ready-for-review",
+  "baseCommit": "895fee9873cd62316579d18512c8b2e3315c3d62",
+  "branch": "codex/a8-real-e2e",
+  "dependencies": {
+    "B1": "merged",
+    "E2": "merged"
+  },
+  "checks": {
+    "waveGraph": {
+      "waves": 40,
+      "endpoints": 99,
+      "legacyWaves": 35,
+      "readyFromMain": [
+        "A8",
+        "C3"
+      ],
+      "blocked": [
+        "C4",
+        "B2",
+        "D1",
+        "D2",
+        "E3",
+        "F1",
+        "E4",
+        "E5",
+        "D3",
+        "F2",
+        "G1",
+        "H1",
+        "G2",
+        "I1",
+        "I2",
+        "I3",
+        "J1",
+        "J2",
+        "J3",
+        "K1",
+        "L1",
+        "L2",
+        "K2",
+        "M1",
+        "N1",
+        "N2"
+      ],
+      "negativeFixtures": [
+        "cycle",
+        "unknown dependency",
+        "unmerged dependency started",
+        "open decision started",
+        "stale unlocks",
+        "duplicate endpoint owner",
+        "missing legacy mapping",
+        "stacked PR permitted",
+        "browser gate disabled",
+        "visual gate disabled"
+      ]
+    },
+    "canonicalApi": {
+      "date": "2026-09-11",
+      "result": "passed",
+      "requests": 99,
+      "folders": 15,
+      "scripts": 144,
+      "waves": 40,
+      "schemaValidation": "not-run",
+      "schemaUrl": "https://schema.postman.com/json/collection/v2.1.0/collection.json",
+      "checks": [
+        "JSON parse",
+        "unique IDs and method/path pairs",
+        "Markdown/registry/collection parity",
+        "module ownership and module-plan parity",
+        "RaBit API base and contract paths",
+        "route declaration ownership and proposed status",
+        "raw/structured URL parity",
+        "all variable references declared",
+        "empty exported credentials",
+        "numeric JSON version fields",
+        "auth and idempotency headers",
+        "endpoint-specific multipart fields and boundary",
+        "platform requests blocked by default",
+        "wave primary coverage, acyclic dependencies and independent readiness",
+        "wave metadata and review/acceptance completeness",
+        "module/wave Postman item equality",
+        "existing source paths and document links"
+      ],
+      "liveApiRequestsExecuted": false
+    },
+    "postmanOffline": {
+      "scriptsParsed": 144,
+      "positiveFixtures": 99,
+      "negativeFixtures": 198,
+      "idempotencyRepeatChecks": 43,
+      "platformGuardChecks": 14,
+      "platformContractNegativeFixtures": 2,
+      "note": "Offline script fixtures only; no API requests or Postman UI import were executed."
+    },
+    "phpSyntax": {
+      "status": "passed",
+      "files": 353,
+      "runtime": "PHP 8.4.25",
+      "evidence": {
+        "path": "api/var/e2e/rabit-e2e-156efdea4a96/php-lint.log",
+        "sha256": "df89bb2417aa2e106d5493877b0e31cba2efe0d890046257aab66fc88933f26b"
+      }
+    },
+    "frontend": {
+      "status": "passed",
+      "runtime": [
+        "Node22.14.0 in pinned Playwright image for isolated gate/build/unit",
+        "Node24.15.0 in WSL for final lint/types after R16 test-only navigation fix"
+      ],
+      "commands": [
+        "npm ci --no-audit --no-fund",
+        "npm run check",
+        "npm run test:commerce",
+        "VITE_API_URL= VITE_API_MOCKS_ENABLED=false npm run build"
+      ],
+      "unitTests": 150,
+      "logs": {
+        "install": {
+          "path": "api/var/e2e/rabit-e2e-156efdea4a96/npm-ci.log",
+          "sha256": "6e57c5b174d91638e2361e59b9df0f95f92ce961eae985836025a1d0300e6839"
+        },
+        "check": {
+          "path": "frontend/reports/a8-recovery/R16-navigation-check.log",
+          "sha256": "beb5edf6e458c0bfa5dce2e9208600ec0c4f4615e02479df11fc3615960ee35d"
+        },
+        "unit": {
+          "path": "frontend/reports/a8-recovery/can-reset-unit.log",
+          "sha256": "c9b134976da4d4798fd525549188ff839656a1eede856d404e0414fc2ab02221"
+        },
+        "build": {
+          "path": "api/var/e2e/rabit-e2e-156efdea4a96/build-final.log",
+          "sha256": "f69d9cebc94f2d101d89372db631476460aaf00dde92105eb80075c1287646d1"
+        }
+      }
+    },
+    "pythonSyntax": {
+      "status": "passed",
+      "files": [
+        "tools/run-browser-e2e.py",
+        "tools/verify-wave-graph.py"
+      ]
+    },
+    "makeDryRun": {
+      "status": "passed",
+      "command": "make -n test-e2e"
+    },
+    "gitDiffCheck": {
+      "status": "passed",
+      "note": "Whitespace-only cleanup in imported files after frontend checks"
+    },
+    "phpStyle": {
+      "status": "passed",
+      "changedPhpFiles": 3,
+      "configuration": "api/public/local/php-cs-fixer.php",
+      "evidence": {
+        "path": "api/var/a8-validation/php-style.log",
+        "sha256": "2738ae380501935aff0d15fd337b10a54e6d1712946870c6f346002ff8c5aaf0"
+      }
+    },
+    "phpstan": {
+      "status": "passed",
+      "errors": 0,
+      "evidence": {
+        "path": "api/var/e2e/rabit-e2e-156efdea4a96/phpstan.log",
+        "sha256": "0b488d0da8351230956de7891f1988cea88cb424d7bd206daae1f7bec0482c8a"
+      }
+    },
+    "phpunit": {
+      "status": "passed",
+      "tests": 249,
+      "assertions": 854,
+      "evidence": {
+        "path": "api/var/e2e/rabit-e2e-156efdea4a96/phpunit.log",
+        "sha256": "5e2b320112fc5d4da06ce654351d02e3bb564636b1c9001efaa8fee042b5c6f9"
+      }
+    },
+    "nativeCatalog": {
+      "status": "passed",
+      "checks": 95,
+      "runtime": {
+        "php": "8.4.25",
+        "bitrix": "25.750.0",
+        "mysql": "8.0.45"
+      },
+      "report": "native-catalog.json"
+    },
+    "realBrowser": {
+      "status": "passed",
+      "command": "make e2e-up && make e2e-test E2E_STATE=<state.json> && make e2e-down E2E_STATE=<state.json>",
+      "stats": {
+        "startTime": "2026-09-12T14:04:01.851Z",
+        "duration": 39334.712,
+        "expected": 14,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "retries": 0,
+      "mocks": false,
+      "database": "new disposable real Bitrix/MySQL database",
+      "report": {
+        "path": "frontend/reports/e2e-live/results.json",
+        "sha256": "1915b78f6118af2311c354016dde44bf82ee7ba0c852c1b2ee6f4fa173b06659"
+      },
+      "log": {
+        "path": "api/var/e2e/rabit-e2e-156efdea4a96/browser.log",
+        "sha256": "d08fd6632b7879be0ceb2adc483a4b4bcca6002960888c5c7b41b0aa3677b8cb"
+      },
+      "cleanup": {
+        "stopped": true,
+        "errors": []
+      }
+    },
+    "visual": {
+      "status": "passed",
+      "screenshots": 10,
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 1000
+        },
+        {
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "pageErrors": 0,
+      "assetFailures": 0,
+      "horizontalOverflow": false,
+      "report": "visual.json"
+    },
+    "demo": {
+      "status": "passed",
+      "scenarios": 451,
+      "steps": 1537,
+      "report": "demo.json",
+      "execution": "Full coverage from recorded primary runs and explicit follow-ups; see demo.json for failures, OOM and reruns."
+    },
+    "canonicalPatch": {
+      "status": "passed",
+      "files": 5,
+      "baselineVerified": true,
+      "appliesExactly": true
+    }
+  },
+  "pending": [],
+  "previousRun": {
+    "date": "2026-09-12",
+    "sourceTask": "01a090f8-c183-7291-9aec-97948fe6b762",
+    "reportedRealE2EPassed": 13,
+    "reusedAsCurrentEvidence": false,
+    "note": "Interrupted worktree in /tmp disappeared after restart; code recovered from recorded edits. Runtime tests must be rerun."
+  },
+  "deployment": false,
+  "merged": false,
+  "knownInheritedWarnings": [
+    "npm peer dependency warning: vite-plugin-inspect 0.8.9 (via devtools) declares Vite 5/6, existing frontend uses Vite 7.2.2. No dependency upgrade included.",
+    "Build references absent auth-pattern-dark.svg from legacy dark auth styles; the current live login uses different markup. No asset failures occurred in the verified flow."
+  ],
+  "recovery": {
+    "docker": "recovered with explicit user approval",
+    "engineVersion": "29.4.1",
+    "temporarySockets": "Both stale socket parent directories were moved to backups before restart; no image or database reset.",
+    "worktree": "Recovered code was verified again; previous task results are not counted."
+  },
+  "fixedDuringAcceptance": [
+    "Stock Bitrix route parameters are no longer treated as query parameters by CatalogController.",
+    "Digital product creation no longer validates hidden print count.",
+    "Shared AdminDialog defaults canReset to true so demo conflict recovery remains available.",
+    "Live E2E selects Vuetify product type via its standard keyboard interaction.",
+    "R16 demo test waits for request-card navigation before recording the URL and changing the staff role."
+  ],
+  "knownUiLimitations": [
+    "The invalid-password API message is currently English; login rejection and retry work.",
+    "Demo R12 returned a different conflict message in the accelerated two-worker run, then passed the one-worker rerun without app changes. Cause is not established; see demo.json and known-issues.md."
+  ],
+  "verifiedSource": {
+    "algorithm": "sha256 over sorted tracked runtime paths, NUL, per-file sha256, newline",
+    "files": 1230,
+    "sha256": "a7b20bf0aff355de2262c42f272e19e3fb7a9c561272c542e3011aefda0229ab",
+    "includes": [
+      "frontend/",
+      "api/",
+      "tools/",
+      "Makefile"
+    ],
+    "note": "Includes final AdminDialog default and keyboard E2E step. Documentation-only updates after runtime tests are excluded."
+  }
+}
