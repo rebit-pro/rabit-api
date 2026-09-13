@@ -18,8 +18,21 @@ use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
 use Morefoto\Access\Domain\Assignment\Repository\InstitutionAssignmentRepository;
 use Morefoto\Access\Application\Assignment\Service\InstitutionAccess;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
+use Morefoto\Access\Domain\Assignment\Repository\GroupAssignmentRepository;
+use Morefoto\Access\Application\Assignment\Service\GroupAccess;
+use Rebit\Share\Contracts\Access\GroupAccessInterface;
 
 return [
+    GroupAssignmentRepository::class => ['className' => GroupAssignmentRepository::class],
+    GroupAccessInterface::class => [
+        'constructor' => static fn(): GroupAccessInterface => new GroupAccess(
+            ServiceLocator::getInstance()->get(GroupAssignmentRepository::class),
+            ServiceLocator::getInstance()->get(InstitutionAccessInterface::class),
+            ServiceLocator::getInstance()->get(InstitutionAssignmentRepository::class),
+            ServiceLocator::getInstance()->get(StaffProfileRepository::class),
+            ServiceLocator::getInstance()->get(IdentityGatewayInterface::class),
+        ),
+    ],
     InstitutionAssignmentRepository::class => ['className' => InstitutionAssignmentRepository::class],
     InstitutionAccessInterface::class => [
         'constructor' => static fn(): InstitutionAccessInterface => new InstitutionAccess(
@@ -40,6 +53,7 @@ return [
             ServiceLocator::getInstance()->get(IdentityGatewayInterface::class),
             ServiceLocator::getInstance()->get(PermissionPolicy::class),
             ServiceLocator::getInstance()->get(InstitutionAssignmentRepository::class),
+            ServiceLocator::getInstance()->get(GroupAssignmentRepository::class),
         ],
     ],
     AccessGuardInterface::class => [

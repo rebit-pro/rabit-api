@@ -120,10 +120,10 @@ def start(args):
         print("Backend lint, static analysis and PHPUnit", flush=True)
         for name, check in [
             ("php-lint", ["php", "vendor/bin/phplint"]),
-            ("phpstan", ["php", "vendor/bin/phpstan", "analyse", "--no-progress", "--memory-limit=1G"]),
+            ("phpstan", ["php", "vendor/bin/phpstan", "analyse", "--no-progress", "--debug", "--memory-limit=1G"]),
             ("phpunit", ["php", "vendor/bin/phpunit", "--colors=never"]),
         ]:
-            docker("run", "--rm", "--network", "none", "--memory", "1536m", "--memory-swap", "1536m", "--tmpfs", "/app/var:rw,size=256m", "--entrypoint", "php", *mounts, "--workdir", "/app", args.php_cli, *check[1:], log=report / (name + ".log"))
+            docker("run", "--rm", "--network", "none", "--cpus", "2", "--memory", "1536m", "--memory-swap", "1536m", "--tmpfs", "/app/var:rw,size=256m", "--entrypoint", "php", *mounts, "--workdir", "/app", args.php_cli, *check[1:], log=report / (name + ".log"))
         print("Installing real Bitrix schema and fixture accounts", flush=True)
         output = docker("run", "--rm", "--network", state["private"], "--user", "0", "--entrypoint", "php", *mounts, "--workdir", "/app", args.php_cli, "-d", "short_open_tag=1", "-d", "date.timezone=UTC", "tools/e2e/prepare.php", log=report / "prepare.log")
         if "fixture ready" not in output:
@@ -181,7 +181,7 @@ def test_live(state):
     docker("run", "--rm", "--network", "container:" + state["id"] + "-frontend", "--shm-size=1g", *state["nodeArgs"], "--env", "E2E_BASE_URL=http://127.0.0.1", IMAGE, "npm", "run", "test:e2e:live", log=Path(state["report"], "browser.log"))
     results = json.loads((ROOT / "frontend/reports/e2e-live/results.json").read_text())
     stats = results["stats"]
-    if stats["unexpected"] or stats["skipped"] or stats["expected"] < 14:
+    if stats["unexpected"] or stats["skipped"] or stats["expected"] < 25:
         raise RuntimeError("Browser gate incomplete: " + json.dumps(stats))
     state["browser"] = stats
     save(state)

@@ -37,7 +37,8 @@ router.beforeEach(async (to) => {
     return auth.homePath;
   }
   if (!isMockApiEnabled && to.path.startsWith('/cabinet')) {
-    if (!['/cabinet/catalog', '/cabinet/profile'].includes(to.path)) return auth.homePath;
+    if (!['Catalog', 'CabinetProfile', 'OrganizationList', 'CabinetInstitution', 'OrganizationShoot'].includes(String(to.name)))
+      return auth.homePath;
     if (to.path === '/cabinet/catalog' && !auth.user?.permissions?.includes('catalog.manage')) return '/access-unavailable';
   }
   return true;

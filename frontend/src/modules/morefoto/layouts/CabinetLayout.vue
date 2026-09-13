@@ -33,33 +33,98 @@ const roleLabel = computed(() => (isStaffRole(auth.user?.role) ? roleLabels[auth
 const navigation = computed(() =>
   !isMockApiEnabled
     ? [
-        ...(auth.user?.permissions?.includes('catalog.manage')
-          ? [{ title: 'Каталог и цены', to: '/cabinet/catalog', icon: 'mdi-tag-outline' }]
+        ...(['organizer', 'curator', 'head'].includes(auth.user?.role ?? '')
+          ? [
+              {
+                title: 'Учреждения',
+                to: '/cabinet/institutions',
+                icon: 'mdi-home-city-outline'
+              }
+            ]
           : []),
-        { title: 'Профиль', to: '/cabinet/profile', icon: 'mdi-account-outline' }
+        ...(auth.user?.permissions?.includes('catalog.manage')
+          ? [
+              {
+                title: 'Каталог и цены',
+                to: '/cabinet/catalog',
+                icon: 'mdi-tag-outline'
+              }
+            ]
+          : []),
+        {
+          title: 'Профиль',
+          to: '/cabinet/profile',
+          icon: 'mdi-account-outline'
+        }
       ]
     : [
-        { title: auth.user?.role === 'teacher' ? 'Мои группы' : 'Обзор', to: '/cabinet/overview', icon: 'mdi-view-dashboard-outline' },
+        {
+          title: auth.user?.role === 'teacher' ? 'Мои группы' : 'Обзор',
+          to: '/cabinet/overview',
+          icon: 'mdi-view-dashboard-outline'
+        },
         ...(auth.user?.role === 'organizer'
           ? [
-              { title: 'Учреждения', to: '/cabinet/institutions', icon: 'mdi-home-city-outline' },
-              { title: 'Каталог и цены', to: '/cabinet/catalog', icon: 'mdi-tag-outline' },
-              { title: 'Пользователи', to: '/cabinet/users', icon: 'mdi-account-group-outline' }
+              {
+                title: 'Учреждения',
+                to: '/cabinet/institutions',
+                icon: 'mdi-home-city-outline'
+              },
+              {
+                title: 'Каталог и цены',
+                to: '/cabinet/catalog',
+                icon: 'mdi-tag-outline'
+              },
+              {
+                title: 'Пользователи',
+                to: '/cabinet/users',
+                icon: 'mdi-account-group-outline'
+              }
             ]
           : []),
         ...(['organizer', 'curator'].includes(auth.user?.role ?? '')
           ? [
-              { title: 'Производство', to: '/cabinet/production', icon: 'mdi-printer-outline' },
-              { title: 'Заказы', to: '/cabinet/orders', icon: 'mdi-receipt-text-outline' },
-              { title: 'Обращения', to: '/cabinet/support', icon: 'mdi-message-text-outline' }
+              {
+                title: 'Производство',
+                to: '/cabinet/production',
+                icon: 'mdi-printer-outline'
+              },
+              {
+                title: 'Заказы',
+                to: '/cabinet/orders',
+                icon: 'mdi-receipt-text-outline'
+              },
+              {
+                title: 'Обращения',
+                to: '/cabinet/support',
+                icon: 'mdi-message-text-outline'
+              }
             ]
           : []),
-        { title: 'Доставка', to: '/cabinet/delivery', icon: 'mdi-truck-delivery-outline' },
-        { title: 'Ссылки и сроки', to: '/cabinet/links', icon: 'mdi-link-variant' },
+        {
+          title: 'Доставка',
+          to: '/cabinet/delivery',
+          icon: 'mdi-truck-delivery-outline'
+        },
+        {
+          title: 'Ссылки и сроки',
+          to: '/cabinet/links',
+          icon: 'mdi-link-variant'
+        },
         ...(auth.user?.role !== 'head'
-          ? [{ title: 'Списки сотрудников', to: '/cabinet/staff-requests', icon: 'mdi-account-check-outline' }]
+          ? [
+              {
+                title: 'Списки сотрудников',
+                to: '/cabinet/staff-requests',
+                icon: 'mdi-account-check-outline'
+              }
+            ]
           : []),
-        { title: 'Профиль', to: '/cabinet/profile', icon: 'mdi-account-outline' }
+        {
+          title: 'Профиль',
+          to: '/cabinet/profile',
+          icon: 'mdi-account-outline'
+        }
       ]
 );
 watch(

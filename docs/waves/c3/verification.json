@@ -1,0 +1,130 @@
+{
+  "wave": "C3",
+  "status": "ready-for-review",
+  "date": "2026-09-13",
+  "branch": "codex/c3-shoots-groups-calendar",
+  "base": "b01be326e607c5cfafaeff587f29048f6802a636",
+  "independence": {
+    "dependency": "C2 merged in main (PR12)",
+    "decisions": [
+      "D08 accepted",
+      "D10 accepted"
+    ],
+    "A8": "PR14 merged in main, b01be326e607c5cfafaeff587f29048f6802a636; C3 rebased and reverified against this base",
+    "mainCheckoutClean": true
+  },
+  "checks": {
+    "phpunit": {
+      "status": "passed",
+      "tests": 341,
+      "assertions": 1089,
+      "php": "8.4.25"
+    },
+    "nativeC3": {
+      "status": "passed",
+      "checks": 198,
+      "report": "native.json",
+      "bitrix": "25.750.0",
+      "mysql": "8.0.45",
+      "transport": "native Router/controllers/filters/serializer; CLI seam only for php://input, not browser E2E"
+    },
+    "nativeC2": {
+      "status": "passed",
+      "checks": 138,
+      "report": "c2-regression.json"
+    },
+    "nativeE2": {
+      "status": "passed",
+      "checks": 95,
+      "report": "e2-regression.json"
+    },
+    "phpstan": {
+      "status": "passed",
+      "scope": "all configured modules; single-process --debug after parallel OOM; Auth path rechecked after clearToken change",
+      "errors": 0
+    },
+    "phpLint": {
+      "status": "passed",
+      "moduleFiles": 401,
+      "note": "New migration and native fixture PHP executed by the passing native suite; final Auth parsed by PHPStan/PHPUnit/native."
+    },
+    "style": {
+      "status": "passed",
+      "changedPhpFiles": 68,
+      "fixableFiles": 0
+    },
+    "graph": {
+      "status": "passed",
+      "waves": 40,
+      "apiIds": 99,
+      "historicalWaves": 35,
+      "canonicalNegativeFixtures": 10
+    },
+    "postman": {
+      "status": "passed",
+      "scripts": 144,
+      "positiveFixtures": 99,
+      "negativeFixtures": 198,
+      "idempotencyChecks": 43,
+      "liveRequests": false
+    },
+    "browserE2E": {
+      "status": "passed",
+      "report": "browser.json",
+      "tests": 25,
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "retries": 0,
+      "fixture": "rabit-e2e-828c75a75ea9",
+      "transport": "Chromium -> nginx -> real Bitrix FPM -> isolated MySQL; mocks disabled; fresh database",
+      "ownedFixtureCleaned": true
+    },
+    "visualDesktopMobile": {
+      "status": "passed",
+      "report": "visual.json",
+      "screenshotsReviewed": 6,
+      "viewports": [
+        "1440x1000",
+        "390x844"
+      ]
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "production build"
+      ],
+      "unitTests": 155
+    },
+    "demoOrganization": {
+      "status": "passed",
+      "report": "demo.json",
+      "tags": "@r07",
+      "scenarios": 21,
+      "steps": 48,
+      "fullDemoSuiteRepeated": false
+    }
+  },
+  "fixedNativeFindings": [
+    "Native Bitrix Result DATE/DATETIME converted to explicit storage strings before DTO/calendar mapping.",
+    "Calendar idempotency key is validated as 32 lowercase hex, matching durable journal schema.",
+    "Auth clearToken updates only session fields without CUser nested transactions; native SQL fault now rolls back Group/Access/Auth and leaves no transaction open.",
+    "C2/C3 query validation reads original URI because native Bitrix binder injects matched path values into GET. Both valid PATCH and scalar/array query spoof are covered."
+  ],
+  "publication": {
+    "status": "PR preparation",
+    "merged": false,
+    "deployed": false
+  },
+  "complete": true,
+  "fixedBrowserFindings": [
+    "Preserve exact pending mutation across 401/403 after a lost committed response.",
+    "Dialog after-enter focus no longer steals focus from an already opened group type combobox."
+  ],
+  "completeMeaning": "Implementation and required local acceptance complete; merge and deployment require separate review/actions.",
+  "sourceManifest": "source-manifest.json"
+}
