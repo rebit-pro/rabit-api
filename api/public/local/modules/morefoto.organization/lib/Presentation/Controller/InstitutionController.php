@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Morefoto\Organization\Presentation\Controller;
 
 use Morefoto\Organization\Application\Institution\UseCase\ListVisibleInstitutionsUseCase;
+use Morefoto\Organization\Application\Institution\UseCase\GetInstitutionDetailUseCase;
 use Morefoto\Organization\Application\Institution\UseCase\SaveInstitutionUseCase;
 use Morefoto\Organization\Domain\Institution\ValueObject\InstitutionId;
 use Morefoto\Organization\Domain\Institution\Exception\InvalidInstitutionException;
@@ -33,6 +34,7 @@ final class InstitutionController extends BaseJsonController implements Authenti
         private readonly SaveInstitutionUseCase $save,
         private readonly InstitutionRequestFactory $requests,
         private readonly TokenResolverInterface $tokens,
+        private readonly GetInstitutionDetailUseCase $detail,
     ) {
         parent::__construct();
     }
@@ -45,6 +47,23 @@ final class InstitutionController extends BaseJsonController implements Authenti
             ['items' => $result->items, 'assignmentSignature' => $result->assignmentSignature],
             ['page' => $result->page, 'pageSize' => $result->pageSize, 'total' => $result->total, 'totalPages' => (int)ceil($result->total / $result->pageSize)],
         );
+    }
+
+    public function getAction(string $institution_id): ControllerJson
+    {
+        $result = $this->detail->execute($this->getAuthUserId(), $this->bearer(), new InstitutionId($institution_id), $this->requests->detail($this->getRequest()));
+        $data = [
+            'id' => $result->id, 'name' => $result->name, 'address' => $result->address, 'revision' => $result->revision,
+            'curatorId' => $result->curatorId, 'headId' => $result->headId,
+            'shoots' => $result->shoots, 'groups' => $result->groups,
+            // A6/C4: no financial provider exists yet. Its absence is explicit, never fabricated financial zeros.
+            'summary' => ['availability' => 'unavailable', 'reason' => 'dependenciesNotReady'],
+        ];
+        if (null !== $result->assignmentSignature) {
+            $data['assignmentSignature'] = $result->assignmentSignature;
+        }
+
+        return $this->json($data);
     }
 
     public function createAction(): ControllerJson
@@ -69,7 +88,7 @@ final class InstitutionController extends BaseJsonController implements Authenti
     {
         $filters = ['prefilters' => [new BearerTokenFilter($this->tokens), new LoggerFilter()]];
 
-        return ['list' => $filters, 'create' => $filters, 'update' => $filters];
+        return ['list' => $filters, 'get' => $filters, 'create' => $filters, 'update' => $filters];
     }
 
     protected function getExceptionResponse(): ControllerJson

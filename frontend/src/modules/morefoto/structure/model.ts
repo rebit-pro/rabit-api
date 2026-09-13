@@ -43,6 +43,16 @@ export interface ShootDetail extends Shoot {
   assignmentSignature: string;
   groups: { items: Group[]; meta: PageMeta };
 }
+export interface InstitutionDetail extends Institution {
+  shoots: { items: Shoot[]; meta: PageMeta };
+  groups: { items: Group[]; meta: PageMeta };
+  summary: { availability: 'unavailable'; reason: 'dependenciesNotReady' };
+  assignmentSignature?: string;
+}
+export interface InstitutionPages {
+  shootsPage: number;
+  groupsPage: number;
+}
 export interface StructurePage {
   items: StructureItem[];
   meta: PageMeta;

@@ -5,12 +5,15 @@ const props = defineProps<{
   scope: StructureScope;
   disabled: boolean;
   canManage: boolean;
+  linkGroupsToShoots?: boolean;
 }>();
 const emit = defineEmits<{ edit: [item: StructureItem] }>();
 function destination(item: StructureItem): string | null {
   if (props.scope.kind === 'institution') return '/cabinet/institutions/' + encodeURIComponent(item.id);
   if (props.scope.kind === 'shoot' && props.canManage)
     return '/cabinet/institutions/' + encodeURIComponent(props.scope.institutionId ?? '') + '/shoots/' + encodeURIComponent(item.id);
+  if (props.linkGroupsToShoots && 'shootId' in item)
+    return '/cabinet/institutions/' + encodeURIComponent(props.scope.institutionId ?? '') + '/shoots/' + encodeURIComponent(item.shootId);
   return null;
 }
 function description(item: StructureItem): string {

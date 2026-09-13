@@ -1,0 +1,282 @@
+{
+  "wave": "C4",
+  "status": "passed",
+  "fixture": "rabit-e2e-3ccb04704628",
+  "stats": {
+    "startTime": "2026-09-13T08:13:00.709Z",
+    "duration": 93796.869,
+    "expected": 33,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "retries": 0,
+  "freshDatabase": true,
+  "mocks": false,
+  "cases": [
+    {
+      "file": "catalog.spec.ts",
+      "title": "неверный пароль отклонён сервером; роль загружается через /me",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "catalog.spec.ts",
+      "title": "неподключённые публичные разделы недоступны в настоящем режиме",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "catalog.spec.ts",
+      "title": "создание и изменение сохраняются в БД и видны в новой сессии",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "catalog.spec.ts",
+      "title": "ошибки полей и серверный 422 оставляют редактор открытым",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "catalog.spec.ts",
+      "title": "PATCH принимает ID пути, но отклоняет настоящий query string",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "catalog.spec.ts",
+      "title": "воспитатель не может открыть или изменить каталог, включая прямой запрос",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "catalog.spec.ts",
+      "title": "изменённая роль в localStorage заменяется настоящим профилем",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "catalog.spec.ts",
+      "title": "учётная запись без профиля сотрудника получает понятный отказ",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "catalog.spec.ts",
+      "title": "выход отзывает серверный токен",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "catalog.spec.ts",
+      "title": "отзыв сессии возвращает ко входу и затем в каталог",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "catalog.spec.ts",
+      "title": "конфликт двух редакторов не перезаписывает чужие изменения",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "catalog.spec.ts",
+      "title": "потеря ответа после commit и повтор не создают дубликат",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "catalog.spec.ts",
+      "title": "пагинация загружает следующую страницу с сервера",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "catalog.spec.ts",
+      "title": "мобильный редактор доступен, текст товара безопасно отображается",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "organization.spec.ts",
+      "title": "C3: учреждение, две съёмки и группы сохраняются через браузер и новую сессию",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "organization.spec.ts",
+      "title": "C3: очистка даты сохраняет null, переименование без даты сохраняет значение",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "organization.spec.ts",
+      "title": "C3: потерянный ответ группы повторяется после reload с тем же ключом и телом",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "organization.spec.ts",
+      "title": "C3: конфликт двух редакторов группы сохраняет ввод и не перезаписывает победителя",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "organization.spec.ts",
+      "title": "C3: пагинация съёмок и групп читает независимые страницы сервера",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "organization.spec.ts",
+      "title": "C3: сервер отклоняет query-подмену, календарь в PATCH и отсутствующие сущности",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "organization.spec.ts",
+      "title": "C3: воспитатель не получает редактор даже после подмены локальной роли",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "organization.spec.ts",
+      "title": "C3: мобильная форма и календарь группы доступны без горизонтального скролла",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "organization.spec.ts",
+      "title": "C3: куратор и руководитель видят только назначенное учреждение и его съёмки",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "organization.spec.ts",
+      "title": "C3: отзыв сессии во время редактора не сохраняет группу и возвращает ко входу",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "organization.spec.ts",
+      "title": "C3: повтор потерянного сохранения после 401 и нового входа не создаёт дубликат",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "z-institution-detail.spec.ts",
+      "title": "C4: полная карточка показывает сохранённые съёмки и группы из разных съёмок",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "z-institution-detail.spec.ts",
+      "title": "C4: две страницы переключаются независимо и используют реальные totals",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "z-institution-detail.spec.ts",
+      "title": "C4: куратор и руководитель читают только свою карточку без mutation signature",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "z-institution-detail.spec.ts",
+      "title": "C4: teacher и невалидный токен не открывают полный endpoint",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "z-institution-detail.spec.ts",
+      "title": "C4: query границы, path spoof и пустые дальние страницы проверяет сервер",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "z-institution-detail.spec.ts",
+      "title": "C4: ошибка загрузки не подменяется пустой карточкой, повтор читает сервер",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "z-institution-detail.spec.ts",
+      "title": "C4: мобильная карточка безопасно отображает длинный текст и доступные действия",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    },
+    {
+      "file": "z-institution-detail.spec.ts",
+      "title": "C4: отзыв сессии при обновлении карточки возвращает к входу и обратно",
+      "status": "expected",
+      "results": [
+        "passed"
+      ]
+    }
+  ]
+}

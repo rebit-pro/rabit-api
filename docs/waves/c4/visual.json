@@ -1,0 +1,43 @@
+{
+  "wave": "C4",
+  "status": "passed",
+  "fixture": "rabit-e2e-3ccb04704628",
+  "screenshotsReviewed": 4,
+  "localDirectory": "api/var/c4/visual",
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ],
+  "screenshots": [
+    {
+      "name": "c4-desktop-institution.png",
+      "sha256": "d67d2d65ef8487c30a2433fabe789be6f4ed5731cb821b534862f3ba4ceae756",
+      "width": 1440,
+      "height": 1683
+    },
+    {
+      "name": "c4-desktop-curator.png",
+      "sha256": "cc563e0daa719e822505e9f01a657f1695489c5cc036140916673049be528c84",
+      "width": 1440,
+      "height": 1234
+    },
+    {
+      "name": "c4-mobile-shoot-editor.png",
+      "sha256": "ddbf0c0874d92aa00833fbede97e2754a0e1b97c39f88bfe7a2092fa0a1ae373",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "c4-mobile-institution.png",
+      "sha256": "54ad2228dfb913c579ac38500663627f9d233ffe0eb39669e1b85aca5febd292",
+      "width": 390,
+      "height": 1958
+    }
+  ],
+  "method": "Manual review of real live Chromium screenshots after settled UI. Full-page institution views; mobile editor captured within viewport.",
+  "findings": [
+    "Organizer and curator institution cards are readable, with correct role-specific actions.",
+    "Mobile long title, literal HTML-like group name, collections and editor fit 390px without horizontal overflow or overlap."
+  ],
+  "limitations": "Four reviewed states, not automated pixel-diff coverage; screenshot files retained locally."
+}

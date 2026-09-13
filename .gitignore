@@ -51,6 +51,7 @@
 # Versioned wave review packages and deployment reports
 !/docs/waves/
 !/docs/deployments/
+!/docs/testing/
 # Never publish local runtime configuration
 .env.*
 !.env.example
