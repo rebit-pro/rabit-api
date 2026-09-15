@@ -12,6 +12,8 @@ declare(strict_types=1);
 use Bitrix\Main\Loader;
 use Bitrix\Main\Routing\Router;
 use Bitrix\Main\Routing\RoutingConfigurator;
+use Rebit\Notification\Application\Lead\Port\MosDizelLeadNotifierInterface;
+use Rebit\Notification\Application\Lead\UseCase\SubmitMosDizelLeadUseCase;
 use Rebit\Notification\Presentation\Controller\LeadController;
 use Rebit\Notification\Presentation\Controller\MosDizelLeadController;
 
@@ -78,9 +80,16 @@ try {
     $check($expected === $actual, 'Notification route inventory changed.');
 
     $settings = require $apiRoot . '/public/local/modules/rebit.notification/.settings.php';
-    $controllerDefinition = $settings['services']['value'][MosDizelLeadController::class] ?? null;
+    $services = $settings['services']['value'];
+    $controllerDefinition = $services[MosDizelLeadController::class] ?? null;
+    $useCaseDefinition = $services[SubmitMosDizelLeadUseCase::class] ?? null;
+    $notifierDefinition = $services[MosDizelLeadNotifierInterface::class] ?? null;
     $check(is_array($controllerDefinition), 'MosDizelLeadController is absent from module DI.');
-    $check(is_callable($controllerDefinition['constructor'] ?? null), 'MosDizelLeadController requires manual DI constructor.');
+    $check(is_callable($controllerDefinition['constructorParams'] ?? null), 'MosDizelLeadController DI is missing.');
+    $check(is_array($useCaseDefinition), 'SubmitMosDizelLeadUseCase is absent from module DI.');
+    $check(is_callable($useCaseDefinition['constructorParams'] ?? null), 'SubmitMosDizelLeadUseCase DI is missing.');
+    $check(is_array($notifierDefinition), 'MosDizelLeadNotifierInterface is absent from module DI.');
+    $check(is_callable($notifierDefinition['constructor'] ?? null), 'MosDizelLeadNotifierInterface DI is missing.');
 
     $migration = $apiRoot . '/public/local/php_interface/migrations.foundation/Version20260915110001.php';
     $check(is_file($migration), 'Mos-dizel mail-event migration is missing.');
@@ -88,7 +97,7 @@ try {
     echo json_encode([
         'status' => 'PASS',
         'routes' => $actual,
-        'manualControllerDi' => true,
+        'dedicatedEmailDi' => true,
         'migration' => basename($migration),
         'controllersExecuted' => false,
         'businessMethodsExecuted' => false,

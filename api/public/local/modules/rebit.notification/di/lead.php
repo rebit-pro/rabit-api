@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 use Bitrix\Main\DI\ServiceLocator;
 use Rebit\Notification\Application\Lead\Port\LeadNotifierInterface;
+use Rebit\Notification\Application\Lead\Port\MosDizelLeadNotifierInterface;
+use Rebit\Notification\Application\Lead\UseCase\SubmitMosDizelLeadUseCase;
 use Rebit\Notification\Application\Lead\UseCase\SubmitLeadUseCase;
 use Rebit\Notification\Infrastructure\Lead\EmailLeadNotifier;
 use Rebit\Notification\Infrastructure\Lead\FallbackLeadNotifier;
+use Rebit\Notification\Infrastructure\Lead\MosDizelEmailLeadNotifier;
 use Rebit\Notification\Infrastructure\Lead\TelegramLeadNotifier;
 use Rebit\Notification\Infrastructure\Lead\UploadedFileValidator;
 use Rebit\Notification\Presentation\Controller\LeadController;
@@ -69,6 +72,24 @@ return [
         ],
     ],
 
+    MosDizelLeadNotifierInterface::class => [
+        'constructor' => static function() use ($leadMailSiteId, $mosDizelLeadEmail, $mosDizelLeadEventName): MosDizelLeadNotifierInterface {
+            return new MosDizelEmailLeadNotifier(
+                Log::channel(LogChannelEnum::notification),
+                $mosDizelLeadEmail,
+                $leadMailSiteId,
+                $mosDizelLeadEventName,
+            );
+        },
+    ],
+
+    SubmitMosDizelLeadUseCase::class => [
+        'className' => SubmitMosDizelLeadUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(MosDizelLeadNotifierInterface::class),
+        ],
+    ],
+
     LeadController::class => [
         'className' => LeadController::class,
         'constructorParams' => static fn(): array => [
@@ -78,18 +99,10 @@ return [
     ],
 
     MosDizelLeadController::class => [
-        'constructor' => static function() use ($leadMailSiteId, $mosDizelLeadEmail, $mosDizelLeadEventName): MosDizelLeadController {
-            return new MosDizelLeadController(
-                new SubmitLeadUseCase(
-                    new EmailLeadNotifier(
-                        Log::channel(LogChannelEnum::notification),
-                        $mosDizelLeadEmail,
-                        $leadMailSiteId,
-                        $mosDizelLeadEventName,
-                    ),
-                ),
-                ServiceLocator::getInstance()->get(UploadedFileValidator::class),
-            );
-        },
+        'className' => MosDizelLeadController::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(SubmitMosDizelLeadUseCase::class),
+            ServiceLocator::getInstance()->get(UploadedFileValidator::class),
+        ],
     ],
 ];
