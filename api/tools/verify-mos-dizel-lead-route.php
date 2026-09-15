@@ -13,6 +13,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Routing\Router;
 use Bitrix\Main\Routing\RoutingConfigurator;
 use Rebit\Notification\Presentation\Controller\LeadController;
+use Rebit\Notification\Presentation\Controller\MosDizelLeadController;
 
 $check = static function(bool $condition, string $message): void {
     if (!$condition) {
@@ -30,12 +31,12 @@ try {
 
     $autoload = require $vendorRoot . '/autoload.php';
     $autoload->addPsr4(
-        'Rebit\\Notification\\',
+        'Rebit\Notification\\',
         $apiRoot . '/public/local/modules/rebit.notification/lib/',
         true,
     );
     $autoload->addPsr4(
-        'Rebit\\Share\\',
+        'Rebit\Share\\',
         $apiRoot . '/public/local/modules/rebit.share/lib/',
         true,
     );
@@ -57,8 +58,8 @@ try {
     $router->releaseRoutes();
 
     $expected = [
-        '/api/v1/lead' => 'submitAction',
-        '/api/v1/lead/mos-dizel' => 'submitMosDizelAction',
+        '/api/v1/lead' => [LeadController::class, 'submitAction'],
+        '/api/v1/lead/mos-dizel' => [MosDizelLeadController::class, 'submitAction'],
     ];
     $actual = [];
 
@@ -68,19 +69,18 @@ try {
         $controller = $route->getController();
 
         $check(['POST'] === $route->getOptions()->getMethods(), 'Expected POST: ' . $path);
-        $check(LeadController::class === $controller[0], 'Unexpected controller: ' . $path);
-        $check(isset($expected[$path]) && $expected[$path] === $controller[1], 'Unexpected action: ' . $path);
+        $check(isset($expected[$path]) && $expected[$path] === $controller, 'Unexpected controller action: ' . $path);
         $check(method_exists($controller[0], $controller[1]), 'Route action does not exist: ' . $path);
 
-        $actual[$path] = $controller[1];
+        $actual[$path] = $controller;
     }
 
     $check($expected === $actual, 'Notification route inventory changed.');
 
     $settings = require $apiRoot . '/public/local/modules/rebit.notification/.settings.php';
-    $controllerDefinition = $settings['services']['value'][LeadController::class] ?? null;
-    $check(is_array($controllerDefinition), 'LeadController is absent from module DI.');
-    $check(is_callable($controllerDefinition['constructor'] ?? null), 'LeadController requires manual DI constructor.');
+    $controllerDefinition = $settings['services']['value'][MosDizelLeadController::class] ?? null;
+    $check(is_array($controllerDefinition), 'MosDizelLeadController is absent from module DI.');
+    $check(is_callable($controllerDefinition['constructor'] ?? null), 'MosDizelLeadController requires manual DI constructor.');
 
     $migration = $apiRoot . '/public/local/php_interface/migrations.foundation/Version20260915110001.php';
     $check(is_file($migration), 'Mos-dizel mail-event migration is missing.');

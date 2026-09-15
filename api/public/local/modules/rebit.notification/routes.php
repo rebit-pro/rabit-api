@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 use Bitrix\Main\Routing\RoutingConfigurator;
 use Rebit\Notification\Presentation\Controller\LeadController;
+use Rebit\Notification\Presentation\Controller\MosDizelLeadController;
 
 return static function(RoutingConfigurator $routes) {
     // OPTIONS/preflight и CORS обрабатывает nginx (conf.d/default.conf).
     $routes->post('/api/v1/lead', [LeadController::class, 'submitAction']);
-    $routes->post('/api/v1/lead/mos-dizel', [LeadController::class, 'submitMosDizelAction']);
+    $routes->post('/api/v1/lead/mos-dizel', [MosDizelLeadController::class, 'submitAction']);
 };

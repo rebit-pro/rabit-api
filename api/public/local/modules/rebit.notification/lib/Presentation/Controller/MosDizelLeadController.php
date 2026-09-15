@@ -13,17 +13,9 @@ use Rebit\Share\Infrastructure\Exception\ValidationHttpException;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /**
- * Приём заявок с формы сайта и доставка в Telegram.
- *
- * Эндпоинт публичный (без авторизации). CORS и preflight (OPTIONS)
- * обрабатывает nginx (см. docker/common/nginx/conf.d), поэтому контроллер
- * заголовки CORS не добавляет — иначе они продублируются.
- *
- * Форма отправляет multipart/form-data: скалярные поля мапятся в DTO
- * автоматически (RequestToDtoMapper читает getPostList()), а опциональный
- * файл ТЗ контроллер достаёт из запроса отдельно и проверяет на сервере.
+ * Приём заявок mos-dizel.ru с прямой доставкой только по электронной почте.
  */
-final class LeadController extends BaseJsonController
+final class MosDizelLeadController extends BaseJsonController
 {
     public function __construct(
         private readonly SubmitLeadUseCase $submitLeadUseCase,
@@ -33,15 +25,13 @@ final class LeadController extends BaseJsonController
     }
 
     /**
-     * POST /api/v1/lead
+     * POST /api/v1/lead/mos-dizel
      *
      * @throws HttpException
      * @throws ValidationHttpException
      */
     public function submitAction(SubmitLeadRequestDto $dto): ControllerJson
     {
-        // Файл не кладём в DTO: достаём из запроса и валидируем по содержимому.
-        // Файл не сохраняется на диск — работаем только с PHP-temp загрузки.
         $attachment = $this->uploadedFileValidator->validate($this->request->getFile('file'));
 
         return $this->json($this->submitLeadUseCase->execute($dto, $attachment));

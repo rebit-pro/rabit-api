@@ -55,6 +55,8 @@ final readonly class EmailLeadNotifier implements LeadNotifierInterface
 
             throw new HttpException('Не удалось отправить заявку', 502);
         }
+
+        $this->logger->info('Заявка передана почтовому транспорту', ['event' => $this->eventName]);
     }
 
     /**

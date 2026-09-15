@@ -75,8 +75,8 @@ try {
             'submitAction',
         ],
         '/api/v1/lead/mos-dizel' => [
-            'Rebit\Notification\Presentation\Controller\LeadController',
-            'submitMosDizelAction',
+            'Rebit\Notification\Presentation\Controller\MosDizelLeadController',
+            'submitAction',
         ],
     ];
 

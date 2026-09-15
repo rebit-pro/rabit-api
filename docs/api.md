@@ -10,7 +10,7 @@
 | POST | `/api/v1/auth/logout` | `rebit.auth` / `AuthController::logoutAction` |
 | POST | `/api/v1/share/file/upload/` | `rebit.share` / `FileController::uploadAction` |
 | POST | `/api/v1/lead` | `rebit.notification` / `LeadController::submitAction` |
-| POST | `/api/v1/lead/mos-dizel` | `rebit.notification` / `LeadController::submitMosDizelAction` |
+| POST | `/api/v1/lead/mos-dizel` | `rebit.notification` / `MosDizelLeadController::submitAction` |
 
 Конечный slash у upload сохранён из существующего контракта. Единый versioned реестр `api/public/local/routes/rabit-api.php` подключает `routes.php` этих модулей. `local/.settings_extra.php` подключает настройки из `local/php_interface/settings_extra.php`; секция routing переопределяет старый список в ядре. При добавлении будущих модулей реестр расширяется явно. `ModuleRoutingTrait` создаёт совместимые symlink-файлы, но не изменяет этот readonly-реестр. Установка модуля сама по себе не публикует новый маршрут; перед удалением любого сохранённого модуля нужно убрать его из реестра и bootstrap.
 

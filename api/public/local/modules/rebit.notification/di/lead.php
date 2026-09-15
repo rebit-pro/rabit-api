@@ -10,6 +10,7 @@ use Rebit\Notification\Infrastructure\Lead\FallbackLeadNotifier;
 use Rebit\Notification\Infrastructure\Lead\TelegramLeadNotifier;
 use Rebit\Notification\Infrastructure\Lead\UploadedFileValidator;
 use Rebit\Notification\Presentation\Controller\LeadController;
+use Rebit\Notification\Presentation\Controller\MosDizelLeadController;
 use Rebit\Share\Infrastructure\Telegram\TelegramBotApiClient;
 use Rebit\Share\Shared\Enum\LogChannelEnum;
 use Rebit\Share\Shared\Facade\Log;
@@ -69,9 +70,16 @@ return [
     ],
 
     LeadController::class => [
-        'constructor' => static function() use ($leadMailSiteId, $mosDizelLeadEmail, $mosDizelLeadEventName): LeadController {
-            return new LeadController(
-                ServiceLocator::getInstance()->get(SubmitLeadUseCase::class),
+        'className' => LeadController::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(SubmitLeadUseCase::class),
+            ServiceLocator::getInstance()->get(UploadedFileValidator::class),
+        ],
+    ],
+
+    MosDizelLeadController::class => [
+        'constructor' => static function() use ($leadMailSiteId, $mosDizelLeadEmail, $mosDizelLeadEventName): MosDizelLeadController {
+            return new MosDizelLeadController(
                 new SubmitLeadUseCase(
                     new EmailLeadNotifier(
                         Log::channel(LogChannelEnum::notification),
