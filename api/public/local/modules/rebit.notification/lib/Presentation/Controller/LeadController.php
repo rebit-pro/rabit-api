@@ -27,6 +27,7 @@ final class LeadController extends BaseJsonController
 {
     public function __construct(
         private readonly SubmitLeadUseCase $submitLeadUseCase,
+        private readonly SubmitLeadUseCase $submitMosDizelLeadUseCase,
         private readonly UploadedFileValidator $uploadedFileValidator,
     ) {
         parent::__construct();
@@ -40,10 +41,30 @@ final class LeadController extends BaseJsonController
      */
     public function submitAction(SubmitLeadRequestDto $dto): ControllerJson
     {
+        return $this->submit($dto, $this->submitLeadUseCase);
+    }
+
+    /**
+     * POST /api/v1/lead/mos-dizel
+     *
+     * @throws HttpException
+     * @throws ValidationHttpException
+     */
+    public function submitMosDizelAction(SubmitLeadRequestDto $dto): ControllerJson
+    {
+        return $this->submit($dto, $this->submitMosDizelLeadUseCase);
+    }
+
+    /**
+     * @throws HttpException
+     * @throws ValidationHttpException
+     */
+    private function submit(SubmitLeadRequestDto $dto, SubmitLeadUseCase $useCase): ControllerJson
+    {
         // Файл не кладём в DTO: достаём из запроса и валидируем по содержимому.
         // Файл не сохраняется на диск — работаем только с PHP-temp загрузки.
         $attachment = $this->uploadedFileValidator->validate($this->request->getFile('file'));
 
-        return $this->json($this->submitLeadUseCase->execute($dto, $attachment));
+        return $this->json($useCase->execute($dto, $attachment));
     }
 }

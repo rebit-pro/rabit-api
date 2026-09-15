@@ -92,4 +92,6 @@ REBIT_LEADHUNTER_RULES='[{"source":"flRu","keywords":["битрикс","bitrix"]
 
 Настройки в `backend.env`: общий `REBIT_NOTIFICATION_TELEGRAM_CHAT_ID`, `REBIT_NOTIFICATION_LEAD_MAX_FILE_MB` (по умолчанию 15), необязательный `REBIT_NOTIFICATION_LEAD_FALLBACK_EMAIL`. Если собственный fallback email не задан, используется `REBIT_LEADHUNTER_FALLBACK_EMAIL`; когда оба пусты, резерв отключён. Для резервной доставки требуется почтовое событие `REBIT_NOTIFICATION_LEAD` из миграции `Version20260820120001` и настроенный SMTP.
 
+`POST /api/v1/lead/mos-dizel` использует прямую email-доставку. В `backend.env` требуется `REBIT_NOTIFICATION_MOS_DIZEL_EMAIL`; почтовое событие `REBIT_NOTIFICATION_MOS_DIZEL_LEAD` создаёт миграция `Version20260915110001`. Адрес получателя не передаётся в публичном запросе.
+
 В новой установке модуль регистрируется своим installer после `rebit.share`. В существующей установке восстановление исходников не требует повторного применения уже выполненных миграций. Восстановление конфигурации не меняет реальные секреты и не запускает отправку.

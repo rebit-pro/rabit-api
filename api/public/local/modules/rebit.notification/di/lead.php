@@ -19,10 +19,13 @@ $leadMaxFileMb = (int)(getenv('REBIT_NOTIFICATION_LEAD_MAX_FILE_MB') ?: 15);
 if ($leadMaxFileMb <= 0) {
     $leadMaxFileMb = 15;
 }
+$leadMailSiteId = (string)(getenv('REBIT_AUTH_MAIL_EVENT_SITE_ID') ?: 's1');
+$mosDizelLeadEmail = (string)(getenv('REBIT_NOTIFICATION_MOS_DIZEL_EMAIL') ?: '');
+$mosDizelLeadEventName = 'REBIT_NOTIFICATION_MOS_DIZEL_LEAD';
 
 return [
     LeadNotifierInterface::class => [
-        'constructor' => static function(): LeadNotifierInterface {
+        'constructor' => static function() use ($leadMailSiteId): LeadNotifierInterface {
             $telegram = new TelegramLeadNotifier(
                 Log::channel(LogChannelEnum::notification),
                 ServiceLocator::getInstance()->get(TelegramBotApiClient::class),
@@ -46,7 +49,7 @@ return [
                 new EmailLeadNotifier(
                     Log::channel(LogChannelEnum::notification),
                     $fallbackEmail,
-                    (string)(getenv('REBIT_AUTH_MAIL_EVENT_SITE_ID') ?: 's1'),
+                    $leadMailSiteId,
                 ),
             );
         },
@@ -66,10 +69,19 @@ return [
     ],
 
     LeadController::class => [
-        'className' => LeadController::class,
-        'constructorParams' => static fn(): array => [
-            ServiceLocator::getInstance()->get(SubmitLeadUseCase::class),
-            ServiceLocator::getInstance()->get(UploadedFileValidator::class),
-        ],
+        'constructor' => static function() use ($leadMailSiteId, $mosDizelLeadEmail, $mosDizelLeadEventName): LeadController {
+            return new LeadController(
+                ServiceLocator::getInstance()->get(SubmitLeadUseCase::class),
+                new SubmitLeadUseCase(
+                    new EmailLeadNotifier(
+                        Log::channel(LogChannelEnum::notification),
+                        $mosDizelLeadEmail,
+                        $leadMailSiteId,
+                        $mosDizelLeadEventName,
+                    ),
+                ),
+                ServiceLocator::getInstance()->get(UploadedFileValidator::class),
+            );
+        },
     ],
 ];

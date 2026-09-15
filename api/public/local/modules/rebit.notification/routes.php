@@ -8,4 +8,5 @@ use Rebit\Notification\Presentation\Controller\LeadController;
 return static function(RoutingConfigurator $routes) {
     // OPTIONS/preflight и CORS обрабатывает nginx (conf.d/default.conf).
     $routes->post('/api/v1/lead', [LeadController::class, 'submitAction']);
+    $routes->post('/api/v1/lead/mos-dizel', [LeadController::class, 'submitMosDizelAction']);
 };

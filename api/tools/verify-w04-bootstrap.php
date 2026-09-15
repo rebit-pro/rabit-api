@@ -119,9 +119,10 @@ try {
         $check(method_exists($controller[0], $controller[1]), 'Route action does not exist.');
         $routes[] = $route->getUri();
     }
-    $check(7 === count($routes), 'Active foundation + W06 route inventory changed.');
+    $check(8 === count($routes), 'Active foundation + W06 route inventory changed.');
     $check(in_array('/api/v1/me', $routes, true), 'W06 profile route disappeared.');
     $check(in_array('/api/v1/lead', $routes, true), 'Lead route disappeared.');
+    $check(in_array('/api/v1/lead/mos-dizel', $routes, true), 'Mos-dizel lead route disappeared.');
     // Isolated disable rehearsal: only the unchanged Auth/Share route providers remain.
     $disabledRouter = new Router();
     $disabledConfigurator = new RoutingConfigurator();

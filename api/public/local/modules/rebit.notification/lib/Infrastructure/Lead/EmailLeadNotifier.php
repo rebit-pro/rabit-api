@@ -25,6 +25,7 @@ final readonly class EmailLeadNotifier implements LeadNotifierInterface
         private LoggerInterface $logger,
         private string $email,
         private string $siteId,
+        private string $eventName = self::EVENT_NAME,
     ) {}
 
     /**
@@ -33,13 +34,13 @@ final readonly class EmailLeadNotifier implements LeadNotifierInterface
     public function notify(LeadMessageDto $lead, ?LeadAttachmentDto $attachment = null): void
     {
         if ('' === $this->email) {
-            $this->logger->error('Email-получатель заявок не настроен: пустой REBIT_NOTIFICATION_LEAD_FALLBACK_EMAIL');
+            $this->logger->error('Email-получатель заявок не настроен');
 
             throw new HttpException('Сервис заявок временно недоступен', 503);
         }
 
         $result = \CEvent::SendImmediate(
-            self::EVENT_NAME,
+            $this->eventName,
             $this->siteId,
             $this->buildFields($lead, $attachment),
             'Y',
