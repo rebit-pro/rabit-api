@@ -52,6 +52,21 @@ final class EmailLeadNotifierTest extends TestCase
         self::assertSame([], \CEvent::$lastSendImmediateCall['filesContent']);
     }
 
+    public function testUsesConfiguredEventName(): void
+    {
+        $notifier = new EmailLeadNotifier(
+            new NullLogger(),
+            'client@example.com',
+            's1',
+            'REBIT_NOTIFICATION_MOS_DIZEL_LEAD',
+        );
+
+        $notifier->notify($this->lead());
+
+        self::assertSame('REBIT_NOTIFICATION_MOS_DIZEL_LEAD', \CEvent::$lastSendImmediateCall['eventName']);
+        self::assertSame('client@example.com', \CEvent::$lastSendImmediateCall['fields']['EMAIL_TO']);
+    }
+
     public function testEscapesUserInput(): void
     {
         $this->notifier()->notify(new LeadMessageDto(
