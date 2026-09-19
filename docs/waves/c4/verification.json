@@ -1,0 +1,141 @@
+{
+  "wave": "C4",
+  "status": "ready-for-review",
+  "date": "2026-09-13",
+  "branch": "codex/c4-institution-detail",
+  "base": "8962230accdc8fe913ef0a12211bee14c332fdd2",
+  "independence": {
+    "dependency": "C3 merged in main via PR15",
+    "dependencyUrl": "https://github.com/rebit-pro/rabit-api/pull/15",
+    "decisionGates": [
+      "D08 accepted",
+      "A6 summary union accepted"
+    ],
+    "mainCheckedAfterTests": true
+  },
+  "checks": {
+    "phpLint": {
+      "status": "passed",
+      "moduleFiles": 405,
+      "changedToolsParsed": 4
+    },
+    "phpstan": {
+      "status": "passed",
+      "errors": 0,
+      "mode": "single-process --debug with fresh Composer autoload"
+    },
+    "phpunit": {
+      "status": "passed",
+      "tests": 350,
+      "assertions": 1102
+    },
+    "style": {
+      "status": "passed",
+      "changedPhpFiles": 16,
+      "fixableFiles": 0,
+      "scope": "modules and tools, --path-mode=override"
+    },
+    "nativeC4": {
+      "status": "passed",
+      "checks": 99,
+      "report": "native.json"
+    },
+    "nativeC2": {
+      "status": "passed",
+      "checks": 138,
+      "report": "c2-regression.json"
+    },
+    "nativeC3": {
+      "status": "passed",
+      "checks": 198,
+      "report": "c3-regression.json"
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "production build"
+      ],
+      "unitTests": 155
+    },
+    "browserE2E": {
+      "status": "passed",
+      "tests": 33,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "retries": 0,
+      "report": "browser.json",
+      "transport": "Chromium -> nginx -> native Bitrix FPM -> isolated MySQL",
+      "ownedFixtureCleaned": true
+    },
+    "demoOrganization": {
+      "status": "passed",
+      "scenarios": 21,
+      "steps": 48,
+      "report": "demo.json"
+    },
+    "visualDesktopMobile": {
+      "status": "passed",
+      "screenshotsReviewed": 4,
+      "report": "visual.json"
+    },
+    "graph": {
+      "status": "passed",
+      "waves": 40,
+      "apiIds": 99,
+      "historicalWaves": 35,
+      "negativeFixtures": 10
+    },
+    "postman": {
+      "status": "passed",
+      "scripts": 144,
+      "positiveFixtures": 99,
+      "negativeFixtures": 198,
+      "idempotencyChecks": 43,
+      "platformGuardChecks": 14,
+      "schemaValidation": "not-run",
+      "liveRequests": false
+    }
+  },
+  "runtime": {
+    "php": "8.4.25",
+    "bitrix": "25.750.0",
+    "mysql": "8.0.45",
+    "playwright": "1.52.0"
+  },
+  "sourceManifest": "source-manifest.json",
+  "publication": {
+    "status": "PR open",
+    "url": "https://github.com/rebit-pro/rabit-api/pull/16",
+    "merged": false,
+    "deployed": false
+  },
+  "complete": true,
+  "completeMeaning": "Implementation and required local acceptance complete; publication, merge and deployment tracked separately.",
+  "manualReview": {
+    "preparedAt": "2026-09-13T08:27:56.243839+00:00",
+    "sourceCommit": "9a78e731332df1cce6c6dba4248ee2caf5d1e3ca",
+    "guide": "../../testing/manual-wave-checklist.md",
+    "url": "http://localhost:42006",
+    "stateFile": "api/var/e2e/rabit-e2e-df39f10033d5/state.json",
+    "browser": {
+      "startTime": "2026-09-13T08:31:36.015Z",
+      "duration": 92739.25099999999,
+      "expected": 33,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "fixtureAccountsVerified": 9,
+    "fixtureRecords": {
+      "institutions": 20,
+      "products": 32
+    },
+    "leftRunningForUser": true,
+    "storage": "Disposable MySQL tmpfs; links and records belong to this run",
+    "backendAndFrontendChecks": "Re-run by up; PHP lint405, PHPStan0, PHPUnit350/1102, frontend check/build and unit155 passed"
+  }
+}

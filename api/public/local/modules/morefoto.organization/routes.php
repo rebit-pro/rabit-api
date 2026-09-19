@@ -8,6 +8,7 @@ use Morefoto\Organization\Presentation\Controller\StructureController;
 return static function(RoutingConfigurator $routes): void {
     $routes->get('/api/v1/institutions', [InstitutionController::class, 'listAction']);
     $routes->post('/api/v1/institutions', [InstitutionController::class, 'createAction']);
+    $routes->get('/api/v1/institutions/{institution_id}', [InstitutionController::class, 'getAction']);
     $routes->patch('/api/v1/institutions/{institution_id}', [InstitutionController::class, 'updateAction']);
     $routes->get('/api/v1/institutions/{institution_id}/shoots', [StructureController::class, 'listShootsAction']);
     $routes->post('/api/v1/institutions/{institution_id}/shoots', [StructureController::class, 'createShootAction']);

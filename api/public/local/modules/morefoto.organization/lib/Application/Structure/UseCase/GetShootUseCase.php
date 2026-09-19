@@ -9,8 +9,6 @@ use Morefoto\Organization\Application\Structure\Dto\StructurePageOutputDto;
 use Morefoto\Organization\Application\Structure\Dto\ShootDetailOutputDto;
 use Morefoto\Organization\Application\Structure\Dto\GroupOutputDto;
 use Morefoto\Organization\Application\Calendar\Contract\CalendarClockInterface;
-use Morefoto\Organization\Application\Calendar\Service\CalendarProjection;
-use Morefoto\Organization\Domain\Calendar\ValueObject\GroupCalendar;
 use Morefoto\Organization\Domain\Structure\Repository\StructureRepository;
 use Morefoto\Organization\Domain\Structure\ValueObject\StructureId;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
@@ -49,26 +47,8 @@ final readonly class GetShootUseCase
         $now = $this->clock->now();
         $items = [];
         foreach ($rows as $row) {
-            $calendar = CalendarProjection::create(GroupCalendar::fromStorage(
-                null === $row['UF_SENT_AT'] ? null : (string)$row['UF_SENT_AT'],
-                null === $row['UF_CLOSES_AT'] ? null : (string)$row['UF_CLOSES_AT'],
-                null === $row['UF_DELIVERY_DUE_AT'] ? null : (string)$row['UF_DELIVERY_DUE_AT'],
-                (string)$row['UF_TIMEZONE'],
-            ), $now);
             $assignment = $assignments[(int)$row['ID']] ?? new GroupAssignmentOutputDto();
-            $items[] = new GroupOutputDto(
-                id: (string)$row['UF_PUBLIC_ID'],
-                shootId: $shootId->value,
-                name: (string)$row['UF_NAME'],
-                groupKind: (string)$row['UF_KIND'],
-                revision: (int)$row['UF_REVISION'],
-                teacherId: $assignment->teacherId,
-                status: $calendar->status,
-                timezone: $calendar->timezone,
-                sentAt: $calendar->sentAt,
-                closesAt: $calendar->closesAt,
-                deliveryDueAt: $calendar->deliveryDueAt,
-            );
+            $items[] = GroupOutputDto::fromRow($row, $shootId->value, $assignment->teacherId, $now);
         }
         $current = $this->access->scope($actor);
         if ($actor !== $this->tokens->resolveUserId($bearer)) {

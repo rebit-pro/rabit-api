@@ -37,7 +37,7 @@ foreach (['rebit.share', 'rebit.auth', 'morefoto.access', 'morefoto.commerce', '
         throw new RuntimeException('Cannot load fixture module.');
     }
 }
-foreach (['organizer', 'another-organizer', 'teacher', 'unassigned', 'curator', 'head', 'another-teacher'] as $name) {
+foreach (['organizer', 'another-organizer', 'teacher', 'unassigned', 'curator', 'head', 'another-teacher', 'c4-curator', 'c4-head'] as $name) {
     $writer = new CUser();
     $id = $writer->Add([
         'LOGIN' => $name . '@example.invalid', 'EMAIL' => $name . '@example.invalid',
@@ -52,8 +52,8 @@ foreach (['organizer', 'another-organizer', 'teacher', 'unassigned', 'curator', 
     } elseif ('unassigned' !== $name) {
         $role = match ($name) {
             'another-organizer' => 'organizer',
-            'curator' => 'curator',
-            'head' => 'head',
+            'curator', 'c4-curator' => 'curator',
+            'head', 'c4-head' => 'head',
             default => 'teacher',
         };
         $statement = $sql->prepare('INSERT INTO b_hlbd_mf_staff_profile (UF_USER_ID, UF_ROLE, UF_ACTIVE, UF_REVISION, UF_ACCESS_REVISION, UF_CREATED_AT, UF_UPDATED_AT) VALUES (?, ?, 1, 1, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP())');

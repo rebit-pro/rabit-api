@@ -106,6 +106,34 @@ LEFT JOIN (
 SQL);
     }
 
+    /** Groups across every shoot of one institution, independently paged from shoots.
+     * @param null|list<int> $institutionIds
+     *
+     * Each Result row has this shape (nullable page fields represent an empty page with a real total):
+     * array{
+     *     ID: int|string|null, UF_PUBLIC_ID: string|null, SHOOT_PUBLIC_ID: string|null,
+     *     UF_NAME: string|null, UF_KIND: string|null, UF_REVISION: int|string|null,
+     *     UF_TIMEZONE: string|null, UF_SENT_AT: string|null, UF_CLOSES_AT: string|null,
+     *     UF_DELIVERY_DUE_AT: string|null, TOTAL: int|string,
+     * }
+     */
+    public function institutionGroups(int $institutionId, int $limit, int $offset, ?array $institutionIds): Result
+    {
+        $this->bounds($limit, $offset);
+        $condition = 's.UF_INSTITUTION_ID=' . $institutionId . $this->scope($institutionIds, 's.UF_INSTITUTION_ID');
+
+        return $this->query(<<<SQL
+SELECT page.ID,page.UF_PUBLIC_ID,page.SHOOT_PUBLIC_ID,page.UF_NAME,page.UF_KIND,page.UF_REVISION,page.UF_TIMEZONE,
+DATE_FORMAT(page.UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS UF_SENT_AT,DATE_FORMAT(page.UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS UF_CLOSES_AT,DATE_FORMAT(page.UF_DELIVERY_DUE_AT,'%Y-%m-%d %H:%i:%s') AS UF_DELIVERY_DUE_AT,totals.TOTAL
+FROM (SELECT COUNT(*) AS TOTAL FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot s ON s.ID=g.UF_SHOOT_ID WHERE {$condition}) totals
+LEFT JOIN (
+    SELECT g.ID,g.UF_PUBLIC_ID,s.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID,g.UF_NAME,g.UF_KIND,g.UF_REVISION,g.UF_TIMEZONE,g.UF_SENT_AT,g.UF_CLOSES_AT,g.UF_DELIVERY_DUE_AT,g.UF_CREATED_AT
+    FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot s ON s.ID=g.UF_SHOOT_ID WHERE {$condition}
+    ORDER BY g.UF_CREATED_AT DESC,g.ID DESC LIMIT {$limit} OFFSET {$offset}
+) page ON 1=1 ORDER BY page.UF_CREATED_AT DESC,page.ID DESC
+SQL);
+    }
+
     public function createShoot(StructureId $id, int $institutionId, StructureName $name, ShootDate $date): int
     {
         $nameSql = $this->quote($name->value);

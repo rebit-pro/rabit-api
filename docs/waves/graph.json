@@ -6,7 +6,7 @@
   "backend": "RaBit API",
   "baseline": {
     "branch": "main",
-    "commit": "b01be326e607c5cfafaeff587f29048f6802a636",
+    "commit": "8962230accdc8fe913ef0a12211bee14c332fdd2",
     "mergedWaves": [
       "A1",
       "A2",
@@ -20,7 +20,8 @@
       "E1",
       "C2",
       "E2",
-      "A8"
+      "A8",
+      "C3"
     ],
     "review": {},
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
@@ -31,7 +32,8 @@
       "A7": "https://github.com/rebit-pro/rabit-api/pull/11",
       "C2": "https://github.com/rebit-pro/rabit-api/pull/12",
       "E2": "https://github.com/rebit-pro/rabit-api/pull/13",
-      "A8": "https://github.com/rebit-pro/rabit-api/pull/14"
+      "A8": "https://github.com/rebit-pro/rabit-api/pull/14",
+      "C3": "https://github.com/rebit-pro/rabit-api/pull/15"
     }
   },
   "acceptedImplementationDecisions": [
@@ -642,7 +644,7 @@
       "legacyIds": [
         "W08"
       ],
-      "deliveryState": "review",
+      "deliveryState": "merged",
       "unlocks": [
         "C4",
         "B2",
@@ -689,7 +691,7 @@
       "legacyIds": [
         "W07"
       ],
-      "deliveryState": "planned",
+      "deliveryState": "review",
       "unlocks": [
         "N1"
       ],

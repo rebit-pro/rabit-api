@@ -181,7 +181,7 @@ def test_live(state):
     docker("run", "--rm", "--network", "container:" + state["id"] + "-frontend", "--shm-size=1g", *state["nodeArgs"], "--env", "E2E_BASE_URL=http://127.0.0.1", IMAGE, "npm", "run", "test:e2e:live", log=Path(state["report"], "browser.log"))
     results = json.loads((ROOT / "frontend/reports/e2e-live/results.json").read_text())
     stats = results["stats"]
-    if stats["unexpected"] or stats["skipped"] or stats["expected"] < 25:
+    if stats["unexpected"] or stats["skipped"] or stats["expected"] < 33:
         raise RuntimeError("Browser gate incomplete: " + json.dumps(stats))
     state["browser"] = stats
     save(state)

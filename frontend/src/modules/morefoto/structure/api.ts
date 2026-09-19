@@ -1,7 +1,23 @@
 import { isAxiosError } from 'axios';
 import api from '@/api/http';
-import type { Institution, Shoot, ShootDetail, StructureAttempt, StructurePage, StructureScope, PageMeta } from './model';
+import type {
+  Institution,
+  Shoot,
+  ShootDetail,
+  StructureAttempt,
+  StructurePage,
+  StructureScope,
+  PageMeta,
+  InstitutionDetail,
+  InstitutionPages
+} from './model';
 export const structureApi = {
+  async institution(institutionId: string, pages: InstitutionPages, pageSize = 25): Promise<InstitutionDetail> {
+    const result = await api.get<InstitutionDetail>('/api/v1/institutions/' + encodeURIComponent(institutionId), {
+      params: { ...pages, pageSize }
+    });
+    return result.data;
+  },
   async list(scope: StructureScope, page = 1, pageSize = 25, q = ''): Promise<StructurePage> {
     if (scope.kind === 'group') {
       const result = await api.get<ShootDetail>('/api/v1/shoots/' + encodeURIComponent(scope.shootId ?? ''), {
