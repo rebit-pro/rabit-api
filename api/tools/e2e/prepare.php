@@ -22,7 +22,7 @@ foreach (['morefoto.access', 'morefoto.commerce', 'morefoto.organization', 'rebi
 }
 ob_start();
 try {
-    foreach (['20260323120001', '20260326120008', '20260911120001', '20260911200001', '20260911210001', '20260911220001', '20260912210001', '20260912220001', '20260913010001', '20260913010002'] as $id) {
+    foreach (['20260323120001', '20260326120008', '20260911120001', '20260911200001', '20260911210001', '20260911220001', '20260912210001', '20260912220001', '20260913010001', '20260913010002', '20260919090001'] as $id) {
         require_once '/app/public/local/php_interface/migrations.foundation/Version' . $id . '.php';
         $class = 'Sprint\Migration\Version' . $id;
         (new $class())->up();

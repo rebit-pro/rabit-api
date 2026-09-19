@@ -38,6 +38,11 @@ final readonly class GroupAssignmentRepository
         return $ids;
     }
 
+    public function deleteForUser(int $userId): void
+    {
+        Application::getConnection()->queryExecute("DELETE FROM b_hlbd_mf_group_assignment WHERE UF_USER_ID={$userId}");
+    }
+
     public function set(int $groupId, ?int $userId): void
     {
         if (1 > $groupId || (null !== $userId && 1 > $userId)) {

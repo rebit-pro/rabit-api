@@ -51,6 +51,15 @@ const navigation = computed(() =>
               }
             ]
           : []),
+        ...(auth.user?.permissions?.includes('staff.manage')
+          ? [
+              {
+                title: 'Сотрудники',
+                to: '/cabinet/users',
+                icon: 'mdi-account-group-outline'
+              }
+            ]
+          : []),
         {
           title: 'Профиль',
           to: '/cabinet/profile',

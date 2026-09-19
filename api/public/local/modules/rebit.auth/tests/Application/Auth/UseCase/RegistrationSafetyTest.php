@@ -171,7 +171,7 @@ final class RegistrationSafetyTest extends TestCase
         $user = new UserRegistrationState(7, 'user@example.test', 'User', false, true);
         $users->method('findByEmail')->willReturn($user);
         $users->method('findByIdForUpdate')->willReturn($user);
-        $users->expects($this->once())->method('updateInactiveCredentials')->with(7, 'password123', 'user@example.test');
+        $users->expects($this->once())->method('updateInactiveCredentials')->with(7, 'password123', 'User');
         $users->expects($this->never())->method('activateUser');
         $confirmations = $this->createMock(RegistrationConfirmationRepository::class);
         $confirmations->method('findByEmail')->willReturn($this->confirmation());

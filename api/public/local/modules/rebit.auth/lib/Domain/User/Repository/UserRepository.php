@@ -112,6 +112,37 @@ final readonly class UserRepository implements LoginUserRepositoryInterface, Tok
         });
     }
 
+    /** Address lookup serialized with staff provisioning and contact changes. */
+    public function findByEmailForUpdate(string $email): ?UserRegistrationState
+    {
+        return $this->query(static function() use ($email): ?UserRegistrationState {
+            $connection = Application::getConnection();
+            $helper = $connection->getSqlHelper();
+            /** @var array{
+             *     ID: int|string,
+             *     EMAIL: string,
+             *     NAME: null|string,
+             *     ACTIVE: string,
+             *     UF_AUTH_REGISTRATION_PENDING: null|int|string,
+             * }|false $row */
+            $row = $connection->query(sprintf(
+                "SELECT u.ID,u.EMAIL,u.NAME,u.ACTIVE,uf.UF_AUTH_REGISTRATION_PENDING FROM b_user u LEFT JOIN b_uts_user uf ON uf.VALUE_ID=u.ID WHERE LOWER(u.EMAIL)=LOWER('%s') LIMIT 1 FOR UPDATE",
+                $helper->forSql(trim($email)),
+            ))->fetch();
+            if (false === $row) {
+                return null;
+            }
+
+            return new UserRegistrationState(
+                id: (int)$row['ID'],
+                email: (string)$row['EMAIL'],
+                name: (string)$row['NAME'],
+                isActive: 'Y' === (string)$row['ACTIVE'],
+                isPendingRegistration: 1 === (int)($row['UF_AUTH_REGISTRATION_PENDING'] ?? 0),
+            );
+        });
+    }
+
     /**
      * @throws RepositoryException
      */
@@ -286,6 +317,29 @@ final readonly class UserRepository implements LoginUserRepositoryInterface, Tok
                 $userId,
                 $connection->getSqlHelper()->forSql($token),
             ));
+        });
+    }
+
+    public function updateStaffContact(int $userId, string $email, string $name): void
+    {
+        $email = mb_strtolower(trim($email));
+        $name = trim($name);
+        if (1 > $userId || false === filter_var($email, FILTER_VALIDATE_EMAIL) || '' === $name) {
+            throw new \InvalidArgumentException('Valid staff identity fields are required.');
+        }
+        $this->query(static function() use ($userId, $email, $name): void {
+            $connection = Application::getConnection();
+            $helper = $connection->getSqlHelper();
+            $connection->queryExecute(sprintf(
+                "UPDATE b_user SET LOGIN='%s',EMAIL='%s',NAME='%s',TIMESTAMP_X=UTC_TIMESTAMP() WHERE ID=%d",
+                $helper->forSql($email),
+                $helper->forSql($email),
+                $helper->forSql($name),
+                $userId,
+            ));
+            if (1 !== $connection->getAffectedRowsCount()) {
+                throw new RepositoryException('Staff Auth identity was not updated.');
+            }
         });
     }
 

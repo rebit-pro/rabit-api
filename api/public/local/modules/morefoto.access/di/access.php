@@ -3,6 +3,14 @@
 declare(strict_types=1);
 
 use Bitrix\Main\DI\ServiceLocator;
+use Morefoto\Access\Application\Staff\Contract\AssignmentDirectoryInterface;
+use Morefoto\Access\Application\Staff\UseCase\SaveStaffUseCase;
+use Morefoto\Access\Application\Staff\UseCase\StaffDirectoryUseCase;
+use Morefoto\Access\Domain\Staff\Repository\StaffManagementRepository;
+use Morefoto\Access\Infrastructure\Organization\OrganizationAssignmentDirectory;
+use Morefoto\Access\Presentation\Controller\StaffController;
+use Morefoto\Access\Presentation\Request\StaffRequestFactory;
+use Rebit\Share\Application\Contract\Auth\StaffIdentityGatewayInterface;
 use Morefoto\Access\Application\Authorization\Service\StaffAuthorization;
 use Morefoto\Access\Infrastructure\Adapter\AccessGuard;
 use Rebit\Share\Contracts\Access\AccessGuardInterface;
@@ -23,6 +31,44 @@ use Morefoto\Access\Application\Assignment\Service\GroupAccess;
 use Rebit\Share\Contracts\Access\GroupAccessInterface;
 
 return [
+    AssignmentDirectoryInterface::class => [
+        'constructor' => static fn(): AssignmentDirectoryInterface => new OrganizationAssignmentDirectory(),
+    ],
+    StaffManagementRepository::class => ['className' => StaffManagementRepository::class],
+    StaffRequestFactory::class => ['className' => StaffRequestFactory::class],
+    StaffDirectoryUseCase::class => [
+        'className' => StaffDirectoryUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(StaffAuthorization::class),
+            ServiceLocator::getInstance()->get(StaffManagementRepository::class),
+            ServiceLocator::getInstance()->get(AssignmentDirectoryInterface::class),
+            ServiceLocator::getInstance()->get(InstitutionAssignmentRepository::class),
+            ServiceLocator::getInstance()->get(GroupAssignmentRepository::class),
+            ServiceLocator::getInstance()->get(InstitutionAccessInterface::class),
+        ],
+    ],
+    SaveStaffUseCase::class => [
+        'className' => SaveStaffUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(StaffAuthorization::class),
+            ServiceLocator::getInstance()->get(AccessStateRepository::class),
+            ServiceLocator::getInstance()->get(StaffManagementRepository::class),
+            ServiceLocator::getInstance()->get(StaffIdentityGatewayInterface::class),
+            ServiceLocator::getInstance()->get(AssignmentDirectoryInterface::class),
+            ServiceLocator::getInstance()->get(InstitutionAssignmentRepository::class),
+            ServiceLocator::getInstance()->get(GroupAssignmentRepository::class),
+            ServiceLocator::getInstance()->get(InstitutionAccessInterface::class),
+        ],
+    ],
+    StaffController::class => [
+        'className' => StaffController::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(StaffDirectoryUseCase::class),
+            ServiceLocator::getInstance()->get(SaveStaffUseCase::class),
+            ServiceLocator::getInstance()->get(StaffRequestFactory::class),
+            ServiceLocator::getInstance()->get(TokenResolverInterface::class),
+        ],
+    ],
     GroupAssignmentRepository::class => ['className' => GroupAssignmentRepository::class],
     GroupAccessInterface::class => [
         'constructor' => static fn(): GroupAccessInterface => new GroupAccess(

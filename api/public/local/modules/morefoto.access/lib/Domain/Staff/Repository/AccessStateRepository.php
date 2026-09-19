@@ -17,22 +17,38 @@ final readonly class AccessStateRepository
      */
     public function withLock(callable $operation): bool
     {
+        return $this->run(function() use ($operation): bool {
+            $changed = $operation();
+            if ($changed) {
+                Application::getConnection()->queryExecute('UPDATE mf_access_state SET assignments_revision = assignments_revision + 1 WHERE id = 1');
+            }
+
+            return $changed;
+        });
+    }
+
+    /**
+     * @template T
+     *
+     * @param callable(): T $operation
+     *
+     * @return T
+     */
+    public function run(callable $operation): mixed
+    {
         $connection = Application::getConnection();
         $connection->startTransaction();
         try {
             if (false === $connection->query('SELECT assignments_revision FROM mf_access_state WHERE id = 1 FOR UPDATE')->fetch()) {
                 throw new AccessStorageException('Access state is missing; apply the Access migration.');
             }
-            $changed = $operation();
-            if ($changed) {
-                $connection->queryExecute('UPDATE mf_access_state SET assignments_revision = assignments_revision + 1 WHERE id = 1');
-            }
+            $result = $operation();
             $connection->commitTransaction();
 
-            return $changed;
+            return $result;
         } catch (\Throwable $exception) {
             $connection->rollbackTransaction();
-            throw new AccessStorageException('Access change was rolled back.', 0, $exception);
+            throw $exception;
         }
     }
 }
