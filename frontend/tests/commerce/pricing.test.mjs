@@ -5,7 +5,7 @@ const photo = (id) => ({ id, code: id, thumbSrc: '/preview.webp', previewSrc: '/
 const gallery = {
   children: [
     { code: 'A', photos: [photo('a1'), photo('a2')] },
-    { code: 'B', photos: [photo('b1')] }
+    { code: 'B', photos: [photo('b1'), photo('a1')] }
   ],
   audience: 'regular'
 };
@@ -37,15 +37,22 @@ test('digital purchases do not count toward the printed threshold', () => {
   assert.deepEqual(quote.gifts, []);
   assert.equal(quote.total, 200000);
 });
-test('gift covers digital payment and disappears when printed amount falls', () => {
-  const source = [line('A', 'a1', 'print', 2), line('A', 'a1', 'digital')];
+test('gift covers only the bundle and never a separate digital frame', () => {
+  const source = [line('A', 'a1', 'print', 2), line('A', 'a1', 'digital'), line('A', null, 'bundle')];
   const eligible = calculateQuote(gallery, source, catalog);
   assert.deepEqual(eligible.gifts, ['A']);
-  assert.equal(eligible.total, 200000);
-  assert.equal(eligible.giftSaving, 25000);
+  assert.equal(eligible.total, 225000);
+  assert.equal(eligible.giftSaving, 100000);
+  assert.equal(eligible.lines.find((item) => item.productId === 'digital').coveredByGift, false);
+  assert.equal(eligible.lines.find((item) => item.productId === 'bundle').coveredByGift, true);
   const removed = calculateQuote(gallery, [{ ...source[0], quantity: 1 }, source[1]], catalog);
   assert.deepEqual(removed.gifts, []);
   assert.equal(removed.total, 125000);
+});
+test('the same photo identifier is evaluated independently for each child', () => {
+  const quote = calculateQuote(gallery, [line('A', 'a1', 'print', 2), line('B', 'a1', 'print', 2)], catalog);
+  assert.deepEqual(quote.gifts, ['A', 'B']);
+  assert.equal(quote.total, 400000);
 });
 test('staff discount applies only to configured products', () => {
   const quote = calculateQuote({ ...gallery, audience: 'staff' }, [line('A', 'a1', 'print'), line('A', 'a2', 'canvas')], catalog);
@@ -58,6 +65,25 @@ test('staff gift uses printed total after discount when configured', () => {
     enabled = { ...catalog, giftForStaff: true };
   assert.deepEqual(calculateQuote(staff, [line('A', 'a1', 'print', 3)], enabled).gifts, []);
   assert.deepEqual(calculateQuote(staff, [line('A', 'a1', 'print', 4)], enabled).gifts, ['A']);
+});
+test('staff final unit price rounds an odd kopek half up', () => {
+  const odd = {
+    ...catalog,
+    products: catalog.products.map((product) => (product.id === 'print' ? { ...product, price: 101 } : product))
+  };
+  const quote = calculateQuote({ ...gallery, audience: 'staff' }, [line('A', 'a1', 'print')], odd);
+  assert.equal(quote.lines[0].unitPrice, 51);
+  assert.equal(quote.discount, 50);
+  assert.equal(quote.total, 51);
+});
+test('gift wins over staff discount without stacking both reductions', () => {
+  const quote = calculateQuote({ ...gallery, audience: 'staff' }, [line('A', 'a1', 'canvas'), line('A', null, 'bundle')], {
+    ...catalog,
+    giftForStaff: true
+  });
+  assert.equal(quote.giftSaving, 100000);
+  assert.equal(quote.discount, 0);
+  assert.equal(quote.total, 240000);
 });
 test('unknown photos or unavailable products block checkout through invalid lines', () => {
   const quote = calculateQuote(gallery, [line('A', 'b1', 'print'), line('A', 'a1', 'unknown')], catalog);

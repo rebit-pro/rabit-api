@@ -39,6 +39,7 @@ export function editConditions(
     kind: 'conditions',
     requestId: crypto.randomUUID(),
     revision: catalog.revision,
+    catalogRevision: catalog.revision,
     conditionsRevision: effective.conditionsRevision ?? 0,
     groupId,
     shootId: group?.shootId ?? null,

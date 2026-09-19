@@ -1,0 +1,34 @@
+{
+  "wave": "E3",
+  "status": "passed",
+  "fixture": "rabit-e2e-8243a10a97b4",
+  "screenshotsReviewed": 3,
+  "localDirectory": "frontend/reports/e2e-live/artifacts/conditions-E3-общие-и-груп-a740d-т-CAS-idempotency-и-live-UI-chromium",
+  "screenshots": [
+    {
+      "name": "desktop-global-conditions.png",
+      "sha256": "6f91bbb4ffc8ad7730b0c1bad2144f09a760aac7a05e602ef87a959fbd108ea1",
+      "width": 1440,
+      "height": 4185
+    },
+    {
+      "name": "desktop-group-conditions.png",
+      "sha256": "ca20b8be031806c8c85a0bb1afda52ef69f2e9fb2b3c76fd8308f6a050911b89",
+      "width": 1440,
+      "height": 5440
+    },
+    {
+      "name": "mobile-group-conditions.png",
+      "sha256": "555b05126e841865f568ff22cae64104b69b4cba6c21b36a6aa1780ce6185227",
+      "width": 390,
+      "height": 7688
+    }
+  ],
+  "method": "Manual review of screenshots produced by the final real Chromium run after settled UI.",
+  "findings": [
+    "Global conditions are visually separated from product management and expose one clear editor action.",
+    "Group conditions show inheritance state, effective rules and a read-only catalogue with one aggregate edit action.",
+    "Desktop and 390px mobile layouts have no overlap or horizontal overflow; untrusted catalogue text remains literal."
+  ],
+  "limitations": "Manual screenshot review, not pixel-diff coverage; files remain in ignored local E2E artifacts."
+}
