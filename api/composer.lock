@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fec60acdde14c654a38f5817de29ac49",
+    "content-hash": "c25a175d4af0a54b157614abc7b3b5dc",
     "packages": [
         {
             "name": "ballen/distical",

@@ -78,6 +78,19 @@ function editShoot(): void {
       <v-btn v-if="canManage && scope.kind === 'group'" variant="outlined" :disabled="disabled" @click="editShoot"
         >Редактировать съёмку</v-btn
       >
+      <v-btn
+        v-if="canManage && scope.kind === 'group'"
+        variant="outlined"
+        :disabled="disabled"
+        :to="
+          '/cabinet/institutions/' +
+          encodeURIComponent(scope.institutionId ?? '') +
+          '/shoots/' +
+          encodeURIComponent(scope.shootId ?? '') +
+          '/photos'
+        "
+        >Фотографии</v-btn
+      >
       <v-btn variant="outlined" :disabled="loading" @click="reload()">Обновить список</v-btn>
     </div>
   </header>

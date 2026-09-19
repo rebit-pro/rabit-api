@@ -15,6 +15,7 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 IMAGE = "mcr.microsoft.com/playwright:v1.52.0-jammy"
+RABBITMQ_IMAGE = "rabbitmq:3.13-management"
 LABEL = "rabit.browser_e2e"
 
 
@@ -74,7 +75,7 @@ def start(args):
         for source in [kernel / "modules/main/install/mysql/install.sql", kernel / "routing_index.php", vendor / "autoload.php", ROOT / "frontend/package-lock.json"]:
             if not source.is_file():
                 raise RuntimeError("Missing dependency: " + str(source))
-        for image in [IMAGE, args.php_cli, args.php_fpm, args.nginx, args.mysql, "nginx:1.29-alpine"]:
+        for image in [IMAGE, args.php_cli, args.php_fpm, args.nginx, args.mysql, "nginx:1.29-alpine", RABBITMQ_IMAGE]:
             docker("image", "inspect", image)
         label = LABEL + "=" + identity
         for suffix in ["private", "browser"]:
@@ -110,6 +111,17 @@ def start(args):
             time.sleep(1)
         else:
             raise RuntimeError("Disposable MySQL did not become ready")
+        name = identity + "-rabbitmq"
+        docker("run", "--detach", "--name", name, "--label", label, "--network", state["private"], "--network-alias", "rabbitmq", "--memory", "512m", "--memory-swap", "512m", "--env", "RABBITMQ_DEFAULT_USER=rebit", "--env", "RABBITMQ_DEFAULT_PASS=rebit", "--env", "RABBITMQ_DEFAULT_VHOST=rebit", RABBITMQ_IMAGE)
+        state["containers"].append(name)
+        save(state)
+        for _ in range(60):
+            result = subprocess.run(["docker", "exec", "--user", "rabbitmq", name, "rabbitmq-diagnostics", "-q", "ping"], capture_output=True)
+            if result.returncode == 0:
+                break
+            time.sleep(1)
+        else:
+            raise RuntimeError("Disposable RabbitMQ did not become ready")
         fixture = ROOT / "api/tools/e2e"
         mounts = ["--mount", f"type=bind,source={ROOT / 'api'},target=/app,readonly", "--mount", f"type=volume,source={identity}-vendor,target=/app/vendor", "--mount", f"type=bind,source={kernel / 'modules'},target=/kernel/modules,readonly", "--mount", f"type=bind,source={kernel / 'routing_index.php'},target=/kernel/routing_index.php,readonly", "--mount", f"type=volume,source={identity}-runtime,target=/runtime"]
         print("Preparing isolated Composer autoload for this checkout", flush=True)
@@ -129,9 +141,17 @@ def start(args):
         if "fixture ready" not in output:
             raise RuntimeError("Fixture bootstrap did not complete; see prepare.log")
         name = identity + "-fpm"
-        docker("run", "--detach", "--name", name, "--label", label, "--network", state["private"], "--network-alias", "api-php-fpm", "--user", "0", "--entrypoint", "php-fpm", *mounts, "--env", "APP_ENV=test", "--env", "APP_DEBUG=0", "--env", "REBIT_GEETEST_ENABLED=0", "--env", "REBIT_GEETEST_BYPASS=1", args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
+        docker("run", "--detach", "--name", name, "--label", label, "--network", state["private"], "--network-alias", "api-php-fpm", "--user", "0", "--entrypoint", "php-fpm", *mounts, "--env", "APP_ENV=test", "--env", "APP_DEBUG=0", "--env", "REBIT_GEETEST_ENABLED=0", "--env", "REBIT_GEETEST_BYPASS=1", "--env", "MESSENGER_TRANSPORT_DSN=amqp://rebit:rebit@rabbitmq:5672/rebit", "--env", "MOREFOTO_PRIVATE_MEDIA_PATH=/runtime/private/media", "--env", "MOREFOTO_PUBLIC_PREVIEW_PATH=/runtime/public/upload/morefoto/previews", "--env", "MOREFOTO_PUBLIC_PREVIEW_URL=/upload/morefoto/previews", args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
         state["containers"].append(name)
         save(state)
+        name = identity + "-media"
+        docker("run", "--detach", "--name", name, "--label", label, "--network", state["private"], "--user", "0", "--entrypoint", "php", *mounts, "--workdir", "/app", "--env", "MESSENGER_TRANSPORT_DSN=amqp://rebit:rebit@rabbitmq:5672/rebit", "--env", "MOREFOTO_PRIVATE_MEDIA_PATH=/runtime/private/media", "--env", "MOREFOTO_PUBLIC_PREVIEW_PATH=/runtime/public/upload/morefoto/previews", "--env", "MOREFOTO_PUBLIC_PREVIEW_URL=/upload/morefoto/previews", args.php_cli, "tools/e2e/consume-media.php")
+        state["containers"].append(name)
+        save(state)
+        time.sleep(1)
+        if not json.loads(docker("container", "inspect", name))[0]["State"]["Running"]:
+            raise RuntimeError("Disposable media worker did not stay running")
+
         # Reuse the application's actual nginx routing and header forwarding configuration.
         config = (ROOT / "api/docker/common/nginx/conf.d/default.conf").read_text().replace("root /app/public;", "root /runtime/public;")
         (report / "backend.conf").write_text(config)
@@ -181,7 +201,7 @@ def test_live(state):
     docker("run", "--rm", "--network", "container:" + state["id"] + "-frontend", "--shm-size=1g", *state["nodeArgs"], "--env", "E2E_BASE_URL=http://127.0.0.1", IMAGE, "npm", "run", "test:e2e:live", log=Path(state["report"], "browser.log"))
     results = json.loads((ROOT / "frontend/reports/e2e-live/results.json").read_text())
     stats = results["stats"]
-    if stats["unexpected"] or stats["skipped"] or stats["expected"] < 33:
+    if stats["unexpected"] or stats["skipped"] or stats["expected"] < 34:
         raise RuntimeError("Browser gate incomplete: " + json.dumps(stats))
     state["browser"] = stats
     save(state)

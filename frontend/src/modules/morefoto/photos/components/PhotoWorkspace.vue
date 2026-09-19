@@ -22,6 +22,7 @@ const {
   group,
   selectedGroupId,
   editable,
+  assignmentsEnabled,
   groupPhotos,
   childCodes,
   visible,
@@ -92,6 +93,9 @@ async function confirmMove(toId: string, code: string) {
     </div>
     <p v-if="!group" class="mf-panel">В съёмке пока нет групп. Добавьте группу на странице съёмки.</p>
     <template v-else>
+      <v-alert v-if="!assignmentsEnabled" type="info" variant="tonal" class="mb-6" data-testid="d1-boundary">
+        Оригиналы сохраняются приватно, а защищённые превью готовятся на сервере. Разметка по детям и обложки появятся в D2.
+      </v-alert>
       <section class="mf-panel photo-readiness mb-6" aria-label="Состояние подборки">
         <div>
           <h2>{{ group.name }}</h2>
@@ -138,7 +142,7 @@ async function confirmMove(toId: string, code: string) {
         :photos="visible"
         :child-codes="childCodes"
         :cover-id="cover?.id"
-        :disabled="!editable"
+        :disabled="!editable || !assignmentsEnabled"
         :busy="busy || uploading"
         :suggested-code="suggestedCode"
         @assign="assign"

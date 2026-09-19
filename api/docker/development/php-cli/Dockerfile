@@ -6,6 +6,7 @@ RUN apt-get update \
         libpng-dev \
         libjpeg-dev \
         libfreetype6-dev \
+        libwebp-dev \
         libzip-dev \
         libonig-dev \
         libicu-dev \
@@ -22,7 +23,7 @@ RUN apt-get update \
         msmtp \
     && pecl install memcache \
     && docker-php-ext-enable memcache \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install \
         gd \
         bcmath \

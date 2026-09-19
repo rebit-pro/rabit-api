@@ -114,22 +114,30 @@ cron-logs:
 
 # --- Queue ---
 queue-up:
-	docker compose up -d api-audit-consumer
+	docker compose up -d api-audit-consumer api-media-consumer
 
 queue-down:
 	docker compose stop api-audit-consumer
+	docker compose stop api-media-consumer
 
 queue-restart:
 	docker compose restart api-audit-consumer
+	docker compose restart api-media-consumer
 
 queue-logs:
-	docker compose logs -f api-audit-consumer
+	docker compose logs -f api-audit-consumer api-media-consumer
 
 consume-audit:
 	docker compose run --rm api-php-cli php public/local/bin/bitrix-console app:audit:consume
 
 consume-audit-once:
 	docker compose run --rm api-php-cli php public/local/bin/bitrix-console app:audit:consume --limit=10 --time-limit=30
+
+consume-media-once:
+	docker compose run --rm api-php-cli php public/local/bin/bitrix-console app:media:consume --limit=10 --time-limit=30
+
+dispatch-media:
+	docker compose run --rm api-php-cli php public/local/bin/bitrix-console app:media:dispatch-pending --limit=100
 
 # ==============================================================================
 # PRODUCTION
@@ -235,6 +243,8 @@ deploy: deploy-check-env
 		&& mv ~/docker-compose-production.yml $(RELEASE_DIR)/$(COMPOSE_DST) \
 		&& test -f "$(BITRIX_HOST_DIR)/modules/main/include/prolog_before.php" \
 		&& test -d "$(RUNTIME_DATA_DIR)/upload" \
+		&& mkdir -p "$(RUNTIME_DATA_DIR)/private-media" \
+		&& chmod 700 "$(RUNTIME_DATA_DIR)/private-media" \
 		&& docker volume inspect "$(MYSQL_VOLUME_NAME)" >/dev/null \
 		&& docker volume inspect "$(RABBITMQ_VOLUME_NAME)" >/dev/null \
 		&& mv ~/bitrix-settings-extra.php $(BITRIX_HOST_DIR)/.settings_extra.php \
