@@ -30,8 +30,15 @@ use Rebit\Share\Shared\Enum\LogChannelEnum;
 use Rebit\Share\Shared\Facade\Log;
 use Rebit\Auth\Infrastructure\Adapter\IdentityGateway;
 use Rebit\Share\Application\Contract\Auth\IdentityGatewayInterface;
+use Rebit\Auth\Infrastructure\Adapter\StaffIdentityGateway;
+use Rebit\Share\Application\Contract\Auth\StaffIdentityGatewayInterface;
 
 return [
+    StaffIdentityGatewayInterface::class => [
+        'constructor' => static fn(): StaffIdentityGatewayInterface => new StaffIdentityGateway(
+            ServiceLocator::getInstance()->get(UserRepository::class),
+        ),
+    ],
     IdentityGatewayInterface::class => [
         'constructor' => static fn(): IdentityGatewayInterface => new IdentityGateway(
             ServiceLocator::getInstance()->get(UserRepository::class),

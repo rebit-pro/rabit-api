@@ -37,9 +37,10 @@ router.beforeEach(async (to) => {
     return auth.homePath;
   }
   if (!isMockApiEnabled && to.path.startsWith('/cabinet')) {
-    if (!['Catalog', 'CabinetProfile', 'OrganizationList', 'CabinetInstitution', 'OrganizationShoot'].includes(String(to.name)))
+    if (!['Catalog', 'Users', 'CabinetProfile', 'OrganizationList', 'CabinetInstitution', 'OrganizationShoot'].includes(String(to.name)))
       return auth.homePath;
     if (to.path === '/cabinet/catalog' && !auth.user?.permissions?.includes('catalog.manage')) return '/access-unavailable';
+    if (to.path === '/cabinet/users' && !auth.user?.permissions?.includes('staff.manage')) return '/access-unavailable';
   }
   return true;
 });

@@ -99,7 +99,11 @@ final readonly class RequestRegistrationCodeUseCase
             : $existingUser->id;
 
         if (null !== $existingUser) {
-            $this->userRepository->updateInactiveCredentials($existingUser->id, $dto->password, $email);
+            $this->userRepository->updateInactiveCredentials(
+                $existingUser->id,
+                $dto->password,
+                '' !== trim($existingUser->name) ? $existingUser->name : $email,
+            );
         }
 
         $code = $this->registrationCodeGenerator->generate();

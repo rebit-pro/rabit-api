@@ -41,6 +41,11 @@ final readonly class InstitutionAssignmentRepository
         return $ids;
     }
 
+    public function deleteForUser(int $userId): void
+    {
+        Application::getConnection()->queryExecute("DELETE FROM b_hlbd_mf_institution_assignment WHERE UF_USER_ID={$userId}");
+    }
+
     /** @param list<int> $userIds */
     public function lockProfiles(array $userIds): void
     {
