@@ -59,7 +59,8 @@
     "playwright": "1.52.0"
   },
   "publication": {
-    "status": "PR pending",
+    "status": "PR open",
+    "url": "https://github.com/rebit-pro/rabit-api/pull/21",
     "merged": false,
     "deployed": false,
     "deploymentTarget": "app.morefoto.36.ru",
