@@ -1,0 +1,39 @@
+# H1 — общая надёжная доставка Notification
+
+Статус: готово к ревью, обязательная локальная приёмка завершена. Ветка `codex/h1-reliable-email` от `main` `c32b98e7c7407592c54c9ee382e994d7fa611955`; зависимости A2 и A5 слиты. Реализация находится в Rabbit P2P / `rabit-api`, каноническая продуктовая документация — в совместном проекте MoreFoto/BorrowPhoto.
+
+## Решение по каналу
+
+20 сентября 2026 года пользователь выбрал EMAIL первым рабочим каналом H1. Переход на MAX будет отдельным этапом после этой реализации. Выбор EMAIL закрывает блокирующую часть D09 только для H1; платёжный провайдер, параметры фискализации и прочие вопросы D09 остаются открыты для G1/G2.
+
+## Результат волны
+
+В `rebit.share` добавлен узкий внутренний контракт постановки email-уведомления и чтения статуса. В `rebit.notification` реализованы сохраняемые операции и попытки, deduplication key с проверкой payload, очередь RabbitMQ, consumer, ограниченные экспоненциальные повторы, processing lease и явное восстановление неизвестного исхода с предупреждением о возможном дубле.
+
+Статусы различают `accepted` транспортом и фактическую доставку адресату: H1 не обещает SMTP exactly-once и не помечает неизвестный исход успешным. Получатель и содержимое принадлежат вызывающему consumer; Notification выполняет транспорт. Контакты и тело письма не пишутся в журналы. Существующие Lead и LeadHunter не переподключались.
+
+Миграция создаёт журнал операций/попыток и отдельное почтовое событие Bitrix. Добавлены команды `app:notification:consume` и `app:notification:dispatch-pending`; unknown повторяется только с явным `--include-unknown`. Consumer подключён к local Compose/Makefile и production Swarm с отдельным числом реплик, а recovery-dispatch запускается supercronic каждую минуту. Новых публичных REST-операций нет.
+
+## Проверка
+
+Повторный финальный disposable-прогон прошёл полностью: frontend ESLint/typecheck/E2E typecheck, 158 unit-тестов и production build; PHP lint 524 файлов, PHPStan без ошибок, PHPUnit 388/1209; установка миграции на чистую MySQL; интеграционный сценарий persistent dedup/restart/retry exhaustion/unknown recovery; реальный round-trip RabbitMQ; 42/42 Chromium-сценария без ошибок. Local Compose с profile `notification`, production Compose с replicas/config/secrets/mounts, cron и Makefile дополнительно провалидированы без запуска production.
+
+Новый NTF-01 сценарий проверяет доступность существующего публичного lead endpoint при установленном модуле Notification с подменёнными отправителями — реальная рассылка не выполняется. Визуальная проверка не требуется: H1 не меняет пользовательский интерфейс. Временные контейнеры, сеть и тома удалены.
+
+## Повторная проверка
+
+Из корня worktree:
+
+```sh
+python3 tools/run-browser-e2e.py up --php-cli rabit-api-php-cli:d1-local --php-fpm rabit-api-php-fpm:d1-local
+python3 tools/run-browser-e2e.py test --state <state.json>
+python3 tools/run-browser-e2e.py down --state <state.json>
+```
+
+Runner использует отдельные сеть/тома/tmpfs MySQL и локальные образы. Production/stage не затрагиваются.
+
+## Публикация и откат
+
+Волна опубликована в [PR #22](https://github.com/rebit-pro/rabit-api/pull/22). Merge и deployment не выполняются автоматически. Деплой объединяется с последующими волнами и выполняется отдельно на `app.morefoto.36.ru` только после согласованного этапа.
+
+До появления production-операций миграцию можно откатить вместе со схемой. Если журнал уже содержит операции, destructive rollback запрещён; откат приложения должен сохранять таблицы и использовать совместимый forward-fix.

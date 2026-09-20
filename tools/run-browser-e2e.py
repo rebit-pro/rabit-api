@@ -155,6 +155,11 @@ def start(args):
         if "fixture ready" not in output:
             raise RuntimeError("Fixture bootstrap did not complete; see prepare.log")
         name = identity + "-fpm"
+        print("Verifying durable Notification contract on real MySQL", flush=True)
+        output = docker("run", "--rm", "--network", state["private"], "--user", "0", "--entrypoint", "php", *mounts, "--workdir", "/app", "--env", "MESSENGER_TRANSPORT_DSN=amqp://rebit:rebit@rabbitmq:5672/rebit", args.php_cli, "-d", "short_open_tag=1", "-d", "date.timezone=UTC", "tools/e2e/verify-notification.php", log=report / "notification.log")
+        if "Notification H1 integration passed" not in output:
+            raise RuntimeError("Notification integration did not complete; see notification.log")
+
         docker("run", "--detach", "--name", name, "--label", label, "--network", state["private"], "--network-alias", "api-php-fpm", "--user", "0", "--entrypoint", "php-fpm", *mounts, "--env", "APP_ENV=test", "--env", "APP_DEBUG=0", "--env", "REBIT_GEETEST_ENABLED=0", "--env", "REBIT_GEETEST_BYPASS=1", "--env", "MESSENGER_TRANSPORT_DSN=amqp://rebit:rebit@rabbitmq:5672/rebit", "--env", "MOREFOTO_PRIVATE_MEDIA_PATH=/runtime/private/media", "--env", "MOREFOTO_PUBLIC_PREVIEW_PATH=/runtime/public/upload/morefoto/previews", "--env", "MOREFOTO_PUBLIC_PREVIEW_URL=/upload/morefoto/previews", args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
         state["containers"].append(name)
         save(state)

@@ -1,0 +1,106 @@
+{
+  "wave": "H1",
+  "status": "ready-for-merge",
+  "date": "2026-09-20",
+  "branch": "codex/h1-reliable-email",
+  "base": "31ebf8a1c1f6672ecd1da8011b8230413e416433",
+  "dependencies": [
+    "A2 merged",
+    "A5 merged"
+  ],
+  "acceptedDecisions": [
+    "EMAIL is the first H1 delivery channel",
+    "MAX is deferred to a separate later stage",
+    "Other D09 payment and fiscalization questions remain open"
+  ],
+  "checks": {
+    "phpLint": {
+      "status": "passed",
+      "files": 524
+    },
+    "phpstan": {
+      "status": "passed",
+      "errors": 0
+    },
+    "phpunit": {
+      "status": "passed",
+      "tests": 392,
+      "assertions": 1222
+    },
+    "style": {
+      "status": "passed",
+      "changedPhpFiles": 32,
+      "fixableFilesAfterFix": 0
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "production build"
+      ],
+      "unitTests": 158
+    },
+    "notificationIntegration": {
+      "status": "passed",
+      "database": "isolated MySQL 8.0",
+      "queue": "real RabbitMQ round-trip",
+      "scenarios": [
+        "persistent deduplication",
+        "payload conflict",
+        "restart-safe accepted transition",
+        "retry exhaustion",
+        "unknown quarantine",
+        "explicit unknown recovery"
+      ]
+    },
+    "browserE2E": {
+      "status": "passed",
+      "tests": 42,
+      "failed": 0,
+      "fixture": "rabit-e2e-99f58da45a60",
+      "transport": "Chromium -> nginx -> native Bitrix FPM -> isolated MySQL",
+      "ownedFixtureCleaned": true
+    },
+    "visualDesktopMobile": {
+      "status": "not-applicable",
+      "reason": "H1 has no user interface changes"
+    },
+    "runtimeWiring": {
+      "status": "passed",
+      "localCompose": "api-notification-consumer enabled by notification profile",
+      "productionCompose": "consumer with replicas, backend config, encryption/SMTP/RabbitMQ secrets and bind mounts",
+      "cron": "app:notification:dispatch-pending --limit=100 every minute",
+      "makefile": "queue lifecycle, one-shot consume and manual dispatch dry-run passed"
+    },
+    "secondRoundReview": {
+      "status": "passed",
+      "blockers": 0,
+      "nonBlockingFindings": 0,
+      "issuesCreated": 0
+    },
+    "baseRefresh": {
+      "status": "passed",
+      "mainCommit": "31ebf8a1c1f6672ecd1da8011b8230413e416433",
+      "resolvedConflict": "api/tools/e2e/prepare.php keeps both D2 and H1 migrations",
+      "browserTests": 42,
+      "cleanupErrors": 0
+    }
+  },
+  "runtime": {
+    "php": "8.4.25",
+    "mysql": "8.0",
+    "playwright": "1.52.0"
+  },
+  "publication": {
+    "status": "PR open; second-round review clean",
+    "url": "https://github.com/rebit-pro/rabit-api/pull/22",
+    "merged": false,
+    "deployed": false,
+    "deploymentTarget": "app.morefoto.36.ru",
+    "deploymentPolicy": "aggregate later wave checkpoint"
+  },
+  "complete": true,
+  "completeMeaning": "Implementation, publication and second-round local acceptance complete; merge and aggregate deployment are tracked separately."
+}
