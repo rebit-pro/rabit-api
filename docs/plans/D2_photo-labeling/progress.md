@@ -1,6 +1,6 @@
 # D2 — прогресс правок по code review
 
-Текущее состояние: второй review завершён без замечаний; ветка готова к commit/push.
+Текущее состояние: второй review завершён без замечаний; ветка опубликована и готова к merge.
 
 ## Точка продолжения
 
@@ -9,14 +9,14 @@
 - Связанная задача техдолга: [#23](https://github.com/rebit-pro/rabit-api/issues/23).
 - Base: `c32b98e7c7407592c54c9ee382e994d7fa611955`.
 - Head до правок второго круга: `1e7616714261c2f93ac30a9db476de1bb0222df2`.
-- Завершено: исправления конфликта и агрегации реализованы; повторный полный disposable-run прошёл 41/41 и очистил ресурсы без ошибок.
-- Текущий шаг: commit/push проверенной реализации и журналов.
-- Следующий шаг: ответить в двух inline-thread PR #21 и проверить OPEN/CLEAN на опубликованном head.
+- Основной коммит правок второго круга: `24a1865877c861eb061eceee15bcf5bbd3fd1bd4`.
+- Завершено: исправления опубликованы, оба inline-thread получили ответы; PR проверен как OPEN/CLEAN.
+- Текущий шаг: второй круг D2 закрыт.
+- Следующий шаг: отдельно согласовать merge PR #21; deployment оставить до агрегированного этапа.
 - Блокеры: нет.
 - Открытое решение: по итогам review исправлять только блокирующие находки; неблокирующие оформлять отдельными Issues.
-- Состояние рабочего дерева: изменены API/composable/repository/mapper, unit/live E2E и task docs; первый fixture `rabit-e2e-583a411e3515` очищен без ошибок.
-- Команда продолжения: `git status --short && git diff -- docs/plans/D2_photo-labeling`.
-- Запланированная полная проверка: `python3 tools/run-browser-e2e.py run --php-cli rabit-api-php-cli:d1-local --php-fpm rabit-api-php-fpm:d1-local`.
+- Состояние рабочего дерева перед финальным docs-коммитом: чистое; оба E2E fixture очищены без ошибок.
+- Команда продолжения: `gh pr view 21 --repo rebit-pro/rabit-api --json state,mergeStateStatus,headRefOid,url`.
 
 ## 2026-09-20 — разбор замечаний
 
@@ -55,6 +55,14 @@
 - После сужения locator повторный полный прогон `rabit-e2e-3130842ab860` прошёл: Chromium 41/41, skipped/unexpected/flaky = 0; `stopped=true`, `cleanupErrors=[]`.
 - Отдельный PHP CS Fixer dry-run нашёл одну форматную строку в `PhotoRowMapper`; runtime не затронут, применена предложенная проектным конфигом форма.
 - Повторный fixer: 0/3; второй review полного delta завершён, блокирующих и неблокирующих находок нет, поэтому новые Issues не создавались.
+
+## 2026-09-20 — публикация второго круга
+
+- Коммит реализации `24a1865877c861eb061eceee15bcf5bbd3fd1bd4` отправлен в `codex/d2-photo-labeling`.
+- Ответы: [revision conflict](https://github.com/rebit-pro/rabit-api/pull/21#discussion_r4057154654),
+  [JSON aggregation](https://github.com/rebit-pro/rabit-api/pull/21#discussion_r4057154447).
+- Итог второго review: [issuecomment-5750361916](https://github.com/rebit-pro/rabit-api/pull/21#issuecomment-5750361916).
+- GitHub подтвердил PR #21 как `OPEN/CLEAN` на опубликованном head; merge и deployment не выполнялись.
 
 ## Результаты проверок
 

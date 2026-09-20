@@ -1,6 +1,6 @@
 # D2 — правки по code review
 
-Статус: выполняются исправления второго круга review. Ветка `codex/d2-photo-labeling`, PR [#21](https://github.com/rebit-pro/rabit-api/pull/21), base `c32b98e7c7407592c54c9ee382e994d7fa611955`.
+Статус: второй круг review завершён; ветка `codex/d2-photo-labeling` опубликована в PR [#21](https://github.com/rebit-pro/rabit-api/pull/21) и готова к merge.
 
 ## Цель
 
@@ -41,7 +41,7 @@
 - [x] Заменить строковую агрегацию назначений на JSON и проверить более 23 назначений unit-тестом.
 - [x] Выполнить frontend check, PHP lint/style/PHPStan/PHPUnit и полный disposable browser E2E.
 - [x] Выполнить второй просмотр полного diff; блокирующие находки исправить, неблокирующие оформить отдельными Issues.
-- [ ] Закоммитить, отправить ветку, ответить на inline-комментарии и зафиксировать итог в progress.
+- [x] Закоммитить, отправить ветку, ответить на inline-комментарии и зафиксировать итог в progress.
 
 ## Риски и ограничения
 
