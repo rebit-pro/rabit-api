@@ -1,6 +1,6 @@
 {
   "wave": "H1",
-  "status": "ready-for-review",
+  "status": "ready-for-push",
   "date": "2026-09-20",
   "branch": "codex/h1-reliable-email",
   "base": "c32b98e7c7407592c54c9ee382e994d7fa611955",
@@ -59,13 +59,26 @@
       "status": "passed",
       "tests": 42,
       "failed": 0,
-      "fixture": "rabit-e2e-766d8c5b1af5",
+      "fixture": "rabit-e2e-86c215fce395",
       "transport": "Chromium -> nginx -> native Bitrix FPM -> isolated MySQL",
       "ownedFixtureCleaned": true
     },
     "visualDesktopMobile": {
       "status": "not-applicable",
       "reason": "H1 has no user interface changes"
+    },
+    "runtimeWiring": {
+      "status": "passed",
+      "localCompose": "api-notification-consumer enabled by notification profile",
+      "productionCompose": "consumer with replicas, backend config, encryption/SMTP/RabbitMQ secrets and bind mounts",
+      "cron": "app:notification:dispatch-pending --limit=100 every minute",
+      "makefile": "queue lifecycle, one-shot consume and manual dispatch dry-run passed"
+    },
+    "secondRoundReview": {
+      "status": "passed",
+      "blockers": 0,
+      "nonBlockingFindings": 0,
+      "issuesCreated": 0
     }
   },
   "runtime": {
@@ -82,5 +95,5 @@
     "deploymentPolicy": "aggregate later wave checkpoint"
   },
   "complete": true,
-  "completeMeaning": "Implementation and required local acceptance complete; PR review, merge and aggregate deployment are tracked separately."
+  "completeMeaning": "Implementation, second-round fixes and required local acceptance complete; second review, merge and aggregate deployment are tracked separately."
 }

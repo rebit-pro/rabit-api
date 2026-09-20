@@ -194,6 +194,39 @@ services:
           restart_policy:
             condition: any
             delay: 5s
+    api-notification-consumer:
+        image: ${REGISTRY}/rabit-api-php-cli:${IMAGE_TAG}
+        command: ["php", "public/local/bin/bitrix-console", "app:notification:consume"]
+        configs:
+          - source: rebit_backend_env
+            target: /app/public/.env
+        secrets:
+          - source: rebit_encryption_key
+            target: rebit_encryption_key
+          - source: rebit_smtp_password
+            target: rebit_smtp_password
+          - source: rebit_rabbitmq_password
+            target: rebit_rabbitmq_password
+        volumes:
+          - type: bind
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/bitrix
+            target: /app/public/bitrix
+          - type: bind
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/upload
+            target: /app/public/upload
+          - type: bind
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/logs
+            target: /app/logs
+        deploy:
+          mode: replicated
+          replicas: ${NOTIFICATION_CONSUMER_REPLICAS:-1}
+          update_config:
+            parallelism: 1
+            delay: 10s
+            order: stop-first
+          restart_policy:
+            condition: any
+            delay: 5s
 
     rabbitmq:
         image: rabbitmq:3.13-management-alpine

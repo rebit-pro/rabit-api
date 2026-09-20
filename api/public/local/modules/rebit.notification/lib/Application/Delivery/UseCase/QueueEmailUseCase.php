@@ -12,6 +12,11 @@ use Rebit\Share\Application\Contract\Notification\Dto\EmailNotificationInputDto;
 use Rebit\Share\Application\Contract\Notification\Dto\NotificationOperationOutputDto;
 use Rebit\Share\Application\Contract\Notification\EmailNotificationInterface;
 
+/**
+ * Создаёт или повторно использует идемпотентную операцию email-доставки и пытается немедленно поставить её в очередь.
+ *
+ * Возвращает безопасный статус операции, сохраняя pending-состояние при временном сбое публикации.
+ */
 final readonly class QueueEmailUseCase implements EmailNotificationInterface
 {
     public function __construct(

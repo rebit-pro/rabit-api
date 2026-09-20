@@ -12,11 +12,11 @@
 
 Статусы различают `accepted` транспортом и фактическую доставку адресату: H1 не обещает SMTP exactly-once и не помечает неизвестный исход успешным. Получатель и содержимое принадлежат вызывающему consumer; Notification выполняет транспорт. Контакты и тело письма не пишутся в журналы. Существующие Lead и LeadHunter не переподключались.
 
-Миграция создаёт журнал операций/попыток и отдельное почтовое событие Bitrix. Добавлены команды `app:notification:consume` и `app:notification:dispatch-pending`; unknown повторяется только с явным `--include-unknown`. Новых публичных REST-операций нет.
+Миграция создаёт журнал операций/попыток и отдельное почтовое событие Bitrix. Добавлены команды `app:notification:consume` и `app:notification:dispatch-pending`; unknown повторяется только с явным `--include-unknown`. Consumer подключён к local Compose/Makefile и production Swarm с отдельным числом реплик, а recovery-dispatch запускается supercronic каждую минуту. Новых публичных REST-операций нет.
 
 ## Проверка
 
-Финальный disposable-прогон прошёл полностью: frontend ESLint/typecheck/E2E typecheck, 158 unit-тестов и production build; PHP lint 524 файлов, PHPStan без ошибок, PHPUnit 388/1209; установка миграции на чистую MySQL; интеграционный сценарий persistent dedup/restart/retry exhaustion/unknown recovery; реальный round-trip RabbitMQ; 42/42 Chromium-сценария без ошибок.
+Повторный финальный disposable-прогон прошёл полностью: frontend ESLint/typecheck/E2E typecheck, 158 unit-тестов и production build; PHP lint 524 файлов, PHPStan без ошибок, PHPUnit 388/1209; установка миграции на чистую MySQL; интеграционный сценарий persistent dedup/restart/retry exhaustion/unknown recovery; реальный round-trip RabbitMQ; 42/42 Chromium-сценария без ошибок. Local Compose с profile `notification`, production Compose с replicas/config/secrets/mounts, cron и Makefile дополнительно провалидированы без запуска production.
 
 Новый NTF-01 сценарий проверяет доступность существующего публичного lead endpoint при установленном модуле Notification с подменёнными отправителями — реальная рассылка не выполняется. Визуальная проверка не требуется: H1 не меняет пользовательский интерфейс. Временные контейнеры, сеть и тома удалены.
 

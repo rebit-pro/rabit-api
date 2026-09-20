@@ -9,6 +9,11 @@ use Rebit\Share\Application\Contract\Messenger\MessageTransportFactoryInterface;
 use Rebit\Share\Shared\Enum\MessengerQueueEnum;
 use Symfony\Component\Messenger\MessageBusInterface;
 
+/**
+ * Запускает ограниченный по числу сообщений и времени worker очереди email-уведомлений.
+ *
+ * Связывает транспорт Notification с общей шиной и передаёт обработку зарегистрированному handler.
+ */
 final readonly class ConsumeEmailUseCase
 {
     public function __construct(

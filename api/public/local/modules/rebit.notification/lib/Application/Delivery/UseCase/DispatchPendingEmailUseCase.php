@@ -9,6 +9,11 @@ use Rebit\Notification\Application\Delivery\Contract\DeliveryOperationRepository
 use Rebit\Notification\Application\Delivery\Contract\NotificationClockInterface;
 use Rebit\Notification\Application\Delivery\Contract\NotificationPublisherInterface;
 
+/**
+ * Возвращает зависшие операции в доступное состояние и публикует готовые email-задачи в очередь.
+ *
+ * Не теряет pending-операцию при сбое RabbitMQ и восстанавливает unknown только по явному запросу.
+ */
 final readonly class DispatchPendingEmailUseCase
 {
     private const int PROCESSING_LEASE_SECONDS = 300;

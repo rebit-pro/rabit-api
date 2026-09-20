@@ -9,6 +9,11 @@ use Rebit\Notification\Application\Delivery\Contract\EmailTransportInterface;
 use Rebit\Notification\Application\Delivery\Contract\NotificationClockInterface;
 use Rebit\Notification\Application\Delivery\Exception\DefiniteDeliveryException;
 
+/**
+ * Выполняет одну защищённую lease попытку доставки сохранённого email-уведомления.
+ *
+ * Фиксирует принятый, отклонённый или неизвестный исход и рассчитывает ограниченный повтор для определённой ошибки.
+ */
 final readonly class DeliverEmailUseCase
 {
     private const int PROCESSING_LEASE_SECONDS = 300;

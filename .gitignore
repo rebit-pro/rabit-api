@@ -52,6 +52,7 @@
 !/docs/waves/
 !/docs/deployments/
 !/docs/testing/
+!/docs/plans/
 # Never publish local runtime configuration
 .env.*
 !.env.example
