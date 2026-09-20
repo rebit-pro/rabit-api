@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { money } from '../../commerce/money';
 import type { CatalogProduct } from '../api';
-defineProps<{ products: CatalogProduct[]; disabled: boolean }>();
+withDefaults(defineProps<{ products: CatalogProduct[]; disabled: boolean; editable?: boolean }>(), { editable: true });
 defineEmits<{ edit: [product: CatalogProduct] }>();
 </script>
 <template>
@@ -18,7 +18,12 @@ defineEmits<{ edit: [product: CatalogProduct] }>();
         <span>{{ product.active ? 'В продаже' : 'Отключено' }}</span>
         <span v-if="product.staffDiscount">Скидка сотрудникам 50%</span>
       </div>
-      <v-btn variant="outlined" :disabled="disabled" :aria-label="'Редактировать ' + product.name" @click="$emit('edit', product)"
+      <v-btn
+        v-if="editable !== false"
+        variant="outlined"
+        :disabled="disabled"
+        :aria-label="'Редактировать ' + product.name"
+        @click="$emit('edit', product)"
         >Редактировать</v-btn
       >
     </article>

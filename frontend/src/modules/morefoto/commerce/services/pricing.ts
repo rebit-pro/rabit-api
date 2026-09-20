@@ -12,8 +12,8 @@ export function calculateQuote(gallery: GallerySnapshot, source: CartLine[], cat
       continue;
     }
     const quantity = product.kind === 'physical' ? item.quantity : 1;
-    const discount = gallery.audience === 'staff' && product.staffDiscount ? Math.round(product.price / 2) : 0;
-    const unitPrice = product.price - discount;
+    const unitPrice = gallery.audience === 'staff' && product.staffDiscount ? Math.round(product.price / 2) : product.price;
+    const discount = product.price - unitPrice;
     lines.push({
       ...item,
       quantity,
@@ -35,8 +35,10 @@ export function calculateQuote(gallery: GallerySnapshot, source: CartLine[], cat
     .map((child) => child.code);
   let giftSaving = 0;
   for (const line of lines) {
-    if (line.product.kind !== 'physical' && gifts.includes(line.childCode)) {
-      giftSaving += line.total;
+    if (line.product.kind === 'bundle' && gifts.includes(line.childCode)) {
+      giftSaving += line.product.price * line.quantity;
+      line.unitPrice = line.product.price;
+      line.discount = 0;
       line.total = 0;
       line.coveredByGift = true;
     }

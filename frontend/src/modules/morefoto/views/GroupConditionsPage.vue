@@ -1,4 +1,7 @@
 <script setup lang="ts">
-import ManagementScreen from '../management/components/ManagementScreen.vue';
+import { defineAsyncComponent } from 'vue';
+import { isMockApiEnabled } from '@/mocks/config';
+import GroupConditionsScreen from '../conditions/components/GroupConditionsScreen.vue';
+const ManagementScreen = defineAsyncComponent(() => import('../management/components/ManagementScreen.vue'));
 </script>
-<template><ManagementScreen mode="conditions" /></template>
+<template><ManagementScreen v-if="isMockApiEnabled" mode="conditions" /><GroupConditionsScreen v-else /></template>

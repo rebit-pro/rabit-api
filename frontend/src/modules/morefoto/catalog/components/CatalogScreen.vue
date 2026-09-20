@@ -2,6 +2,7 @@
 import { shallowRef } from 'vue';
 import AdminDialog from '../../management/components/AdminDialog.vue';
 import ProductFields from '../../management/components/ProductFields.vue';
+import GlobalConditionsPanel from '../../conditions/components/GlobalConditionsPanel.vue';
 import CatalogTable from './CatalogTable.vue';
 import { useCatalog } from '../useCatalog';
 import { useProductEditor } from '../useProductEditor';
@@ -44,6 +45,7 @@ function edit(product?: CatalogProduct): void {
   <v-progress-linear v-if="loading" indeterminate aria-label="Загрузка каталога" class="mb-5" />
   <v-alert v-if="error" type="error" variant="tonal" role="alert" class="mb-5">{{ error }}</v-alert>
   <v-alert v-if="notice" type="success" variant="tonal" role="status" class="mb-5">{{ notice }}</v-alert>
+  <GlobalConditionsPanel class="mb-7" />
   <template v-if="snapshot && !error">
     <p class="mf-muted mb-4">Всего позиций: {{ snapshot.meta.total }}</p>
     <CatalogTable :products="snapshot.data.items" :disabled="loading" @edit="edit" />

@@ -27,6 +27,7 @@ export interface ProductCommand extends CommandBase {
 export interface ConditionsCommand extends CommandBase {
   kind: 'conditions';
   revision: number;
+  catalogRevision: number;
   conditionsRevision: number;
   groupId: string | null;
   shootId: string | null;

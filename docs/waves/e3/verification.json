@@ -1,0 +1,80 @@
+{
+  "wave": "E3",
+  "status": "ready-for-review",
+  "date": "2026-09-19",
+  "branch": "codex/e3-sales-conditions",
+  "base": "d78862280cd6cf21ab829dc782459203ea66a3ac",
+  "dependencies": [
+    "C3 merged",
+    "E2 merged"
+  ],
+  "acceptedDecisions": [
+    "No seeded products or prices",
+    "Gift threshold per child on discounted physical goods",
+    "Gift covers exactly one active bundle, not digital singles",
+    "Trusted staff entitlement; 50% only on flagged products",
+    "Integer RUB kopecks; final half price rounds upward",
+    "Group overrides inherit global conditions by default"
+  ],
+  "checks": {
+    "phpLint": {
+      "status": "passed",
+      "files": 458
+    },
+    "phpstan": {
+      "status": "passed",
+      "errors": 0
+    },
+    "phpunit": {
+      "status": "passed",
+      "tests": 365,
+      "assertions": 1133
+    },
+    "style": {
+      "status": "passed",
+      "changedPhpFiles": 43,
+      "fixableFilesAfterFix": 0
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "production build"
+      ],
+      "unitTests": 158
+    },
+    "browserE2E": {
+      "status": "passed",
+      "tests": 40,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "retries": 0,
+      "fixture": "rabit-e2e-8243a10a97b4",
+      "transport": "Chromium -> nginx -> native Bitrix FPM -> isolated MySQL",
+      "ownedFixtureCleaned": true
+    },
+    "visualDesktopMobile": {
+      "status": "passed",
+      "screenshotsReviewed": 3,
+      "report": "visual.json"
+    }
+  },
+  "runtime": {
+    "php": "8.4.25",
+    "mysql": "8.0",
+    "playwright": "1.52.0"
+  },
+  "publication": {
+    "status": "PR open",
+    "url": "https://github.com/rebit-pro/rabit-api/pull/20",
+    "merged": false,
+    "deployed": false,
+    "deploymentTarget": "app.morefoto.36.ru",
+    "deploymentPolicy": "aggregate later wave checkpoint"
+  },
+  "complete": true,
+  "completeMeaning": "Implementation and required local acceptance complete; PR review, merge and aggregate deployment are tracked separately."
+}
