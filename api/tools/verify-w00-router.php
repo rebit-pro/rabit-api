@@ -74,6 +74,10 @@ try {
             'Rebit\Notification\Presentation\Controller\LeadController',
             'submitAction',
         ],
+        '/api/v1/lead/mos-dizel' => [
+            'Rebit\Notification\Presentation\Controller\MosDizelLeadController',
+            'submitAction',
+        ],
     ];
 
     /** @var array<string, array{0: string, 1: string}> $actualRoutes */
@@ -125,6 +129,7 @@ try {
         'Version20260820120001.php',
         'Version20260911120001.php',
         'Version20260911130001.php',
+        'Version20260915110001.php',
     ];
     $migrationFiles = glob($publicRoot . $migrationConfig['migration_dir'] . '/*.php');
     $check(false !== $migrationFiles, 'Cannot enumerate foundation migrations.');

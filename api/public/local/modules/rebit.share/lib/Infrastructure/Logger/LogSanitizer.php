@@ -27,6 +27,7 @@ final readonly class LogSanitizer
         'AuditMessage получено',
         'Email-получатель внешних заявок не настроен: пустой REBIT_LEADHUNTER_FALLBACK_EMAIL',
         'Email-получатель заявок не настроен: пустой REBIT_NOTIFICATION_LEAD_FALLBACK_EMAIL',
+        'Email-получатель заявок не настроен',
         'Failed to resolve dependency for controller constructor',
         'GeeTest captcha credentials are not configured',
         'GeeTest captcha verification failed',
