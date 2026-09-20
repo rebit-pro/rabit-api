@@ -39,13 +39,22 @@ export function fixture() {
     originalGroupId: 'sun-stars',
     childCode: 'A001',
     sequence: n,
+    assignments: [{ childId: 'sun-stars:A001', childCode: 'A001', sequence: n, code: 'A001-0' + n }],
     filename: 'demo.webp',
     bytes: 0,
     fingerprint: 'r14-' + n,
     source: 'seed',
     revision: 1
   }));
-  photos.push({ ...photos[0]!, id: 'staff-photo', code: 'A099-01', groupId: 'sun-staff', childCode: 'A099' });
+  photos.push({
+    ...photos[0]!,
+    id: 'staff-photo',
+    code: 'A099-01',
+    groupId: 'sun-staff',
+    childCode: 'A099',
+    sequence: 1,
+    assignments: [{ childId: 'sun-staff:A099', childCode: 'A099', sequence: 1, code: 'A099-01' }]
+  });
   const requests = [
     {
       id: 'staff-list',

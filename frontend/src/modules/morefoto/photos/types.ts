@@ -1,10 +1,18 @@
 import type { GalleryChild, GalleryPhoto } from '../gallery/types.js';
+
+export interface PhotoAssignment {
+  childId: string;
+  childCode: string;
+  sequence: number;
+  code: string;
+}
 export interface ManagedPhoto extends GalleryPhoto {
   shootId: string;
   groupId: string;
   originalGroupId: string;
   childCode: string | null;
   sequence: number | null;
+  assignments: PhotoAssignment[];
   filename: string;
   bytes: number;
   fingerprint: string;

@@ -3,7 +3,7 @@
   "status": "ready-for-merge",
   "date": "2026-09-20",
   "branch": "codex/h1-reliable-email",
-  "base": "c32b98e7c7407592c54c9ee382e994d7fa611955",
+  "base": "31ebf8a1c1f6672ecd1da8011b8230413e416433",
   "dependencies": [
     "A2 merged",
     "A5 merged"
@@ -24,8 +24,8 @@
     },
     "phpunit": {
       "status": "passed",
-      "tests": 388,
-      "assertions": 1209
+      "tests": 392,
+      "assertions": 1222
     },
     "style": {
       "status": "passed",
@@ -59,7 +59,7 @@
       "status": "passed",
       "tests": 42,
       "failed": 0,
-      "fixture": "rabit-e2e-86c215fce395",
+      "fixture": "rabit-e2e-99f58da45a60",
       "transport": "Chromium -> nginx -> native Bitrix FPM -> isolated MySQL",
       "ownedFixtureCleaned": true
     },
@@ -79,6 +79,13 @@
       "blockers": 0,
       "nonBlockingFindings": 0,
       "issuesCreated": 0
+    },
+    "baseRefresh": {
+      "status": "passed",
+      "mainCommit": "31ebf8a1c1f6672ecd1da8011b8230413e416433",
+      "resolvedConflict": "api/tools/e2e/prepare.php keeps both D2 and H1 migrations",
+      "browserTests": 42,
+      "cleanupErrors": 0
     }
   },
   "runtime": {

@@ -9,6 +9,7 @@ const props = defineProps<{
   childCodes: string[];
   coverId?: string;
   disabled: boolean;
+  allowMove: boolean;
   busy: boolean;
   suggestedCode: string;
 }>();
@@ -35,6 +36,9 @@ const filters = computed(() => [
 function toggle(id: string) {
   emit('update:selected', props.selected.includes(id) ? props.selected.filter((value) => value !== id) : [...props.selected, id]);
 }
+function photoCodes(photo: ManagedPhoto): string {
+  return photo.assignments.map((assignment) => assignment.code).join(' · ') || 'Без ребёнка';
+}
 </script>
 <template>
   <section class="mf-panel" aria-labelledby="collection-heading">
@@ -52,7 +56,7 @@ function toggle(id: string) {
       />
       <div v-if="!['all', 'unassigned'].includes(filter)" class="mf-actions">
         <v-btn variant="outlined" @click="$emit('preview', filter)">Просмотреть набор</v-btn>
-        <v-btn v-if="!disabled" variant="outlined" :disabled="busy" @click="$emit('move', filter)">Перенести весь набор</v-btn>
+        <v-btn v-if="!disabled && allowMove" variant="outlined" :disabled="busy" @click="$emit('move', filter)">Перенести весь набор</v-btn>
       </div>
     </div>
     <div v-if="!disabled" class="collection-assignment mt-4">
@@ -77,7 +81,7 @@ function toggle(id: string) {
       <article v-for="photo in photos" :key="photo.id" class="photo-card" :data-photo-id="photo.id" data-testid="photo-card">
         <GalleryImage :src="photo.thumbSrc" :alt="'Кадр ' + (photo.code || photo.filename)" :width="photo.width" :height="photo.height" />
         <div class="photo-card-body">
-          <p class="photo-code">{{ photo.code || 'Без ребёнка' }} <span v-if="coverId === photo.id" class="photo-cover">Обложка</span></p>
+          <p class="photo-code">{{ photoCodes(photo) }} <span v-if="coverId === photo.id" class="photo-cover">Обложка</span></p>
           <p class="photo-filename">{{ photo.filename }}</p>
           <v-checkbox
             v-if="!disabled"
@@ -88,7 +92,7 @@ function toggle(id: string) {
             @update:model-value="toggle(photo.id)"
           />
           <v-btn
-            v-if="!disabled && photo.childCode"
+            v-if="!disabled && photo.assignments.length"
             variant="text"
             :disabled="busy || coverId === photo.id"
             @click="$emit('cover', photo.id)"

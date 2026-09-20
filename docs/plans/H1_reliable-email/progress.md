@@ -6,15 +6,15 @@
 
 - Ветка: `codex/h1-reliable-email`.
 - PR: [#22](https://github.com/rebit-pro/rabit-api/pull/22).
-- Base: `c32b98e7c7407592c54c9ee382e994d7fa611955`.
+- Актуальный base перед merge: `31ebf8a1c1f6672ecd1da8011b8230413e416433` (PR #17 и #21 уже слиты).
 - Head до исправлений: `c21632c82b3c2851d283f078e37d5da73114d2a7`.
 - Основной коммит правок второго круга: `368f7502708d97aab6d35701da63d66b37d52385`.
-- Завершено: исправления опубликованы, три inline-thread получили ответы; PR проверен как OPEN/CLEAN.
-- Текущий шаг: второй круг H1 закрыт.
-- Следующий шаг: отдельно согласовать merge PR #22; deployment оставить до агрегированного этапа.
+- Завершено: `origin/main` влит в H1, конфликт миграций E2E разрешён объединением D2/H1, повторный полный gate прошёл.
+- Текущий шаг: отправить merge-коммит и слить PR #22.
+- Следующий шаг: обновить основной checkout `/home/user/rabit-api` и начать F1 без отдельного worktree.
 - Блокеры: нет.
 - Открытое решение: по итогам review исправлять только блокирующие находки; неблокирующие оформлять отдельными Issues.
-- Состояние рабочего дерева перед финальным docs-коммитом: чистое; fixture `rabit-e2e-86c215fce395` очищен без ошибок.
+- Последний fixture: `rabit-e2e-99f58da45a60`, `stopped=true`, `cleanupErrors=[]`, Docker-ресурсы отсутствуют.
 - Команда продолжения: `gh pr view 22 --repo rebit-pro/rabit-api --json state,mergeStateStatus,headRefOid,url`.
 
 ## 2026-09-20 — второй круг review
@@ -37,6 +37,13 @@
 - Итог второго review: [issuecomment-5750363933](https://github.com/rebit-pro/rabit-api/pull/22#issuecomment-5750363933).
 - GitHub подтвердил PR #22 как `OPEN/CLEAN` на опубликованном head; merge и deployment не выполнялись.
 
+## 2026-09-20 — обновление base перед merge
+
+- После merge PR #17 и D2 PR #21 GitHub пометил H1 как конфликтующий только в `api/tools/e2e/prepare.php`.
+- В fixture сохранены обе миграции в порядке D2 `20260920100001` → H1 `20260920110001`; остальные изменения `main` слиты автоматически.
+- Полный прогон `rabit-e2e-99f58da45a60`: frontend check/158 unit/build — PASS; PHP lint/PHPStan — PASS; PHPUnit 392/1222 — PASS; Notification integration — PASS; Chromium 42/42 — PASS.
+- Cleanup подтверждён: `stopped=true`, `cleanupErrors=[]`; контейнеров и сетей fixture не осталось.
+
 ## Результаты проверок
 
 | ID | Статус | Факт |
@@ -46,7 +53,7 @@
 | H1-R03 | PASS | Local Compose с profile `notification` содержит service и `app:notification:consume` |
 | H1-R04 | PASS | Production Compose содержит consumer, replicas, backend config, encryption/SMTP/RabbitMQ secrets и bind mounts |
 | H1-R05 | PASS | Cron и Makefile dry-run подтвердили recovery/consumer/queue-команды |
-| H1-R06 | PASS | PHP lint/PHPStan/PHPUnit 388/1209 и PHP CS Fixer 0/4 прошли |
+| H1-R06 | PASS | После обновления base PHP lint/PHPStan/PHPUnit 392/1222 прошли; PHP CS Fixer H1 — 0/4 |
 | H1-R07 | PASS | `Notification H1 integration passed` на isolated MySQL 8 + реальном RabbitMQ |
-| H1-R08 | PASS | `rabit-e2e-86c215fce395`: Chromium 42/42, skipped/unexpected/flaky=0, cleanup без ошибок |
+| H1-R08 | PASS | `rabit-e2e-99f58da45a60`: Chromium 42/42, skipped/unexpected/flaky=0, cleanup без ошибок |
 | H1-R09 | PASS | Второй review: блокеров и неблокирующих замечаний нет; новые Issues не требуются |

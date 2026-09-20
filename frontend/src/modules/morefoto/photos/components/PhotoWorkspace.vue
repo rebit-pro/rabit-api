@@ -23,6 +23,7 @@ const {
   selectedGroupId,
   editable,
   assignmentsEnabled,
+  transferEnabled,
   groupPhotos,
   childCodes,
   visible,
@@ -45,7 +46,7 @@ const groupItems = computed(() =>
     value: item.id
   }))
 );
-const unassigned = computed(() => groupPhotos.value.filter((photo) => !photo.childCode).length);
+const unassigned = computed(() => groupPhotos.value.filter((photo) => photo.assignments.length === 0).length);
 const preview = shallowRef(false);
 const previewChild = shallowRef('');
 const move = shallowRef<{ child: string; ids: string[] } | null>(null);
@@ -58,7 +59,10 @@ function showPreview(code = '') {
 }
 function showMove(code: string) {
   error.value = '';
-  move.value = { child: code, ids: groupPhotos.value.filter((photo) => photo.childCode === code).map((photo) => photo.id) };
+  move.value = {
+    child: code,
+    ids: groupPhotos.value.filter((photo) => photo.assignments.some((assignment) => assignment.childCode === code)).map((photo) => photo.id)
+  };
 }
 async function confirmMove(toId: string, code: string) {
   if (move.value && (await transfer(move.value.child, toId, code, move.value.ids))) move.value = null;
@@ -93,9 +97,6 @@ async function confirmMove(toId: string, code: string) {
     </div>
     <p v-if="!group" class="mf-panel">В съёмке пока нет групп. Добавьте группу на странице съёмки.</p>
     <template v-else>
-      <v-alert v-if="!assignmentsEnabled" type="info" variant="tonal" class="mb-6" data-testid="d1-boundary">
-        Оригиналы сохраняются приватно, а защищённые превью готовятся на сервере. Разметка по детям и обложки появятся в D2.
-      </v-alert>
       <section class="mf-panel photo-readiness mb-6" aria-label="Состояние подборки">
         <div>
           <h2>{{ group.name }}</h2>
@@ -143,6 +144,7 @@ async function confirmMove(toId: string, code: string) {
         :child-codes="childCodes"
         :cover-id="cover?.id"
         :disabled="!editable || !assignmentsEnabled"
+        :allow-move="transferEnabled"
         :busy="busy || uploading"
         :suggested-code="suggestedCode"
         @assign="assign"

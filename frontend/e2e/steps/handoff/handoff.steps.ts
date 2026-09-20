@@ -335,7 +335,13 @@ Then('R10 проверяет {string}', async function (this: CustomWorld, name:
     await submit(p, base);
     await review(p);
     const state = await photos(p);
-    state.photos.push({ ...sourcePhotos[0]!, id: 'added-r10', code: 'A001-99', sequence: 99 });
+    state.photos.push({
+      ...sourcePhotos[0]!,
+      id: 'added-r10',
+      code: 'A001-99',
+      sequence: 99,
+      assignments: [{ childId: 'sun-stars:A001', childCode: 'A001', sequence: 99, code: 'A001-99' }]
+    });
     await p.evaluate((s) => {
       localStorage.setItem('morefoto:demo:photos:v1', JSON.stringify(s));
       window.dispatchEvent(new Event('morefoto:photos:changed'));

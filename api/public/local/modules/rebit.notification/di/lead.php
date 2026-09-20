@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 use Bitrix\Main\DI\ServiceLocator;
 use Rebit\Notification\Application\Lead\Port\LeadNotifierInterface;
+use Rebit\Notification\Application\Lead\Port\MosDizelLeadNotifierInterface;
+use Rebit\Notification\Application\Lead\UseCase\SubmitMosDizelLeadUseCase;
 use Rebit\Notification\Application\Lead\UseCase\SubmitLeadUseCase;
 use Rebit\Notification\Infrastructure\Lead\EmailLeadNotifier;
 use Rebit\Notification\Infrastructure\Lead\FallbackLeadNotifier;
+use Rebit\Notification\Infrastructure\Lead\MosDizelEmailLeadNotifier;
 use Rebit\Notification\Infrastructure\Lead\TelegramLeadNotifier;
 use Rebit\Notification\Infrastructure\Lead\UploadedFileValidator;
 use Rebit\Notification\Presentation\Controller\LeadController;
+use Rebit\Notification\Presentation\Controller\MosDizelLeadController;
 use Rebit\Share\Infrastructure\Telegram\TelegramBotApiClient;
 use Rebit\Share\Shared\Enum\LogChannelEnum;
 use Rebit\Share\Shared\Facade\Log;
@@ -19,10 +23,13 @@ $leadMaxFileMb = (int)(getenv('REBIT_NOTIFICATION_LEAD_MAX_FILE_MB') ?: 15);
 if ($leadMaxFileMb <= 0) {
     $leadMaxFileMb = 15;
 }
+$leadMailSiteId = (string)(getenv('REBIT_AUTH_MAIL_EVENT_SITE_ID') ?: 's1');
+$mosDizelLeadEmail = (string)(getenv('REBIT_NOTIFICATION_MOS_DIZEL_EMAIL') ?: '');
+$mosDizelLeadEventName = 'REBIT_NOTIFICATION_MOS_DIZEL_LEAD';
 
 return [
     LeadNotifierInterface::class => [
-        'constructor' => static function(): LeadNotifierInterface {
+        'constructor' => static function() use ($leadMailSiteId): LeadNotifierInterface {
             $telegram = new TelegramLeadNotifier(
                 Log::channel(LogChannelEnum::notification),
                 ServiceLocator::getInstance()->get(TelegramBotApiClient::class),
@@ -46,7 +53,7 @@ return [
                 new EmailLeadNotifier(
                     Log::channel(LogChannelEnum::notification),
                     $fallbackEmail,
-                    (string)(getenv('REBIT_AUTH_MAIL_EVENT_SITE_ID') ?: 's1'),
+                    $leadMailSiteId,
                 ),
             );
         },
@@ -65,10 +72,36 @@ return [
         ],
     ],
 
+    MosDizelLeadNotifierInterface::class => [
+        'constructor' => static function() use ($leadMailSiteId, $mosDizelLeadEmail, $mosDizelLeadEventName): MosDizelLeadNotifierInterface {
+            return new MosDizelEmailLeadNotifier(
+                Log::channel(LogChannelEnum::notification),
+                $mosDizelLeadEmail,
+                $leadMailSiteId,
+                $mosDizelLeadEventName,
+            );
+        },
+    ],
+
+    SubmitMosDizelLeadUseCase::class => [
+        'className' => SubmitMosDizelLeadUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(MosDizelLeadNotifierInterface::class),
+        ],
+    ],
+
     LeadController::class => [
         'className' => LeadController::class,
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(SubmitLeadUseCase::class),
+            ServiceLocator::getInstance()->get(UploadedFileValidator::class),
+        ],
+    ],
+
+    MosDizelLeadController::class => [
+        'className' => MosDizelLeadController::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(SubmitMosDizelLeadUseCase::class),
             ServiceLocator::getInstance()->get(UploadedFileValidator::class),
         ],
     ],

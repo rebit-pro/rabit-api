@@ -20,6 +20,7 @@ function initialState(): PhotoState {
           originalGroupId: groupId,
           childCode: child.code,
           sequence: index + 1,
+          assignments: [{ childId: groupId + ':' + child.code, childCode: child.code, sequence: index + 1, code: photo.code }],
           filename: photo.code + '.webp',
           bytes: 0,
           fingerprint: 'seed:' + photo.previewSrc,
@@ -31,19 +32,36 @@ function initialState(): PhotoState {
   return { photos, covers: {} };
 }
 export function readPhotos(): PhotoState {
-  return readDemo(photoStateKey, initialState());
+  const state = readDemo(photoStateKey, initialState());
+  state.photos.forEach((photo) => {
+    photo.assignments ??= photo.childCode
+      ? [{ childId: photo.groupId + ':' + photo.childCode, childCode: photo.childCode, sequence: photo.sequence ?? 1, code: photo.code }]
+      : [];
+  });
+  return state;
 }
 export function writePhotos(state: PhotoState): void {
   writeDemo(photoStateKey, state);
   window.dispatchEvent(new Event(photosChangedEvent));
 }
 export function groupChildren(groupId: string): GalleryChild[] {
-  const photos = readPhotos().photos.filter((item) => item.groupId === groupId && item.childCode);
-  return [...new Set(photos.map((item) => item.childCode!))].sort().map((code) => ({
+  const photos = readPhotos().photos.filter((item) => item.groupId === groupId);
+  const codes = [...new Set(photos.flatMap((item) => item.assignments.map((assignment) => assignment.childCode)))].sort();
+  return codes.map((code) => ({
     code,
     photos: photos
-      .filter((item) => item.childCode === code)
-      .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
-      .map(({ id, code: photoCode, thumbSrc, previewSrc, width, height }) => ({ id, code: photoCode, thumbSrc, previewSrc, width, height }))
+      .flatMap((photo) => {
+        const assignment = photo.assignments.find((item) => item.childCode === code);
+        return assignment ? [{ photo, assignment }] : [];
+      })
+      .sort((a, b) => a.assignment.sequence - b.assignment.sequence)
+      .map(({ photo, assignment }) => ({
+        id: photo.id,
+        code: assignment.code,
+        thumbSrc: photo.thumbSrc,
+        previewSrc: photo.previewSrc,
+        width: photo.width,
+        height: photo.height
+      }))
   }));
 }
