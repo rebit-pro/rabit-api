@@ -10,6 +10,7 @@ final readonly class ListPhotosInputDto
         public ?string $groupId,
         public int $page,
         public int $pageSize,
-        public bool $noMatch,
+        public ?string $childCode,
+        public ?bool $assigned,
     ) {}
 }

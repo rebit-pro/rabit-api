@@ -20,8 +20,18 @@ export function childCodeAt(index: number): string {
   }
   return result;
 }
+function assignments(photo: ManagedPhoto) {
+  return (
+    photo.assignments ??
+    (photo.childCode
+      ? [{ childId: photo.groupId + ':' + photo.childCode, childCode: photo.childCode, sequence: photo.sequence ?? 1, code: photo.code }]
+      : [])
+  );
+}
 export function nextChildCode(photos: ManagedPhoto[], groupId: string): string {
-  const codes = new Set(photos.filter((item) => item.groupId === groupId).map((item) => item.childCode));
+  const codes = new Set(
+    photos.filter((item) => item.groupId === groupId).flatMap((item) => assignments(item).map((assignment) => assignment.childCode))
+  );
   for (let i = 0; i < 18278; i++) {
     const code = childCodeAt(i);
     if (!codes.has(code)) return code;
@@ -33,7 +43,14 @@ export function photoCode(child: string, sequence: number): string {
 }
 export function nextSequence(photos: ManagedPhoto[], groupId: string, child: string): number {
   return (
-    Math.max(0, ...photos.filter((item) => item.groupId === groupId && item.childCode === child).map((item) => item.sequence ?? 0)) + 1
+    Math.max(
+      0,
+      ...photos
+        .filter((item) => item.groupId === groupId)
+        .flatMap(assignments)
+        .filter((assignment) => assignment.childCode === child)
+        .map((assignment) => assignment.sequence)
+    ) + 1
   );
 }
 export function duplicatePhoto(photos: ManagedPhoto[], shootId: string, fingerprint: string) {
@@ -42,10 +59,14 @@ export function duplicatePhoto(photos: ManagedPhoto[], shootId: string, fingerpr
 export function completeChildSelection(photos: ManagedPhoto[], ids: string[]): boolean {
   const chosen = photos.filter((item) => ids.includes(item.id));
   const first = chosen[0];
+  const child = first ? assignments(first)[0]?.childCode : undefined;
+  if (!first || !child) return false;
+
   return (
-    !!first?.childCode &&
     chosen.length === new Set(ids).size &&
-    chosen.every((item) => item.groupId === first.groupId && item.childCode === first.childCode) &&
-    photos.filter((item) => item.groupId === first.groupId && item.childCode === first.childCode).every((item) => ids.includes(item.id))
+    chosen.every((item) => item.groupId === first.groupId && assignments(item).some((assignment) => assignment.childCode === child)) &&
+    photos
+      .filter((item) => item.groupId === first.groupId && assignments(item).some((assignment) => assignment.childCode === child))
+      .every((item) => ids.includes(item.id))
   );
 }

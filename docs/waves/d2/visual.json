@@ -1,0 +1,29 @@
+{
+  "wave": "D2",
+  "status": "passed",
+  "fixture": "rabit-e2e-adc3ba213515",
+  "screenshotsCaptured": 2,
+  "localDirectory": "frontend/reports/e2e-live/artifacts/zz-media-D1-D2-приватное-ф-0e0f7-ожку-без-потери-атомарности-chromium",
+  "screenshots": [
+    {
+      "name": "d2-desktop-assignments.png",
+      "sha256": "ca80061841cf01c4babfd3c93052136de36c62260730e84cda957c1759323336",
+      "width": 1440,
+      "height": 1866
+    },
+    {
+      "name": "d2-mobile-assignments.png",
+      "sha256": "39d99efba680a96a2ec21ee04e31516b6d076d68848d34e546a19f6cb6bca6f0",
+      "width": 390,
+      "height": 2910
+    }
+  ],
+  "method": "Screenshots from the final real Chromium run; explicit mobile assertion verifies document width does not exceed viewport.",
+  "assertions": [
+    "Reloading the deep-link keeps the requested group selected",
+    "The photo card contains both A001 and B001",
+    "The selected cover remains visible",
+    "The 390px layout has no horizontal overflow"
+  ],
+  "limitations": "Screenshot evidence is retained in ignored local E2E artifacts; this report records hashes and automated layout assertions rather than pixel-diff coverage."
+}

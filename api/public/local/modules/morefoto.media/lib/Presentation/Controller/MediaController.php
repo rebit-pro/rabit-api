@@ -6,8 +6,10 @@ namespace Morefoto\Media\Presentation\Controller;
 
 use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Response;
+use Morefoto\Media\Application\Photo\UseCase\AssignPhotosUseCase;
 use Morefoto\Media\Application\Photo\UseCase\GetPhotoUseCase;
 use Morefoto\Media\Application\Photo\UseCase\ListPhotosUseCase;
+use Morefoto\Media\Application\Photo\UseCase\SetGroupCoverUseCase;
 use Morefoto\Media\Application\Photo\UseCase\UploadPhotoUseCase;
 use Morefoto\Media\Presentation\Request\MediaRequestFactory;
 use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
@@ -29,6 +31,8 @@ final class MediaController extends BaseJsonController implements AuthenticatedC
         private readonly ListPhotosUseCase $list,
         private readonly UploadPhotoUseCase $upload,
         private readonly GetPhotoUseCase $detail,
+        private readonly AssignPhotosUseCase $assignments,
+        private readonly SetGroupCoverUseCase $covers,
         private readonly MediaRequestFactory $requests,
         private readonly TokenResolverInterface $tokens,
     ) {
@@ -64,11 +68,41 @@ final class MediaController extends BaseJsonController implements AuthenticatedC
         return $this->json($this->detail->execute($this->getAuthUserId(), $this->requests->routeId('photo_id')));
     }
 
+    public function assignmentAction(): ControllerJson
+    {
+        $request = $this->requests->assignment($this->getRequest());
+
+        return $this->json($this->assignments->execute(
+            $this->getAuthUserId(),
+            $this->requests->routeId('group_id'),
+            $request['key'],
+            $request['input'],
+        ));
+    }
+
+    public function coverAction(): ControllerJson
+    {
+        $request = $this->requests->cover($this->getRequest());
+
+        return $this->json($this->covers->execute(
+            $this->getAuthUserId(),
+            $this->requests->routeId('group_id'),
+            $request['key'],
+            $request['input'],
+        ));
+    }
+
     public function configureActions(): array
     {
         $filters = ['prefilters' => [new BearerTokenFilter($this->tokens), new LoggerFilter()]];
 
-        return ['list' => $filters, 'upload' => $filters, 'detail' => $filters];
+        return [
+            'list' => $filters,
+            'upload' => $filters,
+            'detail' => $filters,
+            'assignment' => $filters,
+            'cover' => $filters,
+        ];
     }
 
     protected function getExceptionResponse(): ControllerJson

@@ -24,6 +24,7 @@ export function usePhotoWorkspace() {
   const contextLoading = shallowRef(false);
   const contextError = shallowRef('');
   const photos = shallowRef<PhotoState>(isMockApiEnabled ? readPhotos() : { photos: [], covers: {} });
+  const mediaRevision = shallowRef(1);
   const mediaLoading = shallowRef(false);
   let mediaRequest = 0;
   const selectedGroupId = shallowRef(typeof route.query.group === 'string' ? route.query.group : '');
@@ -74,10 +75,16 @@ export function usePhotoWorkspace() {
       const serverPhotos: ServerPhoto[] = [];
       let page = 1;
       let total = 0;
+      let covers: Record<string, string> = {};
+      let revision = 1;
       do {
         const result = await photosApi.list(routeShootId, page);
         serverPhotos.push(...result.items);
         total = result.meta.total;
+        if (page === 1) {
+          covers = result.covers;
+          revision = result.revision;
+        }
         page++;
       } while (serverPhotos.length < total && page <= 1000);
       if (!alive || ticket !== mediaRequest) return;
@@ -85,8 +92,9 @@ export function usePhotoWorkspace() {
         (item): item is ServerPhoto & { thumbSrc: string; previewSrc: string } =>
           item.status === 'ready' && !!item.thumbSrc && !!item.previewSrc
       );
+      mediaRevision.value = revision;
       photos.value = {
-        covers: {},
+        covers,
         photos: ready.map<ManagedPhoto>((item) => ({
           id: item.id,
           code: item.code ?? item.filename,
@@ -98,7 +106,8 @@ export function usePhotoWorkspace() {
           groupId: item.groupId,
           originalGroupId: item.originalGroupId,
           childCode: item.childCode,
-          sequence: null,
+          sequence: item.sequence,
+          assignments: item.assignments,
           filename: item.filename,
           bytes: item.bytes,
           fingerprint: item.fingerprint,
@@ -158,19 +167,25 @@ export function usePhotoWorkspace() {
   const editable = computed(() => group.value?.state === 'preparing');
   const groupPhotos = computed(() => photos.value.photos.filter((item) => item.groupId === group.value?.id));
   const childCodes = computed(() =>
-    [...new Set(groupPhotos.value.map((item) => item.childCode).filter((code): code is string => !!code))].sort()
+    [...new Set(groupPhotos.value.flatMap((item) => item.assignments.map((assignment) => assignment.childCode)))].sort()
   );
   const visible = computed(() =>
     groupPhotos.value.filter(
-      (item) => filter.value === 'all' || (filter.value === 'unassigned' ? !item.childCode : item.childCode === filter.value)
+      (item) =>
+        filter.value === 'all' ||
+        (filter.value === 'unassigned'
+          ? item.assignments.length === 0
+          : item.assignments.some((assignment) => assignment.childCode === filter.value))
     )
   );
   const suggestedCode = computed(() => (group.value ? nextChildCode(photos.value.photos, group.value.id) : 'A'));
   const cover = computed(() => groupPhotos.value.find((item) => item.id === photos.value.covers[group.value?.id ?? '']));
-  const assignmentsEnabled = isMockApiEnabled;
+  const assignmentsEnabled = true;
+  const transferEnabled = isMockApiEnabled;
   watch(
     groups,
     (value) => {
+      if (!value.length) return;
       if (!value.some((item) => item.id === selectedGroupId.value))
         selectedGroupId.value = (value.find((item) => item.state === 'preparing') ?? value[0])?.id ?? '';
     },
@@ -196,10 +211,6 @@ export function usePhotoWorkspace() {
     window.removeEventListener('storage', storage);
   });
   async function act(operation: (token: string) => Promise<void>, message: string): Promise<boolean> {
-    if (!assignmentsEnabled) {
-      error.value = 'Разметка детей и обложки подключается в волне D2.';
-      return false;
-    }
     if (busy.value) return false;
     busy.value = true;
     error.value = '';
@@ -213,27 +224,43 @@ export function usePhotoWorkspace() {
       }
       return true;
     } catch (cause) {
-      if (alive) error.value = cause instanceof Error ? cause.message : 'Не удалось сохранить изменения.';
+      if (alive) error.value = isMockApiEnabled && cause instanceof Error ? cause.message : photoApiError(cause);
       return false;
     } finally {
       if (alive) busy.value = false;
     }
   }
-  function assign(code: string) {
+  function assign(value: string) {
     const ids = [...selected.value];
     const groupId = group.value?.id ?? '';
-    return act((token) => assignPhotos(token, String(route.params.shootId), groupId, ids, code), 'Кадры назначены ребёнку.');
+    const code = value.trim().toUpperCase();
+    return act(async (token) => {
+      if (isMockApiEnabled) {
+        await assignPhotos(token, routeShootId, groupId, ids, code);
+      } else {
+        const result = await photosApi.assign(groupId, routeShootId, mediaRevision.value, ids, code);
+        mediaRevision.value = result.revision;
+      }
+    }, 'Кадры назначены ребёнку.');
   }
   function setCover(id: string) {
     const groupId = group.value?.id ?? '';
-    return act((token) => chooseCover(token, String(route.params.shootId), groupId, id), 'Обложка группы сохранена.');
+    return act(async (token) => {
+      if (isMockApiEnabled) {
+        await chooseCover(token, routeShootId, groupId, id);
+      } else {
+        const result = await photosApi.cover(groupId, mediaRevision.value, id);
+        mediaRevision.value = result.revision;
+      }
+    }, 'Обложка группы сохранена.');
   }
   function transfer(child: string, toId: string, code: string, ids: string[]) {
+    if (!transferEnabled) {
+      error.value = 'Перенос полного набора будет подключён в волне D3.';
+      return Promise.resolve(false);
+    }
     const groupId = group.value?.id ?? '';
-    return act(
-      (token) => moveChild(token, String(route.params.shootId), groupId, child, toId, code, ids),
-      'Полный набор ребёнка перенесён.'
-    );
+    return act((token) => moveChild(token, routeShootId, groupId, child, toId, code, ids), 'Полный набор ребёнка перенесён.');
   }
   return {
     data,
@@ -248,6 +275,7 @@ export function usePhotoWorkspace() {
     editable,
     groupPhotos,
     assignmentsEnabled,
+    transferEnabled,
     childCodes,
     visible,
     cover,

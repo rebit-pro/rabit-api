@@ -8,6 +8,7 @@ use Rebit\Share\Shared\Interface\ResponseDtoInterface;
 
 final readonly class PhotoOutputDto implements ResponseDtoInterface
 {
+    /** @param list<PhotoAssignmentOutputDto> $assignments */
     public function __construct(
         public string $id,
         public string $status,
@@ -16,6 +17,8 @@ final readonly class PhotoOutputDto implements ResponseDtoInterface
         public string $originalGroupId,
         public ?string $childCode,
         public ?string $code,
+        public ?int $sequence,
+        public array $assignments,
         public string $filename,
         public int $bytes,
         public int $width,

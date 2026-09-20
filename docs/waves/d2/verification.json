@@ -1,0 +1,70 @@
+{
+  "wave": "D2",
+  "status": "ready-for-review",
+  "date": "2026-09-20",
+  "branch": "codex/d2-photo-labeling",
+  "base": "c32b98e7c7407592c54c9ee382e994d7fa611955",
+  "dependencies": [
+    "D1 merged"
+  ],
+  "checks": {
+    "backend": {
+      "status": "passed",
+      "checks": [
+        "PHP lint",
+        "PHPStan",
+        "PHPUnit",
+        "migrations on disposable MySQL",
+        "Bitrix fixture"
+      ]
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "production build"
+      ],
+      "unitTests": 158
+    },
+    "targetedBrowserE2E": {
+      "status": "passed",
+      "tests": 1,
+      "scenario": "D1/D2: private photo, M:N assignments and cover without lost atomicity"
+    },
+    "browserE2E": {
+      "status": "passed",
+      "tests": 41,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "retries": 0,
+      "fixture": "rabit-e2e-adc3ba213515",
+      "transport": "Chromium -> nginx -> native Bitrix FPM -> isolated MySQL",
+      "ownedFixtureCleaned": true
+    },
+    "visualDesktopMobile": {
+      "status": "passed",
+      "screenshotsCaptured": 2,
+      "mobileOverflowAssertion": true,
+      "report": "visual.json"
+    },
+    "diffCheck": {
+      "status": "passed"
+    }
+  },
+  "runtime": {
+    "mysql": "8.0",
+    "playwright": "1.52.0"
+  },
+  "publication": {
+    "status": "PR pending",
+    "merged": false,
+    "deployed": false,
+    "deploymentTarget": "app.morefoto.36.ru",
+    "deploymentPolicy": "aggregate later wave checkpoint"
+  },
+  "complete": true,
+  "completeMeaning": "Implementation and required local acceptance complete; PR review, merge and aggregate deployment are tracked separately."
+}
