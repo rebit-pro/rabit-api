@@ -108,11 +108,16 @@ export const photosApi = {
   }
 };
 
+export function photoApiErrorCode(cause: unknown): string | undefined {
+  if (!isAxiosError(cause)) return undefined;
+  return (cause.response?.data as { error?: { code?: string } } | undefined)?.error?.code;
+}
+
 export function photoApiError(cause: unknown): string {
   if (!isAxiosError(cause)) return cause instanceof Error ? cause.message : 'Не удалось обработать фотографию.';
-  const code = (cause.response?.data as { error?: { code?: string } } | undefined)?.error?.code;
+  const code = photoApiErrorCode(cause);
   if (code === 'FINGERPRINT_MISMATCH') return 'Контрольная сумма файла не совпала. Выберите исходник заново.';
-  if (code === 'REVISION_CONFLICT') return 'Разметка уже изменилась. Список обновлён — повторите действие.';
+  if (code === 'REVISION_CONFLICT') return 'Разметка уже изменилась. Обновите список и повторите действие.';
   if (code === 'PHOTO_NOT_ASSIGNABLE') return 'Один из кадров ещё не готов или уже относится к другой группе.';
   if (code === 'PHOTO_NOT_COVER_ELIGIBLE') return 'Сначала назначьте кадр ребёнку в этой группе.';
   if (code === 'GROUP_LOCKED') return 'Подборка уже опубликована и недоступна для изменений.';

@@ -7,7 +7,7 @@ import { structureApi, structureError } from '../../structure/api';
 import { photosChangedEvent, photoStateKey, readPhotos } from '../repository';
 import { assignPhotos, chooseCover, moveChild } from '../service';
 import { nextChildCode } from '../rules';
-import { photoApiError, photosApi, type ServerPhoto } from '../api';
+import { photoApiError, photoApiErrorCode, photosApi, type ServerPhoto } from '../api';
 import type { ManagedGroup, ManagedInstitution, OrganizationSnapshot, PhotoShoot } from '../../organization/types';
 import type { Group } from '../../structure/model';
 import type { ManagedPhoto, PhotoState } from '../types';
@@ -62,11 +62,11 @@ export function usePhotoWorkspace() {
   });
   const loading = computed(() => (isMockApiEnabled ? organization!.loading.value : contextLoading.value) || mediaLoading.value);
   const loadError = computed(() => (isMockApiEnabled ? organization!.error.value : contextError.value));
-  async function refreshPhotos() {
+  async function refreshPhotos(): Promise<boolean> {
     if (isMockApiEnabled) {
       photos.value = readPhotos();
       selected.value = selected.value.filter((id) => photos.value.photos.some((item) => item.id === id));
-      return;
+      return true;
     }
     const ticket = ++mediaRequest;
     mediaLoading.value = true;
@@ -87,7 +87,7 @@ export function usePhotoWorkspace() {
         }
         page++;
       } while (serverPhotos.length < total && page <= 1000);
-      if (!alive || ticket !== mediaRequest) return;
+      if (!alive || ticket !== mediaRequest) return false;
       const ready = serverPhotos.filter(
         (item): item is ServerPhoto & { thumbSrc: string; previewSrc: string } =>
           item.status === 'ready' && !!item.thumbSrc && !!item.previewSrc
@@ -116,8 +116,10 @@ export function usePhotoWorkspace() {
         }))
       };
       selected.value = selected.value.filter((id) => photos.value.photos.some((item) => item.id === id));
+      return true;
     } catch (cause) {
       if (alive && ticket === mediaRequest) error.value = photoApiError(cause);
+      return false;
     } finally {
       if (alive && ticket === mediaRequest) mediaLoading.value = false;
     }
@@ -224,7 +226,14 @@ export function usePhotoWorkspace() {
       }
       return true;
     } catch (cause) {
-      if (alive) error.value = isMockApiEnabled && cause instanceof Error ? cause.message : photoApiError(cause);
+      if (alive) {
+        if (!isMockApiEnabled && photoApiErrorCode(cause) === 'REVISION_CONFLICT') {
+          const refreshed = await refreshPhotos();
+          if (alive && refreshed) error.value = 'Разметка уже изменилась. Список обновлён — повторите действие.';
+        } else {
+          error.value = isMockApiEnabled && cause instanceof Error ? cause.message : photoApiError(cause);
+        }
+      }
       return false;
     } finally {
       if (alive) busy.value = false;

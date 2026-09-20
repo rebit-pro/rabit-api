@@ -199,7 +199,9 @@ test('D1/D2: приватное фото получает M:N-разметку �
   expect(unassigned.data.items).toHaveLength(0);
   expect(assignedToB.data.items[0].assignments.map((item: { childCode: string }) => item.childCode)).toEqual(['A', 'B']);
 
-  await page.reload();
+  await expect(page.getByTestId('photo-card')).toContainText('A001');
+  await page.getByRole('button', { name: 'Сделать обложкой', exact: true }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'Список обновлён — повторите действие.' })).toBeVisible();
   await expect(page.getByTestId('photo-card')).toContainText('A001 · B001');
   await page.getByRole('button', { name: 'Сделать обложкой', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Обложка группы сохранена.' })).toBeVisible();

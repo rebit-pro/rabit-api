@@ -167,7 +167,7 @@ final readonly class PhotoRepository
     {
         return 'SELECT p.ID,p.UF_PUBLIC_ID,p.UF_FILENAME,p.UF_MIME_TYPE,p.UF_BYTES,p.UF_WIDTH,p.UF_HEIGHT,p.UF_FINGERPRINT,p.UF_STATUS,p.UF_ORIGINAL_PATH,p.UF_THUMB_SRC,p.UF_PREVIEW_SRC,p.UF_ERROR_CODE,p.UF_REVISION,'
             . 's.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID,g.UF_PUBLIC_ID AS GROUP_PUBLIC_ID,og.UF_PUBLIC_ID AS ORIGINAL_GROUP_PUBLIC_ID,existing.UF_PUBLIC_ID AS EXISTING_PUBLIC_ID,'
-            . "(SELECT GROUP_CONCAT(CONCAT(child.PUBLIC_ID,':',child.CODE,':',assignment.SEQUENCE_NO) ORDER BY assignment.SEQUENCE_NO,child.ID SEPARATOR ',') "
+            . "(SELECT JSON_ARRAYAGG(JSON_OBJECT('childId',child.PUBLIC_ID,'childCode',child.CODE,'sequence',assignment.SEQUENCE_NO,'sortId',child.ID)) "
             . 'FROM mf_photo_assignment assignment INNER JOIN mf_media_child child ON child.ID=assignment.CHILD_ID '
             . 'WHERE assignment.PHOTO_ID=p.ID AND child.GROUP_ID=p.UF_GROUP_ID) AS ASSIGNMENTS '
             . 'FROM b_hlbd_mf_photo p INNER JOIN b_hlbd_mf_shoot s ON s.ID=p.UF_SHOOT_ID '

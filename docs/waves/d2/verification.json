@@ -1,6 +1,6 @@
 {
   "wave": "D2",
-  "status": "ready-for-review",
+  "status": "ready-for-push",
   "date": "2026-09-20",
   "branch": "codex/d2-photo-labeling",
   "base": "c32b98e7c7407592c54c9ee382e994d7fa611955",
@@ -16,7 +16,11 @@
         "PHPUnit",
         "migrations on disposable MySQL",
         "Bitrix fixture"
-      ]
+      ],
+      "phpunit": {
+        "tests": 375,
+        "assertions": 1179
+      }
     },
     "frontend": {
       "status": "passed",
@@ -31,7 +35,7 @@
     "targetedBrowserE2E": {
       "status": "passed",
       "tests": 1,
-      "scenario": "D1/D2: private photo, M:N assignments and cover without lost atomicity"
+      "scenario": "D1/D2: revision conflict refresh, M:N assignments and cover retry without reload"
     },
     "browserE2E": {
       "status": "passed",
@@ -40,7 +44,7 @@
       "skipped": 0,
       "flaky": 0,
       "retries": 0,
-      "fixture": "rabit-e2e-adc3ba213515",
+      "fixture": "rabit-e2e-3130842ab860",
       "transport": "Chromium -> nginx -> native Bitrix FPM -> isolated MySQL",
       "ownedFixtureCleaned": true
     },
@@ -52,6 +56,17 @@
     },
     "diffCheck": {
       "status": "passed"
+    },
+    "style": {
+      "status": "passed",
+      "changedPhpFiles": 3,
+      "fixableFilesAfterFix": 0
+    },
+    "secondRoundReview": {
+      "status": "passed",
+      "blockers": 0,
+      "nonBlockingFindings": 0,
+      "issuesCreated": 0
     }
   },
   "runtime": {
@@ -67,5 +82,5 @@
     "deploymentPolicy": "aggregate later wave checkpoint"
   },
   "complete": true,
-  "completeMeaning": "Implementation and required local acceptance complete; PR review, merge and aggregate deployment are tracked separately."
+  "completeMeaning": "Implementation, second-round fixes and required local acceptance complete; publication, merge and aggregate deployment are tracked separately."
 }

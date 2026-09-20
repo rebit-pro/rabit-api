@@ -1,6 +1,6 @@
 # D2 — прогресс правок по code review
 
-Текущее состояние: готово к повторному review.
+Текущее состояние: второй review завершён без замечаний; ветка готова к commit/push.
 
 ## Точка продолжения
 
@@ -8,13 +8,15 @@
 - PR: [#21](https://github.com/rebit-pro/rabit-api/pull/21).
 - Связанная задача техдолга: [#23](https://github.com/rebit-pro/rabit-api/issues/23).
 - Base: `c32b98e7c7407592c54c9ee382e994d7fa611955`.
-- Основной review-коммит: `590ec83`; актуальный head при продолжении проверить командой `git rev-parse HEAD`.
-- Завершено: замечания реализованы и опубликованы, проверки прошли, на оба комментария PR даны ответы.
-- Текущий шаг: ожидание повторного review пользователя.
-- Следующий шаг: обработать новые замечания либо отдельно согласовать merge; автоматически не сливать и не деплоить.
+- Head до правок второго круга: `1e7616714261c2f93ac30a9db476de1bb0222df2`.
+- Завершено: исправления конфликта и агрегации реализованы; повторный полный disposable-run прошёл 41/41 и очистил ресурсы без ошибок.
+- Текущий шаг: commit/push проверенной реализации и журналов.
+- Следующий шаг: ответить в двух inline-thread PR #21 и проверить OPEN/CLEAN на опубликованном head.
 - Блокеры: нет.
-- Ожидаемое состояние рабочего дерева после публикации этого журнала: clean.
-- Команда продолжения: `git status --short && git rev-parse HEAD && gh pr view 21`.
+- Открытое решение: по итогам review исправлять только блокирующие находки; неблокирующие оформлять отдельными Issues.
+- Состояние рабочего дерева: изменены API/composable/repository/mapper, unit/live E2E и task docs; первый fixture `rabit-e2e-583a411e3515` очищен без ошибок.
+- Команда продолжения: `git status --short && git diff -- docs/plans/D2_photo-labeling`.
+- Запланированная полная проверка: `python3 tools/run-browser-e2e.py run --php-cli rabit-api-php-cli:d1-local --php-fpm rabit-api-php-fpm:d1-local`.
 
 ## 2026-09-20 — разбор замечаний
 
@@ -43,6 +45,17 @@
   общий ответ: [issuecomment-5749629904](https://github.com/rebit-pro/rabit-api/pull/21#issuecomment-5749629904).
 - PR #21 открыт и имеет `mergeStateStatus=CLEAN`; issue #23 открыта. Merge и deployment не выполнялись.
 
+## 2026-09-20 — второй круг review
+
+- Inline `discussion_r4056918716`: после `REVISION_CONFLICT` UI оставляет старую `mediaRevision`, поэтому повтор зацикливается до ручного reload.
+- Inline `discussion_r4056917362`: `GROUP_CONCAT` может молча усечь назначения при стандартном `group_concat_max_len`.
+- Решение до кода: конфликт запускает защищённый `refreshPhotos`; SQL возвращает JSON, mapper декодирует и стабильно сортирует назначения.
+- Реализация завершена: JSON содержит внутренний `sortId`, поэтому primary-порядок совместим с прежним `ORDER BY sequence, child.ID`.
+- Первый полный прогон `rabit-e2e-583a411e3515`: frontend check, 158 unit и build — PASS; PHPStan — PASS; PHPUnit 375/1179 — PASS; Chromium 40/41 — FAIL только из-за strict locator `getByRole('alert')`; cleanup — PASS.
+- После сужения locator повторный полный прогон `rabit-e2e-3130842ab860` прошёл: Chromium 41/41, skipped/unexpected/flaky = 0; `stopped=true`, `cleanupErrors=[]`.
+- Отдельный PHP CS Fixer dry-run нашёл одну форматную строку в `PhotoRowMapper`; runtime не затронут, применена предложенная проектным конфигом форма.
+- Повторный fixer: 0/3; второй review полного delta завершён, блокирующих и неблокирующих находок нет, поэтому новые Issues не создавались.
+
 ## Результаты проверок
 
 | ID | Статус | Факт |
@@ -56,3 +69,8 @@
 | D2-R07 | PASS | PHPStan без ошибок; PHPUnit 6/6, 34 assertions |
 | D2-R08 | PASS | Создана issue #23 |
 | D2-R09 | PASS | `git diff --check` прошёл; PR #21 открыт и CLEAN, merge/deploy не выполнялись |
+| D2-R10 | PASS | Live UI получил 409, автоматически обновил список до `A001 · B001`, показал подсказку и успешно повторил cover без reload |
+| D2-R11 | PASS | PHPUnit mapper test вернул 30/30 назначений и сохранил primary-порядок; общий итог 375/1179 |
+| D2-R12 | PASS | Frontend check/158 unit/build, PHP lint, PHPStan, PHPUnit и повторный PHP CS Fixer 0/3 прошли |
+| D2-R13 | PASS | Повторный полный прогон `rabit-e2e-3130842ab860`: Chromium 41/41, cleanup без ошибок |
+| D2-R14 | PASS | Второй review: блокеров и неблокирующих замечаний нет; новые Issues не требуются |

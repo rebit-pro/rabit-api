@@ -6,7 +6,9 @@ namespace Morefoto\Media\Tests\Unit;
 
 use Morefoto\Media\Application\Photo\Contract\MediaPublisherInterface;
 use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
+use Morefoto\Media\Application\Photo\Dto\PhotoAssignmentOutputDto;
 use Morefoto\Media\Application\Photo\Message\ProcessPhotoMessage;
+use Morefoto\Media\Application\Photo\Service\PhotoRowMapper;
 use Morefoto\Media\Application\Photo\UseCase\UploadPhotoUseCase;
 use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
@@ -29,6 +31,45 @@ final class PhotoWorkflowTest extends TestCase
         self::assertSame('media:12345678-abcd-4abc-8abc-123456789abc:1', $first->getDeduplicationKey());
         self::assertSame('media:12345678-abcd-4abc-8abc-123456789abc:6', $reopened->getDeduplicationKey());
         self::assertNotSame($first->getDeduplicationKey(), $reopened->getDeduplicationKey());
+    }
+
+    public function testMapperKeepsAllJsonAssignmentsAndPreservesPrimaryOrder(): void
+    {
+        $encoded = [];
+        for ($sortId = 30; 1 <= $sortId; --$sortId) {
+            $encoded[] = [
+                'childId' => sprintf('child-%02d', $sortId),
+                'childCode' => sprintf('C%02d', $sortId),
+                'sequence' => 1,
+                'sortId' => $sortId,
+            ];
+        }
+
+        $photo = (new PhotoRowMapper())->map([
+            'UF_PUBLIC_ID' => '12345678-abcd-4abc-8abc-123456789abc',
+            'UF_STATUS' => 'ready',
+            'SHOOT_PUBLIC_ID' => '22345678-abcd-4abc-8abc-123456789abc',
+            'GROUP_PUBLIC_ID' => '32345678-abcd-4abc-8abc-123456789abc',
+            'ORIGINAL_GROUP_PUBLIC_ID' => '32345678-abcd-4abc-8abc-123456789abc',
+            'UF_FILENAME' => 'photo.jpg',
+            'UF_BYTES' => 100,
+            'UF_WIDTH' => 10,
+            'UF_HEIGHT' => 10,
+            'UF_FINGERPRINT' => str_repeat('a', 64),
+            'UF_REVISION' => 3,
+            'ASSIGNMENTS' => json_encode($encoded, JSON_THROW_ON_ERROR),
+        ]);
+
+        self::assertCount(30, $photo->assignments);
+        self::assertSame(
+            array_map(static fn(int $id): string => sprintf('child-%02d', $id), range(1, 30)),
+            array_map(
+                static fn(PhotoAssignmentOutputDto $assignment): string => $assignment->childId,
+                $photo->assignments,
+            ),
+        );
+        self::assertSame('C01', $photo->childCode);
+        self::assertSame('C01001', $photo->code);
     }
 
     public function testUploadRejectsPublishedGroupBeforeInspectingOrStoringFile(): void

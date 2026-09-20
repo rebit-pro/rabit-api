@@ -17,20 +17,48 @@ final readonly class PhotoRowMapper
     /** @param array<string,mixed> $row */
     public function map(array $row): PhotoOutputDto
     {
-        $assignments = [];
-        foreach (array_filter(explode(',', (string)($row['ASSIGNMENTS'] ?? ''))) as $encoded) {
-            $parts = explode(':', $encoded, 3);
-            if (3 !== count($parts)) {
-                continue;
-            }
-            $sequence = (int)$parts[2];
-            $assignments[] = new PhotoAssignmentOutputDto(
-                childId: $parts[0],
-                childCode: $parts[1],
-                sequence: $sequence,
-                code: $parts[1] . str_pad((string)$sequence, 3, '0', STR_PAD_LEFT),
-            );
+        $decoded = json_decode((string)($row['ASSIGNMENTS'] ?? '[]'), true, 512, JSON_THROW_ON_ERROR);
+        if (!is_array($decoded)) {
+            throw new \UnexpectedValueException('Invalid photo assignments payload.');
         }
+
+        /** @var array<int, array{assignment: PhotoAssignmentOutputDto, sortId: int}> $assignmentsWithOrder */
+        $assignmentsWithOrder = [];
+        foreach ($decoded as $assignmentRow) {
+            if (
+                !is_array($assignmentRow)
+                || !isset(
+                    $assignmentRow['childId'],
+                    $assignmentRow['childCode'],
+                    $assignmentRow['sequence'],
+                    $assignmentRow['sortId'],
+                )
+            ) {
+                throw new \UnexpectedValueException('Invalid photo assignment row.');
+            }
+            $sequence = (int)$assignmentRow['sequence'];
+            $assignmentsWithOrder[] = [
+                'assignment' => new PhotoAssignmentOutputDto(
+                    childId: (string)$assignmentRow['childId'],
+                    childCode: (string)$assignmentRow['childCode'],
+                    sequence: $sequence,
+                    code: (string)$assignmentRow['childCode'] . str_pad((string)$sequence, 3, '0', STR_PAD_LEFT),
+                ),
+                'sortId' => (int)$assignmentRow['sortId'],
+            ];
+        }
+        usort(
+            $assignmentsWithOrder,
+            static function(array $left, array $right): int {
+                $sequenceOrder = $left['assignment']->sequence <=> $right['assignment']->sequence;
+
+                return 0 !== $sequenceOrder ? $sequenceOrder : $left['sortId'] <=> $right['sortId'];
+            },
+        );
+        $assignments = array_map(
+            static fn(array $item): PhotoAssignmentOutputDto => $item['assignment'],
+            $assignmentsWithOrder,
+        );
         $primary = $assignments[0] ?? null;
 
         return new PhotoOutputDto(
