@@ -13,6 +13,11 @@ use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
+/**
+ * Атомарно привязывает выбранные готовые фотографии к ребёнку в редактируемой группе.
+ *
+ * Проверяет область и доступ, revision и идемпотентность, не допуская частично сохранённой разметки.
+ */
 final readonly class AssignPhotosUseCase
 {
     public function __construct(

@@ -7,6 +7,11 @@ namespace Morefoto\Media\Application\Photo\Service;
 use Morefoto\Media\Application\Photo\Dto\PhotoAssignmentOutputDto;
 use Morefoto\Media\Application\Photo\Dto\PhotoOutputDto;
 
+/**
+ * Преобразует строку репозитория фотографий в выходной DTO Application-слоя.
+ *
+ * Декодирует M:N-разметку и собирает совместимое основное назначение, метаданные файла и состояния обработки.
+ */
 final readonly class PhotoRowMapper
 {
     /** @param array<string,mixed> $row */

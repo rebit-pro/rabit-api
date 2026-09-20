@@ -14,6 +14,11 @@ use Rebit\Share\Contracts\Organization\GroupReferenceInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
+/**
+ * Атомарно назначает готовую фотографию обложкой редактируемой группы.
+ *
+ * Проверяет доступ, принадлежность фотографии, revision и идемпотентность, затем обновляет media revision.
+ */
 final readonly class SetGroupCoverUseCase
 {
     public function __construct(

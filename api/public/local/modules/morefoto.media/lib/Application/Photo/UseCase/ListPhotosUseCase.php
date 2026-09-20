@@ -12,6 +12,12 @@ use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 
+/**
+ * Формирует защищённую страницу фотографий для рабочего пространства разметки.
+ *
+ * Применяет серверные фильтры и собирает назначения, обложки, revision и данные пагинации в единый
+ * выходной DTO.
+ */
 final readonly class ListPhotosUseCase
 {
     public function __construct(
