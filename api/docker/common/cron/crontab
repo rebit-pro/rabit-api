@@ -5,3 +5,6 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # ScanLeads — мониторинг внешних площадок (fl.ru) с отправкой в Telegram каждые 5 минут.
 */5 * * * * cd /app/public && php local/bin/bitrix-console app:leadhunter:scan 2>&1
+
+# Повторно публикует D1-задачи, если RabbitMQ был недоступен в момент HTTP-загрузки.
+* * * * * cd /app/public && php local/bin/bitrix-console app:media:dispatch-pending --limit=100 2>&1

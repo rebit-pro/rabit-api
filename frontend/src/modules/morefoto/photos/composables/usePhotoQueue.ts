@@ -1,14 +1,17 @@
 import { computed, onScopeDispose, shallowRef } from 'vue';
 import { onBeforeRouteLeave } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { isMockApiEnabled } from '@/mocks/config';
 import { fileProblem, photoLimits } from '../rules';
 import { preparePhoto } from '../prepare';
 import { acceptPhoto, editableGroup } from '../service';
+import { photoApiError, photosApi } from '../api';
+import { photosChangedEvent } from '../repository';
 import type { UploadJob } from '../types';
 
 export function usePhotoQueue(shootId: string) {
   const auth = useAuthStore();
-  const key = 'morefoto:demo:uploads:' + auth.user?.id + ':' + shootId;
+  const key = 'morefoto:' + (isMockApiEnabled ? 'demo' : 'live') + ':uploads:' + auth.user?.id + ':' + shootId;
   let initial: UploadJob[] = [];
   try {
     initial = JSON.parse(sessionStorage.getItem(key) ?? '[]') as UploadJob[];
@@ -18,8 +21,15 @@ export function usePhotoQueue(shootId: string) {
   }
   const jobs = shallowRef<UploadJob[]>(
     initial.map((job) =>
-      ['queued', 'processing'].includes(job.status)
-        ? { ...job, status: 'interrupted', progress: 0, message: 'Подготовка прервана. Выберите исходный файл снова.' }
+      (isMockApiEnabled && ['queued', 'processing'].includes(job.status)) ||
+      (!isMockApiEnabled && job.status === 'queued') ||
+      (!isMockApiEnabled && job.status === 'processing' && !job.serverId)
+        ? {
+            ...job,
+            status: 'interrupted',
+            progress: 0,
+            message: 'Отправка прервана. Выберите исходный файл снова.'
+          }
         : job
     )
   );
@@ -40,11 +50,13 @@ export function usePhotoQueue(shootId: string) {
   }
   function add(list: File[], groupId: string) {
     error.value = '';
-    try {
-      editableGroup(auth.getAccessToken() ?? '', shootId, groupId);
-    } catch (cause) {
-      error.value = (cause as Error).message;
-      return;
+    if (isMockApiEnabled) {
+      try {
+        editableGroup(auth.getAccessToken() ?? '', shootId, groupId);
+      } catch (cause) {
+        error.value = (cause as Error).message;
+        return;
+      }
     }
     if (list.length > photoLimits.batch) {
       error.value = 'Выберите не больше 50 файлов за раз.';
@@ -76,6 +88,53 @@ export function usePhotoQueue(shootId: string) {
     }
     persist();
   }
+  async function poll(jobId: string, photoId: string) {
+    for (let attempt = 0; attempt < 120 && !controller.signal.aborted; attempt++) {
+      const photo = await photosApi.detail(photoId);
+      if (photo.status === 'ready') {
+        update(jobId, { status: 'done', progress: 100, message: 'Защищённые превью готовы' });
+        window.dispatchEvent(new Event(photosChangedEvent));
+        return;
+      }
+      if (photo.status === 'failed') {
+        update(jobId, {
+          status: 'error',
+          progress: 100,
+          message: 'Сервер не смог подготовить превью. Повторно выберите исходный файл.'
+        });
+        return;
+      }
+      if (photo.status === 'duplicate') {
+        update(jobId, {
+          status: 'duplicate',
+          progress: 100,
+          message: 'Такой файл уже есть в этой съёмке. Второй кадр не создан.'
+        });
+        return;
+      }
+      update(jobId, { progress: Math.min(95, 78 + attempt), message: 'Сервер готовит защищённые превью' });
+      await new Promise((resolve) => window.setTimeout(resolve, 500));
+    }
+    if (!controller.signal.aborted)
+      update(jobId, { status: 'error', message: 'Обработка продолжается дольше минуты. Обновите страницу для проверки статуса.' });
+  }
+  async function processLive(job: UploadJob, file: File) {
+    update(job.id, { status: 'processing', progress: 5, message: 'Отправляем приватный оригинал' });
+    const result = await photosApi.upload(shootId, job.groupId, file, controller.signal, (progress) =>
+      update(job.id, { progress, message: 'Отправляем приватный оригинал' })
+    );
+    update(job.id, { serverId: result.id, progress: 78, message: 'Файл принят. Ожидаем защищённые превью' });
+    files.delete(job.id);
+    if (result.status === 'duplicate') {
+      update(job.id, {
+        status: 'duplicate',
+        progress: 100,
+        message: 'Такой файл уже есть в этой съёмке. Второй кадр не создан.'
+      });
+      return;
+    }
+    await poll(job.id, result.id);
+  }
   async function start() {
     if (busy.value) return;
     busy.value = true;
@@ -88,23 +147,25 @@ export function usePhotoQueue(shootId: string) {
           update(job.id, { status: 'interrupted', message: 'Выберите исходный файл снова.' });
           continue;
         }
-        update(job.id, { status: 'processing', progress: 5, message: 'Читаем и проверяем файл' });
         try {
-          const token = auth.getAccessToken() ?? '';
-          editableGroup(token, shootId, job.groupId);
-          const prepared = await preparePhoto(file, controller.signal, (progress) =>
-            update(job.id, { progress, message: progress < 50 ? 'Проверяем изображение' : 'Готовим защищённые превью' })
-          );
-          update(job.id, { progress: 90, message: 'Сохраняем в браузере' });
-          const result = await acceptPhoto(token, job, prepared, controller.signal);
-          update(job.id, {
-            status: result,
-            progress: 100,
-            message: result === 'done' ? 'Файл подготовлен' : 'Такой файл уже есть в этой съёмке. Второй кадр не создан.'
-          });
-          files.delete(job.id);
+          if (isMockApiEnabled) {
+            update(job.id, { status: 'processing', progress: 5, message: 'Читаем и проверяем файл' });
+            const token = auth.getAccessToken() ?? '';
+            editableGroup(token, shootId, job.groupId);
+            const prepared = await preparePhoto(file, controller.signal, (progress) =>
+              update(job.id, { progress, message: progress < 50 ? 'Проверяем изображение' : 'Готовим защищённые превью' })
+            );
+            update(job.id, { progress: 90, message: 'Сохраняем в браузере' });
+            const result = await acceptPhoto(token, job, prepared, controller.signal);
+            update(job.id, {
+              status: result,
+              progress: 100,
+              message: result === 'done' ? 'Файл подготовлен' : 'Такой файл уже есть в этой съёмке. Второй кадр не создан.'
+            });
+            files.delete(job.id);
+          } else await processLive(job, file);
         } catch (cause) {
-          update(job.id, { status: 'error', message: cause instanceof Error ? cause.message : 'Не удалось подготовить файл.' });
+          if (!controller.signal.aborted) update(job.id, { status: 'error', message: photoApiError(cause) });
         }
       }
     } finally {
@@ -117,7 +178,7 @@ export function usePhotoQueue(shootId: string) {
       error.value = 'Выберите исходный файл снова: он не сохраняется после обновления страницы.';
       return;
     }
-    update(id, { status: 'queued', progress: 0, message: 'Готов к повтору' });
+    update(id, { status: 'queued', progress: 0, message: 'Готов к повтору', serverId: undefined });
     void start();
   }
   function clear() {
@@ -151,5 +212,22 @@ export function usePhotoQueue(shootId: string) {
     files.clear();
     window.removeEventListener('beforeunload', beforeUnload);
   });
+  if (!isMockApiEnabled && jobs.value.some((job) => job.status === 'processing' && job.serverId)) {
+    queueMicrotask(async () => {
+      if (busy.value || !alive) return;
+      busy.value = true;
+      try {
+        for (const job of jobs.value.filter((item) => item.status === 'processing' && item.serverId)) {
+          try {
+            await poll(job.id, job.serverId!);
+          } catch (cause) {
+            if (alive && !controller.signal.aborted) update(job.id, { status: 'error', message: photoApiError(cause) });
+          }
+        }
+      } finally {
+        if (alive) busy.value = false;
+      }
+    });
+  }
   return { jobs, busy, error, queued, accepted, failed, add, start, retry, clear, remove };
 }

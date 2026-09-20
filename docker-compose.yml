@@ -128,6 +128,11 @@ services:
         <<: *api-consumer-service
         command: ["php", "public/local/bin/bitrix-console", "app:audit:consume"]
 
+    api-media-consumer:
+        profiles: [media]
+        <<: *api-consumer-service
+        command: ["php", "public/local/bin/bitrix-console", "app:media:consume"]
+
     api-mysql:
         build:
             context: api/docker

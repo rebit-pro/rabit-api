@@ -8,7 +8,7 @@ export interface ManagedPhoto extends GalleryPhoto {
   filename: string;
   bytes: number;
   fingerprint: string;
-  source: 'seed' | 'local';
+  source: 'seed' | 'local' | 'server';
   revision: number;
 }
 import type { StaffRequest, Operation } from '../handoff/types.js';
@@ -29,6 +29,7 @@ export interface UploadJob {
   status: QueueStatus;
   progress: number;
   message: string;
+  serverId?: string;
 }
 export interface PreparedPhoto {
   fingerprint: string;

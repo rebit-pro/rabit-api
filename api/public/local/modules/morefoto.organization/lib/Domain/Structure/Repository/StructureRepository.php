@@ -35,6 +35,7 @@ use Morefoto\Organization\Domain\Structure\Exception\StructureVersionConflictExc
  *     UF_NAME: string,
  *     UF_KIND: string,
  *     UF_REVISION: int|string,
+ *     UF_SENT_AT: string|null,
  *     UF_INSTITUTION_ID?: int|string,
  *     SHOOT_PUBLIC_ID?: string,
  * }
@@ -56,7 +57,7 @@ final readonly class StructureRepository
     /** One GroupRow per result. */
     public function group(StructureId $id): Result
     {
-        return $this->query("SELECT g.ID,g.UF_PUBLIC_ID,g.UF_SHOOT_ID,g.UF_NAME,g.UF_KIND,g.UF_REVISION,s.UF_INSTITUTION_ID,s.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot s ON s.ID=g.UF_SHOOT_ID WHERE g.UF_PUBLIC_ID='{$id->value}'");
+        return $this->query("SELECT g.ID,g.UF_PUBLIC_ID,g.UF_SHOOT_ID,g.UF_NAME,g.UF_KIND,g.UF_REVISION,DATE_FORMAT(g.UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS UF_SENT_AT,s.UF_INSTITUTION_ID,s.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot s ON s.ID=g.UF_SHOOT_ID WHERE g.UF_PUBLIC_ID='{$id->value}'");
     }
 
     public function lockInstitution(int $id): Result
