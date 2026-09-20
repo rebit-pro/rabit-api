@@ -1,6 +1,6 @@
 # D2 — прогресс правок по code review
 
-Текущее состояние: в работе.
+Текущее состояние: готово к повторному review.
 
 ## Точка продолжения
 
@@ -8,13 +8,13 @@
 - PR: [#21](https://github.com/rebit-pro/rabit-api/pull/21).
 - Связанная задача техдолга: [#23](https://github.com/rebit-pro/rabit-api/issues/23).
 - Base: `c32b98e7c7407592c54c9ee382e994d7fa611955`.
-- Последний опубликованный commit до review-правок: `ee357dd`.
-- Завершено: реализованы замечания, PHP 8.4 lint/style/PHPStan/PHPUnit и проверки task-артефактов прошли.
-- Текущий шаг: проверить итоговый diff и подготовить commit/push.
-- Следующий шаг: опубликовать исправления и ответить на оба комментария PR #21.
+- Основной review-коммит: `590ec83`; актуальный head при продолжении проверить командой `git rev-parse HEAD`.
+- Завершено: замечания реализованы и опубликованы, проверки прошли, на оба комментария PR даны ответы.
+- Текущий шаг: ожидание повторного review пользователя.
+- Следующий шаг: обработать новые замечания либо отдельно согласовать merge; автоматически не сливать и не деплоить.
 - Блокеры: нет.
-- Рабочее дерево: незакоммиченные `AGENTS.md`/`CLAUDE.md`, `.gitignore`, четыре PHP-файла и `docs/plans/D2_photo-labeling/`.
-- Команда проверки состояния: `git status --short && git diff --check && cmp AGENTS.md CLAUDE.md`.
+- Ожидаемое состояние рабочего дерева после публикации этого журнала: clean.
+- Команда продолжения: `git status --short && git rev-parse HEAD && gh pr view 21`.
 
 ## 2026-09-20 — разбор замечаний
 
@@ -36,6 +36,13 @@
 - PHP 8.4: lint четырёх файлов, PHP CS Fixer 0/4, PHPStan без ошибок.
 - PHPUnit модуля Media: 6 тестов, 34 assertions; task-артефакты и issue #23 проверены.
 
+## 2026-09-20 — публикация и ответы review
+
+- Коммит `590ec83` отправлен в `codex/d2-photo-labeling`.
+- Inline reply: [discussion_r4056876247](https://github.com/rebit-pro/rabit-api/pull/21#discussion_r4056876247);
+  общий ответ: [issuecomment-5749629904](https://github.com/rebit-pro/rabit-api/pull/21#issuecomment-5749629904).
+- PR #21 открыт и имеет `mergeStateStatus=CLEAN`; issue #23 открыта. Merge и deployment не выполнялись.
+
 ## Результаты проверок
 
 | ID | Статус | Факт |
@@ -48,4 +55,4 @@
 | D2-R06 | PASS | PHP CS Fixer 3.94.2: 0/4 файлов требуют исправления |
 | D2-R07 | PASS | PHPStan без ошибок; PHPUnit 6/6, 34 assertions |
 | D2-R08 | PASS | Создана issue #23 |
-| D2-R09 | PENDING | `git diff --check` прошёл; состояние PR проверить после публикации |
+| D2-R09 | PASS | `git diff --check` прошёл; PR #21 открыт и CLEAN, merge/deploy не выполнялись |

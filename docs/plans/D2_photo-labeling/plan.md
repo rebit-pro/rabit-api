@@ -1,6 +1,6 @@
 # D2 — правки по code review
 
-Статус: в работе. Ветка `codex/d2-photo-labeling`, PR [#21](https://github.com/rebit-pro/rabit-api/pull/21), base `c32b98e7c7407592c54c9ee382e994d7fa611955`.
+Статус: готово к повторному review. Ветка `codex/d2-photo-labeling`, PR [#21](https://github.com/rebit-pro/rabit-api/pull/21), base `c32b98e7c7407592c54c9ee382e994d7fa611955`.
 
 ## Цель
 
@@ -31,7 +31,7 @@
 - [x] Добавить class-level phpDoc к трём UseCase и `PhotoRowMapper`.
 - [x] Обновить прогресс фактическими файлами и результатами проверок.
 - [x] Выполнить lint, PHP CS Fixer dry-run и релевантные тесты.
-- [ ] Проверить diff, закоммитить, отправить ветку и ответить в PR #21.
+- [x] Проверить diff, закоммитить, отправить ветку и ответить в PR #21.
 
 ## Риски и ограничения
 
