@@ -51,6 +51,11 @@ export interface StaffRequest {
   comment: string;
   history: { actorName?: string; kind: 'submitted' | 'clarification' | 'transferred'; actorId: number; at: string; comment: string }[];
   results?: TransferResult[];
+  staffEligibility?: {
+    eligible: boolean;
+    source: 'verified_staff_assignment';
+    verifiedAt: string;
+  };
 }
 export interface LinkGroup {
   id: string;

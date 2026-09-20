@@ -1,5 +1,6 @@
 import { nextTick, onScopeDispose, ref, shallowRef, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { isMockApiEnabled } from '@/mocks/config';
 import type { HandoffCommand, HandoffErrors } from './types';
 import { HandoffValidationError } from './scope';
 import { saveLink } from './links-service';
@@ -20,7 +21,7 @@ export function useHandoffEditor(saved: () => void) {
   function open(create: () => HandoffCommand, context: string) {
     if (busy.value) return;
     factory = create;
-    key = 'morefoto:demo:handoff-draft:' + auth.user?.id + ':' + context;
+    key = 'morefoto:' + (isMockApiEnabled ? 'demo' : 'live') + ':handoff-draft:' + auth.user?.id + ':' + context;
     const fresh = create();
     let draft: HandoffCommand | null = null;
     try {

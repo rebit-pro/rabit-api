@@ -1,10 +1,12 @@
 import { onMounted, onScopeDispose, shallowRef } from 'vue';
+import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { getDemoNow } from '../mocks/clock';
 import { loadHandoff } from './service';
 import type { HandoffWorkspace } from './types';
 export function useHandoff() {
-  const auth = useAuthStore(),
+  const route = useRoute(),
+    auth = useAuthStore(),
     data = shallowRef<HandoffWorkspace | null>(null),
     loading = shallowRef(true),
     error = shallowRef('');
@@ -15,7 +17,8 @@ export function useHandoff() {
     loading.value = true;
     error.value = '';
     try {
-      const next = await loadHandoff(auth.getAccessToken() ?? '');
+      const requestId = typeof route.params.requestId === 'string' ? route.params.requestId : undefined;
+      const next = await loadHandoff(auth.getAccessToken() ?? '', requestId);
       if (alive && id === run) data.value = next;
     } catch (e) {
       if (alive && id === run) {

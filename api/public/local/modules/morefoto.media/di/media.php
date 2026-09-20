@@ -22,6 +22,7 @@ use Morefoto\Media\Infrastructure\Database\BitrixMediaTransaction;
 use Morefoto\Media\Infrastructure\File\GdPreviewRenderer;
 use Morefoto\Media\Infrastructure\File\LocalPrivatePhotoStorage;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
+use Morefoto\Media\Infrastructure\Handoff\StaffChildReference;
 use Morefoto\Media\Infrastructure\Messenger\MediaMessengerFactory;
 use Morefoto\Media\Infrastructure\Messenger\MediaPublisher;
 use Morefoto\Media\Presentation\Command\DispatchPendingMediaCommand;
@@ -34,11 +35,13 @@ use Rebit\Share\Application\Contract\Messenger\MessageTransportFactoryInterface;
 use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Rebit\Share\Contracts\Organization\GroupReferenceInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
+use Rebit\Share\Contracts\Media\StaffChildReferenceInterface;
 use Rebit\Share\Infrastructure\Messenger\AmqpConnectionFactory;
 use Rebit\Share\Shared\Enum\MessengerQueueEnum;
 use Symfony\Component\Messenger\Transport\TransportInterface;
 
 return [
+    StaffChildReferenceInterface::class => ['constructor' => static fn(): StaffChildReferenceInterface => new StaffChildReference()],
     PhotoRepository::class => ['className' => PhotoRepository::class],
     MediaMutationRepository::class => ['className' => MediaMutationRepository::class],
     MediaTransactionInterface::class => ['className' => BitrixMediaTransaction::class],

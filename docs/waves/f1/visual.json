@@ -1,0 +1,30 @@
+{
+  "wave": "F1",
+  "status": "passed",
+  "fixture": "rabit-e2e-679467cf9660",
+  "screenshotsCaptured": 2,
+  "localDirectory": "frontend/reports/e2e-live/artifacts/zzz-handoff-F1-воспитатель-555f7-р-сохраняет-право-и-историю-chromium",
+  "screenshots": [
+    {
+      "name": "f1-desktop-list.png",
+      "sha256": "084a106e0bf0f0c4ff1c61f8431d373c7cd166775c6523bccdcb232e838f52fc",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "f1-mobile-detail.png",
+      "sha256": "fc364d2d9acbc1884d96c6e1ddbfd9878615f3ce01cdd817e2cd55e551c43817",
+      "width": 390,
+      "height": 1334
+    }
+  ],
+  "method": "Screenshots from the final real Chromium run; desktop list and mobile detail were inspected manually, and the mobile scenario asserts document width does not exceed viewport.",
+  "assertions": [
+    "The list displays the newly submitted request and server status",
+    "The detail displays server-verified staff eligibility",
+    "The history contains submit, clarification and resubmit events",
+    "The 390px layout has no horizontal overflow",
+    "Live UI does not expose the deferred D3 transfer action"
+  ],
+  "limitations": "Screenshot evidence is retained in ignored local E2E artifacts; this report records hashes and automated layout assertions rather than pixel-diff coverage."
+}

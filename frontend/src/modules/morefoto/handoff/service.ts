@@ -1,10 +1,13 @@
+import { isMockApiEnabled } from '@/mocks/config';
 import { simulateRequest } from '../mocks/runtime';
 import { readPhotos } from '../photos/repository';
 import { getCatalog } from '../commerce/mocks/catalog';
 import { handoffAccess, canReadRequest } from './scope';
 import { calendarDays, currentGroupState, groupSentAt, preparationProblems, preparationSignature } from './rules';
-import type { HandoffWorkspace } from './types';
-export async function loadHandoff(token: string): Promise<HandoffWorkspace> {
+import { staffRequestsApi } from './api';
+import type { HandoffWorkspace, LinkGroup } from './types';
+export async function loadHandoff(token: string, requestId?: string): Promise<HandoffWorkspace> {
+  if (!isMockApiEnabled) return loadLiveHandoff(requestId);
   await simulateRequest();
   const access = handoffAccess(token),
     { organization, scope, account, now } = access,
@@ -45,5 +48,48 @@ export async function loadHandoff(token: string): Promise<HandoffWorkspace> {
           childCount: new Set(list.map((p) => p.childCode).filter(Boolean)).size
         };
       })
+  };
+}
+
+async function loadLiveHandoff(requestId?: string): Promise<HandoffWorkspace> {
+  const first = await staffRequestsApi.list();
+  const items = [...first.items];
+  for (let page = 2; page <= first.meta.totalPages; page++) items.push(...(await staffRequestsApi.list(page)).items);
+  if (requestId) {
+    const detail = await staffRequestsApi.detail(requestId);
+    const index = items.findIndex((item) => item.id === detail.id);
+    if (index === -1) items.push(detail);
+    else items[index] = detail;
+  }
+  const groups = first.scope.groups.map<LinkGroup>((group) => ({
+    ...group,
+    galleryToken: '',
+    revision: 1,
+    state: group.state === 'open' || group.state === 'closed' ? group.state : 'preparing',
+    sentAt: null,
+    closesAt: null,
+    deliveryAt: null,
+    signature: '',
+    prepared: false,
+    problems: [],
+    history: [],
+    photoCount: 0,
+    childCount: 0
+  }));
+  return {
+    role: first.scope.role,
+    now: new Date().toISOString(),
+    requests: items,
+    photos: [],
+    groups,
+    scope: {
+      institutions: first.scope.institutions.map((item) => ({ ...item, address: '' })),
+      shoots: first.scope.shoots.map((item) => ({
+        ...item,
+        date: null,
+        revision: 1
+      })),
+      groups
+    }
   };
 }

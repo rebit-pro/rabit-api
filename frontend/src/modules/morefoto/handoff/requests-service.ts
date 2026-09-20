@@ -1,3 +1,5 @@
+import { isMockApiEnabled } from '@/mocks/config';
+import { staffRequestsApi, staffRequestError } from './api';
 import { DemoError } from '../mocks/service';
 import { simulateRequest } from '../mocks/runtime';
 import { readDemo } from '../mocks/storage';
@@ -9,6 +11,16 @@ import type { StaffCommand, StaffRequest } from './types';
 import type { OrderSnapshot } from '../orders/types';
 
 export async function saveStaffRequest(token: string, command: StaffCommand): Promise<void> {
+  if (!isMockApiEnabled) {
+    try {
+      if (command.action === 'submit') await staffRequestsApi.save(command);
+      else if (command.action === 'clarify') await staffRequestsApi.clarify(command);
+      else throw new Error('Перенос полного набора будет подключён в волне D3.');
+      return;
+    } catch (cause) {
+      throw new Error(staffRequestError(cause));
+    }
+  }
   handoffAccess(token);
   await simulateRequest();
   return handoffLock(() => {

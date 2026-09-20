@@ -1,0 +1,90 @@
+{
+  "wave": "F1",
+  "status": "ready-for-review",
+  "date": "2026-09-20",
+  "branch": "codex/f1-staff-requests",
+  "base": "28bcad9e575489deb1113d7ce2ac459a43dd7132",
+  "dependencies": [
+    "B2 merged",
+    "D2 merged",
+    "E3 merged"
+  ],
+  "scope": [
+    "HND-06",
+    "HND-07",
+    "HND-08",
+    "HND-09",
+    "HND-12"
+  ],
+  "deferred": [
+    "HND-10 preview to D3",
+    "HND-11 transfer to D3"
+  ],
+  "checks": {
+    "phpLint": {
+      "status": "passed",
+      "files": 566
+    },
+    "phpstan": {
+      "status": "passed",
+      "errors": 0
+    },
+    "phpunit": {
+      "status": "passed",
+      "tests": 394,
+      "assertions": 1238
+    },
+    "targetedUnit": {
+      "status": "passed",
+      "tests": 2,
+      "assertions": 16
+    },
+    "style": {
+      "status": "passed",
+      "changedPhpFiles": 35,
+      "filesFixed": 14,
+      "fixableFilesAfterFix": 0
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "production build"
+      ],
+      "unitTests": 158
+    },
+    "targetedBrowserE2E": {
+      "status": "passed",
+      "tests": 1,
+      "scenario": "F1: teacher submits, curator clarifies, server preserves eligibility and history"
+    },
+    "browserE2E": {
+      "status": "passed",
+      "tests": 43,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "fixture": "rabit-e2e-679467cf9660",
+      "transport": "Chromium -> nginx -> native Bitrix FPM -> isolated MySQL and RabbitMQ",
+      "ownedFixtureCleaned": true,
+      "cleanupErrors": []
+    },
+    "visualDesktopMobile": {
+      "status": "passed",
+      "screenshotsCaptured": 2,
+      "mobileOverflowAssertion": true,
+      "report": "visual.json"
+    }
+  },
+  "publication": {
+    "status": "pending PR creation",
+    "merged": false,
+    "deployed": false,
+    "deploymentTarget": "app.morefoto.36.ru",
+    "deploymentPolicy": "aggregate later wave checkpoint"
+  },
+  "complete": true,
+  "completeMeaning": "Implementation and local acceptance complete; PR review, merge and aggregate deployment are tracked separately."
+}

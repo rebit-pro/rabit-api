@@ -8,7 +8,8 @@ export async function login(page: Page, account = 'organizer'): Promise<void> {
   const response = page.waitForResponse((r) => r.url().endsWith('/api/v1/me'));
   await page.getByRole('button', { name: 'Войти', exact: true }).click();
   await response;
-  if (account === 'teacher') await expect(page.getByRole('heading', { name: 'Профиль', exact: true })).toBeVisible();
+  if (account === 'teacher' || account === 'curator')
+    await expect(page.getByRole('heading', { name: 'Профиль', exact: true })).toBeVisible();
   else if (account === 'unassigned') await expect(page.getByRole('heading', { name: 'Доступ к кабинету не назначен' })).toBeVisible();
   else await expect(page.getByRole('button', { name: 'Новая продукция', exact: true })).toBeEnabled();
 }

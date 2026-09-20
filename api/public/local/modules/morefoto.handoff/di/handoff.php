@@ -1,0 +1,41 @@
+<?php
+
+declare(strict_types=1);
+
+use Bitrix\Main\DI\ServiceLocator;
+use Morefoto\Handoff\Application\Request\Contract\HandoffTransactionInterface;
+use Morefoto\Handoff\Application\Request\Service\StaffRequestWorkflow;
+use Morefoto\Handoff\Application\Request\UseCase\ClarifyStaffRequestUseCase;
+use Morefoto\Handoff\Application\Request\UseCase\GetStaffRequestUseCase;
+use Morefoto\Handoff\Application\Request\UseCase\ListStaffRequestsUseCase;
+use Morefoto\Handoff\Application\Request\UseCase\SaveStaffRequestUseCase;
+use Morefoto\Handoff\Domain\Request\Repository\StaffRequestRepository;
+use Morefoto\Handoff\Infrastructure\Database\BitrixHandoffTransaction;
+use Morefoto\Handoff\Presentation\Controller\StaffRequestController;
+use Morefoto\Handoff\Presentation\Request\StaffRequestFactory;
+use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
+use Rebit\Share\Contracts\Access\StaffRequestAccessInterface;
+use Rebit\Share\Contracts\Media\StaffChildReferenceInterface;
+use Rebit\Share\Contracts\Organization\MediaScopeInterface;
+
+$services = [
+    HandoffTransactionInterface::class => ['constructor' => static fn(): HandoffTransactionInterface => new BitrixHandoffTransaction()],
+    StaffRequestRepository::class => ['className' => StaffRequestRepository::class],
+    StaffRequestFactory::class => ['className' => StaffRequestFactory::class],
+];
+$dependencies = [
+    StaffRequestWorkflow::class => [HandoffTransactionInterface::class, StaffRequestRepository::class, StaffRequestAccessInterface::class, MediaScopeInterface::class, StaffChildReferenceInterface::class],
+    ListStaffRequestsUseCase::class => [StaffRequestWorkflow::class],
+    GetStaffRequestUseCase::class => [StaffRequestWorkflow::class],
+    SaveStaffRequestUseCase::class => [StaffRequestWorkflow::class],
+    ClarifyStaffRequestUseCase::class => [StaffRequestWorkflow::class],
+    StaffRequestController::class => [ListStaffRequestsUseCase::class, GetStaffRequestUseCase::class, SaveStaffRequestUseCase::class, ClarifyStaffRequestUseCase::class, StaffRequestFactory::class, TokenResolverInterface::class],
+];
+foreach ($dependencies as $class => $arguments) {
+    $services[$class] = [
+        'className' => $class,
+        'constructorParams' => static fn(): array => array_map(static fn(string $dependency): object => ServiceLocator::getInstance()->get($dependency), $arguments),
+    ];
+}
+
+return $services;
