@@ -1,0 +1,86 @@
+{
+  "wave": "H1",
+  "status": "ready-for-review",
+  "date": "2026-09-20",
+  "branch": "codex/h1-reliable-email",
+  "base": "c32b98e7c7407592c54c9ee382e994d7fa611955",
+  "dependencies": [
+    "A2 merged",
+    "A5 merged"
+  ],
+  "acceptedDecisions": [
+    "EMAIL is the first H1 delivery channel",
+    "MAX is deferred to a separate later stage",
+    "Other D09 payment and fiscalization questions remain open"
+  ],
+  "checks": {
+    "phpLint": {
+      "status": "passed",
+      "files": 524
+    },
+    "phpstan": {
+      "status": "passed",
+      "errors": 0
+    },
+    "phpunit": {
+      "status": "passed",
+      "tests": 388,
+      "assertions": 1209
+    },
+    "style": {
+      "status": "passed",
+      "changedPhpFiles": 32,
+      "fixableFilesAfterFix": 0
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "production build"
+      ],
+      "unitTests": 158
+    },
+    "notificationIntegration": {
+      "status": "passed",
+      "database": "isolated MySQL 8.0",
+      "queue": "real RabbitMQ round-trip",
+      "scenarios": [
+        "persistent deduplication",
+        "payload conflict",
+        "restart-safe accepted transition",
+        "retry exhaustion",
+        "unknown quarantine",
+        "explicit unknown recovery"
+      ]
+    },
+    "browserE2E": {
+      "status": "passed",
+      "tests": 42,
+      "failed": 0,
+      "fixture": "rabit-e2e-766d8c5b1af5",
+      "transport": "Chromium -> nginx -> native Bitrix FPM -> isolated MySQL",
+      "ownedFixtureCleaned": true
+    },
+    "visualDesktopMobile": {
+      "status": "not-applicable",
+      "reason": "H1 has no user interface changes"
+    }
+  },
+  "runtime": {
+    "php": "8.4.25",
+    "mysql": "8.0",
+    "playwright": "1.52.0"
+  },
+  "publication": {
+    "status": "branch ready",
+    "url": null,
+    "merged": false,
+    "deployed": false,
+    "deploymentTarget": "app.morefoto.36.ru",
+    "deploymentPolicy": "aggregate later wave checkpoint"
+  },
+  "complete": true,
+  "completeMeaning": "Implementation and required local acceptance complete; PR review, merge and aggregate deployment are tracked separately."
+}

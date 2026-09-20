@@ -2,9 +2,24 @@
 
 declare(strict_types=1);
 
+use Rebit\Notification\Presentation\Command\DispatchPendingNotificationsCommand;
+use Rebit\Notification\Presentation\Command\NotificationConsumerCommand;
+
 return [
     'services' => [
-        'value' => require __DIR__ . '/di/lead.php',
+        'value' => array_merge(
+            require __DIR__ . '/di/lead.php',
+            require __DIR__ . '/di/delivery.php',
+        ),
+        'readonly' => true,
+    ],
+    'console' => [
+        'value' => [
+            'commands' => [
+                NotificationConsumerCommand::class,
+                DispatchPendingNotificationsCommand::class,
+            ],
+        ],
         'readonly' => true,
     ],
 ];
