@@ -96,27 +96,31 @@ final readonly class PhotoRepository
         return $this->query($this->baseSelect() . ' WHERE p.UF_PUBLIC_ID=' . $this->quote($publicId) . ' LIMIT 1');
     }
 
-    public function photos(int $shootId, ?int $groupId, int $limit, int $offset): Result
-    {
+    public function photos(
+        int $shootId,
+        ?int $groupId,
+        ?string $childCode,
+        ?bool $assigned,
+        int $limit,
+        int $offset,
+    ): Result {
         if (1 > $limit || 100 < $limit || 0 > $offset) {
             throw new \InvalidArgumentException('Invalid photo page.');
         }
-        $condition = 'p.UF_SHOOT_ID=' . $shootId;
-        if (null !== $groupId) {
-            $condition .= ' AND p.UF_GROUP_ID=' . $groupId;
-        }
-        $base = $this->baseSelect();
+        $pageCondition = $this->filterCondition($shootId, $groupId, $childCode, $assigned, 'page_photo');
+        $condition = $this->filterCondition($shootId, $groupId, $childCode, $assigned, 'p');
 
         return $this->query(
-            $base . " INNER JOIN (SELECT ID FROM b_hlbd_mf_photo p WHERE {$condition} ORDER BY p.ID DESC LIMIT {$limit} OFFSET {$offset}) page ON page.ID=p.ID"
+            $this->baseSelect()
+            . " INNER JOIN (SELECT page_photo.ID FROM b_hlbd_mf_photo page_photo WHERE {$pageCondition} ORDER BY page_photo.ID DESC LIMIT {$limit} OFFSET {$offset}) page ON page.ID=p.ID"
             . " WHERE {$condition} ORDER BY p.ID DESC",
         );
     }
 
-    public function count(int $shootId, ?int $groupId): int
+    public function count(int $shootId, ?int $groupId, ?string $childCode, ?bool $assigned): int
     {
-        $condition = 'UF_SHOOT_ID=' . $shootId . (null === $groupId ? '' : ' AND UF_GROUP_ID=' . $groupId);
-        $row = $this->query('SELECT COUNT(*) AS TOTAL FROM b_hlbd_mf_photo WHERE ' . $condition)->fetch();
+        $condition = $this->filterCondition($shootId, $groupId, $childCode, $assigned, 'p');
+        $row = $this->query('SELECT COUNT(*) AS TOTAL FROM b_hlbd_mf_photo p WHERE ' . $condition)->fetch();
 
         return is_array($row) ? (int)$row['TOTAL'] : 0;
     }
@@ -162,10 +166,37 @@ final readonly class PhotoRepository
     private function baseSelect(): string
     {
         return 'SELECT p.ID,p.UF_PUBLIC_ID,p.UF_FILENAME,p.UF_MIME_TYPE,p.UF_BYTES,p.UF_WIDTH,p.UF_HEIGHT,p.UF_FINGERPRINT,p.UF_STATUS,p.UF_ORIGINAL_PATH,p.UF_THUMB_SRC,p.UF_PREVIEW_SRC,p.UF_ERROR_CODE,p.UF_REVISION,'
-            . 's.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID,g.UF_PUBLIC_ID AS GROUP_PUBLIC_ID,og.UF_PUBLIC_ID AS ORIGINAL_GROUP_PUBLIC_ID,existing.UF_PUBLIC_ID AS EXISTING_PUBLIC_ID '
+            . 's.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID,g.UF_PUBLIC_ID AS GROUP_PUBLIC_ID,og.UF_PUBLIC_ID AS ORIGINAL_GROUP_PUBLIC_ID,existing.UF_PUBLIC_ID AS EXISTING_PUBLIC_ID,'
+            . "(SELECT JSON_ARRAYAGG(JSON_OBJECT('childId',child.PUBLIC_ID,'childCode',child.CODE,'sequence',assignment.SEQUENCE_NO,'sortId',child.ID)) "
+            . 'FROM mf_photo_assignment assignment INNER JOIN mf_media_child child ON child.ID=assignment.CHILD_ID '
+            . 'WHERE assignment.PHOTO_ID=p.ID AND child.GROUP_ID=p.UF_GROUP_ID) AS ASSIGNMENTS '
             . 'FROM b_hlbd_mf_photo p INNER JOIN b_hlbd_mf_shoot s ON s.ID=p.UF_SHOOT_ID '
             . 'INNER JOIN b_hlbd_mf_group g ON g.ID=p.UF_GROUP_ID INNER JOIN b_hlbd_mf_group og ON og.ID=p.UF_ORIGINAL_GROUP_ID '
             . 'LEFT JOIN b_hlbd_mf_photo existing ON existing.ID=p.UF_EXISTING_PHOTO_ID';
+    }
+
+    private function filterCondition(
+        int $shootId,
+        ?int $groupId,
+        ?string $childCode,
+        ?bool $assigned,
+        string $alias,
+    ): string {
+        $condition = "{$alias}.UF_SHOOT_ID={$shootId}";
+        if (null !== $groupId) {
+            $condition .= " AND {$alias}.UF_GROUP_ID={$groupId}";
+        }
+        $assignment = 'SELECT 1 FROM mf_photo_assignment filter_assignment '
+            . 'INNER JOIN mf_media_child filter_child ON filter_child.ID=filter_assignment.CHILD_ID '
+            . "WHERE filter_assignment.PHOTO_ID={$alias}.ID AND filter_child.GROUP_ID={$alias}.UF_GROUP_ID";
+        if (null !== $childCode) {
+            $condition .= ' AND EXISTS(' . $assignment . ' AND filter_child.CODE=' . $this->quote($childCode) . ')';
+        }
+        if (null !== $assigned) {
+            $condition .= ($assigned ? ' AND EXISTS(' : ' AND NOT EXISTS(') . $assignment . ')';
+        }
+
+        return $condition;
     }
 
     private function quote(string $value): string

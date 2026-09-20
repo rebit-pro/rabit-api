@@ -87,6 +87,7 @@ export function reviewFixture() {
           originalGroupId: group.id,
           childCode: child.code,
           sequence: index + 1,
+          assignments: [{ childId: group.id + ':' + child.code, childCode: child.code, sequence: index + 1, code: photo.code }],
           filename: photo.code + '.webp',
           bytes: 0,
           fingerprint: 'seed:' + photo.previewSrc,

@@ -10,11 +10,20 @@ const props = defineProps<{ open: boolean; photos: ManagedPhoto[]; initialChild:
 defineEmits<{ close: [] }>();
 const child = shallowRef('');
 const index = shallowRef(0);
-const codes = computed(() => [...new Set(props.photos.map((photo) => photo.childCode).filter((code): code is string => !!code))].sort());
+const codes = computed(() =>
+  [...new Set(props.photos.flatMap((photo) => photo.assignments.map((assignment) => assignment.childCode)))].sort()
+);
 const bundle = computed(() =>
-  props.photos.filter((photo) => photo.childCode === child.value).sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
+  props.photos
+    .filter((photo) => photo.assignments.some((assignment) => assignment.childCode === child.value))
+    .sort(
+      (a, b) =>
+        (a.assignments.find((assignment) => assignment.childCode === child.value)?.sequence ?? 0) -
+        (b.assignments.find((assignment) => assignment.childCode === child.value)?.sequence ?? 0)
+    )
 );
 const photo = computed(() => bundle.value[Math.min(index.value, bundle.value.length - 1)]);
+const code = computed(() => photo.value?.assignments.find((assignment) => assignment.childCode === child.value)?.code ?? '');
 watch(
   () => props.open,
   (value) => {
@@ -56,14 +65,14 @@ watch(child, () => {
         <GalleryImage
           :key="photo.id"
           :src="photo.previewSrc"
-          :alt="'Кадр ' + photo.code"
+          :alt="'Кадр ' + code"
           :width="photo.width"
           :height="photo.height"
           class="preview-image mt-4"
         />
         <div class="preview-navigation mt-4">
           <v-btn variant="outlined" :disabled="index === 0" aria-label="Предыдущий кадр" @click="index--">←</v-btn>
-          <p role="status" data-testid="preview-position">{{ photo.code }} · {{ index + 1 }} из {{ bundle.length }}</p>
+          <p role="status" data-testid="preview-position">{{ code }} · {{ index + 1 }} из {{ bundle.length }}</p>
           <v-btn variant="outlined" :disabled="index >= bundle.length - 1" aria-label="Следующий кадр" @click="index++">→</v-btn>
         </div>
       </template>

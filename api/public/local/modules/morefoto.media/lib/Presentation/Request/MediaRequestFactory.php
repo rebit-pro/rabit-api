@@ -6,7 +6,10 @@ namespace Morefoto\Media\Presentation\Request;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\HttpRequest;
+use Morefoto\Media\Application\Photo\Dto\AssignPhotosInputDto;
 use Morefoto\Media\Application\Photo\Dto\ListPhotosInputDto;
+use Morefoto\Media\Application\Photo\Dto\SetCoverInputDto;
+use Morefoto\Media\Domain\Photo\ValueObject\IdempotencyKey;
 use Rebit\Share\Shared\Exception\HttpException;
 
 final readonly class MediaRequestFactory
@@ -63,9 +66,59 @@ final readonly class MediaRequestFactory
         if (null !== $assigned && !in_array($assigned, ['true', 'false', '1', '0'], true)) {
             throw new HttpException('INVALID_ASSIGNED_FILTER', 422);
         }
-        $noMatch = null !== $childCode || in_array($assigned, ['true', '1'], true);
 
-        return new ListPhotosInputDto($groupId, $page, $pageSize, $noMatch);
+        return new ListPhotosInputDto(
+            $groupId,
+            $page,
+            $pageSize,
+            $childCode,
+            null === $assigned ? null : in_array($assigned, ['true', '1'], true),
+        );
+    }
+
+    /** @return array{input:AssignPhotosInputDto,key:IdempotencyKey} */
+    public function assignment(HttpRequest $request): array
+    {
+        $data = $this->json($request, ['shootId', 'revision', 'photoIds', 'childCode']);
+        $shootId = $data['shootId'] ?? null;
+        $revision = $data['revision'] ?? null;
+        $photoIds = $data['photoIds'] ?? null;
+        $childCode = $data['childCode'] ?? null;
+        if (!is_string($shootId) || 1 !== preg_match('/^[a-f0-9-]{36}$/D', $shootId)
+            || !is_int($revision) || 1 > $revision
+            || !is_array($photoIds) || [] === $photoIds || 100 < count($photoIds)
+            || !is_string($childCode) || 1 !== preg_match('/^[A-Z]{1,3}$/D', $childCode)) {
+            throw new HttpException('VALIDATION_FAILED', 422);
+        }
+        $normalized = [];
+        foreach ($photoIds as $photoId) {
+            if (!is_string($photoId) || 1 !== preg_match('/^[a-f0-9-]{36}$/D', $photoId) || isset($normalized[$photoId])) {
+                throw new HttpException('INVALID_PHOTO_IDS', 422);
+            }
+            $normalized[$photoId] = true;
+        }
+
+        return [
+            'input' => new AssignPhotosInputDto($shootId, $revision, array_keys($normalized), $childCode),
+            'key' => new IdempotencyKey((string)$request->getHeader('Idempotency-Key')),
+        ];
+    }
+
+    /** @return array{input:SetCoverInputDto,key:IdempotencyKey} */
+    public function cover(HttpRequest $request): array
+    {
+        $data = $this->json($request, ['revision', 'photoId']);
+        $revision = $data['revision'] ?? null;
+        $photoId = $data['photoId'] ?? null;
+        if (!is_int($revision) || 1 > $revision || !is_string($photoId)
+            || 1 !== preg_match('/^[a-f0-9-]{36}$/D', $photoId)) {
+            throw new HttpException('VALIDATION_FAILED', 422);
+        }
+
+        return [
+            'input' => new SetCoverInputDto($revision, $photoId),
+            'key' => new IdempotencyKey((string)$request->getHeader('Idempotency-Key')),
+        ];
     }
 
     public function routeId(string $name): string
@@ -91,6 +144,37 @@ final readonly class MediaRequestFactory
         }
 
         return (int)$value;
+    }
+
+    /**
+     * @param list<string> $fields
+     *
+     * @return array<string,mixed>
+     */
+    private function json(HttpRequest $request, array $fields): array
+    {
+        if ([] !== $this->query($request)
+            || 'application/json' !== strtolower(trim(explode(';', (string)$request->getHeader('Content-Type'))[0]))) {
+            throw new HttpException('JSON_REQUIRED', 400);
+        }
+        $raw = (string)$request->getInput();
+        if (32768 < strlen($raw)) {
+            throw new HttpException('PAYLOAD_TOO_LARGE', 413);
+        }
+        try {
+            $decoded = json_decode($raw, false, 16, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $error) {
+            throw new HttpException('MALFORMED_JSON', 400, $error);
+        }
+        if (!$decoded instanceof \stdClass) {
+            throw new HttpException('VALIDATION_FAILED', 422);
+        }
+        $data = get_object_vars($decoded);
+        if ([] !== array_diff(array_keys($data), $fields) || [] !== array_diff($fields, array_keys($data))) {
+            throw new HttpException('UNKNOWN_FIELD', 422);
+        }
+
+        return $data;
     }
 
     /** @return array<string,mixed> */

@@ -60,6 +60,7 @@ export async function acceptPhoto(
       originalGroupId: job.groupId,
       childCode: null,
       sequence: null,
+      assignments: [],
       code: '',
       filename: job.filename,
       bytes: job.bytes,
@@ -92,10 +93,19 @@ export async function assignPhotos(token: string, shootId: string, groupId: stri
       throw new Error('Выберите кадры одной группы. Обновите список.');
     let sequence = nextSequence(state.photos, groupId, code);
     for (const photo of chosen) {
-      if (photo.childCode !== code) {
-        photo.childCode = code;
-        photo.sequence = sequence++;
-        photo.code = photoCode(code, photo.sequence);
+      if (!photo.assignments.some((assignment) => assignment.childCode === code)) {
+        const assignment = {
+          childId: groupId + ':' + code,
+          childCode: code,
+          sequence: sequence++,
+          code: photoCode(code, sequence - 1)
+        };
+        photo.assignments.push(assignment);
+        if (!photo.childCode) {
+          photo.childCode = assignment.childCode;
+          photo.sequence = assignment.sequence;
+          photo.code = assignment.code;
+        }
         photo.revision++;
       }
     }
@@ -107,7 +117,7 @@ export async function chooseCover(token: string, shootId: string, groupId: strin
   return lock(() => {
     editableGroup(token, shootId, groupId);
     const state = readPhotos();
-    if (!state.photos.some((item) => item.id === photoId && item.groupId === groupId && item.childCode))
+    if (!state.photos.some((item) => item.id === photoId && item.groupId === groupId && item.assignments.length))
       throw new Error('Сначала назначьте кадр ребёнку в этой группе.');
     state.covers[groupId] = photoId;
     writePhotos(state);
