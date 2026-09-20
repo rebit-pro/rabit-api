@@ -10,6 +10,7 @@ use Morefoto\Commerce\Application\Conditions\Dto\SaveConditionsInputDto;
 use Morefoto\Commerce\Application\Conditions\Service\ConditionsProducts;
 use Morefoto\Commerce\Domain\Catalog\Exception\CatalogRevisionConflictException;
 use Morefoto\Commerce\Domain\Catalog\Repository\CatalogRepository;
+use Morefoto\Commerce\Domain\Conditions\Exception\InvalidConditionsException;
 use Morefoto\Commerce\Domain\Conditions\Exception\ConditionsRevisionConflictException;
 use Morefoto\Commerce\Domain\Conditions\Repository\SalesConditionsRepository;
 
@@ -35,6 +36,9 @@ final readonly class SaveGlobalConditionsUseCase
         $catalogue = $this->products->read($this->conditions->globalProducts());
         foreach ($this->products->validate($input, $catalogue, false) as $product) {
             $this->conditions->updateGlobalProduct($product);
+        }
+        if ($this->conditions->hasIncompatibleGroupOverrides()) {
+            throw new InvalidConditionsException('Global changes conflict with active group sales conditions.');
         }
         $catalogRevision = $this->catalogue->advanceRevision($catalogRevision);
         $revision = $this->conditions->advanceGlobal($input->revision, $input->effectiveGiftThreshold(), $input->giftForStaff);

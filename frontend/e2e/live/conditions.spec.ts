@@ -182,6 +182,20 @@ test('E3: общие и групповые условия проходят CAS, 
   const groupSaved = await body(await page.request.put(groupPath, { headers: await auth(page, key()), data: groupBody }));
   expect(groupSaved.data.revision).toBe(1);
   expect((await page.request.put(groupPath, { headers: await auth(page, key()), data: groupBody })).status()).toBe(409);
+  const globalBeforeConflict = (await body(await page.request.get(globalPath, { headers: await auth(page) }))).data as Conditions;
+  const conflictingGlobal = conditionBody(globalBeforeConflict, ids);
+  const bundleCondition = conflictingGlobal.products.find((product) => product.id === bundle.id);
+  expect(bundleCondition).toBeDefined();
+  bundleCondition!.active = false;
+  conflictingGlobal.giftEnabled = false;
+  conflictingGlobal.giftThreshold = 0;
+  conflictingGlobal.giftForStaff = false;
+  expect((await page.request.put(globalPath, { headers: await auth(page, key()), data: conflictingGlobal })).status()).toBe(422);
+  const globalAfterConflict = (await body(await page.request.get(globalPath, { headers: await auth(page) }))).data as Conditions;
+  expect(globalAfterConflict.revision).toBe(globalBeforeConflict.revision);
+  expect(globalAfterConflict.catalogRevision).toBe(globalBeforeConflict.catalogRevision);
+  expect(globalAfterConflict.products.find((product) => product.id === bundle.id)?.active).toBe(true);
+
   expect((await page.request.get(`/api/v1/groups/${crypto.randomUUID()}/conditions`, { headers: await auth(page) })).status()).toBe(404);
 
   const conditionsPage = `/cabinet/institutions/${structure.institution}/shoots/${structure.shoot}/conditions?group=${structure.group}`;
@@ -204,6 +218,29 @@ test('E3: общие и групповые условия проходят CAS, 
     )?.price
   ).toBe(17500);
   await page.screenshot({ path: testInfo.outputPath('desktop-group-conditions.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Изменить условия группы', exact: true }).click();
+  await page.getByLabel('Цена: E3 Печатный портрет', { exact: true }).fill('invalid');
+  await page.getByLabel('Наследовать общий прайс и предложения', { exact: true }).check();
+  const inheritSave = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === groupPath && response.request().method() === 'PUT'
+  );
+  await page.getByTestId('admin-dialog').getByRole('button', { name: 'Сохранить', exact: true }).click();
+  const inheritResponse = await inheritSave;
+  expect(inheritResponse.status()).toBe(200);
+  expect(inheritResponse.request().postDataJSON()).toMatchObject({
+    inherit: true,
+    products: [],
+    giftEnabled: false,
+    giftThreshold: 0,
+    giftForStaff: false
+  });
+  await expect(page.getByTestId('admin-dialog')).not.toBeVisible();
+  const inheritedAgain = (await body(await page.request.get(groupPath, { headers: await auth(page) }))).data as Conditions;
+  expect(inheritedAgain.inherit).toBe(true);
+  expect(inheritedAgain.giftThreshold).toBe(22500);
+  expect(inheritedAgain.products.find((product) => product.id === physical.id)?.price).toBe(10000);
+  await expect(page.getByText('Наследует общие условия.', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('conditions-summary')).toContainText(/225\s*₽/);
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();

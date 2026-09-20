@@ -42,6 +42,7 @@ function createCommand(source: ConditionsEditorSource): ConditionsCommand {
 }
 function validate(command: ConditionsCommand): ManagementErrors {
   const errors: ManagementErrors = {};
+  if (command.groupId && command.inherit) return errors;
   for (const product of command.products) {
     const price = moneyInputValue(product.price);
     if (price === null || price > 2147483647)
@@ -55,18 +56,21 @@ function validate(command: ConditionsCommand): ManagementErrors {
   return errors;
 }
 function attempt(command: ConditionsCommand): ConditionsAttempt {
+  const inherit = !!command.groupId && command.inherit;
   const body: ConditionsAttempt['body'] = {
     revision: command.revision,
     catalogRevision: command.catalogRevision,
-    products: command.products.map((product) => ({
-      id: product.id,
-      price: moneyInputValue(product.price)!,
-      active: product.active,
-      staffDiscount: product.staffDiscount
-    })),
-    giftEnabled: command.giftEnabled,
-    giftThreshold: command.giftEnabled ? moneyInputValue(command.giftThreshold)! : 0,
-    giftForStaff: command.giftEnabled && command.giftForStaff
+    products: inherit
+      ? []
+      : command.products.map((product) => ({
+          id: product.id,
+          price: moneyInputValue(product.price)!,
+          active: product.active,
+          staffDiscount: product.staffDiscount
+        })),
+    giftEnabled: !inherit && command.giftEnabled,
+    giftThreshold: !inherit && command.giftEnabled ? moneyInputValue(command.giftThreshold)! : 0,
+    giftForStaff: !inherit && command.giftEnabled && command.giftForStaff
   };
   if (command.groupId) {
     body.conditionsRevision = command.conditionsRevision;

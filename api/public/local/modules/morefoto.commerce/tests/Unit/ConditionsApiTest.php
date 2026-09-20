@@ -66,15 +66,20 @@ final class ConditionsApiTest extends TestCase
         self::assertSame((new ConditionsPayloadHash())->create($first->input), (new ConditionsPayloadHash())->create($second->input));
     }
 
-    public function testGroupContractRequiresInheritanceAndGlobalConditionsRevision(): void
+    public function testGroupInheritanceAcceptsCanonicalEmptyOverridePayload(): void
     {
         $payload = $this->payload();
         $payload['conditionsRevision'] = 3;
         $payload['inherit'] = true;
+        $payload['products'] = [];
+        $payload['giftEnabled'] = false;
+        $payload['giftThreshold'] = 0;
+        $payload['giftForStaff'] = false;
         $request = (new ConditionsRequestFactory())->save(json_encode($payload, JSON_THROW_ON_ERROR), 'application/json', self::KEY, [], true);
 
         self::assertSame(3, $request->input->conditionsRevision);
         self::assertTrue($request->input->inherit);
+        self::assertSame([], $request->input->products);
     }
 
     public function testReadRejectsBodyAndQuery(): void

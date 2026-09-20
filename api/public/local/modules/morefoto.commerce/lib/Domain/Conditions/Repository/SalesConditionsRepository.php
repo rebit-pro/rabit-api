@@ -45,6 +45,18 @@ final readonly class SalesConditionsRepository
             . ' ORDER BY p.UF_NAME ASC,p.ID ASC');
     }
 
+    public function hasIncompatibleGroupOverrides(): bool
+    {
+        return false !== $this->query(
+            'SELECT g.GROUP_ID FROM mf_group_sales_conditions g '
+            . 'LEFT JOIN mf_group_product_condition c ON c.GROUP_ID=g.GROUP_ID '
+            . 'LEFT JOIN b_hlbd_mf_product p ON p.UF_UUID=c.PRODUCT_UUID '
+            . 'WHERE g.INHERIT=0 GROUP BY g.GROUP_ID,g.GIFT_THRESHOLD '
+            . 'HAVING SUM(CASE WHEN c.ACTIVE=1 AND (p.UF_UUID IS NULL OR p.UF_ACTIVE=0) THEN 1 ELSE 0 END)>0 '
+            . "OR (g.GIFT_THRESHOLD>0 AND SUM(CASE WHEN c.ACTIVE=1 AND p.UF_ACTIVE=1 AND p.UF_KIND='bundle' THEN 1 ELSE 0 END)<>1) LIMIT 1",
+        )->fetch();
+    }
+
     public function updateGlobalProduct(ProductConditionInputDto $product): void
     {
         $this->execute('UPDATE b_hlbd_mf_product SET UF_PRICE=' . $product->price . ',UF_ACTIVE=' . (int)$product->active

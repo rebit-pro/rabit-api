@@ -38,8 +38,8 @@ final readonly class SaveGroupConditionsUseCase
             throw new ConditionsRevisionConflictException('Group sales conditions changed; reload before saving.');
         }
         $catalogue = $this->products->read($this->conditions->globalProducts());
-        $products = $this->products->validate($input, $catalogue, true);
-        $this->conditions->replaceGroupProducts($groupId, $input->inherit ? [] : $products);
+        $products = $input->inherit ? [] : $this->products->validate($input, $catalogue, true);
+        $this->conditions->replaceGroupProducts($groupId, $products);
         $revision = $this->conditions->saveGroup(
             groupId: $groupId,
             current: $revision,
