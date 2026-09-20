@@ -1,6 +1,6 @@
 # H1 — прогресс исправлений code review
 
-Текущее состояние: второй review завершён без замечаний; ветка готова к commit/push.
+Текущее состояние: второй review завершён без замечаний; ветка опубликована и готова к merge.
 
 ## Точка продолжения
 
@@ -8,14 +8,14 @@
 - PR: [#22](https://github.com/rebit-pro/rabit-api/pull/22).
 - Base: `c32b98e7c7407592c54c9ee382e994d7fa611955`.
 - Head до исправлений: `c21632c82b3c2851d283f078e37d5da73114d2a7`.
-- Завершено: четыре UseCase документированы; consumer/cron подключены к local/production runtime; Compose и полный disposable gate прошли.
-- Текущий шаг: commit/push проверенной реализации и журналов.
-- Следующий шаг: ответить в трёх inline-thread PR #22 и проверить OPEN/CLEAN на опубликованном head.
+- Основной коммит правок второго круга: `368f7502708d97aab6d35701da63d66b37d52385`.
+- Завершено: исправления опубликованы, три inline-thread получили ответы; PR проверен как OPEN/CLEAN.
+- Текущий шаг: второй круг H1 закрыт.
+- Следующий шаг: отдельно согласовать merge PR #22; deployment оставить до агрегированного этапа.
 - Блокеры: нет.
 - Открытое решение: по итогам review исправлять только блокирующие находки; неблокирующие оформлять отдельными Issues.
-- Состояние рабочего дерева: изменены четыре UseCase, local/production Compose, Makefile, cron, wave/task docs; fixture `rabit-e2e-86c215fce395` очищен без ошибок.
-- Команда продолжения: `git status --short && git diff -- .gitignore docs/plans/H1_reliable-email`.
-- Запланированная полная проверка: `python3 tools/run-browser-e2e.py run --php-cli rabit-api-php-cli:d1-local --php-fpm rabit-api-php-fpm:d1-local`.
+- Состояние рабочего дерева перед финальным docs-коммитом: чистое; fixture `rabit-e2e-86c215fce395` очищен без ошибок.
+- Команда продолжения: `gh pr view 22 --repo rebit-pro/rabit-api --json state,mergeStateStatus,headRefOid,url`.
 
 ## 2026-09-20 — второй круг review
 
@@ -27,6 +27,15 @@
 - Makefile dry-run подтвердил queue-up, one-shot consumer и dispatch; crontab содержит ежеминутный recovery без `--include-unknown`.
 - Полный прогон `rabit-e2e-86c215fce395`: frontend check/158 unit/build — PASS; PHP lint/PHPStan — PASS; PHPUnit 388/1209 — PASS; Notification integration — PASS; Chromium 42/42 — PASS; cleanup — PASS.
 - PHP CS Fixer dry-run: 0/4; второй review полного delta завершён, блокирующих и неблокирующих находок нет, поэтому новые Issues не создавались.
+
+## 2026-09-20 — публикация второго круга
+
+- Коммит реализации `368f7502708d97aab6d35701da63d66b37d52385` отправлен в `codex/h1-reliable-email`.
+- Ответы: [runtime wiring](https://github.com/rebit-pro/rabit-api/pull/22#discussion_r4057154613),
+  [русские phpDoc](https://github.com/rebit-pro/rabit-api/pull/22#discussion_r4057154545),
+  [plan/progress](https://github.com/rebit-pro/rabit-api/pull/22#discussion_r4057154525).
+- Итог второго review: [issuecomment-5750363933](https://github.com/rebit-pro/rabit-api/pull/22#issuecomment-5750363933).
+- GitHub подтвердил PR #22 как `OPEN/CLEAN` на опубликованном head; merge и deployment не выполнялись.
 
 ## Результаты проверок
 

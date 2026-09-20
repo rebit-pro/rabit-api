@@ -1,6 +1,6 @@
 {
   "wave": "H1",
-  "status": "ready-for-push",
+  "status": "ready-for-merge",
   "date": "2026-09-20",
   "branch": "codex/h1-reliable-email",
   "base": "c32b98e7c7407592c54c9ee382e994d7fa611955",
@@ -87,7 +87,7 @@
     "playwright": "1.52.0"
   },
   "publication": {
-    "status": "PR open",
+    "status": "PR open; second-round review clean",
     "url": "https://github.com/rebit-pro/rabit-api/pull/22",
     "merged": false,
     "deployed": false,
@@ -95,5 +95,5 @@
     "deploymentPolicy": "aggregate later wave checkpoint"
   },
   "complete": true,
-  "completeMeaning": "Implementation, second-round fixes and required local acceptance complete; second review, merge and aggregate deployment are tracked separately."
+  "completeMeaning": "Implementation, publication and second-round local acceptance complete; merge and aggregate deployment are tracked separately."
 }

@@ -1,6 +1,6 @@
 # H1 — исправления второго круга code review
 
-Статус: исправления выполняются. Ветка `codex/h1-reliable-email`, PR [#22](https://github.com/rebit-pro/rabit-api/pull/22), base `c32b98e7c7407592c54c9ee382e994d7fa611955`.
+Статус: второй круг review завершён; ветка `codex/h1-reliable-email` опубликована в PR [#22](https://github.com/rebit-pro/rabit-api/pull/22) и готова к merge.
 
 ## Цель
 
@@ -41,7 +41,7 @@
 - [x] Проверить оба Compose-конфига, cron и команды Makefile.
 - [x] Выполнить PHP lint/style/PHPStan/PHPUnit, интеграционный round-trip и полный disposable browser E2E.
 - [x] Выполнить второй review полного diff; блокирующие находки исправить, неблокирующие оформить отдельными Issues.
-- [ ] Закоммитить, отправить ветку, ответить на inline-комментарии и актуализировать progress/verification.
+- [x] Закоммитить, отправить ветку, ответить на inline-комментарии и актуализировать progress/verification.
 
 ## Риски и ограничения
 
