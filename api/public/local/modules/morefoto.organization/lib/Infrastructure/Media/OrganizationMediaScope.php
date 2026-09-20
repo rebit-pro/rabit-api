@@ -23,6 +23,7 @@ final readonly class OrganizationMediaScope implements MediaScopeInterface
         }
         $groupInternalId = null;
         $groupPublicId = null;
+        $groupEditable = false;
         if (null !== $groupId) {
             $group = $this->structures->group(new StructureId($groupId))->fetch();
             if (!is_array($group) || (int)$group['UF_SHOOT_ID'] !== (int)$shoot['ID']) {
@@ -30,6 +31,7 @@ final readonly class OrganizationMediaScope implements MediaScopeInterface
             }
             $groupInternalId = (int)$group['ID'];
             $groupPublicId = (string)$group['UF_PUBLIC_ID'];
+            $groupEditable = null === $group['UF_SENT_AT'];
         }
 
         return new MediaScopeOutputDto(
@@ -38,6 +40,7 @@ final readonly class OrganizationMediaScope implements MediaScopeInterface
             shootPublicId: (string)$shoot['UF_PUBLIC_ID'],
             groupId: $groupInternalId,
             groupPublicId: $groupPublicId,
+            groupEditable: $groupEditable,
         );
     }
 

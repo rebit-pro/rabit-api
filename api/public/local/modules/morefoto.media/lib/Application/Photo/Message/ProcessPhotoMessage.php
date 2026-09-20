@@ -8,13 +8,13 @@ use Rebit\Share\Application\Contract\Messenger\AbstractMessage;
 
 final readonly class ProcessPhotoMessage extends AbstractMessage
 {
-    public function __construct(public string $photoId)
+    public function __construct(public string $photoId, public int $revision)
     {
         parent::__construct();
     }
 
     public function getDeduplicationKey(): string
     {
-        return 'media:' . $this->photoId;
+        return 'media:' . $this->photoId . ':' . $this->revision;
     }
 }

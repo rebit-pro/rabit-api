@@ -12,5 +12,6 @@ final readonly class MediaScopeOutputDto
         public string $shootPublicId,
         public ?int $groupId,
         public ?string $groupPublicId,
+        public bool $groupEditable,
     ) {}
 }

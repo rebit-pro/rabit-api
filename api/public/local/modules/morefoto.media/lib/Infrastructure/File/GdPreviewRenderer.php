@@ -17,7 +17,7 @@ final readonly class GdPreviewRenderer implements PreviewRendererInterface
 
     public function render(string $originalPath, string $mimeType, string $photoId): PreviewOutputDto
     {
-        if (!extension_loaded('gd') || !is_file($originalPath)) {
+        if (!extension_loaded('gd') || !function_exists('imagewebp') || !is_file($originalPath)) {
             throw new MediaStorageException('Image renderer is unavailable.');
         }
         $source = match ($mimeType) {

@@ -20,7 +20,7 @@ final readonly class DispatchPendingPhotoJobsUseCase
         $result = $this->photos->pendingJobs($limit);
         while (false !== ($row = $result->fetch())) {
             $photoId = (string)$row['UF_PUBLIC_ID'];
-            $this->publisher->process($photoId);
+            $this->publisher->process($photoId, (int)$row['UF_REVISION']);
             $this->photos->markPublished($photoId);
             ++$published;
         }

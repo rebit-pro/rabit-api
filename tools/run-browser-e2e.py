@@ -70,6 +70,16 @@ def start(args):
     state = {"id": identity, "report": str(report), "source": str(ROOT), "containers": [], "networks": [], "volumes": [], "stopped": False}
     save(state)
     try:
+        if args.php_cli is None:
+            args.php_cli = "rabit-api-e2e-php-cli:local"
+            print("Building checkout PHP CLI image", flush=True)
+            docker("build", "--tag", args.php_cli, "--file", str(ROOT / "api/docker/development/php-cli/Dockerfile"),
+                   str(ROOT / "api/docker"), log=report / "php-cli-build.log", timeout=1800)
+        if args.php_fpm is None:
+            args.php_fpm = "rabit-api-e2e-php-fpm:local"
+            print("Building checkout PHP-FPM image", flush=True)
+            docker("build", "--tag", args.php_fpm, "--file", str(ROOT / "api/docker/development/php-fpm/Dockerfile"),
+                   str(ROOT / "api/docker"), log=report / "php-fpm-build.log", timeout=1800)
         kernel = Path(args.kernel).resolve()
         vendor = Path(args.vendor).resolve()
         for source in [kernel / "modules/main/install/mysql/install.sql", kernel / "routing_index.php", vendor / "autoload.php", ROOT / "frontend/package-lock.json"]:
@@ -77,6 +87,10 @@ def start(args):
                 raise RuntimeError("Missing dependency: " + str(source))
         for image in [IMAGE, args.php_cli, args.php_fpm, args.nginx, args.mysql, "nginx:1.29-alpine", RABBITMQ_IMAGE]:
             docker("image", "inspect", image)
+        capability_check = "if (!function_exists('imagewebp')) { fwrite(STDERR, 'GD WebP support is required.\\n'); exit(1); }"
+        for role, image in [("php-cli", args.php_cli), ("php-fpm", args.php_fpm)]:
+            docker("run", "--rm", "--network", "none", "--entrypoint", "php", image, "-r", capability_check,
+                   log=report / (role + "-capability.log"))
         label = LABEL + "=" + identity
         for suffix in ["private", "browser"]:
             name = identity + "-" + suffix
@@ -214,8 +228,8 @@ def main():
     parser.add_argument("--state", type=Path)
     parser.add_argument("--kernel", default=os.environ.get("E2E_KERNEL_ROOT", "/home/user/rebit-p2p/api/public/bitrix"))
     parser.add_argument("--vendor", default=os.environ.get("E2E_VENDOR_ROOT", "/home/user/rebit-p2p/api/vendor"))
-    parser.add_argument("--php-cli", default=os.environ.get("E2E_PHP_CLI_IMAGE", "rabit-api-php-fpm:20260911-074507"))
-    parser.add_argument("--php-fpm", default=os.environ.get("E2E_PHP_FPM_IMAGE", "rabit-api-php-fpm:20260911-074507"))
+    parser.add_argument("--php-cli", default=os.environ.get("E2E_PHP_CLI_IMAGE"))
+    parser.add_argument("--php-fpm", default=os.environ.get("E2E_PHP_FPM_IMAGE"))
     parser.add_argument("--nginx", default=os.environ.get("E2E_NGINX_IMAGE", "rabit-api-nginx:20260911-074507"))
     parser.add_argument("--mysql", default=os.environ.get("E2E_MYSQL_IMAGE", "mysql:8.0"))
     args = parser.parse_args()

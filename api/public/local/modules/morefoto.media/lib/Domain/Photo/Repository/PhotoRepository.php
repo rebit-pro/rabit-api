@@ -127,7 +127,7 @@ final readonly class PhotoRepository
             throw new \InvalidArgumentException('Invalid pending job limit.');
         }
 
-        return $this->query("SELECT UF_PUBLIC_ID FROM b_hlbd_mf_photo WHERE UF_STATUS='processing' AND UF_JOB_STATE='pending' ORDER BY ID LIMIT {$limit}");
+        return $this->query("SELECT UF_PUBLIC_ID,UF_REVISION FROM b_hlbd_mf_photo WHERE UF_STATUS='processing' AND UF_JOB_STATE='pending' ORDER BY ID LIMIT {$limit}");
     }
 
     public function markPublished(string $publicId): void

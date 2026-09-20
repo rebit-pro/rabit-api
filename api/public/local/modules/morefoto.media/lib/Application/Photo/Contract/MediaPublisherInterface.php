@@ -6,5 +6,5 @@ namespace Morefoto\Media\Application\Photo\Contract;
 
 interface MediaPublisherInterface
 {
-    public function process(string $photoId): void;
+    public function process(string $photoId, int $revision): void;
 }

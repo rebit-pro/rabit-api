@@ -12,8 +12,8 @@ final readonly class MediaPublisher implements MediaPublisherInterface
 {
     public function __construct(private MessagePublisherInterface $publisher) {}
 
-    public function process(string $photoId): void
+    public function process(string $photoId, int $revision): void
     {
-        $this->publisher->dispatch(new ProcessPhotoMessage($photoId), 30);
+        $this->publisher->dispatch(new ProcessPhotoMessage($photoId, $revision), 30);
     }
 }

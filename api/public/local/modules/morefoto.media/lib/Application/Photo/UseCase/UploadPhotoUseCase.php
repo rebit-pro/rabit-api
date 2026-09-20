@@ -12,6 +12,7 @@ use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
 use Ramsey\Uuid\Uuid;
 use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
+use Rebit\Share\Shared\Exception\HttpException;
 
 final readonly class UploadPhotoUseCase
 {
@@ -38,6 +39,9 @@ final readonly class UploadPhotoUseCase
         if (null === $scope->groupId) {
             throw new \LogicException('Resolved media group is missing.');
         }
+        if (!$scope->groupEditable) {
+            throw new HttpException('GROUP_MEDIA_LOCKED', 409);
+        }
         $photo = $this->inspector->inspect($tmpName, $filename, $bytes, $clientFingerprint);
         $originalPath = $this->storage->store($scope->shootPublicId, $photo);
         try {
@@ -56,7 +60,7 @@ final readonly class UploadPhotoUseCase
         }
         if ($registration->processingRequired) {
             try {
-                $this->publisher->process($registration->publicId);
+                $this->publisher->process($registration->publicId, $registration->revision);
                 $this->photos->markPublished($registration->publicId);
             } catch (\Throwable) {
                 // The durable pending marker is replayed by app:media:dispatch-pending.
