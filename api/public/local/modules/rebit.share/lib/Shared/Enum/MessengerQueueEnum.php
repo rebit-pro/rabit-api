@@ -7,6 +7,7 @@ namespace Rebit\Share\Shared\Enum;
 enum MessengerQueueEnum: string
 {
     case AUDIT = 'audit';
+    case MEDIA_PROCESSING = 'mediaProcessing';
     case FAILED = 'messengerFailed';
 
     /**

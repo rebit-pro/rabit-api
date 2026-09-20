@@ -11,6 +11,7 @@ use Morefoto\Organization\Application\Structure\UseCase\GetShootUseCase;
 use Morefoto\Organization\Application\Structure\UseCase\SaveShootUseCase;
 use Morefoto\Organization\Application\Structure\UseCase\SaveGroupUseCase;
 use Morefoto\Organization\Domain\Institution\Repository\InstitutionOperationRepository;
+use Morefoto\Organization\Infrastructure\Media\OrganizationMediaScope;
 use Morefoto\Organization\Domain\Structure\Repository\StructureRepository;
 use Morefoto\Organization\Infrastructure\Routing\StructureRouteParameters;
 use Morefoto\Organization\Presentation\Controller\StructureController;
@@ -19,6 +20,7 @@ use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Contracts\Access\GroupAccessInterface;
 use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
 use Rebit\Share\Contracts\Organization\GroupReferenceInterface;
+use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 
 $services = [
     StructureRepository::class => ['className' => StructureRepository::class],
@@ -27,6 +29,11 @@ $services = [
     GroupReferenceInterface::class => [
         'constructor' => static fn(): GroupReferenceInterface => new GroupReference(ServiceLocator::getInstance()->get(StructureRepository::class)),
     ],
+];
+$services[MediaScopeInterface::class] = [
+    'constructor' => static fn(): MediaScopeInterface => new OrganizationMediaScope(
+        ServiceLocator::getInstance()->get(StructureRepository::class),
+    ),
 ];
 $dependencies = [
     ListShootsUseCase::class => [StructureRepository::class, InstitutionAccessInterface::class, TokenResolverInterface::class],

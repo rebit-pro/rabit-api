@@ -27,6 +27,9 @@ final class PermissionPolicyTest extends TestCase
     {
         yield 'organizer reads any institution' => [Role::ORGANIZER, Permission::INSTITUTION_READ, 99, null, true];
         yield 'organizer manages staff' => [Role::ORGANIZER, Permission::STAFF_MANAGE, null, null, true];
+        yield 'organizer manages private media' => [Role::ORGANIZER, Permission::MEDIA_MANAGE, 99, 999, true];
+        yield 'curator cannot manage private media' => [Role::CURATOR, Permission::MEDIA_MANAGE, 11, 21, false];
+        yield 'teacher cannot manage private media' => [Role::TEACHER, Permission::MEDIA_MANAGE, 11, 21, false];
         yield 'curator own institution' => [Role::CURATOR, Permission::INSTITUTION_READ, 11, null, true];
         yield 'group without verified ancestry' => [Role::CURATOR, Permission::GROUP_READ, null, 21, false];
         yield 'curator foreign institution' => [Role::CURATOR, Permission::INSTITUTION_READ, 12, null, false];

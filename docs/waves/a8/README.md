@@ -20,7 +20,7 @@ Demo-регресс завершён: покрыты 451 сценарий / 1537
 
 По умолчанию берутся `/home/user/rebit-p2p/api/public/bitrix` и `/home/user/rebit-p2p/api/vendor`. Другие каталоги задаются `E2E_KERNEL_ROOT`/`E2E_VENDOR_ROOT` или аргументами `--kernel`/`--vendor` скрипта.
 
-Образы: `mcr.microsoft.com/playwright:v1.52.0-jammy`, `mysql:8.0`, `nginx:1.29-alpine` и локальные `rabit-api-php-fpm` и `rabit-api-nginx` с тегом `20260911-074507`. Образ FPM содержит PHP CLI и Composer; проверки CLI используют его с переопределённой точкой входа. Собственные образы задаются через `E2E_PHP_CLI_IMAGE`, `E2E_PHP_FPM_IMAGE`, `E2E_NGINX_IMAGE`, `E2E_MYSQL_IMAGE`. Для npm ci нужен доступ к registry; backend-тесты работают без внешней сети. Node/Chromium ограничены двумя CPU и 3 ГиБ памяти; MySQL — 1 ГиБ, PHP-проверки — 1,5 ГиБ. Браузерный набор выполняется одним worker.
+Образы: `mcr.microsoft.com/playwright:v1.52.0-jammy`, `mysql:8.0`, `nginx:1.29-alpine`, `rabit-api-nginx:20260911-074507` и PHP CLI/FPM, которые по умолчанию собираются из Dockerfile текущего checkout. Перед стендом runner отдельно проверяет WebP capability обоих PHP-образов. Готовые образы можно задать через `E2E_PHP_CLI_IMAGE`, `E2E_PHP_FPM_IMAGE`, `E2E_NGINX_IMAGE`, `E2E_MYSQL_IMAGE`; это также позволяет повторить прогон офлайн после предварительной сборки. Для npm ci и первичной сборки PHP нужен доступ к registry; backend-тесты после подготовки работают без внешней сети. Node/Chromium ограничены двумя CPU и 3 ГиБ памяти; MySQL — 1 ГиБ, PHP-проверки — 1,5 ГиБ. Браузерный набор выполняется одним worker.
 
 ```sh
 make test-e2e

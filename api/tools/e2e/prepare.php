@@ -17,22 +17,24 @@ require_once '/kernel/modules/highloadblock/install/index.php';
 if (!(new highloadblock())->InstallDB()) {
     throw new RuntimeException('Cannot install test highloadblock schema.');
 }
-foreach (['morefoto.access', 'morefoto.commerce', 'morefoto.organization', 'rebit.notification', 'rebit.leadhunter'] as $module) {
+foreach (['morefoto.access', 'morefoto.commerce', 'morefoto.organization', 'morefoto.media', 'rebit.notification', 'rebit.leadhunter'] as $module) {
     symlink('/app/public/local/modules/' . $module, $fixture['documentRoot'] . '/local/modules/' . $module);
 }
 ob_start();
 try {
-    foreach (['20260323120001', '20260326120008', '20260911120001', '20260911200001', '20260911210001', '20260911220001', '20260912210001', '20260912220001', '20260913010001', '20260913010002', '20260919090001', '20260919100001'] as $id) {
+    foreach (['20260323120001', '20260326120008', '20260911120001', '20260911200001', '20260911210001', '20260911220001', '20260912210001', '20260912220001', '20260913010001', '20260913010002', '20260919090001', '20260919100001', '20260919130001'] as $id) {
         require_once '/app/public/local/php_interface/migrations.foundation/Version' . $id . '.php';
         $class = 'Sprint\Migration\Version' . $id;
         (new $class())->up();
     }
     require '/app/public/local/modules/morefoto.commerce/install/index.php';
     (new Morefoto_Commerce())->DoInstall();
+    require '/app/public/local/modules/morefoto.media/install/index.php';
+    (new Morefoto_Media())->DoInstall();
 } finally {
     ob_end_clean();
 }
-foreach (['rebit.share', 'rebit.auth', 'morefoto.access', 'morefoto.commerce', 'morefoto.organization'] as $module) {
+foreach (['rebit.share', 'rebit.auth', 'morefoto.access', 'morefoto.commerce', 'morefoto.organization', 'morefoto.media'] as $module) {
     if (!Loader::includeModule($module)) {
         throw new RuntimeException('Cannot load fixture module.');
     }
@@ -107,4 +109,19 @@ foreach (['bitrix/cache', 'bitrix/managed_cache', 'bitrix/stack_cache', 'bitrix/
     mkdir('/runtime/public/' . $directory, 0777, true);
     chmod('/runtime/public/' . $directory, 0777);
 }
-echo "Disposable Auth/Access/Commerce/Organization fixture ready; catalogue and institutions are empty.\n";
+$runtimeUser = posix_getpwnam('www-data');
+$runtimeUid = is_array($runtimeUser) ? (int)$runtimeUser['uid'] : 1000;
+$runtimeGid = is_array($runtimeUser) ? (int)$runtimeUser['gid'] : 1000;
+foreach ([
+    ['/runtime/private', 0700],
+    ['/runtime/private/media', 0700],
+    ['/runtime/public/upload/morefoto/previews', 0755],
+] as [$directory, $mode]) {
+    if (!is_dir($directory) && !mkdir($directory, $mode, true) && !is_dir($directory)) {
+        throw new RuntimeException('Cannot create media runtime directory.');
+    }
+    if (!chown($directory, $runtimeUid) || !chgrp($directory, $runtimeGid) || !chmod($directory, $mode)) {
+        throw new RuntimeException('Cannot secure media runtime directory.');
+    }
+}
+echo "Disposable Auth/Access/Commerce/Organization/Media fixture ready; catalogue, institutions and photos are empty.\n";

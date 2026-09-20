@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
+    libwebp-dev \
     libzip-dev \
     libonig-dev \
     libicu-dev \
@@ -18,7 +19,7 @@ RUN apt-get update && apt-get install -y \
     git \
     gnupg2 \
     msmtp \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install \
         gd \
         bcmath \
@@ -40,7 +41,7 @@ RUN apt update && apt install -y iputils-ping
 
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
  && apt-get install -y nodejs \
- && npm install -g npm@latest \
+ && npm install -g npm@10.9.4 \
  && npm cache clean --force
 
 # Включаем нужные настройки PHP

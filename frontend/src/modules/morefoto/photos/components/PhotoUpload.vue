@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { shallowRef } from 'vue';
+import { isMockApiEnabled } from '@/mocks/config';
 import type { UploadJob } from '../types';
 import type { ManagedGroup } from '../../organization/types';
 import { writeDemo } from '../../mocks/storage';
@@ -25,11 +26,14 @@ function choose(files: File | File[] | null) {
 </script>
 <template>
   <section class="mf-panel" aria-labelledby="upload-heading">
-    <h2 id="upload-heading">Подготовить фотографии</h2>
+    <h2 id="upload-heading">{{ isMockApiEnabled ? 'Подготовить фотографии' : 'Загрузить фотографии' }}</h2>
     <p class="mf-muted mt-2 mb-5">Файлы попадут в группу «{{ groupName }}». JPEG, PNG, WebP · до 25 МБ и 40 Мп · до 50 файлов за раз.</p>
-    <v-alert type="info" variant="tonal" class="mb-5"
+    <v-alert v-if="isMockApiEnabled" type="info" variant="tonal" class="mb-5"
       >Демонстрация: создаём превью с водяным знаком в этом браузере. Файлы не отправляются на сервер; исходники сохраните у себя.</v-alert
     >
+    <v-alert v-else type="info" variant="tonal" class="mb-5">
+      Исходник отправляется в приватное хранилище. В интерфейсе публикуются только защищённые превью с водяным знаком.
+    </v-alert>
     <v-file-input
       :model-value="input"
       multiple
@@ -40,7 +44,9 @@ function choose(files: File | File[] | null) {
       @update:model-value="choose"
     />
     <div class="mf-actions mt-5">
-      <v-btn :disabled="!queued || busy || disabled" :loading="busy" @click="$emit('start')">Начать подготовку</v-btn
+      <v-btn :disabled="!queued || busy || disabled" :loading="busy" @click="$emit('start')">{{
+        isMockApiEnabled ? 'Начать подготовку' : 'Загрузить на сервер'
+      }}</v-btn
       ><v-btn variant="outlined" :disabled="busy || !jobs.some((job) => ['done', 'duplicate'].includes(job.status))" @click="$emit('clear')"
         >Убрать завершённые из очереди</v-btn
       >
@@ -50,7 +56,7 @@ function choose(files: File | File[] | null) {
     </p>
     <v-alert v-if="error" type="error" variant="tonal" role="alert" class="mt-4">{{ error }}</v-alert>
     <UploadQueue :jobs="jobs" :busy="busy" :groups="groups" @retry="$emit('retry', $event)" @remove="$emit('remove', $event)" />
-    <details class="upload-demo">
+    <details v-if="isMockApiEnabled" class="upload-demo">
       <summary>Проверка демонстрации</summary>
       <v-btn variant="text" :disabled="busy" @click="writeDemo('photos:fail-next', true)">Ошибка следующего файла</v-btn>
     </details>
