@@ -2,14 +2,14 @@
 
 ## Точка продолжения
 
-- Ветка `codex/role-dashboard-plan`; base/main/origin/main `8cba22c7655b5886d5fe663523214bcd059e674b`; HEAD до коммита совпадает с base.
-- PR этой задачи ещё не создан; пользователь явно запросил отдельный плановый PR. #35 — отдельный план СберПэй, не base и не runtime-зависимость.
+- Ветка `codex/role-dashboard-plan`; base/main/origin/main `8cba22c7655b5886d5fe663523214bcd059e674b`; план опубликован коммитом d3be2f2, текущий HEAD — коммит с записью PR (`git rev-parse HEAD`).
+- PR: https://github.com/rebit-pro/rabit-api/pull/36 — открыт в main. #35 — отдельный план СберПэй, не base и не runtime-зависимость.
 - Документы: `plan.md`, `docs/waves/graph.json` (N1), соседний MoreFoto `docs/04-bitrix-modules/backend-waves.json` и `docs/05-rest-api/README.md`.
 - Завершено: исследование существующего кабинета, областей Access, N1 и UI токенов; создана ветка, описаны роли/метрики/инфографика/ссылки/тест-кейсы.
-- Сейчас: план и N1 готовы, публикация отдельного PR в main.
-- Следующий шаг: commit/push и создание PR только с планом, затем остановиться по просьбе пользователя.
+- Сейчас: плановый срез завершён, PR #36 опубликован и прикреплён к задаче Codex; реализация отложена.
+- Следующий шаг: review планового PR #36. Реализацию сейчас не начинать; вернуться отдельной задачей при готовности N1 и её зависимостей.
 - Реализация отложена по просьбе пользователя; N1 planned, нужны её слитые зависимости и решения. Для текущего планового PR блокеров нет.
-- Дерево перед commit: plan/progress, только требования N1 в graph.json, `docs/waves/role-dashboard/morefoto-plan-sync.patch` и verification.json. Продуктовые исходники не меняются. Локальные изменения СберПэй в соседнем MoreFoto сохранены; в эту ветку не перенесены.
+- Ветка содержит только plan/progress, требования N1 в graph.json, `docs/waves/role-dashboard/morefoto-plan-sync.patch` и verification.json. Перед финальным push изменяются только P6 и журнал; после push проверить чистое дерево. Локальные изменения СберПэй в соседнем MoreFoto сохранены и не входят в PR #36.
 - Проверки: `python3 tools/verify-wave-graph.py docs/waves/graph.json`; канонический `wave_graph.py`; scoped comparison N1; `git diff --cached --check`.
 
 ## 2026-09-21 — Исследование и рамки
@@ -30,7 +30,7 @@
 | DOC-02 | PASS | 2026-09-21 | `python3 tools/verify-wave-graph.py docs/waves/graph.json`: 40 волн, 99 ID, 35 WNN, 10 negative fixtures |
 | DOC-03 | PASS | 2026-09-21 | `python3 /home/user/MoreFoto/docs/04-bitrix-modules/wave_graph.py /home/user/MoreFoto/docs/04-bitrix-modules/backend-waves.json` + scoped assertions: N1 одинаков, кроме N1 обе копии неизменны, ID/edges/statuses сохранены |
 | DOC-04 | PASS | 2026-09-21 | `python3 /home/user/MoreFoto/docs/04-bitrix-modules/render-waves.py` дважды — одинаковые байты; `git -C /home/user/MoreFoto apply --check --reverse /home/user/rabit-api/docs/waves/role-dashboard/morefoto-plan-sync.patch` — exit 0 |
-| DOC-05 | PENDING | 2026-09-21 | Перед/после публикации |
+| DOC-05 | PASS | 2026-09-21 | Staged `git diff --cached --check` PASS, только 5 документов; push успешен; `gh pr view 36 --repo rebit-pro/rabit-api --json url,state,baseRefName,headRefName,headRefOid`: OPEN, main ← codex/role-dashboard-plan |
 | UX-01 | PENDING | 2026-09-21 | Плановый PR: реализация/тесты этого сценария не выполнялись |
 | UX-02 | PENDING | 2026-09-21 | Плановый PR: реализация/тесты этого сценария не выполнялись |
 | UX-03 | PENDING | 2026-09-21 | Плановый PR: реализация/тесты этого сценария не выполнялись |
@@ -56,3 +56,9 @@
 Первый `git diff --cached --check` вернул FAIL: пустая строка контекста в конце unified patch распознана как новая пустая строка EOF. Patch пересобран с двумя строками контекста вместо трёх; целевые изменения JSON/Markdown не менялись. Повторный reverse-check на канонических файлах PASS. Staged whitespace повторяется после обновления артефакта.
 
 Финальная staged-проверка `git diff --cached --check` — PASS. `git diff --cached --stat`: 5 документов, продуктовых файлов нет. `git merge-base HEAD origin/main` = 8cba22c, до первого собственного коммита `git log origin/main..HEAD` пуст — ветка независима. DOC-05: локальная часть PASS, удалённая проверка выполняется после создания PR. Следующий шаг — commit/push/create через настроенный gh; P6 пока ожидает URL PR.
+
+## 2026-09-21 — Публикация и завершение
+
+Создан коммит d3be2f2 с планом/графом/артефактами. HTTPS push через gh credential helper успешен; `gh pr create --repo rebit-pro/rabit-api --base main --head codex/role-dashboard-plan --title 'План дашбордов организатора и куратора MoreFoto' --body-file /tmp/rabit-role-dashboard-pr-body.md` создал https://github.com/rebit-pro/rabit-api/pull/36. PR прикреплён к текущей задаче.
+
+DOC-01–DOC-05 PASS, P1–P6 закрыты. UX-01–UX-11 остаются ожидаемыми проверками будущей реализации и не запускались. Финальная запись журнала отправляется отдельным коммитом; после push проверить headRefOid и `git status --short`. Merge, UI/API-реализация и deployment не выполняются. На этом работа останавливается согласно просьбе пользователя.
