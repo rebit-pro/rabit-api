@@ -17,8 +17,11 @@ use Morefoto\Handoff\Presentation\Result\StaffRequestResultMapper;
 use Rebit\Share\Contracts\Access\StaffRequestAccessInterface;
 use Rebit\Share\Contracts\Media\StaffChildReferenceInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
+use Morefoto\Handoff\Infrastructure\Gallery\StaffEligibility;
+use Rebit\Share\Contracts\Handoff\StaffEligibilityInterface;
 
 $services = [
+    StaffEligibilityInterface::class => ['constructor' => static fn(): StaffEligibilityInterface => new StaffEligibility()],
     StaffRequestInputMapper::class => ['className' => StaffRequestInputMapper::class],
     StaffRequestResultMapper::class => ['className' => StaffRequestResultMapper::class],
     HandoffTransactionInterface::class => ['constructor' => static fn(): HandoffTransactionInterface => new BitrixHandoffTransaction()],

@@ -216,12 +216,19 @@ def test_live(state):
     if state["stopped"]:
         raise RuntimeError("The E2E fixture has been stopped")
     owned("network", state["private"], state["id"])
+    print("Preparing E4 gallery fixture through internal lifecycle", flush=True)
+    docker("exec", state["id"] + "-fpm", "php", "/app/tools/e2e/prepare-storefront.php", log=Path(state["report"], "storefront-fixture.log"))
+    (ROOT / "frontend/var").mkdir(exist_ok=True)
+    docker("cp", state["id"] + "-fpm:/runtime/e4-fixture.json", str(ROOT / "frontend/var/e4-fixture.json"))
     print("Running real browser E2E", flush=True)
     docker("run", "--rm", "--network", "container:" + state["id"] + "-frontend", "--shm-size=1g", *state["nodeArgs"], "--env", "E2E_BASE_URL=http://127.0.0.1", IMAGE, "npm", "run", "test:e2e:live", log=Path(state["report"], "browser.log"))
     results = json.loads((ROOT / "frontend/reports/e2e-live/results.json").read_text())
     stats = results["stats"]
     if stats["unexpected"] or stats["skipped"] or stats["expected"] < 34:
         raise RuntimeError("Browser gate incomplete: " + json.dumps(stats))
+    output = docker("exec", state["id"] + "-fpm", "php", "/app/tools/e2e/verify-storefront.php", log=Path(state["report"], "storefront-integration.log"))
+    if "E4 integration passed" not in output:
+        raise RuntimeError("Storefront integration did not complete")
     state["browser"] = stats
     save(state)
     print("Browser scenarios passed: " + str(stats["expected"]), flush=True)

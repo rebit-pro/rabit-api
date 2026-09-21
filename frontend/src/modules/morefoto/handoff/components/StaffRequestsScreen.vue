@@ -84,7 +84,7 @@ function change(value: Partial<StaffCommand>) {
   <header class="handoff-heading">
     <div>
       <p class="mf-eyebrow">РАБОТА С УЧРЕЖДЕНИЕМ</p>
-      <h1>{{ route.params.requestId ? 'Список сотрудников' : 'Списки сотрудников' }}</h1>
+      <h1>{{ route.params.requestId ? 'Заявка на список сотрудников' : 'Заявки на списки сотрудников' }}</h1>
       <p class="mf-muted">Проверка детей сотрудников и перенос полных наборов.</p>
     </div>
     <v-btn v-if="!route.params.requestId && createAllowed" @click="open('submit')">Новый список</v-btn>

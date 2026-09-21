@@ -65,7 +65,7 @@ const rows = computed(
           >Условия групп</v-btn
         >
         <v-btn variant="outlined" :to="{ path: '/cabinet/links', query: { shoot: shoot.id } }">Ссылки и сроки</v-btn>
-        <v-btn variant="outlined" :to="{ path: '/cabinet/staff-requests', query: { shoot: shoot.id } }">Списки сотрудников</v-btn>
+        <v-btn variant="outlined" :to="{ path: '/cabinet/staff-requests', query: { shoot: shoot.id } }">Заявки на списки сотрудников</v-btn>
         <v-btn prepend-icon="mdi-plus" @click="editor?.open({ kind: 'group', parentId: shoot.id })">Новая группа</v-btn
         ><v-btn variant="outlined" @click="editor?.open({ kind: 'shoot', id: shoot.id, parentId: institution.id })"
           >Редактировать съёмку</v-btn

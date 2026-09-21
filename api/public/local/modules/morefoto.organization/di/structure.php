@@ -21,8 +21,13 @@ use Rebit\Share\Contracts\Access\GroupAccessInterface;
 use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
 use Rebit\Share\Contracts\Organization\GroupReferenceInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
+use Morefoto\Organization\Infrastructure\Media\GalleryGroup;
+use Rebit\Share\Contracts\Organization\GalleryGroupInterface;
 
 $services = [
+    GalleryGroupInterface::class => [
+        'constructor' => static fn(): GalleryGroupInterface => new GalleryGroup(),
+    ],
     StructureRepository::class => ['className' => StructureRepository::class],
     StructureRequestFactory::class => ['className' => StructureRequestFactory::class],
     StructureRouteParameters::class => ['className' => StructureRouteParameters::class],

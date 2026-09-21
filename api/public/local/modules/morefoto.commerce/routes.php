@@ -5,8 +5,11 @@ declare(strict_types=1);
 use Bitrix\Main\Routing\RoutingConfigurator;
 use Morefoto\Commerce\Presentation\Controller\CatalogController;
 use Morefoto\Commerce\Presentation\Controller\ConditionsController;
+use Morefoto\Commerce\Presentation\Controller\StorefrontController;
 
 return static function(RoutingConfigurator $routes): void {
+    $routes->get('/api/v1/public/galleries/{gallery_token}/catalog', [StorefrontController::class, 'catalogAction']);
+    $routes->post('/api/v1/public/galleries/{gallery_token}/quotes', [StorefrontController::class, 'quoteAction']);
     $routes->get('/api/v1/catalog/products', [CatalogController::class, 'listAction']);
     $routes->post('/api/v1/catalog/products', [CatalogController::class, 'createAction']);
     $routes->patch('/api/v1/catalog/products/{product_id}', [CatalogController::class, 'updateAction']);

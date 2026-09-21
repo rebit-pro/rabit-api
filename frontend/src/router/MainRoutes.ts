@@ -63,7 +63,7 @@ const MainRoutes: RouteRecordRaw = {
       path: 'staff-requests',
       component: () => import('@/modules/morefoto/views/StaffRequestsPage.vue'),
       meta: {
-        title: 'Списки сотрудников',
+        title: 'Заявки на списки сотрудников',
         staffRoles: ['organizer', 'curator', 'teacher']
       }
     },
@@ -72,7 +72,7 @@ const MainRoutes: RouteRecordRaw = {
       path: 'staff-requests/:requestId',
       component: () => import('@/modules/morefoto/views/StaffRequestsPage.vue'),
       meta: {
-        title: 'Список сотрудников',
+        title: 'Заявка на список сотрудников',
         staffRoles: ['organizer', 'curator', 'teacher']
       }
     },

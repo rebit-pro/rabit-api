@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { isMockApiEnabled } from '@/mocks/config';
 import type { CartQuote, Catalog } from '../types';
 import { money } from '../money';
 defineProps<{ quote: CartQuote; catalog: Catalog; staff: boolean }>();
@@ -24,7 +25,7 @@ defineProps<{ quote: CartQuote; catalog: Catalog; staff: boolean }>();
         <dd data-testid="cart-total">{{ money(quote.total) }}</dd>
       </div>
     </dl>
-    <p class="mf-muted">Цены демонстрационные. Настоящие платежи не выполняются.</p>
+    <p v-if="isMockApiEnabled" class="mf-muted">Цены демонстрационные. Настоящие платежи не выполняются.</p>
     <div v-if="catalog.giftThreshold > 0 && (!staff || catalog.giftForStaff)" class="cart-summary__offer">
       <v-icon icon="mdi-gift-outline" size="22" />
       <p>От {{ money(catalog.giftThreshold) }} печатной продукции для одной серии — электронный комплект в подарок.</p>

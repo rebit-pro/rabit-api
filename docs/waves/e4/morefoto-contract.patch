@@ -1,0 +1,192 @@
+--- a/docs/05-rest-api/build.py
++++ b/docs/05-rest-api/build.py
+@@ -156,7 +156,7 @@
+ add("media","MED-01","GET","/public/galleries/{gallery_token}","Открыть галерею","Галерея",
+     "groupId, institutionName, groupName, shootName, audience, state, sentAt, closesAt, referenceNow, children, curator, delivery",
+     save={"group_id":"groupId"},source="frontend/src/modules/morefoto/gallery/types.ts",
+-    note="preparing не возвращает снимки. Оригиналы, сведения о покупателях и ключи заказов не выдаются. Ссылки thumb/preview только на защищённые версии.")
++    note="preparing не возвращает снимки. Оригиналы, сведения о покупателях и ключи заказов не выдаются. Ссылки thumb/preview только на защищённые версии. Каждый элемент children[].photos[] содержит assignmentId связи ребёнок—снимок; один снимок у разных детей имеет разные assignmentId.")
+ add("media","MED-02","GET","/shoots/{shoot_id}/photos","Материалы съёмки",O,"items<ManagedPhoto>, groups, covers, revision, meta",
+     query=[("groupId","{{group_id}}","Группа"),("childCode","","Код ребёнка"),("assigned","","true/false")],
+     sample={"items":[],"groups":[],"covers":{},"revision":1},save={"photos_revision":"revision"})
+@@ -208,12 +208,12 @@
+     "products, giftThreshold, giftForStaff, revision, conditionsRevision, capabilities, purchaseTerms",
+     save={"catalog_revision":"revision","conditions_revision":"conditionsRevision"},
+     note="capabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается.")
+-cart_lines=[{"photoId":"{{photo_id}}","productId":"{{product_id}}","quantity":1}]
++cart_lines=[{"assignmentId":"{{assignment_id}}","productId":"{{product_id}}","quantity":1}]
+ quote_sample={"quote":{"lines":[],"total":25000,"subtotal":25000,"discount":0,"giftSaving":0,"gifts":[],"count":1,"invalid":[],"revision":1,"conditionsRevision":1},
+     "quoteToken":"opaque-quote-example","expiresAt":"2026-10-01T12:15:00+03:00"}
+ add("commerce","COM-09","POST","/public/galleries/{gallery_token}/quotes","Проверить корзину и рассчитать итог",G,
+     "quote: CartQuote, quoteToken, expiresAt",{"lines":cart_lines},sample=quote_sample,
+-    save={"quote_token":"quoteToken"},note="Не создаёт заказ. Вход только ID и quantity; childCode, скидки, подарок и суммы выводит сервер. Для bundle передаётся выбранный photoId ребёнка; сервер нормализует состав. Клиент не подписывает JSON сам.")
++    save={"quote_token":"quoteToken"},note="Не создаёт заказ. Вход только assignmentId/productId/quantity; assignmentId получен из MED-01 и обозначает связь ребёнок—снимок. Сервер проверяет связь, область capability и готовность фото; childCode, скидки, подарок и суммы выводит сам. Для bundle assignmentId определяет ребёнка; сервер нормализует весь разрешённый состав его набора. Клиент не подписывает JSON сам.")
+ buyer={"name":"Тестовый покупатель","phone":"+79990000000","email":"buyer@example.test","comment":"Тестовый заказ","receiptChannel":"email","reviewed":True}
+ add("commerce","COM-10","POST","/public/galleries/{gallery_token}/orders","Оформить заказ из проверенной корзины",G,
+     "id, number, accessKey, paymentStatus, productionStatus, quote, buyer, version",
+@@ -483,7 +483,7 @@
+ "base_url":"http://localhost:8086","api_prefix":"/api/api/v1",
+ "login_email":"","login_password":"","registration_email":"","registration_password":"","registration_code":"",
+ "staff_token":"","staff_role":"","token_expires_at":"","current_user_id":"",
+-"user_id":"","institution_id":"","shoot_id":"","group_id":"","target_group_id":"","photo_id":"","product_id":"",
++"user_id":"","institution_id":"","shoot_id":"","group_id":"","target_group_id":"","photo_id":"","assignment_id":"","product_id":"",
+ "order_id":"","order_key":"","order_line_id":"","staff_request_id":"","support_id":"",
+ "assignment_signature":"","link_signature":"","staff_transfer_signature":"","order_version":"",
+ "quote_token":"","payment_quote_token":"","payment_attempt_id":"","receipt_delivery_id":"",
+--- a/docs/04-bitrix-modules/backend-waves.json
++++ b/docs/04-bitrix-modules/backend-waves.json
+@@ -1,12 +1,12 @@
+ {
+   "version": 2,
+   "planStatus": "active",
+-  "date": "2026-09-13",
++  "date": "2026-09-21",
+   "endpointCount": 99,
+   "backend": "RaBit API",
+   "baseline": {
+     "branch": "main",
+-    "commit": "8962230accdc8fe913ef0a12211bee14c332fdd2",
++    "commit": "6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc",
+     "mergedWaves": [
+       "A1",
+       "A2",
+@@ -15,13 +15,20 @@
+       "A5",
+       "A6",
+       "A7",
++      "A8",
+       "B1",
+       "C1",
+       "E1",
+       "C2",
++      "C3",
++      "C4",
++      "B2",
++      "D1",
++      "D2",
+       "E2",
+-      "A8",
+-      "C3"
++      "E3",
++      "F1",
++      "H1"
+     ],
+     "review": {},
+     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
+@@ -33,10 +40,34 @@
+       "C2": "https://github.com/rebit-pro/rabit-api/pull/12",
+       "E2": "https://github.com/rebit-pro/rabit-api/pull/13",
+       "A8": "https://github.com/rebit-pro/rabit-api/pull/14",
+-      "C3": "https://github.com/rebit-pro/rabit-api/pull/15"
++      "C3": "https://github.com/rebit-pro/rabit-api/pull/15",
++      "C4": "https://github.com/rebit-pro/rabit-api/pull/16",
++      "B2": "https://github.com/rebit-pro/rabit-api/pull/18",
++      "D1": "https://github.com/rebit-pro/rabit-api/pull/19",
++      "E3": "https://github.com/rebit-pro/rabit-api/pull/20",
++      "D2": "https://github.com/rebit-pro/rabit-api/pull/21",
++      "H1": "https://github.com/rebit-pro/rabit-api/pull/22",
++      "F1": "https://github.com/rebit-pro/rabit-api/pull/25"
++    },
++    "mergeCommits": {
++      "C4": "cfc334e5890dd51dfd6ff6638eac2cc3e436322b",
++      "B2": "d78862280cd6cf21ab829dc782459203ea66a3ac",
++      "D1": "33458dcce6b0665af17ce0764e4df62668c28b5b",
++      "E3": "c32b98e7c7407592c54c9ee382e994d7fa611955",
++      "D2": "31ebf8a1c1f6672ecd1da8011b8230413e416433",
++      "H1": "28bcad9e575489deb1113d7ce2ac459a43dd7132",
++      "F1": "6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc"
++    },
++    "decisionEvidence": {
++      "D02-D05": "docs/waves/e3/README.md in rabit-api: user accepted rules before PR #20",
++      "E4-DEC-01": "2026-09-21 user accepted assignmentId for child-photo relation"
+     }
+   },
+   "acceptedImplementationDecisions": [
++    "D02",
++    "D03",
++    "D04",
++    "D05",
+     "D07",
+     "D08",
+     "D10"
+@@ -691,7 +722,7 @@
+       "legacyIds": [
+         "W07"
+       ],
+-      "deliveryState": "review",
++      "deliveryState": "merged",
+       "unlocks": [
+         "N1"
+       ],
+@@ -754,7 +785,7 @@
+       "legacyIds": [
+         "W09"
+       ],
+-      "deliveryState": "planned",
++      "deliveryState": "merged",
+       "unlocks": [
+         "F1",
+         "N1"
+@@ -804,7 +835,7 @@
+       "legacyIds": [
+         "W10"
+       ],
+-      "deliveryState": "planned",
++      "deliveryState": "merged",
+       "unlocks": [
+         "D2",
+         "J1",
+@@ -854,7 +885,7 @@
+       "legacyIds": [
+         "W11"
+       ],
+-      "deliveryState": "planned",
++      "deliveryState": "merged",
+       "unlocks": [
+         "F1",
+         "E4",
+@@ -952,7 +983,7 @@
+       "legacyIds": [
+         "W13"
+       ],
+-      "deliveryState": "planned",
++      "deliveryState": "merged",
+       "unlocks": [
+         "F1",
+         "E4",
+@@ -1006,7 +1037,7 @@
+       "legacyIds": [
+         "W14"
+       ],
+-      "deliveryState": "planned",
++      "deliveryState": "merged",
+       "unlocks": [
+         "E4",
+         "D3",
+@@ -1046,7 +1077,7 @@
+       "outcome": "Покупатель видит разрешённые превью и получает проверяемый сервером quote.",
+       "scope": [
+         "Capability галереи и внутренний lifecycle выдачи/отзыва; публичная подготовка ссылки — F2.",
+-        "Галерея/каталог/quote с ценами, подарком, скидкой, fingerprint состава/версий и сроком.",
++        "Галерея выдаёт assignmentId связи ребёнок—снимок; quote принимает assignmentId/productId/quantity. Галерея/каталог/quote с ценами, подарком, скидкой, fingerprint состава/версий и сроком.",
+         "Проверять группу/фото/количество. capabilities.receiptChannels содержит лишь реально подключённые каналы, повтор после G2."
+       ],
+       "review": [
+@@ -1061,7 +1092,7 @@
+       "legacyIds": [
+         "W15"
+       ],
+-      "deliveryState": "planned",
++      "deliveryState": "inProgress",
+       "unlocks": [
+         "E5",
+         "F2"
+@@ -1350,7 +1381,7 @@
+       "legacyIds": [
+         "W20"
+       ],
+-      "deliveryState": "review",
++      "deliveryState": "merged",
+       "unlocks": [
+         "G2",
+         "J2"

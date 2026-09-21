@@ -43,7 +43,7 @@ const PublicRoutes: RouteRecordRaw = {
       name: 'Cart',
       path: '/g/:token/cart',
       component: () => import('@/modules/morefoto/views/CartPage.vue'),
-      meta: { title: 'Корзина', demoOnly: true }
+      meta: { title: 'Корзина' }
     },
     {
       name: 'Gallery',
@@ -51,7 +51,6 @@ const PublicRoutes: RouteRecordRaw = {
       component: () => import('@/modules/morefoto/views/GalleryPage.vue'),
       meta: {
         title: 'Галерея фотографий',
-        demoOnly: true,
         description: 'Фотографии вашей группы в MoreFoto.'
       }
     },

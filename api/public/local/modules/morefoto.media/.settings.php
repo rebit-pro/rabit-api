@@ -7,7 +7,7 @@ use Morefoto\Media\Presentation\Command\MediaConsumerCommand;
 
 return [
     'services' => [
-        'value' => require __DIR__ . '/di/media.php',
+        'value' => array_merge(require __DIR__ . '/di/media.php', require __DIR__ . '/di/gallery.php'),
         'readonly' => true,
     ],
     'console' => [

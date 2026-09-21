@@ -5,7 +5,7 @@ const props = withDefaults(defineProps<{ src: string; alt: string; eager?: boole
 const loaded = shallowRef(false);
 const failed = shallowRef(false);
 const attempt = shallowRef(0);
-const source = computed(() => props.src + (attempt.value ? '?retry=' + attempt.value : ''));
+const source = computed(() => props.src + (attempt.value && !props.src.startsWith('/api/v1/') ? '?retry=' + attempt.value : ''));
 watch(
   () => props.src,
   () => {
@@ -25,7 +25,7 @@ function retry() {
   <div class="gallery-image" :aria-busy="!loaded && !failed">
     <PhotoImage
       v-if="!failed"
-      :key="source"
+      :key="source + attempt"
       :src="source"
       :alt="alt"
       :loading="eager ? 'eager' : 'lazy'"

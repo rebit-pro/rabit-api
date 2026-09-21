@@ -13,6 +13,8 @@ use Rebit\Share\Infrastructure\Controller\Auth\AuthenticatedControllerTrait;
 use Rebit\Share\Infrastructure\Controller\Filters\BearerTokenFilter;
 use Rebit\Share\Infrastructure\Controller\Responses\ApiJsonExceptionResponse;
 use Rebit\Share\Shared\Interface\ResponseDtoInterface;
+use Rebit\Share\Application\Contract\File\Dto\PreviewContentOutputDto;
+use Rebit\Share\Infrastructure\Controller\Responses\PreviewResponse;
 
 /**
  * Централизует обязательную HTTP-обвязку защищённых JSON API.
@@ -57,5 +59,11 @@ abstract class AuthenticatedApiJsonController extends BaseJsonController impleme
         $response->addHeader('Location', $location);
 
         return $response;
+    }
+
+    final protected function preview(
+        PreviewContentOutputDto $content,
+    ): PreviewResponse {
+        return new PreviewResponse($content);
     }
 }

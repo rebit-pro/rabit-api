@@ -1,0 +1,79 @@
+{
+  "wave": "E4",
+  "status": "verified",
+  "date": "2026-09-21",
+  "branch": "codex/e4-private-storefront",
+  "base": "6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc",
+  "fixture": "rabit-e2e-8abe011ee786",
+  "checks": {
+    "phpLint": {
+      "status": "passed",
+      "files": 649
+    },
+    "phpstan": {
+      "status": "passed",
+      "errors": 0
+    },
+    "phpunit": {
+      "status": "passed",
+      "tests": 420,
+      "assertions": 1608
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "production build"
+      ],
+      "unitTests": 158
+    },
+    "style": {
+      "status": "passed",
+      "checkedLocalPhpFiles": 68,
+      "fixableFiles": 0
+    },
+    "browser": {
+      "status": "passed",
+      "passed": 59,
+      "failed": 0,
+      "skipped": 0,
+      "e4Scenarios": "8 passed",
+      "f1Navigation": "8 passed",
+      "d1Preview": "anonymous 401; Bearer 200"
+    },
+    "integration": {
+      "status": "passed",
+      "proof": "storefront-integration.log: F1 eligibility, stale quote, TTL, revoke, assignment and migration replay"
+    },
+    "graph": {
+      "status": "passed",
+      "waves": 40,
+      "apiIds": 99
+    },
+    "visual": {
+      "status": "passed",
+      "viewports": [
+        "desktop",
+        "mobile"
+      ],
+      "artifacts": [
+        "screenshots/e4-f1-desktop-navigation.png",
+        "screenshots/e4-f1-mobile-navigation.png",
+        "screenshots/e4-desktop-gallery.png",
+        "screenshots/e4-mobile-gallery.png",
+        "screenshots/e4-desktop-cart.png",
+        "screenshots/e4-mobile-cart.png"
+      ]
+    }
+  },
+  "cleanup": {
+    "stopped": true,
+    "errors": []
+  },
+  "mergeAllowed": true,
+  "nextStep": "Commit and push review fixes; mark PR ready, merge verified head into main, then deploy stage backend with backup/migrations before frontend.",
+  "pr": "https://github.com/rebit-pro/rabit-api/pull/30",
+  "runtimeBaseCommit": "a44d9c8"
+}

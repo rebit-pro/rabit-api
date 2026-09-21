@@ -1,12 +1,12 @@
 {
   "version": 2,
   "planStatus": "active",
-  "date": "2026-09-13",
+  "date": "2026-09-21",
   "endpointCount": 99,
   "backend": "RaBit API",
   "baseline": {
     "branch": "main",
-    "commit": "8962230accdc8fe913ef0a12211bee14c332fdd2",
+    "commit": "6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc",
     "mergedWaves": [
       "A1",
       "A2",
@@ -15,13 +15,20 @@
       "A5",
       "A6",
       "A7",
+      "A8",
       "B1",
       "C1",
       "E1",
       "C2",
+      "C3",
+      "C4",
+      "B2",
+      "D1",
+      "D2",
       "E2",
-      "A8",
-      "C3"
+      "E3",
+      "F1",
+      "H1"
     ],
     "review": {},
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
@@ -33,10 +40,34 @@
       "C2": "https://github.com/rebit-pro/rabit-api/pull/12",
       "E2": "https://github.com/rebit-pro/rabit-api/pull/13",
       "A8": "https://github.com/rebit-pro/rabit-api/pull/14",
-      "C3": "https://github.com/rebit-pro/rabit-api/pull/15"
+      "C3": "https://github.com/rebit-pro/rabit-api/pull/15",
+      "C4": "https://github.com/rebit-pro/rabit-api/pull/16",
+      "B2": "https://github.com/rebit-pro/rabit-api/pull/18",
+      "D1": "https://github.com/rebit-pro/rabit-api/pull/19",
+      "E3": "https://github.com/rebit-pro/rabit-api/pull/20",
+      "D2": "https://github.com/rebit-pro/rabit-api/pull/21",
+      "H1": "https://github.com/rebit-pro/rabit-api/pull/22",
+      "F1": "https://github.com/rebit-pro/rabit-api/pull/25"
+    },
+    "mergeCommits": {
+      "C4": "cfc334e5890dd51dfd6ff6638eac2cc3e436322b",
+      "B2": "d78862280cd6cf21ab829dc782459203ea66a3ac",
+      "D1": "33458dcce6b0665af17ce0764e4df62668c28b5b",
+      "E3": "c32b98e7c7407592c54c9ee382e994d7fa611955",
+      "D2": "31ebf8a1c1f6672ecd1da8011b8230413e416433",
+      "H1": "28bcad9e575489deb1113d7ce2ac459a43dd7132",
+      "F1": "6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc"
+    },
+    "decisionEvidence": {
+      "D02-D05": "docs/waves/e3/README.md in rabit-api: user accepted rules before PR #20",
+      "E4-DEC-01": "2026-09-21 user accepted assignmentId for child-photo relation"
     }
   },
   "acceptedImplementationDecisions": [
+    "D02",
+    "D03",
+    "D04",
+    "D05",
     "D07",
     "D08",
     "D10"
@@ -691,7 +722,7 @@
       "legacyIds": [
         "W07"
       ],
-      "deliveryState": "review",
+      "deliveryState": "merged",
       "unlocks": [
         "N1"
       ],
@@ -754,7 +785,7 @@
       "legacyIds": [
         "W09"
       ],
-      "deliveryState": "planned",
+      "deliveryState": "merged",
       "unlocks": [
         "F1",
         "N1"
@@ -804,7 +835,7 @@
       "legacyIds": [
         "W10"
       ],
-      "deliveryState": "planned",
+      "deliveryState": "merged",
       "unlocks": [
         "D2",
         "J1",
@@ -854,7 +885,7 @@
       "legacyIds": [
         "W11"
       ],
-      "deliveryState": "planned",
+      "deliveryState": "merged",
       "unlocks": [
         "F1",
         "E4",
@@ -952,7 +983,7 @@
       "legacyIds": [
         "W13"
       ],
-      "deliveryState": "planned",
+      "deliveryState": "merged",
       "unlocks": [
         "F1",
         "E4",
@@ -1006,7 +1037,7 @@
       "legacyIds": [
         "W14"
       ],
-      "deliveryState": "planned",
+      "deliveryState": "merged",
       "unlocks": [
         "E4",
         "D3",
@@ -1046,7 +1077,7 @@
       "outcome": "Покупатель видит разрешённые превью и получает проверяемый сервером quote.",
       "scope": [
         "Capability галереи и внутренний lifecycle выдачи/отзыва; публичная подготовка ссылки — F2.",
-        "Галерея/каталог/quote с ценами, подарком, скидкой, fingerprint состава/версий и сроком.",
+        "Галерея выдаёт assignmentId связи ребёнок—снимок; quote принимает assignmentId/productId/quantity. Галерея/каталог/quote с ценами, подарком, скидкой, fingerprint состава/версий и сроком.",
         "Проверять группу/фото/количество. capabilities.receiptChannels содержит лишь реально подключённые каналы, повтор после G2."
       ],
       "review": [
@@ -1061,7 +1092,7 @@
       "legacyIds": [
         "W15"
       ],
-      "deliveryState": "planned",
+      "deliveryState": "inProgress",
       "unlocks": [
         "E5",
         "F2"
@@ -1350,7 +1381,7 @@
       "legacyIds": [
         "W20"
       ],
-      "deliveryState": "review",
+      "deliveryState": "merged",
       "unlocks": [
         "G2",
         "J2"

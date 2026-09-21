@@ -90,7 +90,8 @@ final readonly class MediaMutationRepository
                 continue;
             }
             ++$sequence;
-            $this->execute("INSERT INTO mf_photo_assignment(PHOTO_ID,CHILD_ID,SEQUENCE_NO,CREATED_AT) VALUES({$photoId},{$childId},{$sequence},UTC_TIMESTAMP())");
+            $assignmentId = Uuid::uuid4()->toString();
+            $this->execute("INSERT INTO mf_photo_assignment(PHOTO_ID,CHILD_ID,SEQUENCE_NO,CREATED_AT,PUBLIC_ID) VALUES({$photoId},{$childId},{$sequence},UTC_TIMESTAMP(),'{$assignmentId}')");
             $changed = true;
         }
 
