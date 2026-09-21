@@ -4,9 +4,9 @@
 
 - Ветка `codex/d3-stage-media-recovery`, base E4 merge `7e606e53cc6b347e5c7b70e217ab7f8eb8a45875`, HEAD `1a04eb3`; draft PR #32, issue массовой загрузки #31.
 - Завершено: stage получил E4, исправления DI, очередь, nginx 413 и логи. Авторизованная загрузка пользователя сохранила два оригинала; оба затем упали на обработке из-за отсутствия WebP в старом stage PHP image.
-- Сейчас: три пользовательских кадра готовы; по новому скриншоту найден и устранён 404 миниатюр из-за отсутствующего `/app/public/upload` mount в stage FPM. Следующий шаг: подтвердить ответ защищённого HTTP endpoint после обновления FPM, обновить PR/журнал.
+- Сейчас: три пользовательских кадра готовы; 404 миниатюр устранён mount `/app/public/upload` в stage FPM. Защищённые GET после обновления FPM завершились `RESPONSE` в live логе. Следующий шаг: сохранить журнал в PR и передать пользователю путь галереи.
 - Риски: остальные файлы первого пакета были прерваны; готовые кадры ещё не привязаны к ребёнку, ссылка группы ещё не передана. Stage images временно основаны на локальном D1 build с отключённым Xdebug, для последующего релиза нужны production images. Основной site_* не менялся.
-- Рабочее дерево: изменены `plan.md` и `progress.md`. D3-DI/QUEUE/LOG/HTTP-LIMIT/F1-INVALID/VISUAL/WEBP/RECOVERY — PASS; повторная ручная загрузка полного пакета пользователем ещё PENDING.
+- Рабочее дерево: после commit `a1f9a86` изменяется только этот журнал. D3-DI/QUEUE/LOG/HTTP-LIMIT/F1-INVALID/VISUAL/WEBP/RECOVERY/PREVIEW — PASS; повторная ручная загрузка полного пакета пользователем ещё PENDING.
 
 ## Хронология
 
@@ -20,6 +20,7 @@
 - Публичный прямой URL `/upload/morefoto/previews/...` ответил 404: это ожидаемая защита в backend nginx; защищённый `/api/v1/photos/{id}/thumb` без Bearer отвечает 401. В БД у обоих готовых кадров 0 привязок к ребёнку, у группы `UF_SENT_AT IS NOT NULL=0`; публичная галерея пока на стадии подготовки.
 - `docker service ls --filter name=morefoto_stage`: backend, FPM, consumer и dispatcher — все 1/1. Логи dispatcher показывают успешные проходы; повторный `dispatch-pending` публикует 0. Небольшой GD benchmark на исходном JPEG 3000×4500 в текущем consumer с `XDEBUG_MODE=off`: декодирование, масштабирование до 320 px и WebP за 0,95 с. Полная пользовательская передача 8 МБ зависит также от сети; повтор её после восстановления ещё не наблюдался.
 - Новый скриншот показывает три готовых кадра (`IMG_0577.jpg`, `IMG_0591.jpg`, `IMG_0590.jpg`), но все миниатюры отвечают 404. В stage FPM логи `ManagedPreviewController::getAction` указывают `PreviewContent.php:23` (файл отсутствует по пути FPM). `docker service inspect morefoto_stage_fpm` подтвердил отсутствие mount `/app/public/upload`, тогда как consumer его имеет. `docker service update --mount-add type=bind,src=.../runtime/public/upload,dst=/app/public/upload morefoto_stage_fpm`: сервис сошёлся; `docker exec` проверил 3/3 WebP внутри нового FPM, размеры 16026/16628/16830 байт. Защищённый HTTP GET из пользовательской сессии после обновления ещё PENDING.
+- `docker service logs --since 2m morefoto_stage_fpm | grep ManagedPreviewController`: после обновления FPM новые GET в 16:46:39, 16:46:43 и 16:46:44 UTC завершились `media.INFO: RESPONSE`, без `PreviewContent.php` 404. Это реальные запросы через HTTP, D3-PREVIEW PASS. PR #32 body обновлён описанием stage recovery; commit `a1f9a86` опубликован.
 
 ## Тест-кейсы
 
@@ -33,7 +34,7 @@
 - D3-VISUAL: PASS, 2026-09-21, Playwright desktop/mobile screenshots и ручной просмотр `docs/waves/d3/visual/`.
 - D3-WEBP: PASS, 2026-09-21, `docker exec ... php -r 'function_exists("imagewebp")'` в stage FPM/consumer/dispatcher: yes.
 - D3-RECOVERY: PASS, 2026-09-21, SQL read-only по ID 1/2: `ready/done`, 4 WebP файла ненулевого размера.
-- D3-PREVIEW: PENDING, 2026-09-21, `docker exec stage-fpm php -r 'is_file/filesize'`: 3/3 файла читаются после mount; пользовательский HTTP GET после обновления FPM ещё не подтверждён.
+- D3-PREVIEW: PASS, 2026-09-21, `docker exec stage-fpm php -r 'is_file/filesize'`: 3/3 файла читаются; `docker service logs --since 2m morefoto_stage_fpm`: реальные защищённые GET завершились `media.INFO: RESPONSE` без 404.
 - По скриншотам пользователя: девять POST файлов отклонены 413; экран кадров показывает `Cannot read properties of null (reading 'items')`.
 - Stage FPM `ServiceLocator::get(UploadPhotoUseCase::class)` выбрасывает `MESSENGER_TRANSPORT_DSN не задан или пуст`; это ломает создание MediaController для GET и POST.
 - В stage FPM отсутствуют DSN и media consumer. Основной site_rabbitmq существует; отдельного stage vhost нет.
