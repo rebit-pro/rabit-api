@@ -60,6 +60,15 @@ const navigation = computed(() =>
               }
             ]
           : []),
+        ...(['organizer', 'curator', 'teacher'].includes(auth.user?.role ?? '')
+          ? [
+              {
+                title: 'Списки сотрудников',
+                to: '/cabinet/staff-requests',
+                icon: 'mdi-account-check-outline'
+              }
+            ]
+          : []),
         {
           title: 'Профиль',
           to: '/cabinet/profile',

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, shallowRef } from 'vue';
 import { useRoute } from 'vue-router';
+import { isMockApiEnabled } from '@/mocks/config';
 import AdminDialog from '../../management/components/AdminDialog.vue';
 import RequestFields from './RequestFields.vue';
 import RequestReview from './RequestReview.vue';
@@ -21,6 +22,7 @@ const { command, busy, errors, restored, error: saveError } = editor;
 const selected = computed(() => data.value?.requests.find((r) => r.id === route.params.requestId));
 const reviewing = computed(() => ['curator', 'organizer'].includes(data.value?.role ?? ''));
 const createAllowed = computed(() => ['teacher', 'organizer'].includes(data.value?.role ?? ''));
+const transferEnabled = isMockApiEnabled;
 const titles = { submit: 'Передать список куратору', clarify: 'Запросить уточнение', confirm: 'Подтвердить перенос' };
 const requests = computed(
   () =>
@@ -33,7 +35,7 @@ function previewFor(request: StaffRequest): RequestPreview {
   return reviewRequest(request, data.value!.groups, { photos: data.value!.photos, covers: {} });
 }
 const preview = computed(() => {
-  if (!selected.value || !reviewing.value || selected.value.status !== 'submitted') return null;
+  if (!transferEnabled || !selected.value || !reviewing.value || selected.value.status !== 'submitted') return null;
   try {
     return previewFor(selected.value);
   } catch {
@@ -41,7 +43,7 @@ const preview = computed(() => {
   }
 });
 const previewError = computed(() => {
-  if (!selected.value || !reviewing.value || selected.value.status !== 'submitted') return '';
+  if (!transferEnabled || !selected.value || !reviewing.value || selected.value.status !== 'submitted') return '';
   try {
     previewFor(selected.value);
     return '';
@@ -107,6 +109,9 @@ function change(value: Partial<StaffCommand>) {
             requestStatus[selected.status]
           }}</v-chip>
         </header>
+        <v-alert v-if="selected.staffEligibility?.eligible" type="success" variant="tonal" class="mb-5" data-testid="staff-eligibility">
+          Право сотрудника подтверждено сервером · {{ formatMoment(selected.staffEligibility.verifiedAt) }}
+        </v-alert>
         <p v-if="selected.comment">{{ selected.comment }}</p>
         <div v-for="row in selected.rows" :key="row.id" class="handoff-row">
           <strong>{{ data.groups.find((g) => g.id === row.groupId)?.name }} · {{ row.childCode }}</strong>
@@ -122,7 +127,10 @@ function change(value: Partial<StaffCommand>) {
             selected.status === 'clarification' ? 'Уточнить список' : 'Изменить список'
           }}</v-btn>
           <v-btn v-if="reviewing" variant="outlined" @click="open('clarify', selected)">Запросить уточнение</v-btn>
-          <v-btn v-if="reviewing && selected.status === 'submitted'" :disabled="!preview" @click="open('confirm', selected)"
+          <v-btn
+            v-if="transferEnabled && reviewing && selected.status === 'submitted'"
+            :disabled="!preview"
+            @click="open('confirm', selected)"
             >Проверить и перенести</v-btn
           >
         </div>

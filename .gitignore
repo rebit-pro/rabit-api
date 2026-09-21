@@ -61,3 +61,5 @@
 !**/.env.example
 
 !/docs/database.md
+
+var/

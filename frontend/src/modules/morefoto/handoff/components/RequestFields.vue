@@ -96,4 +96,12 @@ function add() {
     :aria-invalid="!!errors.reason"
     @update:model-value="emit('change', { reason: $event })"
   />
+  <v-checkbox
+    v-if="command.action === 'clarify'"
+    :model-value="command.confirmed"
+    label="Подтверждаю запрос уточнения и сохранение причины в истории"
+    :error-messages="errors.confirmed"
+    :aria-invalid="!!errors.confirmed"
+    @update:model-value="emit('change', { confirmed: !!$event })"
+  />
 </template>

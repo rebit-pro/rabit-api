@@ -1,0 +1,158 @@
+{
+  "wave": "F1",
+  "status": "passed",
+  "date": "2026-09-21",
+  "branch": "codex/f1-staff-requests",
+  "base": "28bcad9e575489deb1113d7ce2ac459a43dd7132",
+  "dependencies": [
+    "B2 merged",
+    "D2 merged",
+    "E3 merged"
+  ],
+  "scope": [
+    "HND-06",
+    "HND-07",
+    "HND-08",
+    "HND-09",
+    "HND-12"
+  ],
+  "deferred": [
+    "HND-10 preview to D3",
+    "HND-11 transfer to D3"
+  ],
+  "checks": {
+    "phpLint": {
+      "status": "passed",
+      "files": 591
+    },
+    "phpstan": {
+      "status": "passed",
+      "errors": 0
+    },
+    "phpunit": {
+      "status": "passed",
+      "tests": 403,
+      "assertions": 1492
+    },
+    "targetedUnit": {
+      "status": "passed",
+      "tests": 11,
+      "assertions": 270
+    },
+    "style": {
+      "status": "passed",
+      "checkedPhpFiles": 65,
+      "fixableFilesAfterFix": 0
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "production build"
+      ],
+      "unitTests": 158
+    },
+    "targetedBrowserE2E": {
+      "status": "passed",
+      "tests": 9,
+      "scenario": "F1 workflow and 8 role/viewport navigation scenarios with settled screenshots",
+      "fixture": "rabit-e2e-363c0655f0f5",
+      "report": "api/var/e2e/rabit-e2e-363c0655f0f5/browser-results.json"
+    },
+    "browserE2E": {
+      "status": "passed",
+      "tests": 51,
+      "passed": 51,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "fixture": "rabit-e2e-60d07b962945",
+      "transport": "Chromium -> nginx -> native Bitrix FPM -> isolated MySQL and RabbitMQ",
+      "ownedFixtureCleaned": true,
+      "cleanupErrors": [],
+      "report": "api/var/e2e/rabit-e2e-60d07b962945/browser-results.json"
+    },
+    "visualDesktopMobile": {
+      "status": "passed",
+      "screenshotsCaptured": 6,
+      "mobileOverflowAssertion": true,
+      "report": "visual.json",
+      "fixture": "rabit-e2e-363c0655f0f5"
+    },
+    "monolog": {
+      "status": "passed",
+      "REQUEST": 41,
+      "RESPONSE": 25,
+      "HTTP_EXCEPTION": 16,
+      "requestIdPresent": true,
+      "sensitiveSentinelsAbsent": true,
+      "log": "api/var/e2e/rabit-e2e-60d07b962945/rabit-e2e-60d07b962945-fpm.log"
+    },
+    "dtoSignatures": {
+      "status": "passed",
+      "scope": "All 15 handoff DTOs and 3 shared contract DTOs; public typed readonly properties and empty constructor only"
+    },
+    "routeStub": {
+      "status": "passed",
+      "checks": [
+        "php -l api/phpstan/bitrix-stubs.php",
+        "PHPStan after route signatures update"
+      ],
+      "ideIndexVerified": false
+    },
+    "reviewNavigation": {
+      "status": "passed",
+      "tests": 8,
+      "roles": [
+        "teacher",
+        "organizer",
+        "curator",
+        "head"
+      ],
+      "viewports": [
+        "1280x720",
+        "390x844"
+      ],
+      "teacherPath": "login -> navigation link -> staff requests -> new request dialog; no direct goto",
+      "head": "No menu entry; direct API returns 403",
+      "reviewComment": "https://github.com/rebit-pro/rabit-api/pull/25#discussion_r4060560246"
+    }
+  },
+  "publication": {
+    "status": "published",
+    "merged": false,
+    "deployed": false,
+    "deploymentTarget": "app.morefoto.36.ru",
+    "deploymentPolicy": "aggregate later wave checkpoint",
+    "followUpIssue": "https://github.com/rebit-pro/rabit-api/issues/24",
+    "url": "https://github.com/rebit-pro/rabit-api/pull/25",
+    "number": 25,
+    "reviewFixReply": "https://github.com/rebit-pro/rabit-api/pull/25#discussion_r4060957940"
+  },
+  "complete": true,
+  "completeMeaning": "F1 review P1 navigation fixed and locally verified; awaiting reviewer recheck. Merge/deployment not performed.",
+  "remaining": [
+    "Reviewer recheck of navigation P1; non-blocking issues #26, #27, #28 remain separate"
+  ],
+  "history": [
+    {
+      "fixture": "rabit-e2e-40c5384da489",
+      "result": "42/43; E3 warning after reload was absent. Not reproduced in current runs; root cause not established."
+    },
+    {
+      "fixture": "rabit-e2e-f0179580309e",
+      "result": "42/43; F1 second-author fixture reused first row UUID, violating unique constraint. Fixed by generating a UUID for the new row; assertions unchanged."
+    },
+    {
+      "fixture": "rabit-e2e-1183a02c05d5",
+      "result": "Independent review: baseline browser 43/43, but separate navigation repro failed for teacher; fixed with live menu entry and 8 navigation E2E tests."
+    },
+    {
+      "fixture": "rabit-e2e-4502e89b3586",
+      "result": "First navigation-fix gate: 48/51; closed Vuetify drawer remains CSS-visible offscreen. Trace confirmed translateX(-248px); assertion changed to viewport intersection without runtime changes."
+    }
+  ],
+  "testedSource": "3ce71bc"
+}

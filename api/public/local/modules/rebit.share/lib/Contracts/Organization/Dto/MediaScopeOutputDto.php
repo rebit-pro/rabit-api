@@ -13,5 +13,7 @@ final readonly class MediaScopeOutputDto
         public ?int $groupId,
         public ?string $groupPublicId,
         public bool $groupEditable,
+        public ?string $institutionPublicId = null,
+        public ?string $groupKind = null,
     ) {}
 }
