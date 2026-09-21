@@ -28,6 +28,7 @@
 - [x] Защитить frontend от чтения `items` у `null` при ошибке API.
 - [x] Проверить и исправить сообщение F1 для кода `A0001` из скриншота.
 - [x] Проверить расположение stage логов.
+- [x] Просмотреть сообщения ошибок на desktop и mobile.
 - [ ] Получить подтверждение авторизованной загрузки на stage и закрыть incident.
 
 ## Критерии приёмки
@@ -44,3 +45,4 @@
 5. D3-QUEUE: stage consumer и очередь подтверждены; команда: docker service ps/logs и rabbitmqctl list_queues в stage vhost.
 6. D3-LOG: определить рабочий путь логов и проверить запись; команда: service logs/find runtime.
 7. D3-F1-INVALID: ввести код `A0001`; ожидается подсказка формата в поле без POST. Команда: browser E2E.
+8. D3-VISUAL: открыть ошибки фото/F1 на desktop и mobile; ожидается видимый текст без наложения. Команда: Playwright screenshot в изолированном fixture, ручной просмотр PNG.

@@ -2,11 +2,11 @@
 
 ## Точка продолжения
 
-- Ветка `codex/d3-stage-media-recovery`, base E4 merge `7e606e53cc6b347e5c7b70e217ab7f8eb8a45875`, runtime/docs commit `c9c7fc4` опубликован; PR ещё нет. Issue массовой загрузки: #31.
+- Ветка `codex/d3-stage-media-recovery`, base E4 merge `7e606e53cc6b347e5c7b70e217ab7f8eb8a45875`, HEAD `a92910a`; draft PR #32. Issue массовой загрузки: #31.
 - Завершено: E4 развёрнут на app.morefoto36.ru; подтверждены HTTP 413 и ошибка DI; корень DI — пустой MESSENGER_TRANSPORT_DSN stage FPM.
-- Сейчас: оформление PR на проверенный frontend diff. Следующий шаг: создать PR, затем получить подтверждение авторизованной загрузки на stage.
+- Сейчас: ожидание подтверждения авторизованной загрузки на stage. Следующий шаг: дождаться ответа пользователя по JPEG 8 МБ и завершить review PR #32.
 - Риски: основной RabbitMQ общий инфраструктурно; stage сообщения находятся в отдельном vhost. Авторизованный HTTP upload на stage ещё не проверен, пользователь получил запрос на повтор.
-- Рабочее дерево: только обновление progress после runtime/docs commit; приложение закоммичено и опубликовано. D3-DI/QUEUE/LOG/HTTP-LIMIT/F1-INVALID — PASS; HTTP-LIST/UPLOAD — PASS в изолированном real E2E, PENDING на stage с авторизацией.
+- Рабочее дерево: plan/progress и четыре визуальных артефакта после создания draft PR; приложение закоммичено и опубликовано. D3-DI/QUEUE/LOG/HTTP-LIMIT/F1-INVALID/VISUAL — PASS; HTTP-LIST/UPLOAD — PASS в изолированном real E2E, PENDING на stage с авторизацией.
 
 ## Хронология
 
@@ -29,3 +29,5 @@
 - Повтор `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`: browser 60/60 PASS (0 skipped/unexpected), PHPUnit 420/1608 PASS, frontend lint/typecheck/commerce/build PASS, PHPStan/PHP lint PASS, E4/F1 post-browser MySQL integration PASS; fixture остановлен. D3-HTTP-LIST/UPLOAD/F1-INVALID PASS на изолированном HTTP.
 - `git diff --check`: PASS. Stage `curl` без Bearer подтверждает устранение 413 и разрешение MediaController, но не обработку файла от авторизованного пользователя. Пользователю направлен запрос повторить JPEG около 8 МБ.
 - `git commit -m 'fix(morefoto): restore stage photo uploads and clarify handoff validation'`: `c9c7fc4`. SSH `git push` истёк по timeout; `gh auth setup-git` и HTTPS `git push` опубликовали ветку без раскрытия токена.
+- Docs commit `a92910a` опубликован; `gh pr create --draft --base main --head codex/d3-stage-media-recovery --body-file /tmp/d3-pr-body.md`: PR #32 создан. Merge/deploy нового frontend image не выполнялись; live stage nginx исправлен bind-шаблоном.
+- `make e2e-up ...` создал изолированный fixture `rabit-e2e-726c1040e2e8`; Playwright из контейнера прошёл фото-ошибку и F1 `A0001` на 1440×1000 и 390×844. Четыре PNG сохранены в `docs/waves/d3/visual/`; ручной просмотр подтвердил читаемость, отсутствие наложений и видимость ошибки F1 на mobile после прокрутки внутреннего диалога. D3-VISUAL PASS. `make e2e-down E2E_STATE=.../state.json`: PASS.
