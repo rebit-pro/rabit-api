@@ -126,3 +126,9 @@
 - Frontend переведён на `API_UPSTREAM=http://morefoto_stage_backend` и подключён к внешней сети `morefoto-stage-private`; Traefik-сеть сохранена. Развёрнут релиз `main-live-api-20260921120900-6b81647`, 2/2 реплики.
 - Smoke PASS: `curl -k -X POST -H 'Content-Type: application/json' --data '{}' https://app.morefoto36.ru/api/v1/auth/login` → HTTP 400 JSON `В запросе не были переданы поля: email`, заголовок `WWW-Authenticate` отсутствует; `/health` → 200.
 - Rollback: релиз `main-live-20260921115621-6b81647` (live API с прежним upstream) либо `main-20260921113950-6b81647` (mock mode). Рабочее дерево после docs-коммита должно быть чистым.
+
+### 2026-09-21 — ручной чек-лист актуализирован
+
+- `docs/testing/manual-wave-checklist.md` обновлён: добавлены опубликованный stage frontend без mock, устранение Basic Auth, разделение локальных E2E-логинов и stage-учётных записей, а также границы ручной проверки E4.
+- Проверено: локальный `organizer@example.invalid` с паролем из E2E-набора на `app.morefoto36.ru` не принимается (`Invalid credentials`); рабочие stage-логины в репозитории отсутствуют и не публикуются.
+- Команда `git diff --check` — PASS. Коммит документа `dc1dd30`. Push ветки повторно зависает по таймауту 20–30 секунд; удалённый PR #30 пока содержит предыдущий docs-коммит.
