@@ -2,15 +2,19 @@
 
 ## Точка продолжения
 
-- Ветка `codex/d3-stage-media-recovery`, base E4 merge `7e606e53cc6b347e5c7b70e217ab7f8eb8a45875`; актуальный HEAD — `git rev-parse HEAD`, опубликован в draft PR #32; issue массовой загрузки #31.
-- Завершено: stage получил E4, исправления DI, очередь, nginx 413 и логи. Авторизованная загрузка пользователя сохранила два оригинала; оба затем упали на обработке из-за отсутствия WebP в старом stage PHP image.
-- Сейчас: пользователь явно поручил merge/deploy. PR #32 draft OPEN, HEAD `6261ad0`, base `7e606e5`, mergeable; обязательный локальный E2E 60/60 и визуальная проверка уже PASS. Следующий шаг: сверить release путь, подготовить rollback, затем merge и frontend rolling deployment.
-- Риски: остальные файлы первого пакета были прерваны; готовые кадры ещё не привязаны к ребёнку, ссылка группы ещё не передана. Stage images временно основаны на локальном D1 build с отключённым Xdebug, для последующего релиза нужны production images. Основной site_* не менялся.
-- Рабочее дерево: изменены `plan.md` и этот журнал до merge/deploy. D3-DI/QUEUE/LOG/HTTP-LIMIT/F1-INVALID/VISUAL/WEBP/RECOVERY/PREVIEW/ASSIGN-CODE — PASS; D3-DEPLOY — PENDING.
+- Ветка `main`, D3 PR #32 MERGED в `3bca388004ad7ce76678d97500dc8376ec092b08`; issue массовой загрузки #31. Актуальный HEAD — `git rev-parse HEAD` после docs фиксации deployment.
+- Завершено: stage получил D3 frontend image `morefoto-frontend:d3-20260921173000-3bca388` из слитого `main`; media FPM/consumer/dispatcher с WebP и preview mount работают, HTTP smoke прошёл.
+- Сейчас: деплой завершён, следующий шаг — пользовательская проверка назначения `A` в текущей группе; отдельный production build PHP images при плановом выпуске.
+- Риски: остальные файлы первого пакета были прерваны; три готовых кадра ранее не были привязаны к ребёнку, ссылка группы ещё не передана. Stage PHP images временно основаны на локальном D1 build с отключённым Xdebug. Основной site_* не менялся.
+- Рабочее дерево: чистое после публикации этого журнала. D3-DI/QUEUE/LOG/HTTP-LIMIT/F1-INVALID/VISUAL/WEBP/RECOVERY/PREVIEW/ASSIGN-CODE/DEPLOY — PASS.
 
 ## Хронология
 
 ### 2026-09-21
+- `gh pr ready 32`, затем `gh pr merge 32 --merge --match-head-commit 276df5d...`: PASS, merge commit `3bca388004ad7ce76678d97500dc8376ec092b08`; локальный `main` fast-forward до merge commit. CI Actions отключены, локальный E2E 60/60 и desktop/mobile visual PASS.
+- Из merged main собран `morefoto-frontend:d3-20260921173000-3bca388` с `VITE_API_MOCKS_ENABLED=false`; image содержит новую проверку кода и `client_max_body_size 30m`. Stage release `/srv/morefoto/releases/d3-20260921173000-3bca388`: сохранены `services-before.json`, прежний image, sha256 и архив нового image. Архив проверен и загружен через SSH; отдельный `nginx -t` в stage private network PASS. Исходный E4 bind-конфиг идентичен встроенному D3 (`sha256`), поэтому при rolling update его сняли.
+- `docker service update --detach=false --mount-rm /etc/nginx/templates/default.conf.template --image morefoto-frontend:d3-20260921173000-3bca388 morefoto_frontend`: PASS, сервис `completed`, 2/2 новые реплики. Backend, FPM, consumer, dispatcher 1/1, параметры остальных сервисов сохранены. Rollback: `docker service rollback morefoto_frontend`; прежний spec и image сохранены в release.
+- Smoke: публичные `/health` и `/cabinet/overview` 200; API и защищённое preview без токена 401 JSON; POST 2 МиБ без токена 401 JSON вместо 413; опубликованный `index.html` имеет тот же SHA-256, что файл в новом image; актуальный `PhotoWorkspacePage` asset 200. Архив и predeploy артефакты SHA-256 PASS; frontend logs после rollout без ошибок. D3-DEPLOY PASS. Авторизованный пользовательский POST после нового frontend image отдельно не запускался; реальный изолированный E2E назначения PASS.
 - По явному поручению пользователя начат merge/deploy PR #32. `gh pr view 32`: draft OPEN, MERGEABLE, base E4 merge `7e606e5`, HEAD `6261ad0`, CI statusCheckRollup пуст (Actions отключены). Локальный полный `make test-e2e ...` ранее PASS 60/60; targeted browser и visual PASS. Stage сейчас: `morefoto_frontend` E4 2/2, backend 1/1, FPM/WebP 1/1, consumer 1/1, dispatcher 1/1. План дополнен release шагами до действий.
 - Новый скриншот: ввод `A01` в форме назначения двух кадров вернул 422 `VALIDATION_FAILED`, сообщение UI ошибочно говорит о формате/размере файла. Frontend `PhotoCollection.vue` ограничивает поле 3 символами, но `usePhotoWorkspace.assign` не вызывает `validChildCode`; backend `MediaRequestFactory::assignment` принимает только `^[A-Z]{1,3}$`. `A001` — автоматически сформированный код первого кадра ребёнка `A`, не значение поля ребёнка. План расширен до проверки до POST и контекстной ошибки.
 - Форма теперь объясняет `A` → `A001`, подсвечивает `A01`, блокирует отправку и дополнительно проверяет код в composable. Для серверного `VALIDATION_FAILED` при назначении показывает ошибку данных назначения вместо ошибки формата файла. Обновлены mock/browser и real HTTP E2E: неверный код не делает POST, `A` создаёт `A001`.
@@ -44,7 +48,7 @@
 - D3-RECOVERY: PASS, 2026-09-21, SQL read-only по ID 1/2: `ready/done`, 4 WebP файла ненулевого размера.
 - D3-PREVIEW: PASS, 2026-09-21, `docker exec stage-fpm php -r 'is_file/filesize'`: 3/3 файла читаются; `docker service logs --since 2m morefoto_stage_fpm`: реальные защищённые GET завершились `media.INFO: RESPONSE` без 404.
 - D3-ASSIGN-CODE: PASS, 2026-09-21, `make test-e2e ...`: live browser проверил `A01` без POST и `A` → `A001`; mock browser неверного кода также прошёл.
-- D3-DEPLOY: PENDING, 2026-09-21, merge/deploy ещё не начат.
+- D3-DEPLOY: PASS, 2026-09-21, `gh pr view 32` MERGED `3bca388`; `docker service inspect/ps` image D3 2/2 completed; `curl` health/index/API/preview/2 МиБ PASS; image/index SHA-256 совпал.
 - По скриншотам пользователя: девять POST файлов отклонены 413; экран кадров показывает `Cannot read properties of null (reading 'items')`.
 - Stage FPM `ServiceLocator::get(UploadPhotoUseCase::class)` выбрасывает `MESSENGER_TRANSPORT_DSN не задан или пуст`; это ломает создание MediaController для GET и POST.
 - В stage FPM отсутствуют DSN и media consumer. Основной site_rabbitmq существует; отдельного stage vhost нет.
