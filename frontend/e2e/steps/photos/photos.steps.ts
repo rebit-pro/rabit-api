@@ -269,8 +269,8 @@ Then('неверный код R08 показывает ошибку без из�
   await upload(p, 1);
   await p.getByRole('checkbox').check();
   await p.getByTestId('child-code').locator('input').fill('А1');
-  await p.getByRole('button', { name: 'Назначить ребёнку', exact: true }).click();
-  await expect(p.getByRole('alert').filter({ hasText: 'латинских букв' })).toBeVisible();
+  await expect(p.getByRole('button', { name: 'Назначить ребёнку', exact: true })).toBeDisabled();
+  await expect(p.getByText('Код ребёнка — от 1 до 3 латинских букв.', { exact: false })).toBeVisible();
   expect((await localPhotos(p))[0]?.childCode).toBeNull();
 });
 Then('опубликованная группа R08 защищена от изменений', async function (this: CustomWorld) {

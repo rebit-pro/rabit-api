@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, shallowRef, watch } from 'vue';
 import GalleryImage from '../../gallery/components/GalleryImage.vue';
+import { validChildCode } from '../rules';
 import type { ManagedPhoto } from '../types';
 const props = defineProps<{
   photos: ManagedPhoto[];
@@ -22,6 +23,11 @@ const emit = defineEmits<{
   move: [code: string];
 }>();
 const code = shallowRef(props.suggestedCode);
+const codeError = computed(() =>
+  code.value.trim() && !validChildCode(code.value.trim().toUpperCase())
+    ? 'Код ребёнка — от 1 до 3 латинских букв. Код кадра A001 появится автоматически для ребёнка A.'
+    : ''
+);
 watch(
   () => props.suggestedCode,
   (value) => {
@@ -63,16 +69,26 @@ function photoCodes(photo: ManagedPhoto): string {
       <p>
         Выбрано кадров: <strong data-testid="photo-selection-count">{{ selected.length }}</strong>
       </p>
-      <v-text-field
-        v-model="code"
-        label="Код ребёнка"
-        hint="Латинские буквы: A, B, AA. Занятый код добавит кадры в существующий набор."
-        persistent-hint
-        maxlength="3"
-        data-testid="child-code"
-        :disabled="busy"
-      />
-      <v-btn :disabled="!selected.length || busy" :loading="busy" @click="$emit('assign', code)">Назначить ребёнку</v-btn>
+      <div class="collection-code">
+        <v-text-field
+          v-model="code"
+          label="Код ребёнка"
+          hint="Введите A, B или AA. Коды кадров A001, A002… появятся автоматически."
+          :persistent-hint="!codeError"
+          :hide-details="Boolean(codeError)"
+          :error="Boolean(codeError)"
+          maxlength="3"
+          data-testid="child-code"
+          :disabled="busy"
+        />
+        <p v-if="codeError" class="collection-code__error" role="alert">{{ codeError }}</p>
+      </div>
+      <v-btn
+        :disabled="!selected.length || busy || !validChildCode(code.trim().toUpperCase())"
+        :loading="busy"
+        @click="$emit('assign', code)"
+        >Назначить ребёнку</v-btn
+      >
     </div>
     <p v-if="!photos.length" class="mf-muted py-8" data-testid="photos-empty">
       Кадров пока нет. Выберите фотографии для подготовки или измените фильтр.
@@ -125,8 +141,15 @@ function photoCodes(photo: ManagedPhoto): string {
   background: #f4f7fa;
   border-radius: 4px;
 }
-.collection-assignment > .v-input {
+.collection-code {
   flex: 1 1 240px;
+  min-width: 0;
+}
+.collection-code__error {
+  color: #b42318;
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 6px;
 }
 .photo-grid {
   display: grid;

@@ -142,8 +142,22 @@ test('D1/D2: приватное фото получает M:N-разметку �
   await page.screenshot({ path: testInfo.outputPath('d1-desktop-media.png'), fullPage: true });
 
   await page.getByTestId('photo-card').getByRole('checkbox').check();
+  let assignmentRequests = 0;
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && new URL(request.url()).pathname.endsWith('/photo-assignments')) assignmentRequests++;
+  });
+  await page.getByLabel('Код ребёнка', { exact: true }).fill('A01');
+  await expect(page.getByRole('button', { name: 'Назначить ребёнку', exact: true })).toBeDisabled();
+  await expect(page.getByText('Код ребёнка — от 1 до 3 латинских букв.', { exact: false })).toBeVisible();
+  expect(assignmentRequests).toBe(0);
+  await page.screenshot({ path: testInfo.outputPath('d3-assignment-code-desktop.png'), fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByText('Код ребёнка — от 1 до 3 латинских букв.', { exact: false })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('d3-assignment-code-mobile.png'), fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByLabel('Код ребёнка', { exact: true }).fill('A');
   await page.getByRole('button', { name: 'Назначить ребёнку', exact: true }).click();
+  expect(assignmentRequests).toBe(1);
   await expect(page.getByRole('status').filter({ hasText: 'Кадры назначены ребёнку.' })).toBeVisible();
   await expect(page.getByTestId('photo-card')).toContainText('A001');
 
