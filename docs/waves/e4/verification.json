@@ -57,5 +57,7 @@
     "errors": []
   },
   "mergeAllowed": false,
-  "nextStep": "Update D1 preview contract test to assert anonymous 401 and authorized 200; rerun make test-e2e including verify-storefront.php."
+  "nextStep": "Update D1 preview contract test to assert anonymous 401 and authorized 200; rerun make test-e2e including verify-storefront.php.",
+  "pr": "https://github.com/rebit-pro/rabit-api/pull/30",
+  "runtimeCommit": "a44d9c8"
 }

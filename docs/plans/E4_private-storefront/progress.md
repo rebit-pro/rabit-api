@@ -2,11 +2,11 @@
 
 ## Точка продолжения
 
-- Ветка codex/e4-private-storefront; base 6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc; HEAD b854933; PR E4 ещё не создан.
-- F1 PR #25 слит; согласованный контракт и граф сохранены. Runtime E4 реализован в рабочем дереве: миграции, capability, preview, catalog/quote, live UI и проверки. Изменения пока не закоммичены, PR отсутствует.
-- Сейчас: пользователь завершил текущую проверку и поручил сделать PR. Полный gate: backend/frontend PASS; browser 56/57, FAIL старого D1 anonymous preview ожидания. Создаётся draft PR; merge заблокирован.
+- Ветка codex/e4-private-storefront; base 6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc; runtime HEAD a44d9c8; PR #30 DRAFT: https://github.com/rebit-pro/rabit-api/pull/30. Текущий HEAD — последующий docs-only commit публикации.
+- F1 PR #25 слит; согласованный контракт и граф сохранены. Runtime E4 реализован в рабочем дереве: миграции, capability, preview, catalog/quote, live UI и проверки. Runtime и proof закоммичены (a44d9c8) и отправлены в draft PR #30.
+- Сейчас: текущая проверка завершена, PR опубликован по указанию пользователя. Полный gate: backend/frontend PASS; browser 56/57, FAIL старого D1 anonymous preview ожидания. Создан draft PR #30; merge заблокирован.
 - Следующий шаг: обновить frontend/e2e/live/zz-media.spec.ts:101 на anonymous 401 + authorized 200, затем полный make test-e2e. Final verify-storefront (включая F1) PENDING. Context/DTO unit проходят.
-- Base/HEAD проверены через git, PR через gh (пусто). Stash F1 сохранён отдельно, не восстанавливать в E4.
+- Base/HEAD проверены через git, draft PR #30 создан через gh. Stash F1 сохранён отдельно, не восстанавливать в E4.
 - Команды продолжения: `python3` для чтения frontend/reports/e2e-live/results.json; `docker logs rabit-e2e-ca1b3ab556a7-fpm`; после исправлений `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
 
 ## Хронология
@@ -102,3 +102,5 @@
 - E4-CAPABILITY/QUOTE/UI browser PASS по 6 новым сценариям. Полный browser 56 PASS / 1 FAIL / 0 skipped; zz-media.spec.ts:101 ожидает 200 от анонимного GET нового Bearer preview, получает корректный 401. E4-MEDIA общий регресс FAIL до обновления теста и повторной проверки.
 - E4-STALE: ранний real MySQL PASS зафиксирован выше; после выделения context финальный post-browser verifier не запускался. Повтор PENDING; подтверждение F1 через реальный порт также PENDING. Нельзя переносить прежний PASS на финальный source.
 - E4-GRAPH PASS (40 waves / 99 API), main не изменился. E4-PUBLISH draft, готовность к merge BLOCKED. Все три собственных стенда остановлены, cleanupErrors=[]. Stash F1 не затронут.
+
+- Публикация: commit a44d9c8, push ветки codex/e4-private-storefront и `gh pr create --draft` — PASS. PR https://github.com/rebit-pro/rabit-api/pull/30. Merge/deployment не выполнялись. Следующий docs-only commit фиксирует ссылку и точку продолжения; рабочее дерево после его push должно быть чистым.
