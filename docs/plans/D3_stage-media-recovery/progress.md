@@ -2,15 +2,38 @@
 
 ## Точка продолжения
 
-- Ветка `codex/d3-stage-media-recovery`, base E4 merge `7e606e53cc6b347e5c7b70e217ab7f8eb8a45875`; runtime commit `c9c7fc4`, текущий HEAD — `headRefOid` draft PR #32 (`gh pr view 32 --json headRefOid`). Issue массовой загрузки: #31.
-- Завершено: E4 развёрнут на app.morefoto36.ru; подтверждены HTTP 413 и ошибка DI; корень DI — пустой MESSENGER_TRANSPORT_DSN stage FPM.
-- Сейчас: ожидание подтверждения авторизованной загрузки на stage. Следующий шаг: дождаться ответа пользователя по JPEG 8 МБ и завершить review PR #32.
-- Риски: основной RabbitMQ общий инфраструктурно; stage сообщения находятся в отдельном vhost. Авторизованный HTTP upload на stage ещё не проверен, пользователь получил запрос на повтор.
-- Рабочее дерево: чистое после публикации визуальных артефактов и этого журнала. D3-DI/QUEUE/LOG/HTTP-LIMIT/F1-INVALID/VISUAL — PASS; HTTP-LIST/UPLOAD — PASS в изолированном real E2E, PENDING на stage с авторизацией.
+- Ветка `codex/d3-stage-media-recovery`, base E4 merge `7e606e53cc6b347e5c7b70e217ab7f8eb8a45875`, HEAD `1a04eb3`; draft PR #32, issue массовой загрузки #31.
+- Завершено: stage получил E4, исправления DI, очередь, nginx 413 и логи. Авторизованная загрузка пользователя сохранила два оригинала; оба затем упали на обработке из-за отсутствия WebP в старом stage PHP image.
+- Сейчас: три пользовательских кадра готовы; по новому скриншоту найден и устранён 404 миниатюр из-за отсутствующего `/app/public/upload` mount в stage FPM. Следующий шаг: подтвердить ответ защищённого HTTP endpoint после обновления FPM, обновить PR/журнал.
+- Риски: остальные файлы первого пакета были прерваны; готовые кадры ещё не привязаны к ребёнку, ссылка группы ещё не передана. Stage images временно основаны на локальном D1 build с отключённым Xdebug, для последующего релиза нужны production images. Основной site_* не менялся.
+- Рабочее дерево: изменены `plan.md` и `progress.md`. D3-DI/QUEUE/LOG/HTTP-LIMIT/F1-INVALID/VISUAL/WEBP/RECOVERY — PASS; повторная ручная загрузка полного пакета пользователем ещё PENDING.
 
 ## Хронология
 
 ### 2026-09-21
+- Авторизованный POST со скриншота подтвердил приём `IMG_0590.jpg` и `IMG_0591.jpg`: записи ID 1/2 и оригиналы в приватном хранилище есть. Прочие файлы пакета не завершили отправку. Ручной `app:media:dispatch-pending --limit=10` отправил две задачи; consumer исчерпал три попытки, статус обеих — `failed`/`PROCESSING_FAILED`.
+- Диагностика `GdPreviewRenderer::render` в stage CLI: `Image renderer is unavailable`; `function_exists('imagewebp')=no` в старых stage CLI/FPM images, в локальных D1 CLI/FPM images — yes. В stage FPM pool `clear_env=no`, это не причина задержки. План расширен до обновления images и восстановления оригиналов.
+- `bash backup-d3.sh` на stage: новая копия БД `database-before-d3-recovery.sql.gz`, gzip/SHA и содержимое проверены; 39264 байт. D3-RECOVERY пока PENDING.
+- `docker save ... | gzip | ssh ... docker load`: stage получил CLI/FPM `d3-webp`, gzip проверен. `docker run ... php -r 'function_exists("imagewebp")'`: yes в обоих images. Обновлены только `morefoto_stage_media_consumer` и `morefoto_stage_fpm`; создан `morefoto_stage_media_dispatcher` с минутным `dispatch-pending`, отдельным stage vhost и прежними mounts/secret. `docker exec php -r ...` в трёх контейнерах: webp=yes; D3-WEBP PASS.
+- У stage images включён Xdebug; для FPM, consumer и dispatcher задан `XDEBUG_MODE=off`, сервисы сошлись. Требуется отдельный production build в плановом релизе.
+- После проверенной копии БД SQL update строго двух `failed` записей с оригиналами: `ROW_COUNT()=2`, статус переведён в `processing/pending`, попытки обнулены. `docker exec ... docker-entrypoint.sh php ... app:media:dispatch-pending --limit=10`: опубликовано 2. Контроль SQL: обе записи `ready/done`, `UF_ATTEMPTS=0`, thumb/preview заданы; четыре WebP файла существуют и ненулевого размера. D3-RECOVERY PASS.
+- Публичный прямой URL `/upload/morefoto/previews/...` ответил 404: это ожидаемая защита в backend nginx; защищённый `/api/v1/photos/{id}/thumb` без Bearer отвечает 401. В БД у обоих готовых кадров 0 привязок к ребёнку, у группы `UF_SENT_AT IS NOT NULL=0`; публичная галерея пока на стадии подготовки.
+- `docker service ls --filter name=morefoto_stage`: backend, FPM, consumer и dispatcher — все 1/1. Логи dispatcher показывают успешные проходы; повторный `dispatch-pending` публикует 0. Небольшой GD benchmark на исходном JPEG 3000×4500 в текущем consumer с `XDEBUG_MODE=off`: декодирование, масштабирование до 320 px и WebP за 0,95 с. Полная пользовательская передача 8 МБ зависит также от сети; повтор её после восстановления ещё не наблюдался.
+- Новый скриншот показывает три готовых кадра (`IMG_0577.jpg`, `IMG_0591.jpg`, `IMG_0590.jpg`), но все миниатюры отвечают 404. В stage FPM логи `ManagedPreviewController::getAction` указывают `PreviewContent.php:23` (файл отсутствует по пути FPM). `docker service inspect morefoto_stage_fpm` подтвердил отсутствие mount `/app/public/upload`, тогда как consumer его имеет. `docker service update --mount-add type=bind,src=.../runtime/public/upload,dst=/app/public/upload morefoto_stage_fpm`: сервис сошёлся; `docker exec` проверил 3/3 WebP внутри нового FPM, размеры 16026/16628/16830 байт. Защищённый HTTP GET из пользовательской сессии после обновления ещё PENDING.
+
+## Тест-кейсы
+
+- D3-DI: PASS, 2026-09-21, `docker exec stage-fpm ... ServiceLocator::get(UploadPhotoUseCase::class)`, сервис разрешён.
+- D3-HTTP-LIST: PASS, 2026-09-21, `make test-e2e ...`, реальный HTTP в изолированном fixture; пользовательский stage GET после исправления отображает кадры.
+- D3-HTTP-UPLOAD: PASS, 2026-09-21, `make test-e2e ...` и пользовательский авторизованный POST на stage; два оригинала сохранены, после исправления обработки оба `ready`.
+- D3-HTTP-LIMIT: PASS, 2026-09-21, `curl` 8 МиБ через app.morefoto36.ru без Bearer: 401 JSON вместо прежнего 413 HTML.
+- D3-QUEUE: PASS, 2026-09-21, `docker service ls`, `app:media:dispatch-pending --limit=10`, SQL: 2 опубликованы и обработаны.
+- D3-LOG: PASS, 2026-09-21, проверка stage `runtime/logs/logstash/media-2026-09-21.log`.
+- D3-F1-INVALID: PASS, 2026-09-21, `make test-e2e ...`, код `A0001` отклонён в форме до POST.
+- D3-VISUAL: PASS, 2026-09-21, Playwright desktop/mobile screenshots и ручной просмотр `docs/waves/d3/visual/`.
+- D3-WEBP: PASS, 2026-09-21, `docker exec ... php -r 'function_exists("imagewebp")'` в stage FPM/consumer/dispatcher: yes.
+- D3-RECOVERY: PASS, 2026-09-21, SQL read-only по ID 1/2: `ready/done`, 4 WebP файла ненулевого размера.
+- D3-PREVIEW: PENDING, 2026-09-21, `docker exec stage-fpm php -r 'is_file/filesize'`: 3/3 файла читаются после mount; пользовательский HTTP GET после обновления FPM ещё не подтверждён.
 - По скриншотам пользователя: девять POST файлов отклонены 413; экран кадров показывает `Cannot read properties of null (reading 'items')`.
 - Stage FPM `ServiceLocator::get(UploadPhotoUseCase::class)` выбрасывает `MESSENGER_TRANSPORT_DSN не задан или пуст`; это ломает создание MediaController для GET и POST.
 - В stage FPM отсутствуют DSN и media consumer. Основной site_rabbitmq существует; отдельного stage vhost нет.
