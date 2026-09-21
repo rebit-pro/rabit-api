@@ -2,11 +2,11 @@
 
 ## Точка продолжения
 
-- Ветка `codex/d3-stage-media-recovery`, base E4 merge `7e606e53cc6b347e5c7b70e217ab7f8eb8a45875`, HEAD `a92910a`; draft PR #32. Issue массовой загрузки: #31.
+- Ветка `codex/d3-stage-media-recovery`, base E4 merge `7e606e53cc6b347e5c7b70e217ab7f8eb8a45875`; runtime commit `c9c7fc4`, текущий HEAD — `headRefOid` draft PR #32 (`gh pr view 32 --json headRefOid`). Issue массовой загрузки: #31.
 - Завершено: E4 развёрнут на app.morefoto36.ru; подтверждены HTTP 413 и ошибка DI; корень DI — пустой MESSENGER_TRANSPORT_DSN stage FPM.
 - Сейчас: ожидание подтверждения авторизованной загрузки на stage. Следующий шаг: дождаться ответа пользователя по JPEG 8 МБ и завершить review PR #32.
 - Риски: основной RabbitMQ общий инфраструктурно; stage сообщения находятся в отдельном vhost. Авторизованный HTTP upload на stage ещё не проверен, пользователь получил запрос на повтор.
-- Рабочее дерево: plan/progress и четыре визуальных артефакта после создания draft PR; приложение закоммичено и опубликовано. D3-DI/QUEUE/LOG/HTTP-LIMIT/F1-INVALID/VISUAL — PASS; HTTP-LIST/UPLOAD — PASS в изолированном real E2E, PENDING на stage с авторизацией.
+- Рабочее дерево: чистое после публикации визуальных артефактов и этого журнала. D3-DI/QUEUE/LOG/HTTP-LIMIT/F1-INVALID/VISUAL — PASS; HTTP-LIST/UPLOAD — PASS в изолированном real E2E, PENDING на stage с авторизацией.
 
 ## Хронология
 
@@ -31,3 +31,4 @@
 - `git commit -m 'fix(morefoto): restore stage photo uploads and clarify handoff validation'`: `c9c7fc4`. SSH `git push` истёк по timeout; `gh auth setup-git` и HTTPS `git push` опубликовали ветку без раскрытия токена.
 - Docs commit `a92910a` опубликован; `gh pr create --draft --base main --head codex/d3-stage-media-recovery --body-file /tmp/d3-pr-body.md`: PR #32 создан. Merge/deploy нового frontend image не выполнялись; live stage nginx исправлен bind-шаблоном.
 - `make e2e-up ...` создал изолированный fixture `rabit-e2e-726c1040e2e8`; Playwright из контейнера прошёл фото-ошибку и F1 `A0001` на 1440×1000 и 390×844. Четыре PNG сохранены в `docs/waves/d3/visual/`; ручной просмотр подтвердил читаемость, отсутствие наложений и видимость ошибки F1 на mobile после прокрутки внутреннего диалога. D3-VISUAL PASS. `make e2e-down E2E_STATE=.../state.json`: PASS.
+- Visual/docs commit `ec35ad8` опубликован в PR #32; `gh pr view 32 --json number,isDraft,state,headRefOid,baseRefOid,url`: draft OPEN, base `7e606e5`, head `ec35ad8`. `gh issue view 31`: OPEN. Все четыре stage-сервиса 2/2, 1/1, 1/1, 1/1; stage logstash содержит media, handoff, access, organization, cli файлы.
