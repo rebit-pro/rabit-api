@@ -5,24 +5,30 @@
 - Дата: 2026-09-21.
 - Ветка: `codex/issues-23-24-dto-phpdoc`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-23-24-dto-phpdoc`.
-- Base и HEAD перед первым коммитом документации:
-  `6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc` (origin/main, merge F1).
-  После публикации точный HEAD проверяется через `git rev-parse HEAD` и `gh pr view --json headRefOid`.
+- Base: `6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc` (main, merge F1).
+- Первый опубликованный commit плана: `a204c63df2116681d9e07121d862f10569dd22f6`.
+  Финальный HEAD — commit документации с этой записью; точный SHA определяется через
+  `git rev-parse HEAD` и сверяется с `gh pr view 29 --json headRefOid`.
+  Собственный SHA не записывается внутрь коммита, чтобы не требовать бесконечных изменений журнала.
 - Issues: [#23](https://github.com/rebit-pro/rabit-api/issues/23) и
   [#24](https://github.com/rebit-pro/rabit-api/issues/24), оба OPEN.
-- PR: ещё не создан; предназначен только для плана, без закрытия issues.
+- PR: [#29](https://github.com/rebit-pro/rabit-api/pull/29), OPEN в main, только план; issues не закрывает.
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md),
   [F1](../F1_staff_requests/plan.md).
 - Завершено: чтение issues/review, проверка merge F1, изолированный worktree,
-  первичная инвентаризация путей, план с рисками и T01–T12.
-- Сейчас: документы проверены, выполняется commit/push и создание PR.
-- Один следующий шаг: закоммитить проверенный план и создать PR в main через gh.
+  первичная инвентаризация путей, план с рисками и T01–T12, проверки документов,
+  commit/push и создание PR #29.
+- Сейчас: текущий объём «только план» выполнен; сохраняется итоговая запись журнала.
+- Один следующий шаг после публикации журнала: ждать отдельного поручения пользователя;
+  реализацию автоматически не начинать. При возобновлении сначала прочитать план/журнал и сверить main/PR.
 - Блокеров для плана нет. Реализация отложена по прямому указанию пользователя.
   Решения по error mapping/передаче auth-контекста относятся к будущей реализации.
-- Рабочее дерево: только новые `docs/plans/issues-23-24-dto-phpdoc/plan.md` и
-  `progress.md`; код приложения не изменялся.
-- Следующие команды: `git diff --cached --check`; `git diff --cached --name-only`;
-  `git status --short`; после PR — `/home/user/.local/bin/gh pr view --json url,state,baseRefName,headRefName,headRefOid,files`.
+- Рабочее дерево: после первого push было чистым; финальная запись меняет только
+  `docs/plans/issues-23-24-dto-phpdoc/plan.md` и `progress.md`.
+  После commit/push журнала проверить чистоту; код приложения не изменялся.
+- Следующие read-only команды: `git status --short`; `git diff origin/main...HEAD --check`;
+  `/home/user/.local/bin/gh pr view 29 --json url,state,baseRefName,headRefName,headRefOid,files`;
+  `git rev-parse HEAD`; `git rev-parse origin/codex/issues-23-24-dto-phpdoc`.
 
 ## Хронология
 
@@ -70,7 +76,7 @@
 | --- | --- | --- | --- |
 | T01 | PASS | 2026-09-21 | `git diff --cached --check` (exit 0); `git diff --cached --name-only`: только plan.md и progress.md |
 | T02 | PASS | 2026-09-21 | PowerShell: проверено ровно 2 UTF-8 файла, наличие T01–T12 в каждом, отсутствие U+FFFD; ручное review scope/рисков/статусов завершено |
-| T03 | PENDING | 2026-09-21 | PR ещё не создан; после push проверить head/files/base и OPEN issues через gh |
+| T03 | PASS | 2026-09-21 | `gh pr view 29 --json url,state,baseRefName,headRefName,headRefOid,files`: OPEN, main, 2 документа; `gh issue view 23 --json number,state` и аналогично 24: OPEN; локальный/remote/PR HEAD a204c63 совпали |
 | T04 | PENDING | 2026-09-21 | Только инвентаризация 70 путей; смысловой аудит и сравнение PHP-токенов не запускались |
 | T05 | PENDING | 2026-09-21 | Architecture/unit не запускались: реализация отложена |
 | T06 | PENDING | 2026-09-21 | HTTP happy paths не запускались: реализация отложена |
@@ -91,3 +97,19 @@
 - Исходная попытка SSH fetch завершилась ошибкой соединения; выполненный после неё HTTPS fetch
   через gh credential helper успешно подтвердил актуальный main. Это не блокирует публикацию.
 - Перед commit в индексе только plan.md/progress.md; следующий шаг — commit, push и PR через gh.
+
+### 2026-09-21 — commit, push и PR
+
+- `git commit -m "docs: plan issues 23 and 24 without implementation"`: PASS,
+  commit `a204c63df2116681d9e07121d862f10569dd22f6`.
+- `git -c url.https://github.com/.insteadOf=git@github.com: -c credential.helper= -c credential.helper="!/home/user/.local/bin/gh auth git-credential" push -u origin codex/issues-23-24-dto-phpdoc`: PASS.
+- `/home/user/.local/bin/gh pr create --base main --head codex/issues-23-24-dto-phpdoc --title "План issues #23 и #24: phpDoc и чистые HTTP-контроллеры" --body-file /tmp/rabit-issues-23-24-pr-body.md`:
+  создан [PR #29](https://github.com/rebit-pro/rabit-api/pull/29), прикреплён к задаче Codex.
+- `/home/user/.local/bin/gh pr view 29 --json url,state,baseRefName,headRefName,headRefOid,files`:
+  PASS, OPEN, base main, нужная ветка, только два документа, SHA a204c63.
+- `/home/user/.local/bin/gh issue view 23 --json number,state` и аналогично #24: оба OPEN.
+- `git status --short`: пусто; `git rev-parse HEAD` и
+  `git rev-parse origin/codex/issues-23-24-dto-phpdoc`: одинаковый SHA a204c63.
+- Финальная запись отмечает завершение плана и публикацию. Перед её commit/push повторяется
+  `git diff --cached --check`; после push — read-only сверка HEAD/PR/files и чистоты дерева.
+  T04–T12 остаются PENDING по решению пользователя; merge/deployment не выполнялись.
