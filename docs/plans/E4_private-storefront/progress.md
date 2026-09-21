@@ -104,3 +104,11 @@
 - E4-GRAPH PASS (40 waves / 99 API), main не изменился. E4-PUBLISH draft, готовность к merge BLOCKED. Все три собственных стенда остановлены, cleanupErrors=[]. Stash F1 не затронут.
 
 - Публикация: commit a44d9c8, push ветки codex/e4-private-storefront и `gh pr create --draft` — PASS. PR https://github.com/rebit-pro/rabit-api/pull/30. Merge/deployment не выполнялись. Следующий docs-only commit фиксирует ссылку и точку продолжения; рабочее дерево после его push должно быть чистым.
+
+### 2026-09-21 — отдельный deployment main по запросу пользователя
+
+- SSH повторно проверен: `rebit-pro` доступен, single-node Swarm Ready/Leader/Active.
+- В production stage `app.morefoto36.ru` выкатлено только содержимое `origin/main` (`6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc`), E4 draft PR #30 в образ не включён.
+- Образ `morefoto-frontend:main-20260921113950-6b81647` собран и загружен в `/srv/morefoto/releases/`; rolling update `morefoto_frontend` завершён `completed`, 2/2 реплики. `/srv/morefoto/current` переключён на новый релиз.
+- Smoke PASS: `https://app.morefoto36.ru/health` HTTP 200, главная страница HTTP 200, service image/update/replicas подтверждены удалённо. `/api/health` вернул ожидаемый 401 stage Basic Auth; backend/site не изменялись.
+- Rollback: `IMAGE_TAG=stage-20260919-b2-d788622` через штатный `stage-remote.sh`/`stage.sh rollback`. Локальные архивы и временный worktree удалены, рабочее дерево чистое.
