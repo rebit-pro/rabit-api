@@ -66,6 +66,7 @@ export function staffRequestError(cause: unknown): string {
   if (code === 'IDEMPOTENCY_CONFLICT') return 'Эта попытка уже использована с другими данными. Закройте форму и откройте её снова.';
   if (code === 'CHILD_ALREADY_PENDING') return 'Этот ребёнок уже есть в списке на проверке.';
   if (code === 'CHILD_NOT_FOUND') return 'Код ребёнка или снимка не найден в выбранной группе.';
+  if (code === 'INVALID_ROW') return 'Проверьте код ребёнка или снимка: например, A или A001. У снимка ровно три цифры.';
   if (code === 'GROUP_NOT_FOUND' || cause.response?.status === 404) return 'Группа или список больше не доступны в вашей области.';
   if (code === 'CONFIRMATION_REQUIRED') return 'Подтвердите запрос уточнения.';
   if (cause.response?.status === 403) return 'Недостаточно прав для этого действия.';
