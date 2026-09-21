@@ -1,0 +1,61 @@
+{
+  "wave": "E4",
+  "status": "blocked",
+  "date": "2026-09-21",
+  "branch": "codex/e4-private-storefront",
+  "base": "6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc",
+  "fixture": "rabit-e2e-8caca4c75f2e",
+  "checks": {
+    "phpLint": {
+      "status": "passed",
+      "files": 649
+    },
+    "phpstan": {
+      "status": "passed",
+      "errors": 0
+    },
+    "phpunit": {
+      "status": "passed",
+      "tests": 420,
+      "assertions": 1608
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "production build"
+      ],
+      "unitTests": 158
+    },
+    "style": {
+      "status": "passed",
+      "checkedLocalPhpFiles": 68,
+      "fixableFiles": 0
+    },
+    "browser": {
+      "status": "failed",
+      "passed": 56,
+      "failed": 1,
+      "skipped": 0,
+      "failure": "zz-media.spec.ts:101: legacy anonymous preview GET expected 200, received 401 after E4 protection",
+      "e4Scenarios": "6 passed"
+    },
+    "integration": {
+      "status": "pending",
+      "note": "Earlier targeted real MySQL stale/revoke/migration run passed before context extraction; final post-browser verifier and F1 eligibility check did not run because browser gate failed."
+    },
+    "graph": {
+      "status": "passed",
+      "waves": 40,
+      "apiIds": 99
+    }
+  },
+  "cleanup": {
+    "stopped": true,
+    "errors": []
+  },
+  "mergeAllowed": false,
+  "nextStep": "Update D1 preview contract test to assert anonymous 401 and authorized 200; rerun make test-e2e including verify-storefront.php."
+}

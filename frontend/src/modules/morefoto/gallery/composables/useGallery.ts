@@ -51,7 +51,7 @@ export function useGallery() {
   const code = computed(() => (typeof route.query.child === 'string' ? route.query.child.trim().toUpperCase() : ''));
   const allPhotos = computed(() => gallery.value?.children.flatMap((child) => child.photos) ?? []);
   const photos = computed(() => allPhotos.value.filter((photo) => photo.code.includes(code.value)));
-  const activeIndex = computed(() => photos.value.findIndex((photo) => photo.id === route.query.photo));
+  const activeIndex = computed(() => photos.value.findIndex((photo) => (photo.assignmentId ?? photo.id) === route.query.photo));
   const activePhoto = computed(() => photos.value[activeIndex.value] ?? null);
   const missingPhoto = computed(() => !!route.query.photo && !activePhoto.value && !!gallery.value);
 
@@ -62,7 +62,9 @@ export function useGallery() {
   }
   function openPhoto(photo: GalleryPhoto) {
     returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    void router.push({ query: { ...route.query, photo: photo.id } });
+    void router.push({
+      query: { ...route.query, photo: photo.assignmentId ?? photo.id }
+    });
   }
   function closePhoto() {
     const query = { ...route.query };
@@ -71,7 +73,10 @@ export function useGallery() {
   }
   function stepPhoto(direction: number) {
     const photo = photos.value[activeIndex.value + direction];
-    if (photo) void router.replace({ query: { ...route.query, photo: photo.id } });
+    if (photo)
+      void router.replace({
+        query: { ...route.query, photo: photo.assignmentId ?? photo.id }
+      });
   }
   watch(activePhoto, async (current, previous) => {
     if (!current && previous) {

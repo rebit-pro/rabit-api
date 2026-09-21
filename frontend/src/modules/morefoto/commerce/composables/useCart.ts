@@ -1,3 +1,5 @@
+import { isMockApiEnabled } from '@/mocks/config';
+import { liveState } from '../services/storefront';
 import { computed, onMounted, onScopeDispose, shallowRef, toValue, type MaybeRefOrGetter } from 'vue';
 import type { GallerySnapshot } from '../../gallery/types';
 import { demoChangedEvent } from '../../mocks/storage';
@@ -22,7 +24,9 @@ export function useCart(gallery: MaybeRefOrGetter<GallerySnapshot>) {
   });
   const catalog = computed(() => {
     void revision.value;
-    return getCatalog(toValue(gallery).groupId);
+    return isMockApiEnabled ? getCatalog(toValue(gallery).groupId) : liveState(toValue(gallery).groupId).catalog;
   });
-  return { quote, catalog };
+  const calculationError = computed(() => (isMockApiEnabled ? '' : liveState(toValue(gallery).groupId).error));
+  const hasQuote = computed(() => isMockApiEnabled || liveState(toValue(gallery).groupId).quote !== null);
+  return { quote, catalog, calculationError, hasQuote };
 }

@@ -7,7 +7,7 @@ defineEmits<{ open: [photo: GalleryPhoto] }>();
 
 <template>
   <div class="gallery-grid">
-    <article v-for="(photo, index) in photos" :key="photo.id" class="photo-card" data-testid="photo-card">
+    <article v-for="(photo, index) in photos" :key="photo.assignmentId ?? photo.id" class="photo-card" data-testid="photo-card">
       <div class="photo-card__image" @click="$emit('open', photo)">
         <GalleryImage :src="photo.thumbSrc" :alt="'Кадр ' + photo.code" :eager="index < 4" />
       </div>

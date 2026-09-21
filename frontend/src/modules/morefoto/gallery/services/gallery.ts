@@ -1,3 +1,5 @@
+import api from '@/api/http';
+import { loadStorefront } from '../../commerce/services/storefront';
 import { calendarDays, groupSentAt } from '../../handoff/rules';
 import { formatMoment } from '../../handoff/display';
 import { getDemoNow } from '../../mocks/clock';
@@ -41,6 +43,17 @@ export function resolveDemoGallery(token: string): GallerySnapshot {
 }
 
 export async function loadGallery(token: string): Promise<GallerySnapshot> {
-  await simulateRequest();
-  return resolveDemoGallery(token);
+  if (isMockApiEnabled) {
+    await simulateRequest();
+    return resolveDemoGallery(token);
+  }
+  try {
+    const { data } = await api.get<GallerySnapshot>('/api/v1/public/galleries/' + encodeURIComponent(token));
+    await loadStorefront(token, data);
+    return data;
+  } catch (cause) {
+    if (cause && typeof cause === 'object' && 'response' in cause && (cause.response as { status?: number })?.status === 404)
+      throw new GalleryUnavailableError('Ссылка недействительна');
+    throw new Error('Не удалось загрузить галерею. Попробуйте ещё раз.');
+  }
 }

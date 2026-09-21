@@ -77,8 +77,8 @@ final readonly class PhotoRowMapper
             height: (int)$row['UF_HEIGHT'],
             fingerprint: (string)$row['UF_FINGERPRINT'],
             revision: (int)$row['UF_REVISION'],
-            thumbSrc: null === ($row['UF_THUMB_SRC'] ?? null) ? null : (string)$row['UF_THUMB_SRC'],
-            previewSrc: null === ($row['UF_PREVIEW_SRC'] ?? null) ? null : (string)$row['UF_PREVIEW_SRC'],
+            thumbSrc: null === ($row['UF_THUMB_SRC'] ?? null) ? null : '/api/v1/photos/' . (string)$row['UF_PUBLIC_ID'] . '/thumb',
+            previewSrc: null === ($row['UF_PREVIEW_SRC'] ?? null) ? null : '/api/v1/photos/' . (string)$row['UF_PUBLIC_ID'] . '/preview',
             error: null === ($row['UF_ERROR_CODE'] ?? null) ? null : (string)$row['UF_ERROR_CODE'],
             existingPhotoId: null === ($row['EXISTING_PUBLIC_ID'] ?? null) ? null : (string)$row['EXISTING_PUBLIC_ID'],
         );

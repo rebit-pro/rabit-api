@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { isMockApiEnabled } from '@/mocks/config';
 import { shallowRef } from 'vue';
 import { useRoute } from 'vue-router';
 import CartEntry from '../../commerce/components/CartEntry.vue';
@@ -35,7 +36,7 @@ const helpOpen = shallowRef(false);
     <header class="gallery-topbar">
       <span class="mf-brand gallery-brand"><img src="/icons/morefoto-v1.svg" alt="" width="30" height="30" />More<span>Foto</span></span>
       <span class="gallery-topbar__caption">Фотографии ваших детей</span>
-      <CartEntry v-if="gallery" :gallery="gallery" :token="String(route.params.token)" />
+      <CartEntry v-if="gallery && gallery.state !== 'preparing'" :gallery="gallery" :token="String(route.params.token)" />
       <v-btn
         v-if="gallery"
         class="gallery-help-top"
@@ -47,7 +48,7 @@ const helpOpen = shallowRef(false);
         >Помощь</v-btn
       >
     </header>
-    <p class="gallery-demo">Тестовая галерея · Названия и даты условные</p>
+    <p v-if="isMockApiEnabled" class="gallery-demo">Тестовая галерея · Названия и даты условные</p>
     <main id="gallery-content" class="gallery-main">
       <div v-if="loading" role="status" aria-label="Загрузка галереи" class="gallery-loading">
         <v-skeleton-loader type="heading, paragraph" />

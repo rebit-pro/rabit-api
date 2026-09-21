@@ -20,6 +20,7 @@ export interface Catalog {
   conditionsRevision?: number;
 }
 export interface CartLine {
+  assignmentId?: string;
   id: string;
   childCode: string;
   photoId: string | null;

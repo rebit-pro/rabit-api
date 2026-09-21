@@ -2,13 +2,12 @@
 
 ## Точка продолжения
 
-- Ветка codex/e4-private-storefront; base 6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc; HEAD 66adc99; PR E4 ещё не создан.
-- F1 PR #25 MERGED 2026-09-21T10:11:13Z, merge 6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc. D2/E3 уже в main. Новый код E4 отсутствует.
-- Завершены merge F1, согласование assignmentId, обновление канонического API/Postman и графа. Следующий шаг — реализация assignment UUID и capability lifecycle по уточнённому плану.
-- E4-DEC-01 принят пользователем: assignmentId/productId/quantity. Следующий шаг — обновление канонического контракта и графа, затем реализация. Решение больше не блокирует код.
-- Подготовлены план/журнал, graph.json и patch канонических источников docs/waves/e4/morefoto-contract.patch. Стороннее форматирование F1 routes.php сохранено в git stash с сообщением preserve local F1 routes formatting before E4; не переносить в E4.
-- Источники: docs/waves/e3/README.md, docs/waves/w05/decisions.md, графы RaBit/MoreFoto, endpoints MED-01/COM-08/COM-09.
-- Следующая проверка: git status --short; rg --files api/public/local/modules/morefoto.media/lib; изучить existing private preview и возможности межмодульных портов. Затем обновить план до реализации.
+- Ветка codex/e4-private-storefront; base 6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc; HEAD b854933; PR E4 ещё не создан.
+- F1 PR #25 слит; согласованный контракт и граф сохранены. Runtime E4 реализован в рабочем дереве: миграции, capability, preview, catalog/quote, live UI и проверки. Изменения пока не закоммичены, PR отсутствует.
+- Сейчас: пользователь завершил текущую проверку и поручил сделать PR. Полный gate: backend/frontend PASS; browser 56/57, FAIL старого D1 anonymous preview ожидания. Создаётся draft PR; merge заблокирован.
+- Следующий шаг: обновить frontend/e2e/live/zz-media.spec.ts:101 на anonymous 401 + authorized 200, затем полный make test-e2e. Final verify-storefront (включая F1) PENDING. Context/DTO unit проходят.
+- Base/HEAD проверены через git, PR через gh (пусто). Stash F1 сохранён отдельно, не восстанавливать в E4.
+- Команды продолжения: `python3` для чтения frontend/reports/e2e-live/results.json; `docker logs rabit-e2e-ca1b3ab556a7-fpm`; после исправлений `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
 
 ## Хронология
 
@@ -46,3 +45,60 @@
 - Точный diff двух внешних канонических источников сохранён в docs/waves/e4/morefoto-contract.patch. В MoreFoto обновлены также производные карты/Postman. Patch позволяет воспроизвести изменения вне Git; перед повторным применением проверять текущее состояние.
 - E4-GRAPH PASS для текущего планирования; остальные E4 runtime/HTTP/UI проверки PENDING. Код приложения ещё не менялся. Найдены обязательные работы по UUID связи и закрытию прямой выдачи preview, добавлены в plan.
 - Перед commit `git diff --check` PASS. Этот commit фиксирует согласованный контракт и готовность зависимостей, не объявляет продуктовую волну завершённой. PR пока не создаётся.
+
+### 2026-09-21 — реализация связей
+
+Начат runtime этап по указанию «Продолжи». Дерево чистое, ветка E4. Сначала mf_photo_assignment получает постоянный публичный UUID: backfill только отсутствующих значений, unique index, новые записи получают UUID в существующем write-пути. Повтор назначения сохраняет идентификатор. Следом capability lifecycle/галерея. Проверки пока PENDING.
+
+
+- Реализованы migration assignment UUID/capability hash, внутренний lifecycle, разрешение галереи, DTO/mapper/controller, отдельные защищённые preview UseCase для capability и Bearer. Административные URL переведены на API; PhotoImage получает авторизованный Blob, nginx закрывает прямой каталог. COM-08/09 и live корзина ещё не реализованы.
+- Адресный PHPUnit GalleryAvailabilityTest: PASS, 1 test/5 assertions; границы передачи/закрытия проверены. Первый PHPStan foundation PASS. После binary ответа PHPStan выявил 4 ошибки отсутствующего addHeader в stub; метод сверен с реальным Bitrix httpresponse.php:72, stub дополнен.
+- Следующий шаг — подготовка реального E2E стенда для проверки схемы/DI/preview, параллельно продолжить серверный quote. Полная готовность E4 PENDING.
+
+### 2026-09-21 — серверный quote и первый браузерный прогон
+
+- Реализованы COM-08/09, хранение SHA-256 quote token, TTL 15 минут, fingerprint и повторная проверка через ValidateQuoteUseCase; транзакция SERIALIZABLE. Live UI использует серверный расчёт. DTO пассивны.
+- Адресный PHPUnit (GalleryAvailabilityTest, StorefrontQuoteTest, StorefrontQuoteTokenTest, StorefrontArchitectureTest): PASS 14 tests / 94 assertions. PHPStan: PASS после дополнения проверенного stub HttpResponse::addHeader. Последующие изменения требуют повторного gate.
+- Frontend check/build: сначала FAIL форматирования и TS possibly undefined; после eslint --fix и корректировки теста PASS. Логи /tmp/e4-frontend.log и /tmp/e4-stan.log. php-cs-fixer применён к 67 изменённым PHP, /tmp/e4-style.log.
+- `make e2e-up` с указанными выше images/kernel/vendor: PASS, изолированный стенд rabit-e2e-ca1b3ab556a7. Seed сначала выявил отсутствующий DI GalleryGroupInterface, неверное поле PhotoRegistration и пропущенные миграции в явном списке; исправлены, повтор seed PASS. Fixture capability хранится только в игнорируемом var.
+- Реальные HTTP GET галерей: open/preparing/closed 200 с ожидаемым состоянием, revoked 404; preview 200 image/webp. Полное E4-CAPABILITY/MEDIA пока PENDING до свежего gate.
+- `npm run test:e2e:live -- zzzz-storefront.spec.ts` в Playwright-контейнере: FAIL 6/6. Quote возвращает Bitrix 500; desktop/mobile не находят карточку, retry — состояние корзины. E4-QUOTE/UI FAIL; диагностика продолжается. Готовность PR не заявляется.
+
+### 2026-09-21 — адресные проверки исправлений
+
+- Причина 500: Commerce include.php не подключал поставщиков GalleryAccessInterface/StaffEligibilityInterface. Явные зависимости добавлены; отдельный DI resolve PASS.
+- Повтор browser `/tmp/e4-browser2.log`: 3 PASS / 3 FAIL; HTTP исправлен, UI тест кликал перекрытый input Vuetify, retry выдавал Network Error. Исправлены клик по видимому полю и сообщение сетевой ошибки.
+- `npm run check` + production build после eslint --fix: PASS (/tmp/e4-frontend2.log). Адресный browser `/tmp/e4-browser3.log`: PASS 6/6, desktop/mobile корзина и повтор после сетевого сбоя.
+- PHPStan: PASS (/tmp/e4-stan2.log). php-cs-fixer изменённых local PHP: PASS, исправлены 2/66 (/tmp/e4-style2.log).
+- `docker exec rabit-e2e-ca1b3ab556a7-fpm php /app/tools/e2e/verify-storefront.php`: PASS — свежий quote, отсутствие сырых ключей в snapshot, другая галерея/состав/цена/версия фото/assignment/TTL/отзыв отклоняются; повтор назначения и миграции сохраняет assignmentId.
+- URL capability теперь добавляет presentation mapper; persisted snapshot не содержит ключей. Staff provider оборачивает ошибки; явный false eligibility отклоняется. Добавлены unit-кейсы false eligibility и digital+bundle.
+- Перед свежим полным gate добавлена проверка Referrer-Policy HTML: nginx add_header в location index.html отменял наследование. Исправлено. Адресный PASS относится к предыдущему source; финальная проверка нового source PENDING.
+
+### 2026-09-21 — первый полный gate
+
+- `make test-e2e ...` (стенд rabit-e2e-71cd705d21e1): FAIL на E2E TypeScript. Новая переменная document для HTTP-ответа перекрыла DOM document в browser evaluate; переименована в navigation. ESLint/Vue typecheck до этого прошли. Стенд автоматически удалён, cleanupErrors=[]; backend/browser этого прогона не запускались.
+- Предварительный rabit-e2e-ca1b3ab556a7 остановлен через run-browser-e2e.py down. Четыре визуальных снимка просмотрены: desktop 1280×900 и mobile 390×844, галерея/корзина, без переполнения и сломанных изображений.
+- Новая проверка F1-порта в verify-storefront использует запись, созданную реальным browser workflow F1; проверяет подтверждение только в своей съёмке. Команда полного gate проверит её после браузера.
+- Ошибка загрузки live-галереи приведена к понятному русскому сообщению. Повтор полного gate PENDING.
+
+### 2026-09-21 — проверка границы DTO
+
+- Полный PHPUnit отдельной командой docker ... vendor/bin/phpunit --colors=never: FAIL, 419 tests / 1597 assertions, один architecture failure. Причина: новая проверка захватила старый CalendarCommandInputDto из C4, где конструктор выполняет валидацию. Сам DTO не менялся в E4; это найденный долг вне scope.
+- Architecture-проверка уточнена на все DTO новой витрины и конкретные новые межмодульные Gallery DTO. Это соответствует ответственности E4; существующий CalendarCommandInputDto требует отдельного исправления/переноса валидации. На ревью сообщить разработчику.
+- Повтор полного gate уже устанавливает зависимости; backend-проверки ещё не начинались, они прочитают исправленный тест. Runtime E4 не изменён этим исправлением.
+
+### 2026-09-21 — context без чтения фотографий
+
+- GalleryAccessInterface::context проверяет capability, область и состояние; resolve дополняет его назначениями. Catalog и preview переиспользуют context, убраны лишняя выборка полного набора и дублированная авторизация. Новый GalleryContextOutputDto пассивный; GalleryContextTest запрещает запрос фотографий в этом пути.
+- `docker run --rm --network none --entrypoint php --mount type=bind,source=/home/user/rabit-api/api,target=/app,readonly --tmpfs /app/var:rw,size=256m --workdir /app rabit-api-php-cli:d1-local vendor/bin/phpunit --colors=never` до context: PASS 419 tests / 1598 assertions (/tmp/e4-unit-final2.log). Context войдёт в полный gate; повтор отдельно не нужен при зелёном gate.
+- php-cs-fixer local diff: 68 файлов, исправлены 2 (/tmp/e4-style3.log). Новые e2e PHP tools отдельно проверены тем же config с --path-mode=override (/tmp/e4-style-tools.log). Минимальный stub HttpResponse::addHeader сохранён без стороннего форматирования всего файла.
+- Сверка main через gh api: 6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc, base актуален. DAG/99 API/готовность PASS, E4 единственная готовая волна. Два предыдущих стенда остановлены, cleanupErrors=[].
+
+### 2026-09-21 — завершение проверки по указанию пользователя, draft PR
+
+- Пользователь: «Завершай проверку. Токены закончились. Делай PR». Дополнительные итерации остановлены после текущего прогона, публикуется draft с явным блокером.
+- `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`: FAIL, стенд rabit-e2e-8caca4c75f2e, /tmp/e4-full-gate2.log.
+- E4-ARCH PASS: PHP lint 649, PHPStan 0 errors, PHPUnit 420 tests / 1608 assertions. Frontend ESLint/Vue/E2E TypeScript/build PASS, unit 158 PASS. Style dry-run PASS: 0/68 local PHP требуют исправлений, /tmp/e4-style-final.log.
+- E4-CAPABILITY/QUOTE/UI browser PASS по 6 новым сценариям. Полный browser 56 PASS / 1 FAIL / 0 skipped; zz-media.spec.ts:101 ожидает 200 от анонимного GET нового Bearer preview, получает корректный 401. E4-MEDIA общий регресс FAIL до обновления теста и повторной проверки.
+- E4-STALE: ранний real MySQL PASS зафиксирован выше; после выделения context финальный post-browser verifier не запускался. Повтор PENDING; подтверждение F1 через реальный порт также PENDING. Нельзя переносить прежний PASS на финальный source.
+- E4-GRAPH PASS (40 waves / 99 API), main не изменился. E4-PUBLISH draft, готовность к merge BLOCKED. Все три собственных стенда остановлены, cleanupErrors=[]. Stash F1 не затронут.

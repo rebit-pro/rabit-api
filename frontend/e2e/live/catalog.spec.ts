@@ -33,7 +33,9 @@ test('неверный пароль отклонён сервером; роль 
   await login(page);
   await expect(page.getByText('Организатор', { exact: true })).toBeVisible();
   await expect(page.getByText('Ассортимент пуст. Добавьте первую продукцию.')).toBeVisible();
-  const me = await page.request.get('/api/v1/me', { headers: { Authorization: 'Bearer ' + (await token(page)) } });
+  const me = await page.request.get('/api/v1/me', {
+    headers: { Authorization: 'Bearer ' + (await token(page)) }
+  });
   expect((await me.json()).data.permissions).toContain('catalog.manage');
 });
 
@@ -42,16 +44,15 @@ test('неподключённые публичные разделы недос�
   page.on('request', (request) => {
     if (new URL(request.url()).pathname.startsWith('/api/')) apiRequests.push(request.url());
   });
-  for (const path of [
-    '/g/a8-disabled',
-    '/g/a8-disabled/cart',
-    '/g/a8-disabled/checkout',
-    '/orders/access/a8-disabled',
-    '/orders/access/a8-disabled/payment'
-  ]) {
+  for (const path of ['/g/a8-disabled/checkout', '/orders/access/a8-disabled', '/orders/access/a8-disabled/payment']) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/feature-unavailable$/);
-    await expect(page.getByRole('heading', { name: 'Раздел пока недоступен', exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('heading', {
+        name: 'Раздел пока недоступен',
+        exact: true
+      })
+    ).toBeVisible();
     expect(await page.evaluate(() => Object.keys(localStorage).some((key) => key.startsWith('morefoto:demo:')))).toBe(false);
   }
   expect(apiRequests).toEqual([]);
@@ -97,7 +98,9 @@ test('ошибки полей и серверный 422 оставляют ре�
   await page.getByRole('option', { name: 'Электронный кадр', exact: true }).click();
   await expect(page.getByLabel('Отпечатков в единице', { exact: true })).toHaveCount(0);
   await saveProduct(page);
-  const list = await page.request.get(catalogPath, { headers: { Authorization: 'Bearer ' + (await token(page)) } });
+  const list = await page.request.get(catalogPath, {
+    headers: { Authorization: 'Bearer ' + (await token(page)) }
+  });
   const item = (await list.json()).data.items.find((value: { name: string }) => value.name === 'A8 Валидация');
   expect(item.kind).toBe('digital');
   expect(item.printCount).toBe(0);
@@ -122,10 +125,15 @@ test('воспитатель не может открыть или измени�
   await login(page, 'teacher');
   await expect(page.getByRole('link', { name: 'Каталог и цены' })).toHaveCount(0);
   const bearer = await token(page);
-  const response = await page.request.get(catalogPath, { headers: { Authorization: 'Bearer ' + bearer } });
+  const response = await page.request.get(catalogPath, {
+    headers: { Authorization: 'Bearer ' + bearer }
+  });
   expect(response.status()).toBe(403);
   const mutation = await page.request.post(catalogPath, {
-    headers: { Authorization: 'Bearer ' + bearer, 'Idempotency-Key': 'a'.repeat(32) },
+    headers: {
+      Authorization: 'Bearer ' + bearer,
+      'Idempotency-Key': 'a'.repeat(32)
+    },
     data: {
       name: 'Forbidden mutation',
       description: '',
@@ -169,7 +177,13 @@ test('выход отзывает серверный токен', async ({ page 
   await page.getByRole('button', { name: 'Выйти', exact: true }).click();
   expect((await logout).status()).toBe(200);
   await expect(page).toHaveURL(/\/login$/);
-  expect((await page.request.get(catalogPath, { headers: { Authorization: 'Bearer ' + bearer } })).status()).toBe(401);
+  expect(
+    (
+      await page.request.get(catalogPath, {
+        headers: { Authorization: 'Bearer ' + bearer }
+      })
+    ).status()
+  ).toBe(401);
   await page.goto('/cabinet/catalog');
   await expect(page.getByRole('heading', { name: 'Вход в MoreFoto' })).toBeVisible();
 });
@@ -270,7 +284,10 @@ test('мобильный редактор доступен, текст това�
   await expect(productRow(page, 'A8 Мобильный <img onerror=alert(1)>')).toContainText('<script>');
   expect(await page.evaluate(() => 'e2eUnexpected' in window)).toBe(false);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.screenshot({ path: testInfo.outputPath('mobile-catalog.png'), fullPage: true });
+  await page.screenshot({
+    path: testInfo.outputPath('mobile-catalog.png'),
+    fullPage: true
+  });
   await page.getByRole('button', { name: 'Открыть меню' }).click();
   await expect(page.getByRole('link', { name: 'Профиль', exact: true })).toBeVisible();
 });

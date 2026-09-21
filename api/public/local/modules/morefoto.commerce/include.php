@@ -2,4 +2,10 @@
 
 declare(strict_types=1);
 
-// Bitrix Loader registers Morefoto\Commerce from the installed module directory.
+use Bitrix\Main\Loader;
+
+foreach (['rebit.share', 'morefoto.organization', 'morefoto.media', 'morefoto.handoff'] as $dependency) {
+    if (!Loader::includeModule($dependency)) {
+        throw new RuntimeException('Required module is unavailable: ' . $dependency);
+    }
+}

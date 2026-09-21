@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { isMockApiEnabled } from '@/mocks/config';
+import { refreshStorefront } from '../services/storefront';
 import { shallowRef, useTemplateRef } from 'vue';
 import type { GallerySnapshot } from '../../gallery/types';
 import { useCart } from '../composables/useCart';
@@ -6,7 +8,7 @@ import { changeCartLine, clearCart } from '../services/cart';
 import CartItems from './CartItems.vue';
 import CartSummary from './CartSummary.vue';
 const props = defineProps<{ gallery: GallerySnapshot; token: string }>();
-const { quote, catalog } = useCart(() => props.gallery);
+const { quote, catalog, calculationError, hasQuote } = useCart(() => props.gallery);
 const busy = shallowRef(false);
 const notice = shallowRef('');
 const error = shallowRef('');
@@ -57,10 +59,15 @@ async function clear() {
   >
   <v-alert v-if="error" type="error" variant="tonal" class="mb-5" role="alert">{{ error }}</v-alert>
   <p v-if="notice" class="cart-notice" role="status">{{ notice }}</p>
+  <v-alert v-if="calculationError" type="error" variant="tonal" class="mb-5">
+    {{ calculationError }}
+    <v-btn variant="text" @click="refreshStorefront(gallery.groupId)">Повторить расчёт</v-btn>
+    <v-btn variant="text" @click="openClear">Очистить сохранённый выбор</v-btn>
+  </v-alert>
   <v-alert v-if="quote.invalid.length" type="warning" variant="tonal" class="mb-5"
     >Часть выбранных товаров больше недоступна. Очистите корзину и выберите доступные фотографии заново.</v-alert
   >
-  <template v-if="quote.lines.length || quote.invalid.length">
+  <template v-if="hasQuote && (quote.lines.length || quote.invalid.length)">
     <div class="cart-layout">
       <div class="cart-items-column">
         <CartItems :quote="quote" :busy="busy" :closed="gallery.state !== 'open'" @change="change" />
@@ -70,6 +77,7 @@ async function clear() {
       </div>
       <CartSummary :quote="quote" :catalog="catalog" :staff="gallery.audience === 'staff'">
         <v-btn
+          v-if="isMockApiEnabled"
           :to="'/g/' + token + '/checkout'"
           color="primary"
           block
@@ -80,7 +88,7 @@ async function clear() {
       </CartSummary>
     </div>
   </template>
-  <section v-else class="mf-panel mf-empty">
+  <section v-else-if="hasQuote" class="mf-panel mf-empty">
     <v-icon icon="mdi-cart-outline" size="42" color="primary" />
     <h2 class="my-4">Корзина пока пуста</h2>
     <p class="mf-muted mb-5">Откройте кадр в галерее и выберите продукцию.</p>

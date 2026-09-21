@@ -1,4 +1,5 @@
 export interface GalleryPhoto {
+  assignmentId?: string;
   id: string;
   code: string;
   thumbSrc: string;

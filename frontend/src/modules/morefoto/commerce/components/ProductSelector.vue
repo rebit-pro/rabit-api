@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { isMockApiEnabled } from '@/mocks/config';
 import { computed, shallowRef, useTemplateRef, watch } from 'vue';
 import type { GalleryPhoto, GallerySnapshot } from '../../gallery/types';
 import { useCart } from '../composables/useCart';
@@ -27,26 +28,31 @@ watch(
   { immediate: true }
 );
 const product = computed(() => products.value.find((product) => product.id === productId.value));
-const discounted = computed(() => props.gallery.audience === 'staff' && product.value?.staffDiscount);
-const childCode = computed(() => props.gallery.children.find((child) => child.photos.some((photo) => photo.id === props.photo.id))?.code);
+const discounted = computed(() => isMockApiEnabled && props.gallery.audience === 'staff' && product.value?.staffDiscount);
+const childCode = computed(
+  () =>
+    props.gallery.children.find((child) =>
+      child.photos.some((photo) => (photo.assignmentId ?? photo.id) === (props.photo.assignmentId ?? props.photo.id))
+    )?.code
+);
 const covered = computed(
   () =>
     product.value?.kind !== 'physical' &&
     !!childCode.value &&
-    (quote.value.gifts.includes(childCode.value) ||
+    ((product.value?.kind === 'bundle' && quote.value.gifts.includes(childCode.value)) ||
       (product.value?.kind === 'digital' &&
         quote.value.lines.some((line) => line.childCode === childCode.value && line.product.kind === 'bundle')))
 );
 const unitPrice = computed(() => {
   const price = product.value?.price ?? 0;
-  return price - (discounted.value ? Math.round(price / 2) : 0);
+  return discounted.value ? Math.ceil(price / 2) : price;
 });
 const total = computed(() => {
   const count = product.value?.kind === 'physical' ? quantityValue(quantity.value) : 1;
   return count === null ? null : (covered.value ? 0 : unitPrice.value) * count;
 });
 watch(
-  () => props.photo.id,
+  () => props.photo.assignmentId ?? props.photo.id,
   () => {
     quantity.value = 1;
     notice.value = '';
@@ -67,7 +73,7 @@ async function add() {
   try {
     notice.value = await addToCart(
       props.token,
-      props.photo.id,
+      props.photo.assignmentId ?? props.photo.id,
       productId.value,
       product.value.kind === 'physical' ? Number(quantity.value) : 1
     );
@@ -81,7 +87,7 @@ async function add() {
 <template>
   <form class="product-selector" novalidate @submit.prevent="add">
     <h3>Заказать этот кадр</h3>
-    <p class="product-demo">Демонстрационные цены</p>
+    <p v-if="isMockApiEnabled" class="product-demo">Демонстрационные цены</p>
     <v-select
       v-model="productId"
       :items="products"
@@ -113,10 +119,12 @@ async function add() {
         class="product-quantity"
       />
       <p v-if="product.printCount > 1" class="mf-muted">
-        Отпечатков: {{ Number(quantity) > 0 ? Number(quantity) * product.printCount : 0 }}
+        Отпечатков:
+        {{ Number(quantity) > 0 ? Number(quantity) * product.printCount : 0 }}
       </p>
       <div class="product-price">
-        <span>Итого</span><strong>{{ total === null ? '—' : money(total) }}</strong>
+        <span>{{ isMockApiEnabled ? 'Итого' : 'Цена за единицу до расчёта' }}</span
+        ><strong>{{ isMockApiEnabled ? (total === null ? '—' : money(total)) : money(product.price) }}</strong>
       </div>
       <v-btn type="submit" color="primary" block :loading="busy" :disabled="busy" data-testid="add-to-cart">Добавить в корзину</v-btn>
       <v-btn :to="'/g/' + token + '/cart'" variant="text" color="primary" block>Посмотреть корзину</v-btn>

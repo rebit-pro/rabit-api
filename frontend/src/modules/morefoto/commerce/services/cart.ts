@@ -1,3 +1,5 @@
+import { isMockApiEnabled } from '@/mocks/config';
+import { liveQuote, addLive, changeLive, clearLive } from './storefront';
 import { calculateQuote } from './pricing';
 import { resolveDemoGallery } from '../../gallery/services/gallery';
 import type { GallerySnapshot } from '../../gallery/types';
@@ -21,8 +23,10 @@ export function readCart(groupId: string): CartLine[] {
       line.quantity <= 99
   );
 }
-export function quoteCart(gallery: GallerySnapshot, source = readCart(gallery.groupId)): CartQuote {
-  return calculateQuote(gallery, source, getCatalog(gallery.groupId));
+export function quoteCart(gallery: GallerySnapshot, source?: CartLine[]): CartQuote {
+  return isMockApiEnabled
+    ? calculateQuote(gallery, source ?? readCart(gallery.groupId), getCatalog(gallery.groupId))
+    : liveQuote(gallery.groupId);
 }
 
 function assertOpen(token: string): GallerySnapshot {
@@ -40,6 +44,7 @@ function persist(gallery: GallerySnapshot, lines: CartLine[], notice: string): s
   return lost.length ? notice + ' Подарочный комплект для ' + lost.join(', ') + ' убран: сумма печатных товаров ниже порога.' : notice;
 }
 export async function addToCart(token: string, photoId: string, productId: string, quantity: number): Promise<string> {
+  if (!isMockApiEnabled) return addLive(token, photoId, productId, quantity);
   await simulateRequest();
   const gallery = assertOpen(token);
   const product = getCatalog(gallery.groupId).products.find((product) => product.id === productId && product.active);
@@ -60,7 +65,13 @@ export async function addToCart(token: string, photoId: string, productId: strin
   }
   const nextQuantity = product.kind === 'physical' ? (existing?.quantity ?? 0) + quantity : 1;
   if (nextQuantity > 99) throw new Error('В одной позиции можно заказать не более 99 единиц.');
-  const next = { id, childCode: child.code, photoId: targetPhoto, productId, quantity: nextQuantity };
+  const next = {
+    id,
+    childCode: child.code,
+    photoId: targetPhoto,
+    productId,
+    quantity: nextQuantity
+  };
   lines = existing ? lines.map((line) => (line.id === id ? next : line)) : [...lines, next];
   return persist(
     gallery,
@@ -69,6 +80,7 @@ export async function addToCart(token: string, photoId: string, productId: strin
   );
 }
 export async function changeCartLine(token: string, id: string, quantity: number): Promise<string> {
+  if (!isMockApiEnabled) return changeLive(token, id, quantity);
   await simulateRequest();
   const gallery = assertOpen(token);
   if (!Number.isInteger(quantity) || quantity < 0 || quantity > 99) throw new Error('Количество должно быть от 1 до 99.');
@@ -84,6 +96,7 @@ export async function changeCartLine(token: string, id: string, quantity: number
   );
 }
 export async function clearCart(token: string): Promise<void> {
+  if (!isMockApiEnabled) return clearLive(token);
   await simulateRequest();
   const gallery = resolveDemoGallery(token);
   writeDemo('cart:' + gallery.groupId, []);

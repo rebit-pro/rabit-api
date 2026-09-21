@@ -1,0 +1,28 @@
+{
+  "wave": "E4",
+  "status": "captured",
+  "fixture": "rabit-e2e-8caca4c75f2e",
+  "viewports": [
+    "1280x900",
+    "390x844"
+  ],
+  "screenshots": [
+    {
+      "file": "docs/waves/e4/screenshots/e4-mobile-gallery.png",
+      "sha256": "a95d64299c7f65b72e13b870132a7fe5a6d4616fb3820e6d70e025fc460022b1"
+    },
+    {
+      "file": "docs/waves/e4/screenshots/e4-mobile-cart.png",
+      "sha256": "5608f403f4131f106fe1354f56417a737c6bf2162d38345d9c1f486f1fb1d718"
+    },
+    {
+      "file": "docs/waves/e4/screenshots/e4-desktop-gallery.png",
+      "sha256": "03dc685ef52174fc309f3e16b93e1adf0a6138420d61ebcd6b13cd9ca6235f49"
+    },
+    {
+      "file": "docs/waves/e4/screenshots/e4-desktop-cart.png",
+      "sha256": "69292698f7c8f0b8d58643107fd3fcfbb74fcaf54b2909c863656306ed2f8195"
+    }
+  ],
+  "inspection": "Четыре аналогичных снимка адресного успешного прогона просмотрены; в финальном прогоне E4 desktop/mobile PASS, артефакты сохранены. Общая готовность блокируется D1 browser regression."
+}

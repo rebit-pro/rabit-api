@@ -33,7 +33,10 @@ namespace Bitrix\Main {
         public function getStatus(): string {}
     }
 
-    class HttpResponse extends Response {}
+    class HttpResponse extends Response
+    {
+        public function addHeader($name, $value = ''): static {}
+    }
 
     class HttpRequest
     {
