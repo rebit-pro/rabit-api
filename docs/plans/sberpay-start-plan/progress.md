@@ -2,14 +2,14 @@
 
 ## Точка продолжения
 
-- Ветка `codex/sberpay-start-plan`; base/main/origin/main `8cba22c7655b5886d5fe663523214bcd059e674b`. HEAD перед локальной фиксацией совпадает с base; итоговый HEAD — коммит с этим журналом (`git rev-parse HEAD`, `git log -1 --oneline`).
-- PR этой задачи: создание разрешено пользователем 2026-09-21, перед публикацией существующий PR по ветке не найден. Issue не создавалась.
+- Ветка `codex/sberpay-start-plan`; base/main/origin/main `8cba22c7655b5886d5fe663523214bcd059e674b`. Опубликованы план `2308bf5` и статус договора `2a8f016`; итоговый HEAD — коммит с записью PR (`git rev-parse HEAD`).
+- PR: https://github.com/rebit-pro/rabit-api/pull/35 — открыт в main, только план. Issue не создавалась.
 - Документы: `plan.md`, `docs/waves/graph.json`, `/home/user/MoreFoto/docs/04-bitrix-modules/backend-waves.json`.
 - Завершено: исходники/инструкции/ветки, подтверждены Старт и UI MoreFoto, создана ветка, описана адаптация.
-- Сейчас: публикация готового плана и создание PR по явной просьбе пользователя. Договор эквайринга в процессе получения, реализация отложена.
-- Следующий шаг: открыть PR с планом и передать ссылку пользователю. К реализации оплаты вернуться при наступлении соответствующих волн и получении условий договора/настроек; E5/F2 и решения остаются зависимостями.
+- Сейчас: план опубликован, PR #35 создан; текущая задача завершена. Договор эквайринга в процессе получения, реализация отложена.
+- Следующий шаг: review планового PR #35; реализацию оплаты сейчас не начинать. Возобновить её отдельной задачей при наступлении соответствующих волн и получении условий договора/настроек; E5/F2 и решения остаются зависимостями.
 - Блокеры runtime: E5/F2 не реализованы/не приняты; D09 частично открыт (refund contract/фискализация/sandbox), D12 остаётся gate. Плановый срез не заблокирован.
-- Рабочее дерево перед фиксацией: `docs/waves/graph.json`, `docs/plans/sberpay-start-plan/{plan,progress}.md`, `docs/waves/sberpay-start/{morefoto-plan-sync.patch,verification.json}`. Runtime не менялся. Канонические правки MoreFoto уже применены локально, их проверенный patch сохранён в ветке; соседний MoreFoto не является git-репозиторием.
+- В PR только пять плановых файлов: `docs/waves/graph.json`, `docs/plans/sberpay-start-plan/{plan,progress}.md`, `docs/waves/sberpay-start/{morefoto-plan-sync.patch,verification.json}`. Runtime не менялся. Канонические правки MoreFoto применены локально, их проверенный patch сохранён в ветке; соседний MoreFoto не является git-репозиторием. Перед финальным push изменены только отметка P7 и этот журнал; после push проверить чистое дерево.
 - Команды: `python3 tools/verify-wave-graph.py docs/waves/graph.json`; `python3 /home/user/MoreFoto/docs/04-bitrix-modules/wave_graph.py /home/user/MoreFoto/docs/04-bitrix-modules/backend-waves.json`; `git diff --check`.
 
 ## 2026-09-21 — Источник и уточнения
@@ -68,3 +68,9 @@ Sandbox запуск команд не работает (`setup refresh had erro
 Перед push: проверить актуальный origin/main, валидатор графа и diff; публиковать только эту ветку. Merge/deployment не входят в запрос.
 
 Проверки перед публикацией: HTTPS fetch через gh credential helper успешен, origin/main остался 8cba22c; python3 tools/verify-wave-graph.py docs/waves/graph.json — PASS (40 волн, 99 ID, 35 WNN, 10 negative fixtures); git diff --check — PASS. Runtime/E2E не запускались: меняются только документы, пользователь явно отложил реализацию.
+
+## 2026-09-21 — PR создан
+
+Коммит `2a8f016` сохранил статус договора и запрос публикации. Push `HEAD:refs/heads/codex/sberpay-start-plan` по HTTPS через gh credential helper успешен. Команда `gh pr create --repo rebit-pro/rabit-api --base main --head codex/sberpay-start-plan --title 'План интеграции СберПэй для MoreFoto на Битрикс Старт' --body-file /tmp/rabit-sberpay-plan-pr-body.md` создала https://github.com/rebit-pro/rabit-api/pull/35; PR прикреплён к задаче Codex.
+
+P7 закрыт. Перед завершающим push повторяется `git diff --cached --check`; после push проверить `gh pr view 35 --json url,state,baseRefName,headRefName,headRefOid` и `git status --short`. Merge/deployment/реализация не выполняются.
