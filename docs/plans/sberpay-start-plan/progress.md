@@ -3,11 +3,11 @@
 ## Точка продолжения
 
 - Ветка `codex/sberpay-start-plan`; base/main/origin/main `8cba22c7655b5886d5fe663523214bcd059e674b`. HEAD перед локальной фиксацией совпадает с base; итоговый HEAD — коммит с этим журналом (`git rev-parse HEAD`, `git log -1 --oneline`).
-- PR/issue этой задачи не создавались. Прочитаны открытый PR #29 и список issues; отдельной платёжной задачи среди них нет.
+- PR этой задачи: создание разрешено пользователем 2026-09-21, перед публикацией существующий PR по ветке не найден. Issue не создавалась.
 - Документы: `plan.md`, `docs/waves/graph.json`, `/home/user/MoreFoto/docs/04-bitrix-modules/backend-waves.json`.
 - Завершено: исходники/инструкции/ветки, подтверждены Старт и UI MoreFoto, создана ветка, описана адаптация.
-- Сейчас: плановый срез завершён; продуктовая реализация ещё не начата.
-- Следующий шаг: реализовать и принять E5 отдельной волной от main; затем закрыть F2 и предметные решения до G1. До G1 также оформить методы списка/карточки платежа в API-генераторе.
+- Сейчас: публикация готового плана и создание PR по явной просьбе пользователя. Договор эквайринга в процессе получения, реализация отложена.
+- Следующий шаг: открыть PR с планом и передать ссылку пользователю. К реализации оплаты вернуться при наступлении соответствующих волн и получении условий договора/настроек; E5/F2 и решения остаются зависимостями.
 - Блокеры runtime: E5/F2 не реализованы/не приняты; D09 частично открыт (refund contract/фискализация/sandbox), D12 остаётся gate. Плановый срез не заблокирован.
 - Рабочее дерево перед фиксацией: `docs/waves/graph.json`, `docs/plans/sberpay-start-plan/{plan,progress}.md`, `docs/waves/sberpay-start/{morefoto-plan-sync.patch,verification.json}`. Runtime не менялся. Канонические правки MoreFoto уже применены локально, их проверенный patch сохранён в ветке; соседний MoreFoto не является git-репозиторием.
 - Команды: `python3 tools/verify-wave-graph.py docs/waves/graph.json`; `python3 /home/user/MoreFoto/docs/04-bitrix-modules/wave_graph.py /home/user/MoreFoto/docs/04-bitrix-modules/backend-waves.json`; `git diff --check`.
@@ -60,3 +60,11 @@ Sandbox запуск команд не работает (`setup refresh had erro
 ### Проверка staged diff
 
 Первый `git diff --cached --check` дал FAIL: строки пустого контекста внутри нового unified patch содержали одиночный пробел. До staging обычный diff не проверял untracked patch. Исправлен только способ записи пустых строк контекста, без изменения целевых документов; повторный `git -C /home/user/MoreFoto apply --check --reverse /home/user/rabit-api/docs/waves/sberpay-start/morefoto-plan-sync.patch` прошёл. Финальный staged whitespace check выполняется перед коммитом; TC-06 учитывает staged и untracked артефакты.
+
+## 2026-09-21 — Запрос публикации плана
+
+Пользователь прочитал план и явно попросил сохранить его в репозитории и создать PR; на этом текущая работа заканчивается, реализации сейчас не требуется. Зафиксировано: договор эквайринга находится в процессе получения. До правок проверены чистое дерево, HEAD `2308bf5`, отсутствие PR по ветке (`gh pr list --head codex/sberpay-start-plan --state all --json number,title,state,url` вернул []). План дополнен P7 и статусом договора.
+
+Перед push: проверить актуальный origin/main, валидатор графа и diff; публиковать только эту ветку. Merge/deployment не входят в запрос.
+
+Проверки перед публикацией: HTTPS fetch через gh credential helper успешен, origin/main остался 8cba22c; python3 tools/verify-wave-graph.py docs/waves/graph.json — PASS (40 волн, 99 ID, 35 WNN, 10 negative fixtures); git diff --check — PASS. Runtime/E2E не запускались: меняются только документы, пользователь явно отложил реализацию.
