@@ -4,9 +4,9 @@
 
 - Ветка `codex/d3-stage-media-recovery`, base E4 merge `7e606e53cc6b347e5c7b70e217ab7f8eb8a45875`; актуальный HEAD — `git rev-parse HEAD`, опубликован в draft PR #32; issue массовой загрузки #31.
 - Завершено: stage получил E4, исправления DI, очередь, nginx 413 и логи. Авторизованная загрузка пользователя сохранила два оригинала; оба затем упали на обработке из-за отсутствия WebP в старом stage PHP image.
-- Сейчас: ошибка назначения `A01` исправлена, полный E2E и отдельный browser repeat прошли; desktop/mobile состояние вручную просмотрено. Следующий шаг: опубликовать изменения в PR #32, оставить merge/deploy на отдельное review.
+- Сейчас: ошибка назначения `A01` исправлена и опубликована в draft PR #32; полный E2E, отдельный browser repeat и desktop/mobile визуальная проверка прошли. Следующий шаг: review PR #32, затем отдельно решить merge/deploy.
 - Риски: остальные файлы первого пакета были прерваны; готовые кадры ещё не привязаны к ребёнку, ссылка группы ещё не передана. Stage images временно основаны на локальном D1 build с отключённым Xdebug, для последующего релиза нужны production images. Основной site_* не менялся.
-- Рабочее дерево: изменены `plan.md`, этот журнал, два frontend файла, два browser spec, два PNG в `docs/waves/d3/visual/`. D3-DI/QUEUE/LOG/HTTP-LIMIT/F1-INVALID/VISUAL/WEBP/RECOVERY/PREVIEW/ASSIGN-CODE — PASS.
+- Рабочее дерево: чистое после публикации этого журнала. D3-DI/QUEUE/LOG/HTTP-LIMIT/F1-INVALID/VISUAL/WEBP/RECOVERY/PREVIEW/ASSIGN-CODE — PASS.
 
 ## Хронология
 
@@ -17,6 +17,7 @@
 - `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`: PASS, browser scenarios 60; frontend check/build, backend lint/static/PHPUnit, реальный MySQL и браузерная HTTP-интеграция выполнены в изолированном fixture. D3-ASSIGN-CODE PASS: `A01` без POST, `A` → `A001`. Добавлены скриншоты desktop/mobile в live spec; для них поднимается отдельный fixture и будет ручной просмотр.
 - `make e2e-up ...`, затем targeted real Playwright `D1/D2: приватное фото`: PASS 1/1; первый визуальный просмотр выявил наложение встроенных Vuetify hint/error на desktop/mobile. Ошибка перенесена под поле отдельным `<p role="alert">`, встроенный hint на ошибке скрыт. Frontend пересобран с real API, targeted Playwright повторён: PASS 1/1; screenshots `assignment-code-desktop.png` и `assignment-code-mobile.png` сохранены в `docs/waves/d3/visual/`. Ручной просмотр: текст читается, наложений нет, кнопка доступна после ввода `A`. `make e2e-down E2E_STATE=api/var/e2e/rabit-e2e-e9b9da4c2a27/state.json`: PASS.
 - Повтор `docker run --rm -v "$PWD/frontend:/app" -w /app node:24-alpine sh -lc 'npm run check'` после визуальной правки: PASS, lint/vue-tsc/e2e tsc. Vite build в targeted fixture: PASS.
+- `git commit -m 'fix(morefoto): clarify child codes before assigning photos'`: `211d985`; HTTPS `git push` PASS. `gh pr edit 32 --body-file /tmp/d3-pr-body-current.md`: PR дополнен контрактом кодов и тестами; merge/deploy D3 не выполнялись.
 - Авторизованный POST со скриншота подтвердил приём `IMG_0590.jpg` и `IMG_0591.jpg`: записи ID 1/2 и оригиналы в приватном хранилище есть. Прочие файлы пакета не завершили отправку. Ручной `app:media:dispatch-pending --limit=10` отправил две задачи; consumer исчерпал три попытки, статус обеих — `failed`/`PROCESSING_FAILED`.
 - Диагностика `GdPreviewRenderer::render` в stage CLI: `Image renderer is unavailable`; `function_exists('imagewebp')=no` в старых stage CLI/FPM images, в локальных D1 CLI/FPM images — yes. В stage FPM pool `clear_env=no`, это не причина задержки. План расширен до обновления images и восстановления оригиналов.
 - `bash backup-d3.sh` на stage: новая копия БД `database-before-d3-recovery.sql.gz`, gzip/SHA и содержимое проверены; 39264 байт. D3-RECOVERY пока PENDING.
