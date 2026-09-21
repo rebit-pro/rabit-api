@@ -4,8 +4,8 @@
 
 - Ветка codex/e4-private-storefront; base 6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc; runtime HEAD a44d9c8; PR #30 DRAFT: https://github.com/rebit-pro/rabit-api/pull/30. Текущий HEAD — последующий docs-only commit публикации.
 - F1 PR #25 слит; согласованный контракт и граф сохранены. Runtime E4 реализован в рабочем дереве: миграции, capability, preview, catalog/quote, live UI и проверки. Runtime и proof закоммичены (a44d9c8) и отправлены в draft PR #30.
-- Сейчас: текущая проверка завершена, PR опубликован по указанию пользователя. Полный gate: backend/frontend PASS; browser 56/57, FAIL старого D1 anonymous preview ожидания. Создан draft PR #30; merge заблокирован.
-- Следующий шаг: обновить frontend/e2e/live/zz-media.spec.ts:101 на anonymous 401 + authorized 200, затем полный make test-e2e. Final verify-storefront (включая F1) PENDING. Context/DTO unit проходят.
+- Сейчас: E4 PR #30 остаётся draft и не развёрнут; отдельно выкачан актуальный `origin/main` с live API на `app.morefoto36.ru`. Исправлен runtime-upstream Basic Auth, smoke login PASS.
+- Следующий шаг: по согласованию закрыть ревью/merge E4; для frontend deployment использовать релиз `main-live-api-20260921120900-6b81647`. Полный E4 gate по-прежнему блокирован старым D1 anonymous preview ожиданием.
 - Base/HEAD проверены через git, draft PR #30 создан через gh. Stash F1 сохранён отдельно, не восстанавливать в E4.
 - Команды продолжения: `python3` для чтения frontend/reports/e2e-live/results.json; `docker logs rabit-e2e-ca1b3ab556a7-fpm`; после исправлений `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
 
@@ -119,3 +119,10 @@
 - Пересобран `origin/main` с `VITE_API_MOCKS_ENABLED=false`: `main-live-20260921115621-6b81647`. Из-за недоступности pull `nginx:1.28-alpine` использован локально доступный `nginx:1.29-alpine`; исходники не менялись.
 - Rolling update `morefoto_frontend` завершён на 2/2 репликах; `/srv/morefoto/current` переключён на `main-live-20260921115621-6b81647`. `/health` и главная страница 200.
 - Bundle проверен удалённо: mock adapter отсутствует, присутствуют реальные `/api/v1/auth/login` и `/api/v1/me`. Предыдущий релиз `main-20260921113950-6b81647` остаётся доступным для rollback.
+
+### 2026-09-21 — устранение Basic Auth на login
+
+- Причина подтверждена сетевой проверкой: `site_api` возвращал `401` и `WWW-Authenticate: Basic realm="Restricted"`; предназначенный для stage `morefoto_stage_backend` на том же запросе возвращает предметный JSON `400` без Basic Auth.
+- Frontend переведён на `API_UPSTREAM=http://morefoto_stage_backend` и подключён к внешней сети `morefoto-stage-private`; Traefik-сеть сохранена. Развёрнут релиз `main-live-api-20260921120900-6b81647`, 2/2 реплики.
+- Smoke PASS: `curl -k -X POST -H 'Content-Type: application/json' --data '{}' https://app.morefoto36.ru/api/v1/auth/login` → HTTP 400 JSON `В запросе не были переданы поля: email`, заголовок `WWW-Authenticate` отсутствует; `/health` → 200.
+- Rollback: релиз `main-live-20260921115621-6b81647` (live API с прежним upstream) либо `main-20260921113950-6b81647` (mock mode). Рабочее дерево после docs-коммита должно быть чистым.
