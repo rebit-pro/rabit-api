@@ -112,3 +112,10 @@
 - Образ `morefoto-frontend:main-20260921113950-6b81647` собран и загружен в `/srv/morefoto/releases/`; rolling update `morefoto_frontend` завершён `completed`, 2/2 реплики. `/srv/morefoto/current` переключён на новый релиз.
 - Smoke PASS: `https://app.morefoto36.ru/health` HTTP 200, главная страница HTTP 200, service image/update/replicas подтверждены удалённо. `/api/health` вернул ожидаемый 401 stage Basic Auth; backend/site не изменялись.
 - Rollback: `IMAGE_TAG=stage-20260919-b2-d788622` через штатный `stage-remote.sh`/`stage.sh rollback`. Локальные архивы и временный worktree удалены, рабочее дерево чистое.
+
+### 2026-09-21 — исправление режима frontend после smoke-проверки
+
+- Пользователь обнаружил, что первый deployment main был собран с `VITE_API_MOCKS_ENABLED=true`. Причина подтверждена: bundle не делал backend-запросов.
+- Пересобран `origin/main` с `VITE_API_MOCKS_ENABLED=false`: `main-live-20260921115621-6b81647`. Из-за недоступности pull `nginx:1.28-alpine` использован локально доступный `nginx:1.29-alpine`; исходники не менялись.
+- Rolling update `morefoto_frontend` завершён на 2/2 репликах; `/srv/morefoto/current` переключён на `main-live-20260921115621-6b81647`. `/health` и главная страница 200.
+- Bundle проверен удалённо: mock adapter отсутствует, присутствуют реальные `/api/v1/auth/login` и `/api/v1/me`. Предыдущий релиз `main-20260921113950-6b81647` остаётся доступным для rollback.
