@@ -2,13 +2,13 @@
 
 ## Точка продолжения
 
-- Ветка `codex/f1-staff-requests`; PR https://github.com/rebit-pro/rabit-api/pull/25; HEAD ba250e1927111b522a4aec297304f63495f9041a, base/main 28bcad9e575489deb1113d7ce2ac459a43dd7132.
+- Ветка `codex/f1-staff-requests`; PR https://github.com/rebit-pro/rabit-api/pull/25; Проверенный implementation HEAD 3ce71bc (текущий HEAD включает завершающий docs-коммит), base/main 28bcad9e575489deb1113d7ce2ac459a43dd7132.
 - Review P1: https://github.com/rebit-pro/rabit-api/pull/25#discussion_r4060560246 — отсутствовал live-путь воспитателя после login. Исправлен CabinetLayout: пункт F1 только organizer/curator/teacher; основной E2E входит кликом меню, добавлены 8 role/viewport E2E.
-- Полный gate на rabit-e2e-60d07b962945: 51/51; адресный F1 на rabit-e2e-363c0655f0f5: 9/9. Все шесть стабильных screenshots просмотрены, visual PASS. Оба стенда удалены без ошибок. Следующий шаг — commit/push и ответ на P1.
-- Рабочее дерево: три frontend-файла, plan/progress и отчёты docs/waves/f1 подготовлены к публикации. Дополнительно обнаружено стороннее форматирование morefoto.handoff/routes.php; не включается в commit.
+- Полный gate на rabit-e2e-60d07b962945: 51/51; адресный F1 на rabit-e2e-363c0655f0f5: 9/9. Все шесть стабильных screenshots просмотрены, visual PASS. Оба стенда удалены без ошибок. Исправление опубликовано, следующий шаг — повторный review P1.
+- Исправление и отчёты опубликованы; финальный docs-коммит содержит статус публикации. В рабочем дереве остаётся стороннее форматирование morefoto.handoff/routes.php, вне commit.
 - Неблокирующие follow-up #26/#27/#28 остаются OPEN, старые контроллеры #24. Merge/deployment не выполняются. Формальный review COMMENTED: GitHub запретил автору REQUEST_CHANGES; P1 обязателен до merge.
 - Повтор: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`; лог `/tmp/f1-review-fix-final-gate.log`.
-- Перед публикацией: `git diff --check`, `gh pr view 25 --json headRefOid,baseRefOid`; обновить docs/waves/f1 и ответить на P1 с фактическими результатами.
+- Следующая проверка: `/home/user/.local/bin/gh pr view 25 --json headRefOid,baseRefOid,reviews`; сверить повторный review. Ответ: https://github.com/rebit-pro/rabit-api/pull/25#discussion_r4060957940.
 
 ### Предыдущая точка (история)
 
@@ -327,3 +327,12 @@ python3 tools/run-browser-e2e.py run --php-cli rabit-api-php-cli:d1-local --php-
 - Вручную просмотрены все 6 финальных изображений: desktop/mobile меню и форма, desktop список, mobile карточка. Текст читаем, элементы доступны, кадры после завершения анимации. Хэши в docs/waves/f1/visual.json.
 - F1-REVIEW-NAV-DESKTOP — PASS; F1-REVIEW-NAV-MOBILE — PASS; F1-REVIEW-NAV-ROLES — PASS (2026-09-21): полный make test-e2e 51/51 плюс адресный F1 9/9. JSON сохранены в api/var/e2e/<fixture>/browser-results.json для обоих прогонов.
 - F1-REVIEW-FIX-PUBLISH — PENDING. Перед commit/push подготовлены отчёты и ответ P1. Найденная сторонняя правка routes.php — только форматирование, остаётся вне staging.
+
+- Commit 3ce71bc и HTTPS push в существующую ветку — PASS. Перед ответом в review подготовлены фактические результаты; следующий шаг — gh API reply и обновление PR body.
+
+
+### 2026-09-21 — исправление P1 опубликовано
+
+- F1-REVIEW-FIX-PUBLISH — PASS: commit 3ce71bc отправлен HTTPS push; `gh api repos/rebit-pro/rabit-api/pulls/25/comments/4060560246/replies --input /tmp/f1-review-reply.json` опубликовал https://github.com/rebit-pro/rabit-api/pull/25#discussion_r4060957940.
+- `gh pr edit 25 --body-file /tmp/f1-updated-pr.md` — PASS, описание содержит путь через меню, 51/51 полного и 9/9 адресного прогона, 6 visual и отдельные #26–28.
+- Завершающий commit меняет только отчёты. Повтор runtime-тестов не нужен. Перед commit/push `git diff --check` PASS. Сторонний routes.php сохранён вне staging. Следующий шаг после публикации — повторный review; merge/deployment не выполнялись.

@@ -128,7 +128,8 @@
     "deploymentPolicy": "aggregate later wave checkpoint",
     "followUpIssue": "https://github.com/rebit-pro/rabit-api/issues/24",
     "url": "https://github.com/rebit-pro/rabit-api/pull/25",
-    "number": 25
+    "number": 25,
+    "reviewFixReply": "https://github.com/rebit-pro/rabit-api/pull/25#discussion_r4060957940"
   },
   "complete": true,
   "completeMeaning": "F1 review P1 navigation fixed and locally verified; awaiting reviewer recheck. Merge/deployment not performed.",
@@ -153,5 +154,5 @@
       "result": "First navigation-fix gate: 48/51; closed Vuetify drawer remains CSS-visible offscreen. Trace confirmed translateX(-248px); assertion changed to viewport intersection without runtime changes."
     }
   ],
-  "testedSource": "Navigation fix on ba250e1; implementation commit recorded in progress.md after publication"
+  "testedSource": "3ce71bc"
 }
