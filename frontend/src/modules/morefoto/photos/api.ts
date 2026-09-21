@@ -64,8 +64,14 @@ function idempotencyKey(): string {
 
 export const photosApi = {
   async list(shootId: string, page = 1, pageSize = 100): Promise<ServerPhotoPage> {
-    return (await api.get<ServerPhotoPage>('/api/v1/shoots/' + encodeURIComponent(shootId) + '/photos', { params: { page, pageSize } }))
-      .data;
+    const response = await api.get<ServerPhotoPage | null>('/api/v1/shoots/' + encodeURIComponent(shootId) + '/photos', {
+      params: { page, pageSize }
+    });
+    if (null === response.data || !Array.isArray(response.data.items) || !response.data.meta) {
+      throw new Error('Не удалось загрузить список кадров. Повторите попытку.');
+    }
+
+    return response.data;
   },
   async detail(photoId: string): Promise<ServerPhoto> {
     return (await api.get('/api/v1/photos/' + encodeURIComponent(photoId))).data;

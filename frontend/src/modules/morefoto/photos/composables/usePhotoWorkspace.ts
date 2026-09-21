@@ -6,7 +6,7 @@ import { useOrganization } from '../../organization/composables/useOrganization'
 import { structureApi, structureError } from '../../structure/api';
 import { photosChangedEvent, photoStateKey, readPhotos } from '../repository';
 import { assignPhotos, chooseCover, moveChild } from '../service';
-import { nextChildCode } from '../rules';
+import { nextChildCode, validChildCode } from '../rules';
 import { photoApiError, photoApiErrorCode, photosApi, type ServerPhoto } from '../api';
 import type { ManagedGroup, ManagedInstitution, OrganizationSnapshot, PhotoShoot } from '../../organization/types';
 import type { Group } from '../../structure/model';
@@ -212,7 +212,7 @@ export function usePhotoWorkspace() {
     window.removeEventListener(photosChangedEvent, changed);
     window.removeEventListener('storage', storage);
   });
-  async function act(operation: (token: string) => Promise<void>, message: string): Promise<boolean> {
+  async function act(operation: (token: string) => Promise<void>, message: string, validationMessage = ''): Promise<boolean> {
     if (busy.value) return false;
     busy.value = true;
     error.value = '';
@@ -230,6 +230,8 @@ export function usePhotoWorkspace() {
         if (!isMockApiEnabled && photoApiErrorCode(cause) === 'REVISION_CONFLICT') {
           const refreshed = await refreshPhotos();
           if (alive && refreshed) error.value = 'Разметка уже изменилась. Список обновлён — повторите действие.';
+        } else if (validationMessage && photoApiErrorCode(cause) === 'VALIDATION_FAILED') {
+          error.value = validationMessage;
         } else {
           error.value = isMockApiEnabled && cause instanceof Error ? cause.message : photoApiError(cause);
         }
@@ -243,14 +245,22 @@ export function usePhotoWorkspace() {
     const ids = [...selected.value];
     const groupId = group.value?.id ?? '';
     const code = value.trim().toUpperCase();
-    return act(async (token) => {
-      if (isMockApiEnabled) {
-        await assignPhotos(token, routeShootId, groupId, ids, code);
-      } else {
-        const result = await photosApi.assign(groupId, routeShootId, mediaRevision.value, ids, code);
-        mediaRevision.value = result.revision;
-      }
-    }, 'Кадры назначены ребёнку.');
+    if (!validChildCode(code)) {
+      error.value = 'Код ребёнка — от 1 до 3 латинских букв. Коды кадров вроде A001 создаются автоматически.';
+      return Promise.resolve(false);
+    }
+    return act(
+      async (token) => {
+        if (isMockApiEnabled) {
+          await assignPhotos(token, routeShootId, groupId, ids, code);
+        } else {
+          const result = await photosApi.assign(groupId, routeShootId, mediaRevision.value, ids, code);
+          mediaRevision.value = result.revision;
+        }
+      },
+      'Кадры назначены ребёнку.',
+      'Не удалось назначить кадры. Проверьте код ребёнка и выбранные фотографии.'
+    );
   }
   function setCover(id: string) {
     const groupId = group.value?.id ?? '';

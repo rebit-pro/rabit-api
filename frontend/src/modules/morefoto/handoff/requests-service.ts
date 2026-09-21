@@ -12,6 +12,15 @@ import type { OrderSnapshot } from '../orders/types';
 
 export async function saveStaffRequest(token: string, command: StaffCommand): Promise<void> {
   if (!isMockApiEnabled) {
+    if (command.action === 'submit') {
+      const errors: Record<string, string> = {};
+      for (const row of command.rows) {
+        if (!/^[A-Z]{1,3}(?:[0-9]{3})?$/.test(row.code.trim().toUpperCase())) {
+          errors['code:' + row.id] = 'Укажите код ребёнка или снимка: например, A или A001. У снимка ровно три цифры.';
+        }
+      }
+      if (Object.keys(errors).length > 0) throw new HandoffValidationError(errors);
+    }
     try {
       if (command.action === 'submit') await staffRequestsApi.save(command);
       else if (command.action === 'clarify') await staffRequestsApi.clarify(command);

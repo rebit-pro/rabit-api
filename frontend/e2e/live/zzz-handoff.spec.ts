@@ -126,6 +126,14 @@ test('F1: воспитатель подаёт список, куратор ут�
     await expect(dialog.getByLabel('Учреждение списка', { exact: true })).toHaveValue(institution.id);
     await expect(dialog.getByLabel('Съёмка списка', { exact: true })).toHaveValue(shoot.id);
     await expect(dialog.getByLabel('Исходная группа 1', { exact: true })).toHaveValue(group.id);
+    let submittedRequests = 0;
+    teacher.on('request', (request) => {
+      if (new URL(request.url()).pathname === '/api/v1/staff-requests' && request.method() === 'POST') submittedRequests++;
+    });
+    await dialog.getByLabel('Код ребёнка или снимка 1', { exact: true }).fill('A0001');
+    await dialog.getByRole('button', { name: 'Передать список куратору', exact: true }).click();
+    await expect(dialog.getByText('Укажите код ребёнка или снимка: например, A или A001. У снимка ровно три цифры.')).toBeVisible();
+    expect(submittedRequests).toBe(0);
     await dialog.getByLabel('Код ребёнка или снимка 1', { exact: true }).fill('A001');
     await dialog.getByLabel('Комментарий к списку', { exact: true }).fill('Первичная заявка F1');
     const pendingRequest = teacher.waitForRequest(

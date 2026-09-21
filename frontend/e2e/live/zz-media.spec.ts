@@ -39,6 +39,41 @@ test.afterEach(async ({ page }) => {
   expect(await page.evaluate(() => Object.keys(localStorage).some((key) => key.startsWith('morefoto:demo:')))).toBe(false);
 });
 
+test('D3: ошибочный ответ списка кадров показывает понятное сообщение', async ({ page }) => {
+  await login(page);
+  const institution = (
+    await result(
+      await page.request.post('/api/v1/institutions', {
+        headers: await headers(page),
+        data: { name: 'D3 Детский сад ' + crypto.randomUUID().slice(0, 8), address: 'Москва' }
+      }),
+      201
+    )
+  ).data;
+  const shoot = (
+    await result(
+      await page.request.post('/api/v1/institutions/' + institution.id + '/shoots', {
+        headers: await headers(page),
+        data: { name: 'D3 Съёмка', date: '2026-10-20' }
+      }),
+      201
+    )
+  ).data;
+  await result(
+    await page.request.post('/api/v1/shoots/' + shoot.id + '/groups', {
+      headers: await headers(page),
+      data: { name: 'D3 Группа', groupKind: 'regular' }
+    }),
+    201
+  );
+  await page.route('**/api/v1/shoots/' + shoot.id + '/photos?*', async (route) => {
+    await route.fulfill({ status: 200, json: { status: 'error', data: null, errors: [{ message: 'Internal error' }] } });
+  });
+  await page.goto('/cabinet/institutions/' + institution.id + '/shoots/' + shoot.id + '/photos');
+  await expect(page.getByText('Не удалось загрузить список кадров. Повторите попытку.', { exact: true })).toBeVisible();
+  await expect(page.getByText("Cannot read properties of null (reading 'items')")).toHaveCount(0);
+});
+
 test('D1/D2: приватное фото получает M:N-разметку и обложку без потери атомарности', async ({ page, browser, baseURL }, testInfo) => {
   test.setTimeout(120000);
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -107,8 +142,22 @@ test('D1/D2: приватное фото получает M:N-разметку �
   await page.screenshot({ path: testInfo.outputPath('d1-desktop-media.png'), fullPage: true });
 
   await page.getByTestId('photo-card').getByRole('checkbox').check();
+  let assignmentRequests = 0;
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && new URL(request.url()).pathname.endsWith('/photo-assignments')) assignmentRequests++;
+  });
+  await page.getByLabel('Код ребёнка', { exact: true }).fill('A01');
+  await expect(page.getByRole('button', { name: 'Назначить ребёнку', exact: true })).toBeDisabled();
+  await expect(page.getByText('Код ребёнка — от 1 до 3 латинских букв.', { exact: false })).toBeVisible();
+  expect(assignmentRequests).toBe(0);
+  await page.screenshot({ path: testInfo.outputPath('d3-assignment-code-desktop.png'), fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByText('Код ребёнка — от 1 до 3 латинских букв.', { exact: false })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('d3-assignment-code-mobile.png'), fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByLabel('Код ребёнка', { exact: true }).fill('A');
   await page.getByRole('button', { name: 'Назначить ребёнку', exact: true }).click();
+  expect(assignmentRequests).toBe(1);
   await expect(page.getByRole('status').filter({ hasText: 'Кадры назначены ребёнку.' })).toBeVisible();
   await expect(page.getByTestId('photo-card')).toContainText('A001');
 
