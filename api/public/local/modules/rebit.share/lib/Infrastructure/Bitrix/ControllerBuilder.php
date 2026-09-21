@@ -6,6 +6,8 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\ObjectException;
+use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
+use Rebit\Share\Infrastructure\Controller\Auth\AuthenticatedControllerInterface;
 use Rebit\Share\Infrastructure\Controller\AbstractController;
 use Rebit\Share\Shared\Facade\Log;
 
@@ -54,6 +56,11 @@ final class ControllerBuilder
                 throw new \ReflectionException("Can't construct controller {$controllerClass}.");
             }
 
+            if ($controller instanceof AuthenticatedControllerInterface) {
+                $controller->setTokenResolver(
+                    ServiceLocator::getInstance()->get(TokenResolverInterface::class),
+                );
+            }
             $controller->setScope($scope);
             $controller->setCurrentUser($currentUser ?? CurrentUser::get());
 

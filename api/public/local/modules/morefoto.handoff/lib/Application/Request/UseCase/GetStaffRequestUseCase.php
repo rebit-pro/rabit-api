@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Handoff\Application\Request\UseCase;
 
+use Morefoto\Handoff\Application\Request\Dto\StaffRequestOutputDto;
 use Morefoto\Handoff\Application\Request\Service\StaffRequestWorkflow;
 
 /**
@@ -15,8 +16,7 @@ final readonly class GetStaffRequestUseCase
 {
     public function __construct(private StaffRequestWorkflow $workflow) {}
 
-    /** @return array<string,mixed> */
-    public function execute(int $actorId, string $requestId): array
+    public function execute(int $actorId, string $requestId): StaffRequestOutputDto
     {
         return $this->workflow->detail($actorId, $requestId);
     }

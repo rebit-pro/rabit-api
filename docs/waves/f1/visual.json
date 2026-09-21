@@ -1,19 +1,19 @@
 {
   "wave": "F1",
   "status": "passed",
-  "fixture": "rabit-e2e-679467cf9660",
+  "fixture": "rabit-e2e-c27280e2987a",
   "screenshotsCaptured": 2,
   "localDirectory": "frontend/reports/e2e-live/artifacts/zzz-handoff-F1-воспитатель-555f7-р-сохраняет-право-и-историю-chromium",
   "screenshots": [
     {
       "name": "f1-desktop-list.png",
-      "sha256": "084a106e0bf0f0c4ff1c61f8431d373c7cd166775c6523bccdcb232e838f52fc",
+      "sha256": "8d7de0412286127b83c02c051eca03d9a4794a3b94baa5fae74a9397b75ae46c",
       "width": 1280,
       "height": 720
     },
     {
       "name": "f1-mobile-detail.png",
-      "sha256": "fc364d2d9acbc1884d96c6e1ddbfd9878615f3ce01cdd817e2cd55e551c43817",
+      "sha256": "2e610d26d12e9e04c0df848f589a8898566297ca7af0762abc6327121635e1dd",
       "width": 390,
       "height": 1334
     }
@@ -26,5 +26,9 @@
     "The 390px layout has no horizontal overflow",
     "Live UI does not expose the deferred D3 transfer action"
   ],
-  "limitations": "Screenshot evidence is retained in ignored local E2E artifacts; this report records hashes and automated layout assertions rather than pixel-diff coverage."
+  "limitations": "Screenshot evidence is retained in ignored local E2E artifacts; this report records hashes and automated layout assertions rather than pixel-diff coverage.",
+  "notes": [
+    "Desktop/mobile inspected on 2026-09-21",
+    "Existing copy issues: 1 детей; full-set transfer mentioned before D3 activation"
+  ]
 }

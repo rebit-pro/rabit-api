@@ -12,16 +12,17 @@ use Morefoto\Handoff\Application\Request\UseCase\SaveStaffRequestUseCase;
 use Morefoto\Handoff\Domain\Request\Repository\StaffRequestRepository;
 use Morefoto\Handoff\Infrastructure\Database\BitrixHandoffTransaction;
 use Morefoto\Handoff\Presentation\Controller\StaffRequestController;
-use Morefoto\Handoff\Presentation\Request\StaffRequestFactory;
-use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
+use Morefoto\Handoff\Presentation\Request\StaffRequestInputMapper;
+use Morefoto\Handoff\Presentation\Result\StaffRequestResultMapper;
 use Rebit\Share\Contracts\Access\StaffRequestAccessInterface;
 use Rebit\Share\Contracts\Media\StaffChildReferenceInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 
 $services = [
+    StaffRequestInputMapper::class => ['className' => StaffRequestInputMapper::class],
+    StaffRequestResultMapper::class => ['className' => StaffRequestResultMapper::class],
     HandoffTransactionInterface::class => ['constructor' => static fn(): HandoffTransactionInterface => new BitrixHandoffTransaction()],
     StaffRequestRepository::class => ['className' => StaffRequestRepository::class],
-    StaffRequestFactory::class => ['className' => StaffRequestFactory::class],
 ];
 $dependencies = [
     StaffRequestWorkflow::class => [HandoffTransactionInterface::class, StaffRequestRepository::class, StaffRequestAccessInterface::class, MediaScopeInterface::class, StaffChildReferenceInterface::class],
@@ -29,7 +30,7 @@ $dependencies = [
     GetStaffRequestUseCase::class => [StaffRequestWorkflow::class],
     SaveStaffRequestUseCase::class => [StaffRequestWorkflow::class],
     ClarifyStaffRequestUseCase::class => [StaffRequestWorkflow::class],
-    StaffRequestController::class => [ListStaffRequestsUseCase::class, GetStaffRequestUseCase::class, SaveStaffRequestUseCase::class, ClarifyStaffRequestUseCase::class, StaffRequestFactory::class, TokenResolverInterface::class],
+    StaffRequestController::class => [ListStaffRequestsUseCase::class, GetStaffRequestUseCase::class, SaveStaffRequestUseCase::class, ClarifyStaffRequestUseCase::class, StaffRequestInputMapper::class, StaffRequestResultMapper::class],
 ];
 foreach ($dependencies as $class => $arguments) {
     $services[$class] = [

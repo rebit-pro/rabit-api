@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Rebit\Share\Infrastructure\Controller\Auth;
 
+use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /**
@@ -14,6 +15,18 @@ use Rebit\Share\Shared\Exception\HttpException;
 trait AuthenticatedControllerTrait
 {
     private ?int $authUserId = null;
+    private ?TokenResolverInterface $injectedTokenResolver = null;
+
+    final public function setTokenResolver(TokenResolverInterface $tokenResolver): void
+    {
+        $this->injectedTokenResolver = $tokenResolver;
+    }
+
+    final protected function getTokenResolver(): TokenResolverInterface
+    {
+        return $this->injectedTokenResolver
+            ?? throw new \LogicException('TokenResolverInterface was not injected into authenticated controller.');
+    }
 
     public function setAuthUserId(?int $userId): void
     {

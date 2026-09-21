@@ -1,7 +1,7 @@
 {
   "wave": "F1",
-  "status": "ready-for-review",
-  "date": "2026-09-20",
+  "status": "passed",
+  "date": "2026-09-21",
   "branch": "codex/f1-staff-requests",
   "base": "28bcad9e575489deb1113d7ce2ac459a43dd7132",
   "dependencies": [
@@ -23,7 +23,7 @@
   "checks": {
     "phpLint": {
       "status": "passed",
-      "files": 566
+      "files": 591
     },
     "phpstan": {
       "status": "passed",
@@ -31,18 +31,17 @@
     },
     "phpunit": {
       "status": "passed",
-      "tests": 394,
-      "assertions": 1238
+      "tests": 403,
+      "assertions": 1492
     },
     "targetedUnit": {
       "status": "passed",
-      "tests": 2,
-      "assertions": 16
+      "tests": 11,
+      "assertions": 270
     },
     "style": {
       "status": "passed",
-      "changedPhpFiles": 35,
-      "filesFixed": 14,
+      "checkedPhpFiles": 65,
       "fixableFilesAfterFix": 0
     },
     "frontend": {
@@ -63,10 +62,11 @@
     "browserE2E": {
       "status": "passed",
       "tests": 43,
+      "passed": 43,
       "failed": 0,
       "skipped": 0,
       "flaky": 0,
-      "fixture": "rabit-e2e-679467cf9660",
+      "fixture": "rabit-e2e-c27280e2987a",
       "transport": "Chromium -> nginx -> native Bitrix FPM -> isolated MySQL and RabbitMQ",
       "ownedFixtureCleaned": true,
       "cleanupErrors": []
@@ -76,15 +76,42 @@
       "screenshotsCaptured": 2,
       "mobileOverflowAssertion": true,
       "report": "visual.json"
+    },
+    "monolog": {
+      "status": "passed",
+      "REQUEST": 33,
+      "RESPONSE": 19,
+      "HTTP_EXCEPTION": 14,
+      "requestIdPresent": true,
+      "sensitiveSentinelsAbsent": true,
+      "log": "api/var/e2e/rabit-e2e-c27280e2987a/rabit-e2e-c27280e2987a-fpm.log"
+    },
+    "dtoSignatures": {
+      "status": "passed",
+      "scope": "All 15 handoff DTOs and 3 shared contract DTOs; public typed readonly properties and empty constructor only"
     }
   },
   "publication": {
-    "status": "pending PR creation",
+    "status": "ready for PR",
     "merged": false,
     "deployed": false,
     "deploymentTarget": "app.morefoto.36.ru",
-    "deploymentPolicy": "aggregate later wave checkpoint"
+    "deploymentPolicy": "aggregate later wave checkpoint",
+    "followUpIssue": "https://github.com/rebit-pro/rabit-api/issues/24"
   },
   "complete": true,
-  "completeMeaning": "Implementation and local acceptance complete; PR review, merge and aggregate deployment are tracked separately."
+  "completeMeaning": "F1 implementation and required local checks complete; PR publication pending. Merge and deployment are separate.",
+  "head": "0697fdbe238cacb1ef18c64f54ef9aa89d5a0fc7",
+  "uncommittedChanges": true,
+  "remaining": [],
+  "history": [
+    {
+      "fixture": "rabit-e2e-40c5384da489",
+      "result": "42/43; E3 warning after reload was absent. Not reproduced in current runs; root cause not established."
+    },
+    {
+      "fixture": "rabit-e2e-f0179580309e",
+      "result": "42/43; F1 second-author fixture reused first row UUID, violating unique constraint. Fixed by generating a UUID for the new row; assertions unchanged."
+    }
+  ]
 }

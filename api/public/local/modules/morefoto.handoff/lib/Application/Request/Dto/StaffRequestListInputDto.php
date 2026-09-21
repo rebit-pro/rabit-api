@@ -13,9 +13,4 @@ final readonly class StaffRequestListInputDto
         public int $page,
         public int $pageSize,
     ) {}
-
-    public function offset(): int
-    {
-        return ($this->page - 1) * $this->pageSize;
-    }
 }

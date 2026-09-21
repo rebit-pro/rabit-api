@@ -13,12 +13,15 @@
 - HND-12 `POST /api/v1/staff-requests/{id}/clarifications`: запрос уточнения организатором/куратором с optimistic lock и идемпотентностью.
 - Live frontend для списков сотрудников с сохранением mock-режима.
 - Локальные unit/integration/E2E и desktop/mobile visual-проверки.
+- Второй круг review: чистый HTTP-контроллер на presentation request DTO и UseCase без прямой работы с Bitrix request/route, фильтрами, serializer и logger.
+- Общая инфраструктурная обвязка Bearer, JSON-ошибок, `no-store`, request-id и Monolog; явное описание точки конфигурации логов.
 
 ## Не входит
 
 - HND-10 preview, HND-11 перенос наборов и любые изменения фотографий/заказов — волна D3.
 - Расчёт скидки в заказе и изменение перечня льготных товаров — E3/последующие commerce-волны.
 - Деплой: выполняется отдельным общим этапом после согласованного пакета волн.
+- Массовый рефакторинг уже слитых `CatalogController`, `ConditionsController` и остальных legacy-контроллеров: для них фиксируется отдельный follow-up после появления общего эталона в F1.
 
 ## Зависимости и решения
 
@@ -39,6 +42,10 @@
 - Изменение после уточнения возвращает заявку в `submitted`, повышает revision и дописывает историю. `transferred` неизменяем, хотя F1 его не создаёт.
 - Транзакция охватывает заявку, строки, историю и запись идемпотентности.
 - Ошибки существования вне области маскируются как 404; stale revision и повтор ключа с другим телом дают 409.
+- Action получает один presentation `*RequestDto`; разбор JSON, route-параметров и HTTP-заголовков выполняет общий infrastructure mapper.
+- Конкретный контроллер содержит только вызовы UseCase и формирование успешного presentation-ответа; Bearer, фильтры, error mapping, `Cache-Control` и логирование предоставляет общий базовый контроллер.
+- Monolog уже подключён глобально через `local/.settings_extra.php` → `local/php_interface/settings_extra.php`; F1 обязан использовать именованный канал `handoff`, не создавать logger/filter внутри контроллера и не писать payload/токены в логи.
+- Правило чистых контроллеров фиксируется на верхнем уровне в `AGENTS.md` и `CLAUDE.md` как обязательное для следующих волн.
 
 ## Карта frontend-компонентов
 
@@ -69,6 +76,10 @@
 - [x] Полный локальный disposable quality gate.
 - [x] Документация волны для review; публикация PR выполняется следующим шагом.
 
+- [x] Заменить ручной `StaffRequestFactory` на типизированные presentation request DTO и общий infrastructure mapper.
+- [x] Вынести Bearer/error/no-store/Monolog из `StaffRequestController` в общую инфраструктурную обвязку.
+- [x] Зафиксировать верхнеуровневое правило чистого controller и фактическую конфигурацию Monolog.
+- [x] Повторить unit/static/full browser E2E после архитектурной правки и обновить review-артефакты.
 ## Acceptance и стабильные test ID
 
 - `F1-HND-06-SCOPE`: список не раскрывает чужую область; учитель видит только свои заявки.
@@ -79,3 +90,97 @@
 - `F1-HND-09-REVISION`: устаревшая revision исправления отклоняется с 409 без частичной записи.
 - `F1-HND-12-CLARIFICATION`: куратор с доступом и явным подтверждением сохраняет причину в истории.
 - `F1-HISTORY`: повторная подача возвращает статус `submitted`, повышает revision и сохраняет три события истории.
+- `F1-ARCH-CONTROLLER`: concrete controller зависит только от UseCase, presentation DTO и общего controller API; Bitrix request/route, auth/filter/logger/serializer/error mapping в нём отсутствуют.
+- `F1-HTTP-CONTRACT`: typed DTO сохраняют строгие JSON/query/path/header-проверки, коды ошибок, `201 + Location` и `Cache-Control: no-store`.
+- `F1-OBS-MONOLOG`: `REQUEST`, `RESPONSE` и `HTTP_EXCEPTION` проходят через глобальную конфигурацию Monolog в канал `handoff` с request-id без request payload и Authorization.
+
+## Сбор контекста MoreFoto — 2026-09-20
+
+Цель: по запросу пользователя изучить MoreFoto и RaBit API как основной backend; прямой MySQL в репозиториях, DTO-контракты, приоритет производительности PHP.
+Scope: сценарий и план соседнего ../MoreFoto, фактические модули/маршруты, SQL/DTO-границы, main против локальной F1. Вне scope: runtime-правки, продолжение F1, бизнес-операции, commit/push/merge/deployment, нагрузочный аудит.
+Решения/риски: сохранить прежние изменения; устаревшую документацию сверять с кодом; внутренние Result/скаляры отделять от внешних DTO; скорость без измерений не обещать. GitHub CLI недоступен по TLS timeout.
+
+- [x] Прочитать инструкции, ветку и существующие plan/progress.
+- [x] Сопоставить продуктовый сценарий, план, модули и историю main.
+- [x] Проследить чтение/запись и найти Objectify-вызовы.
+- [x] Зафиксировать подтверждённую карту, расхождения и ограничения.
+
+Приёмка: карта продукта/backend подтверждена файлами; объяснены SQL/DTO-границы; main отделён от F1; непроверенное отмечено.
+
+1. CTX-01: при доступных checkout прочитать сценарий, graph.json/routes.php и Git; ожидается разделение реализованного и планируемого. Команды: `git log --first-parent origin/main --oneline -25`, `git ls-tree -d origin/main api/public/local/modules/`, `Get-Content docs/waves/graph.json`.
+2. CTX-02: при доступных модулях проследить репозитории и UseCase; ожидается фактическая карта SQL/Result/DTO и Objectify-исключений. Команды: `rg -n 'fetchCollection\(|fetchObject\(|wakeUpObject\(|Objectify|EntityObject|EO_' api/public/local/modules -g '*.php' -g '!sprint.migration/**'` и адресное чтение файлов.
+3. CTX-03: после изучения сверить diff; ожидается сохранение прежних правок и только изменения plan/progress в этой сессии. Команды: `git diff --check -- docs/plans/F1_staff_requests/plan.md docs/plans/F1_staff_requests/progress.md`, `git status --short`.
+## Возобновление F1 и актуальное имя проекта — 2026-09-20
+
+Цель: подтвердить календарные D2/H1, закрепить актуальный checkout RaBit API и завершить проверки архитектурных изменений F1 перед review. Scope: F1 и необходимая общая HTTP-обвязка; инструкции проекта и навигационная карта ReBit OS. Вне scope: реализация E4/F2, массовый рефакторинг слитых контроллеров, merge и deployment.
+
+- [x] Сверить календарь 20 сентября и локальные merge-коммиты: D2 #21, H1 #22; F1 — текущая незавершённая волна.
+- [x] Закрепить `/home/user/rabit-api` и разделение общей основы `rebit.*` / специализации `morefoto.*`.
+- [x] Проверить текущий remote/PR (попытки HTTPS/SSH заблокированы сетевыми timeout); при недоступности явно отметить границу локальной проверки.
+- [x] Проверить clean-controller diff, исправить обнаруженные регрессии и закрыть F1-ARCH-CONTROLLER/F1-HTTP-CONTRACT/F1-OBS-MONOLOG по указанным ниже границам покрытия.
+- [x] Повторить штатный локальный gate и desktop/mobile visual; обновить README/verification/progress.
+
+Риск: GitHub ранее недоступен; проверка только локального origin/main не подтверждает актуальность удалённого base. Sandbox запуска команд даёт helper_unknown_error; чтение через разрешённый exec вне sandbox работает. Предыдущие незакоммиченные изменения сохраняются.
+
+1. RESUME-01: календарь доступен; прочитать `calendar.cmd list --from 2026-09-20T00:00 --to 2026-09-21T00:00 --category rebit --json` и `git log --first-parent origin/main`; ожидаются D2/H1 и F1 как текущая работа.
+2. RESUME-02: инструкции и карта существуют; проверить `rg -n 'rabit-api|morefoto\.' AGENTS.md CLAUDE.md` и чтение studio-map.md; ожидается актуальный путь, старое имя только как историческое.
+3. RESUME-03: доступен Docker; выполнить `python3 tools/run-browser-e2e.py run --php-cli rabit-api-php-cli:d1-local --php-fpm rabit-api-php-fpm:d1-local`; ожидаются зелёные backend/frontend/HTTP проверки и очистка только ресурсов этого запуска.
+4. RESUME-04: после проверки выполнить `git diff --check` и `git status --short`; ожидаются корректный diff и актуальная точка продолжения без потери прежних правок.
+
+### Найденные регрессии HTTP и план исправления
+
+- Strict JSON/GET должен читать исходный URI query, не служебные GET-параметры роутера Bitrix.
+- До гидрации проверять реальные типы JSON, обязательные поля и неизвестные вложенные ключи; header/path не принимаются из body/query. Использовать существующие кешируемые DTO-метаданные, не переносить разбор HTTP в controller.
+- Исправить ложное срабатывание architecture-теста на общий `Rebit\Share\Infrastructure\Bitrix\ControllerJson`: проверять namespace Bitrix как зависимость через PHP tokens.
+- F1-HTTP-CONTRACT: дополнить проверки числовыми строками вместо revision, строковым confirmed, лишними полями строки ребёнка, rows-объектом, подменой технического поля; сохранить успешные GET/PUT/clarification через native router.
+
+
+### Приёмка возобновления — 2026-09-20
+
+- [x] Выполнен полный штатный gate: PHP lint 581, PHPStan 0 ошибок, PHPUnit 400/1279, frontend unit 158; собственный F1 E2E и desktop/mobile PASS.
+- [x] Monolog: REQUEST/RESPONSE/HTTP_EXCEPTION, request-id и отсутствие тестовых текстов/токена подтверждены сохранённым FPM log.
+- [x] ESLint/TypeScript изменённого E2E и PHP CS Fixer по изменённым файлам завершены.
+- [x] Получить зелёный общий browser gate: 43/43; прежний FAIL E3 не воспроизвёлся без изменения теста, его историческая причина не установлена.
+- [x] Подтвердить свежий remote main, решить оставшиеся выходные DTO списка/карточки и закрыть пробелы role/scope acceptance до готовности к review; публикация PR после этого.
+
+Существующий E2E проверяет отказ неназначенному сотруднику при чтении списка, но не прямой POST этого сотрудника; не считать это полным F1-HND-07-UNVERIFIED. Проверка списка не доказывает исчерпывающую фильтрацию всех чужих заявок (F1-HND-06-SCOPE). Эти границы требуют отдельных assertions.
+
+## Публикация F1 — 2026-09-21
+
+Пользователь поручил создать отдельный issue по ранее слитым контроллерам, завершить F1, сделать commit и PR в main, затем перейти к review. Массовое исправление остальных контроллеров не включать в F1; merge/deployment не выполнять.
+
+- [x] Создать follow-up issue с проверенными примерами и критериями приёмки.
+- [x] Завершить Application OutputDto / Presentation ResultDto F1; усилить проверку границы контроллера.
+- [x] Закрыть прямой POST неназначенного сотрудника и фильтрацию чужой заявки в HTTP E2E.
+- [x] Проверить актуальный main и полный disposable gate; исследовать прежний FAIL E3 без ослабления проверки.
+- [ ] Обновить plan/progress и артефакты, выполнить self-review, commit/push и один PR в main.
+
+1. F1-OUTPUT-CONTRACT: UseCase возвращает типизированный OutputDto; ResultDto сохраняет JSON списка, карточки и мутации, pagination meta и Location; команда PHPUnit morefoto.handoff/tests/Unit.
+2. F1-PUBLISH: после зелёного gate git diff --check, git status, git fetch origin и проверка PR; ожидается одна ветка F1, commit с проверенными изменениями и PR со ссылкой на follow-up issue. Незелёные проверки исключают объявление готовности к merge.
+
+## DTO без поведения — 2026-09-21
+
+Требование пользователя: DTO содержат только типизированную сигнатуру — публичные readonly-свойства и пустой конструктор. Методы преобразования, валидации, сериализации и вычислений запрещены. Scope: все DTO F1 и затронутые межмодульные DTO; массовый рефакторинг чужих волн исключён.
+
+- [x] Вынести преобразования request/result в stateless presentation mapper, сборку OutputDto — в Application mapper; offset вычислять в workflow.
+- [x] Сохранить чистоту controller: только явное отображение DTO, UseCase и общий response API, без HTTP parsing/валидации/инфраструктурной сборки.
+- [x] Закрепить запрет поведения DTO архитектурным тестом и инструкциями.
+- [x] Выполнить unit/static и полный make test-e2e, проверить desktop/mobile, обновить артефакты.
+- [ ] Commit/push и PR в main; merge/deployment исключены.
+
+1. F1-DTO-SIGNATURE: DTO доступны; reflection/token-проверка всех DTO F1 и затронутых контрактов; ожидаются только public readonly свойства и пустой constructor, без методов. Команда: PHPUnit morefoto.handoff/tests/Unit.
+2. F1-DTO-COMPAT: преобразовать корректные/некорректные запросы и сериализовать ответы общим serializer; прежние поля, ошибки, meta и Location сохранены. Команды: PHPUnit и make test-e2e.
+
+### Исправление данных E2E — 2026-09-21
+
+Первый полный gate после DTO-правки: 42/43, F1 упал на создании второй заявки. Новая проверка чужого автора копировала UUID строки первой заявки, но миграция задаёт глобальный UNIQUE PUBLIC_ID строки. Исправить fixture второй заявки: отдельный crypto.randomUUID() для новой строки; role/scope assertions не менять. Затем повторить полный make test-e2e.
+
+3. F1-FOREIGN-AUTHOR-FIXTURE: предусловие — заявка воспитателя существует; создать другим автором заявку другого ребёнка с новым UUID строки; ожидается 201, чужая заявка отсутствует в списке воспитателя и её карточка даёт 404. Команда: make test-e2e.
+
+### Подсветка методов Bitrix в IDE — 2026-09-21
+
+По вопросу пользователя сверены hasCurrentRoute/getCurrentRoute с лицензированным ядром: оба объявлены в Bitrix Main Application. В текущем checkout ядро пусто, статический stub Application не содержит этих сигнатур. Дополнить только статический контракт Routing/ Application и пояснить appendTechnicalValues русским phpDoc; поведение HTTP не менять. Повторить PHPStan и lint stub.
+
+4. F1-ROUTE-STUB: сравнить static signatures с ядром, запустить PHP lint/PHPStan; ожидается доступность сигнатур hasCurrentRoute/getCurrentRoute/getParameterValue без подавлений IDE. Проверка фактической индексации IDE остаётся за разработчиком.
+
+Итог 2026-09-21: реализация, DTO-signature, HTTP-контракт, полный gate и visual закрыты. Публикация PR — последний шаг; исторические неудачные прогоны сохранены в progress.md.

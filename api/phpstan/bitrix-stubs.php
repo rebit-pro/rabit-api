@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Minimal Bitrix stubs for PHPStan static analysis.
  */
@@ -14,6 +16,8 @@ namespace Bitrix\Main {
         public static function getDocumentRoot(): string {}
         public function getManagedCache(): Data\ManagedCache {}
         public function getTaggedCache(): Data\TaggedCache {}
+        public function hasCurrentRoute(): bool {}
+        public function getCurrentRoute(): Routing\Route {}
     }
 
     class Loader
@@ -146,6 +150,11 @@ namespace Bitrix\Main\Type {
 }
 
 namespace Bitrix\Main\Routing {
+    class Route
+    {
+        public function getParameterValue(string $name): mixed {}
+    }
+
     class RoutingConfigurator
     {
         public function get(string $uri, mixed $controller): self {}

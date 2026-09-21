@@ -10,6 +10,10 @@ const failures = new WeakMap<Page, string[]>();
 
 async function body(response: APIResponse | Response, status = 200) {
   expect(response.status(), await response.text()).toBe(status);
+  if (new URL(response.url()).pathname.startsWith('/api/v1/staff-requests')) {
+    expect(response.headers()['cache-control']).toBe('no-store');
+    if (status === 201) expect(response.headers()['location']).toMatch(/^\/api\/v1\/staff-requests\/[a-f0-9-]+$/);
+  }
   return response.json();
 }
 async function headers(page: Page, idempotencyKey = key()) {
@@ -139,6 +143,67 @@ test('F1: воспитатель подаёт список, куратор ут�
 
     const createKey = createRequest.headers()['idempotency-key']!;
     const createBody = createRequest.postDataJSON();
+
+    const latestMedia = await body(await page.request.get('/api/v1/shoots/' + shoot.id + '/photos', { headers: await headers(page) }));
+    await body(
+      await page.request.post('/api/v1/groups/' + group.id + '/photo-assignments', {
+        headers: await headers(page),
+        data: { shootId: shoot.id, revision: latestMedia.data.revision, photoIds: [photoId], childCode: 'B' }
+      })
+    );
+    const otherRequest = await create(page, '/api/v1/staff-requests', {
+      ...createBody,
+      rows: [{ ...createBody.rows[0], id: crypto.randomUUID(), code: 'B' }]
+    });
+    const ownList = await body(
+      await teacher.request.get('/api/v1/staff-requests?shootId=' + shoot.id, {
+        headers: await headers(teacher)
+      })
+    );
+    expect(ownList.data.items.map((item: { id: string }) => item.id)).toEqual([created.id]);
+    expect(ownList.meta).toMatchObject({ total: 1, totalPages: 1 });
+    expect(ownList.data.scope.groups.map((item: { id: string }) => item.id)).toContain(group.id);
+    expect(ownList.data.scope.groups.map((item: { id: string }) => item.id)).not.toContain(foreign.id);
+    await body(
+      await teacher.request.get('/api/v1/staff-requests/' + otherRequest.id, {
+        headers: await headers(teacher)
+      }),
+      404
+    );
+    for (const invalid of [
+      { ...createBody, comment: 42 },
+      { ...createBody, idempotencyKey: 'body-must-not-supply-header' },
+      { ...createBody, rows: { 0: createBody.rows[0] } },
+      { ...createBody, rows: [{ ...createBody.rows[0], unexpected: true }] }
+    ]) {
+      await body(
+        await teacher.request.post('/api/v1/staff-requests', {
+          headers: await headers(teacher),
+          data: invalid
+        }),
+        422
+      );
+    }
+    await body(
+      await teacher.request.put('/api/v1/staff-requests/' + created.id, {
+        headers: await headers(teacher),
+        data: { ...createBody, revision: '999' }
+      }),
+      422
+    );
+    await body(
+      await teacher.request.get('/api/v1/staff-requests/' + created.id + '?requestId=' + created.id, {
+        headers: await headers(teacher)
+      }),
+      422
+    );
+    await body(
+      await teacher.request.put('/api/v1/staff-requests/' + created.id + '?extra=1', {
+        headers: await headers(teacher),
+        data: { ...createBody, revision: 999 }
+      }),
+      400
+    );
     expect(
       (
         await body(
@@ -191,8 +256,27 @@ test('F1: воспитатель подаёт список, куратор ут�
       ).status()
     ).toBe(403);
 
+    await body(
+      await unavailable.request.post('/api/v1/staff-requests', {
+        headers: await headers(unavailable),
+        data: createBody
+      }),
+      403
+    );
+
     const curator = await curatorContext.newPage();
     await login(curator, 'curator');
+    await body(
+      await curator.request.post('/api/v1/staff-requests/' + created.id + '/clarifications', {
+        headers: await headers(curator),
+        data: {
+          revision: 1,
+          comment: 'Тест строгого confirmed',
+          confirmed: 'true'
+        }
+      }),
+      422
+    );
     await curator.goto('/cabinet/staff-requests/' + created.id);
     await expect(curator.getByTestId('request-detail')).toBeVisible();
     await expect(curator.getByTestId('staff-eligibility')).toContainText('Право сотрудника подтверждено сервером');

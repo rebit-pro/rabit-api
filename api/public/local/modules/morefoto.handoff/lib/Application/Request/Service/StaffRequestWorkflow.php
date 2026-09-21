@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Morefoto\Handoff\Application\Request\Service;
 
+use Morefoto\Handoff\Application\Request\Mapper\StaffRequestOutputMapper;
 use Morefoto\Handoff\Application\Request\Contract\HandoffTransactionInterface;
 use Morefoto\Handoff\Application\Request\Dto\ClarificationInputDto;
 use Morefoto\Handoff\Application\Request\Dto\StaffRequestListInputDto;
+use Morefoto\Handoff\Application\Request\Dto\StaffRequestListOutputDto;
+use Morefoto\Handoff\Application\Request\Dto\StaffRequestOutputDto;
 use Morefoto\Handoff\Application\Request\Dto\StaffRequestMutationInputDto;
 use Morefoto\Handoff\Application\Request\Dto\StaffRequestMutationOutputDto;
 use Morefoto\Handoff\Domain\Request\Repository\StaffRequestRepository;
@@ -33,32 +36,32 @@ final readonly class StaffRequestWorkflow
         private StaffChildReferenceInterface $children,
     ) {}
 
-    /** @return array{items:list<array<string,mixed>>,scope:array<string,mixed>,meta:array{page:int,pageSize:int,total:int,totalPages:int}} */
-    public function list(int $actorId, StaffRequestListInputDto $input): array
+    public function list(int $actorId, StaffRequestListInputDto $input): StaffRequestListOutputDto
     {
         $actor = $this->actor($actorId, ['organizer', 'curator', 'teacher']);
-        $page = $this->requests->page($actor, $input->institutionId, $input->shootId, $input->status, $input->pageSize, $input->offset());
+        $page = $this->requests->page($actor, $input->institutionId, $input->shootId, $input->status, $input->pageSize, ($input->page - 1) * $input->pageSize);
+        $items = [];
+        foreach ($page['items'] as $item) {
+            $items[] = StaffRequestOutputMapper::fromView($item);
+        }
 
-        return [
-            'items' => $page['items'],
-            'scope' => ['role' => $actor->role, ...$this->requests->options($actor)],
-            'meta' => [
-                'page' => $input->page,
-                'pageSize' => $input->pageSize,
-                'total' => $page['total'],
-                'totalPages' => (int)ceil($page['total'] / $input->pageSize),
-            ],
-        ];
+        return new StaffRequestListOutputDto(
+            items: $items,
+            scope: ['role' => $actor->role, ...$this->requests->options($actor)],
+            page: $input->page,
+            pageSize: $input->pageSize,
+            total: $page['total'],
+            totalPages: (int)ceil($page['total'] / $input->pageSize),
+        );
     }
 
-    /** @return array<string,mixed> */
-    public function detail(int $actorId, string $requestId): array
+    public function detail(int $actorId, string $requestId): StaffRequestOutputDto
     {
         $actor = $this->actor($actorId, ['organizer', 'curator', 'teacher']);
         $request = $this->required($requestId);
         $this->assertVisible($actor, $request);
 
-        return $this->requests->view($request);
+        return StaffRequestOutputMapper::fromView($this->requests->view($request));
     }
 
     public function save(int $actorId, ?string $requestId, IdempotencyKey $key, StaffRequestMutationInputDto $input): StaffRequestMutationOutputDto

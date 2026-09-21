@@ -34,6 +34,7 @@ Programmer: PHP 8.4, Bitrix D7, Makefile.
 - `ServiceLocator` — только в DI-конфигах и bootstrap
 - Зависимости через конструктор (constructor property promotion)
 - DTO/VO — `final readonly`, named arguments для сложных вызовов
+- DTO содержат только public readonly свойства и пустой конструктор с их сигнатурой. Методы, вычисления, валидация и сериализация внутри DTO запрещены; преобразования выполняют отдельные mapper-классы.
 - Hot path: без лишних циклов, `array_merge`, spread, промежуточных массивов
 - Инфра-исключения → предметные исключения Application/Domain
 - Legacy/Bitrix-код → `Infrastructure` или bootstrap
@@ -46,6 +47,17 @@ Programmer: PHP 8.4, Bitrix D7, Makefile.
 4. Сценарий через порты → `Application` (UseCase)
 
 Антипаттерны: SQL в UseCase, бизнес-логика в Builder, форматирование в UseCase.
+
+## Чистые HTTP-контроллеры и логирование
+
+- Concrete controller работает только с типизированными presentation `*RequestDto`, `*ResultDto`, UseCase, stateless presentation mapper для преобразования DTO и API базового controller.
+- Один action принимает не более одного request DTO. Query, JSON body, route-параметры и разрешённые headers собирает infrastructure mapper до action.
+- В concrete controller запрещены `Bitrix\\*`, `HttpRequest`, `Application::getCurrentRoute()`, `ServiceLocator`, ручной разбор payload, request factory над `HttpRequest`, auth/filter/logger/serializer/request-id и собственный exception mapping.
+- Bearer, pre/post filters, `Cache-Control`, единый error response и HTTP-логирование находятся в общей infrastructure-обвязке. Controller не создаёт `LoggerFilter` или Monolog handler.
+- Успешный action только передаёт DTO в UseCase и оформляет ответ общими `json()`/`createdJson()`/`noContent()`; предметные проверки остаются в Application/Domain.
+- Monolog настраивается глобально в `local/php_interface/settings_extra.php`, подключённом через `local/.settings_extra.php`. Новые модули обязаны иметь осмысленный `LogChannelEnum`; токены, headers и raw payload не логируются.
+- Новый или изменённый controller не готов к review, если содержит технологическую сборку либо не имеет unit/architecture-проверки границы и HTTP/E2E-проверки контракта.
+- Ранее слитый загрязнённый controller не копируется как эталон: для него создаётся отдельный follow-up issue, а новая волна сразу следует этому правилу.
 
 ## Структура модуля
 
@@ -100,7 +112,8 @@ FooGatewayInterface::class => [
 
 ## Профиль RaBit API
 
-- Техническое имя: `rabit-api`; текущий checkout может сохранять старое имя `rebit-p2p`.
+- RaBit API — основной backend проекта MoreFoto36.ru. Техническое имя и актуальная папка: `rabit-api`; Linux/WSL: `/home/user/rabit-api`, Windows: `\\wsl.localhost\Ubuntu\home\user\rabit-api`. `rebit-p2p` — прежнее имя, не использовать его как текущий checkout.
+- Модули `rebit.*` — общая основа RaBit API: Share, Auth, Dev, Notification, LeadHunter и другие инфраструктурные возможности. Специализация продукта MoreFoto реализуется в `morefoto.*`; не переименовывать общие модули и namespace ради MoreFoto.
 - Прикладная основа: `rebit.share` и `rebit.auth`. `rebit.notification` принимает заявки с сайта через `POST /api/v1/lead`, синхронно отправляет их в Telegram и поддерживает резервный email; торговая ветка и её consumer не включены. `rebit.leadhunter` — самостоятельная работающая лидогенерация: получает заявки с внешних площадок, отправляет их в Telegram и поддерживает резервный email. Оба модуля сохранены в RaBit API и не относятся к P2P. `rebit.dev` и `sprint.migration` — технические инструменты.
 - Frontend MoreFoto находится в `frontend/` этого репозитория. Продуктовый план остаётся в соседнем `../MoreFoto`. Карта модулей: `docs/04-bitrix-modules/README.md`, API: `docs/05-rest-api/README.md` именно этого соседнего проекта.
 - Текущая архитектура основы: `docs/architecture.md`. Планируемые `morefoto.*` не считать реализованными по документации.
@@ -110,6 +123,8 @@ FooGatewayInterface::class => [
 - Новые миграции добавлять в активный `api/public/local/php_interface/migrations.foundation/`; исторический `migrations/` не является набором по умолчанию.
 
 ## Волны и pull requests
+
+- Для GitHub использовать только настроенный GitHub CLI `gh` (в WSL: `/home/user/.local/bin/gh`); не обращаться к GitHub-коннекторам, другим приложениям или браузеру для этих операций. Явное правило пользователя от 2026-09-21.
 
 - Обязательное правило пользователя: одна независимая волна — одна ветка `codex/<буква><номер>-...` от актуального `main` и один PR в `main`. Буква обозначает направление, номер — самостоятельный срез. Исторические WNN сохраняются в карте соответствия.
 - Все необходимые runtime/compile/schema зависимости волны до начала её реализации уже должны быть слиты в `main`. Draft PR и незамерженная ветка не закрывают зависимость. Не использовать stacked PR, перенос соседнего незамерженного кода, allow-all, mock или фиктивный fallback для видимости готовности.

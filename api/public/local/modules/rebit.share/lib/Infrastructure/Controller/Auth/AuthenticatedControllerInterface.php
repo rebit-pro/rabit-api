@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Rebit\Share\Infrastructure\Controller\Auth;
 
+use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /**
@@ -13,6 +14,8 @@ use Rebit\Share\Shared\Exception\HttpException;
  */
 interface AuthenticatedControllerInterface
 {
+    public function setTokenResolver(TokenResolverInterface $tokenResolver): void;
+
     public function setAuthUserId(?int $userId): void;
 
     /**

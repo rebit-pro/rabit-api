@@ -382,7 +382,7 @@ final class DtoMetadataService
      *
      * @throws ValidationHttpException
      */
-    private static function analyze(string $className): DtoClassMetadata
+    public static function analyze(string $className): DtoClassMetadata
     {
         if (array_key_exists($className, self::$cache)) {
             return self::$cache[$className];

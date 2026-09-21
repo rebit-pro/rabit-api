@@ -7,6 +7,11 @@ namespace Rebit\Share\Shared\Enum;
 enum LogChannelEnum: string
 {
     case default = 'rebit';
+    case access = 'access';
+    case commerce = 'commerce';
+    case handoff = 'handoff';
+    case media = 'media';
+    case organization = 'organization';
     case notification = 'notification';
     case leadhunter = 'leadhunter';
     case security = 'security';
@@ -26,7 +31,7 @@ enum LogChannelEnum: string
      */
     public static function resolveFromClassName(string $className): self
     {
-        if (1 === preg_match('/^Rebit\\\(\w+)\\\/', $className, $matches)) {
+        if (1 === preg_match('/^(?:Rebit|Morefoto)\\\([A-Za-z][A-Za-z0-9_]*)\\\/', $className, $matches)) {
             $resolved = self::tryFrom(strtolower($matches[1]));
 
             if (null !== $resolved) {
