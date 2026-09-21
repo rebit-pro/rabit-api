@@ -230,3 +230,28 @@ Scope: проверить опубликованный HEAD ba250e1927111b522a4a
 ### Стабильный визуальный захват
 
 Полный повтор прошёл 51/51, но четыре новых screenshots захватили CSS transition меню/диалога. Добавить animations: disabled только при screenshot, без изменения функциональных assertions или runtime. Отдельно поднять свежий disposable fixture и выполнить F1 spec (9 сценариев), затем вручную просмотреть стабильные кадры. Полный gate 60d07b962945 остаётся доказательством регрессии; отдельный visual-прогон документируется отдельно.
+
+
+## Повторное review P1 — 2026-09-21
+
+Цель: независимо проверить опубликованный HEAD 74e44ea после исправления навигации и закрыть review-тред только при фактическом PASS. Scope: diff от ba250e1, вход через login/menu desktop/mobile и права organizer/curator/teacher/head. Вне scope: runtime-правки, commit/push, merge/deployment и исправления follow-up #26–28.
+
+Решение: проверки запускаются из `git archive 74e44ea` в `api/var/f1-review2-source`, чтобы стороннее форматирование routes.php не влияло на проверяемый код. Зависимости PHP/kernel берутся из локального окружения, БД и Docker-ресурсы создаются изолированно. Риск: GitHub не разрешает автору PR формальный APPROVE; тогда итог публикуется COMMENT с явным неформальным APPROVE.
+
+- [x] Прочитать актуальный PR, ответы, diff и роли live-навигации.
+- [x] Повторить локальные проверки и F1 HTTP/browser E2E из опубликованного дерева.
+- [x] Просмотреть screenshots desktop/mobile и проверить сохранение прав всех четырёх ролей.
+- [x] Ответить в P1-треде, resolve при PASS и опубликовать итог review через gh.
+- [x] Удалить только собственный стенд и обновить точку продолжения.
+
+1. R2-01: PR доступен; `gh pr view 25 --json headRefOid,baseRefOid,reviews` и `git diff ba250e1..74e44ea`; ожидается только навигационное исправление, тесты и документы без backend изменений.
+2. R2-02: чистый snapshot HEAD; `python3 api/var/f1-review2-source/tools/run-browser-e2e.py up --php-cli rabit-api-php-cli:d1-local --php-fpm rabit-api-php-fpm:d1-local --kernel /home/user/rebit-p2p/api/public/bitrix --vendor /home/user/rabit-api/api/vendor`; ожидаются зелёные frontend check/unit/build, backend lint/static/unit и реальная fixture.
+3. R2-03: стенд R2-02 запущен; Docker Playwright `playwright test --config playwright.live.config.ts e2e/live/zzz-handoff.spec.ts`; ожидаются 9/9 без mock/skip/retry: настоящий F1 workflow, вход по меню на двух viewport для четырёх ролей, 403 для head.
+4. R2-04: R2-03 завершён; просмотр шести screenshots в snapshot frontend/reports/e2e-live/artifacts; ожидается видимый пункт меню и рабочий UI desktop/mobile, без overflow.
+5. R2-05: R2-01–04 PASS; gh reply/resolve/review и `run-browser-e2e.py down --state <state.json>`; ожидаются опубликованный итог, resolved P1, stopped=true и cleanupErrors=[]; незапрошенные runtime-правки отсутствуют.
+
+## Слияние после review — 2026-09-21
+
+Пользователь разрешил merge F1 и начало E4. Сохранить журнал повторного review, слить PR #25 с проверкой head; deployment исключён.
+
+- [ ] F1-MERGE: gh pr merge с match-head-commit; ожидается MERGED, commit в main.

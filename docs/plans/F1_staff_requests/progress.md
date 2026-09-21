@@ -2,6 +2,15 @@
 
 ## Точка продолжения
 
+- Ветка codex/f1-staff-requests, опубликованный/локальный HEAD 74e44eab27fd7eb0dc38deaf37f5f2ad8becae63; base/main 28bcad9e575489deb1113d7ce2ac459a43dd7132; PR https://github.com/rebit-pro/rabit-api/pull/25 (OPEN, не merged).
+- Повторное review завершено: R2-01–05 PASS. P1 исправлен и resolved; ответ https://github.com/rebit-pro/rabit-api/pull/25#discussion_r4061083148. Итог https://github.com/rebit-pro/rabit-api/pull/25#pullrequestreview-5265330357 — COMMENTED с явным неформальным APPROVE: GitHub запретил формальный APPROVE собственной учётной записи автора PR.
+- Независимый gate на точном опубликованном snapshot: backend lint591/PHPStan/403 tests/1492 assertions, frontend check/158 unit/build, real MySQL/Notification integration; F1 Chromium 9/9 и 6 visual PASS. Fixture rabit-e2e-705c43d408d8 удалён, stopped=true/errors=[]. Полный 51/51 browser проход автора не выдаётся за повтор reviewer.
+- Пользователь разрешил merge F1 и начало E4. Следующий шаг — сохранить журнал review и слить PR #25; deployment не запрошен. Блокеров review нет. #24/#26/#27/#28 остаются OPEN отдельными задачами.
+- Рабочее дерево: стороннее форматирование api/public/local/modules/morefoto.handoff/routes.php сохранено. Локальные plan.md/progress.md содержат результаты review, не закоммичены; runtime-код reviewer не менял. Snapshot/логи/визуальные доказательства — в игнорируемом api/var/f1-review2-source/, GitHub receipts — api/var/f1-review2-*.json.
+- Следующая read-only проверка при возобновлении: `/home/user/.local/bin/gh pr view 25 --repo rebit-pro/rabit-api --json headRefOid,baseRefOid,state,reviews,mergedAt`; `git status --short`. Новый HEAD требует проверки затронутого diff, текущий вердикт относится к 74e44ea.
+
+### Точка после публикации исправления (история)
+
 - Ветка `codex/f1-staff-requests`; PR https://github.com/rebit-pro/rabit-api/pull/25; Проверенный implementation HEAD 3ce71bc (текущий HEAD включает завершающий docs-коммит), base/main 28bcad9e575489deb1113d7ce2ac459a43dd7132.
 - Review P1: https://github.com/rebit-pro/rabit-api/pull/25#discussion_r4060560246 — отсутствовал live-путь воспитателя после login. Исправлен CabinetLayout: пункт F1 только organizer/curator/teacher; основной E2E входит кликом меню, добавлены 8 role/viewport E2E.
 - Полный gate на rabit-e2e-60d07b962945: 51/51; адресный F1 на rabit-e2e-363c0655f0f5: 9/9. Все шесть стабильных screenshots просмотрены, visual PASS. Оба стенда удалены без ошибок. Исправление опубликовано, следующий шаг — повторный review P1.
@@ -336,3 +345,34 @@ python3 tools/run-browser-e2e.py run --php-cli rabit-api-php-cli:d1-local --php-
 - F1-REVIEW-FIX-PUBLISH — PASS: commit 3ce71bc отправлен HTTPS push; `gh api repos/rebit-pro/rabit-api/pulls/25/comments/4060560246/replies --input /tmp/f1-review-reply.json` опубликовал https://github.com/rebit-pro/rabit-api/pull/25#discussion_r4060957940.
 - `gh pr edit 25 --body-file /tmp/f1-updated-pr.md` — PASS, описание содержит путь через меню, 51/51 полного и 9/9 адресного прогона, 6 visual и отдельные #26–28.
 - Завершающий commit меняет только отчёты. Повтор runtime-тестов не нужен. Перед commit/push `git diff --check` PASS. Сторонний routes.php сохранён вне staging. Следующий шаг после публикации — повторный review; merge/deployment не выполнялись.
+
+
+### 2026-09-21 — независимое повторное review: старт
+
+- R2-01 PASS: сверены git status/rev-parse, gh PR и все сообщения единственного review-треда PRRT_kwDOUWl_zM6kSW6Y. Автор исправил вход в F1 через live-меню; head исключён, curator без создания, teacher/organizer с созданием. Опубликованный diff меняет один Vue layout, два E2E-файла и документы; backend не затронут.
+- R2-02/03/04/05 PENDING. Набор проверок зафиксирован в плане. Review выполняется без runtime-исправлений и без изменения чужого routes.php.
+
+- R2-01 PASS дополнительно: `python3 api/var/f1-review2-integrity.py` проверил git blob hash всех 1709 файлов snapshot против 74e44ea, различий 0. Повтор `python3 api/var/f1-review2-read-threads.py` через gh подтвердил HEAD/base; временный сетевой сбой предыдущего чтения больше не воспроизводится. `python3 api/var/f1-review2-read-state.py`: PR OPEN, issues #24/#26/#27/#28 OPEN.
+- R2-02 PENDING, промежуточный PASS: команда up из плана на fixture rabit-e2e-705c43d408d8 завершила npm ci, npm run check (ESLint/Vue types/E2E types), npm run test:commerce (158/158) и production build. Логи api/var/f1-review2-source/api/var/e2e/rabit-e2e-705c43d408d8/{check,test-commerce,build}.log. Backend/fixture ещё выполняются.
+
+
+### 2026-09-21 — повторное review: проверки завершены
+
+- R2-02 PASS: `python3 api/var/f1-review2-source/tools/run-browser-e2e.py up --php-cli rabit-api-php-cli:d1-local --php-fpm rabit-api-php-fpm:d1-local --kernel /home/user/rebit-p2p/api/public/bitrix --vendor /home/user/rabit-api/api/vendor`; exit 0. Fixture rabit-e2e-705c43d408d8. Lint 591, PHPStan exit 0, PHPUnit 403/1492, frontend check/158 unit/build PASS. Изолированная настоящая MySQL-схема/миграции и Notification H1 integration PASS.
+- R2-03 PASS: `python3 api/var/f1-review2-browser.py` выполнил Docker Chromium `./node_modules/.bin/playwright test --config playwright.live.config.ts e2e/live/zzz-handoff.spec.ts` с nodeArgs штатного runner и сетью container:rabit-e2e-705c43d408d8-frontend. 9/9, duration 24958 ms, unexpected=0/skipped=0/flaky=0. Проверены login→menu→list→new для teacher/organizer на desktop/mobile, curator без создания, head без пункта и HTTP 403; настоящий workflow создания/уточнения/повторной подачи сохраняет revision и историю. Прямой goto на начальную страницу F1 отсутствует.
+- R2-04 PASS: просмотрены все шесть новых screenshots из snapshot: два меню, две формы, desktop список и mobile карточка. Пункт F1 читаем/доступен, на mobile drawer закрывается после перехода, поля/действия формы видимы, горизонтального overflow нет. Файлы и SHA256 в api/var/f1-review2-source/api/var/e2e/rabit-e2e-705c43d408d8/review2-visual.json.
+- Полный browser набор 51/51 в этом повторном review не перезапускался: изменение ограничено меню и тестами; полный проход автора уже отражён в опубликованных отчётах. Здесь независимо повторены весь локальный backend/frontend gate и 9 затронутых browser сценариев на чистом опубликованном дереве. Новых блокирующих замечаний не найдено; #26–28 остаются неблокирующими.
+- Перед ответом в review: P1 подтверждён исправленным на HEAD 74e44ea; R2-05 PENDING до cleanup и публикации через gh. Код приложения не менялся.
+
+- R2-05 cleanup PASS: `python3 api/var/f1-review2-source/tools/run-browser-e2e.py down --state /home/user/rabit-api/api/var/f1-review2-source/api/var/e2e/rabit-e2e-705c43d408d8/state.json`; stopped=true, cleanupErrors=[]. Собственные containers/networks/volumes удалены штатной проверкой ownership. GitHub публикация остаётся PENDING.
+
+
+### 2026-09-21 — повторное review опубликовано
+
+- R2-05 PASS: `python3 api/var/f1-review2-publish.py` выполнял только настроенный GitHub CLI /home/user/.local/bin/gh. Reply через REST pulls/25/comments/4060560246/replies опубликован: https://github.com/rebit-pro/rabit-api/pull/25#discussion_r4061083148. GraphQL resolveReviewThread подтвердил isResolved=true для PRRT_kwDOUWl_zM6kSW6Y.
+- Формальный APPROVE через `gh pr review 25 --repo rebit-pro/rabit-api --approve --body-file api/var/f1-review2-approve.md` — BLOCKED правилом GitHub: `Review Can not approve your own pull request`. Это ограничение GitHub self-review, не sandbox/automatic approval review. Согласованный fallback COMMENT с явным неформальным APPROVE опубликован на проверенный commit через REST reviews: https://github.com/rebit-pro/rabit-api/pull/25#pullrequestreview-5265330357 (COMMENTED).
+- `python3 api/var/f1-review2-finalize.py`: PASS. Повторно прочитаны PR, review и thread через gh; HEAD 74e44ea, base 28bcad9, PR OPEN/mergedAt=null, P1 resolved=true, ответ и итог сохранены в GitHub. Код не исправлялся, commit/push/merge/deployment не выполнялись; локальные plan/progress оставлены для дальнейшего сохранения автором.
+
+### 2026-09-21 — подготовка разрешённого merge
+
+Свежий fetch main: 28bcad9, база не изменилась. Review 5265330357 подтвердил PASS на 74e44ea; P1 resolved. gh pr checks: no checks reported (CI отключён); локальные обязательные проверки выше PASS. Сохраняются только документы review; runtime неизменён. Сторонний routes.php вне commit. F1-MERGE PENDING.
