@@ -2,11 +2,11 @@
 
 ## Точка продолжения
 
-- Ветка `codex/d3-stage-media-recovery`, base E4 merge `7e606e53cc6b347e5c7b70e217ab7f8eb8a45875`, HEAD `1a04eb3`; draft PR #32, issue массовой загрузки #31.
+- Ветка `codex/d3-stage-media-recovery`, base E4 merge `7e606e53cc6b347e5c7b70e217ab7f8eb8a45875`; актуальный HEAD — `git rev-parse HEAD`, опубликован в draft PR #32; issue массовой загрузки #31.
 - Завершено: stage получил E4, исправления DI, очередь, nginx 413 и логи. Авторизованная загрузка пользователя сохранила два оригинала; оба затем упали на обработке из-за отсутствия WebP в старом stage PHP image.
-- Сейчас: три пользовательских кадра готовы; 404 миниатюр устранён mount `/app/public/upload` в stage FPM. Защищённые GET после обновления FPM завершились `RESPONSE` в live логе. Следующий шаг: сохранить журнал в PR и передать пользователю путь галереи.
+- Сейчас: три пользовательских кадра готовы; 404 миниатюр устранён mount `/app/public/upload` в stage FPM. Защищённые GET после обновления FPM завершились `RESPONSE` в live логе. Следующий шаг: review PR #32 и production build stage images при плановом релизе.
 - Риски: остальные файлы первого пакета были прерваны; готовые кадры ещё не привязаны к ребёнку, ссылка группы ещё не передана. Stage images временно основаны на локальном D1 build с отключённым Xdebug, для последующего релиза нужны production images. Основной site_* не менялся.
-- Рабочее дерево: после commit `a1f9a86` изменяется только этот журнал. D3-DI/QUEUE/LOG/HTTP-LIMIT/F1-INVALID/VISUAL/WEBP/RECOVERY/PREVIEW — PASS; повторная ручная загрузка полного пакета пользователем ещё PENDING.
+- Рабочее дерево: чистое после публикации этого журнала. D3-DI/QUEUE/LOG/HTTP-LIMIT/F1-INVALID/VISUAL/WEBP/RECOVERY/PREVIEW — PASS; повторная ручная загрузка полного пакета пользователем ещё PENDING.
 
 ## Хронология
 
