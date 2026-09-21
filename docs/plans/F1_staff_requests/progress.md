@@ -2,14 +2,13 @@
 
 ## Точка продолжения
 
-- Checkout `/home/user/rabit-api`; ветка `codex/f1-staff-requests`; base `28bcad9e575489deb1113d7ce2ac459a43dd7132`; проверенный implementation HEAD `ef2ca7529ed7cdde232b2da47ad677a6e6c44447`. Завершающий commit меняет только документы и `.gitignore`; текущий tip — `git rev-parse HEAD`.
-- PR: https://github.com/rebit-pro/rabit-api/pull/25 — OPEN, не draft, base main, mergeable на момент проверки. Follow-up старых контроллеров: https://github.com/rebit-pro/rabit-api/issues/24.
-- Завершены реализация F1, DTO без поведения, чистый controller, mapper, route-stubs, полный gate и desktop/mobile visual, commit/push/PR. Следующий шаг — review PR #25; автоматический merge/deployment не разрешён и не выполнялся.
-- Блокеров проверок нет. Замечания вне DTO-scope: N+1 в списке и UI-тексты, раскрыты в README/PR; прежний E3 сбой не воспроизвёлся.
-- Рабочее дерево перед завершающим commit: только отчёты/журнал и `.gitignore`. Правка `var/` включается по явному указанию пользователя; файлы var не коммитятся. Runtime-diff уже опубликован и проверен.
-- Gate fixture `rabit-e2e-c27280e2987a`: 43/43 browser, PHPUnit 403/1492, frontend 158, lint 591, PHPStan PASS; static stub отдельно проверен PHPStan/lint. Изолированный стенд удалён без ошибок.
-- Команды продолжения: `git status --short`; `git rev-parse HEAD`; `/home/user/.local/bin/gh pr view 25 --json number,url,state,baseRefName,headRefName,headRefOid,mergeable`. Повтор gate нужен при изменении runtime/base.
-- План и доказательства: `docs/plans/F1_staff_requests/plan.md`, `docs/waves/f1/{README.md,verification.json,visual.json}`.
+- Ветка `codex/f1-staff-requests`; PR https://github.com/rebit-pro/rabit-api/pull/25; HEAD ba250e1927111b522a4aec297304f63495f9041a, base/main 28bcad9e575489deb1113d7ce2ac459a43dd7132.
+- Review P1: https://github.com/rebit-pro/rabit-api/pull/25#discussion_r4060560246 — отсутствовал live-путь воспитателя после login. Исправлен CabinetLayout: пункт F1 только organizer/curator/teacher; основной E2E входит кликом меню, добавлены 8 role/viewport E2E.
+- Полный gate на rabit-e2e-60d07b962945: 51/51; адресный F1 на rabit-e2e-363c0655f0f5: 9/9. Все шесть стабильных screenshots просмотрены, visual PASS. Оба стенда удалены без ошибок. Следующий шаг — commit/push и ответ на P1.
+- Рабочее дерево: три frontend-файла, plan/progress и отчёты docs/waves/f1 подготовлены к публикации. Дополнительно обнаружено стороннее форматирование morefoto.handoff/routes.php; не включается в commit.
+- Неблокирующие follow-up #26/#27/#28 остаются OPEN, старые контроллеры #24. Merge/deployment не выполняются. Формальный review COMMENTED: GitHub запретил автору REQUEST_CHANGES; P1 обязателен до merge.
+- Повтор: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`; лог `/tmp/f1-review-fix-final-gate.log`.
+- Перед публикацией: `git diff --check`, `gh pr view 25 --json headRefOid,baseRefOid`; обновить docs/waves/f1 и ответить на P1 с фактическими результатами.
 
 ### Предыдущая точка (история)
 
@@ -272,3 +271,59 @@ python3 tools/run-browser-e2e.py run --php-cli rabit-api-php-cli:d1-local --php-
 - `gh pr create --base main --head codex/f1-staff-requests --title 'F1: списки детей сотрудников, чистые контроллеры и DTO без поведения' --body-file /tmp/f1-pr.md`: PASS, https://github.com/rebit-pro/rabit-api/pull/25.
 - `gh pr view 25 --json number,url,state,isDraft,baseRefName,headRefName,headRefOid,mergeable`: PASS, OPEN, isDraft=false, main ← codex/f1-staff-requests, head ef2ca75, MERGEABLE.
 - Пользователь отдельно поручил добавить `.gitignore`: правило `var/` включено в завершающий commit вместе с отчётами. F1-GITIGNORE PASS 2026-09-21: `git check-ignore var/img.png` вернул путь. `git diff --check` PASS. Повтор runtime-тестов для документов и ignore-правила не требуется; после commit — push и проверка совпадения PR head.
+
+### 2026-09-21 — начало строгого review PR #25
+
+- F1-REVIEW-BASE PASS: gh pr list/view подтвердил PR #25, HEAD ba250e1, base 28bcad9; git fetch origin выполнен, origin/main совпадает. До review дерево чистое. Issue #24 уже создан другим ходом.
+- Runtime-код не меняется. DTO опубликованной версии пассивные, преобразования находятся в mapper. Проверены controller, DI, валидация, workflow, миграция, транзакция и общая HTTP-обвязка.
+- Подозрения для проверки: конкурирующая идемпотентность на отсутствующем ключе при READ COMMITTED; UX восстановления после неопределённого результата; N+1 и полная загрузка всех страниц. Это пока не подтверждённые блокеры.
+- F1-REVIEW-GATE и F1-REVIEW-PUBLISH PENDING. Следующий шаг — свежий disposable стенд; ядро Bitrix фактически находится в /home/user/rebit-p2p/api/public/bitrix как зависимость, текущий checkout остаётся /home/user/rabit-api.
+
+### 2026-09-21 — завершение строгого review PR #25
+
+- F1-REVIEW-BASE — PASS. git fetch origin; gh pr view 25 --repo rebit-pro/rabit-api --json author,body,baseRefOid,headRefOid,reviews. HEAD ba250e1 и base 28bcad9 совпали с локальным diff.
+- F1-REVIEW-GATE — PASS baseline. Команда: python3 tools/run-browser-e2e.py up --php-cli rabit-api-php-cli:d1-local --php-fpm rabit-api-php-fpm:d1-local --kernel /home/user/rebit-p2p/api/public/bitrix --vendor /home/user/rabit-api/api/vendor. Затем python3 tools/run-browser-e2e.py test --state /home/user/rabit-api/api/var/e2e/rabit-e2e-1183a02c05d5/state.json. Lint 591, PHPStan 0, PHPUnit 403/1492, frontend 158/check/build; миграции и Notification integration PASS; Chromium 43/43, 151224 ms, skipped=0/unexpected=0/flaky=0.
+- Дополнительное воспроизведение: docker run --rm --network container:rabit-e2e-1183a02c05d5-frontend --shm-size=1g --memory 3g --cpus 2 --mount type=bind,source=/home/user/rabit-api/frontend,target=/app,readonly --mount type=volume,source=rabit-e2e-1183a02c05d5-node,target=/app/node_modules,readonly --mount type=bind,source=/home/user/rabit-api/api/var/f1-review-repro.cjs,target=/review.cjs,readonly --workdir /app mcr.microsoft.com/playwright:v1.52.0-jammy node /review.cjs — exit 0. Четыре одинаковых concurrent PUT: 200/409/409/409, revisionDelta=1, последовательный retry=200. Lost-response: сервер сохранил revision 5, UI заявил «не сохранил»; reset сделал 0 GET и сохранил revision 4; повтор получил 409. Это неблокирующие P2 #27/#28.
+- F1-REVIEW-NAV — FAIL продуктового критерия доступности, воспроизведение exit 0: та же Docker-команда со скриптом api/var/f1-review-navigation.cjs. После реального teacher login путь /cabinet/profile; desktop ссылки только skip/profile/logo, mobile menu «Профиль», ссылок к staff-requests 0. Код CabinetLayout live branch и auth.homePath подтверждают отсутствие альтернативного пути. Blocker P1 опубликован inline.
+- Visual: просмотрены новые desktop 1280x720 и mobile 390x1334 из review-прогона. Горизонтальный overflow отсутствует; на desktop виден только пункт «Профиль». Известные copy-замечания сохранены в итоговом GitHub review.
+- F1-REVIEW-PUBLISH — PASS публикации истории. gh api создал issues #26/#27/#28 и inline comment 4060560246. gh pr review 25 --request-changes --body-file api/var/f1-review-body.md — BLOCKED: GitHub запрещает request changes на собственном PR. gh api POST pulls/25/reviews с event=COMMENT опубликовал review 5264693273, state COMMENTED, с явным блокером и объяснением ограничения.
+- Cleanup — PASS: python3 tools/run-browser-e2e.py down --state /home/user/rabit-api/api/var/e2e/rabit-e2e-1183a02c05d5/state.json; stopped=true, cleanupErrors=[].
+- Runtime-код не менялся, commit/push/merge/deployment не выполнялись. Изменены только локальные plan/progress для точки продолжения.
+
+### 2026-09-21 — исправление P1 после review
+
+- Прочитаны review и inline comment 4060560246 через gh. Подтверждено: live CabinetLayout не содержит пункта F1, хотя MainRoutes допускает organizer/curator/teacher.
+- Свежий fetch main PASS: base остался 28bcad9. В рабочем дереве сохранены только заметки reviewer в plan/progress; runtime до исправления совпадает с PR ba250e1.
+- План до кода дополнен ролью меню и проверками desktop/mobile/head. #26–28 не входят в это исправление. F1-REVIEW-NAV-DESKTOP/MOBILE/ROLES: PENDING.
+
+- Реализован пункт live-навигации для organizer/curator/teacher в существующем CabinetLayout. Demo-ветка и route guards не изменены. Основной F1 E2E теперь входит через пункт меню.
+- Добавлены 8 browser проверок (4 роли × desktop/mobile): teacher/organizer открывают форму, curator имеет список без создания, head не видит пункт и получает HTTP 403. Для teacher сохраняются снимки меню и новой формы. Штатный gate теперь ожидает 51 сценарий.
+- `git diff --check`: PASS. Следующий шаг — полный make test-e2e, затем visual и публикация результата review.
+
+- `gh issue view 26/27/28 --json number,title,state`: все follow-up OPEN, их scope подтверждён. `git diff --check`: PASS.
+- Запущен `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`; fixture rabit-e2e-4502e89b3586, результат PENDING.
+
+- Промежуточные результаты полного make test-e2e: frontend check (ESLint/Vue/E2E types) PASS, 158 unit PASS, production build PASS; выполняется backend gate. Поведение API/DTO/ролей не менялось. Browser/visual пока PENDING.
+
+### 2026-09-21 — первый gate исправления P1
+
+- Полный make test-e2e выше: FAIL, fixture rabit-e2e-4502e89b3586. Backend lint 591/PHPStan/403 PHPUnit/1492 assertions, frontend check/158 unit/build PASS. Browser 48 PASS / 3 FAIL (mobile teacher/organizer/curator: ожидание not.toBeVisible для закрытого drawer). Desktop и head mobile PASS.
+- Просмотрен mobile failure screenshot и snapshot trace: drawer без active-класса, transform translateX(-248px), сама страница списка и «Новый список» видимы. Это ошибка assertion, а не незакрытое меню. План дополнен; проверка меняется на пересечение viewport.
+- F1-REVIEW-NAV-DESKTOP PASS; F1-REVIEW-NAV-MOBILE/ROLES FAIL до полного повтора. Runtime-код не меняется.
+
+- Первый fix-стенд 4502e89b3586 штатно удалён: stopped=true, cleanupErrors=[]. Повтор той же make-команды запущен на 60d07b962945; исходное приложение не менялось, исправлен только viewport assertion.
+
+- Полный повтор make test-e2e на 60d07b962945: PASS, exit 0; Chromium 51/51, skipped=0/flaky=0; backend 591 lint/403 tests/1492 assertions/PHPStan PASS, frontend 158/check/build PASS. Cleanup stopped=true/errors=[].
+- Аудит `/tmp/f1-review-fix-audit.py`: PASS, Monolog 41 REQUEST / 25 RESPONSE / 16 HTTP_EXCEPTION, requestId и отсутствие чувствительных маркеров подтверждены.
+- При ручном просмотре 4 новых screenshots обнаружен mid-transition capture (частично выехавшее меню и полупрозрачная форма). Функциональные сценарии PASS, но visual ещё PENDING. План дополнен: screenshot animations disabled; отдельный fresh fixture и адресный F1 spec без повтора всего browser набора.
+
+- Для визуальной перепроверки запущен `make e2e-up E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` (fixture 363c0655f0f5). После up — `python3 /tmp/f1-review-visual-test.py`, запускающий `npm run test:e2e:live -- zzz-handoff.spec.ts` в Chromium через изолированный frontend container; cleanup в finally штатным runner.stop.
+
+
+### 2026-09-21 — итог исправления review перед публикацией
+
+- `make e2e-up E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`: PASS, fixture rabit-e2e-363c0655f0f5; frontend check/158 unit/build, backend lint591/PHPStan/403 tests/1492 assertions.
+- `python3 /tmp/f1-review-visual-test.py`: PASS, запускает `npm run test:e2e:live -- zzz-handoff.spec.ts` в штатном isolated Docker fixture. 9/9, skipped=0/unexpected=0/flaky=0; штатный cleanup stopped=true/errors=[].
+- Вручную просмотрены все 6 финальных изображений: desktop/mobile меню и форма, desktop список, mobile карточка. Текст читаем, элементы доступны, кадры после завершения анимации. Хэши в docs/waves/f1/visual.json.
+- F1-REVIEW-NAV-DESKTOP — PASS; F1-REVIEW-NAV-MOBILE — PASS; F1-REVIEW-NAV-ROLES — PASS (2026-09-21): полный make test-e2e 51/51 плюс адресный F1 9/9. JSON сохранены в api/var/e2e/<fixture>/browser-results.json для обоих прогонов.
+- F1-REVIEW-FIX-PUBLISH — PENDING. Перед commit/push подготовлены отчёты и ответ P1. Найденная сторонняя правка routes.php — только форматирование, остаётся вне staging.

@@ -56,35 +56,39 @@
     },
     "targetedBrowserE2E": {
       "status": "passed",
-      "tests": 1,
-      "scenario": "F1: teacher submits, curator clarifies, server preserves eligibility and history"
+      "tests": 9,
+      "scenario": "F1 workflow and 8 role/viewport navigation scenarios with settled screenshots",
+      "fixture": "rabit-e2e-363c0655f0f5",
+      "report": "api/var/e2e/rabit-e2e-363c0655f0f5/browser-results.json"
     },
     "browserE2E": {
       "status": "passed",
-      "tests": 43,
-      "passed": 43,
+      "tests": 51,
+      "passed": 51,
       "failed": 0,
       "skipped": 0,
       "flaky": 0,
-      "fixture": "rabit-e2e-c27280e2987a",
+      "fixture": "rabit-e2e-60d07b962945",
       "transport": "Chromium -> nginx -> native Bitrix FPM -> isolated MySQL and RabbitMQ",
       "ownedFixtureCleaned": true,
-      "cleanupErrors": []
+      "cleanupErrors": [],
+      "report": "api/var/e2e/rabit-e2e-60d07b962945/browser-results.json"
     },
     "visualDesktopMobile": {
       "status": "passed",
-      "screenshotsCaptured": 2,
+      "screenshotsCaptured": 6,
       "mobileOverflowAssertion": true,
-      "report": "visual.json"
+      "report": "visual.json",
+      "fixture": "rabit-e2e-363c0655f0f5"
     },
     "monolog": {
       "status": "passed",
-      "REQUEST": 33,
-      "RESPONSE": 19,
-      "HTTP_EXCEPTION": 14,
+      "REQUEST": 41,
+      "RESPONSE": 25,
+      "HTTP_EXCEPTION": 16,
       "requestIdPresent": true,
       "sensitiveSentinelsAbsent": true,
-      "log": "api/var/e2e/rabit-e2e-c27280e2987a/rabit-e2e-c27280e2987a-fpm.log"
+      "log": "api/var/e2e/rabit-e2e-60d07b962945/rabit-e2e-60d07b962945-fpm.log"
     },
     "dtoSignatures": {
       "status": "passed",
@@ -97,6 +101,23 @@
         "PHPStan after route signatures update"
       ],
       "ideIndexVerified": false
+    },
+    "reviewNavigation": {
+      "status": "passed",
+      "tests": 8,
+      "roles": [
+        "teacher",
+        "organizer",
+        "curator",
+        "head"
+      ],
+      "viewports": [
+        "1280x720",
+        "390x844"
+      ],
+      "teacherPath": "login -> navigation link -> staff requests -> new request dialog; no direct goto",
+      "head": "No menu entry; direct API returns 403",
+      "reviewComment": "https://github.com/rebit-pro/rabit-api/pull/25#discussion_r4060560246"
     }
   },
   "publication": {
@@ -110,10 +131,10 @@
     "number": 25
   },
   "complete": true,
-  "completeMeaning": "F1 implementation, local quality gate and PR publication complete. Awaiting review; merge and deployment are separate.",
-  "head": "ef2ca7529ed7cdde232b2da47ad677a6e6c44447",
-  "uncommittedChanges": false,
-  "remaining": [],
+  "completeMeaning": "F1 review P1 navigation fixed and locally verified; awaiting reviewer recheck. Merge/deployment not performed.",
+  "remaining": [
+    "Reviewer recheck of navigation P1; non-blocking issues #26, #27, #28 remain separate"
+  ],
   "history": [
     {
       "fixture": "rabit-e2e-40c5384da489",
@@ -122,6 +143,15 @@
     {
       "fixture": "rabit-e2e-f0179580309e",
       "result": "42/43; F1 second-author fixture reused first row UUID, violating unique constraint. Fixed by generating a UUID for the new row; assertions unchanged."
+    },
+    {
+      "fixture": "rabit-e2e-1183a02c05d5",
+      "result": "Independent review: baseline browser 43/43, but separate navigation repro failed for teacher; fixed with live menu entry and 8 navigation E2E tests."
+    },
+    {
+      "fixture": "rabit-e2e-4502e89b3586",
+      "result": "First navigation-fix gate: 48/51; closed Vuetify drawer remains CSS-visible offscreen. Trace confirmed translateX(-248px); assertion changed to viewport intersection without runtime changes."
     }
-  ]
+  ],
+  "testedSource": "Navigation fix on ba250e1; implementation commit recorded in progress.md after publication"
 }

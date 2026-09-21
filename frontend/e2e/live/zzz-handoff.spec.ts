@@ -113,7 +113,7 @@ test('F1: воспитатель подаёт список, куратор ут�
   try {
     const teacher = await teacherContext.newPage();
     await login(teacher, 'teacher');
-    await teacher.goto('/cabinet/staff-requests');
+    await teacher.getByLabel('Основная навигация').getByRole('link', { name: 'Списки сотрудников', exact: true }).click();
     await expect(teacher.getByRole('heading', { name: 'Списки сотрудников', exact: true })).toBeVisible();
     await teacher.getByRole('button', { name: 'Новый список', exact: true }).click();
     const dialog = teacher.getByTestId('admin-dialog');
@@ -316,3 +316,53 @@ test('F1: воспитатель подаёт список, куратор ут�
     await Promise.all([teacherContext.close(), curatorContext.close(), unavailableContext.close()]);
   }
 });
+
+for (const viewport of [
+  { name: 'desktop', width: 1280, height: 720 },
+  { name: 'mobile', width: 390, height: 844 }
+]) {
+  for (const account of ['teacher', 'organizer', 'curator', 'head'] as const) {
+    test(`F1 navigation: ${account} enters through ${viewport.name} menu after login`, async ({ page }, testInfo) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await login(page, account);
+      if (viewport.name === 'mobile') await page.getByRole('button', { name: 'Открыть меню', exact: true }).click();
+      const navigation = page.getByLabel('Основная навигация');
+      await expect(navigation).toBeInViewport();
+      const link = navigation.getByRole('link', { name: 'Списки сотрудников', exact: true });
+      if (account === 'head') {
+        await expect(link).toHaveCount(0);
+        await body(await page.request.get('/api/v1/staff-requests', { headers: await headers(page) }), 403);
+        return;
+      }
+      await expect(link).toBeVisible();
+      if (account === 'teacher') {
+        await page.screenshot({
+          path: testInfo.outputPath(`f1-${viewport.name}-navigation.png`),
+          fullPage: true,
+          animations: 'disabled'
+        });
+      }
+      await link.click();
+      await expect(page).toHaveURL(/\/cabinet\/staff-requests$/);
+      await expect(page.getByRole('heading', { name: 'Списки сотрудников', exact: true })).toBeVisible();
+      if (viewport.name === 'mobile') await expect(navigation).not.toBeInViewport();
+      const createButton = page.getByRole('button', { name: 'Новый список', exact: true });
+      if (account === 'curator') {
+        await expect(createButton).toHaveCount(0);
+        return;
+      }
+      await createButton.click();
+      const dialog = page.getByTestId('admin-dialog');
+      await expect(dialog).toBeVisible();
+      await expect(dialog.getByLabel('Учреждение списка', { exact: true })).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      if (account === 'teacher') {
+        await page.screenshot({
+          path: testInfo.outputPath(`f1-${viewport.name}-new-request.png`),
+          fullPage: true,
+          animations: 'disabled'
+        });
+      }
+    });
+  }
+}

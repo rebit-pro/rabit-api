@@ -1,19 +1,49 @@
 {
   "wave": "F1",
   "status": "passed",
-  "fixture": "rabit-e2e-c27280e2987a",
-  "screenshotsCaptured": 2,
-  "localDirectory": "frontend/reports/e2e-live/artifacts/zzz-handoff-F1-воспитатель-555f7-р-сохраняет-право-и-историю-chromium",
+  "fixture": "rabit-e2e-363c0655f0f5",
+  "screenshotsCaptured": 6,
+  "localDirectory": "frontend/reports/e2e-live/artifacts",
   "screenshots": [
     {
+      "name": "f1-mobile-navigation.png",
+      "path": "frontend/reports/e2e-live/artifacts/zzz-handoff-F1-navigation--0988f-ugh-mobile-menu-after-login-chromium/f1-mobile-navigation.png",
+      "sha256": "506710b8869e64eacfde6d886b396b8ae8057dd047a4997d4db80a3139e3b05a",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "f1-mobile-new-request.png",
+      "path": "frontend/reports/e2e-live/artifacts/zzz-handoff-F1-navigation--0988f-ugh-mobile-menu-after-login-chromium/f1-mobile-new-request.png",
+      "sha256": "c5b8cbccfb8f7fa23139b54b8de8e98821cb0277342c8ad5c9ab45d910a237c0",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "name": "f1-desktop-navigation.png",
+      "path": "frontend/reports/e2e-live/artifacts/zzz-handoff-F1-navigation--12c5c-gh-desktop-menu-after-login-chromium/f1-desktop-navigation.png",
+      "sha256": "5d95531a0dd5081733ee711be5401de10cc74ffcec7fadf8f4e7f62552a4d704",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "f1-desktop-new-request.png",
+      "path": "frontend/reports/e2e-live/artifacts/zzz-handoff-F1-navigation--12c5c-gh-desktop-menu-after-login-chromium/f1-desktop-new-request.png",
+      "sha256": "afe12d9b80f99d53c79536d99a8814cda1ed1842ef63a77c3a6cea5478273906",
+      "width": 1280,
+      "height": 720
+    },
+    {
       "name": "f1-desktop-list.png",
-      "sha256": "8d7de0412286127b83c02c051eca03d9a4794a3b94baa5fae74a9397b75ae46c",
+      "path": "frontend/reports/e2e-live/artifacts/zzz-handoff-F1-воспитатель-555f7-р-сохраняет-право-и-историю-chromium/f1-desktop-list.png",
+      "sha256": "97415b4c2c863e53edfa7b9b09a38f61d0d619ee6adec22bf5ec7f20f7f80e74",
       "width": 1280,
       "height": 720
     },
     {
       "name": "f1-mobile-detail.png",
-      "sha256": "2e610d26d12e9e04c0df848f589a8898566297ca7af0762abc6327121635e1dd",
+      "path": "frontend/reports/e2e-live/artifacts/zzz-handoff-F1-воспитатель-555f7-р-сохраняет-право-и-историю-chromium/f1-mobile-detail.png",
+      "sha256": "fe8b495e20530f6e1cc04447ca72bc4b57f4571fdbcbd8367c755c4dd843154f",
       "width": 390,
       "height": 1334
     }
@@ -24,11 +54,14 @@
     "The detail displays server-verified staff eligibility",
     "The history contains submit, clarification and resubmit events",
     "The 390px layout has no horizontal overflow",
-    "Live UI does not expose the deferred D3 transfer action"
+    "Live UI does not expose the deferred D3 transfer action",
+    "Teacher sees the live staff-request navigation entry on desktop/mobile after login",
+    "Teacher opens the new request dialog through the menu on both widths"
   ],
   "limitations": "Screenshot evidence is retained in ignored local E2E artifacts; this report records hashes and automated layout assertions rather than pixel-diff coverage.",
   "notes": [
     "Desktop/mobile inspected on 2026-09-21",
-    "Existing copy issues: 1 детей; full-set transfer mentioned before D3 activation"
+    "Existing copy issues: 1 детей; full-set transfer mentioned before D3 activation",
+    "Review P1 navigation fix inspected on 2026-09-21: desktop/mobile menu and new request dialog"
   ]
 }

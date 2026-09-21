@@ -191,3 +191,42 @@ Scope: сценарий и план соседнего ../MoreFoto, фактич
 - [x] По дополнительному указанию пользователя включить существующую правку `.gitignore` (`var/`) в F1.
 
 5. F1-GITIGNORE: существует локальный var/img.png; `git check-ignore var/img.png` должен вернуть путь, файл не попадает в staging. Проверка PASS.
+
+## Строгое review PR #25 — 2026-09-21
+
+Scope: проверить опубликованный HEAD ba250e1927111b522a4aec297304f63495f9041a относительно origin/main 28bcad9e575489deb1113d7ce2ac459a43dd7132; архитектуру, DTO, DI, доступ, SQL/миграцию, API и frontend. Код не исправлять, merge/deployment не выполнять. GitHub — только gh CLI.
+
+- [x] Проверить diff и историю обсуждения; отдельно воспроизвести подозрения.
+- [x] Перезапустить достаточные локальные проверки в disposable среде.
+- [x] Опубликовать блокирующие замечания по строкам PR, неблокирующие — отдельными issues; итог review сохранить в GitHub (COMMENTED: GitHub запретил REQUEST_CHANGES автора).
+
+1. F1-REVIEW-BASE: git fetch origin, gh pr view 25; ожидается совпадение опубликованного и локального HEAD, актуальный main.
+2. F1-REVIEW-GATE: штатный run-browser-e2e.py up и test на свежей изолированной БД; ожидаются зелёные backend/frontend и browser проверки. Для подозрений использовать отдельные локальные скрипты в игнорируемом api/var, без исправления исходного кода.
+3. F1-REVIEW-PUBLISH: gh api / gh pr review; все подтверждённые замечания и вердикт остаются в PR/issues. Проверить отсутствие runtime diff после review.
+
+4. F1-REVIEW-NAV: после обычного входа назначенного воспитателя открыть F1 через доступный элемент интерфейса без прямого goto на staff-requests, desktop/mobile; ожидается путь к подаче заявки. В ходе review обнаружен FAIL; исправление выполняется отдельным следующим ходом, не reviewer.
+
+## Исправление P1 по review #25 — 2026-09-21
+
+Цель: назначенный воспитатель входит в F1 через live-навигацию после login на desktop/mobile. Scope: CabinetLayout (единое desktop/mobile меню), существующий F1 E2E, role-based navigation E2E и helper login для head. API/DTO и demo-навигация не меняются. Неблокирующие #26/#27/#28 остаются отдельными задачами; merge/deployment исключены.
+
+Решение: показывать live-пункт «Списки сотрудников» только organizer/curator/teacher, как разрешено MainRoutes. CabinetLayout остаётся композицией оболочки, новый компонент/состояние не нужен. Использовать существующие Vuetify drawer, aria-label и реактивную auth.role.
+
+- [x] Добавить role-ограниченный live-пункт F1.
+- [x] Заменить первоначальный прямой переход teacher в F1 E2E кликом по меню.
+- [x] Проверить login → меню → список → форма на desktop/mobile; сохранить curator/organizer/head ограничения.
+- [x] Полный make test-e2e и просмотр desktop/mobile; актуализировать результаты.
+- [ ] Commit/push в существующий PR #25 и ответить на P1 с доказательствами.
+
+1. F1-REVIEW-NAV-DESKTOP: назначенный teacher; login на 1280×720, ссылка меню, «Новый список»; ожидается открытая форма без прямого goto к F1. Команда make test-e2e.
+2. F1-REVIEW-NAV-MOBILE: тот же путь на 390×844 через «Открыть меню»; ожидается доступная ссылка, drawer закрывается после перехода, форма открывается без overflow. Команда make test-e2e.
+3. F1-REVIEW-NAV-ROLES: organizer/curator имеют ссылку, создать может organizer; head не имеет ссылки и прямой HTTP GET возвращает 403. Проверить обе ширины, команда make test-e2e.
+4. F1-REVIEW-FIX-PUBLISH: commit/push и gh api replies к discussion_r4060560246; PR содержит исправление и фактические проверки, merge не выполняется.
+
+### Уточнение browser-assertion drawer
+
+Первый прогон P1-fix: 48/51. Три mobile-проверки некорректно ожидали not.toBeVisible для Vuetify drawer, который закрывается translateX(-248px), сохраняя DOM и CSS visibility. Снимок и trace подтверждают закрытие. Заменить проверку открытого/закрытого меню на toBeInViewport/not.toBeInViewport; критерий закрытия сохраняется. Повторить полный gate без изменения runtime.
+
+### Стабильный визуальный захват
+
+Полный повтор прошёл 51/51, но четыре новых screenshots захватили CSS transition меню/диалога. Добавить animations: disabled только при screenshot, без изменения функциональных assertions или runtime. Отдельно поднять свежий disposable fixture и выполнить F1 spec (9 сценариев), затем вручную просмотреть стабильные кадры. Полный gate 60d07b962945 остаётся доказательством регрессии; отдельный visual-прогон документируется отдельно.

@@ -12,11 +12,19 @@ Live frontend сохраняет заявки через API и показыва
 
 ## Проверки — 2026-09-21
 
-Полный `make test-e2e` на fixture `rabit-e2e-c27280e2987a`: PHP lint 591 файл, PHPStan 0 ошибок, PHPUnit 403 теста / 1492 assertions; frontend ESLint/typecheck, 158 unit-тестов и production build; реальные миграции Bitrix/MySQL и Notification contract; Chromium 43/43 без повторов и пропусков. Адресный PHPUnit F1 — 11/270; CS Fixer — 0 замечаний по 65 PHP-файлам diff. Стенд удалён без ошибок.
+Полный `make test-e2e` на fixture `rabit-e2e-60d07b962945`: PHP lint 591 файл, PHPStan 0 ошибок, PHPUnit 403 теста / 1492 assertions; frontend ESLint/typecheck, 158 unit-тестов и production build; реальные миграции Bitrix/MySQL и Notification contract; Chromium 51/51 без повторов и пропусков. Адресный PHPUnit F1 — 11/270; CS Fixer — 0 замечаний по 65 PHP-файлам diff. Стенд удалён без ошибок.
 
 E2E проверяет создание через UI, чужого автора в списке/карточке, чужую группу, прямой POST неназначенного сотрудника, replay/conflict, revision, уточнение и повторную подачу с тремя событиями истории. Дополнительно проверены строгие типы JSON, подмена header/path, meta, Location и no-store. Desktop/mobile просмотрены; mobile проверяет отсутствие горизонтального переполнения. Полные результаты — [verification.json](verification.json), [visual.json](visual.json) и [журнал](../../plans/F1_staff_requests/progress.md).
 
 Предыдущий FAIL E3 при reload не воспроизвёлся без изменения его теста; причина исторического сбоя не установлена. Первый новый прогон выявил повтор UUID строки в fixture второй заявки F1; исправлены данные теста, assertions сохранены.
+
+## Исправление review P1
+
+В live-меню добавлены «Списки сотрудников» для organizer/curator/teacher. Назначенный воспитатель после обычного login открывает список и форму через меню на desktop/mobile. Основной F1 E2E больше не использует прямой goto для входа в список. Дополнительные 8 сценариев проверяют четыре роли на двух ширинах: curator не создаёт заявку, head не видит пункт и получает 403 от API. На шести итоговых снимках просмотрены также меню и форма на обеих ширинах.
+
+Полный gate 51/51 выполнен на 60d07b962945. После стабилизации только screenshot-захвата отдельно пройдены 9/9 F1-сценариев на свежем 363c0655f0f5; шесть стабильных кадров взяты из этого адресного прогона. Оба стенда штатно удалены.
+
+Неблокирующие замечания reviewer отслеживаются отдельно: [#26 — объём списочного чтения](https://github.com/rebit-pro/rabit-api/issues/26), [#27 — конкурентный replay](https://github.com/rebit-pro/rabit-api/issues/27), [#28 — потерянный ответ и reset формы](https://github.com/rebit-pro/rabit-api/issues/28). Они не включены в исправление P1.
 
 ## Воспроизведение
 
