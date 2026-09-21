@@ -1,6 +1,6 @@
 # F1 — списки детей сотрудников
 
-F1 готова к review отдельным PR из `codex/f1-staff-requests` в `main`. База `28bcad9e575489deb1113d7ce2ac459a43dd7132` подтверждена fetch 2026-09-21; B2, D2 и E3 уже слиты. Checkout — `/home/user/rabit-api`.
+F1 опубликована для review: [PR #25](https://github.com/rebit-pro/rabit-api/pull/25) из `codex/f1-staff-requests` в `main`. База `28bcad9e575489deb1113d7ce2ac459a43dd7132` подтверждена fetch 2026-09-21; B2, D2 и E3 уже слиты. Checkout — `/home/user/rabit-api`.
 
 ## Результат
 

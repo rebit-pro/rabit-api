@@ -153,7 +153,7 @@ Scope: сценарий и план соседнего ../MoreFoto, фактич
 - [x] Завершить Application OutputDto / Presentation ResultDto F1; усилить проверку границы контроллера.
 - [x] Закрыть прямой POST неназначенного сотрудника и фильтрацию чужой заявки в HTTP E2E.
 - [x] Проверить актуальный main и полный disposable gate; исследовать прежний FAIL E3 без ослабления проверки.
-- [ ] Обновить plan/progress и артефакты, выполнить self-review, commit/push и один PR в main.
+- [x] Обновить plan/progress и артефакты, выполнить self-review, commit/push и один PR в main.
 
 1. F1-OUTPUT-CONTRACT: UseCase возвращает типизированный OutputDto; ResultDto сохраняет JSON списка, карточки и мутации, pagination meta и Location; команда PHPUnit morefoto.handoff/tests/Unit.
 2. F1-PUBLISH: после зелёного gate git diff --check, git status, git fetch origin и проверка PR; ожидается одна ветка F1, commit с проверенными изменениями и PR со ссылкой на follow-up issue. Незелёные проверки исключают объявление готовности к merge.
@@ -166,7 +166,7 @@ Scope: сценарий и план соседнего ../MoreFoto, фактич
 - [x] Сохранить чистоту controller: только явное отображение DTO, UseCase и общий response API, без HTTP parsing/валидации/инфраструктурной сборки.
 - [x] Закрепить запрет поведения DTO архитектурным тестом и инструкциями.
 - [x] Выполнить unit/static и полный make test-e2e, проверить desktop/mobile, обновить артефакты.
-- [ ] Commit/push и PR в main; merge/deployment исключены.
+- [x] Commit/push и PR в main; merge/deployment исключены.
 
 1. F1-DTO-SIGNATURE: DTO доступны; reflection/token-проверка всех DTO F1 и затронутых контрактов; ожидаются только public readonly свойства и пустой constructor, без методов. Команда: PHPUnit morefoto.handoff/tests/Unit.
 2. F1-DTO-COMPAT: преобразовать корректные/некорректные запросы и сериализовать ответы общим serializer; прежние поля, ошибки, meta и Location сохранены. Команды: PHPUnit и make test-e2e.
@@ -183,4 +183,11 @@ Scope: сценарий и план соседнего ../MoreFoto, фактич
 
 4. F1-ROUTE-STUB: сравнить static signatures с ядром, запустить PHP lint/PHPStan; ожидается доступность сигнатур hasCurrentRoute/getCurrentRoute/getParameterValue без подавлений IDE. Проверка фактической индексации IDE остаётся за разработчиком.
 
-Итог 2026-09-21: реализация, DTO-signature, HTTP-контракт, полный gate и visual закрыты. Публикация PR — последний шаг; исторические неудачные прогоны сохранены в progress.md.
+Итог 2026-09-21: реализация, DTO-signature, HTTP-контракт, полный gate и visual закрыты. PR #25 опубликован; исторические неудачные прогоны сохранены в progress.md.
+
+### Публикация и .gitignore — 2026-09-21
+
+- [x] Опубликован один PR F1 в main: https://github.com/rebit-pro/rabit-api/pull/25; состояние OPEN, не draft, mergeable.
+- [x] По дополнительному указанию пользователя включить существующую правку `.gitignore` (`var/`) в F1.
+
+5. F1-GITIGNORE: существует локальный var/img.png; `git check-ignore var/img.png` должен вернуть путь, файл не попадает в staging. Проверка PASS.

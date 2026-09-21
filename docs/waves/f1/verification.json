@@ -89,20 +89,30 @@
     "dtoSignatures": {
       "status": "passed",
       "scope": "All 15 handoff DTOs and 3 shared contract DTOs; public typed readonly properties and empty constructor only"
+    },
+    "routeStub": {
+      "status": "passed",
+      "checks": [
+        "php -l api/phpstan/bitrix-stubs.php",
+        "PHPStan after route signatures update"
+      ],
+      "ideIndexVerified": false
     }
   },
   "publication": {
-    "status": "ready for PR",
+    "status": "published",
     "merged": false,
     "deployed": false,
     "deploymentTarget": "app.morefoto.36.ru",
     "deploymentPolicy": "aggregate later wave checkpoint",
-    "followUpIssue": "https://github.com/rebit-pro/rabit-api/issues/24"
+    "followUpIssue": "https://github.com/rebit-pro/rabit-api/issues/24",
+    "url": "https://github.com/rebit-pro/rabit-api/pull/25",
+    "number": 25
   },
   "complete": true,
-  "completeMeaning": "F1 implementation and required local checks complete; PR publication pending. Merge and deployment are separate.",
-  "head": "0697fdbe238cacb1ef18c64f54ef9aa89d5a0fc7",
-  "uncommittedChanges": true,
+  "completeMeaning": "F1 implementation, local quality gate and PR publication complete. Awaiting review; merge and deployment are separate.",
+  "head": "ef2ca7529ed7cdde232b2da47ad677a6e6c44447",
+  "uncommittedChanges": false,
   "remaining": [],
   "history": [
     {

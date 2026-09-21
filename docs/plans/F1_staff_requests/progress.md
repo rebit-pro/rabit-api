@@ -2,13 +2,14 @@
 
 ## Точка продолжения
 
-- Checkout `/home/user/rabit-api`; ветка `codex/f1-staff-requests`; base `28bcad9`, текущий HEAD до commit `0697fdb`. PR ещё не опубликован; follow-up issue: https://github.com/rebit-pro/rabit-api/issues/24.
-- Завершены чистый controller, DTO без поведения, mapper-классы, архитектурные проверки, уточнение Bitrix route-stubs, полный gate и desktop/mobile visual. Следующий шаг — commit/push и PR в main.
-- Блокеров проверок нет. Merge/deployment не выполняются. Замечания вне DTO-scope: N+1 в списке и UI-тексты; раскрыты в README/PR.
-- Рабочее дерево: F1 diff готов к commit; отдельно появилась пользовательская правка `.gitignore` (`var/`), она сохранена и в commit F1 не включается.
-- Проверенная ревизия: HEAD `0697fdb` плюс текущий F1 diff; fixture `rabit-e2e-c27280e2987a`, 43/43 browser, PHPUnit 403/1492, frontend 158, PHPStan PASS; static stub после browser startup дополнительно проверен PHPStan/lint.
-- Следующая проверка перед публикацией: `git diff --check`; `git diff --cached --stat`; после push — `/home/user/.local/bin/gh pr view --json number,url,state,baseRefName,headRefName`.
-- План и фактические результаты: `docs/plans/F1_staff_requests/plan.md`, `docs/waves/f1/{README.md,verification.json,visual.json}`.
+- Checkout `/home/user/rabit-api`; ветка `codex/f1-staff-requests`; base `28bcad9e575489deb1113d7ce2ac459a43dd7132`; проверенный implementation HEAD `ef2ca7529ed7cdde232b2da47ad677a6e6c44447`. Завершающий commit меняет только документы и `.gitignore`; текущий tip — `git rev-parse HEAD`.
+- PR: https://github.com/rebit-pro/rabit-api/pull/25 — OPEN, не draft, base main, mergeable на момент проверки. Follow-up старых контроллеров: https://github.com/rebit-pro/rabit-api/issues/24.
+- Завершены реализация F1, DTO без поведения, чистый controller, mapper, route-stubs, полный gate и desktop/mobile visual, commit/push/PR. Следующий шаг — review PR #25; автоматический merge/deployment не разрешён и не выполнялся.
+- Блокеров проверок нет. Замечания вне DTO-scope: N+1 в списке и UI-тексты, раскрыты в README/PR; прежний E3 сбой не воспроизвёлся.
+- Рабочее дерево перед завершающим commit: только отчёты/журнал и `.gitignore`. Правка `var/` включается по явному указанию пользователя; файлы var не коммитятся. Runtime-diff уже опубликован и проверен.
+- Gate fixture `rabit-e2e-c27280e2987a`: 43/43 browser, PHPUnit 403/1492, frontend 158, lint 591, PHPStan PASS; static stub отдельно проверен PHPStan/lint. Изолированный стенд удалён без ошибок.
+- Команды продолжения: `git status --short`; `git rev-parse HEAD`; `/home/user/.local/bin/gh pr view 25 --json number,url,state,baseRefName,headRefName,headRefOid,mergeable`. Повтор gate нужен при изменении runtime/base.
+- План и доказательства: `docs/plans/F1_staff_requests/plan.md`, `docs/waves/f1/{README.md,verification.json,visual.json}`.
 
 ### Предыдущая точка (история)
 
@@ -258,6 +259,16 @@ python3 tools/run-browser-e2e.py run --php-cli rabit-api-php-cli:d1-local --php-
 | F1-DTO-COMPAT | PASS | PHPUnit + полный make test-e2e, прежние контракт/ошибки сохранены |
 | F1-FOREIGN-AUTHOR-FIXTURE | PASS | make test-e2e: отдельный UUID строки, другая заявка 201, scope 404 |
 | F1-ROUTE-STUB | PASS | php -l api/phpstan/bitrix-stubs.php + отдельный PHPStan; IDE-индексация не проверялась |
-| F1-PUBLISH | PENDING | commit/push/PR — следующий шаг |
+| F1-PUBLISH | PASS | HTTPS push через gh credentials и gh pr create: PR #25 в main |
 
 - Перед commit: свежий fetch через gh credential helper PASS, origin/main остался 28bcad9. `git add` только F1-пути; `git diff --cached --check` PASS; staged 50 файлов. `.gitignore` не включён. Следующий шаг — commit и HTTPS push через gh credentials.
+
+### 2026-09-21 — публикация
+
+- `git commit -m "refactor(handoff): keep DTOs passive and finalize F1 validation"`: PASS, commit ef2ca75. Все 50 подготовленных файлов F1 включены; `.gitignore` сохранён вне commit.
+- Перед push точка продолжения обновлена; выполняется HTTPS push с авторизацией настроенного gh, merge/deployment не запрашиваются.
+
+- HTTPS push `git -c credential.helper= -c 'credential.helper=!/home/user/.local/bin/gh auth git-credential' push https://github.com/rebit-pro/rabit-api.git HEAD:refs/heads/codex/f1-staff-requests`: PASS, новая remote ветка F1.
+- `gh pr create --base main --head codex/f1-staff-requests --title 'F1: списки детей сотрудников, чистые контроллеры и DTO без поведения' --body-file /tmp/f1-pr.md`: PASS, https://github.com/rebit-pro/rabit-api/pull/25.
+- `gh pr view 25 --json number,url,state,isDraft,baseRefName,headRefName,headRefOid,mergeable`: PASS, OPEN, isDraft=false, main ← codex/f1-staff-requests, head ef2ca75, MERGEABLE.
+- Пользователь отдельно поручил добавить `.gitignore`: правило `var/` включено в завершающий commit вместе с отчётами. F1-GITIGNORE PASS 2026-09-21: `git check-ignore var/img.png` вернул путь. `git diff --check` PASS. Повтор runtime-тестов для документов и ignore-правила не требуется; после commit — push и проверка совпадения PR head.
