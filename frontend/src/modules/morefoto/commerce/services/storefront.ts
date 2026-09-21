@@ -100,7 +100,24 @@ export async function loadStorefront(token: string, gallery: GallerySnapshot): P
     );
     return;
   }
-  const { data: catalog } = await api.get<Catalog>('/api/v1/public/galleries/' + token + '/catalog');
+  let catalog: Catalog;
+  try {
+    ({ data: catalog } = await api.get<Catalog>('/api/v1/public/galleries/' + token + '/catalog'));
+  } catch (cause) {
+    states.set(
+      gallery.groupId,
+      shallowReactive<State>({
+        gallery,
+        token,
+        catalog: { products: [], giftThreshold: 0, giftForStaff: false, revision: 0 },
+        lines: read(gallery.groupId),
+        quote: null,
+        busy: false,
+        error: message(cause)
+      })
+    );
+    return;
+  }
   const state = shallowReactive<State>({
     gallery,
     token,
@@ -197,9 +214,12 @@ export async function changeLive(token: string, id: string, quantity: number): P
 }
 export async function clearLive(token: string): Promise<void> {
   const state = forToken(token);
+  if (state.busy) throw new Error('Дождитесь завершения расчёта.');
+  if (state.gallery.state === 'open') {
+    await persist(state, []);
+  }
   localStorage.removeItem(key(state.gallery.groupId));
   state.lines = [];
-  state.quote = null;
   state.error = '';
-  if (state.gallery.state === 'open') await refreshStorefront(state.gallery.groupId);
+  if (state.gallery.state !== 'open') state.quote = null;
 }

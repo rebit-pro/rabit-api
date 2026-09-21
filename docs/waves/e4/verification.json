@@ -1,10 +1,10 @@
 {
   "wave": "E4",
-  "status": "blocked",
+  "status": "verified",
   "date": "2026-09-21",
   "branch": "codex/e4-private-storefront",
   "base": "6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc",
-  "fixture": "rabit-e2e-8caca4c75f2e",
+  "fixture": "rabit-e2e-8abe011ee786",
   "checks": {
     "phpLint": {
       "status": "passed",
@@ -35,29 +35,45 @@
       "fixableFiles": 0
     },
     "browser": {
-      "status": "failed",
-      "passed": 56,
-      "failed": 1,
+      "status": "passed",
+      "passed": 59,
+      "failed": 0,
       "skipped": 0,
-      "failure": "zz-media.spec.ts:101: legacy anonymous preview GET expected 200, received 401 after E4 protection",
-      "e4Scenarios": "6 passed"
+      "e4Scenarios": "8 passed",
+      "f1Navigation": "8 passed",
+      "d1Preview": "anonymous 401; Bearer 200"
     },
     "integration": {
-      "status": "pending",
-      "note": "Earlier targeted real MySQL stale/revoke/migration run passed before context extraction; final post-browser verifier and F1 eligibility check did not run because browser gate failed."
+      "status": "passed",
+      "proof": "storefront-integration.log: F1 eligibility, stale quote, TTL, revoke, assignment and migration replay"
     },
     "graph": {
       "status": "passed",
       "waves": 40,
       "apiIds": 99
+    },
+    "visual": {
+      "status": "passed",
+      "viewports": [
+        "desktop",
+        "mobile"
+      ],
+      "artifacts": [
+        "screenshots/e4-f1-desktop-navigation.png",
+        "screenshots/e4-f1-mobile-navigation.png",
+        "screenshots/e4-desktop-gallery.png",
+        "screenshots/e4-mobile-gallery.png",
+        "screenshots/e4-desktop-cart.png",
+        "screenshots/e4-mobile-cart.png"
+      ]
     }
   },
   "cleanup": {
     "stopped": true,
     "errors": []
   },
-  "mergeAllowed": false,
-  "nextStep": "Update D1 preview contract test to assert anonymous 401 and authorized 200; rerun make test-e2e including verify-storefront.php.",
+  "mergeAllowed": true,
+  "nextStep": "Commit and push review fixes; mark PR ready, merge verified head into main, then deploy stage backend with backup/migrations before frontend.",
   "pr": "https://github.com/rebit-pro/rabit-api/pull/30",
-  "runtimeCommit": "a44d9c8"
+  "runtimeBaseCommit": "a44d9c8"
 }

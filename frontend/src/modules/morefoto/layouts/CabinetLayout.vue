@@ -63,7 +63,7 @@ const navigation = computed(() =>
         ...(['organizer', 'curator', 'teacher'].includes(auth.user?.role ?? '')
           ? [
               {
-                title: 'Списки сотрудников',
+                title: 'Заявки на списки сотрудников',
                 to: '/cabinet/staff-requests',
                 icon: 'mdi-account-check-outline'
               }
@@ -132,7 +132,7 @@ const navigation = computed(() =>
         ...(auth.user?.role !== 'head'
           ? [
               {
-                title: 'Списки сотрудников',
+                title: 'Заявки на списки сотрудников',
                 to: '/cabinet/staff-requests',
                 icon: 'mdi-account-check-outline'
               }
@@ -180,6 +180,7 @@ watch(
           :to="item.to"
           :title="item.title"
           :prepend-icon="item.icon"
+          class="mf-navigation-item"
           color="primary"
         />
       </v-list>
@@ -201,3 +202,10 @@ watch(
     </v-main>
   </v-app>
 </template>
+
+<style scoped>
+.mf-navigation-item :deep(.v-list-item-title) {
+  white-space: normal;
+  line-height: 1.35;
+}
+</style>

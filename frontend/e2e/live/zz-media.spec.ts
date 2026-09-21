@@ -97,7 +97,11 @@ test('D1/D2: приватное фото получает M:N-разметку �
   expect(photo).not.toHaveProperty('originalPath');
   expect(photo.status).toBe('ready');
   expect(photo.groupId).toBe(group.id);
-  const preview = await page.request.get(photo.previewSrc);
+  const anonymousPreview = await page.request.get(photo.previewSrc);
+  expect(anonymousPreview.status()).toBe(401);
+  const preview = await page.request.get(photo.previewSrc, {
+    headers: { Authorization: 'Bearer ' + (await token(page)) }
+  });
   expect(preview.status()).toBe(200);
   expect(preview.headers()['content-type']).toContain('image/webp');
   await page.screenshot({ path: testInfo.outputPath('d1-desktop-media.png'), fullPage: true });

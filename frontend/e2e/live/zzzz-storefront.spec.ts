@@ -209,3 +209,30 @@ test('E4: failed recalculation keeps selection and offers a real retry', async (
   await page.getByRole('button', { name: 'Повторить расчёт', exact: true }).click();
   await expect(page.getByTestId('cart-total')).toContainText('100');
 });
+
+test('E4: catalog outage does not hide an authorized gallery', async ({ page }) => {
+  await page.route('**/catalog', (route) => route.fulfill({ status: 404, body: '{}' }));
+  await page.goto('/g/' + fixture.open.token);
+  await expect(page.getByRole('button', { name: 'Открыть кадр A001', exact: true })).toBeVisible();
+  await expect(page.getByText('Ссылка недействительна')).toHaveCount(0);
+});
+
+test('E4: failed clear keeps the saved selection', async ({ page }) => {
+  await page.goto('/g/' + fixture.open.token);
+  await page.evaluate(
+    ({ groupId, assignmentId, productId }) => {
+      localStorage.setItem('morefoto:cart:v1:' + groupId, JSON.stringify([{ assignmentId, productId, quantity: 1 }]));
+    },
+    { groupId: fixture.open.groupId, assignmentId: assignments[0]!.assignmentId, productId: printId }
+  );
+  await page.goto('/g/' + fixture.open.token + '/cart');
+  await expect(page.getByTestId('cart-total')).toContainText('100');
+  await page.route('**/quotes', (route) => route.abort());
+  await page.getByRole('button', { name: 'Очистить корзину группы' }).click();
+  await page.getByRole('button', { name: 'Да, очистить' }).click();
+  await expect(page.getByRole('dialog', { name: 'Очистить корзину этой группы?' }).getByRole('alert')).toContainText(
+    'Не удалось проверить корзину'
+  );
+  expect(await page.evaluate((groupId) => localStorage.getItem('morefoto:cart:v1:' + groupId), fixture.open.groupId)).toContain(printId);
+  await expect(page.getByTestId('cart-total')).toContainText('100');
+});

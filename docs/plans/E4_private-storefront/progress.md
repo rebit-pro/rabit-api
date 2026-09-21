@@ -2,14 +2,38 @@
 
 ## Точка продолжения
 
-- Ветка codex/e4-private-storefront; base 6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc; runtime HEAD a44d9c8; PR #30 DRAFT: https://github.com/rebit-pro/rabit-api/pull/30. Текущий HEAD — последующий docs-only commit публикации.
-- F1 PR #25 слит; согласованный контракт и граф сохранены. Runtime E4 реализован в рабочем дереве: миграции, capability, preview, catalog/quote, live UI и проверки. Runtime и proof закоммичены (a44d9c8) и отправлены в draft PR #30.
-- Сейчас: E4 PR #30 остаётся draft и не развёрнут; отдельно выкачан актуальный `origin/main` с live API на `app.morefoto36.ru`. Исправлен runtime-upstream Basic Auth, smoke login PASS.
-- Следующий шаг: по согласованию закрыть ревью/merge E4; для frontend deployment использовать релиз `main-live-api-20260921120900-6b81647`. Полный E4 gate по-прежнему блокирован старым D1 anonymous preview ожиданием.
-- Base/HEAD проверены через git, draft PR #30 создан через gh. Stash F1 сохранён отдельно, не восстанавливать в E4.
-- Команды продолжения: `python3` для чтения frontend/reports/e2e-live/results.json; `docker logs rabit-e2e-ca1b3ab556a7-fpm`; после исправлений `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
+- 2026-09-21, перед commit/push: пользователь поручил закрыть review PR #30, переименовать раздел F1 по скриншоту, слить E4 и развернуть backend/frontend на app.morefoto36.ru. Ветка `codex/e4-private-storefront`, base `6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc`, локальный HEAD `015f804`, опубликованный HEAD `8efc931` на момент старта; PR #30 draft. Правки и полный gate завершены: 59/59 browser, backend/frontend и real MySQL PASS; desktop/mobile F1/Gallery/Cart просмотрены. Сейчас — обновление отчёта и commit/push. Следующий шаг — `git diff --check`, commit/push и `gh pr ready 30`. Блокер деплоя: stage backend всё ещё старый, нужны отдельный бэкап stage DB, миграции F1/E4 и обновление backend до frontend. В рабочем дереве до commit изменены plan/progress, frontend service/UI/E2E, README/verification и два F1 снимка.
 
 ## Хронология
+
+### 2026-09-21 — исправление ревью и терминологии
+
+- По inline-тредам PR #30 изменены `loadStorefront`: отказ COM-08 сохраняет просмотр MED-01, и `clearLive`: выбор удаляется только после успешного пустого quote. Название F1 в меню/маршруте/экране/переходе от съёмки уточнено до «Заявки на списки сотрудников» по скриншоту пользователя.
+- E2E D1/D2 preview теперь проверяет anonymous 401 и Bearer 200. Проверки после правок ещё не запускались; E4-REVIEW-CATALOG/CLEAR/F1 и повтор полного gate — PENDING.
+- `git diff --check` — PASS; `python3 tools/verify-wave-graph.py docs/waves/graph.json` — PASS, 40 волн / 99 API, E4 единственная readyFromMain. `npm run check` напрямую в host — BLOCKED (`eslint: not found`), поскольку node_modules живёт в изолированном Docker volume; та же проверка запущена штатным `make test-e2e` и дошла до браузерного E2E. В полном прогоне PHPStan и PHPUnit 420/1608 PASS, frontend check/build/unit PASS по фазам runner; итог browser ещё PENDING.
+- По запросу пользователя SSH повторно проверен — PASS. Stage: `morefoto_frontend` main-live-api 2/2, `morefoto_stage_backend` и `morefoto_stage_fpm` — образ 20260911 1/1; отдельная база `morefoto_stage_c4_20260913` на общем MySQL. Текущий stage runtime в `/srv/morefoto/releases/stage-20260919-b2-d788622/runtime`, новые media/handoff symlink отсутствуют. Текущий composer vendor имеет те же 98 package/version, что и актуальный lock; stage FPM содержит GD. Backend выкатывать только с новым source, stage config, symlink, миграциями и сохранением текущих ServiceSpec/дампа.
+- Первый полный `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`: FAIL, browser 51 PASS / 8 FAIL, `/api/var/e2e/rabit-e2e-2ddd74397c12/browser.log`. D1 preview 401/200 PASS, E4 catalog outage PASS. Семь F1 failure вызваны ожидаемой старой подписью меню/заголовка после переименования; тест обновлён. E4 clear failure — только неоднозначный locator трёх alert, тест сужен до диалога. Реальный эффект сохранения выбора не успел провериться из-за locator; повтор PENDING.
+- Второй запуск той же команды: FAIL на frontend lint до сборки/HTTP (`/api/var/e2e/rabit-e2e-404e870df4c9/check.log`), Prettier требовал перенос аргумента в исправленном E4-тесте. Форматирование исправлено, `git diff --check` PASS; третий полный прогон запущен, результат PENDING.
+- Третий полный запуск той же команды: PASS, browser 59/59 (`api/var/e2e/rabit-e2e-1a2eeff99ae3/browser.log`), PHPStan PASS, PHPUnit 420/1608, frontend check/unit/build PASS. Post-browser `storefront-integration.log`: PASS, F1 доверенная льгота, stale/TTL/revocation/assignment/миграция. E4-REVIEW-CATALOG/CLEAR/F1 PASS через реальные HTTP/browser.
+- Просмотрены снимки F1 desktop/mobile и E4 gallery/cart. На F1 боковое меню обрезало новую подпись до многоточия. Добавлен перенос строки только в navigation item title; повтор затронутой визуальной проверки и browser gate PENDING. Остальные просмотренные экраны без горизонтального переполнения.
+- Четвёртый полный запуск той же команды после переноса: PASS, browser 59/59, 0 skipped/unexpected/flaky, `api/var/e2e/rabit-e2e-8abe011ee786/browser.log`; post-browser `storefront-integration.log` PASS. PHPStan, PHPUnit 420/1608, frontend ESLint/Vue/E2E TS/build и unit PASS. Свежие F1 desktop/mobile screenshots просмотрены: название видно целиком в две строки, переполнения нет. Stage nginx конфиг для нового backend подготовлен отдельно и `nginx -t` PASS на сервере в сети `morefoto-stage-private`; сервисы пока не переключались.
+
+## Результаты тест-кейсов
+
+| ID | Статус | Дата | Команда и доказательство |
+| --- | --- | --- | --- |
+| E4-BASE | PASS | 2026-09-21 | `gh pr view 25`, merge receipt `6b81647` присутствует в base `main` |
+| E4-CAPABILITY | PASS | 2026-09-21 | `make test-e2e` final fixture `8abe011ee786`, MED-01 states/revoke browser 59/59 |
+| E4-MEDIA | PASS | 2026-09-21 | Та же команда, D1 anonymous preview 401 / Bearer 200 и E4 protected derivatives |
+| E4-QUOTE | PASS | 2026-09-21 | Та же команда, E4 quote browser cases и `storefront-integration.log` |
+| E4-STALE | PASS | 2026-09-21 | Та же команда, post-browser `storefront-integration.log`: TTL/fingerprint/revoke/assignment |
+| E4-ARCH | PASS | 2026-09-21 | Та же команда, PHPStan 0, PHPUnit 420/1608, frontend check/build/unit PASS |
+| E4-UI | PASS | 2026-09-21 | Та же команда, browser 59/59, просмотр F1/Gallery/Cart desktop/mobile screenshots |
+| E4-GRAPH | PASS | 2026-09-21 | `python3 tools/verify-wave-graph.py docs/waves/graph.json`: 40 волн, 99 API ID |
+| E4-PUBLISH | PENDING | 2026-09-21 | `git diff --check` PASS; commit/push и merge ещё не выполнены |
+| E4-REVIEW-CATALOG | PASS | 2026-09-21 | `make test-e2e`, E4 catalog outage browser case 58 |
+| E4-REVIEW-CLEAR | PASS | 2026-09-21 | `make test-e2e`, E4 failed clear browser case 59 |
+| E4-REVIEW-F1 | PASS | 2026-09-21 | `make test-e2e`, F1 workflow и 8 navigation cases, визуально desktop/mobile; stage smoke после деплоя PENDING |
 
 ### 2026-09-21 — merge F1 и старт E4
 
