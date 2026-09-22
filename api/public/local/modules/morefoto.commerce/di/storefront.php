@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Bitrix\Main\DI\ServiceLocator;
 use Morefoto\Commerce\Application\Conditions\UseCase\GetGroupConditionsUseCase;
+use Morefoto\Commerce\Application\Order\Service\CheckoutAvailability;
 use Morefoto\Commerce\Application\Storefront\Contract\QuoteTransactionInterface;
 use Morefoto\Commerce\Application\Storefront\Service\StorefrontQuote;
 use Morefoto\Commerce\Application\Storefront\UseCase\CreateQuoteUseCase;
@@ -40,6 +41,7 @@ return [
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(GalleryAccessInterface::class),
             ServiceLocator::getInstance()->get(GetGroupConditionsUseCase::class),
+            ServiceLocator::getInstance()->get(CheckoutAvailability::class),
         ],
     ],
     CreateQuoteUseCase::class => [

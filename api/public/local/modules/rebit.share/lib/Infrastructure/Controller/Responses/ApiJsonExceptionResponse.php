@@ -23,12 +23,16 @@ final class ApiJsonExceptionResponse extends AbstractResponse
     {
         $status = $this->status();
         $code = $this->code($status);
+        $error = [
+            'code' => $code,
+            'message' => $code,
+        ];
+        if ($this->exception instanceof HttpException && $code === $this->exception->getMessage() && [] !== $this->exception->getDetails()) {
+            $error['details'] = $this->exception->getDetails();
+        }
 
         return (new ControllerJson(CommonSerializer::createDefault(), [
-            'error' => [
-                'code' => $code,
-                'message' => $code,
-            ],
+            'error' => $error,
             'meta' => [
                 'requestId' => RequestIdGenerator::getRequestId(),
             ],

@@ -9,8 +9,15 @@ defineProps<{ quote: CartQuote }>();
     <h2>Состав заказа</h2>
     <ul>
       <li v-for="line in quote.lines" :key="line.id" data-testid="order-line">
-        <PhotoImage v-if="line.photo" :src="line.photo.thumbSrc" :alt="'Кадр ' + line.photo.code" width="56" height="76" loading="lazy" />
-        <v-icon v-else icon="mdi-image-multiple-outline" size="36" class="order-composition__icon" />
+        <PhotoImage
+          v-if="line.photo?.thumbSrc"
+          :src="line.photo.thumbSrc"
+          :alt="'Кадр ' + line.photo.code"
+          width="56"
+          height="76"
+          loading="lazy"
+        />
+        <v-icon v-else :icon="line.photo ? 'mdi-image-outline' : 'mdi-image-multiple-outline'" size="36" class="order-composition__icon" />
         <div class="order-composition__description">
           <strong>{{ line.product.name }}</strong>
           <p>

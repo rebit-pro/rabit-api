@@ -9,6 +9,7 @@ use Morefoto\Commerce\Application\Storefront\Dto\QuoteLineInputDto;
 use Morefoto\Commerce\Application\Storefront\UseCase\CreateQuoteUseCase;
 use Morefoto\Commerce\Application\Storefront\UseCase\GetStorefrontCatalogUseCase;
 use Morefoto\Commerce\Application\Storefront\UseCase\ValidateQuoteUseCase;
+use Morefoto\Commerce\Domain\Storefront\Exception\QuotePriceChangedException;
 use Morefoto\Media\Application\Gallery\Service\GalleryCapabilityLifecycle;
 use Morefoto\Media\Application\Gallery\UseCase\GetGalleryPreviewUseCase;
 use Morefoto\Media\Domain\Photo\Repository\MediaMutationRepository;
@@ -50,7 +51,7 @@ $lines = [new QuoteLineInputDto($assignment->assignmentId, $product->id, 1)];
 $created = $services->get(CreateQuoteUseCase::class)->execute($token, $lines);
 $validator = $services->get(ValidateQuoteUseCase::class);
 $validated = $validator->execute($token, $created->quoteToken, $lines);
-if ($created->quote !== $validated->quote) {
+if ($created->quote !== $validated->quote->quote) {
     throw new RuntimeException('Fresh quote changed without a mutation.');
 }
 $quoteHash = hash('sha256', $created->quoteToken);
@@ -66,13 +67,18 @@ $expect = static function(string $code, callable $operation): void {
             return;
         }
         throw new RuntimeException('Unexpected domain rejection: ' . $error->getMessage());
+    } catch (QuotePriceChangedException) {
+        if ('PRICE_CHANGED' === $code) {
+            return;
+        }
+        throw new RuntimeException('Unexpected price change instead of ' . $code);
     }
     throw new RuntimeException('Expected rejection: ' . $code);
 };
 $expect('QUOTE_STALE', static fn() => $validator->execute($fixture['closed']['token'], $created->quoteToken, $lines));
 $expect('QUOTE_STALE', static fn() => $validator->execute($token, $created->quoteToken, [new QuoteLineInputDto($assignment->assignmentId, $product->id, 2)]));
 $cases = [
-    'price' => ["UPDATE mf_group_product_condition SET PRICE=PRICE+1 WHERE GROUP_ID={$gallery->group->id} AND PRODUCT_UUID='{$product->id}'", 'QUOTE_STALE'],
+    'price' => ["UPDATE mf_group_product_condition SET PRICE=PRICE+1 WHERE GROUP_ID={$gallery->group->id} AND PRODUCT_UUID='{$product->id}'", 'PRICE_CHANGED'],
     'photo revision' => ["UPDATE b_hlbd_mf_photo SET UF_REVISION=UF_REVISION+1 WHERE UF_PUBLIC_ID='{$assignment->photoId}'", 'QUOTE_STALE'],
     'assignment' => ["DELETE FROM mf_photo_assignment WHERE PUBLIC_ID='{$assignment->assignmentId}'", 'INVALID_CART'],
     'expiry' => ["UPDATE mf_cart_quote SET EXPIRES_AT=UTC_TIMESTAMP() WHERE TOKEN_HASH='{$quoteHash}'", 'QUOTE_EXPIRED'],

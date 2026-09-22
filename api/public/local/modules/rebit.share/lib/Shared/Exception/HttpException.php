@@ -15,10 +15,12 @@ class HttpException extends RebitException
     public const int HTTP_DEFAULT_EXCEPTION_CODE = 500;
     public const string DEFAULT_ERROR_MESSAGE = 'Server Error';
 
+    /** @param array<string, mixed> $details безопасные данные для клиента, например актуальный расчёт при 409 */
     public function __construct(
         string $message = self::DEFAULT_ERROR_MESSAGE,
         int $code = self::HTTP_DEFAULT_EXCEPTION_CODE,
         ?\Exception $previous = null,
+        private readonly array $details = [],
     ) {
         // чтобы дефолты брались с актуального класса.
         $message = (self::DEFAULT_ERROR_MESSAGE === $message)
@@ -30,5 +32,11 @@ class HttpException extends RebitException
             : $code;
 
         parent::__construct($message, $code, $previous);
+    }
+
+    /** @return array<string, mixed> */
+    public function getDetails(): array
+    {
+        return $this->details;
     }
 }

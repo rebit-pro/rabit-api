@@ -1,0 +1,251 @@
+# E5 — прогресс
+
+## Точка продолжения
+
+- 2026-09-22. Подготовка merge PR [#37](https://github.com/rebit-pro/rabit-api/pull/37) в `main` по поручению пользователя, ветка codex/e5-order-checkout.
+- Base/main: 8cba22c7655b5886d5fe663523214bcd059e674b; финальный gate — на 0bd8f76530215db423257d14b3272e2cb0950e98 (стенд `rabit-e2e-d2f60778297f`); после него только документация и отчёты.
+- Завершено: исправление B1 (`8806fc2`), issue [#41](https://github.com/rebit-pro/rabit-api/issues/41) о мигании экрана восстановления, полный `make test-e2e` — PASS (браузер 71/71, верификаторы E4/E5/H1), визуальная проверка 10 снимков — PASS, отчёты `docs/waves/e5` обновлены.
+- Сейчас: публикация документационного коммита, описание и комментарий PR, затем merge. Один следующий шаг: `gh pr merge 37 --repo rebit-pro/rabit-api --merge --match-head-commit <HEAD>` при `origin/main` = 8cba22c.
+- Блокеры: нет. Неблокирующие #38, #39, #41 — отдельные issues. Развёртывание не поручено; `MOREFOTO_CHECKOUT_ENABLED` на stage/production не включается.
+- После merge: `gh pr view 37 --json state,mergeCommit`, `git fetch origin --prune`, `git merge-base --is-ancestor <merge> origin/main`; «E5 merged» в `docs/waves/graph.json` и каноне MoreFoto — в ветке следующей волны.
+- Рабочее дерево: отчёты, снимки и plan/progress входят в документационный коммит.
+
+## Хронология
+
+### 2026-09-22 — готовность и старт
+
+- `gh pr list`: E4 слита PR #30 (2026-09-21T15:16:20Z). `gh pr view 30 --json state,mergeCommit` — MERGED, `7e606e53cc6b347e5c7b70e217ab7f8eb8a45875`; `git merge-base --is-ancestor` к HEAD — PASS.
+- Решения E5 (D02, D04, D05, D07, D10) входят в `acceptedImplementationDecisions`. Моделирование графа: сейчас готова только E5; после её merge зависимости закрыты лишь у D3, но D3 блокируют открытые D11/D12.
+- Пользователь поручил начать E5. `git fetch origin --prune`; `git switch -c codex/e5-order-checkout origin/main`; `git branch --unset-upstream`, чтобы случайный push не ушёл в `main`.
+
+### 2026-09-22 — исследование
+
+- Прочитаны граф и канон E5, COM-08…13, правила REST (идемпотентность, ошибки, `X-Order-Key`, негативная матрица), W05 D07/D08/D10, модель и схема W05, E4 plan/README, frontend-релизы R04/R11.
+- Код commerce E4: `ValidateQuoteUseCase::executeWithinTransaction` предназначен для E5; `StorefrontQuote` требует `open`; quote хранит только SHA-256 токена; `QuoteTransaction` — SERIALIZABLE без повтора; COM-08 жёстко отдаёт `purchaseEnabled=false`, `receiptChannels=[]`, `purchaseTerms=null`.
+- Межмодульные контракты: права на заказы в Access нет (нужно `order.read`); контракта кадров ребёнка для `correctionPhotos` нет; служебные превью доступны только организатору; названия и ID учреждения доступны цепочкой `GalleryAccess` → `GroupReference` → `MediaScope`.
+- Инфраструктура: общий компонент идемпотентности отсутствует, все журналы привязаны к сотруднику; причина #27 — replay до блокировки без повторной проверки; эталон резервирования — H1. У `PrivateApiJsonController` нет `createdJson()`; единый ответ ошибки не поддерживает `details`; отказы Access приходят с кодом `SERVICE_UNAVAILABLE`, их нужно переводить.
+- Frontend: оформление, заказ по ключу и служебные заказы работают только в demo; live-корзина отбрасывает `quoteToken`; в live-навигации нет «Заказов»; `/orders/access/` пишется в access log фронтового nginx.
+- Результат: план с пятью решениями на подтверждение.
+
+### 2026-09-22 — синхронизация графа
+
+- `docs/waves/graph.json`: дата 2026-09-22, baseline `8cba22c`, E4 в `mergedWaves`/PR #30/merge `7e606e5`, E4 merged, E5 inProgress.
+- Канон `../MoreFoto/docs/04-bitrix-modules/backend-waves.json`: E5 inProgress, дата; `python3 render-waves.py` — «Rendered 40 independent waves». Diff обоих файлов — `docs/waves/e5/morefoto-contract.patch`.
+- `python3 tools/verify-wave-graph.py docs/waves/graph.json` и тот же скрипт для канона — exit 0: 40 волн, 99 API, `readyFromMain=["E5"]`, 10 негативных фикстур.
+- Сравнение графов: baseline совпадает, кроме D09-evidence; отличаются E5.scope, G1, G2, I2, N1 и `paymentIntegration`. Это правки неслитых PR #35/#36, в E5 не переносятся.
+
+### 2026-09-22 — решения приняты, контракт и backend
+
+- Пользователь подтвердил E5-DEC-01…05 без изменений и разрешил до 6 тыс. рукописных строк одной волной.
+- Канон MoreFoto: `build.py` — уточнены COM-08, COM-10…13 (ключ повтора, коды ошибок, `PRICE_CHANGED` с details, `accessKeyExpiresAt`/`createdAt`, `period`, `StaffOrder`, фильтры, `correctionPhotos`, `purchaseEnabled`). `python3 docs/05-rest-api/build.py` — PASS; `python3 docs/05-rest-api/validate.py` — `result: passed`, 99 запросов, 40 волн; `node docs/05-rest-api/validate-postman.cjs` из корня MoreFoto — PASS (99/198 фикстур, 43 проверки повтора). Diff внешних файлов — `docs/waves/e5/morefoto-contract.patch`.
+- Базовый прогон до изменений: `docker run --rm --network none --entrypoint php --mount type=bind,source=/home/user/rabit-api/api,target=/app,readonly --tmpfs /app/var:rw,size=256m --workdir /app rabit-api-php-cli:d1-local vendor/bin/phpunit --colors=never` — OK, 420 тестов / 1608 проверок.
+- Миграция `Version20260922120001`: `mf_order`, `mf_order_line`, `mf_order_access_key` (генерируемый `ACTIVE_ORDER_ID` с UNIQUE — один действующий ключ), `mf_order_checkout`. DDL дважды применён на одноразовом `mysql:8.0` (tmpfs, без сети) — PASS; проверены отказ второго действующего ключа, неверной суммы, повторного quote, комплекта с кадром, незавершённого чека — PASS.
+- Backend: `CreateOrderUseCase` (флаг → capability → резерв ключа повтора → повтор → покупатель → `ValidateQuoteUseCase` → снимок/номер/ключ → чек), `GetBuyerOrderUseCase`, `SearchStaffOrdersUseCase` (3 SQL на страницу), `GetStaffOrderUseCase`; `ValidateQuoteUseCase` различает `PRICE_CHANGED` и `QUOTE_STALE`; копия ключа — AES-256-GCM с ключом HKDF из Idempotency-Key.
+- Проверки: PHPUnit — OK, 472 теста / 1874 проверки; PHPStan — No errors; php-cs-fixer применён к 7 из 101 изменённых PHP-файлов, повторный dry-run чист.
+
+### 2026-09-22 — frontend и E2E-обвязка
+
+- Frontend: `quoteToken` в live-корзине, типы `capabilities`/`purchaseTerms`, кнопка оформления по `purchaseEnabled`; `useLiveCheckout` (черновик `morefoto:live:checkout:*`, повтор неизвестного исхода тем же ключом и телом, пересчёт при `PRICE_CHANGED`/`QUOTE_*`); `OrderLiveScreen`; `StaffOrdersLiveScreen` с серверными фильтрами; `Checkout`/`Order` без `demoOnly`, `Payment` остаётся демо; навигация «Заказы» по `order.read`; nginx не пишет `/orders/access/` в access log.
+- `CreateOrderUseCase`: новый заказ в закрытой группе отклоняется сразу после проверки повтора (`GALLERY_CLOSED`), unit-тест добавлен — PHPUnit OK.
+- Frontend в `mcr.microsoft.com/playwright:v1.52.0-jammy` с томом `rabit-e5-node`: `npm ci` — PASS; `npm run check` (lint, vue-tsc, tsc e2e) — PASS после `eslint --fix` форматирования новых файлов; `npm run test:commerce` — 164/164 PASS.
+- E2E: миграция `20260922120001` в `prepare.php`; FPM стенда получает `MOREFOTO_CHECKOUT_ENABLED=1`; после браузера runner копирует `frontend/var/e5-orders.json` и выполняет `verify-orders.php` (секреты, инварианты, жизненный цикл ключа, повтор после закрытия, истёкший quote, `ACCESS_CHANGED`, повтор миграции, 1000+ заказов). Верификатор E4 адаптирован к `ValidatedQuoteOutputDto` и `PRICE_CHANGED`. Ожидания A8/E4 обновлены: оформление включено на стенде, недоступна только оплата.
+
+### 2026-09-22 — первый полный gate
+
+- `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` (стенд `rabit-e2e-de449cb52b9b`) — FAIL на браузере: 67 passed, 2 failed. Frontend check/unit, PHP lint/PHPStan/PHPUnit, установка схемы и Notification — PASS. Все API-сценарии E5 (повтор, конкуренция 4×, гонка трёх ключей на один quote, отказы, `PRICE_CHANGED`, ключ заказа, область организатора/кураторов/head/teacher), потерянный ответ и изменение цены в UI — PASS.
+- Причина двух падений (`buyer checkout and staff orders` desktop/mobile) — локатор теста: `getByLabel` находил и поле поиска, и иконку очистки. Исправлено на `getByRole('textbox', { exact: true })`. Пост-браузерные верификаторы в этом прогоне не выполнялись.
+- Просмотр сохранённых снимков оформления и заказа desktop/mobile: вёрстка без переполнения; найдено «поможет куратор .» при пустом имени куратора в live-галерее — `CheckoutTerms` теперь показывает «куратор учреждения», если имени нет. `npm run check` — PASS.
+
+### 2026-09-22 — второй прогон и порядок финального gate
+
+- Второй `make test-e2e` (стенд `rabit-e2e-c14d949a108e`) — FAIL: 67 passed, 2 failed. Тест служебного экрана не смог заполнить поиск: у поля не было явного `aria-label`, точное имя textbox не совпало. Добавлены `aria-label` фильтрам (доступность), повтор не выполнялся.
+- Просмотр снимков второго прогона: «куратор учреждения» вместо «куратор .» — PASS; на mobile-снимке оформления кнопка снята во время серверного пересчёта (выключена) — пересчёт теперь показывается индикатором загрузки на кнопке.
+- Пользователь: «Давай пока не будем делать финальные прогоны…», затем «Сейчас задачу вернется с ревью. Если не будет блокирующих, то тогда делаем финальный прогон». Поднятый для итераций `make e2e-up` (`rabit-e2e-7d9e899e9205`) остановлен до создания контейнеров; `run-browser-e2e.py down` — `stopped: true`, ошибок нет.
+- Верификатор: замер N+1 переделан на сравнение числа SQL для страниц 10 и 100 строк (не более 15 запросов), php-cs-fixer применён.
+- Быстрые проверки на итоговом состоянии: php-cs-fixer по 104 изменённым PHP (исправлен 1 — `verify-orders.php`), PHPStan — No errors, PHPUnit — OK 473/1877, phplint — 726 файлов OK; frontend `npm run check` — PASS, `npm run test:commerce` — 164/164, `npm run build` — PASS.
+- Граф: E5 `review` в `docs/waves/graph.json` и каноне MoreFoto, `render-waves.py` — PASS, `verify-wave-graph.py` для обоих — 40 волн, 99 API, `readyFromMain=["E5"]`; patch канона обновлён.
+
+### 2026-09-22 — публикация на ревью
+
+- `git fetch origin --prune`: `origin/main` = `8cba22c`, `git merge-base --is-ancestor origin/main HEAD` — PASS. Коммиты `0c4a852` (backend) и `9b52c68` (frontend, E2E, документы).
+- `git push -u origin codex/e5-order-checkout` — PASS; `gh pr create --base main` — https://github.com/rebit-pro/rabit-api/pull/37. В описании: ответственность, решения, зависимости, быстрые проверки, результат браузерного прогона и условие merge — финальный gate после ревью.
+
+## Результаты тест-кейсов
+
+
+| ID | Статус | Дата | Команда и доказательство |
+| --- | --- | --- | --- |
+| E5-BASE | PASS | 2026-09-22 | `gh pr view 30`: MERGED `7e606e5`; `git merge-base --is-ancestor` — предок HEAD `8cba22c` |
+| E5-GRAPH | PASS | 2026-09-22 | `python3 tools/verify-wave-graph.py` для обоих графов: 40 волн, 99 API, `readyFromMain=["E5"]` |
+| E5-CONTRACT | PASS | 2026-09-22 | `build.py`, `validate.py` (passed, 99 API), `validate-postman.cjs` (99/198) |
+| E5-CREATE | PASS | 2026-09-22 | PHPUnit; `make test-e2e` `rabit-e2e-c2a30ffb9621`: 201, `Location`, номер, ключ, статусы, снимок |
+| E5-REPLAY | PASS | 2026-09-22 | HTTP повтор тем же ключом; UI потерянного ответа и 502; повтор после закрытия — `verify-orders.php` |
+| E5-CONCURRENCY | PASS | 2026-09-22 | HTTP: 4 одновременных запроса с одним ключом → один заказ; 3 ключа на один quote → 201 + 2×409 |
+| E5-CONFLICT | PASS | 2026-09-22 | PHPUnit и HTTP: другое тело с тем же ключом → 409 `IDEMPOTENCY_CONFLICT` |
+| E5-QUOTE | PASS | 2026-09-22 | PHPUnit (состав → `QUOTE_STALE`, деньги → `PRICE_CHANGED`); HTTP `PRICE_CHANGED` и UI подтверждения; `QUOTE_EXPIRED` — `verify-orders.php`; `verify-storefront.php` PASS |
+| E5-CLOSED | PASS | 2026-09-22 | HTTP: closed → 409 `GALLERY_CLOSED`, preparing → 409, revoked → 404; закрытие на MySQL — `verify-orders.php` |
+| E5-GATE | PASS | 2026-09-22 | PHPUnit (`PURCHASE_DISABLED` до любых обращений); HTTP стенда: `purchaseEnabled=true`, `receiptChannels=[]`, `purchaseTerms=null` |
+| E5-VALIDATION | PASS | 2026-09-22 | PHPUnit `BuyerPolicy`; HTTP 422 по полям, `INVALID_IDEMPOTENCY_KEY`, `UNKNOWN_FIELD` |
+| E5-SNAPSHOT | PASS | 2026-09-22 | HTTP: после смены цены COM-11 показывает прежние цену и итог |
+| E5-KEY | PASS | 2026-09-22 | HTTP: проекция, `no-store`, единый 404; `verify-orders.php`: отзыв, истечение, перевыпуск, независимость от ссылки галереи |
+| E5-STAFF-LIST | PASS | 2026-09-22 | HTTP: организатор, свой и чужой куратор, head/teacher 403, фильтры и 422; UI поиска desktop/mobile |
+| E5-STAFF-CARD | PASS | 2026-09-22 | HTTP и UI: `period`, `correctionPhotos` с A001, 404 чужому куратору, 403 head/teacher |
+| E5-ACCESS-CHANGE | PASS | 2026-09-22 | PHPUnit адаптера; `verify-orders.php`: смена `accessRevision` во время чтения → 409 `ACCESS_CHANGED` |
+| E5-PRIVACY | PASS | 2026-09-22 | HTTP без ключей/токенов, `no-store`; `verify-orders.php`: в БД нет сырых ключей, Idempotency-Key и токена галереи |
+| E5-MIGRATION | PASS | 2026-09-22 | Установка на пустую БД в gate; DDL дважды на MySQL 8.0; `verify-orders.php`: повтор `up()`, отказ `down()` |
+| E5-PERF | PASS | 2026-09-22 | `verify-orders.php`: 1011 заказов, 7 SQL для 10 и 100 строк, 7,5 мс на страницу из 100 |
+| E5-ARCH | PASS | 2026-09-22 | PHPUnit 472/1874 (включая `OrderArchitectureTest`), PHPStan No errors, php-cs-fixer по изменённым файлам |
+| E5-UI | PASS | 2026-09-22 | Браузер 70/70; просмотрены 8 снимков desktop/mobile (`docs/waves/e5/visual.json`) |
+| E5-REGRESSION | PASS | 2026-09-22 | Полный браузерный набор 70/70 без пропусков и нестабильных тестов |
+| E5-PUBLISH | PASS | 2026-09-22 | `git diff --check` PASS; `origin/main` = base `8cba22c`; `git push -u origin codex/e5-order-checkout`; `gh pr create` → PR #37. Merge — после ревью и финального gate |
+| E5-FIX2-RULES | PASS | 2026-09-22 | `npm run test:commerce` в контейнере Playwright — 167/167: при восстановлении `PURCHASE_DISABLED`, 408, 429, неизвестный 4xx, `GALLERY_NOT_*`, `IDEMPOTENCY_CONFLICT` → `unknown`; коды после поиска сбрасывают попытку; первая отправка без изменений |
+| E5-FIX2-CHECK | PASS | 2026-09-22 | `npm run check` — ESLint, vue-tsc, tsc e2e, exit 0 |
+| E5-FIX2-E2E | PASS | 2026-09-22 | `make test-e2e` на `0bd8f76` (`rabit-e2e-d2f60778297f`): сценарий `E5: refusals while recovering keep the attempt until the same order is replayed` — passed с первой попытки; `verify-orders.php` — 1012 заказов в БД совпадают с запомненными браузером |
+| E5-ISSUE-FLICKER | PASS | 2026-09-22 | `gh issue create` → #41, `gh issue view 41` — OPEN, тело совпадает |
+| E5-GATE-FINAL | PASS | 2026-09-22 | `make test-e2e …` на `0bd8f76`: phplint 726, PHPStan 0, PHPUnit 474/1880, frontend check/unit 167/build, Notification H1, браузер 71 expected / 0 unexpected / 0 skipped / 0 flaky, E4 и E5 integration passed; стенд остановлен, `cleanupErrors=[]` |
+| E5-VISUAL-FINAL | PASS | 2026-09-22 | Просмотрены 10 снимков 1280×900 и 390×844, включая восстановление; SHA-256 в `docs/waves/e5/visual.json` |
+| E5-MERGE | PENDING | 2026-09-22 | Выполняется после публикации этого коммита: `gh pr merge 37 --merge --match-head-commit <HEAD>` |
+
+
+### 2026-09-22 — начало статического ревью PR #37
+
+- Запрос пользователя: только код, без прогонов/E2E; блокирующие находки — note в PR через gh, неблокирующие — отдельные issues.
+- E5-RV-01 PASS: git status --short пустой; gh pr view 37 --json baseRefOid,headRefOid — base 8cba22c, head 46c442e; локальный HEAD совпадает. Diff: 145 файлов, +6514/-114.
+- E5-RV-02 PENDING; E5-RV-03 PENDING; E5-RV-04 PENDING.
+- Открытые issues #23/#24/#26/#27/#28/#31/#33/#34 прочитаны по заголовкам для исключения дублирования.
+- Обычный sandbox не инициализируется (helper_unknown_error); чтение и gh доступны через разрешённый запуск exec вне sandbox.
+
+
+### 2026-09-22 — статическая проверка и перепроверка находок
+
+- Прочитаны оформление/повтор/ключи, SQL-репозитории и миграция, DI и HTTP DTO/controller/mapper, Access/Media, frontend composables/screens, маршруты, nginx, тесты и runner. Никакие PHPUnit/frontend/E2E/SQL-прогоны не запускались.
+- E5-RV-02 FAIL (статическое ревью): B1 — checkoutOutcome считает HTTP 502/504 окончательным отказом, useLiveCheckout удаляет pending и меняет requestId; подтверждённый на сервере заказ становится недоступен для replay. B2 — pending не участвует в canSubmit/render: после закрытия группы и перезагрузки loadStorefront не получает quote, CheckoutForm скрывает форму, хотя сервер разрешает replay. B3 — money() включает quantity/id; смена количества при том же quote бросает QuotePriceChangedException, а verify-storefront.php:79 ожидает QUOTE_STALE; runner запускает его до verify-orders.php.
+- Неблокирующие: N1 — clearable VTextField присваивает null через Vuetify validation.reset(), useStaffOrders.apply вызывает filters.q.trim(); обход — «Сбросить». N2 — institutionId/shootId/groupId отсутствуют в StaffOrderFilters, URL mapper и служебной форме, хотя backend COM-12 их поддерживает.
+- E5-RV-03 PASS: решения E5-DEC-01…05 учтены; открытые issues #23/#24/#26/#27/#28/#31/#33/#34 не дублируют эти находки (#28 относится к F1). Миниатюры проверены до PhotoImage: используют авторизованный blob-запрос, замечания нет. Nginx задаёт no-referrer; недоказанная утечка не включается.
+- Доказательства: чтение файлов с номерами строк; git diff origin/main...HEAD; gh issue list --state open --limit 100 --json number,title,url; установленный frontend/node_modules/vuetify/lib/composables/validation.js:122–125. E5-RV-04 PENDING.
+
+
+### 2026-09-22 — публикация неблокирующих issues
+
+- gh issue create --repo rebit-pro/rabit-api --title … --body-file /tmp/rabit-pr37-review-20260922/issue-1.md — PASS: #38 https://github.com/rebit-pro/rabit-api/issues/38 (clearable → null → trim).
+- Та же команда с issue-2.md — PASS: #39 https://github.com/rebit-pro/rabit-api/issues/39 (фильтры учреждения/съёмки/группы).
+- Перед созданием gh issue list --state all --limit 100 — дубликатов нет.
+- Note с B1/B2/P1 и B3/P2 (блокирует обязательный верификатор) подготовлен в /tmp/rabit-pr37-review-20260922/review-note.md; следующим действием gh pr comment 37 --body-file …
+- git diff --check — PASS (формат документации; это не тестовый прогон).
+
+
+### 2026-09-22 — ревью завершено
+
+- gh pr comment 37 --repo rebit-pro/rabit-api --body-file /tmp/rabit-pr37-review-20260922/review-note.md — PASS: https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5774904959.
+- E5-RV-04 PASS: gh api repos/rebit-pro/rabit-api/issues/comments/5774904959; gh issue view 38/39 --json title,body,url,state — опубликованные тела совпадают с подготовленными текстами, issues OPEN.
+- Повторный gh pr view 37 --json headRefOid,baseRefOid,state — PASS: PR OPEN, HEAD/base остались 46c442e/8cba22c. Ревью относится именно к ним.
+- Итог: B1/B2 — P1, B3 — P2, блокирующий финальный gate; PR не рекомендован к merge до исправлений. Неблокирующий долг — #38 и #39.
+- Тесты, E2E, контейнеры и приложение в этом ревью не запускались. git diff --check ранее PASS; прежние runtime-статусы выше оставлены как история реализации.
+- Перед завершением: локальный документационный коммит только plan.md/progress.md, без push; удалённый продуктовый HEAD сохраняется. Merge/deployment не выполняются.
+
+
+### 2026-09-22 — старт исправлений ревью
+
+- Пользователь: «Ревью закончилось. Правки помечены в нотах. Приступай к реализации. И потом ветку прогоняй полный E2E тест. И далее, если все хорошо, делай мерж в майн. И деплой на продакшн app.morefoto36.ru».
+- Прочитан note PR #37 (`gh pr view 37 --json comments`): B1–B3 блокирующие, #38/#39 — неблокирующие issues вне этого PR. В план добавлен раздел исправлений, gate, merge и развёртывания; флаг оформления на рабочем стенде не включается без отдельного решения.
+
+### 2026-09-22 — исправления B1–B3
+
+- B3: `ValidateQuoteUseCase` при расхождении fingerprint сравнивает сначала нормализованный состав (ID строк и количества): изменился — `QUOTE_STALE`; при том же составе изменились деньги — `QuotePriceChangedException` → `PRICE_CHANGED`. Новый unit-тест: quote на 1 шт., оформление 2 шт. → `QUOTE_STALE`. `verify-storefront.php:79` (quantity=2 → `QUOTE_STALE`) теперь согласован.
+- B1: `checkoutOutcome` считает неизвестным исходом любой ответ без однозначного отказа (нет ответа, статус 5xx, неожиданная ошибка), `isCreatedOrder` не принимает успешный статус без заказа и 64-hex ключа. Сохранённые тело и ключ сбрасываются только после ответа 4xx.
+- B2: `useLiveCheckout.recovering` и отдельный экран «Проверим прошлую отправку» в `CheckoutForm` показываются при сохранённой неподтверждённой отправке независимо от quote, состояния группы и `purchaseEnabled`; «Повторить отправку» отправляет точное тело с прежним ключом.
+- E2E: сценарий потерянного ответа дополнен закрытием группы (подмена состояния в ответе галереи) и перезагрузкой; новый сценарий — заказ сохранён, клиент получил 502 HTML. Оба ждут экран восстановления, повтор с прежним ключом, 201 и ровно один заказ в служебном поиске.
+- Проверки: `vendor/bin/phpunit --filter StorefrontQuoteTokenTest` — 6/6; PHPStan — No errors; php-cs-fixer — 0 исправлений; полный PHPUnit — OK 474/1880; phplint — 726 файлов; frontend `npm run check` — PASS; `npm run test:commerce` — 166/166.
+
+### 2026-09-22 — подготовка развёртывания и отмена merge
+
+- Чтение сервера `ssh rebit-pro` (без изменений): сервисы `morefoto_frontend` (d3-…-3bca388, 2/2), `morefoto_stage_backend`, `morefoto_stage_fpm`, `morefoto_stage_media_consumer`, `morefoto_stage_media_dispatcher` — `/app` из релиза `e4-20260921151701-7e606e5`; у FPM нет `MOREFOTO_CHECKOUT_ENABLED` (флаг выключен); свободно 28 ГБ. Прочитаны скрипты релиза E4 (`backup.sh`, `migrate.sh`, `restore-check.sh`). `https://app.morefoto36.ru/api/v1/public/orders/current` сейчас отвечает 200 HTML (маршрута ещё нет).
+- Локально подготовлены скрипты релиза E5 (резервная копия, проверка восстановления, миграция одной версии, подготовка app, переключение/откат backend); `bash -n` — PASS. На сервер не загружались.
+- Пользователь: «мерж в майн, пока делать не надо. Мы еще один круг ревью сделаем». Merge и развёртывание отложены; финальный gate продолжает работу для следующего круга ревью.
+
+### 2026-09-22 — финальный gate PASS
+
+- `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` на `5435ebc` (стенд `rabit-e2e-c2a30ffb9621`) — exit 0: phplint 726, PHPStan OK, PHPUnit 474/1880, frontend check/unit 166/build PASS, Notification H1 PASS, браузер 70 expected / 0 unexpected / 0 skipped / 0 flaky; `storefront-integration.log` — «E4 integration passed…»; `orders-integration.log` — «E5 integration passed: no raw secrets; one order per quote and receipt; key revoke, expiry, reissue and gallery independence; replay after closure, closed group and expired quote; access change during read; migration replay and protected down(); search on 1011 orders: 7 SQL for 10 and 100 rows, 7.5 ms per page of 100». Стенд остановлен, `cleanupErrors=[]`.
+- Визуальная проверка: просмотрены 8 снимков (оформление, заказ по ключу, служебные список и карточка на 1280×900 и 390×844) — PASS; сохранены в `docs/waves/e5/screenshots`, SHA-256 в `visual.json`.
+
+### 2026-09-22 — публикация gate в PR
+
+- `gh pr edit 37 --body-file …` — раздел «Проверки» заменён результатами финального gate, добавлено условие второго круга ревью; `gh pr comment 37 …` — [комментарий](https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775362711) с итогами gate и ссылками на отчёты `e2ba2b5`. Merge и развёртывание не выполнялись по решению пользователя.
+
+
+### 2026-09-22 — начало второго круга ревью
+
+- Пользователь поручил второй круг, фокус — блокирующие замечания; неблокирующие — issues.
+- E5-RV2-01 PASS: gh pr view 37 и git rev-parse HEAD — daa2dfb, base 8cba22c; git status --short пустой; AGENTS.md/CLAUDE.md с первого круга не менялись.
+- Diff с 46c442e: 20 файлов (+355/-90), единственный продуктовый коммит 5435ebc; остальные изменения — документация/отчёты и снимки.
+- E5-RV2-02 PENDING; E5-RV2-03 PENDING; E5-RV2-04 PENDING.
+
+
+### 2026-09-22 — результат статической проверки второго круга
+
+- E5-RV2-02 FAIL: единственный оставшийся блокер B1/P1. Цепочка: успешный commit + потерянный ответ/502 → повтор при выключенном MOREFOTO_CHECKOUT_ENABLED → 403 PURCHASE_DISABLED до receipts lookup (CreateOrderUseCase:40–44) → outcome message (rules.ts:44–45) → pending=null и новый requestId (useLiveCheckout.ts:99–101), синхронно в localStorage. После включения флага прежний заказ нельзя восстановить; новый quote допускает второй заказ. Временные неизвестные 408/429 имеют ту же ошибочную классификацию.
+- B2 PASS по статическому коду: recovery-ветка CheckoutForm раньше пустой корзины; точное pending-тело отправляется без fresh quote/open.
+- B3 PASS по статическому коду: composition(id, quantity) сравнивается отдельно и раньше денег; изменённый состав даёт QUOTE_STALE.
+- E5-RV2-03 PASS (чтение доказательств, без нового запуска): docs/waves/e5/verification.json указывает 5435ebc; git diff --name-only 5435ebc..daa2dfb содержит только docs/отчёты/снимки. Локально прочитаны api/var/e2e/rabit-e2e-c2a30ffb9621/{orders-integration.log,storefront-integration.log} с сообщениями E5/E4 integration passed. Исходники нового E2E выполняют сразу успешный повтор после 502/abort; цепочка с промежуточным 4xx не покрыта.
+- Новый неблокирующий долг не добавляется; #38/#39 уже существуют. Дубликатов issues не создаётся.
+- Note подготовлен: /tmp/rabit-pr37-review2-20260922/review-note.md. Следующая команда: gh pr comment 37 --repo rebit-pro/rabit-api --body-file /tmp/rabit-pr37-review2-20260922/review-note.md.
+
+
+### 2026-09-22 — второй круг опубликован
+
+- gh pr comment 37 --repo rebit-pro/rabit-api --body-file /tmp/rabit-pr37-review2-20260922/review-note.md — PASS: https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775455991.
+- E5-RV2-04 PASS: gh api repos/rebit-pro/rabit-api/issues/comments/5775455991 — текст публикации точно совпадает с подготовленным note.
+- Перед публикацией gh pr view 37 --json headRefOid,baseRefOid,state — HEAD daa2dfb, base 8cba22c, OPEN.
+- Вердикт: B2/B3 закрыты по коду; B1 частично открыт, один P1-блокер. Новых неблокирующих issues нет; #38/#39 не дублируются. Merge не рекомендован до исправления B1.
+- Новые тестовые/E2E-прогоны не запускались, продуктовый код не менялся. Результаты автора прочитаны как ранее полученное доказательство, не как новый запуск.
+- Перед завершением: git diff --check для документации; локальный commit plan.md/progress.md без push. Merge/deployment не выполняются.
+
+
+### 2026-09-22 — исправление B1 после второго круга: анализ
+
+- Пользователь: «по волне Е5 прошел второй круг ревью. Б1 пункт частично не реализован до конца. Прочитай… в ПР комментарии последний». Прочитан note https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775455991 (`gh pr view 37 --json comments`).
+- `git fetch origin --prune`: `origin/main` = 8cba22c, предок HEAD; `gh pr view 37` — OPEN, MERGEABLE, head daa2dfb.
+- Подтверждено чтением кода: `CreateOrderUseCase:40–42` отдаёт 403 `PURCHASE_DISABLED` до транзакции; `GALLERY_NOT_FOUND` (контекст галереи), `GALLERY_NOT_READY` и `IDEMPOTENCY_CONFLICT` — тоже до поиска по ключу; `rules.ts:44–45` → `message`, `useLiveCheckout.ts:100–101` стирают pending и меняют ключ, синхронный watcher сохраняет это в localStorage. Замечание воспроизводится по коду.
+- Коды после поиска (доказывают отсутствие заказа по ключу): `GALLERY_CLOSED`, поля покупателя, `QUOTE_*`, `PRICE_CHANGED`, `QUOTE_ALREADY_USED`, `INVALID_CART`, `DUPLICATE_CART_LINE`, `DIGITAL_ALREADY_IN_BUNDLE`, `STAFF_ELIGIBILITY_REQUIRED`. `INVALID_CART` также бросает `StorefrontMapper` до use case, но для того же тела это детерминированный отказ.
+- `verify-orders.php` уже сверяет число заказов в БД с числом запомненных браузером — новая E2E-цепочка закроет «заказ в БД один» на MySQL.
+- План записан в plan.md; тест-кейсы E5-FIX2-RULES, E5-FIX2-E2E, E5-FIX2-CHECK — PENDING. Продуктовый код не менялся, прогоны не запускались.
+
+
+### 2026-09-22 — исправление B1 после второго круга: реализация
+
+- Пользователь выбрал «Реализовать, E2E после ревью»: правки, быстрые проверки, push и ответ в PR; полный `make test-e2e` — после ревью без блокирующих замечаний.
+- `rules.ts`: `checkoutOutcome(problem, recovering)`. Нет ответа, 5xx, неожиданная ошибка → `unknown` с прежним текстом. При восстановлении попытку сбрасывают только коды, которые сервер отдаёт после поиска по ключу повтора (`unusedKeyCodes`: поля покупателя, `GALLERY_CLOSED`, `PRICE_CHANGED`, `QUOTE_*`, `QUOTE_ALREADY_USED`, ошибки корзины); прочие ответы → `unknown` с причиной («Оформление заказов сейчас недоступно.» / «Сервер пока не принял повтор.») и «Прошлая отправка сохранена — повторите её позже.». Первая отправка классифицируется как раньше.
+- `useLiveCheckout.ts`: `recovery = draft.pending !== null` фиксируется до отправки и передаётся в правила; сообщение `unknown` берётся из правил; pending и ключ сбрасываются только при другом исходе.
+- Unit: новый тест восстановления; существующие вызовы получили `recovering=false`.
+- E2E `zzzzz-orders.spec.ts`: `recover()` возвращает повторённый заказ и тело запроса; новый сценарий — реальный 201 заменён на 502, повтор → 403 `PURCHASE_DISABLED` (ответ маршрута в формате единой ошибки), reload, повтор → 429 HTML, повтор к серверу. Проверяются экран восстановления после каждого отказа, один ключ и одно тело во всех попытках, исходные id/accessKey, один заказ в служебном поиске; `verify-orders.php` сверяет число заказов в БД с запомненными браузером.
+- `docs/waves/e5/README.md`: правило восстановления дополнено.
+- `docker run --rm --network none -v /home/user/rabit-api/frontend:/app -v rabit-e5-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run test:commerce'` — 167/167 PASS.
+- Тот же контейнер, `npm run check` — первый запуск FAIL: prettier требовал перенос длинного сообщения в `rules.ts:46`; исправлено вручную; повтор — exit 0 (ESLint, vue-tsc, tsc e2e). `npm run test:commerce` повторно — 167/167.
+- `git diff --check` — PASS. Backend не менялся: PHPUnit/PHPStan/php-cs-fixer не требуются.
+
+### 2026-09-22 — исправление B1 опубликовано
+
+- Commit `8806fc2` (`fix(e5): keep an unconfirmed checkout through refusals before the key lookup`); `git push origin codex/e5-order-checkout` — PASS, `daa2dfb..8806fc2`.
+- `gh pr edit 37 --repo rebit-pro/rabit-api --body-file …` — в «Проверках» описаны исправление `8806fc2`, быстрые проверки и отложенный полный gate; условие merge — повторное ревью и финальный gate.
+- `gh pr comment 37 --repo rebit-pro/rabit-api --body-file …` — PASS: https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775712600. `gh api repos/rebit-pro/rabit-api/issues/comments/5775712600` и `gh pr view 37 --json body` совпадают с подготовленными текстами (без учёта завершающего перевода строки).
+- `gh pr view 37 --json headRefOid,baseRefOid,state,mergeable` — head 8806fc2, base 8cba22c, OPEN, MERGEABLE.
+
+### 2026-09-22 — поручение: issue и merge
+
+- Пользователь: «запиши этот, не блокер в issues. А ветку Е5 отправь, пожалуйста, в Майн». Повторное ревью исправления B1 пользователь не требует; по `CLAUDE.md` перед merge обязателен полный `make test-e2e` на итоговом HEAD и визуальная проверка — выполняются перед слиянием.
+- `git fetch origin --prune`: `origin/main` = 8cba22c, ветка = origin/codex/e5-order-checkout = 7889f27, рабочее дерево чистое.
+- `gh issue list --state all --limit 100` — issue о мигании экрана восстановления нет. PR #30 слит merge-коммитом (`7e606e5`, два родителя), ветка сохранена; в репозитории `delete_branch_on_merge=false`.
+- План дополнен разделом «Issue мигания восстановления, финальный gate и merge».
+- `gh issue create --repo rebit-pro/rabit-api --title "E5: не скрывать экран восстановления оформления на время повторной отправки" --body-file …` — PASS: https://github.com/rebit-pro/rabit-api/issues/41 (P3; ссылки на HEAD 7889f27). `gh issue view 41` — OPEN, тело совпадает с подготовленным. E5-ISSUE-FLICKER PASS.
+- E2E-сценарий E5-FIX2-E2E снимает экран восстановления с удержанным `PURCHASE_DISABLED` на 390×844 и 1280×900 (`e5-mobile-recovery.png`, `e5-desktop-recovery.png`), затем продолжает на desktop. `npm run check` в контейнере Playwright — exit 0.
+- Следующий шаг: commit, затем полный `make test-e2e` на этом HEAD.
+
+### 2026-09-22 — финальный gate на 0bd8f76 и подготовка merge
+
+- Commit `0bd8f76` (`test(e5): capture the checkout recovery screen for the visual check`), рабочее дерево чистое.
+- `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` — exit 0, стенд `rabit-e2e-d2f60778297f`, `state.json`: commit 0bd8f76, `stopped: true`, `cleanupErrors: []`.
+- Логи стенда (`api/var/e2e/rabit-e2e-d2f60778297f/`): phplint — 726 файлов OK; PHPStan — No errors; PHPUnit — OK (474 tests, 1880 assertions); `test:commerce` — 167/167; `npm run check` без ошибок; production build — PASS; Notification H1 integration passed; браузер — 71 expected / 0 unexpected / 0 skipped / 0 flaky (`frontend/reports/e2e-live/results.json`), три сценария восстановления passed с первой попытки; `storefront-integration.log` — E4 integration passed; `orders-integration.log` — E5 integration passed, поиск на 1012 заказах: 7 SQL для 10 и 100 строк, 7,7 мс на страницу из 100.
+- Визуальная проверка: просмотрены 10 снимков (оформление, восстановление с причиной удержания, заказ по ключу, служебные список и карточка; 1280×900 и 390×844) — переполнения и demo-хранилища нет; бледная «Найти» совпадает со снимком прошлого gate. Снимки скопированы в `docs/waves/e5/screenshots`, SHA-256 в `visual.json`.
+- `python3 tools/verify-wave-graph.py docs/waves/graph.json` — exit 0, 40 волн, `readyFromMain=["E5"]`; граф в этом круге не менялся.
+- Отчёты: `verification.json` (head 0bd8f76, 71 браузерный сценарий, unit 167, `mergeAllowed: true`), `visual.json`, README «Проверки».
+- Следующий шаг: документационный commit, push, описание и комментарий PR, затем `gh pr merge 37 --merge --match-head-commit <HEAD>` при неизменном `main`.

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Morefoto\Media\Application\Gallery\Service;
 
+use Morefoto\Media\Application\Gallery\Mapper\GalleryAssignmentMapper;
 use Morefoto\Media\Domain\Gallery\Repository\GalleryCapabilityRepository;
 use Morefoto\Media\Domain\Gallery\Repository\GalleryPhotoRepository;
 use Morefoto\Media\Domain\Gallery\Service\GalleryAvailability;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
 use Rebit\Share\Contracts\Media\Dto\GalleryAccessOutputDto;
 use Rebit\Share\Contracts\Media\Dto\GalleryContextOutputDto;
-use Rebit\Share\Contracts\Media\Dto\GalleryAssignmentOutputDto;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
 use Rebit\Share\Contracts\Organization\GalleryGroupInterface;
 use Rebit\Share\Shared\Exception\HttpException;
@@ -26,6 +26,7 @@ final readonly class GalleryAccess implements GalleryAccessInterface
         private GalleryPhotoRepository $photos,
         private GalleryAvailability $availability,
         private ClockInterface $clock,
+        private GalleryAssignmentMapper $mapper,
     ) {}
 
     public function context(string $token): GalleryContextOutputDto
@@ -56,17 +57,7 @@ final readonly class GalleryAccess implements GalleryAccessInterface
                 if (5000 === count($assignments)) {
                     throw new HttpException('GALLERY_TOO_LARGE', 409);
                 }
-                $assignments[] = new GalleryAssignmentOutputDto(
-                    (string)$row['ASSIGNMENT_ID'],
-                    (string)$row['PHOTO_ID'],
-                    (string)$row['CHILD_ID'],
-                    (int)$row['NATIVE_CHILD_ID'],
-                    (string)$row['CODE'],
-                    (string)$row['CODE'] . str_pad((string)$row['SEQUENCE_NO'], 3, '0', STR_PAD_LEFT),
-                    (int)$row['UF_WIDTH'],
-                    (int)$row['UF_HEIGHT'],
-                    (int)$row['UF_REVISION'],
-                );
+                $assignments[] = $this->mapper->fromRow($row);
             }
         }
 

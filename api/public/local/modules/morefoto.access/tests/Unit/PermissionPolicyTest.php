@@ -45,6 +45,12 @@ final class PermissionPolicyTest extends TestCase
         yield 'curator cannot manage staff' => [Role::CURATOR, Permission::STAFF_MANAGE, null, null, false];
         yield 'curator scoped list' => [Role::CURATOR, Permission::INSTITUTION_READ, null, null, true];
         yield 'invalid resource ID' => [Role::CURATOR, Permission::INSTITUTION_READ, 0, null, false];
+        yield 'organizer reads any order' => [Role::ORGANIZER, Permission::ORDER_READ, 99, null, true];
+        yield 'curator reads orders of own institution' => [Role::CURATOR, Permission::ORDER_READ, 11, null, true];
+        yield 'curator scoped order list' => [Role::CURATOR, Permission::ORDER_READ, null, null, true];
+        yield 'curator cannot read foreign orders' => [Role::CURATOR, Permission::ORDER_READ, 12, null, false];
+        yield 'head cannot read orders' => [Role::HEAD, Permission::ORDER_READ, 11, null, false];
+        yield 'teacher cannot read orders' => [Role::TEACHER, Permission::ORDER_READ, 11, 21, false];
     }
 
     public function testEmptyScopeNeverGrantsResourceAccess(): void
@@ -53,7 +59,7 @@ final class PermissionPolicyTest extends TestCase
         foreach ([Role::CURATOR, Role::HEAD, Role::TEACHER] as $role) {
             $profile = new StaffProfile(10, $role, true, 1, 1);
             self::assertTrue($policy->allows($profile, Permission::PROFILE_READ));
-            foreach ([Permission::INSTITUTION_READ, Permission::SHOOT_READ, Permission::GROUP_READ] as $permission) {
+            foreach ([Permission::INSTITUTION_READ, Permission::SHOOT_READ, Permission::GROUP_READ, Permission::ORDER_READ] as $permission) {
                 self::assertFalse($policy->allows($profile, $permission));
                 self::assertFalse($policy->allows($profile, $permission, institutionId: 11, groupId: 21));
             }

@@ -12,6 +12,7 @@ use Morefoto\Commerce\Domain\Catalog\Enum\ProductKind;
 use Morefoto\Commerce\Domain\Conditions\Service\SalesPolicy;
 use Morefoto\Commerce\Domain\Conditions\ValueObject\SalesProduct;
 use Morefoto\Commerce\Domain\Conditions\ValueObject\SaleItem;
+use Rebit\Share\Contracts\Media\Dto\GalleryAccessOutputDto;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
 use Rebit\Share\Contracts\Handoff\StaffEligibilityInterface;
 use Rebit\Share\Shared\Exception\HttpException;
@@ -31,7 +32,7 @@ final readonly class StorefrontQuote
     ) {}
 
     /** @param list<QuoteLineInputDto> $lines
-     * @return array{quote:CartQuote,fingerprint:string}
+     * @return array{quote:CartQuote,fingerprint:string,gallery:GalleryAccessOutputDto}
      */
     public function calculate(string $token, array $lines): array
     {
@@ -126,7 +127,7 @@ final readonly class StorefrontQuote
             'lines' => $output, 'total' => $priced->total, 'subtotal' => $priced->subtotal, 'discount' => $priced->staffDiscount,
             'giftSaving' => $priced->giftSaving, 'gifts' => array_keys($priced->gifts), 'count' => $count, 'invalid' => [],
             'revision' => $conditions->catalogRevision, 'conditionsRevision' => $conditions->conditionsRevision,
-        ], 'fingerprint' => $fingerprint];
+        ], 'fingerprint' => $fingerprint, 'gallery' => $gallery];
     }
 
     /** @return array{id:string,name:string,description:string,kind:string,price:int,printCount:int,format:string,unit:string,staffDiscount:bool,active:bool} */

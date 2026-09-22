@@ -31,13 +31,13 @@ const PublicRoutes: RouteRecordRaw = {
       name: 'Checkout',
       path: '/g/:token/checkout',
       component: () => import('@/modules/morefoto/views/CheckoutPage.vue'),
-      meta: { title: 'Оформление заказа', demoOnly: true }
+      meta: { title: 'Оформление заказа' }
     },
     {
       name: 'Order',
       path: '/orders/access/:orderKey',
       component: () => import('@/modules/morefoto/views/OrderPage.vue'),
-      meta: { title: 'Ваш заказ', demoOnly: true }
+      meta: { title: 'Ваш заказ' }
     },
     {
       name: 'Cart',

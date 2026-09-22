@@ -7,21 +7,25 @@ namespace Morefoto\Commerce\Presentation\Storefront;
 use Morefoto\Commerce\Application\Storefront\Dto\CatalogOutputDto;
 use Morefoto\Commerce\Application\Storefront\Dto\QuoteLineInputDto;
 use Morefoto\Commerce\Application\Storefront\Dto\QuoteOutputDto;
-use Morefoto\Commerce\Presentation\Storefront\Dto\CreateQuoteRequestDto;
+use Morefoto\Commerce\Presentation\Storefront\Dto\QuoteLineRequestDto;
 use Morefoto\Commerce\Presentation\Storefront\Dto\QuoteResultDto;
 use Morefoto\Commerce\Presentation\Storefront\Dto\StorefrontCatalogResultDto;
 use Rebit\Share\Shared\Exception\HttpException;
 
 final readonly class StorefrontMapper
 {
-    /** @return list<QuoteLineInputDto> */
-    public function lines(CreateQuoteRequestDto $request): array
+    /**
+     * @param array<QuoteLineRequestDto> $requestLines
+     *
+     * @return list<QuoteLineInputDto>
+     */
+    public function lines(array $requestLines): array
     {
-        if (!array_is_list($request->lines) || 100 < count($request->lines)) {
+        if (!array_is_list($requestLines) || 100 < count($requestLines)) {
             throw new HttpException('INVALID_CART', 422);
         }
         $lines = [];
-        foreach ($request->lines as $line) {
+        foreach ($requestLines as $line) {
             if (1 !== preg_match('/^[a-f0-9-]{36}$/D', $line->assignmentId) || 1 !== preg_match('/^[a-f0-9-]{36}$/D', $line->productId)) {
                 throw new HttpException('INVALID_CART', 422);
             }
@@ -57,6 +61,6 @@ final readonly class StorefrontMapper
             ];
         }
 
-        return new StorefrontCatalogResultDto($products, $output->giftThreshold, $output->giftForStaff, $output->revision, $output->conditionsRevision, ['receiptChannels' => [], 'purchaseEnabled' => false], null);
+        return new StorefrontCatalogResultDto($products, $output->giftThreshold, $output->giftForStaff, $output->revision, $output->conditionsRevision, ['receiptChannels' => $output->receiptChannels, 'purchaseEnabled' => $output->purchaseEnabled], null);
     }
 }
