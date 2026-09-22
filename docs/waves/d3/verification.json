@@ -4,7 +4,7 @@
   "date": "2026-09-22",
   "branch": "codex/d3-child-transfers",
   "base": "a43e4ea183dccf99659cd3c99322ba25f28ac1ce",
-  "pr": null,
+  "pr": "https://github.com/rebit-pro/rabit-api/pull/46",
   "dependencies": {
     "D2": "#21",
     "F1": "#25",

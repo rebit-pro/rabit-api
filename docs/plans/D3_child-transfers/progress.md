@@ -5,9 +5,9 @@
 - 2026-09-22.
   - Ветка `codex/d3-child-transfers`, worktree `/home/user/rabit-api-worktrees/d3-child-transfers`; основной checkout `/home/user/rabit-api` остаётся на `main`.
   - Base — `a43e4ea183dccf99659cd3c99322ba25f28ac1ce` (`main`: merge F2 `44f2e36` + документы развёртывания F2).
-  - Документы: `plan.md`, `docs/waves/d3/`.
+  - Документы: `plan.md`, `docs/waves/d3/`; PR https://github.com/rebit-pro/rabit-api/pull/46.
 - Завершено: решения, графы, контракт, backend, frontend, E2E-спецификации и верификатор, документы; быстрые проверки PASS.
-- Сейчас: публикация — commit, push, один PR в `main`.
+- Сейчас: PR [#46](https://github.com/rebit-pro/rabit-api/pull/46) ждёт ревью.
 - Один следующий шаг: после ревью без блокирующих замечаний — финальный `make test-e2e` и визуальная проверка (решение пользователя от 2026-09-22).
 - Блокеры: нет. Браузерные, интеграционные и визуальные кейсы — PENDING до финального gate.
 - Рабочее дерево: `tools/__pycache__/` — локальный кэш py_compile, не коммитится.
@@ -140,6 +140,11 @@
 - `baseline.commit` обоих графов → `a43e4ea`; `render-waves.py` — «Rendered 41 independent waves»; `validate.py` — passed; `verify-wave-graph.py` — 40/99 `["D3"]` и канон 41/99 `["E6","D3"]`; patch MoreFoto пересобран (`diff -u --suppress-blank-empty`, dry-run применения к исходной копии — PASS).
 - Код base не затронут (только документы F2), поэтому PHPUnit, PHPStan и frontend не повторялись.
 
+### 2026-09-22 — публикация на ревью
+
+- `git push -u origin codex/d3-child-transfers` — PASS; `gh pr create --base main` — https://github.com/rebit-pro/rabit-api/pull/46.
+- В описании: ответственность модулей, решения D3-DEC-01…08, зависимости, быстрые проверки, ограничения и условие merge — финальный `make test-e2e` и визуальная проверка после ревью без блокирующих замечаний.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда и доказательство |
@@ -170,4 +175,4 @@
 | D3-ARCH | PASS | 2026-09-22 | PHPUnit 561/2639 (архитектура `ChildTransferController` и `StaffRequestController`, контракты DTO), PHPStan 0, php-cs-fixer по изменённым файлам |
 | D3-UI | PENDING | 2026-09-22 | Frontend check/unit/build PASS; браузер и 4 снимка desktop/mobile — финальный gate |
 | D3-REGRESSION | PENDING | 2026-09-22 | PHPUnit 561 и frontend unit 172 PASS; полный браузерный набор — финальный gate |
-| D3-PUBLISH | PENDING | — | — |
+| D3-PUBLISH | PASS | 2026-09-22 | `git diff --check a43e4ea..HEAD` PASS; `origin/main` = base `a43e4ea`; `git push -u origin codex/d3-child-transfers`; `gh pr create` → PR #46. Merge — после ревью и финального gate |
