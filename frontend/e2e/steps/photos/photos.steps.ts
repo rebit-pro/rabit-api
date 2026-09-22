@@ -72,10 +72,7 @@ async function openMove(p: Page, code = 'A') {
 }
 async function transfer(p: Page, code = 'A') {
   await p.getByTestId('move-code').locator('input').fill(code);
-  await p
-    .getByRole('dialog')
-    .getByRole('button', { name: /^Перенести \d/ })
-    .click();
+  await p.getByRole('dialog').getByRole('button', { name: 'Перенести набор', exact: true }).click();
 }
 Given('организатор открыл фотографии R08', async function (this: CustomWorld) {
   const p = page(this);

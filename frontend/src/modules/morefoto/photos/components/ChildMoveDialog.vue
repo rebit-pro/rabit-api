@@ -41,7 +41,7 @@ watch(
     <v-card class="morefoto-app pa-6">
       <h2 id="move-heading">Перенести набор ребёнка {{ child }}</h2>
       <p class="my-4">
-        Из группы «{{ fromName }}» будут перенесены все {{ count }} кадра набора. Выбор отдельных кадров не влияет на перенос.
+        Из группы «{{ fromName }}» будет перенесён весь набор. Кадров в наборе: {{ count }}. Выбор отдельных кадров не влияет на перенос.
       </p>
       <p v-if="!groups.length" class="mf-muted mb-4">
         В этой съёмке нет другой группы того же типа в подготовке. Создайте её на странице съёмки.
@@ -59,7 +59,7 @@ watch(
       />
       <v-alert v-if="error" role="alert" type="error" variant="tonal" class="mt-4">{{ error }}</v-alert>
       <div class="mf-actions mt-6">
-        <v-btn :disabled="!target || !code || busy" :loading="busy" @click="$emit('move', target, code)">Перенести {{ count }} кадра</v-btn
+        <v-btn :disabled="!target || !code || busy" :loading="busy" @click="$emit('move', target, code)">Перенести набор</v-btn
         ><v-btn variant="outlined" :disabled="busy" @click="$emit('close')">Отмена</v-btn>
       </div>
     </v-card>
