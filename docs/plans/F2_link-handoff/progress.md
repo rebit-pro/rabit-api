@@ -5,7 +5,7 @@
 - Ветка `codex/f2-link-handoff` в worktree `/home/user/rabit-api-worktrees/f2-link-handoff`. Исходный base 8cba22c; актуальный `origin/main` 4b507b3 (merge E5 #37) влит в ветку. PR https://github.com/rebit-pro/rabit-api/pull/40.
 - Основной checkout `/home/user/rabit-api` использует параллельная сессия; его не трогать. E5 (PR #37) слита в main 22.09.2026.
 - Завершено: граф F2 → D3, backend HND-01…05 с контрактами Organization/Access/Media/Commerce, live frontend, E2E-спецификация и MySQL verifier (написаны, не запускались), уточнения контракта MoreFoto, отчёт волны; быстрый gate зелёный.
-- Сейчас: публикация (commit/push) и перевод PR в review.
+- Сейчас: PR #40 открыт для review (не draft), head 68082e1 опубликован, GitHub: MERGEABLE.
 - Следующий шаг: code review PR #40. После review без блокеров — полный `make test-e2e` (команда ниже), просмотр `f2-desktop-prepared.png`/`f2-mobile-open.png`, перенос результатов в progress/verification.
 - Блокеров нет. Открытых решений нет. Конфликты с E5 разрешены, быстрый gate на main 4b507b3 + diff F2 повторён.
 - Рабочее дерево: всё закоммичено. Внешний MoreFoto изменён без Git (граф и `build.py`), воспроизводимый patch — `docs/waves/f2/morefoto-contract.patch`.
@@ -117,6 +117,14 @@
   - frontend `npm run check` — PASS; `npm run test:commerce` — 169/169 PASS.
 - Спецификация E5 `zzzzz-orders` берёт товары из условий группы-фикстуры E4, где активны только товары E4. Товар F2 на неё не влияет.
 
+### 2026-09-22 — PR готов к review
+
+- Merge-коммит 68082e1 опубликован. `git diff --cached --check` по своим файлам — PASS; хвостовые пробелы есть только в контекстных строках `docs/waves/e5/morefoto-contract.patch`, пришедшего из main.
+- `gh pr edit 40 --body-file …` — описание обновлено: реализация, проверки, отложенный E2E, подключение.
+- `gh pr ready 40` — PR переведён из draft в review.
+- `gh pr view 40` — OPEN, MERGEABLE, head 68082e1.
+- Merge и deployment не выполнялись.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда и доказательство |
@@ -139,4 +147,4 @@
 | F2-CONTRACT | PASS (unit) | 2026-09-22 | `GroupLinkContractTest` 11/66: строгий JSON, INVALID_SENT_AT, REVIEW/CONFIRMATION_REQUIRED, INVALID_REASON, фильтры, форма ответов |
 | F2-UI | PASS (check/unit), E2E PENDING | 2026-09-22 | `npm run check` PASS, `npm run test:commerce` 160/160; браузер — после review |
 | F2-VISUAL | PENDING | — | после review, `make test-e2e` + просмотр PNG |
-| F2-PUBLISH | PENDING | — | — |
+| F2-PUBLISH | PASS (review) | 2026-09-22 | PR #40 ready for review, MERGEABLE; merge — после review и полного E2E |
