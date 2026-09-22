@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/auth';
 import { getDemoNow } from '../mocks/clock';
 import { loadHandoff } from './service';
 import type { HandoffWorkspace } from './types';
-export function useHandoff() {
+export function useHandoff(load: (token: string, requestId?: string) => Promise<HandoffWorkspace> = loadHandoff) {
   const route = useRoute(),
     auth = useAuthStore(),
     data = shallowRef<HandoffWorkspace | null>(null),
@@ -18,7 +18,7 @@ export function useHandoff() {
     error.value = '';
     try {
       const requestId = typeof route.params.requestId === 'string' ? route.params.requestId : undefined;
-      const next = await loadHandoff(auth.getAccessToken() ?? '', requestId);
+      const next = await load(auth.getAccessToken() ?? '', requestId);
       if (alive && id === run) data.value = next;
     } catch (e) {
       if (alive && id === run) {

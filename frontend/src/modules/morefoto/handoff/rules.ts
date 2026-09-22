@@ -1,7 +1,7 @@
 import type { Catalog } from '../commerce/types.js';
 import type { ManagedGroup } from '../organization/types.js';
 import type { ManagedPhoto, PhotoState } from '../photos/types.js';
-import type { HandoffErrors, RequestRow, SubmittedRow, StaffRequest, ReviewBundle, RequestPreview } from './types.js';
+import type { HandoffErrors, LinkCommand, RequestRow, SubmittedRow, StaffRequest, ReviewBundle, RequestPreview } from './types.js';
 import { nextChildCode } from '../photos/rules.ts';
 
 export function moscowInput(value: string): string {
@@ -13,6 +13,25 @@ export function parseTransmission(value: string, now: string): string | null {
   const time = Date.parse(value + ':00+03:00');
   if (!Number.isFinite(time) || time > Date.parse(now) || moscowInput(new Date(time).toISOString()) !== value) return null;
   return new Date(time).toISOString();
+}
+/** Moscow form input `YYYY-MM-DDTHH:mm` as the server moment with an explicit offset. */
+export function serverMoment(value: string): string {
+  return value + ':00+03:00';
+}
+/** Client checks before a live link command; the server repeats every rule and owns the final answer. */
+export function liveLinkErrors(command: LinkCommand, now: string): HandoffErrors {
+  const errors: HandoffErrors = {};
+  if (command.action === 'prepare') {
+    if (!command.photosReviewed) errors.photosReviewed = 'Подтвердите проверку фотографий.';
+    if (!command.conditionsReviewed) errors.conditionsReviewed = 'Подтвердите проверку продукции, цен и условий.';
+    if (!command.staffReviewed) errors.staffReviewed = 'Подтвердите проверку сотрудников и ответственных.';
+    return errors;
+  }
+  if (!parseTransmission(command.sentAt, now)) errors.sentAt = 'Укажите существующую дату и время не позже текущего (МСК).';
+  if (!command.confirmed) errors.confirmed = 'Подтвердите факт передачи и показанные сроки.';
+  const reason = command.reason.trim().length;
+  if (command.action === 'correct' && (reason < 5 || reason > 500)) errors.reason = 'Укажите причину исправления: от 5 до 500 символов.';
+  return errors;
 }
 export function calendarDays(value: string, days: number): string {
   return new Date(Date.parse(value) + days * 86400000).toISOString();

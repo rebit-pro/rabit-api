@@ -1,0 +1,86 @@
+{
+  "wave": "F2",
+  "status": "review-pending",
+  "date": "2026-09-22",
+  "branch": "codex/f2-link-handoff",
+  "base": "8cba22c7655b5886d5fe663523214bcd059e674b",
+  "pr": "https://github.com/rebit-pro/rabit-api/pull/40",
+  "dependencies": {
+    "E3": "#20",
+    "F1": "#25",
+    "E4": "#30"
+  },
+  "decisions": [
+    "F2-D3-ORDER",
+    "raw gallery key stored for staff",
+    "sentAt not before the link issue minute",
+    "pending staff requests block preparation until D3",
+    "own link revision"
+  ],
+  "scope": [
+    "HND-01",
+    "HND-02",
+    "HND-03",
+    "HND-04",
+    "HND-05"
+  ],
+  "checks": {
+    "phpLint": {
+      "result": "PASS",
+      "command": "php -l over changed PHP files in rabit-api-php-cli:d1-local"
+    },
+    "phpstan": {
+      "result": "PASS",
+      "command": "vendor/bin/phpstan analyse --no-progress --memory-limit=2G",
+      "note": "first run failed once on ?? after a repeated find(); fixed by @phpstan-impure on GroupDirectoryInterface::find"
+    },
+    "phpunit": {
+      "result": "PASS",
+      "command": "vendor/bin/phpunit --testsuite=unit",
+      "tests": 318,
+      "assertions": 1459,
+      "newTests": 37
+    },
+    "style": {
+      "result": "PASS",
+      "command": "php-cs-fixer fix --path-mode=intersection over changed files; override for api/tools/e2e"
+    },
+    "frontend": {
+      "result": "PASS",
+      "command": "npm run check && npm run test:commerce",
+      "unitTests": 160
+    },
+    "graph": {
+      "result": "PASS",
+      "command": "python3 tools/verify-wave-graph.py docs/waves/graph.json",
+      "readyFromMain": [
+        "E5",
+        "F2"
+      ]
+    },
+    "contract": {
+      "result": "PASS",
+      "command": "python3 ../MoreFoto/docs/05-rest-api/validate.py; node docs/05-rest-api/validate-postman.cjs (from MoreFoto)"
+    },
+    "browserE2E": {
+      "result": "PENDING",
+      "reason": "user order: full make test-e2e after review without blocking comments",
+      "spec": "frontend/e2e/live/zzzz-links.spec.ts"
+    },
+    "integration": {
+      "result": "PENDING",
+      "script": "api/tools/e2e/verify-links.php"
+    },
+    "visualDesktopMobile": {
+      "result": "PENDING",
+      "artifacts": [
+        "f2-desktop-prepared.png",
+        "f2-mobile-open.png"
+      ]
+    }
+  },
+  "remaining": [
+    "full make test-e2e with browser, MySQL verifier and desktop/mobile review after the code review"
+  ],
+  "complete": false
+}

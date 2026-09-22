@@ -127,3 +127,35 @@
        "outputBoundary": "Завершённые операции HND-01, HND-02, HND-03, HND-04, HND-05; Ссылка выдаётся после готовности, сроки считаются от записанного факта передачи.",
        "mergeCheck": "Отдельный PR к актуальному main; все dependsOn уже merged. Проверки на main + только этот diff, без файлов/коммитов незамерженных волн; установить миграции и DI своего сценария. Повторить проверку после обновления base."
      },
+--- a/docs/05-rest-api/build.py
++++ b/docs/05-rest-api/build.py
+@@ -241,21 +241,23 @@
+     save={"order_version":"version"},note="correctionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5: correctionPhotos — готовые кадры детей из строк заказа в его группе [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.")
+ # Handoff.
+ add("handoff","HND-01","GET","/group-links","Ссылки и сроки по доступной области",ALL,"items<LinkGroup>, meta",sample=list_sample,
+-    query=[("institutionId","","Учреждение"),("shootId","","Съёмка"),("state","","preparing/open/closed")])
++    query=[("institutionId","","Учреждение"),("shootId","","Съёмка"),("state","","preparing/open/closed")],
++    note="F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.")
+ add("handoff","HND-02","GET","/groups/{group_id}/link","Подготовка, ссылка и история группы",ALL,
+-    "groupId, galleryToken, revision, signature, prepared, problems, sentAt, closesAt, history",
+-    save={"gallery_token":"galleryToken","link_revision":"revision","link_signature":"signature"})
++    "groupId, name, kind, institutionId, institutionName, shootId, shootName, galleryToken, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, referenceNow, photoCount, childCount, history",
++    save={"gallery_token":"galleryToken","link_revision":"revision","link_signature":"signature"},
++    note="F2: galleryToken — действующий ключ галереи, выдаётся первой HND-03 (до неё null); сырой ключ хранится для повторного копирования по решению 22.09.2026, покупатель разрешается по SHA-256. revision — версия ссылки Handoff (отсутствующая запись — 1), не UF_REVISION группы. signature — SHA-256 серверного состояния: кадры с revision/статусом, назначения, обложка, действующие условия и товары, название/тип группы, воспитатель, незавершённые заявки сотрудников. problems — noPhotos, photosProcessing, unassignedPhotos, noProducts, staffRequestsPending (незавершённые заявки блокируют до D3). prepared — передача записана либо подпись подготовки совпадает с текущей без проблем. history[]: kind prepared/transmitted/corrected, actorId, actorName, at, sentAt, closesAt, deliveryAt, previousSentAt, previousClosesAt, previousDeliveryAt, reason. Вне области — 404 GROUP_NOT_FOUND. Ответ no-store.")
+ add("handoff","HND-03","POST","/groups/{group_id}/link-preparations","Подтвердить проверку перед открытием",O,
+     "revision, signature, prepared",{"revision":rev("link_revision"),"signature":"{{link_signature}}",
+         "photosReviewed":True,"conditionsReviewed":True,"staffReviewed":True,"confirmed":True},
+     save={"link_revision":"revision","link_signature":"signature"},
+-    note="Актуальны все фотографии, условия и списки; проблемы блокируют проверку.")
++    note="Актуальны все фотографии, условия и списки; проблемы блокируют проверку. F2: Idempotency-Key 32 hex. photosReviewed/conditionsReviewed/staffReviewed/confirmed = true, иначе 422 REVIEW_REQUIRED. Устаревшие revision/signature — 409 REVISION_CONFLICT/SIGNATURE_CONFLICT; проблемы — 409 LINK_NOT_READY; после передачи — 409 LINK_ALREADY_SENT; куратор, руководитель, воспитатель — 403 FORBIDDEN. Выдаёт ключ галереи, если действующего нет.")
+ add("handoff","HND-04","POST","/groups/{group_id}/link-transmissions","Отметить фактическую передачу ссылки","О/К/В",
+     "revision, sentAt, closesAt, deliveryAt",{"revision":rev("link_revision"),"signature":"{{link_signature}}","sentAt":"{{sent_at}}","confirmed":True},
+-    save={"link_revision":"revision"},note="Фиксирует факт ручной отправки в чат. Не отправляет сообщение. Семь календарных дней от sentAt; повтор не сдвигает срок.")
++    save={"link_revision":"revision"},note="Фиксирует факт ручной отправки в чат. Не отправляет сообщение. Семь календарных дней от sentAt; повтор не сдвигает срок. F2: sentAt — ISO 8601 с offset и целыми секундами (422 INVALID_SENT_AT), не позже серверного now (422 SENT_AT_IN_FUTURE) и не раньше минуты выдачи ключа (422 SENT_AT_BEFORE_LINK); confirmed=true (422 CONFIRMATION_REQUIRED). Нужны актуальная подготовка (409 LINK_NOT_PREPARED) и signature (409 SIGNATURE_CONFLICT). closesAt = sentAt + 7, deliveryAt = closesAt + 7 календарных дней Europe/Moscow; пишет журнал Organization. Повтор после записанного факта — 200 с текущими сроками без истории, даже с другим ключом и устаревшей формой; тот же ключ с другим телом — 409 IDEMPOTENCY_CONFLICT. Руководитель — 403.")
+ add("handoff","HND-05","POST","/groups/{group_id}/link-date-corrections","Исправить дату передачи",OK,
+     "revision, sentAt, closesAt, deliveryAt",reason(revision=rev("link_revision"),signature="{{link_signature}}",sentAt="{{sent_at}}"),
+-    save={"link_revision":"revision"},note="Сохраняются старые даты и причина; пересчитываются сроки, учитываются продления.")
++    save={"link_revision":"revision"},note="Сохраняются старые даты и причина; пересчитываются сроки, учитываются продления. F2: reason 5–500 символов после trim (422 INVALID_REASON), confirmed=true. До передачи — 409 LINK_NOT_SENT; та же дата — 422 SENT_AT_UNCHANGED; границы sentAt как в HND-04. closesAt = max(sentAt + 7, согласованное продление), deliveryAt = closesAt + 7 календарных дней Europe/Moscow; сдвиг назад может сразу закрыть приём. Воспитатель и руководитель — 403. Ограничения D12 после оплаты/производства добавляют G1 и волны L.")
+ add("handoff","HND-06","GET","/staff-requests","Списки детей сотрудников","О/К/В","items<StaffRequest>, meta",
+     query=[("institutionId","","Учреждение"),("shootId","","Съёмка"),("status","","submitted/clarification/transferred")],sample=list_sample,
+     note="Воспитатель видит собственные списки в назначенной области.")

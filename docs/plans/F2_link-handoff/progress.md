@@ -2,21 +2,16 @@
 
 ## Точка продолжения
 
-- Ветка `codex/f2-link-handoff` в worktree `/home/user/rabit-api-worktrees/f2-link-handoff`. Base `origin/main` 8cba22c7655b5886d5fe663523214bcd059e674b. Draft PR https://github.com/rebit-pro/rabit-api/pull/40 (план; реализация добавляется в ту же ветку).
+- Ветка `codex/f2-link-handoff` в worktree `/home/user/rabit-api-worktrees/f2-link-handoff`. Base `origin/main` 8cba22c7655b5886d5fe663523214bcd059e674b. PR https://github.com/rebit-pro/rabit-api/pull/40.
 - Основной checkout `/home/user/rabit-api` занят параллельной сессией E5 (PR #37); его не трогать.
-- Завершено:
-  - перестановка F2 перед D3 в `docs/waves/graph.json` и каноническом плане MoreFoto;
-  - сбор спецификации и кода;
-  - согласование четырёх решений (см. plan.md);
-  - plan/progress.
-- Сейчас: backend F2 реализован и покрыт unit-тестами; следующий этап — live frontend экрана ссылок.
-- Следующий шаг: frontend `/cabinet/links` в live-режиме (HND-01…05), затем E2E-спецификация и verifier.
-- Блокеров нет. Полный `make test-e2e` — только после review без блокеров (указание пользователя от 22.09.2026 по E5).
-- Рабочее дерево: backend F2 закоммичен отдельным коммитом (см. хронологию). Внешний MoreFoto уже изменён (без Git), резервная копия исходных файлов в scratchpad сессии.
+- Завершено: граф F2 → D3, backend HND-01…05 с контрактами Organization/Access/Media/Commerce, live frontend, E2E-спецификация и MySQL verifier (написаны, не запускались), уточнения контракта MoreFoto, отчёт волны; быстрый gate зелёный.
+- Сейчас: публикация (commit/push) и перевод PR в review.
+- Следующий шаг: code review PR #40. После review без блокеров — полный `make test-e2e` (команда ниже), просмотр `f2-desktop-prepared.png`/`f2-mobile-open.png`, перенос результатов в progress/verification.
+- Блокеров нет. Открытых решений нет. После merge E5 (#37) ожидать текстовые конфликты в `graph.json`, `tools/run-browser-e2e.py`, `api/tools/e2e/prepare.php`, router и `CabinetLayout.vue`; повторить затронутые проверки.
+- Рабочее дерево: всё закоммичено. Внешний MoreFoto изменён без Git (граф и `build.py`), воспроизводимый patch — `docs/waves/f2/morefoto-contract.patch`.
 - Команды следующей проверки:
+  - `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`
   - `python3 tools/verify-wave-graph.py docs/waves/graph.json`
-  - `python3 /home/user/MoreFoto/docs/05-rest-api/validate.py`
-  - `cd /home/user/MoreFoto && node docs/05-rest-api/validate-postman.cjs`
 
 ## Хронология
 
@@ -81,6 +76,35 @@
 - Полный unit-набор после тестов — `phpunit --testsuite=unit` 318 tests / 1459 assertions PASS; PHPStan без ошибок; php-cs-fixer по 89 изменённым файлам исправил форматирование 3 тестов.
 - В `api/tools/e2e/prepare.php` добавлена миграция `20260922150001`.
 
+### 2026-09-22 — frontend, E2E-спецификация, контракт и отчёт
+
+- Frontend live `/cabinet/links`:
+  - `links-api.ts` (HND-01…05, маппинг кодов ошибок);
+  - `loadLinks` по HND-01 (все страницы, без ключей);
+  - live-ветка `saveLink` с клиентскими проверками `liveLinkErrors`;
+  - ключ и история по запросу HND-02; тексты проблем по кодам;
+  - пункт меню для всех ролей персонала, маршрут в live-whitelist;
+  - «Ссылка передана» в карточке съёмки.
+- `npm ci` в образе playwright v1.52.0 с томом `rabit-f2-node`; первый `npm run check` — FAIL: 6 ошибок prettier (форматирование); `eslint --fix` по 4 файлам, повтор `npm run check` — PASS. `npm run test:commerce` — 160/160 PASS (2 новых теста F2).
+- E2E `frontend/e2e/live/zzzz-links.spec.ts`:
+  - UI-подготовка организатором; инвалидация переименованием;
+  - передача воспитателем на 390 px; галерея и quote;
+  - повтор и идемпотентность;
+  - исправление куратором с нижней границей по минуте первого события `prepared`;
+  - запреты руководителю и воспитателю; 404 чужому воспитателю;
+  - скриншоты desktop/mobile.
+
+  Проверяется типизацией и линтом (`npm run check` PASS); не запускалась.
+- `api/tools/e2e/verify-links.php`:
+  - след в БД: история, revision 5, единственный ключ и его хеш, журнал Organization, 5 записей идемпотентности;
+  - календарь на MySQL с управляемыми часами: +7/+7, повтор, внутреннее продление сохраняется при исправлении, LINK_NOT_SENT, SENT_AT_IN_FUTURE;
+  - граница `now == closesAt` в каталоге групп и галерее.
+
+  Подключён в `tools/run-browser-e2e.py`. `php -l` PASS, php-cs-fixer override — 0 правок. Не запускался.
+- Контракт MoreFoto: пометки F2 в `build.py` для HND-01…05 (формы, коды, правила дат и повтора). `build.py`/`render-waves.py` — PASS, `validate.py` exit 0, `validate-postman.cjs` exit 0. Единый patch источников — `docs/waves/f2/morefoto-contract.patch` (граф + build.py).
+- Отчёт `docs/waves/f2/README.md`, `verification.json` (status review-pending), раздел F2 в `docs/testing/manual-wave-checklist.md`.
+- Объём рукописных изменений к main — около 5,7 тыс. строк (backend ~3,1, тесты ~1,2, frontend ~0,6, документы ~0,6), в пределах согласованного лимита 6 тыс.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда и доказательство |
@@ -89,18 +113,18 @@
 | F2-CALENDAR | PASS (unit) | 2026-09-22 | `GroupCalendarDeliveryTest` 8/24: +7/+7 МСК, год/29 февраля/UTC, будущее, повтор, исправление, продление, граница `now == closesAt`. Сервисный слой — PENDING verifier MySQL |
 | F2-READINESS | PASS (unit) | 2026-09-22 | `LinkPolicyTest`: коды проблем и изменение подписи от названия/воспитателя/материалов/условий/заявок |
 | F2-PERMISSIONS | PASS (unit), E2E PENDING | 2026-09-22 | `LinkPolicyTest` матрица D08; `GroupLinkWorkflowTest` 403/404 для куратора, руководителя, воспитателя, чужого куратора |
-| F2-PREPARE | PENDING | — | — |
-| F2-TRANSMIT | PENDING | — | — |
-| F2-REPEAT | PENDING | — | — |
-| F2-CORRECT | PENDING | — | — |
-| F2-EXTENSION | PENDING | — | — |
-| F2-CLOSE-BOUNDARY | PENDING | — | — |
-| F2-INVALIDATION | PENDING | — | — |
+| F2-PREPARE | PASS (unit), E2E PENDING | 2026-09-22 | `GroupLinkWorkflowTest`: успех, LINK_NOT_READY, REVISION/SIGNATURE_CONFLICT, 403/404, LINK_ALREADY_SENT; `GroupLinkContractTest` REVIEW_REQUIRED |
+| F2-TRANSMIT | PASS (unit), E2E PENDING | 2026-09-22 | `GroupLinkWorkflowTest`: передача воспитателем, LINK_NOT_PREPARED, SENT_AT_BEFORE_LINK, 403 руководителю; будущая дата — `GroupCalendarDeliveryTest` |
+| F2-REPEAT | PASS (unit), E2E PENDING | 2026-09-22 | `GroupLinkWorkflowTest`: повтор устаревшей формой без изменения сроков; replay и IDEMPOTENCY_CONFLICT |
+| F2-CORRECT | PASS (unit), E2E PENDING | 2026-09-22 | `GroupLinkWorkflowTest`: LINK_NOT_SENT, 403 воспитателю, история с прежними датами и причиной; `GroupLinkContractTest` INVALID_REASON; SENT_AT_UNCHANGED — `GroupCalendarDeliveryTest` |
+| F2-EXTENSION | PASS (unit), verifier PENDING | 2026-09-22 | `GroupCalendarDeliveryTest` продление сохраняется/перекрывается; MySQL — `verify-links.php` |
+| F2-CLOSE-BOUNDARY | PASS (unit), verifier PENDING | 2026-09-22 | `GroupCalendarDeliveryTest` граница `now == closesAt`; каталог групп и галерея — `verify-links.php` |
+| F2-INVALIDATION | PASS (unit), E2E PENDING | 2026-09-22 | `LinkPolicyTest` и `GroupLinkWorkflowTest`: смена материалов сбрасывает `prepared`, передача отклоняется |
 | F2-RACE-MEDIA | PASS (unit) | 2026-09-22 | `MediaLockRecheckTest` 2/8: разметка и обложка после ожидания блокировки → GROUP_LOCKED, запись не выполняется |
-| F2-GALLERY-QUOTE | PENDING | — | — |
-| F2-TOKEN | PENDING | — | — |
+| F2-GALLERY-QUOTE | PENDING | — | `zzzz-links.spec.ts`, после review |
+| F2-TOKEN | PASS (unit), E2E PENDING | 2026-09-22 | `GroupLinkWorkflowTest` ключ после подготовки; `GroupLinkContractTest` список без ключа; хеш в БД — `verify-links.php` |
 | F2-ARCH | PASS (частично) | 2026-09-22 | architecture-тест контроллера, DTO-архитектура F1 покрывает новые DTO, PHPStan 0, php-cs-fixer; финальный прогон — перед PR |
 | F2-CONTRACT | PASS (unit) | 2026-09-22 | `GroupLinkContractTest` 11/66: строгий JSON, INVALID_SENT_AT, REVIEW/CONFIRMATION_REQUIRED, INVALID_REASON, фильтры, форма ответов |
-| F2-UI | PENDING | — | — |
-| F2-VISUAL | PENDING | — | — |
+| F2-UI | PASS (check/unit), E2E PENDING | 2026-09-22 | `npm run check` PASS, `npm run test:commerce` 160/160; браузер — после review |
+| F2-VISUAL | PENDING | — | после review, `make test-e2e` + просмотр PNG |
 | F2-PUBLISH | PENDING | — | — |

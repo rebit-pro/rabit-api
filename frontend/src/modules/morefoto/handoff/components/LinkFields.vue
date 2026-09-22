@@ -2,7 +2,8 @@
 import { computed } from 'vue';
 import type { LinkCommand, LinkGroup, HandoffErrors } from '../types';
 import { calendarDays, closingAfterCorrection, parseTransmission } from '../rules';
-import { formatMoment } from '../display';
+import { formatMoment, problemText } from '../display';
+import { isMockApiEnabled } from '@/mocks/config';
 const props = defineProps<{ command: LinkCommand; group: LinkGroup; now: string; errors: HandoffErrors }>();
 const emit = defineEmits<{ change: [value: Partial<LinkCommand>] }>();
 const sent = computed(() => parseTransmission(props.command.sentAt, props.now));
@@ -16,7 +17,9 @@ const closing = computed(() => (sent.value ? closingAfterCorrection(sent.value, 
     <p class="mb-4">
       {{ group.photoCount }} фото · {{ group.childCount }} наборов. После проверки ответственный сможет отметить передачу ссылки родителям.
     </p>
-    <v-alert v-if="group.problems.length" type="warning" variant="tonal" class="mb-5">{{ group.problems.join(' ') }}</v-alert>
+    <v-alert v-if="group.problems.length" type="warning" variant="tonal" class="mb-5">{{
+      group.problems.map(problemText).join(' ')
+    }}</v-alert>
     <v-checkbox
       :model-value="command.photosReviewed"
       label="Фотографии и коды проверены"
@@ -42,7 +45,7 @@ const closing = computed(() => (sent.value ? closingAfterCorrection(sent.value, 
   </template>
   <template v-else>
     <p class="mb-4">Укажите, когда ссылка действительно была передана родителям. Приём длится 7 календарных дней с этого момента.</p>
-    <p class="mf-muted mb-5">Текущее время демонстрации: {{ formatMoment(now) }}.</p>
+    <p class="mf-muted mb-5">{{ isMockApiEnabled ? 'Текущее время демонстрации' : 'Текущее время' }}: {{ formatMoment(now) }}.</p>
     <v-text-field
       :model-value="command.sentAt"
       label="Дата и время передачи (МСК)"

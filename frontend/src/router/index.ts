@@ -48,7 +48,8 @@ router.beforeEach(async (to) => {
         'OrganizationShoot',
         'PhotoWorkspace',
         'StaffRequests',
-        'StaffRequest'
+        'StaffRequest',
+        'Links'
       ].includes(String(to.name))
     )
       return auth.homePath;

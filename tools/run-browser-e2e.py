@@ -229,6 +229,9 @@ def test_live(state):
     output = docker("exec", state["id"] + "-fpm", "php", "/app/tools/e2e/verify-storefront.php", log=Path(state["report"], "storefront-integration.log"))
     if "E4 integration passed" not in output:
         raise RuntimeError("Storefront integration did not complete")
+    output = docker("exec", state["id"] + "-fpm", "php", "/app/tools/e2e/verify-links.php", log=Path(state["report"], "links-integration.log"))
+    if "F2 integration passed" not in output:
+        raise RuntimeError("Link integration did not complete")
     state["browser"] = stats
     save(state)
     print("Browser scenarios passed: " + str(stats["expected"]), flush=True)
