@@ -4,7 +4,7 @@
 
 - 2026-09-22.
   - Ветка `codex/d3-child-transfers`, worktree `/home/user/rabit-api-worktrees/d3-child-transfers`; основной checkout `/home/user/rabit-api` остаётся на `main`.
-  - Base — `44f2e36367351614fab66fdc58fa3dc7ee3899b3` (merge F2, PR #40).
+  - Base — `a43e4ea183dccf99659cd3c99322ba25f28ac1ce` (`main`: merge F2 `44f2e36` + документы развёртывания F2).
   - Документы: `plan.md`, `docs/waves/d3/`.
 - Завершено: решения, графы, контракт, backend, frontend, E2E-спецификации и верификатор, документы; быстрые проверки PASS.
 - Сейчас: публикация — commit, push, один PR в `main`.
@@ -133,6 +133,12 @@
   - frontend в `playwright:v1.52.0-jammy` с томом `rabit-e5-node` (lockfile не менялся с E5): `npm run check` — PASS (сначала prettier и 6 ошибок типов спецификации — исправлено), `npm run test:commerce` — 172/172, `npm run build` — PASS;
   - PHPUnit — OK, 561/2639 без уведомлений; PHPStan — No errors; php-cs-fixer — исправлен 1 файл (`verify-transfers.php`); `php -l` верификатора — PASS; `python3 -m py_compile tools/run-browser-e2e.py` — PASS;
   - ссылки после DEC-08: старые пути остались только в пометке об истории OPS.
+
+### 2026-09-22 — перенос на актуальный main
+
+- `git fetch --prune origin`: `origin/main` = `a43e4ea` (docs(f2): развёртывание и откат F2, только файлы F2). `git rebase origin/main` — 3 коммита D3 без конфликтов; `git merge-base --is-ancestor origin/main HEAD` — PASS.
+- `baseline.commit` обоих графов → `a43e4ea`; `render-waves.py` — «Rendered 41 independent waves»; `validate.py` — passed; `verify-wave-graph.py` — 40/99 `["D3"]` и канон 41/99 `["E6","D3"]`; patch MoreFoto пересобран (`diff -u --suppress-blank-empty`, dry-run применения к исходной копии — PASS).
+- Код base не затронут (только документы F2), поэтому PHPUnit, PHPStan и frontend не повторялись.
 
 ## Результаты тест-кейсов
 

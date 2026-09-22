@@ -5,7 +5,7 @@
    "baseline": {
      "branch": "main",
 -    "commit": "4b507b3b3c27719888e38f582b48e6a56c0c5946",
-+    "commit": "44f2e36367351614fab66fdc58fa3dc7ee3899b3",
++    "commit": "a43e4ea183dccf99659cd3c99322ba25f28ac1ce",
      "mergedWaves": [
        "A1",
        "A2",
@@ -103,7 +103,7 @@
  ## Текущий независимый набор
 
 -В main `4b507b3b3c27719888e38f582b48e6a56c0c5946` приняты: A1, A2, A3, A4, A5, A6, A7, A8, B1, C1, E1, C2, C3, C4, B2, D1, D2, E2, E3, F1, H1, E4, E5. Готовы по графу: E6, F2. Это снимок; фактические зависимости и открытые решения проверяются перед стартом.
-+В main `44f2e36367351614fab66fdc58fa3dc7ee3899b3` приняты: A1, A2, A3, A4, A5, A6, A7, A8, B1, C1, E1, C2, C3, C4, B2, D1, D2, E2, E3, F1, H1, E4, E5, F2. Готовы по графу: E6, D3. Это снимок; фактические зависимости и открытые решения проверяются перед стартом.
++В main `a43e4ea183dccf99659cd3c99322ba25f28ac1ce` приняты: A1, A2, A3, A4, A5, A6, A7, A8, B1, C1, E1, C2, C3, C4, B2, D1, D2, E2, E3, F1, H1, E4, E5, F2. Готовы по графу: E6, D3. Это снимок; фактические зависимости и открытые решения проверяются перед стартом.
 
  Пользователь принял модель Access/Organization, одного продавца, связь фото с несколькими детьми и рекомендации D07/D08/D10. R17 и остальные открытые решения не объявлены закрытыми. D02 не мешает пустому редактируемому каталогу, но продолжает блокировать соответствующие коммерческие правила E3. Для H1 выбран EMAIL, MAX перенесён в отдельный последующий этап. 22.09.2026 первым провайдером выбрана ЮKassa с «Чеками от ЮKassa», СберПэй — необязательный резерв. Расходы в общей цене выделены в независимую E6 с округлением вверх до 50 ₽. Битрикс Старт и своё хранение сохраняются; настройки/параметры чека и оставшиеся вопросы D09/D12 не объявлены закрытыми. GitHub Actions отключён вручную; YAML сохранён, проверки выполняются локально.
 
@@ -942,8 +942,8 @@
      "../04-bitrix-modules/README.md": "02a4f3b66767f7f68a7eb28d2021967f34b4d35780c3dee986eb06d848602ba5",
 -    "../04-bitrix-modules/backend-waves.json": "8bf274d8a3c220eb96d144d01f80583757b9f6cd5ee93bd57bcda81ac7d71464",
 -    "../04-bitrix-modules/backend-waves.md": "3158837e14644faf1fa7595e91e16fde1ff690a9d5b8b4b5683ceb98d5af15ed",
-+    "../04-bitrix-modules/backend-waves.json": "9ee6c0a0cce0d28889b108a128c01ed3ac54bf1247763f35e52c5f4afe4b064f",
-+    "../04-bitrix-modules/backend-waves.md": "a4c3b2060025c7122f2129a23b737af1c07a5d845a491725cc81a6fb517ce92e",
++    "../04-bitrix-modules/backend-waves.json": "c8889fefb58840126f1e90569ccae9c2b7b546c12a2ccba5d4810f3f9bc93c65",
++    "../04-bitrix-modules/backend-waves.md": "80b787c3f150627e7d09d66dd4d3763b6ef9b2ed21155c7a115be68cf0b283ca",
      "../04-bitrix-modules/render-waves.py": "7aa7b9bc539de4aff3ade7b318792d08c570bb26b64bede0b142ecdbb74b9d36",
      "../04-bitrix-modules/wave_graph.py": "222e990258bfddd8b9f649ab1779fb64c10cae4ea18c70ff802d80a1ed0187af",
 -    "README.md": "f87acf4fe03afb8b90ce45f463f4199405dd7e0e09bcf5be2bad63f5865253b4",
@@ -957,21 +957,6 @@
      "postman/MoreFoto.local.postman_environment.json": "d4bba2bd1430f2c6e10d7fc916faa677504c539f8fedac2b777e057bce2e74b3",
      "postman/MoreFoto.stage.postman_environment.json": "3bc2686c533d440d968867d02740039fee2236b864e5e66699604312c4781813"
    },
-@@ -63,5 +63,14 @@
-     "frontend/src/modules/morefoto/services/cabinet.ts": "51ad1a1bcf496257ec4371a4dbd318a76edaa8da2a3a50399cbdc6a0bea38d22",
-     "frontend/src/modules/morefoto/settlement/types.ts": "3854e2f3e5da27ac510ca3a96ce8d7487cbb528b56475dff6989918ff678118d",
-     "frontend/src/modules/morefoto/shipping/types.ts": "c73785f3e0a4652680f09e37e26413231af94bed517d0376c1460e30c914980d"
-+  },
-+  "postmanScriptValidation": {
-+    "scriptsParsed": 144,
-+    "positiveFixtures": 99,
-+    "negativeFixtures": 198,
-+    "idempotencyRepeatChecks": 43,
-+    "platformGuardChecks": 14,
-+    "platformContractNegativeFixtures": 2,
-+    "note": "Offline script fixtures only; no API requests or Postman UI import were executed."
-   }
- }
 --- a/docs/frontend/business-review/decisions.md
 +++ b/docs/frontend/business-review/decisions.md
 @@ -58,3 +58,15 @@

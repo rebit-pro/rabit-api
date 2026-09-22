@@ -3,7 +3,7 @@
   "status": "review-pending",
   "date": "2026-09-22",
   "branch": "codex/d3-child-transfers",
-  "base": "44f2e36367351614fab66fdc58fa3dc7ee3899b3",
+  "base": "a43e4ea183dccf99659cd3c99322ba25f28ac1ce",
   "pr": null,
   "dependencies": {
     "D2": "#21",
@@ -107,5 +107,9 @@
     "final make test-e2e with browser, MySQL verifiers and desktop/mobile screenshots",
     "merge and deployment as separate user actions"
   ],
-  "complete": false
+  "complete": false,
+  "baseHistory": [
+    "44f2e36367351614fab66fdc58fa3dc7ee3899b3 (F2 merge)",
+    "a43e4ea183dccf99659cd3c99322ba25f28ac1ce (F2 deployment docs; rebased without conflicts)"
+  ]
 }

@@ -6,7 +6,7 @@
   "backend": "RaBit API",
   "baseline": {
     "branch": "main",
-    "commit": "44f2e36367351614fab66fdc58fa3dc7ee3899b3",
+    "commit": "a43e4ea183dccf99659cd3c99322ba25f28ac1ce",
     "mergedWaves": [
       "A1",
       "A2",

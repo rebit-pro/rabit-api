@@ -57,7 +57,7 @@
 ## Зависимости
 
 - В `main` и предки HEAD: D2 (PR #21, `31ebf8a`), F1 (PR #25, `6b81647`), E5 (PR #37, `4b507b3`), F2 (PR #40, merge `44f2e36`, 2026-09-22T13:28:01Z).
-- Ветка `codex/d3-child-transfers` (worktree `/home/user/rabit-api-worktrees/d3-child-transfers`). Создана от `4b507b3` во время деплоя F2 и без коммитов перемотана fast-forward на `44f2e36`.
+- Ветка `codex/d3-child-transfers` (worktree `/home/user/rabit-api-worktrees/d3-child-transfers`). Создана от `4b507b3` во время деплоя F2, без коммитов перемотана на `44f2e36`; перед публикацией перенесена на `main` `a43e4ea` (документы развёртывания F2).
 - Decision gates: D03 и D05 приняты ранее; D11 принят 22.09.2026 (D3-DEC-01…06), D12 снят с gates D3 (D3-DEC-07). После записи в оба графа `verify-wave-graph.py` даёт `readyFromMain=["D3"]`.
 - Проверка — `main` плюс только diff D3. Правки неслитых PR #29/#35/#36 в канон не переносятся: E6 в каноне MoreFoto — из неслитого #35.
 
