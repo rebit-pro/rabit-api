@@ -2,13 +2,12 @@
 
 ## Точка продолжения
 
-- 2026-09-22. Ветка `codex/e5-order-checkout`, PR [#37](https://github.com/rebit-pro/rabit-api/pull/37); base `8cba22c`, опубликованный HEAD `46c442e`, локально поверх него — документационный коммит ревью `001814f` (без push).
-- Завершено: ревью PR #37 — B1/B2 (P1), B3 (P2); #38/#39 — отдельные issues.
-- Сейчас: B1–B3 исправлены, быстрые проверки PASS; публикация исправлений и ответ на ревью, затем полный `make test-e2e`, при PASS — merge и развёртывание на app.morefoto36.ru (план — раздел «Исправления ревью…» в `plan.md`).
-- Следующий шаг: полный `make test-e2e` на HEAD с исправлениями.
-- Блокеры: нет. Открыто: процедура развёртывания app.morefoto36.ru собирается по записям прошлых релизов.
-- Рабочее дерево: чистое до начала исправлений.
-- Проверки после исправлений: PHPUnit/PHPStan/php-cs-fixer, frontend `npm run check`/`test:commerce`, затем `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
+- 2026-09-22. Ветка `codex/e5-order-checkout`, PR [#37](https://github.com/rebit-pro/rabit-api/pull/37); проверенный HEAD `5435ebc` (исправления B1–B3), отчёты по gate — следующий docs-коммит.
+- Завершено: B1–B3, ответ на ревью, финальный `make test-e2e` PASS (70/70, оба верификатора MySQL), визуальная проверка 8 экранов, отчёты `docs/waves/e5`.
+- Решение пользователя: merge в `main` и развёртывание отложены до второго круга ревью.
+- Следующий шаг: дождаться второго ревью PR #37; merge и развёртывание на app.morefoto36.ru — только по новому указанию (процедура — ниже).
+- Блокеры: нет. Вне E5: коллизия имени D3; #38/#39 — отдельные issues.
+- Процедура развёртывания: каталог `/srv/morefoto/releases/e5-<UTC>-<sha>`; `services-before.json` пяти сервисов; `backup.sh` + `restore-check.sh` по образцу E4 (БД `morefoto_stage_c4_20260913`); `git archive <merge>:api`, `vendor` и `backend.conf` из релиза E4, точки монтирования `public/upload`, `public/bitrix`, `public/local/.settings.php`; `migrate.sh up Version20260922120001` (без подмены модуля commerce); `--mount-add` нового `/app` для fpm, backend (+`backend.conf`), consumer, dispatcher; frontend `docker build … VITE_API_MOCKS_ENABLED=false` из чистого worktree merge-коммита, `docker save | ssh … docker load`, `nginx -t`, `docker service update --image`; флаг `MOREFOTO_CHECKOUT_ENABLED` не задаётся; откат — `--mount-add` путей релиза E4 и предыдущий образ frontend.
 
 ## Хронология
 
@@ -72,32 +71,31 @@
 
 ## Результаты тест-кейсов
 
-`PASS*` — подтверждено unit и HTTP в прогоне `rabit-e2e-c14d949a108e`; повтор в финальном gate после ревью.
 
 | ID | Статус | Дата | Команда и доказательство |
 | --- | --- | --- | --- |
 | E5-BASE | PASS | 2026-09-22 | `gh pr view 30`: MERGED `7e606e5`; `git merge-base --is-ancestor` — предок HEAD `8cba22c` |
 | E5-GRAPH | PASS | 2026-09-22 | `python3 tools/verify-wave-graph.py` для обоих графов: 40 волн, 99 API, `readyFromMain=["E5"]` |
 | E5-CONTRACT | PASS | 2026-09-22 | `build.py`, `validate.py` (passed, 99 API), `validate-postman.cjs` (99/198) |
-| E5-CREATE | PASS* | 2026-09-22 | PHPUnit; HTTP в прогоне `rabit-e2e-c14d949a108e` (201, `Location`, номер, ключ, статусы, снимок). *Финальный gate — после ревью |
-| E5-REPLAY | PASS* | 2026-09-22 | HTTP повтор тем же ключом — тот же id/номер/ключ; UI потерянного ответа — повтор тем же ключом; повтор после закрытия — в `verify-orders.php` (PENDING) |
-| E5-CONCURRENCY | PASS* | 2026-09-22 | HTTP: 4 одновременных запроса с одним ключом → один заказ; 3 ключа на один quote → 201 + 2×409 `QUOTE_ALREADY_USED` |
-| E5-CONFLICT | PASS* | 2026-09-22 | PHPUnit и HTTP: другое тело с тем же ключом → 409 `IDEMPOTENCY_CONFLICT` |
-| E5-QUOTE | PASS* | 2026-09-22 | PHPUnit; HTTP `PRICE_CHANGED` с новым расчётом и UI подтверждения нового итога; `QUOTE_EXPIRED` — в `verify-orders.php` (PENDING) |
-| E5-CLOSED | PASS* | 2026-09-22 | HTTP: closed → 409 `GALLERY_CLOSED`, preparing → 409 `GALLERY_NOT_READY`, revoked → 404 |
+| E5-CREATE | PASS | 2026-09-22 | PHPUnit; `make test-e2e` `rabit-e2e-c2a30ffb9621`: 201, `Location`, номер, ключ, статусы, снимок |
+| E5-REPLAY | PASS | 2026-09-22 | HTTP повтор тем же ключом; UI потерянного ответа и 502; повтор после закрытия — `verify-orders.php` |
+| E5-CONCURRENCY | PASS | 2026-09-22 | HTTP: 4 одновременных запроса с одним ключом → один заказ; 3 ключа на один quote → 201 + 2×409 |
+| E5-CONFLICT | PASS | 2026-09-22 | PHPUnit и HTTP: другое тело с тем же ключом → 409 `IDEMPOTENCY_CONFLICT` |
+| E5-QUOTE | PASS | 2026-09-22 | PHPUnit (состав → `QUOTE_STALE`, деньги → `PRICE_CHANGED`); HTTP `PRICE_CHANGED` и UI подтверждения; `QUOTE_EXPIRED` — `verify-orders.php`; `verify-storefront.php` PASS |
+| E5-CLOSED | PASS | 2026-09-22 | HTTP: closed → 409 `GALLERY_CLOSED`, preparing → 409, revoked → 404; закрытие на MySQL — `verify-orders.php` |
 | E5-GATE | PASS | 2026-09-22 | PHPUnit (`PURCHASE_DISABLED` до любых обращений); HTTP стенда: `purchaseEnabled=true`, `receiptChannels=[]`, `purchaseTerms=null` |
-| E5-VALIDATION | PASS* | 2026-09-22 | PHPUnit `BuyerPolicy`; HTTP 422 по полям, `INVALID_IDEMPOTENCY_KEY`, `UNKNOWN_FIELD` |
-| E5-SNAPSHOT | PASS* | 2026-09-22 | HTTP: после смены цены COM-11 показывает прежние цену и итог |
-| E5-KEY | PASS* | 2026-09-22 | HTTP: проекция, `no-store`, единый 404 для пустого/чужого ключа, номера MF и токена галереи; отзыв/истечение/перевыпуск — `verify-orders.php` (PENDING) |
-| E5-STAFF-LIST | PASS* | 2026-09-22 | HTTP: организатор, свой и чужой куратор, head/teacher 403, фильтры и 422; UI поиска — после исправления локатора (PENDING) |
-| E5-STAFF-CARD | PASS* | 2026-09-22 | HTTP: `period`, `correctionPhotos` с A001, 404 для чужого куратора, 403 head/teacher |
-| E5-ACCESS-CHANGE | PENDING | — | PHPUnit адаптера PASS; проверка на MySQL в `verify-orders.php` — финальный gate |
-| E5-PRIVACY | PENDING | — | HTTP: ответы без ключей/токенов, `no-store` — PASS; сканирование БД — `verify-orders.php` (финальный gate) |
-| E5-MIGRATION | PASS* | 2026-09-22 | Установка на пустую БД в обоих прогонах, DDL дважды на MySQL 8.0; повтор `up()`/отказ `down()` — `verify-orders.php` (PENDING) |
-| E5-PERF | PENDING | — | `verify-orders.php`: 1000+ заказов, одинаковое число SQL для 10 и 100 строк — финальный gate |
+| E5-VALIDATION | PASS | 2026-09-22 | PHPUnit `BuyerPolicy`; HTTP 422 по полям, `INVALID_IDEMPOTENCY_KEY`, `UNKNOWN_FIELD` |
+| E5-SNAPSHOT | PASS | 2026-09-22 | HTTP: после смены цены COM-11 показывает прежние цену и итог |
+| E5-KEY | PASS | 2026-09-22 | HTTP: проекция, `no-store`, единый 404; `verify-orders.php`: отзыв, истечение, перевыпуск, независимость от ссылки галереи |
+| E5-STAFF-LIST | PASS | 2026-09-22 | HTTP: организатор, свой и чужой куратор, head/teacher 403, фильтры и 422; UI поиска desktop/mobile |
+| E5-STAFF-CARD | PASS | 2026-09-22 | HTTP и UI: `period`, `correctionPhotos` с A001, 404 чужому куратору, 403 head/teacher |
+| E5-ACCESS-CHANGE | PASS | 2026-09-22 | PHPUnit адаптера; `verify-orders.php`: смена `accessRevision` во время чтения → 409 `ACCESS_CHANGED` |
+| E5-PRIVACY | PASS | 2026-09-22 | HTTP без ключей/токенов, `no-store`; `verify-orders.php`: в БД нет сырых ключей, Idempotency-Key и токена галереи |
+| E5-MIGRATION | PASS | 2026-09-22 | Установка на пустую БД в gate; DDL дважды на MySQL 8.0; `verify-orders.php`: повтор `up()`, отказ `down()` |
+| E5-PERF | PASS | 2026-09-22 | `verify-orders.php`: 1011 заказов, 7 SQL для 10 и 100 строк, 7,5 мс на страницу из 100 |
 | E5-ARCH | PASS | 2026-09-22 | PHPUnit 472/1874 (включая `OrderArchitectureTest`), PHPStan No errors, php-cs-fixer по изменённым файлам |
-| E5-UI | PENDING | — | Оформление и заказ по ключу desktop/mobile — PASS в прогоне; служебные экраны — финальный gate |
-| E5-REGRESSION | PENDING | — | 67/69 в последнем прогоне; повтор полного набора — финальный gate |
+| E5-UI | PASS | 2026-09-22 | Браузер 70/70; просмотрены 8 снимков desktop/mobile (`docs/waves/e5/visual.json`) |
+| E5-REGRESSION | PASS | 2026-09-22 | Полный браузерный набор 70/70 без пропусков и нестабильных тестов |
 | E5-PUBLISH | PASS | 2026-09-22 | `git diff --check` PASS; `origin/main` = base `8cba22c`; `git push -u origin codex/e5-order-checkout`; `gh pr create` → PR #37. Merge — после ревью и финального gate |
 
 
@@ -150,3 +148,14 @@
 - B2: `useLiveCheckout.recovering` и отдельный экран «Проверим прошлую отправку» в `CheckoutForm` показываются при сохранённой неподтверждённой отправке независимо от quote, состояния группы и `purchaseEnabled`; «Повторить отправку» отправляет точное тело с прежним ключом.
 - E2E: сценарий потерянного ответа дополнен закрытием группы (подмена состояния в ответе галереи) и перезагрузкой; новый сценарий — заказ сохранён, клиент получил 502 HTML. Оба ждут экран восстановления, повтор с прежним ключом, 201 и ровно один заказ в служебном поиске.
 - Проверки: `vendor/bin/phpunit --filter StorefrontQuoteTokenTest` — 6/6; PHPStan — No errors; php-cs-fixer — 0 исправлений; полный PHPUnit — OK 474/1880; phplint — 726 файлов; frontend `npm run check` — PASS; `npm run test:commerce` — 166/166.
+
+### 2026-09-22 — подготовка развёртывания и отмена merge
+
+- Чтение сервера `ssh rebit-pro` (без изменений): сервисы `morefoto_frontend` (d3-…-3bca388, 2/2), `morefoto_stage_backend`, `morefoto_stage_fpm`, `morefoto_stage_media_consumer`, `morefoto_stage_media_dispatcher` — `/app` из релиза `e4-20260921151701-7e606e5`; у FPM нет `MOREFOTO_CHECKOUT_ENABLED` (флаг выключен); свободно 28 ГБ. Прочитаны скрипты релиза E4 (`backup.sh`, `migrate.sh`, `restore-check.sh`). `https://app.morefoto36.ru/api/v1/public/orders/current` сейчас отвечает 200 HTML (маршрута ещё нет).
+- Локально подготовлены скрипты релиза E5 (резервная копия, проверка восстановления, миграция одной версии, подготовка app, переключение/откат backend); `bash -n` — PASS. На сервер не загружались.
+- Пользователь: «мерж в майн, пока делать не надо. Мы еще один круг ревью сделаем». Merge и развёртывание отложены; финальный gate продолжает работу для следующего круга ревью.
+
+### 2026-09-22 — финальный gate PASS
+
+- `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` на `5435ebc` (стенд `rabit-e2e-c2a30ffb9621`) — exit 0: phplint 726, PHPStan OK, PHPUnit 474/1880, frontend check/unit 166/build PASS, Notification H1 PASS, браузер 70 expected / 0 unexpected / 0 skipped / 0 flaky; `storefront-integration.log` — «E4 integration passed…»; `orders-integration.log` — «E5 integration passed: no raw secrets; one order per quote and receipt; key revoke, expiry, reissue and gallery independence; replay after closure, closed group and expired quote; access change during read; migration replay and protected down(); search on 1011 orders: 7 SQL for 10 and 100 rows, 7.5 ms per page of 100». Стенд остановлен, `cleanupErrors=[]`.
+- Визуальная проверка: просмотрены 8 снимков (оформление, заказ по ключу, служебные список и карточка на 1280×900 и 390×844) — PASS; сохранены в `docs/waves/e5/screenshots`, SHA-256 в `visual.json`.

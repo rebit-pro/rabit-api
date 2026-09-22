@@ -1,7 +1,7 @@
 {
   "wave": "E5",
-  "status": "partial",
-  "fixture": "rabit-e2e-c14d949a108e",
+  "status": "passed",
+  "fixture": "rabit-e2e-c2a30ffb9621",
   "viewports": [
     "1280x900",
     "390x844"
@@ -13,16 +13,32 @@
     },
     {
       "file": "docs/waves/e5/screenshots/e5-desktop-order.png",
-      "sha256": "dbc86279eb2a5e4d17236175aff2a765149b87b29d0d15545b7f701df96d0846"
+      "sha256": "f5073a2a3535051816ca8bb32948f343120f6787fcc38ff324f8df8053290dbd"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-desktop-staff-card.png",
+      "sha256": "d02c1f8775db8aa56f3729bda393bf1c618b513f205cc895eebf73ab225ccb43"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-desktop-staff-list.png",
+      "sha256": "c05d61d3605209eff13c2acfdb4a13b17c803f633c78bbe7ece4e06831a934a8"
     },
     {
       "file": "docs/waves/e5/screenshots/e5-mobile-checkout.png",
-      "sha256": "296efee806859a4ce74ff39bb48f345d260f0f4704fcdb1c1509f9f3ae8ce76d"
+      "sha256": "1b176c621c3861e368f2f83381eb44360c43ef6f6a7b0c39bdaceaa8e0e84db1"
     },
     {
       "file": "docs/waves/e5/screenshots/e5-mobile-order.png",
-      "sha256": "21da9035acfb762d5fe8b57fc83ff09da512426d28eed8bf251d87073d934d00"
+      "sha256": "c86c966ecbac490446b1aff62b5025a9495bb74810f8961312d16f4e6b8fd05f"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-mobile-staff-card.png",
+      "sha256": "ee95aa352c36861eda9c04d308644d7adb85cadbaea965201044a184c2e4296c"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-mobile-staff-list.png",
+      "sha256": "9dab63f3ae413841971c41c32423e7613e9d6e49f800fbecd0ee1f8d49883df6"
     }
   ],
-  "inspection": "Просмотрены оформление и страница заказа на desktop и mobile: без горизонтального переполнения, без demo-хранилища, миниатюры в заказе заменены кодами кадров по E5-DEC-03. На mobile-снимке оформления кнопка отправки снята во время серверного пересчёта (выключена); теперь пересчёт показывается индикатором загрузки. Служебные список и карточка будут сняты в финальном прогоне."
+  "inspection": "Просмотрены все восемь снимков: оформление, заказ по ключу, служебные список и карточка на desktop и mobile. Горизонтального переполнения нет, demo-хранилище не используется. В заказе по ключу вместо миниатюр коды кадров (E5-DEC-03); организатор видит служебное превью. Кнопка оформления видна; текст «куратор учреждения» при пустом имени. Нижняя часть бокового меню на полностраничном desktop-снимке не прокрашена — это особенность фиксированной навигации при склейке снимка, не дефект."
 }

@@ -1,10 +1,13 @@
 {
   "wave": "E5",
-  "status": "review",
+  "status": "verified",
   "date": "2026-09-22",
   "branch": "codex/e5-order-checkout",
   "base": "8cba22c7655b5886d5fe663523214bcd059e674b",
+  "head": "5435ebc11388b932064528c4f84b542caea53f5d",
+  "fixture": "rabit-e2e-c2a30ffb9621",
   "decisions": "E5-DEC-01..05 accepted by the user on 2026-09-22",
+  "review": "PR #37 review note B1-B3 fixed in 5435ebc; non-blocking #38/#39 remain separate issues",
   "checks": {
     "phpLint": {
       "status": "passed",
@@ -16,12 +19,11 @@
     },
     "phpunit": {
       "status": "passed",
-      "tests": 473,
-      "assertions": 1877
+      "tests": 474,
+      "assertions": 1880
     },
     "style": {
       "status": "passed",
-      "checkedPhpFiles": 104,
       "note": "php-cs-fixer applied to changed PHP files only"
     },
     "frontend": {
@@ -32,7 +34,7 @@
         "E2E TypeScript",
         "production build"
       ],
-      "unitTests": 164
+      "unitTests": 166
     },
     "contract": {
       "status": "passed",
@@ -50,22 +52,22 @@
     },
     "schema": {
       "status": "passed",
-      "proof": "DDL applied twice on disposable mysql:8.0; constraint violations rejected"
+      "proof": "DDL applied twice on disposable mysql:8.0; constraint violations rejected; migration installed by E2E prepare"
     },
     "browser": {
-      "status": "pending",
-      "lastRun": "rabit-e2e-c14d949a108e",
-      "passed": 67,
-      "failed": 2,
+      "status": "passed",
+      "passed": 70,
+      "failed": 0,
       "skipped": 0,
-      "note": "All E5 API scenarios, lost response and price change UI passed. The two failures were test locators on the staff search field; fixed with accessible labels, not re-run. Final gate runs after review without blockers (user decision 2026-09-22)."
+      "flaky": 0,
+      "e5Scenarios": "idempotency, 4x concurrent same key, 3 keys on one quote, rejections, PRICE_CHANGED, personal key, staff scope, buyer and staff UI desktop/mobile, lost response with group closure and reload, 502 after commit, price change confirmation"
     },
     "integration": {
-      "status": "pending",
-      "proof": "verify-orders.php written, not executed yet; runs after the browser suite in the final gate"
+      "status": "passed",
+      "proof": "orders-integration.log: no raw secrets; one order per quote and receipt; key revoke, expiry, reissue and gallery independence; replay after closure, closed group and expired quote; access change during read; migration replay and protected down(); search on 1011 orders: 7 SQL for 10 and 100 rows, 7.5 ms per page of 100. storefront-integration.log: E4 integration passed"
     },
     "visual": {
-      "status": "pending",
+      "status": "passed",
       "viewports": [
         "desktop",
         "mobile"
@@ -73,10 +75,13 @@
       "artifacts": [
         "screenshots/e5-desktop-checkout.png",
         "screenshots/e5-desktop-order.png",
+        "screenshots/e5-desktop-staff-card.png",
+        "screenshots/e5-desktop-staff-list.png",
         "screenshots/e5-mobile-checkout.png",
-        "screenshots/e5-mobile-order.png"
-      ],
-      "note": "Buyer checkout and order captured; staff list/card to be captured in the final gate"
+        "screenshots/e5-mobile-order.png",
+        "screenshots/e5-mobile-staff-card.png",
+        "screenshots/e5-mobile-staff-list.png"
+      ]
     }
   },
   "cleanup": {
@@ -84,6 +89,6 @@
     "errors": []
   },
   "mergeAllowed": false,
-  "nextStep": "Review the PR; if there are no blocking comments, run the final make test-e2e, record results and screenshots, then merge on the user's decision.",
+  "nextStep": "Second review round requested by the user on 2026-09-22; merge into main and deployment to app.morefoto36.ru only on a new instruction.",
   "pr": "https://github.com/rebit-pro/rabit-api/pull/37"
 }

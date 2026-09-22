@@ -192,10 +192,10 @@ Scope: исправить B1–B3 из note PR #37; повторить быст�
 - [x] B3: ValidateQuoteUseCase + unit-тесты обоих случаев.
 - [x] B1/B2: правила исхода, useLiveCheckout, состояние восстановления в CheckoutForm; unit-тесты правил.
 - [x] E2E: 502 после commit → восстановление того же заказа; неподтверждённая отправка → закрытие группы → перезагрузка → восстановление; обновить сценарий потерянного ответа.
-- [ ] Быстрые проверки, журнал, push, ответ на ревью в PR.
-- [ ] Полный `make test-e2e` PASS, снимки desktop/mobile, отчёты.
-- [ ] Merge PR #37 в `main` (`gh pr merge --match-head-commit`), граф: E5 merged.
-- [ ] Развёртывание на app.morefoto36.ru: backup, миграция, backend, frontend, smoke, запись в `docs/deployments`.
+- [x] Быстрые проверки, журнал, push, ответ на ревью в PR.
+- [x] Полный `make test-e2e` PASS, снимки desktop/mobile, отчёты.
+- [ ] Merge PR #37 в `main` (`gh pr merge --match-head-commit`), граф: E5 merged — отложено: пользователь 2026-09-22 назначил ещё один круг ревью («мерж в майн пока делать не надо»).
+- [ ] Развёртывание на app.morefoto36.ru: backup, миграция, backend, frontend, smoke, запись в `docs/deployments` — после merge; процедура собрана, на сервере только чтение.
 
 | ID | Предусловия / действие | Ожидаемый результат | Команда проверки |
 | --- | --- | --- | --- |
