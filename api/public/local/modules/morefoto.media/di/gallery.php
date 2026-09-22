@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use Bitrix\Main\DI\ServiceLocator;
 use Morefoto\Media\Application\Gallery\Contract\PreviewContentInterface;
+use Morefoto\Media\Application\Gallery\Mapper\GalleryAssignmentMapper;
+use Morefoto\Media\Application\Gallery\Service\ChildPhotos;
 use Morefoto\Media\Application\Gallery\Service\GalleryAccess;
 use Morefoto\Media\Application\Gallery\Service\GalleryCapabilityLifecycle;
 use Morefoto\Media\Application\Gallery\UseCase\GetGalleryPreviewUseCase;
@@ -18,6 +20,7 @@ use Morefoto\Media\Presentation\Controller\GalleryController;
 use Morefoto\Media\Presentation\Controller\ManagedPreviewController;
 use Morefoto\Media\Presentation\Gallery\GalleryResultMapper;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
+use Rebit\Share\Contracts\Media\ChildPhotosInterface;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
 use Rebit\Share\Contracts\Organization\GalleryGroupInterface;
 use Rebit\Share\Infrastructure\Clock\SystemClock;
@@ -56,7 +59,17 @@ return [
             ServiceLocator::getInstance()->get(GalleryPhotoRepository::class),
             ServiceLocator::getInstance()->get(GalleryAvailability::class),
             ServiceLocator::getInstance()->get(ClockInterface::class),
+            ServiceLocator::getInstance()->get(GalleryAssignmentMapper::class),
         ],
+    ],
+    GalleryAssignmentMapper::class => [
+        'className' => GalleryAssignmentMapper::class,
+    ],
+    ChildPhotosInterface::class => [
+        'constructor' => static fn(): ChildPhotosInterface => new ChildPhotos(
+            ServiceLocator::getInstance()->get(GalleryPhotoRepository::class),
+            ServiceLocator::getInstance()->get(GalleryAssignmentMapper::class),
+        ),
     ],
     GetGalleryUseCase::class => [
         'className' => GetGalleryUseCase::class,

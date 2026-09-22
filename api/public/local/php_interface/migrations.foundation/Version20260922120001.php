@@ -1,0 +1,170 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Sprint\Migration;
+
+use Bitrix\Main\Application;
+
+final class Version20260922120001 extends Version
+{
+    protected $author = 'codex';
+    protected $description = 'E5: immutable orders, order lines, personal order keys and checkout replay receipts';
+
+    public function up(): void
+    {
+        $connection = Application::getConnection();
+        $connection->queryExecute(<<<'SQL'
+CREATE TABLE IF NOT EXISTS mf_order (
+    ID BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    PUBLIC_ID CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    NUMBER VARCHAR(20) CHARACTER SET ascii COLLATE ascii_general_ci NULL,
+    GALLERY_HASH CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    QUOTE_HASH CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    INSTITUTION_ID BIGINT UNSIGNED NOT NULL,
+    INSTITUTION_PUBLIC_ID CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    SHOOT_ID BIGINT UNSIGNED NOT NULL,
+    SHOOT_PUBLIC_ID CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    GROUP_ID BIGINT UNSIGNED NOT NULL,
+    GROUP_PUBLIC_ID CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    AUDIENCE VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    INSTITUTION_NAME VARCHAR(255) NOT NULL,
+    SHOOT_NAME VARCHAR(255) NOT NULL,
+    GROUP_NAME VARCHAR(255) NOT NULL,
+    BUYER_NAME VARCHAR(100) NOT NULL,
+    BUYER_PHONE VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    BUYER_EMAIL VARCHAR(254) NOT NULL,
+    BUYER_COMMENT VARCHAR(1000) NOT NULL,
+    RECEIPT_CHANNEL VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NULL,
+    SUBTOTAL BIGINT UNSIGNED NOT NULL,
+    DISCOUNT BIGINT UNSIGNED NOT NULL,
+    GIFT_SAVING BIGINT UNSIGNED NOT NULL,
+    TOTAL BIGINT UNSIGNED NOT NULL,
+    ITEM_COUNT INT UNSIGNED NOT NULL,
+    GIFTS JSON NOT NULL,
+    CATALOG_REVISION BIGINT UNSIGNED NOT NULL,
+    CONDITIONS_REVISION BIGINT UNSIGNED NOT NULL,
+    PAYMENT_STATUS VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    PRODUCTION_STATUS VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    VERSION BIGINT UNSIGNED NOT NULL,
+    CREATED_AT DATETIME NOT NULL,
+    UPDATED_AT DATETIME NOT NULL,
+    PRIMARY KEY (ID),
+    UNIQUE KEY ux_mf_order_public (PUBLIC_ID),
+    UNIQUE KEY ux_mf_order_number (NUMBER),
+    UNIQUE KEY ux_mf_order_quote (QUOTE_HASH),
+    KEY ix_mf_order_created (CREATED_AT, ID),
+    KEY ix_mf_order_institution (INSTITUTION_ID, CREATED_AT, ID),
+    KEY ix_mf_order_institution_public (INSTITUTION_PUBLIC_ID, CREATED_AT, ID),
+    KEY ix_mf_order_shoot (SHOOT_PUBLIC_ID, CREATED_AT, ID),
+    KEY ix_mf_order_group (GROUP_PUBLIC_ID, CREATED_AT, ID),
+    KEY ix_mf_order_gallery (GALLERY_HASH),
+    CONSTRAINT fk_mf_order_gallery FOREIGN KEY (GALLERY_HASH) REFERENCES mf_gallery_capability(TOKEN_HASH) ON DELETE RESTRICT,
+    CONSTRAINT fk_mf_order_quote FOREIGN KEY (QUOTE_HASH) REFERENCES mf_cart_quote(TOKEN_HASH) ON DELETE RESTRICT,
+    CONSTRAINT fk_mf_order_group FOREIGN KEY (GROUP_PUBLIC_ID) REFERENCES b_hlbd_mf_group(UF_PUBLIC_ID) ON DELETE RESTRICT,
+    CONSTRAINT ck_mf_order_values CHECK (
+        AUDIENCE IN ('regular', 'staff')
+        AND PAYMENT_STATUS IN ('unpaid', 'pending', 'declined', 'paid')
+        AND PRODUCTION_STATUS IN ('not-started', 'queued', 'printing', 'ready', 'delivered')
+        AND (RECEIPT_CHANNEL IS NULL OR RECEIPT_CHANNEL IN ('email', 'max'))
+        AND CHAR_LENGTH(TRIM(BUYER_NAME)) >= 2 AND BUYER_EMAIL <> '' AND BUYER_PHONE REGEXP '^[+][0-9]{10,15}$'
+        AND TOTAL + DISCOUNT + GIFT_SAVING = SUBTOTAL AND ITEM_COUNT > 0 AND VERSION > 0
+        AND JSON_TYPE(GIFTS) = 'ARRAY'
+    )
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
+        $connection->queryExecute(<<<'SQL'
+CREATE TABLE IF NOT EXISTS mf_order_line (
+    ID BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    PUBLIC_ID CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    ORDER_ID BIGINT UNSIGNED NOT NULL,
+    LINE_NO SMALLINT UNSIGNED NOT NULL,
+    ASSIGNMENT_PUBLIC_ID CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    CHILD_ID BIGINT UNSIGNED NOT NULL,
+    CHILD_PUBLIC_ID CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    CHILD_CODE VARCHAR(3) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    PHOTO_PUBLIC_ID CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NULL,
+    PHOTO_CODE VARCHAR(8) CHARACTER SET ascii COLLATE ascii_bin NULL,
+    PHOTO_WIDTH INT UNSIGNED NULL,
+    PHOTO_HEIGHT INT UNSIGNED NULL,
+    PRODUCT_PUBLIC_ID CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    PRODUCT_KIND VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    PRODUCT_NAME VARCHAR(255) NOT NULL,
+    PRODUCT_DESCRIPTION TEXT NOT NULL,
+    PRODUCT_FORMAT VARCHAR(100) NOT NULL,
+    PRODUCT_UNIT VARCHAR(100) NOT NULL,
+    PRODUCT_PRICE BIGINT UNSIGNED NOT NULL,
+    PRINT_COUNT INT UNSIGNED NOT NULL,
+    STAFF_DISCOUNT TINYINT UNSIGNED NOT NULL,
+    QUANTITY SMALLINT UNSIGNED NOT NULL,
+    UNIT_PRICE BIGINT UNSIGNED NOT NULL,
+    DISCOUNT BIGINT UNSIGNED NOT NULL,
+    TOTAL BIGINT UNSIGNED NOT NULL,
+    COVERED_BY_GIFT TINYINT UNSIGNED NOT NULL,
+    PRIMARY KEY (ID),
+    UNIQUE KEY ux_mf_order_line_public (PUBLIC_ID),
+    UNIQUE KEY ux_mf_order_line_no (ORDER_ID, LINE_NO),
+    KEY ix_mf_order_line_child (CHILD_ID),
+    CONSTRAINT fk_mf_order_line_order FOREIGN KEY (ORDER_ID) REFERENCES mf_order(ID) ON DELETE RESTRICT,
+    CONSTRAINT ck_mf_order_line_values CHECK (
+        PRODUCT_KIND IN ('physical', 'digital', 'bundle') AND QUANTITY BETWEEN 1 AND 99
+        AND (PRODUCT_KIND = 'physical' OR QUANTITY = 1)
+        AND ((PRODUCT_KIND = 'bundle') = (PHOTO_PUBLIC_ID IS NULL))
+        AND STAFF_DISCOUNT IN (0, 1) AND COVERED_BY_GIFT IN (0, 1) AND CHILD_CODE REGEXP '^[A-Z]{1,3}$'
+    )
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
+        $connection->queryExecute(<<<'SQL'
+CREATE TABLE IF NOT EXISTS mf_order_access_key (
+    ID BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    ORDER_ID BIGINT UNSIGNED NOT NULL,
+    KEY_HASH CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    ISSUED_AT DATETIME NOT NULL,
+    EXPIRES_AT DATETIME NOT NULL,
+    ISSUE_REASON VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    ISSUED_BY_USER_ID BIGINT UNSIGNED NULL,
+    REVOKED_AT DATETIME NULL,
+    REVOKE_REASON VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NULL,
+    REVOKED_BY_USER_ID BIGINT UNSIGNED NULL,
+    ACTIVE_ORDER_ID BIGINT UNSIGNED GENERATED ALWAYS AS (IF(REVOKED_AT IS NULL, ORDER_ID, NULL)) STORED,
+    PRIMARY KEY (ID),
+    UNIQUE KEY ux_mf_order_key_hash (KEY_HASH),
+    UNIQUE KEY ux_mf_order_key_active (ACTIVE_ORDER_ID),
+    KEY ix_mf_order_key_order (ORDER_ID, ID),
+    CONSTRAINT fk_mf_order_key_order FOREIGN KEY (ORDER_ID) REFERENCES mf_order(ID) ON DELETE RESTRICT,
+    CONSTRAINT ck_mf_order_key_values CHECK (
+        EXPIRES_AT > ISSUED_AT AND (REVOKED_AT IS NULL) = (REVOKE_REASON IS NULL)
+        AND ISSUE_REASON REGEXP '^[a-z-]{1,32}$' AND (REVOKE_REASON IS NULL OR REVOKE_REASON REGEXP '^[a-z-]{1,32}$')
+    )
+) ENGINE=InnoDB
+SQL);
+        $connection->queryExecute(<<<'SQL'
+CREATE TABLE IF NOT EXISTS mf_order_checkout (
+    GALLERY_HASH CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    KEY_HASH CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    REQUEST_HASH CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    ORDER_ID BIGINT UNSIGNED NULL,
+    SEALED_KEY VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NULL,
+    CREATED_AT DATETIME NOT NULL,
+    PRIMARY KEY (GALLERY_HASH, KEY_HASH),
+    UNIQUE KEY ux_mf_order_checkout_order (ORDER_ID),
+    KEY ix_mf_order_checkout_created (CREATED_AT),
+    CONSTRAINT fk_mf_order_checkout_gallery FOREIGN KEY (GALLERY_HASH) REFERENCES mf_gallery_capability(TOKEN_HASH) ON DELETE RESTRICT,
+    CONSTRAINT fk_mf_order_checkout_order FOREIGN KEY (ORDER_ID) REFERENCES mf_order(ID) ON DELETE RESTRICT,
+    CONSTRAINT ck_mf_order_checkout_values CHECK ((ORDER_ID IS NULL) = (SEALED_KEY IS NULL))
+) ENGINE=InnoDB
+SQL);
+    }
+
+    public function down(): void
+    {
+        $connection = Application::getConnection();
+        if (false !== $connection->query("SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'mf_order'")->fetch()
+            && false !== $connection->query('SELECT ID FROM mf_order LIMIT 1')->fetch()) {
+            throw new \RuntimeException('Orders exist; preserve them when rolling back application code.');
+        }
+        foreach (['mf_order_checkout', 'mf_order_access_key', 'mf_order_line', 'mf_order'] as $table) {
+            $connection->queryExecute('DROP TABLE IF EXISTS ' . $table);
+        }
+    }
+}

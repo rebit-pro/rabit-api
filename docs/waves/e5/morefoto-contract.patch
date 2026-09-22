@@ -1,0 +1,583 @@
+--- a/docs/04-bitrix-modules/backend-waves.json
++++ b/docs/04-bitrix-modules/backend-waves.json
+@@ -1,7 +1,7 @@
+ {
+   "version": 2,
+   "planStatus": "active",
+-  "date": "2026-09-21",
++  "date": "2026-09-22",
+   "endpointCount": 99,
+   "backend": "RaBit API",
+   "baseline": {
+@@ -1149,7 +1149,7 @@
+       "legacyIds": [
+         "W16"
+       ],
+-      "deliveryState": "planned",
++      "deliveryState": "inProgress",
+       "unlocks": [
+         "D3",
+         "G1",
+--- a/docs/04-bitrix-modules/backend-waves.md
++++ b/docs/04-bitrix-modules/backend-waves.md
+@@ -1,6 +1,6 @@
+ # Независимые волны MoreFoto
+ 
+-Дата: **2026-09-21**. Сервер — **RaBit API**. Активный план — граф зависимостей с буквами направлений и номерами срезов. Буквы не задают порядок выполнения. Статусы ниже — снимок на указанном main; перед стартом/merge проверить GitHub заново. Переименование не объявляет HTTP реализованным.
++Дата: **2026-09-22**. Сервер — **RaBit API**. Активный план — граф зависимостей с буквами направлений и номерами срезов. Буквы не задают порядок выполнения. Статусы ниже — снимок на указанном main; перед стартом/merge проверить GitHub заново. Переименование не объявляет HTTP реализованным.
+ 
+ [Карта модулей](README.md) · [REST-контракты](../05-rest-api/README.md) · [Postman по волнам](../05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json) · [Решения D01–D12](../frontend/business-review/decisions.md).
+ 
+@@ -161,7 +161,7 @@
+ | [E3](#e3) | Условия продаж и переопределения группы | C3, E2 | F1, E4, F2 | COM-04, COM-05, COM-06, COM-07 | в main |
+ | [F1](#f1) | Списки детей сотрудников | B2, D2, E3 | E4, D3, F2 | HND-06, HND-07, HND-08, HND-09, HND-12 | в main |
+ | [E4](#e4) | Приватная витрина и серверный расчёт корзины | D2, E3, F1 | E5, F2 | MED-01, COM-08, COM-09 | в main |
+-| [E5](#e5) | Заказ, снимок покупки и личный ключ | E4 | D3, G1, I1, J1 | COM-10, COM-11, COM-12, COM-13 | запланирована |
++| [E5](#e5) | Заказ, снимок покупки и личный ключ | E4 | D3, G1, I1, J1 | COM-10, COM-11, COM-12, COM-13 | в работе |
+ | [D3](#d3) | Атомарные переносы ребёнка и служебной заявки | D2, F1, E5 | F2, I3 | MED-07, HND-10, HND-11 | запланирована |
+ | [F2](#f2) | Подготовка и факт передачи ссылки | E3, F1, E4, D3 | G1, L1, K2 | HND-01, HND-02, HND-03, HND-04, HND-05 | запланирована |
+ | [G1](#g1) | Платёжные попытки и подтверждённые факты | E5, F2 | G2, I1, I2, I3 | PAY-01, PAY-02, PAY-03, PAY-07 | запланирована |
+@@ -866,7 +866,7 @@
+ 
+ **Владельцы:** `morefoto.commerce`.
+ **Зависит от:** E4. **Разблокирует:** D3, G1, I1, J1.
+-**Решения:** D02, D04, D05, D07, D10. **Статус:** запланирована.
++**Решения:** D02, D04, D05, D07, D10. **Статус:** в работе.
+ **Первичные REST:** COM-10, COM-11, COM-12, COM-13.
+ **Вход:** Установленные и принятые в main контракты/схема: E4. Открытые decisionGates проверяются отдельно до начала зависимого участка.
+ **Выход:** Завершённые операции COM-10, COM-11, COM-12, COM-13; Оформление фиксирует quote и неизменяемый заказ; личный ключ отделён от галереи.
+--- a/docs/05-rest-api/build.py
++++ b/docs/05-rest-api/build.py
+@@ -53,6 +53,8 @@
+ O="О"; OK="О/К"; ALL="О/К/Р/В"; G="Галерея"; B="Заказ"; W="Провайдер"
+ order_sample={"id":"order-example","number":"MF-EXAMPLE","groupId":"group-example",
+     "paymentStatus":"unpaid","productionStatus":"not-started","version":"order-version-example"}
++period_sample={"groupId":"group-example","state":"open","timezone":"Europe/Moscow","sentAt":"2026-10-01T10:00:00+03:00",
++    "closesAt":"2026-10-08T10:00:00+03:00","deliveryDueAt":"2026-10-15T10:00:00+03:00","now":"2026-10-01T12:00:00+03:00"}
+ list_sample={"items":[]}
+ # Existing auth routes: source confirmed, no live API verification.
+ add("auth","AUTH-01","POST","/auth/login","Вход сотрудника","Гость",
+@@ -207,7 +209,7 @@
+ add("commerce","COM-08","GET","/public/galleries/{gallery_token}/catalog","Действующий прайс покупателя",G,
+     "products, giftThreshold, giftForStaff, revision, conditionsRevision, capabilities, purchaseTerms",
+     save={"catalog_revision":"revision","conditions_revision":"conditionsRevision"},
+-    note="capabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается.")
++    note="capabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается. E5: capabilities.purchaseEnabled отражает серверное включение оформления (по умолчанию выключено, включается только на изолированном стенде); при false COM-10 отвечает 403 PURCHASE_DISABLED. purchaseTerms остаётся null до утверждения реквизитов продавца, оферты и согласия на обработку ПДн.")
+ cart_lines=[{"assignmentId":"{{assignment_id}}","productId":"{{product_id}}","quantity":1}]
+ quote_sample={"quote":{"lines":[],"total":25000,"subtotal":25000,"discount":0,"giftSaving":0,"gifts":[],"count":1,"invalid":[],"revision":1,"conditionsRevision":1},
+     "quoteToken":"opaque-quote-example","expiresAt":"2026-10-01T12:15:00+03:00"}
+@@ -216,24 +218,27 @@
+     save={"quote_token":"quoteToken"},note="Не создаёт заказ. Вход только assignmentId/productId/quantity; assignmentId получен из MED-01 и обозначает связь ребёнок—снимок. Сервер проверяет связь, область capability и готовность фото; childCode, скидки, подарок и суммы выводит сам. Для bundle assignmentId определяет ребёнка; сервер нормализует весь разрешённый состав его набора. Клиент не подписывает JSON сам.")
+ buyer={"name":"Тестовый покупатель","phone":"+79990000000","email":"buyer@example.test","comment":"Тестовый заказ","receiptChannel":"email","reviewed":True}
+ add("commerce","COM-10","POST","/public/galleries/{gallery_token}/orders","Оформить заказ из проверенной корзины",G,
+-    "id, number, accessKey, paymentStatus, productionStatus, quote, buyer, version",
++    "id, number, groupId, accessKey, accessKeyExpiresAt, paymentStatus, productionStatus, quote, buyer, version, createdAt",
+     {"lines":cart_lines,"buyer":buyer,"quoteToken":"{{quote_token}}"},code=201,
+-    sample=dict(order_sample,accessKey="example-private-key-not-valid",quote=quote_sample["quote"],buyer={k:v for k,v in buyer.items() if k!="reviewed"}),
++    sample=dict(order_sample,accessKey="example-private-key-not-valid",accessKeyExpiresAt="2026-10-31T12:00:00+03:00",createdAt="2026-10-01T12:00:00+03:00",quote=quote_sample["quote"],buyer=dict({k:v for k,v in buyer.items() if k!="reviewed"},receiptChannel=None)),
+     save={"order_id":"id","order_key":"accessKey","order_version":"version"},
+-    note="Новый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно.",
++    note="Новый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно. E5: Idempotency-Key (32 hex) обязателен, область повтора — capability галереи; тот же ключ и тело — 201 с теми же id/number/accessKey, пока ссылка галереи действует; другое тело — 409 IDEMPOTENCY_CONFLICT. lines совпадают с COM-09 для этого quoteToken; один заказ на расчёт (409 QUOTE_ALREADY_USED). Устаревший расчёт: 409 QUOTE_EXPIRED, QUOTE_STALE или PRICE_CHANGED с error.details{quote,quoteToken,expiresAt}; закрытая группа — 409 GALLERY_CLOSED. buyer: name 2–100, phone 10–15 цифр, email обязателен (до 254), comment до 1000, receiptChannel необязателен и только из capabilities.receiptChannels (до G2 — null); ошибки полей — 422 INVALID_BUYER_NAME/PHONE/EMAIL/COMMENT, RECEIPT_CHANNEL_UNAVAILABLE, REVIEW_REQUIRED. accessKey — 64 hex, действует 30 календарных дней по МСК; в БД только SHA-256. Location: /api/v1/public/orders/current. Строки quote содержат метаданные кадра без URL изображений. Оформление выключено по умолчанию: 403 PURCHASE_DISABLED.",
+     source="frontend/src/modules/morefoto/orders/services/checkout.ts")
+ add("commerce","COM-11","GET","/public/orders/current","Заказ покупателя по личному ключу",B,
+-    "id, number, groupId, buyer, quote, paymentStatus, productionStatus, paidAt?, latePayment?, version, period",
+-    sample=order_sample,save={"order_id":"id","order_version":"version"},
+-    note="X-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников.")
++    "id, number, groupId, institutionName, shootName, groupName, audience, buyer, quote, paymentStatus, productionStatus, paidAt?, latePayment?, version, period, accessKeyExpiresAt, createdAt",
++    sample=dict(order_sample,institutionName="Тестовый детский сад",shootName="Осенняя съёмка",groupName="Солнышко",audience="regular",
++        accessKeyExpiresAt="2026-10-31T12:00:00+03:00",createdAt="2026-10-01T12:00:00+03:00",period=period_sample),
++    save={"order_id":"id","order_version":"version"},
++    note="X-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников. E5: отсутствующий, неверный, отозванный и истёкший ключ дают одинаковый 404 ORDER_NOT_FOUND; отзыв ссылки галереи ключ заказа не отключает. period — календарь группы {groupId, state, timezone, sentAt, closesAt, deliveryDueAt, now}; история продлений появится с K2. paidAt/latePayment появятся с G1. Кадры без URL изображений. Ответ no-store.")
+ add("commerce","COM-12","GET","/orders","Поиск служебных заказов",OK,"items<StaffOrder>, meta",
+     query=[("q","","Номер/контакт"),("institutionId","","Учреждение"),("shootId","","Съёмка"),("groupId","","Группа"),
+         ("paymentStatus","","unpaid/pending/declined/paid"),("productionStatus","","Статус исполнения"),
+-        ("dateFrom","","YYYY-MM-DD"),("dateTo","","YYYY-MM-DD, включительно по МСК"),("late","","true/false"),("settlement","","hold/refund/needs-reprint")],
+-    sample=list_sample,source="frontend/src/modules/morefoto/curator/types.ts",note="Только своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора.")
++        ("dateFrom","","YYYY-MM-DD"),("dateTo","","YYYY-MM-DD, включительно по МСК"),("late","","true/false"),("settlement","","hold/refund/needs-reprint"),
++        ("page","1","Страница от 1"),("pageSize","50","Размер страницы 1–100")],
++    sample=list_sample,source="frontend/src/modules/morefoto/curator/types.ts",note="Только своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора. E5: organizer — все заказы, curator — заказы своих учреждений (пустая область — пустой список), head/teacher — 403 FORBIDDEN. StaffOrder: id, number, institutionId, institutionName, shootId, shootName, groupId, groupName, audience, createdAt, buyer{name,phone,email,comment,receiptChannel}, quote, paymentStatus, productionStatus, version; названия — на момент покупки. q — поиск без учёта регистра по номеру, имени, email и цифрам телефона внутри области, 2–100 символов. productionStatus: not-started/queued/printing/ready/delivered. dateFrom/dateTo — дата создания, полные дни МСК. late и settlement до поставщиков G1/I1–I3 отвечают 422 FILTER_UNAVAILABLE; неизвестный фильтр или значение — 422. Сортировка createdAt desc + id; область и фильтры применяются до LIMIT, total — по всей выборке. Изменение прав во время чтения — 409 ACCESS_CHANGED.")
+ add("commerce","COM-13","GET","/orders/{order_id}","Служебная карточка заказа",OK,
+-    "StaffOrder, period, version, correctionPhotos",sample=dict(order_sample,period={},correctionPhotos=[]),
+-    save={"order_version":"version"},note="correctionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается.")
++    "StaffOrder, period, version, correctionPhotos",sample=dict(order_sample,period=period_sample,correctionPhotos=[]),
++    save={"order_version":"version"},note="correctionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5: correctionPhotos — готовые кадры детей из строк заказа в его группе [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.")
+ # Handoff.
+ add("handoff","HND-01","GET","/group-links","Ссылки и сроки по доступной области",ALL,"items<LinkGroup>, meta",sample=list_sample,
+     query=[("institutionId","","Учреждение"),("shootId","","Съёмка"),("state","","preparing/open/closed")])
+--- a/docs/05-rest-api/endpoints.json
++++ b/docs/05-rest-api/endpoints.json
+@@ -1489,7 +1489,7 @@
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "capabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается.",
++      "note": "capabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается. E5: capabilities.purchaseEnabled отражает серверное включение оформления (по умолчанию выключено, включается только на изолированном стенде); при false COM-10 отвечает 403 PURCHASE_DISABLED. purchaseTerms остаётся null до утверждения реквизитов продавца, оферты и согласия на обработку ПДн.",
+       "status": "П",
+       "save": {
+         "catalog_revision": "revision",
+@@ -1567,7 +1567,7 @@
+       "path": "/public/galleries/{gallery_token}/orders",
+       "title": "Оформить заказ из проверенной корзины",
+       "roles": "Галерея",
+-      "output": "id, number, accessKey, paymentStatus, productionStatus, quote, buyer, version",
++      "output": "id, number, groupId, accessKey, accessKeyExpiresAt, paymentStatus, productionStatus, quote, buyer, version, createdAt",
+       "body": {
+         "lines": [
+           {
+@@ -1588,7 +1588,7 @@
+       },
+       "code": 201,
+       "query": [],
+-      "note": "Новый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно.",
++      "note": "Новый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно. E5: Idempotency-Key (32 hex) обязателен, область повтора — capability галереи; тот же ключ и тело — 201 с теми же id/number/accessKey, пока ссылка галереи действует; другое тело — 409 IDEMPOTENCY_CONFLICT. lines совпадают с COM-09 для этого quoteToken; один заказ на расчёт (409 QUOTE_ALREADY_USED). Устаревший расчёт: 409 QUOTE_EXPIRED, QUOTE_STALE или PRICE_CHANGED с error.details{quote,quoteToken,expiresAt}; закрытая группа — 409 GALLERY_CLOSED. buyer: name 2–100, phone 10–15 цифр, email обязателен (до 254), comment до 1000, receiptChannel необязателен и только из capabilities.receiptChannels (до G2 — null); ошибки полей — 422 INVALID_BUYER_NAME/PHONE/EMAIL/COMMENT, RECEIPT_CHANNEL_UNAVAILABLE, REVIEW_REQUIRED. accessKey — 64 hex, действует 30 календарных дней по МСК; в БД только SHA-256. Location: /api/v1/public/orders/current. Строки quote содержат метаданные кадра без URL изображений. Оформление выключено по умолчанию: 403 PURCHASE_DISABLED.",
+       "status": "П",
+       "save": {
+         "order_id": "id",
+@@ -1603,6 +1603,8 @@
+         "productionStatus": "not-started",
+         "version": "order-version-example",
+         "accessKey": "example-private-key-not-valid",
++        "accessKeyExpiresAt": "2026-10-31T12:00:00+03:00",
++        "createdAt": "2026-10-01T12:00:00+03:00",
+         "quote": {
+           "lines": [],
+           "total": 25000,
+@@ -1620,7 +1622,7 @@
+           "phone": "+79990000000",
+           "email": "buyer@example.test",
+           "comment": "Тестовый заказ",
+-          "receiptChannel": "email"
++          "receiptChannel": null
+         }
+       },
+       "source": "frontend/src/modules/morefoto/orders/services/checkout.ts",
+@@ -1641,11 +1643,11 @@
+       "path": "/public/orders/current",
+       "title": "Заказ покупателя по личному ключу",
+       "roles": "Заказ",
+-      "output": "id, number, groupId, buyer, quote, paymentStatus, productionStatus, paidAt?, latePayment?, version, period",
++      "output": "id, number, groupId, institutionName, shootName, groupName, audience, buyer, quote, paymentStatus, productionStatus, paidAt?, latePayment?, version, period, accessKeyExpiresAt, createdAt",
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "X-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников.",
++      "note": "X-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников. E5: отсутствующий, неверный, отозванный и истёкший ключ дают одинаковый 404 ORDER_NOT_FOUND; отзыв ссылки галереи ключ заказа не отключает. period — календарь группы {groupId, state, timezone, sentAt, closesAt, deliveryDueAt, now}; история продлений появится с K2. paidAt/latePayment появятся с G1. Кадры без URL изображений. Ответ no-store.",
+       "status": "П",
+       "save": {
+         "order_id": "id",
+@@ -1657,7 +1659,22 @@
+         "groupId": "group-example",
+         "paymentStatus": "unpaid",
+         "productionStatus": "not-started",
+-        "version": "order-version-example"
++        "version": "order-version-example",
++        "institutionName": "Тестовый детский сад",
++        "shootName": "Осенняя съёмка",
++        "groupName": "Солнышко",
++        "audience": "regular",
++        "accessKeyExpiresAt": "2026-10-31T12:00:00+03:00",
++        "createdAt": "2026-10-01T12:00:00+03:00",
++        "period": {
++          "groupId": "group-example",
++          "state": "open",
++          "timezone": "Europe/Moscow",
++          "sentAt": "2026-10-01T10:00:00+03:00",
++          "closesAt": "2026-10-08T10:00:00+03:00",
++          "deliveryDueAt": "2026-10-15T10:00:00+03:00",
++          "now": "2026-10-01T12:00:00+03:00"
++        }
+       },
+       "source": "frontend/src/modules/morefoto/commerce/types.ts",
+       "format": "json",
+@@ -1737,9 +1754,19 @@
+           "settlement",
+           "",
+           "hold/refund/needs-reprint"
++        ],
++        [
++          "page",
++          "1",
++          "Страница от 1"
++        ],
++        [
++          "pageSize",
++          "50",
++          "Размер страницы 1–100"
+         ]
+       ],
+-      "note": "Только своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора.",
++      "note": "Только своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора. E5: organizer — все заказы, curator — заказы своих учреждений (пустая область — пустой список), head/teacher — 403 FORBIDDEN. StaffOrder: id, number, institutionId, institutionName, shootId, shootName, groupId, groupName, audience, createdAt, buyer{name,phone,email,comment,receiptChannel}, quote, paymentStatus, productionStatus, version; названия — на момент покупки. q — поиск без учёта регистра по номеру, имени, email и цифрам телефона внутри области, 2–100 символов. productionStatus: not-started/queued/printing/ready/delivered. dateFrom/dateTo — дата создания, полные дни МСК. late и settlement до поставщиков G1/I1–I3 отвечают 422 FILTER_UNAVAILABLE; неизвестный фильтр или значение — 422. Сортировка createdAt desc + id; область и фильтры применяются до LIMIT, total — по всей выборке. Изменение прав во время чтения — 409 ACCESS_CHANGED.",
+       "status": "П",
+       "save": {},
+       "sample": {
+@@ -1774,7 +1801,7 @@
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "correctionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается.",
++      "note": "correctionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5: correctionPhotos — готовые кадры детей из строк заказа в его группе [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.",
+       "status": "П",
+       "save": {
+         "order_version": "version"
+@@ -1786,7 +1813,15 @@
+         "paymentStatus": "unpaid",
+         "productionStatus": "not-started",
+         "version": "order-version-example",
+-        "period": {},
++        "period": {
++          "groupId": "group-example",
++          "state": "open",
++          "timezone": "Europe/Moscow",
++          "sentAt": "2026-10-01T10:00:00+03:00",
++          "closesAt": "2026-10-08T10:00:00+03:00",
++          "deliveryDueAt": "2026-10-15T10:00:00+03:00",
++          "now": "2026-10-01T12:00:00+03:00"
++        },
+         "correctionPhotos": []
+       },
+       "source": "frontend/src/modules/morefoto/commerce/types.ts",
+--- a/docs/05-rest-api/README.md
++++ b/docs/05-rest-api/README.md
+@@ -292,20 +292,20 @@
+ | COM-07 · **П** | **PUT** /groups/{group_id}/conditions | Сохранить условия группы; О | revision, catalogRevision, products, giftEnabled, giftThreshold, giftForStaff, conditionsRevision, inherit | **200**; revision, conditionsRevision | E3; product |
+ | COM-08 · **П** | **GET** /public/galleries/{gallery_token}/catalog | Действующий прайс покупателя; Галерея | — | **200**; products, giftThreshold, giftForStaff, revision, conditionsRevision, capabilities, purchaseTerms | E4; product |
+ | COM-09 · **П** | **POST** /public/galleries/{gallery_token}/quotes | Проверить корзину и рассчитать итог; Галерея | lines | **200**; quote: CartQuote, quoteToken, expiresAt | E4; product |
+-| COM-10 · **П** | **POST** /public/galleries/{gallery_token}/orders | Оформить заказ из проверенной корзины; Галерея | lines, buyer, quoteToken | **201**; id, number, accessKey, paymentStatus, productionStatus, quote, buyer, version | E5; product |
+-| COM-11 · **П** | **GET** /public/orders/current | Заказ покупателя по личному ключу; Заказ | — | **200**; id, number, groupId, buyer, quote, paymentStatus, productionStatus, paidAt?, latePayment?, version, period | E5; product |
+-| COM-12 · **П** | **GET** /orders | Поиск служебных заказов; О/К | —; query: q, institutionId, shootId, groupId, paymentStatus, productionStatus, dateFrom, dateTo, late, settlement; page, pageSize | **200**; items&lt;StaffOrder&gt;, meta | E5; product |
++| COM-10 · **П** | **POST** /public/galleries/{gallery_token}/orders | Оформить заказ из проверенной корзины; Галерея | lines, buyer, quoteToken | **201**; id, number, groupId, accessKey, accessKeyExpiresAt, paymentStatus, productionStatus, quote, buyer, version, createdAt | E5; product |
++| COM-11 · **П** | **GET** /public/orders/current | Заказ покупателя по личному ключу; Заказ | — | **200**; id, number, groupId, institutionName, shootName, groupName, audience, buyer, quote, paymentStatus, productionStatus, paidAt?, latePayment?, version, period, accessKeyExpiresAt, createdAt | E5; product |
++| COM-12 · **П** | **GET** /orders | Поиск служебных заказов; О/К | —; query: q, institutionId, shootId, groupId, paymentStatus, productionStatus, dateFrom, dateTo, late, settlement, page, pageSize; page, pageSize | **200**; items&lt;StaffOrder&gt;, meta | E5; product |
+ | COM-13 · **П** | **GET** /orders/{order_id} | Служебная карточка заказа; О/К | — | **200**; StaffOrder, period, version, correctionPhotos | E5; product |
+ 
+ - **COM-03:** price — целые копейки (в UI строка рублей), printCount — целое число. Тип physical/digital/bundle. Выключение active вместо несуществующего сценария удаления.
+ - **COM-05:** PUT заменяет весь проверенный набор условий. Цены/порог здесь тестовые; D02/D04/D05 открыты.
+ - **COM-07:** inherit=true берёт общие условия. Эффективный прайс и льготу рассчитывает сервер; изменение инвалидирует подготовку ссылки/расчёт заказа.
+-- **COM-08:** capabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается.
++- **COM-08:** capabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается. E5: capabilities.purchaseEnabled отражает серверное включение оформления (по умолчанию выключено, включается только на изолированном стенде); при false COM-10 отвечает 403 PURCHASE_DISABLED. purchaseTerms остаётся null до утверждения реквизитов продавца, оферты и согласия на обработку ПДн.
+ - **COM-09:** Не создаёт заказ. Вход только assignmentId/productId/quantity; assignmentId получен из MED-01 и обозначает связь ребёнок—снимок. Сервер проверяет связь, область capability и готовность фото; childCode, скидки, подарок и суммы выводит сам. Для bundle assignmentId определяет ребёнка; сервер нормализует весь разрешённый состав его набора. Клиент не подписывает JSON сам.
+-- **COM-10:** Новый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно.
+-- **COM-11:** X-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников.
+-- **COM-12:** Только своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора.
+-- **COM-13:** correctionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается.
++- **COM-10:** Новый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно. E5: Idempotency-Key (32 hex) обязателен, область повтора — capability галереи; тот же ключ и тело — 201 с теми же id/number/accessKey, пока ссылка галереи действует; другое тело — 409 IDEMPOTENCY_CONFLICT. lines совпадают с COM-09 для этого quoteToken; один заказ на расчёт (409 QUOTE_ALREADY_USED). Устаревший расчёт: 409 QUOTE_EXPIRED, QUOTE_STALE или PRICE_CHANGED с error.details{quote,quoteToken,expiresAt}; закрытая группа — 409 GALLERY_CLOSED. buyer: name 2–100, phone 10–15 цифр, email обязателен (до 254), comment до 1000, receiptChannel необязателен и только из capabilities.receiptChannels (до G2 — null); ошибки полей — 422 INVALID_BUYER_NAME/PHONE/EMAIL/COMMENT, RECEIPT_CHANNEL_UNAVAILABLE, REVIEW_REQUIRED. accessKey — 64 hex, действует 30 календарных дней по МСК; в БД только SHA-256. Location: /api/v1/public/orders/current. Строки quote содержат метаданные кадра без URL изображений. Оформление выключено по умолчанию: 403 PURCHASE_DISABLED.
++- **COM-11:** X-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников. E5: отсутствующий, неверный, отозванный и истёкший ключ дают одинаковый 404 ORDER_NOT_FOUND; отзыв ссылки галереи ключ заказа не отключает. period — календарь группы {groupId, state, timezone, sentAt, closesAt, deliveryDueAt, now}; история продлений появится с K2. paidAt/latePayment появятся с G1. Кадры без URL изображений. Ответ no-store.
++- **COM-12:** Только своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора. E5: organizer — все заказы, curator — заказы своих учреждений (пустая область — пустой список), head/teacher — 403 FORBIDDEN. StaffOrder: id, number, institutionId, institutionName, shootId, shootName, groupId, groupName, audience, createdAt, buyer{name,phone,email,comment,receiptChannel}, quote, paymentStatus, productionStatus, version; названия — на момент покупки. q — поиск без учёта регистра по номеру, имени, email и цифрам телефона внутри области, 2–100 символов. productionStatus: not-started/queued/printing/ready/delivered. dateFrom/dateTo — дата создания, полные дни МСК. late и settlement до поставщиков G1/I1–I3 отвечают 422 FILTER_UNAVAILABLE; неизвестный фильтр или значение — 422. Сортировка createdAt desc + id; область и фильтры применяются до LIMIT, total — по всей выборке. Изменение прав во время чтения — 409 ACCESS_CHANGED.
++- **COM-13:** correctionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5: correctionPhotos — готовые кадры детей из строк заказа в его группе [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.
+ 
+ ### morefoto.handoff — Ссылки и списки сотрудников
+ 
+--- a/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json
++++ b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json
+@@ -5219,7 +5219,7 @@
+                 "catalog"
+               ]
+             },
+-            "description": "**COM-08 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Галерея.\n\nОтвет: products, giftThreshold, giftForStaff, revision, conditionsRevision, capabilities, purchaseTerms.\n\ncapabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E4. Проверки: F2, G2, N2."
++            "description": "**COM-08 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Галерея.\n\nОтвет: products, giftThreshold, giftForStaff, revision, conditionsRevision, capabilities, purchaseTerms.\n\ncapabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается. E5: capabilities.purchaseEnabled отражает серверное включение оформления (по умолчанию выключено, включается только на изолированном стенде); при false COM-10 отвечает 403 PURCHASE_DISABLED. purchaseTerms остаётся null до утверждения реквизитов продавца, оферты и согласия на обработку ПДн.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E4. Проверки: F2, G2, N2."
+           },
+           "event": [
+             {
+@@ -5429,7 +5429,7 @@
+                 "orders"
+               ]
+             },
+-            "description": "**COM-10 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Галерея.\n\nОтвет: id, number, accessKey, paymentStatus, productionStatus, quote, buyer, version.\n\nНовый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно.\n\nИсточник: frontend/src/modules/morefoto/orders/services/checkout.ts.\n\nОбласть: product. Основная волна: E5. Проверки: F2, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_10. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**COM-10 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Галерея.\n\nОтвет: id, number, groupId, accessKey, accessKeyExpiresAt, paymentStatus, productionStatus, quote, buyer, version, createdAt.\n\nНовый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно. E5: Idempotency-Key (32 hex) обязателен, область повтора — capability галереи; тот же ключ и тело — 201 с теми же id/number/accessKey, пока ссылка галереи действует; другое тело — 409 IDEMPOTENCY_CONFLICT. lines совпадают с COM-09 для этого quoteToken; один заказ на расчёт (409 QUOTE_ALREADY_USED). Устаревший расчёт: 409 QUOTE_EXPIRED, QUOTE_STALE или PRICE_CHANGED с error.details{quote,quoteToken,expiresAt}; закрытая группа — 409 GALLERY_CLOSED. buyer: name 2–100, phone 10–15 цифр, email обязателен (до 254), comment до 1000, receiptChannel необязателен и только из capabilities.receiptChannels (до G2 — null); ошибки полей — 422 INVALID_BUYER_NAME/PHONE/EMAIL/COMMENT, RECEIPT_CHANNEL_UNAVAILABLE, REVIEW_REQUIRED. accessKey — 64 hex, действует 30 календарных дней по МСК; в БД только SHA-256. Location: /api/v1/public/orders/current. Строки quote содержат метаданные кадра без URL изображений. Оформление выключено по умолчанию: 403 PURCHASE_DISABLED.\n\nИсточник: frontend/src/modules/morefoto/orders/services/checkout.ts.\n\nОбласть: product. Основная волна: E5. Проверки: F2, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_10. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"lines\": [\n    {\n      \"assignmentId\": \"{{assignment_id}}\",\n      \"productId\": \"{{product_id}}\",\n      \"quantity\": 1\n    }\n  ],\n  \"buyer\": {\n    \"name\": \"Тестовый покупатель\",\n    \"phone\": \"+79990000000\",\n    \"email\": \"buyer@example.test\",\n    \"comment\": \"Тестовый заказ\",\n    \"receiptChannel\": \"email\",\n    \"reviewed\": true\n  },\n  \"quoteToken\": \"{{quote_token}}\"\n}",
+@@ -5530,7 +5530,7 @@
+                     "orders"
+                   ]
+                 },
+-                "description": "**COM-10 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Галерея.\n\nОтвет: id, number, accessKey, paymentStatus, productionStatus, quote, buyer, version.\n\nНовый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно.\n\nИсточник: frontend/src/modules/morefoto/orders/services/checkout.ts.\n\nОбласть: product. Основная волна: E5. Проверки: F2, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_10. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++                "description": "**COM-10 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Галерея.\n\nОтвет: id, number, groupId, accessKey, accessKeyExpiresAt, paymentStatus, productionStatus, quote, buyer, version, createdAt.\n\nНовый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно. E5: Idempotency-Key (32 hex) обязателен, область повтора — capability галереи; тот же ключ и тело — 201 с теми же id/number/accessKey, пока ссылка галереи действует; другое тело — 409 IDEMPOTENCY_CONFLICT. lines совпадают с COM-09 для этого quoteToken; один заказ на расчёт (409 QUOTE_ALREADY_USED). Устаревший расчёт: 409 QUOTE_EXPIRED, QUOTE_STALE или PRICE_CHANGED с error.details{quote,quoteToken,expiresAt}; закрытая группа — 409 GALLERY_CLOSED. buyer: name 2–100, phone 10–15 цифр, email обязателен (до 254), comment до 1000, receiptChannel необязателен и только из capabilities.receiptChannels (до G2 — null); ошибки полей — 422 INVALID_BUYER_NAME/PHONE/EMAIL/COMMENT, RECEIPT_CHANNEL_UNAVAILABLE, REVIEW_REQUIRED. accessKey — 64 hex, действует 30 календарных дней по МСК; в БД только SHA-256. Location: /api/v1/public/orders/current. Строки quote содержат метаданные кадра без URL изображений. Оформление выключено по умолчанию: 403 PURCHASE_DISABLED.\n\nИсточник: frontend/src/modules/morefoto/orders/services/checkout.ts.\n\nОбласть: product. Основная волна: E5. Проверки: F2, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_10. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+                 "body": {
+                   "mode": "raw",
+                   "raw": "{\n  \"lines\": [\n    {\n      \"assignmentId\": \"{{assignment_id}}\",\n      \"productId\": \"{{product_id}}\",\n      \"quantity\": 1\n    }\n  ],\n  \"buyer\": {\n    \"name\": \"Тестовый покупатель\",\n    \"phone\": \"+79990000000\",\n    \"email\": \"buyer@example.test\",\n    \"comment\": \"Тестовый заказ\",\n    \"receiptChannel\": \"email\",\n    \"reviewed\": true\n  },\n  \"quoteToken\": \"{{quote_token}}\"\n}",
+@@ -5550,7 +5550,7 @@
+                   "value": "application/json"
+                 }
+               ],
+-              "body": "{\n  \"data\": {\n    \"id\": \"order-example\",\n    \"number\": \"MF-EXAMPLE\",\n    \"groupId\": \"group-example\",\n    \"paymentStatus\": \"unpaid\",\n    \"productionStatus\": \"not-started\",\n    \"version\": \"order-version-example\",\n    \"accessKey\": \"example-private-key-not-valid\",\n    \"quote\": {\n      \"lines\": [],\n      \"total\": 25000,\n      \"subtotal\": 25000,\n      \"discount\": 0,\n      \"giftSaving\": 0,\n      \"gifts\": [],\n      \"count\": 1,\n      \"invalid\": [],\n      \"revision\": 1,\n      \"conditionsRevision\": 1\n    },\n    \"buyer\": {\n      \"name\": \"Тестовый покупатель\",\n      \"phone\": \"+79990000000\",\n      \"email\": \"buyer@example.test\",\n      \"comment\": \"Тестовый заказ\",\n      \"receiptChannel\": \"email\"\n    }\n  }\n}"
++              "body": "{\n  \"data\": {\n    \"id\": \"order-example\",\n    \"number\": \"MF-EXAMPLE\",\n    \"groupId\": \"group-example\",\n    \"paymentStatus\": \"unpaid\",\n    \"productionStatus\": \"not-started\",\n    \"version\": \"order-version-example\",\n    \"accessKey\": \"example-private-key-not-valid\",\n    \"accessKeyExpiresAt\": \"2026-10-31T12:00:00+03:00\",\n    \"createdAt\": \"2026-10-01T12:00:00+03:00\",\n    \"quote\": {\n      \"lines\": [],\n      \"total\": 25000,\n      \"subtotal\": 25000,\n      \"discount\": 0,\n      \"giftSaving\": 0,\n      \"gifts\": [],\n      \"count\": 1,\n      \"invalid\": [],\n      \"revision\": 1,\n      \"conditionsRevision\": 1\n    },\n    \"buyer\": {\n      \"name\": \"Тестовый покупатель\",\n      \"phone\": \"+79990000000\",\n      \"email\": \"buyer@example.test\",\n      \"comment\": \"Тестовый заказ\",\n      \"receiptChannel\": null\n    }\n  }\n}"
+             }
+           ]
+         },
+@@ -5585,7 +5585,7 @@
+                 "current"
+               ]
+             },
+-            "description": "**COM-11 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, number, groupId, buyer, quote, paymentStatus, productionStatus, paidAt?, latePayment?, version, period.\n\nX-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: G1, I1, I3, L1, L2, K2, M1, N1, N2."
++            "description": "**COM-11 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, number, groupId, institutionName, shootName, groupName, audience, buyer, quote, paymentStatus, productionStatus, paidAt?, latePayment?, version, period, accessKeyExpiresAt, createdAt.\n\nX-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников. E5: отсутствующий, неверный, отозванный и истёкший ключ дают одинаковый 404 ORDER_NOT_FOUND; отзыв ссылки галереи ключ заказа не отключает. period — календарь группы {groupId, state, timezone, sentAt, closesAt, deliveryDueAt, now}; история продлений появится с K2. paidAt/latePayment появятся с G1. Кадры без URL изображений. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: G1, I1, I3, L1, L2, K2, M1, N1, N2."
+           },
+           "event": [
+             {
+@@ -5654,7 +5654,7 @@
+                     "current"
+                   ]
+                 },
+-                "description": "**COM-11 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, number, groupId, buyer, quote, paymentStatus, productionStatus, paidAt?, latePayment?, version, period.\n\nX-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: G1, I1, I3, L1, L2, K2, M1, N1, N2."
++                "description": "**COM-11 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, number, groupId, institutionName, shootName, groupName, audience, buyer, quote, paymentStatus, productionStatus, paidAt?, latePayment?, version, period, accessKeyExpiresAt, createdAt.\n\nX-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников. E5: отсутствующий, неверный, отозванный и истёкший ключ дают одинаковый 404 ORDER_NOT_FOUND; отзыв ссылки галереи ключ заказа не отключает. period — календарь группы {groupId, state, timezone, sentAt, closesAt, deliveryDueAt, now}; история продлений появится с K2. paidAt/latePayment появятся с G1. Кадры без URL изображений. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: G1, I1, I3, L1, L2, K2, M1, N1, N2."
+               },
+               "status": "OK",
+               "code": 200,
+@@ -5665,7 +5665,7 @@
+                   "value": "application/json"
+                 }
+               ],
+-              "body": "{\n  \"data\": {\n    \"id\": \"order-example\",\n    \"number\": \"MF-EXAMPLE\",\n    \"groupId\": \"group-example\",\n    \"paymentStatus\": \"unpaid\",\n    \"productionStatus\": \"not-started\",\n    \"version\": \"order-version-example\"\n  }\n}"
++              "body": "{\n  \"data\": {\n    \"id\": \"order-example\",\n    \"number\": \"MF-EXAMPLE\",\n    \"groupId\": \"group-example\",\n    \"paymentStatus\": \"unpaid\",\n    \"productionStatus\": \"not-started\",\n    \"version\": \"order-version-example\",\n    \"institutionName\": \"Тестовый детский сад\",\n    \"shootName\": \"Осенняя съёмка\",\n    \"groupName\": \"Солнышко\",\n    \"audience\": \"regular\",\n    \"accessKeyExpiresAt\": \"2026-10-31T12:00:00+03:00\",\n    \"createdAt\": \"2026-10-01T12:00:00+03:00\",\n    \"period\": {\n      \"groupId\": \"group-example\",\n      \"state\": \"open\",\n      \"timezone\": \"Europe/Moscow\",\n      \"sentAt\": \"2026-10-01T10:00:00+03:00\",\n      \"closesAt\": \"2026-10-08T10:00:00+03:00\",\n      \"deliveryDueAt\": \"2026-10-15T10:00:00+03:00\",\n      \"now\": \"2026-10-01T12:00:00+03:00\"\n    }\n  }\n}"
+             }
+           ]
+         },
+@@ -5762,6 +5762,18 @@
+                 },
+                 {
+                   "key": "page",
++                  "value": "1",
++                  "disabled": true,
++                  "description": "Страница от 1"
++                },
++                {
++                  "key": "pageSize",
++                  "value": "50",
++                  "disabled": true,
++                  "description": "Размер страницы 1–100"
++                },
++                {
++                  "key": "page",
+                   "value": "{{page}}",
+                   "description": "Страница начиная с 1"
+                 },
+@@ -5772,7 +5784,7 @@
+                 }
+               ]
+             },
+-            "description": "**COM-12 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<StaffOrder>, meta.\n\nТолько своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: G1, I1, I3, L1, L2, K2, M1, N1, N2."
++            "description": "**COM-12 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<StaffOrder>, meta.\n\nТолько своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора. E5: organizer — все заказы, curator — заказы своих учреждений (пустая область — пустой список), head/teacher — 403 FORBIDDEN. StaffOrder: id, number, institutionId, institutionName, shootId, shootName, groupId, groupName, audience, createdAt, buyer{name,phone,email,comment,receiptChannel}, quote, paymentStatus, productionStatus, version; названия — на момент покупки. q — поиск без учёта регистра по номеру, имени, email и цифрам телефона внутри области, 2–100 символов. productionStatus: not-started/queued/printing/ready/delivered. dateFrom/dateTo — дата создания, полные дни МСК. late и settlement до поставщиков G1/I1–I3 отвечают 422 FILTER_UNAVAILABLE; неизвестный фильтр или значение — 422. Сортировка createdAt desc + id; область и фильтры применяются до LIMIT, total — по всей выборке. Изменение прав во время чтения — 409 ACCESS_CHANGED.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: G1, I1, I3, L1, L2, K2, M1, N1, N2."
+           },
+           "event": [
+             {
+@@ -5905,6 +5917,18 @@
+                     },
+                     {
+                       "key": "page",
++                      "value": "1",
++                      "disabled": true,
++                      "description": "Страница от 1"
++                    },
++                    {
++                      "key": "pageSize",
++                      "value": "50",
++                      "disabled": true,
++                      "description": "Размер страницы 1–100"
++                    },
++                    {
++                      "key": "page",
+                       "value": "{{page}}",
+                       "description": "Страница начиная с 1"
+                     },
+@@ -5915,7 +5939,7 @@
+                     }
+                   ]
+                 },
+-                "description": "**COM-12 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<StaffOrder>, meta.\n\nТолько своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: G1, I1, I3, L1, L2, K2, M1, N1, N2."
++                "description": "**COM-12 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<StaffOrder>, meta.\n\nТолько своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора. E5: organizer — все заказы, curator — заказы своих учреждений (пустая область — пустой список), head/teacher — 403 FORBIDDEN. StaffOrder: id, number, institutionId, institutionName, shootId, shootName, groupId, groupName, audience, createdAt, buyer{name,phone,email,comment,receiptChannel}, quote, paymentStatus, productionStatus, version; названия — на момент покупки. q — поиск без учёта регистра по номеру, имени, email и цифрам телефона внутри области, 2–100 символов. productionStatus: not-started/queued/printing/ready/delivered. dateFrom/dateTo — дата создания, полные дни МСК. late и settlement до поставщиков G1/I1–I3 отвечают 422 FILTER_UNAVAILABLE; неизвестный фильтр или значение — 422. Сортировка createdAt desc + id; область и фильтры применяются до LIMIT, total — по всей выборке. Изменение прав во время чтения — 409 ACCESS_CHANGED.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: G1, I1, I3, L1, L2, K2, M1, N1, N2."
+               },
+               "status": "OK",
+               "code": 200,
+@@ -5962,7 +5986,7 @@
+                 "{{order_id}}"
+               ]
+             },
+-            "description": "**COM-13 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: StaffOrder, period, version, correctionPhotos.\n\ncorrectionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: D3, G1, I1, I3, L1, L2, K2, M1, N1, N2."
++            "description": "**COM-13 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: StaffOrder, period, version, correctionPhotos.\n\ncorrectionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5: correctionPhotos — готовые кадры детей из строк заказа в его группе [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: D3, G1, I1, I3, L1, L2, K2, M1, N1, N2."
+           },
+           "event": [
+             {
+@@ -6033,7 +6057,7 @@
+                     "{{order_id}}"
+                   ]
+                 },
+-                "description": "**COM-13 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: StaffOrder, period, version, correctionPhotos.\n\ncorrectionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: D3, G1, I1, I3, L1, L2, K2, M1, N1, N2."
++                "description": "**COM-13 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: StaffOrder, period, version, correctionPhotos.\n\ncorrectionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5: correctionPhotos — готовые кадры детей из строк заказа в его группе [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: D3, G1, I1, I3, L1, L2, K2, M1, N1, N2."
+               },
+               "status": "OK",
+               "code": 200,
+@@ -6044,7 +6068,7 @@
+                   "value": "application/json"
+                 }
+               ],
+-              "body": "{\n  \"data\": {\n    \"id\": \"order-example\",\n    \"number\": \"MF-EXAMPLE\",\n    \"groupId\": \"group-example\",\n    \"paymentStatus\": \"unpaid\",\n    \"productionStatus\": \"not-started\",\n    \"version\": \"order-version-example\",\n    \"period\": {},\n    \"correctionPhotos\": []\n  }\n}"
++              "body": "{\n  \"data\": {\n    \"id\": \"order-example\",\n    \"number\": \"MF-EXAMPLE\",\n    \"groupId\": \"group-example\",\n    \"paymentStatus\": \"unpaid\",\n    \"productionStatus\": \"not-started\",\n    \"version\": \"order-version-example\",\n    \"period\": {\n      \"groupId\": \"group-example\",\n      \"state\": \"open\",\n      \"timezone\": \"Europe/Moscow\",\n      \"sentAt\": \"2026-10-01T10:00:00+03:00\",\n      \"closesAt\": \"2026-10-08T10:00:00+03:00\",\n      \"deliveryDueAt\": \"2026-10-15T10:00:00+03:00\",\n      \"now\": \"2026-10-01T12:00:00+03:00\"\n    },\n    \"correctionPhotos\": []\n  }\n}"
+             }
+           ]
+         }
+@@ -6886,7 +6910,7 @@
+     },
+     {
+       "name": "G1 — Платёжные попытки и подтверждённые факты",
+-      "description": "Попытка, webhook и неизвестный исход обрабатываются без ложного успешного заказа.\n\nЗависит от: E5, F2. Разблокирует при выполнении остальных условий: G2, I1, I2, I3. Владельцы: morefoto.payments, morefoto.commerce.\n\nВключение: Только sandbox. Реальные списания закрыты до возвратов, исполнения, выдачи и N2.\n\nПроверяет дополнительно: COM-06, COM-07, COM-11, COM-12, COM-13. Папка содержит только основные операции волны; это план для отдельного ревью, не сценарий Run all.",
++      "description": "Попытка, webhook и неизвестный исход обрабатываются без ложного успешного заказа.\n\nЗависит от: E5, F2. Разблокирует при выполнении остальных условий: G2, I1, I2, I3. Владельцы: morefoto.payments, morefoto.commerce.\n\nВключение: Только sandbox. Реестр подключать к реальным данным G1; денежный возврат в интерфейсе обязателен в I2. Боевые списания закрыты до возвратов, фискализации, исполнения, выдачи и N2.\n\nПроверяет дополнительно: COM-06, COM-07, COM-11, COM-12, COM-13. Папка содержит только основные операции волны; это план для отдельного ревью, не сценарий Run all.",
+       "item": [
+         {
+           "id": "544d7b07-0598-523d-b208-eba66a23fb98",
+@@ -8188,7 +8212,7 @@
+     },
+     {
+       "name": "I2 — Резерв и подтверждение возврата",
+-      "description": "Конкурентные запросы не возвращают больше остатка, unknown не вызывает второе списание.\n\nЗависит от: G1, I1. Разблокирует при выполнении остальных условий: I3, N1. Владельцы: morefoto.settlement, morefoto.payments.\n\nВключение: Только sandbox, затем решения I3 и финальный N2.\n\nПроверяет дополнительно: SET-01. Папка содержит только основные операции волны; это план для отдельного ревью, не сценарий Run all.",
++      "description": "Конкурентные запросы не возвращают больше остатка, unknown не вызывает второе списание.\n\nЗависит от: G1, I1. Разблокирует при выполнении остальных условий: I3, N1. Владельцы: morefoto.settlement, morefoto.payments.\n\nВключение: Только sandbox. Приёмка I2 требует работающего денежного возврата из админ-панели MoreFoto; одна backend-команда не закрывает сценарий. Затем I3 и финальный N2.\n\nПроверяет дополнительно: SET-01. Папка содержит только основные операции волны; это план для отдельного ревью, не сценарий Run all.",
+       "item": [
+         {
+           "id": "cc80f3ae-fce4-585f-892b-f196bc14c313",
+--- a/docs/05-rest-api/postman/MoreFoto.postman_collection.json
++++ b/docs/05-rest-api/postman/MoreFoto.postman_collection.json
+@@ -4371,7 +4371,7 @@
+                 "catalog"
+               ]
+             },
+-            "description": "**COM-08 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Галерея.\n\nОтвет: products, giftThreshold, giftForStaff, revision, conditionsRevision, capabilities, purchaseTerms.\n\ncapabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E4. Проверки: F2, G2, N2."
++            "description": "**COM-08 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Галерея.\n\nОтвет: products, giftThreshold, giftForStaff, revision, conditionsRevision, capabilities, purchaseTerms.\n\ncapabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается. E5: capabilities.purchaseEnabled отражает серверное включение оформления (по умолчанию выключено, включается только на изолированном стенде); при false COM-10 отвечает 403 PURCHASE_DISABLED. purchaseTerms остаётся null до утверждения реквизитов продавца, оферты и согласия на обработку ПДн.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E4. Проверки: F2, G2, N2."
+           },
+           "event": [
+             {
+@@ -4575,7 +4575,7 @@
+                 "orders"
+               ]
+             },
+-            "description": "**COM-10 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Галерея.\n\nОтвет: id, number, accessKey, paymentStatus, productionStatus, quote, buyer, version.\n\nНовый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно.\n\nИсточник: frontend/src/modules/morefoto/orders/services/checkout.ts.\n\nОбласть: product. Основная волна: E5. Проверки: F2, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_10. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**COM-10 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Галерея.\n\nОтвет: id, number, groupId, accessKey, accessKeyExpiresAt, paymentStatus, productionStatus, quote, buyer, version, createdAt.\n\nНовый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно. E5: Idempotency-Key (32 hex) обязателен, область повтора — capability галереи; тот же ключ и тело — 201 с теми же id/number/accessKey, пока ссылка галереи действует; другое тело — 409 IDEMPOTENCY_CONFLICT. lines совпадают с COM-09 для этого quoteToken; один заказ на расчёт (409 QUOTE_ALREADY_USED). Устаревший расчёт: 409 QUOTE_EXPIRED, QUOTE_STALE или PRICE_CHANGED с error.details{quote,quoteToken,expiresAt}; закрытая группа — 409 GALLERY_CLOSED. buyer: name 2–100, phone 10–15 цифр, email обязателен (до 254), comment до 1000, receiptChannel необязателен и только из capabilities.receiptChannels (до G2 — null); ошибки полей — 422 INVALID_BUYER_NAME/PHONE/EMAIL/COMMENT, RECEIPT_CHANNEL_UNAVAILABLE, REVIEW_REQUIRED. accessKey — 64 hex, действует 30 календарных дней по МСК; в БД только SHA-256. Location: /api/v1/public/orders/current. Строки quote содержат метаданные кадра без URL изображений. Оформление выключено по умолчанию: 403 PURCHASE_DISABLED.\n\nИсточник: frontend/src/modules/morefoto/orders/services/checkout.ts.\n\nОбласть: product. Основная волна: E5. Проверки: F2, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_10. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"lines\": [\n    {\n      \"assignmentId\": \"{{assignment_id}}\",\n      \"productId\": \"{{product_id}}\",\n      \"quantity\": 1\n    }\n  ],\n  \"buyer\": {\n    \"name\": \"Тестовый покупатель\",\n    \"phone\": \"+79990000000\",\n    \"email\": \"buyer@example.test\",\n    \"comment\": \"Тестовый заказ\",\n    \"receiptChannel\": \"email\",\n    \"reviewed\": true\n  },\n  \"quoteToken\": \"{{quote_token}}\"\n}",
+@@ -4676,7 +4676,7 @@
+                     "orders"
+                   ]
+                 },
+-                "description": "**COM-10 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Галерея.\n\nОтвет: id, number, accessKey, paymentStatus, productionStatus, quote, buyer, version.\n\nНовый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно.\n\nИсточник: frontend/src/modules/morefoto/orders/services/checkout.ts.\n\nОбласть: product. Основная волна: E5. Проверки: F2, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_10. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++                "description": "**COM-10 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Галерея.\n\nОтвет: id, number, groupId, accessKey, accessKeyExpiresAt, paymentStatus, productionStatus, quote, buyer, version, createdAt.\n\nНовый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно. E5: Idempotency-Key (32 hex) обязателен, область повтора — capability галереи; тот же ключ и тело — 201 с теми же id/number/accessKey, пока ссылка галереи действует; другое тело — 409 IDEMPOTENCY_CONFLICT. lines совпадают с COM-09 для этого quoteToken; один заказ на расчёт (409 QUOTE_ALREADY_USED). Устаревший расчёт: 409 QUOTE_EXPIRED, QUOTE_STALE или PRICE_CHANGED с error.details{quote,quoteToken,expiresAt}; закрытая группа — 409 GALLERY_CLOSED. buyer: name 2–100, phone 10–15 цифр, email обязателен (до 254), comment до 1000, receiptChannel необязателен и только из capabilities.receiptChannels (до G2 — null); ошибки полей — 422 INVALID_BUYER_NAME/PHONE/EMAIL/COMMENT, RECEIPT_CHANNEL_UNAVAILABLE, REVIEW_REQUIRED. accessKey — 64 hex, действует 30 календарных дней по МСК; в БД только SHA-256. Location: /api/v1/public/orders/current. Строки quote содержат метаданные кадра без URL изображений. Оформление выключено по умолчанию: 403 PURCHASE_DISABLED.\n\nИсточник: frontend/src/modules/morefoto/orders/services/checkout.ts.\n\nОбласть: product. Основная волна: E5. Проверки: F2, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_10. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+                 "body": {
+                   "mode": "raw",
+                   "raw": "{\n  \"lines\": [\n    {\n      \"assignmentId\": \"{{assignment_id}}\",\n      \"productId\": \"{{product_id}}\",\n      \"quantity\": 1\n    }\n  ],\n  \"buyer\": {\n    \"name\": \"Тестовый покупатель\",\n    \"phone\": \"+79990000000\",\n    \"email\": \"buyer@example.test\",\n    \"comment\": \"Тестовый заказ\",\n    \"receiptChannel\": \"email\",\n    \"reviewed\": true\n  },\n  \"quoteToken\": \"{{quote_token}}\"\n}",
+@@ -4696,7 +4696,7 @@
+                   "value": "application/json"
+                 }
+               ],
+-              "body": "{\n  \"data\": {\n    \"id\": \"order-example\",\n    \"number\": \"MF-EXAMPLE\",\n    \"groupId\": \"group-example\",\n    \"paymentStatus\": \"unpaid\",\n    \"productionStatus\": \"not-started\",\n    \"version\": \"order-version-example\",\n    \"accessKey\": \"example-private-key-not-valid\",\n    \"quote\": {\n      \"lines\": [],\n      \"total\": 25000,\n      \"subtotal\": 25000,\n      \"discount\": 0,\n      \"giftSaving\": 0,\n      \"gifts\": [],\n      \"count\": 1,\n      \"invalid\": [],\n      \"revision\": 1,\n      \"conditionsRevision\": 1\n    },\n    \"buyer\": {\n      \"name\": \"Тестовый покупатель\",\n      \"phone\": \"+79990000000\",\n      \"email\": \"buyer@example.test\",\n      \"comment\": \"Тестовый заказ\",\n      \"receiptChannel\": \"email\"\n    }\n  }\n}"
++              "body": "{\n  \"data\": {\n    \"id\": \"order-example\",\n    \"number\": \"MF-EXAMPLE\",\n    \"groupId\": \"group-example\",\n    \"paymentStatus\": \"unpaid\",\n    \"productionStatus\": \"not-started\",\n    \"version\": \"order-version-example\",\n    \"accessKey\": \"example-private-key-not-valid\",\n    \"accessKeyExpiresAt\": \"2026-10-31T12:00:00+03:00\",\n    \"createdAt\": \"2026-10-01T12:00:00+03:00\",\n    \"quote\": {\n      \"lines\": [],\n      \"total\": 25000,\n      \"subtotal\": 25000,\n      \"discount\": 0,\n      \"giftSaving\": 0,\n      \"gifts\": [],\n      \"count\": 1,\n      \"invalid\": [],\n      \"revision\": 1,\n      \"conditionsRevision\": 1\n    },\n    \"buyer\": {\n      \"name\": \"Тестовый покупатель\",\n      \"phone\": \"+79990000000\",\n      \"email\": \"buyer@example.test\",\n      \"comment\": \"Тестовый заказ\",\n      \"receiptChannel\": null\n    }\n  }\n}"
+             }
+           ]
+         },
+@@ -4731,7 +4731,7 @@
+                 "current"
+               ]
+             },
+-            "description": "**COM-11 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, number, groupId, buyer, quote, paymentStatus, productionStatus, paidAt?, latePayment?, version, period.\n\nX-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: G1, I1, I3, L1, L2, K2, M1, N1, N2."
++            "description": "**COM-11 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, number, groupId, institutionName, shootName, groupName, audience, buyer, quote, paymentStatus, productionStatus, paidAt?, latePayment?, version, period, accessKeyExpiresAt, createdAt.\n\nX-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников. E5: отсутствующий, неверный, отозванный и истёкший ключ дают одинаковый 404 ORDER_NOT_FOUND; отзыв ссылки галереи ключ заказа не отключает. period — календарь группы {groupId, state, timezone, sentAt, closesAt, deliveryDueAt, now}; история продлений появится с K2. paidAt/latePayment появятся с G1. Кадры без URL изображений. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: G1, I1, I3, L1, L2, K2, M1, N1, N2."
+           },
+           "event": [
+             {
+@@ -4800,7 +4800,7 @@
+                     "current"
+                   ]
+                 },
+-                "description": "**COM-11 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, number, groupId, buyer, quote, paymentStatus, productionStatus, paidAt?, latePayment?, version, period.\n\nX-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: G1, I1, I3, L1, L2, K2, M1, N1, N2."
++                "description": "**COM-11 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, number, groupId, institutionName, shootName, groupName, audience, buyer, quote, paymentStatus, productionStatus, paidAt?, latePayment?, version, period, accessKeyExpiresAt, createdAt.\n\nX-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников. E5: отсутствующий, неверный, отозванный и истёкший ключ дают одинаковый 404 ORDER_NOT_FOUND; отзыв ссылки галереи ключ заказа не отключает. period — календарь группы {groupId, state, timezone, sentAt, closesAt, deliveryDueAt, now}; история продлений появится с K2. paidAt/latePayment появятся с G1. Кадры без URL изображений. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: G1, I1, I3, L1, L2, K2, M1, N1, N2."
+               },
+               "status": "OK",
+               "code": 200,
+@@ -4811,7 +4811,7 @@
+                   "value": "application/json"
+                 }
+               ],
+-              "body": "{\n  \"data\": {\n    \"id\": \"order-example\",\n    \"number\": \"MF-EXAMPLE\",\n    \"groupId\": \"group-example\",\n    \"paymentStatus\": \"unpaid\",\n    \"productionStatus\": \"not-started\",\n    \"version\": \"order-version-example\"\n  }\n}"
++              "body": "{\n  \"data\": {\n    \"id\": \"order-example\",\n    \"number\": \"MF-EXAMPLE\",\n    \"groupId\": \"group-example\",\n    \"paymentStatus\": \"unpaid\",\n    \"productionStatus\": \"not-started\",\n    \"version\": \"order-version-example\",\n    \"institutionName\": \"Тестовый детский сад\",\n    \"shootName\": \"Осенняя съёмка\",\n    \"groupName\": \"Солнышко\",\n    \"audience\": \"regular\",\n    \"accessKeyExpiresAt\": \"2026-10-31T12:00:00+03:00\",\n    \"createdAt\": \"2026-10-01T12:00:00+03:00\",\n    \"period\": {\n      \"groupId\": \"group-example\",\n      \"state\": \"open\",\n      \"timezone\": \"Europe/Moscow\",\n      \"sentAt\": \"2026-10-01T10:00:00+03:00\",\n      \"closesAt\": \"2026-10-08T10:00:00+03:00\",\n      \"deliveryDueAt\": \"2026-10-15T10:00:00+03:00\",\n      \"now\": \"2026-10-01T12:00:00+03:00\"\n    }\n  }\n}"
+             }
+           ]
+         },
+@@ -4908,6 +4908,18 @@
+                 },
+                 {
+                   "key": "page",
++                  "value": "1",
++                  "disabled": true,
++                  "description": "Страница от 1"
++                },
++                {
++                  "key": "pageSize",
++                  "value": "50",
++                  "disabled": true,
++                  "description": "Размер страницы 1–100"
++                },
++                {
++                  "key": "page",
+                   "value": "{{page}}",
+                   "description": "Страница начиная с 1"
+                 },
+@@ -4918,7 +4930,7 @@
+                 }
+               ]
+             },
+-            "description": "**COM-12 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<StaffOrder>, meta.\n\nТолько своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: G1, I1, I3, L1, L2, K2, M1, N1, N2."
++            "description": "**COM-12 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<StaffOrder>, meta.\n\nТолько своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора. E5: organizer — все заказы, curator — заказы своих учреждений (пустая область — пустой список), head/teacher — 403 FORBIDDEN. StaffOrder: id, number, institutionId, institutionName, shootId, shootName, groupId, groupName, audience, createdAt, buyer{name,phone,email,comment,receiptChannel}, quote, paymentStatus, productionStatus, version; названия — на момент покупки. q — поиск без учёта регистра по номеру, имени, email и цифрам телефона внутри области, 2–100 символов. productionStatus: not-started/queued/printing/ready/delivered. dateFrom/dateTo — дата создания, полные дни МСК. late и settlement до поставщиков G1/I1–I3 отвечают 422 FILTER_UNAVAILABLE; неизвестный фильтр или значение — 422. Сортировка createdAt desc + id; область и фильтры применяются до LIMIT, total — по всей выборке. Изменение прав во время чтения — 409 ACCESS_CHANGED.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: G1, I1, I3, L1, L2, K2, M1, N1, N2."
+           },
+           "event": [
+             {
+@@ -5051,6 +5063,18 @@
+                     },
+                     {
+                       "key": "page",
++                      "value": "1",
++                      "disabled": true,
++                      "description": "Страница от 1"
++                    },
++                    {
++                      "key": "pageSize",
++                      "value": "50",
++                      "disabled": true,
++                      "description": "Размер страницы 1–100"
++                    },
++                    {
++                      "key": "page",
+                       "value": "{{page}}",
+                       "description": "Страница начиная с 1"
+                     },
+@@ -5061,7 +5085,7 @@
+                     }
+                   ]
+                 },
+-                "description": "**COM-12 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<StaffOrder>, meta.\n\nТолько своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: G1, I1, I3, L1, L2, K2, M1, N1, N2."
++                "description": "**COM-12 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<StaffOrder>, meta.\n\nТолько своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора. E5: organizer — все заказы, curator — заказы своих учреждений (пустая область — пустой список), head/teacher — 403 FORBIDDEN. StaffOrder: id, number, institutionId, institutionName, shootId, shootName, groupId, groupName, audience, createdAt, buyer{name,phone,email,comment,receiptChannel}, quote, paymentStatus, productionStatus, version; названия — на момент покупки. q — поиск без учёта регистра по номеру, имени, email и цифрам телефона внутри области, 2–100 символов. productionStatus: not-started/queued/printing/ready/delivered. dateFrom/dateTo — дата создания, полные дни МСК. late и settlement до поставщиков G1/I1–I3 отвечают 422 FILTER_UNAVAILABLE; неизвестный фильтр или значение — 422. Сортировка createdAt desc + id; область и фильтры применяются до LIMIT, total — по всей выборке. Изменение прав во время чтения — 409 ACCESS_CHANGED.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: G1, I1, I3, L1, L2, K2, M1, N1, N2."
+               },
+               "status": "OK",
+               "code": 200,
+@@ -5108,7 +5132,7 @@
+                 "{{order_id}}"
+               ]
+             },
+-            "description": "**COM-13 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: StaffOrder, period, version, correctionPhotos.\n\ncorrectionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: D3, G1, I1, I3, L1, L2, K2, M1, N1, N2."
++            "description": "**COM-13 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: StaffOrder, period, version, correctionPhotos.\n\ncorrectionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5: correctionPhotos — готовые кадры детей из строк заказа в его группе [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: D3, G1, I1, I3, L1, L2, K2, M1, N1, N2."
+           },
+           "event": [
+             {
+@@ -5179,7 +5203,7 @@
+                     "{{order_id}}"
+                   ]
+                 },
+-                "description": "**COM-13 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: StaffOrder, period, version, correctionPhotos.\n\ncorrectionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: D3, G1, I1, I3, L1, L2, K2, M1, N1, N2."
++                "description": "**COM-13 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: StaffOrder, period, version, correctionPhotos.\n\ncorrectionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5: correctionPhotos — готовые кадры детей из строк заказа в его группе [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: D3, G1, I1, I3, L1, L2, K2, M1, N1, N2."
+               },
+               "status": "OK",
+               "code": 200,
+@@ -5190,7 +5214,7 @@
+                   "value": "application/json"
+                 }
+               ],
+-              "body": "{\n  \"data\": {\n    \"id\": \"order-example\",\n    \"number\": \"MF-EXAMPLE\",\n    \"groupId\": \"group-example\",\n    \"paymentStatus\": \"unpaid\",\n    \"productionStatus\": \"not-started\",\n    \"version\": \"order-version-example\",\n    \"period\": {},\n    \"correctionPhotos\": []\n  }\n}"
++              "body": "{\n  \"data\": {\n    \"id\": \"order-example\",\n    \"number\": \"MF-EXAMPLE\",\n    \"groupId\": \"group-example\",\n    \"paymentStatus\": \"unpaid\",\n    \"productionStatus\": \"not-started\",\n    \"version\": \"order-version-example\",\n    \"period\": {\n      \"groupId\": \"group-example\",\n      \"state\": \"open\",\n      \"timezone\": \"Europe/Moscow\",\n      \"sentAt\": \"2026-10-01T10:00:00+03:00\",\n      \"closesAt\": \"2026-10-08T10:00:00+03:00\",\n      \"deliveryDueAt\": \"2026-10-15T10:00:00+03:00\",\n      \"now\": \"2026-10-01T12:00:00+03:00\"\n    },\n    \"correctionPhotos\": []\n  }\n}"
+             }
+           ]
+         }

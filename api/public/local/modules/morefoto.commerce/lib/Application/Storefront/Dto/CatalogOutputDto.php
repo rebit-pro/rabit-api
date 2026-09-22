@@ -8,6 +8,17 @@ use Morefoto\Commerce\Application\Catalog\Dto\ProductOutputDto;
 
 final readonly class CatalogOutputDto
 {
-    /** @param list<ProductOutputDto> $products */
-    public function __construct(public array $products, public int $giftThreshold, public bool $giftForStaff, public int $revision, public int $conditionsRevision) {}
+    /**
+     * @param list<ProductOutputDto> $products
+     * @param list<string>           $receiptChannels
+     */
+    public function __construct(
+        public array $products,
+        public int $giftThreshold,
+        public bool $giftForStaff,
+        public int $revision,
+        public int $conditionsRevision,
+        public bool $purchaseEnabled,
+        public array $receiptChannels,
+    ) {}
 }

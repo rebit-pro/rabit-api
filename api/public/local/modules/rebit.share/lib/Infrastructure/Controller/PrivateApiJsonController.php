@@ -14,6 +14,8 @@ use Rebit\Share\Infrastructure\Controller\Responses\PreviewResponse;
 /** Централизует ошибки и запрет кеширования API с приватной ссылкой вместо Bearer-сессии. */
 abstract class PrivateApiJsonController extends BaseJsonController
 {
+    use CreatedJsonTrait;
+
     protected function getExceptionResponse(): ControllerJson
     {
         return (new ApiJsonExceptionResponse(
