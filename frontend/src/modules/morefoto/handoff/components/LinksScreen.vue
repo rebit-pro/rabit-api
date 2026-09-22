@@ -1,18 +1,28 @@
 <script setup lang="ts">
 import { computed, shallowRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { isMockApiEnabled } from '@/mocks/config';
+import { useAuthStore } from '@/stores/auth';
 import AdminDialog from '../../management/components/AdminDialog.vue';
 import LinkFields from './LinkFields.vue';
 import { useHandoff } from '../useHandoff';
 import { useHandoffEditor } from '../useHandoffEditor';
 import { moscowInput } from '../rules';
-import { formatMoment } from '../display';
-import type { LinkCommand, LinkGroup } from '../types';
+import { formatMoment, problemText } from '../display';
+import { loadLinks } from '../service';
+import { linkError, linksApi, toLinkGroup } from '../links-api';
+import { isStaffRole } from '../../types';
+import type { LinkCommand, LinkEvent, LinkGroup } from '../types';
 import '../handoff.css';
-const route = useRoute(),
+const live = !isMockApiEnabled,
+  authStore = useAuthStore(),
+  route = useRoute(),
   router = useRouter(),
-  { data, loading, error, reload } = useHandoff(),
-  notice = shallowRef('');
+  // An unknown role only reads: buttons still follow the server-confirmed role of the session.
+  role = () => (isStaffRole(authStore.user?.role) ? authStore.user!.role : 'head'),
+  { data, loading, error, reload } = useHandoff((token) => loadLinks(token, role())),
+  notice = shallowRef(''),
+  histories = shallowRef<Record<string, LinkEvent[]>>({});
 const editor = useHandoffEditor(() => {
   notice.value = 'Изменения сохранены.';
   void reload();
@@ -58,13 +68,46 @@ function open(group: LinkGroup, action: LinkCommand['action']) {
 function change(value: Partial<LinkCommand>) {
   if (command.value?.kind === 'link') Object.assign(command.value, value);
 }
-const url = (group: LinkGroup) => window.location.origin + '/g/' + group.galleryToken;
+const url = (token: string) => window.location.origin + '/g/' + token;
+/** Live keys are requested per group on demand: the list never carries gallery tokens. */
+async function token(group: LinkGroup): Promise<string> {
+  return live ? ((await linksApi.detail(group.id)).galleryToken ?? '') : group.galleryToken;
+}
 async function copy(group: LinkGroup) {
+  let link = '';
   try {
-    await navigator.clipboard.writeText(url(group));
+    link = await token(group);
+    if (!link) {
+      notice.value = 'Ссылка появится после проверки группы.';
+      return;
+    }
+    await navigator.clipboard.writeText(url(link));
     notice.value = 'Ссылка скопирована. Дата передачи не изменена.';
-  } catch {
-    notice.value = 'Выделите и скопируйте ссылку из поля в карточке.';
+  } catch (cause) {
+    notice.value = link ? 'Скопируйте ссылку вручную: ' + url(link) : linkError(cause);
+  }
+}
+async function openGallery(group: LinkGroup) {
+  const tab = window.open('', '_blank');
+  try {
+    const link = await token(group);
+    if (!link) throw new Error('Ссылка появится после проверки группы.');
+    if (tab) {
+      tab.opener = null;
+      tab.location.href = url(link);
+    }
+  } catch (cause) {
+    tab?.close();
+    notice.value = linkError(cause);
+  }
+}
+async function history(group: LinkGroup, event: Event) {
+  if (!live || !(event.target as HTMLDetailsElement).open) return;
+  try {
+    const detail = await linksApi.detail(group.id);
+    histories.value = { ...histories.value, [group.id]: toLinkGroup(detail, detail).history };
+  } catch (cause) {
+    notice.value = linkError(cause);
   }
 }
 </script>
@@ -115,17 +158,22 @@ async function copy(group: LinkGroup) {
           <span>Доставка до</span><strong>{{ formatMoment(group.deliveryAt) }}</strong>
         </div>
       </div>
-      <label class="handoff-url"
+      <label v-if="!live" class="handoff-url"
         >Ссылка группы<input
-          :value="url(group)"
+          :value="url(group.galleryToken)"
           readonly
           :aria-label="'Ссылка группы ' + group.name"
           @focus="($event.target as HTMLInputElement).select()"
       /></label>
-      <p v-if="!group.sentAt" class="mf-muted mb-4">Копирование не запускает срок. {{ group.problems.join(' ') }}</p>
+      <p v-if="!group.sentAt" class="mf-muted mb-4">
+        {{ live && !group.prepared ? 'Ссылка появится после проверки группы.' : 'Копирование не запускает срок.' }}
+        {{ group.problems.map(problemText).join(' ') }}
+      </p>
       <div class="mf-actions">
-        <v-btn variant="outlined" @click="copy(group)">Копировать ссылку</v-btn
-        ><v-btn :href="'/g/' + group.galleryToken" target="_blank" rel="noopener" variant="text">Открыть галерею</v-btn>
+        <template v-if="!live || group.prepared">
+          <v-btn variant="outlined" @click="copy(group)">Копировать ссылку</v-btn
+          ><v-btn variant="text" @click="openGallery(group)">Открыть галерею</v-btn>
+        </template>
         <v-btn v-if="data.role === 'organizer' && !group.sentAt" :disabled="!!group.problems.length" @click="open(group, 'prepare')"
           >Проверить ссылку</v-btn
         >
@@ -134,10 +182,10 @@ async function copy(group: LinkGroup) {
           >Исправить дату</v-btn
         >
       </div>
-      <details v-if="group.history.length" class="handoff-history">
-        <summary>История изменений · {{ group.history.length }}</summary>
+      <details v-if="live || group.history.length" class="handoff-history" @toggle="history(group, $event)">
+        <summary>История изменений{{ live ? '' : ' · ' + group.history.length }}</summary>
         <ol>
-          <li v-for="(event, index) in group.history" :key="index">
+          <li v-for="(event, index) in histories[group.id] ?? group.history" :key="index">
             <strong>{{
               event.kind === 'prepared' ? 'Ссылка проверена' : event.kind === 'transmitted' ? 'Передача отмечена' : 'Дата исправлена'
             }}</strong>

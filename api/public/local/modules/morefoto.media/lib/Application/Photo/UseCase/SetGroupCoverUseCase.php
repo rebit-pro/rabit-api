@@ -39,6 +39,10 @@ final readonly class SetGroupCoverUseCase
                 throw new HttpException('GROUP_LOCKED', 409);
             }
             $current = $this->media->lockRevision($scope->shootId);
+            // Link delivery takes the same lock: re-read after waiting so the cover cannot change in an opened gallery.
+            if (!$this->scopes->resolve($group->shootId, $groupId)->groupEditable) {
+                throw new HttpException('GROUP_LOCKED', 409);
+            }
             $resource = '/groups/' . $groupId . '/cover';
             $hash = hash('sha256', json_encode([
                 'revision' => $input->revision,

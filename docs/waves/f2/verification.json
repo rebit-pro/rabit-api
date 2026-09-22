@@ -1,0 +1,105 @@
+{
+  "wave": "F2",
+  "status": "gate-passed",
+  "date": "2026-09-22",
+  "branch": "codex/f2-link-handoff",
+  "base": "4b507b3b3c27719888e38f582b48e6a56c0c5946",
+  "pr": "https://github.com/rebit-pro/rabit-api/pull/40",
+  "dependencies": {
+    "E3": "#20",
+    "F1": "#25",
+    "E4": "#30"
+  },
+  "decisions": [
+    "F2-D3-ORDER",
+    "raw gallery key stored for staff",
+    "sentAt not before the link issue minute",
+    "pending staff requests block preparation until D3",
+    "own link revision"
+  ],
+  "scope": [
+    "HND-01",
+    "HND-02",
+    "HND-03",
+    "HND-04",
+    "HND-05"
+  ],
+  "checks": {
+    "phpLint": {
+      "result": "PASS",
+      "command": "make test-e2e (php-lint.log)",
+      "files": 800
+    },
+    "phpstan": {
+      "result": "PASS",
+      "command": "make test-e2e (phpstan.log)",
+      "note": "No errors"
+    },
+    "phpunit": {
+      "result": "PASS",
+      "command": "make test-e2e (phpunit.log)",
+      "tests": 511,
+      "assertions": 2384,
+      "newTests": 37
+    },
+    "style": {
+      "result": "PASS",
+      "command": "php-cs-fixer fix --path-mode=intersection over changed files; override for api/tools/e2e"
+    },
+    "frontend": {
+      "result": "PASS",
+      "command": "make test-e2e (check.log, test-commerce.log, build.log)",
+      "unitTests": 169
+    },
+    "graph": {
+      "result": "PASS",
+      "command": "python3 tools/verify-wave-graph.py docs/waves/graph.json",
+      "readyFromMain": [
+        "F2"
+      ]
+    },
+    "contract": {
+      "result": "PASS",
+      "command": "python3 ../MoreFoto/docs/05-rest-api/validate.py; node docs/05-rest-api/validate-postman.cjs (from MoreFoto)"
+    },
+    "browserE2E": {
+      "result": "PASS",
+      "command": "make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor",
+      "fixture": "rabit-e2e-ac59142ba1ce",
+      "expected": 72,
+      "unexpected": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "f2Scenario": "passed, 49.9 s"
+    },
+    "integration": {
+      "result": "PASS",
+      "script": "api/tools/e2e/verify-links.php",
+      "output": "F2 integration passed",
+      "alsoPassed": [
+        "E5 integration",
+        "E4 integration",
+        "E4 F1 trusted eligibility",
+        "Notification H1"
+      ]
+    },
+    "visualDesktopMobile": {
+      "result": "PASS",
+      "record": "docs/waves/f2/visual.json",
+      "artifacts": [
+        "docs/waves/f2/visual/f2-desktop-prepared-top.png",
+        "docs/waves/f2/visual/f2-mobile-open.png"
+      ]
+    }
+  },
+  "remaining": [
+    "merge PR #40",
+    "deployment to app.morefoto36.ru with DB backup, migrations 20260922120001 and 20260922150001, rollback path"
+  ],
+  "complete": true,
+  "baseHistory": [
+    "8cba22c7655b5886d5fe663523214bcd059e674b",
+    "4b507b3b3c27719888e38f582b48e6a56c0c5946 (E5 merged, main merged into the branch)"
+  ],
+  "testedSource": "2de43f7 (main 4b507b3 + F2)"
+}

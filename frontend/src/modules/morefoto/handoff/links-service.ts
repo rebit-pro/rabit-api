@@ -1,12 +1,24 @@
+import { isMockApiEnabled } from '@/mocks/config';
 import { DemoError } from '../mocks/service';
 import { simulateRequest } from '../mocks/runtime';
 import { writeOrganization } from '../organization/repository';
 import { readPhotos } from '../photos/repository';
 import { getCatalog } from '../commerce/mocks/catalog';
-import { closingAfterCorrection, groupSentAt, parseTransmission, preparationProblems, preparationSignature } from './rules';
+import { closingAfterCorrection, groupSentAt, liveLinkErrors, parseTransmission, preparationProblems, preparationSignature } from './rules';
+import { linkError, linksApi } from './links-api';
 import { conflict, handoffLock, HandoffValidationError, requireGroup } from './scope';
 import type { LinkCommand, LinkEvent } from './types';
 export async function saveLink(token: string, command: LinkCommand): Promise<void> {
+  if (!isMockApiEnabled) {
+    const errors = liveLinkErrors(command, new Date().toISOString());
+    if (Object.keys(errors).length) throw new HandoffValidationError(errors);
+    try {
+      await linksApi.save(command);
+      return;
+    } catch (cause) {
+      throw new Error(linkError(cause));
+    }
+  }
   requireGroup(token, command.groupId);
   await simulateRequest();
   return handoffLock(() => {

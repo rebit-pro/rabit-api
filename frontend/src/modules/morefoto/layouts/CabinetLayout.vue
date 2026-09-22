@@ -69,6 +69,15 @@ const navigation = computed(() =>
               }
             ]
           : []),
+        ...(isStaffRole(auth.user?.role)
+          ? [
+              {
+                title: 'Ссылки и сроки',
+                to: '/cabinet/links',
+                icon: 'mdi-link-variant'
+              }
+            ]
+          : []),
         ...(['organizer', 'curator', 'teacher'].includes(auth.user?.role ?? '')
           ? [
               {

@@ -9,7 +9,7 @@ use Morefoto\Media\Domain\Gallery\Repository\GalleryCapabilityRepository;
 use Rebit\Share\Contracts\Organization\GalleryGroupInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
-/** Выдаёт и отзывает непредсказуемые ключи приватной галереи для внутреннего сценария передачи.
+/** Выдаёт и отзывает непредсказуемые ключи приватной галереи для сценария передачи ссылки.
  * Не активирует продажи: состояние определяется фактическими сроками группы, которыми управляет Organization.
  */
 final readonly class GalleryCapabilityLifecycle
@@ -20,7 +20,7 @@ final readonly class GalleryCapabilityLifecycle
     {
         $group = $this->groups->get($groupId);
         $token = bin2hex(random_bytes(32));
-        $this->keys->issue($group->publicId, hash('sha256', $token));
+        $this->keys->issue($group->publicId, hash('sha256', $token), $token);
 
         return new GalleryCapabilityOutputDto($token, 1);
     }

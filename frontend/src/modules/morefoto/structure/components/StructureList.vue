@@ -53,6 +53,10 @@ function group(item: StructureItem): Group | null {
             {{ group(item)!.teacherId === null ? 'Воспитатель не назначен' : 'Воспитатель назначен' }}
           </p>
           <dl v-if="group(item)!.closesAt" class="structure-calendar">
+            <div v-if="group(item)!.sentAt">
+              <dt>Ссылка передана</dt>
+              <dd>{{ deadline(group(item)!.sentAt!) }} МСК</dd>
+            </div>
             <div>
               <dt>Закрытие приёма</dt>
               <dd>{{ deadline(group(item)!.closesAt!) }} МСК</dd>
