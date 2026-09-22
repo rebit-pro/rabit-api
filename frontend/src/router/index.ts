@@ -49,6 +49,8 @@ router.beforeEach(async (to) => {
         'PhotoWorkspace',
         'StaffRequests',
         'StaffRequest',
+        'WorkOrders',
+        'WorkOrder',
         'Links'
       ].includes(String(to.name))
     )
@@ -57,6 +59,8 @@ router.beforeEach(async (to) => {
       return '/access-unavailable';
     if (to.path === '/cabinet/users' && !auth.user?.permissions?.includes('staff.manage')) return '/access-unavailable';
     if (to.name === 'PhotoWorkspace' && !auth.user?.permissions?.includes('media.manage')) return '/access-unavailable';
+    if (['WorkOrders', 'WorkOrder'].includes(String(to.name)) && !auth.user?.permissions?.includes('order.read'))
+      return '/access-unavailable';
   }
   return true;
 });

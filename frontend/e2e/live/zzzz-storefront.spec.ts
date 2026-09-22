@@ -146,7 +146,8 @@ test('E4: quote rejects amount, identity and quantity tampering', async ({ reque
     await body(await request.post(path() + '/quotes', { data }), 422);
   const catalog = (await body(await request.get(path() + '/catalog'))).data;
   expect(catalog.capabilities.receiptChannels).toEqual([]);
-  expect(catalog.capabilities.purchaseEnabled).toBe(false);
+  // E5 enables checkout by server flag only on this isolated stand; fiscal receipt channels stay absent until G2.
+  expect(catalog.capabilities.purchaseEnabled).toBe(true);
 });
 
 for (const viewport of [
@@ -175,7 +176,7 @@ for (const viewport of [
     await page.getByRole('button', { name: 'Закрыть просмотр', exact: true }).click();
     await page.getByRole('link', { name: 'Открыть корзину', exact: true }).click();
     await expect(page.getByTestId('cart-total')).toContainText('100');
-    await expect(page.getByRole('link', { name: 'Оформить заказ', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Оформить заказ', exact: true })).toBeVisible();
     await page.reload();
     await expect(page.getByTestId('cart-total')).toContainText('100');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

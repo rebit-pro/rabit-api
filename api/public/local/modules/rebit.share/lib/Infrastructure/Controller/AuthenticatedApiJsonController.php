@@ -12,7 +12,6 @@ use Rebit\Share\Infrastructure\Controller\Auth\AuthenticatedControllerInterface;
 use Rebit\Share\Infrastructure\Controller\Auth\AuthenticatedControllerTrait;
 use Rebit\Share\Infrastructure\Controller\Filters\BearerTokenFilter;
 use Rebit\Share\Infrastructure\Controller\Responses\ApiJsonExceptionResponse;
-use Rebit\Share\Shared\Interface\ResponseDtoInterface;
 use Rebit\Share\Application\Contract\File\Dto\PreviewContentOutputDto;
 use Rebit\Share\Infrastructure\Controller\Responses\PreviewResponse;
 
@@ -25,6 +24,7 @@ use Rebit\Share\Infrastructure\Controller\Responses\PreviewResponse;
 abstract class AuthenticatedApiJsonController extends BaseJsonController implements AuthenticatedControllerInterface
 {
     use AuthenticatedControllerTrait;
+    use CreatedJsonTrait;
 
     /** @return Base[] */
     protected function getDefaultPreFilters(): array
@@ -48,17 +48,6 @@ abstract class AuthenticatedApiJsonController extends BaseJsonController impleme
         if ($response instanceof HttpResponse) {
             $response->addHeader('Cache-Control', 'no-store');
         }
-    }
-
-    final protected function createdJson(
-        array|ResponseDtoInterface $data,
-        string $location,
-    ): ControllerJson {
-        $response = $this->json($data);
-        $response->setStatus(self::HTTP_CREATED_CODE);
-        $response->addHeader('Location', $location);
-
-        return $response;
     }
 
     final protected function preview(

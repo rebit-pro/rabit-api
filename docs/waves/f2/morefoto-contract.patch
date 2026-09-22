@@ -1,6 +1,42 @@
 --- a/docs/04-bitrix-modules/backend-waves.json
 +++ b/docs/04-bitrix-modules/backend-waves.json
-@@ -64,7 +64,8 @@
+@@ -6,7 +6,7 @@
+   "backend": "RaBit API",
+   "baseline": {
+     "branch": "main",
+-    "commit": "8cba22c7655b5886d5fe663523214bcd059e674b",
++    "commit": "4b507b3b3c27719888e38f582b48e6a56c0c5946",
+     "mergedWaves": [
+       "A1",
+       "A2",
+@@ -29,7 +29,8 @@
+       "E3",
+       "F1",
+       "H1",
+-      "E4"
++      "E4",
++      "E5"
+     ],
+     "review": {},
+     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
+@@ -49,7 +50,8 @@
+       "D2": "https://github.com/rebit-pro/rabit-api/pull/21",
+       "H1": "https://github.com/rebit-pro/rabit-api/pull/22",
+       "F1": "https://github.com/rebit-pro/rabit-api/pull/25",
+-      "E4": "https://github.com/rebit-pro/rabit-api/pull/30"
++      "E4": "https://github.com/rebit-pro/rabit-api/pull/30",
++      "E5": "https://github.com/rebit-pro/rabit-api/pull/37"
+     },
+     "mergeCommits": {
+       "C4": "cfc334e5890dd51dfd6ff6638eac2cc3e436322b",
+@@ -59,12 +61,14 @@
+       "D2": "31ebf8a1c1f6672ecd1da8011b8230413e416433",
+       "H1": "28bcad9e575489deb1113d7ce2ac459a43dd7132",
+       "F1": "6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc",
+-      "E4": "7e606e53cc6b347e5c7b70e217ab7f8eb8a45875"
++      "E4": "7e606e53cc6b347e5c7b70e217ab7f8eb8a45875",
++      "E5": "4b507b3b3c27719888e38f582b48e6a56c0c5946"
+     },
      "decisionEvidence": {
        "D02-D05": "docs/waves/e3/README.md in rabit-api: user accepted rules before PR #20",
        "E4-DEC-01": "2026-09-21 user accepted assignmentId for child-photo relation",
@@ -10,7 +46,16 @@
      }
    },
    "acceptedImplementationDecisions": [
-@@ -1172,7 +1173,8 @@
+@@ -1149,7 +1153,7 @@
+       "legacyIds": [
+         "W16"
+       ],
+-      "deliveryState": "review",
++      "deliveryState": "merged",
+       "unlocks": [
+         "D3",
+         "G1",
+@@ -1172,7 +1176,8 @@
        "dependsOn": [
          "D2",
          "F1",
@@ -20,7 +65,7 @@
        ],
        "decisionGates": [
          "D03",
-@@ -1188,15 +1190,22 @@
+@@ -1188,15 +1193,22 @@
        "verifiesEndpointIds": [
          "MED-02",
          "MED-04",
@@ -44,7 +89,7 @@
        ],
        "review": [
          "Два переноса, повтор и несколько детей не создают дубликаты.",
-@@ -1205,7 +1214,8 @@
+@@ -1205,7 +1217,8 @@
        ],
        "acceptance": [
          "До/после покупки, stale preview, чужая target-группа, сбой между участниками.",
@@ -54,7 +99,7 @@
        ],
        "activation": "Включить переносы после снимка заказа. Платёжные последствия перепроверить I3.",
        "legacyIds": [
-@@ -1213,10 +1223,9 @@
+@@ -1213,10 +1226,9 @@
        ],
        "deliveryState": "planned",
        "unlocks": [
@@ -66,7 +111,7 @@
        "outputBoundary": "Завершённые операции MED-07, HND-10, HND-11; Перенос сохраняет ID/покупку и не создаёт дубли или накопление скидок.",
        "mergeCheck": "Отдельный PR к актуальному main; все dependsOn уже merged. Проверки на main + только этот diff, без файлов/коммитов незамерженных волн; установить миграции и DI своего сценария. Повторить проверку после обновления base."
      },
-@@ -1232,14 +1241,12 @@
+@@ -1232,14 +1244,12 @@
        "dependsOn": [
          "E3",
          "F1",
@@ -83,7 +128,7 @@
        ],
        "endpointIds": [
          "HND-01",
-@@ -1257,35 +1264,36 @@
+@@ -1257,35 +1267,36 @@
          "COM-06",
          "COM-07",
          "COM-08",

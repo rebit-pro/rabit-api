@@ -77,7 +77,7 @@ async function clear() {
       </div>
       <CartSummary :quote="quote" :catalog="catalog" :staff="gallery.audience === 'staff'">
         <v-btn
-          v-if="isMockApiEnabled"
+          v-if="isMockApiEnabled || catalog.capabilities?.purchaseEnabled"
           :to="'/g/' + token + '/checkout'"
           color="primary"
           block

@@ -160,7 +160,7 @@ def start(args):
         if "Notification H1 integration passed" not in output:
             raise RuntimeError("Notification integration did not complete; see notification.log")
 
-        docker("run", "--detach", "--name", name, "--label", label, "--network", state["private"], "--network-alias", "api-php-fpm", "--user", "0", "--entrypoint", "php-fpm", *mounts, "--env", "APP_ENV=test", "--env", "APP_DEBUG=0", "--env", "REBIT_GEETEST_ENABLED=0", "--env", "REBIT_GEETEST_BYPASS=1", "--env", "MESSENGER_TRANSPORT_DSN=amqp://rebit:rebit@rabbitmq:5672/rebit", "--env", "MOREFOTO_PRIVATE_MEDIA_PATH=/runtime/private/media", "--env", "MOREFOTO_PUBLIC_PREVIEW_PATH=/runtime/public/upload/morefoto/previews", "--env", "MOREFOTO_PUBLIC_PREVIEW_URL=/upload/morefoto/previews", args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
+        docker("run", "--detach", "--name", name, "--label", label, "--network", state["private"], "--network-alias", "api-php-fpm", "--user", "0", "--entrypoint", "php-fpm", *mounts, "--env", "APP_ENV=test", "--env", "APP_DEBUG=0", "--env", "REBIT_GEETEST_ENABLED=0", "--env", "REBIT_GEETEST_BYPASS=1", "--env", "MESSENGER_TRANSPORT_DSN=amqp://rebit:rebit@rabbitmq:5672/rebit", "--env", "MOREFOTO_PRIVATE_MEDIA_PATH=/runtime/private/media", "--env", "MOREFOTO_PUBLIC_PREVIEW_PATH=/runtime/public/upload/morefoto/previews", "--env", "MOREFOTO_PUBLIC_PREVIEW_URL=/upload/morefoto/previews", "--env", "MOREFOTO_CHECKOUT_ENABLED=1", args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
         state["containers"].append(name)
         save(state)
         name = identity + "-media"
@@ -229,6 +229,11 @@ def test_live(state):
     output = docker("exec", state["id"] + "-fpm", "php", "/app/tools/e2e/verify-storefront.php", log=Path(state["report"], "storefront-integration.log"))
     if "E4 integration passed" not in output:
         raise RuntimeError("Storefront integration did not complete")
+    # The browser spec records the secrets it received so the verifier can prove none of them is stored in clear text.
+    docker("cp", str(ROOT / "frontend/var/e5-orders.json"), state["id"] + "-fpm:/runtime/e5-orders.json")
+    output = docker("exec", state["id"] + "-fpm", "php", "/app/tools/e2e/verify-orders.php", log=Path(state["report"], "orders-integration.log"))
+    if "E5 integration passed" not in output:
+        raise RuntimeError("Order integration did not complete")
     output = docker("exec", state["id"] + "-fpm", "php", "/app/tools/e2e/verify-links.php", log=Path(state["report"], "links-integration.log"))
     if "F2 integration passed" not in output:
         raise RuntimeError("Link integration did not complete")

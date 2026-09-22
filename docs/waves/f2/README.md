@@ -1,6 +1,6 @@
 # F2 — подготовка и факт передачи ссылки
 
-Ветка `codex/f2-link-handoff` от main `8cba22c7655b5886d5fe663523214bcd059e674b`, PR https://github.com/rebit-pro/rabit-api/pull/40.
+Ветка `codex/f2-link-handoff` от main `8cba22c7655b5886d5fe663523214bcd059e674b`, актуальный main `4b507b3` (E5 слита) влит в ветку; PR https://github.com/rebit-pro/rabit-api/pull/40.
 
 - **Зависимости:** E3 (#20), F1 (#25), E4 (#30); гейты D05, D07 и D10 приняты.
 - **Порядок волн:** по решению пользователя от 22.09.2026 F2 идёт раньше D3. D3 теперь зависит от E5 и F2. Изменены `graph.json` и канонический план MoreFoto.
@@ -52,9 +52,9 @@
 - **Выполнено до review** (факты — `verification.json` и progress):
   - PHP lint;
   - PHPStan;
-  - PHPUnit unit (318 тестов, 37 новых);
+  - PHPUnit unit (372 теста на main с E5, 37 новых F2);
   - php-cs-fixer;
-  - frontend `npm run check` и `npm run test:commerce` (160);
+  - frontend `npm run check` и `npm run test:commerce` (169);
   - граф волн;
   - валидаторы контракта MoreFoto.
 - **По решению пользователя — только после review без блокеров:**

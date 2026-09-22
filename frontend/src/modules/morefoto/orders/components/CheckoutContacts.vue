@@ -2,7 +2,7 @@
 import type { BuyerFields, BuyerErrors } from '../types';
 import UiPhoneField from '../../ui/components/UiPhoneField.vue';
 import UiClearButton from '../../ui/components/UiClearButton.vue';
-defineProps<{ draft: BuyerFields; errors: BuyerErrors; busy: boolean; maxAvailable: boolean }>();
+defineProps<{ draft: BuyerFields; errors: BuyerErrors; busy: boolean; maxAvailable: boolean; receiptAvailable: boolean }>();
 const emit = defineEmits<{ change: [patch: Partial<BuyerFields>] }>();
 function text(field: 'name' | 'email' | 'comment' | 'phone', value: string | null) {
   emit('change', { [field]: value ?? '' });
@@ -79,7 +79,10 @@ function channel(value: unknown) {
         :aria-invalid="!!errors.comment || undefined"
         @update:model-value="text('comment', $event)"
       />
-      <div class="contact-receipt">
+      <p v-if="!receiptAvailable" class="mf-muted contact-channel-note" data-testid="receipt-unavailable">
+        Способ получения чека появится вместе с оплатой. Сейчас заказ сохраняется без списания денег.
+      </p>
+      <div v-else class="contact-receipt">
         <v-radio-group
           :model-value="draft.receiptChannel"
           name="buyer-receiptChannel"

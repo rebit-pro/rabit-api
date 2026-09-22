@@ -3,7 +3,7 @@
   "status": "review-pending",
   "date": "2026-09-22",
   "branch": "codex/f2-link-handoff",
-  "base": "8cba22c7655b5886d5fe663523214bcd059e674b",
+  "base": "4b507b3b3c27719888e38f582b48e6a56c0c5946",
   "pr": "https://github.com/rebit-pro/rabit-api/pull/40",
   "dependencies": {
     "E3": "#20",
@@ -27,7 +27,8 @@
   "checks": {
     "phpLint": {
       "result": "PASS",
-      "command": "php -l over changed PHP files in rabit-api-php-cli:d1-local"
+      "command": "vendor/bin/phplint",
+      "files": 800
     },
     "phpstan": {
       "result": "PASS",
@@ -37,8 +38,8 @@
     "phpunit": {
       "result": "PASS",
       "command": "vendor/bin/phpunit --testsuite=unit",
-      "tests": 318,
-      "assertions": 1459,
+      "tests": 372,
+      "assertions": 1731,
       "newTests": 37
     },
     "style": {
@@ -48,13 +49,12 @@
     "frontend": {
       "result": "PASS",
       "command": "npm run check && npm run test:commerce",
-      "unitTests": 160
+      "unitTests": 169
     },
     "graph": {
       "result": "PASS",
       "command": "python3 tools/verify-wave-graph.py docs/waves/graph.json",
       "readyFromMain": [
-        "E5",
         "F2"
       ]
     },
@@ -82,5 +82,9 @@
   "remaining": [
     "full make test-e2e with browser, MySQL verifier and desktop/mobile review after the code review"
   ],
-  "complete": false
+  "complete": false,
+  "baseHistory": [
+    "8cba22c7655b5886d5fe663523214bcd059e674b",
+    "4b507b3b3c27719888e38f582b48e6a56c0c5946 (E5 merged, main merged into the branch)"
+  ]
 }

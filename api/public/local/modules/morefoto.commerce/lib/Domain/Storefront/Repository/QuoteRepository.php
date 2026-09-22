@@ -22,11 +22,11 @@ final readonly class QuoteRepository
         }
     }
 
-    /** @return array{GALLERY_HASH:string,FINGERPRINT:string,EXPIRES_AT:string}|false */
+    /** @return array{GALLERY_HASH:string,FINGERPRINT:string,EXPIRES_AT:string,SNAPSHOT_JSON:string}|false */
     public function find(string $hash): array|false
     {
         try {
-            return Application::getConnection()->query("SELECT GALLERY_HASH,FINGERPRINT,DATE_FORMAT(EXPIRES_AT,'%Y-%m-%d %H:%i:%s') AS EXPIRES_AT FROM mf_cart_quote WHERE TOKEN_HASH='{$hash}'")->fetch();
+            return Application::getConnection()->query("SELECT GALLERY_HASH,FINGERPRINT,DATE_FORMAT(EXPIRES_AT,'%Y-%m-%d %H:%i:%s') AS EXPIRES_AT,SNAPSHOT_JSON FROM mf_cart_quote WHERE TOKEN_HASH='{$hash}'")->fetch();
         } catch (\Throwable $error) {
             throw new CatalogStorageException('Cannot resolve cart quote.', 0, $error);
         }

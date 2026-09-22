@@ -2,12 +2,12 @@
 
 ## Точка продолжения
 
-- Ветка `codex/f2-link-handoff` в worktree `/home/user/rabit-api-worktrees/f2-link-handoff`. Base `origin/main` 8cba22c7655b5886d5fe663523214bcd059e674b. PR https://github.com/rebit-pro/rabit-api/pull/40.
-- Основной checkout `/home/user/rabit-api` занят параллельной сессией E5 (PR #37); его не трогать.
+- Ветка `codex/f2-link-handoff` в worktree `/home/user/rabit-api-worktrees/f2-link-handoff`. Исходный base 8cba22c; актуальный `origin/main` 4b507b3 (merge E5 #37) влит в ветку. PR https://github.com/rebit-pro/rabit-api/pull/40.
+- Основной checkout `/home/user/rabit-api` использует параллельная сессия; его не трогать. E5 (PR #37) слита в main 22.09.2026.
 - Завершено: граф F2 → D3, backend HND-01…05 с контрактами Organization/Access/Media/Commerce, live frontend, E2E-спецификация и MySQL verifier (написаны, не запускались), уточнения контракта MoreFoto, отчёт волны; быстрый gate зелёный.
 - Сейчас: публикация (commit/push) и перевод PR в review.
 - Следующий шаг: code review PR #40. После review без блокеров — полный `make test-e2e` (команда ниже), просмотр `f2-desktop-prepared.png`/`f2-mobile-open.png`, перенос результатов в progress/verification.
-- Блокеров нет. Открытых решений нет. После merge E5 (#37) ожидать текстовые конфликты в `graph.json`, `tools/run-browser-e2e.py`, `api/tools/e2e/prepare.php`, router и `CabinetLayout.vue`; повторить затронутые проверки.
+- Блокеров нет. Открытых решений нет. Конфликты с E5 разрешены, быстрый gate на main 4b507b3 + diff F2 повторён.
 - Рабочее дерево: всё закоммичено. Внешний MoreFoto изменён без Git (граф и `build.py`), воспроизводимый patch — `docs/waves/f2/morefoto-contract.patch`.
 - Команды следующей проверки:
   - `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`
@@ -104,6 +104,18 @@
 - Контракт MoreFoto: пометки F2 в `build.py` для HND-01…05 (формы, коды, правила дат и повтора). `build.py`/`render-waves.py` — PASS, `validate.py` exit 0, `validate-postman.cjs` exit 0. Единый patch источников — `docs/waves/f2/morefoto-contract.patch` (граф + build.py).
 - Отчёт `docs/waves/f2/README.md`, `verification.json` (status review-pending), раздел F2 в `docs/testing/manual-wave-checklist.md`.
 - Объём рукописных изменений к main — около 5,7 тыс. строк (backend ~3,1, тесты ~1,2, frontend ~0,6, документы ~0,6), в пределах согласованного лимита 6 тыс.
+
+### 2026-09-22 — обновление base: E5 слита в main
+
+- `git fetch`: `origin/main` = 4b507b3 «Merge pull request #37» (E5). `gh pr view 37` — MERGED 2026-09-22T11:56:33Z, merge commit 4b507b3b3c27719888e38f582b48e6a56c0c5946.
+- `git merge origin/main`: конфликты в `api/tools/e2e/prepare.php` (миграции E5 и F2), `frontend/src/router/index.ts` (маршруты E5 и Links), `CabinetLayout.vue` (пункты «Заказы» и «Ссылки и сроки»), `tools/run-browser-e2e.py` (verifier E5 и F2). Во всех случаях сохранены обе стороны. `graph.json` слился автоматически.
+- По merge receipt E5 отмечена merged в `docs/waves/graph.json` и в каноническом MoreFoto (baseline 4b507b3, PR #37). `verify-wave-graph.py` — PASS: 40 волн, 99 API, readyFromMain = F2, 10 негативных fixtures. MoreFoto `render-waves.py`/`build.py` PASS, `validate.py` exit 0, `validate-postman.cjs` exit 0; графы совпадают по E4/E5/D3/F2. Patch `morefoto-contract.patch` перегенерирован от исходной копии.
+- Повторный gate на main 4b507b3 + diff F2:
+  - `phplint` 800 файлов — OK;
+  - PHPStan — 0 ошибок;
+  - `phpunit --testsuite=unit` — 372 tests / 1731 assertions PASS;
+  - frontend `npm run check` — PASS; `npm run test:commerce` — 169/169 PASS.
+- Спецификация E5 `zzzzz-orders` берёт товары из условий группы-фикстуры E4, где активны только товары E4. Товар F2 на неё не влияет.
 
 ## Результаты тест-кейсов
 

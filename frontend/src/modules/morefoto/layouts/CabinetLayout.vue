@@ -60,6 +60,15 @@ const navigation = computed(() =>
               }
             ]
           : []),
+        ...(auth.user?.permissions?.includes('order.read')
+          ? [
+              {
+                title: 'Заказы',
+                to: '/cabinet/orders',
+                icon: 'mdi-receipt-text-outline'
+              }
+            ]
+          : []),
         ...(isStaffRole(auth.user?.role)
           ? [
               {
