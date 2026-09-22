@@ -21,6 +21,9 @@ const productionOptions = [
   { title: 'Любое изготовление', value: '' },
   ...Object.entries(productionLabels).map(([value, title]) => ({ title, value }))
 ];
+const hasFilters = computed(() =>
+  (['q', 'paymentStatus', 'productionStatus', 'dateFrom', 'dateTo'] as const).some((key) => filters[key] !== '')
+);
 const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => photo.code).join(', ') ?? '');
 </script>
 <template>
@@ -60,21 +63,27 @@ const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => ph
   </template>
   <template v-else>
     <form class="mf-panel staff-orders__filters" role="search" @submit.prevent="apply()">
+      <!-- Vuetify sets null on clear; keep the filter a string for apply() and the URL. -->
       <v-text-field
         v-model="filters.q"
         name="q"
         label="Номер, имя, email или телефон"
         aria-label="Номер, имя, email или телефон"
+        prepend-inner-icon="mdi-magnify"
+        density="compact"
         clearable
         hide-details="auto"
+        @click:clear="filters.q = ''"
       />
-      <v-select v-model="filters.paymentStatus" :items="paymentOptions" label="Оплата" hide-details />
-      <v-select v-model="filters.productionStatus" :items="productionOptions" label="Изготовление" hide-details />
-      <v-text-field v-model="filters.dateFrom" type="date" label="Создан с" aria-label="Создан с" hide-details />
-      <v-text-field v-model="filters.dateTo" type="date" label="Создан по" aria-label="Создан по" hide-details />
       <div class="mf-actions">
-        <v-btn type="submit" color="primary" :loading="loading">Найти</v-btn>
-        <v-btn variant="text" @click="reset">Сбросить</v-btn>
+        <v-btn type="submit" color="primary" density="compact" :loading="loading">Найти</v-btn>
+        <v-btn variant="text" density="compact" :disabled="!hasFilters" @click="reset">Сбросить</v-btn>
+      </div>
+      <div class="staff-orders__refine">
+        <v-select v-model="filters.paymentStatus" :items="paymentOptions" label="Оплата" density="compact" hide-details />
+        <v-select v-model="filters.productionStatus" :items="productionOptions" label="Изготовление" density="compact" hide-details />
+        <v-text-field v-model="filters.dateFrom" type="date" label="Создан с" aria-label="Создан с" density="compact" hide-details />
+        <v-text-field v-model="filters.dateTo" type="date" label="Создан по" aria-label="Создан по" density="compact" hide-details />
       </div>
     </form>
     <p v-if="loading && !page" role="status">Загружаем заказы…</p>
@@ -113,13 +122,33 @@ const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => ph
 }
 .staff-orders__filters {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  align-items: end;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 16px;
   margin-bottom: 24px;
 }
-.staff-orders__filters > :first-child {
+.staff-orders__refine {
   grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (min-width: 1280px) {
+  .staff-orders__refine {
+    grid-template-columns: repeat(2, minmax(0, 4fr)) repeat(2, minmax(0, 3fr));
+  }
+}
+@media (max-width: 600px) {
+  .staff-orders__filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .staff-orders__filters .v-btn[type='submit'] {
+    flex: 1;
+  }
+  .staff-orders__refine > .v-select {
+    grid-column: 1 / -1;
+  }
 }
 .staff-orders__total {
   margin-bottom: 12px;
