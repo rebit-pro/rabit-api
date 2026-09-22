@@ -49,17 +49,15 @@
 
 ## Проверки
 
-- **Выполнено до review** (факты — `verification.json` и progress):
-  - PHP lint;
-  - PHPStan;
-  - PHPUnit unit (372 теста на main с E5, 37 новых F2);
-  - php-cs-fixer;
-  - frontend `npm run check` и `npm run test:commerce` (169);
-  - граф волн;
-  - валидаторы контракта MoreFoto.
-- **По решению пользователя — только после review без блокеров:**
-  - реальный браузерный E2E `frontend/e2e/live/zzzz-links.spec.ts`: подготовка → передача → галерея → quote, исправление, роли, идемпотентность, desktop/mobile;
-  - verifier на MySQL `api/tools/e2e/verify-links.php`: след в БД, календарь с управляемыми часами, граница закрытия.
+- **Финальный gate** после review без блокеров — `make test-e2e`, стенд `rabit-e2e-ac59142ba1ce`, источник 2de43f7 (main 4b507b3 + F2):
+  - phplint — 800 файлов;
+  - PHPStan — 0 ошибок;
+  - PHPUnit — 511/2384;
+  - frontend `check`, `test:commerce` (169) и production build;
+  - браузер — 72 expected / 0 unexpected / 0 skipped / 0 flaky; сценарий F2 прошёл за 50 с;
+  - verifier на MySQL: `F2 integration passed`, а также E5, E4, E4 F1 и H1.
+- **Визуальная проверка** desktop/mobile — `visual.json` и `visual/`.
+- **До review:** unit, static и валидаторы контракта MoreFoto (журнал в progress).
 
 ```sh
 make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor

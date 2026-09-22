@@ -1,0 +1,33 @@
+{
+  "wave": "F2",
+  "date": "2026-09-22",
+  "fixture": "rabit-e2e-ac59142ba1ce",
+  "method": "Playwright screenshots from zzzz-links.spec.ts in the final make test-e2e; reviewed manually",
+  "screenshots": [
+    {
+      "name": "f2-desktop-prepared-top.png",
+      "path": "docs/waves/f2/visual/f2-desktop-prepared-top.png",
+      "sha256": "78b3b52e203508ee03f3ddcfaeb0e38f23bb03b40553da99bd869fdcde58f814",
+      "width": 1440,
+      "height": 1000,
+      "note": "верх полностраничного снимка 1440×31600 организатора после подготовки: список содержит все группы стенда"
+    },
+    {
+      "name": "f2-mobile-open.png",
+      "path": "docs/waves/f2/visual/f2-mobile-open.png",
+      "sha256": "73dda28582963368214cd1d6fa187618c7c60991994ab7014d7fb03c06f18ec7",
+      "width": 390,
+      "height": 1630,
+      "note": "390×844 fullPage, воспитатель после отметки передачи"
+    }
+  ],
+  "assertions": [
+    "mobile: document scrollWidth <= innerWidth",
+    "desktop: card statuses, dates, actions and problem text readable"
+  ],
+  "inspection": "PASS: statuses, Moscow dates, actions and readiness problem text readable on desktop and mobile; no horizontal overflow.",
+  "limitations": [
+    "fullPage capture draws the sticky header and the focused skip link over the first mobile card at the scroll position; not a layout defect",
+    "the organizer list renders every group of the E2E database (31600 px desktop page); paging/filters are a usability follow-up, not a blocker"
+  ]
+}

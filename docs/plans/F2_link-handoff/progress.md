@@ -2,16 +2,15 @@
 
 ## Точка продолжения
 
-- Ветка `codex/f2-link-handoff` в worktree `/home/user/rabit-api-worktrees/f2-link-handoff`. Исходный base 8cba22c; актуальный `origin/main` 4b507b3 (merge E5 #37) влит в ветку. PR https://github.com/rebit-pro/rabit-api/pull/40.
-- Основной checkout `/home/user/rabit-api` использует параллельная сессия; его не трогать. E5 (PR #37) слита в main 22.09.2026.
-- Завершено: граф F2 → D3, backend HND-01…05 с контрактами Organization/Access/Media/Commerce, live frontend, E2E-спецификация и MySQL verifier (написаны, не запускались), уточнения контракта MoreFoto, отчёт волны; быстрый gate зелёный.
-- Сейчас: PR #40 открыт для review (не draft), head 68082e1 опубликован, GitHub: MERGEABLE.
-- Следующий шаг: code review PR #40. После review без блокеров — полный `make test-e2e` (команда ниже), просмотр `f2-desktop-prepared.png`/`f2-mobile-open.png`, перенос результатов в progress/verification.
-- Блокеров нет. Открытых решений нет. Конфликты с E5 разрешены, быстрый gate на main 4b507b3 + diff F2 повторён.
-- Рабочее дерево: всё закоммичено. Внешний MoreFoto изменён без Git (граф и `build.py`), воспроизводимый patch — `docs/waves/f2/morefoto-contract.patch`.
+- Ветка `codex/f2-link-handoff` (worktree `/home/user/rabit-api-worktrees/f2-link-handoff`), main 4b507b3 влит; PR https://github.com/rebit-pro/rabit-api/pull/40. Follow-up вне F2 — issue https://github.com/rebit-pro/rabit-api/issues/42 (метка «высокий приоритет»).
+- Завершено: review без блокеров; финальный `make test-e2e` PASS (72/0/0/0, verifier F2/E5/E4/H1); визуальная проверка desktop/mobile PASS.
+- Сейчас: публикация результатов gate, затем merge PR #40 (пользователь поручил merge и деплой на app.morefoto36.ru).
+- Следующий шаг: `gh pr merge 40 --merge --match-head-commit <HEAD>`, затем деплой: резервная копия stage БД, новый release backend, миграции 20260922120001 (E5) и 20260922150001 (F2), переключение `morefoto_stage_*`, frontend image, smoke, путь отката.
+- Блокер деплоя: автоматический режим Claude Code отклоняет SSH к `rebit-pro` (категория Production Reads), даже на чтение; нужно правило разрешения Bash в настройках пользователя.
+- Рабочее дерево: результаты gate и снимки — в текущем commit.
 - Команды следующей проверки:
-  - `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`
-  - `python3 tools/verify-wave-graph.py docs/waves/graph.json`
+  - `gh pr view 40 --json state,mergeCommit`
+  - `git fetch origin && git merge-base --is-ancestor <merge> origin/main`
 
 ## Хронология
 
@@ -125,26 +124,48 @@
 - `gh pr view 40` — OPEN, MERGEABLE, head 68082e1.
 - Merge и deployment не выполнялись.
 
+### 2026-09-22 — follow-up issue вне F2
+
+- По поручению пользователя: `gh label create "высокий приоритет" --color B60205` — PASS; `gh issue create … --label "высокий приоритет"` → https://github.com/rebit-pro/rabit-api/issues/42 (коды 401/403/404 в `error.code`, валидация в `CalendarCommandInputDto`, коллизия ID D3). Ветку во время review не меняли.
+
+### 2026-09-22 — финальный gate после review
+
+- Пользователь: review без блокирующих замечаний, поручены merge и деплой на продакшн. `git fetch`: main 4b507b3 не изменился и уже влит; PR head 2de43f7, MERGEABLE.
+- `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` — PASS с первого запуска, стенд `rabit-e2e-ac59142ba1ce`:
+  - phplint — 800 файлов;
+  - PHPStan — No errors;
+  - PHPUnit — OK 511/2384;
+  - `test:commerce` — 169/169; `npm run check` и build — PASS;
+  - браузер — 72 expected / 0 unexpected / 0 skipped / 0 flaky; F2 — passed, 49,9 с;
+  - `links-integration.log` — `F2 integration passed`; `orders-integration.log` E5, `storefront-integration.log` E4/F1, `notification.log` H1 — passed.
+- Визуальная проверка `f2-mobile-open.png` (390 px) и верхней части `f2-desktop-prepared.png` (1440 px):
+  - статусы, даты МСК, действия и тексты проблем читаются; переполнения нет.
+  - Артефакт полностраничного снимка: закреплённая шапка и сфокусированная skip-link на позиции прокрутки. Desktop-страница 31 600 px — все группы стенда у организатора (кандидат в отдельное улучшение: пагинация или фильтры).
+  - Снимки и `visual.json` — в `docs/waves/f2/`.
+- Попытка только прочитать состояние stage по SSH (`ssh rebit-pro docker service ls …`) дважды отклонена автоматическим режимом Claude Code: сначала без категории, затем «Production Reads». Обход не выполнялся.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда и доказательство |
 | --- | --- | --- | --- |
 | F2-GRAPH | PASS | 2026-09-22 | `verify-wave-graph.py` (40/99/10 negative, ready E5+F2), MoreFoto `validate.py` и `validate-postman.cjs` exit 0 |
-| F2-CALENDAR | PASS (unit) | 2026-09-22 | `GroupCalendarDeliveryTest` 8/24: +7/+7 МСК, год/29 февраля/UTC, будущее, повтор, исправление, продление, граница `now == closesAt`. Сервисный слой — PENDING verifier MySQL |
+| F2-CALENDAR | PASS | 2026-09-22 | `GroupCalendarDeliveryTest` 8/24: +7/+7 МСК, год/29 февраля/UTC, будущее, повтор, исправление, продление, граница `now == closesAt`. Сервисный слой — PENDING verifier MySQL |
 | F2-READINESS | PASS (unit) | 2026-09-22 | `LinkPolicyTest`: коды проблем и изменение подписи от названия/воспитателя/материалов/условий/заявок |
-| F2-PERMISSIONS | PASS (unit), E2E PENDING | 2026-09-22 | `LinkPolicyTest` матрица D08; `GroupLinkWorkflowTest` 403/404 для куратора, руководителя, воспитателя, чужого куратора |
-| F2-PREPARE | PASS (unit), E2E PENDING | 2026-09-22 | `GroupLinkWorkflowTest`: успех, LINK_NOT_READY, REVISION/SIGNATURE_CONFLICT, 403/404, LINK_ALREADY_SENT; `GroupLinkContractTest` REVIEW_REQUIRED |
-| F2-TRANSMIT | PASS (unit), E2E PENDING | 2026-09-22 | `GroupLinkWorkflowTest`: передача воспитателем, LINK_NOT_PREPARED, SENT_AT_BEFORE_LINK, 403 руководителю; будущая дата — `GroupCalendarDeliveryTest` |
-| F2-REPEAT | PASS (unit), E2E PENDING | 2026-09-22 | `GroupLinkWorkflowTest`: повтор устаревшей формой без изменения сроков; replay и IDEMPOTENCY_CONFLICT |
-| F2-CORRECT | PASS (unit), E2E PENDING | 2026-09-22 | `GroupLinkWorkflowTest`: LINK_NOT_SENT, 403 воспитателю, история с прежними датами и причиной; `GroupLinkContractTest` INVALID_REASON; SENT_AT_UNCHANGED — `GroupCalendarDeliveryTest` |
-| F2-EXTENSION | PASS (unit), verifier PENDING | 2026-09-22 | `GroupCalendarDeliveryTest` продление сохраняется/перекрывается; MySQL — `verify-links.php` |
-| F2-CLOSE-BOUNDARY | PASS (unit), verifier PENDING | 2026-09-22 | `GroupCalendarDeliveryTest` граница `now == closesAt`; каталог групп и галерея — `verify-links.php` |
-| F2-INVALIDATION | PASS (unit), E2E PENDING | 2026-09-22 | `LinkPolicyTest` и `GroupLinkWorkflowTest`: смена материалов сбрасывает `prepared`, передача отклоняется |
+| F2-PERMISSIONS | PASS | 2026-09-22 | `LinkPolicyTest` матрица D08; `GroupLinkWorkflowTest` 403/404 для куратора, руководителя, воспитателя, чужого куратора |
+| F2-PREPARE | PASS | 2026-09-22 | `GroupLinkWorkflowTest`: успех, LINK_NOT_READY, REVISION/SIGNATURE_CONFLICT, 403/404, LINK_ALREADY_SENT; `GroupLinkContractTest` REVIEW_REQUIRED |
+| F2-TRANSMIT | PASS | 2026-09-22 | `GroupLinkWorkflowTest`: передача воспитателем, LINK_NOT_PREPARED, SENT_AT_BEFORE_LINK, 403 руководителю; будущая дата — `GroupCalendarDeliveryTest` |
+| F2-REPEAT | PASS | 2026-09-22 | `GroupLinkWorkflowTest`: повтор устаревшей формой без изменения сроков; replay и IDEMPOTENCY_CONFLICT |
+| F2-CORRECT | PASS | 2026-09-22 | `GroupLinkWorkflowTest`: LINK_NOT_SENT, 403 воспитателю, история с прежними датами и причиной; `GroupLinkContractTest` INVALID_REASON; SENT_AT_UNCHANGED — `GroupCalendarDeliveryTest` |
+| F2-EXTENSION | PASS | 2026-09-22 | `GroupCalendarDeliveryTest` продление сохраняется/перекрывается; MySQL — `verify-links.php` |
+| F2-CLOSE-BOUNDARY | PASS | 2026-09-22 | `GroupCalendarDeliveryTest` граница `now == closesAt`; каталог групп и галерея — `verify-links.php` |
+| F2-INVALIDATION | PASS | 2026-09-22 | `LinkPolicyTest` и `GroupLinkWorkflowTest`: смена материалов сбрасывает `prepared`, передача отклоняется |
 | F2-RACE-MEDIA | PASS (unit) | 2026-09-22 | `MediaLockRecheckTest` 2/8: разметка и обложка после ожидания блокировки → GROUP_LOCKED, запись не выполняется |
-| F2-GALLERY-QUOTE | PENDING | — | `zzzz-links.spec.ts`, после review |
-| F2-TOKEN | PASS (unit), E2E PENDING | 2026-09-22 | `GroupLinkWorkflowTest` ключ после подготовки; `GroupLinkContractTest` список без ключа; хеш в БД — `verify-links.php` |
-| F2-ARCH | PASS (частично) | 2026-09-22 | architecture-тест контроллера, DTO-архитектура F1 покрывает новые DTO, PHPStan 0, php-cs-fixer; финальный прогон — перед PR |
+| F2-GALLERY-QUOTE | PASS | 2026-09-22 | `make test-e2e` стенд ac59142ba1ce: галерея open со сроками, catalog и quote 200 |
+| F2-TOKEN | PASS | 2026-09-22 | `GroupLinkWorkflowTest` ключ после подготовки; `GroupLinkContractTest` список без ключа; хеш в БД — `verify-links.php` |
+| F2-ARCH | PASS | 2026-09-22 | architecture-тест контроллера, DTO-архитектура F1 покрывает новые DTO, PHPStan 0, php-cs-fixer; финальный прогон — перед PR |
 | F2-CONTRACT | PASS (unit) | 2026-09-22 | `GroupLinkContractTest` 11/66: строгий JSON, INVALID_SENT_AT, REVIEW/CONFIRMATION_REQUIRED, INVALID_REASON, фильтры, форма ответов |
-| F2-UI | PASS (check/unit), E2E PENDING | 2026-09-22 | `npm run check` PASS, `npm run test:commerce` 160/160; браузер — после review |
-| F2-VISUAL | PENDING | — | после review, `make test-e2e` + просмотр PNG |
+| F2-UI | PASS | 2026-09-22 | `npm run check` PASS, `npm run test:commerce` 160/160; браузер — после review |
+| F2-VISUAL | PASS | 2026-09-22 | `docs/waves/f2/visual.json`: desktop 1440 и mobile 390 просмотрены, переполнения нет |
 | F2-PUBLISH | PASS (review) | 2026-09-22 | PR #40 ready for review, MERGEABLE; merge — после review и полного E2E |
+
+Финальное подтверждение E2E (2026-09-22, `make test-e2e`, стенд `rabit-e2e-ac59142ba1ce`): F2-PERMISSIONS/PREPARE/TRANSMIT/REPEAT/CORRECT/INVALIDATION/TOKEN/UI — браузерный сценарий F2 PASS; F2-CALENDAR/EXTENSION/CLOSE-BOUNDARY — `verify-links.php` PASS на MySQL; F2-ARCH — phplint/PHPStan/PHPUnit 511 PASS.
