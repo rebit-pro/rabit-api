@@ -63,7 +63,7 @@
 - [x] Live E2E: `staff.spec.ts` (T01–T05), `zzzzz-orders.spec.ts` (T08–T10).
 - [x] Быстрые проверки: `npm run check`, `npm run test:commerce`.
 - [x] Браузерный прогон на стабах по ветке (T01–T05, T07, T09, T10) и контрольный прогон тех же шагов на `main`.
-- [ ] Commit, push, PR в `main` без merge. В PR — ограничения и post-review gate.
+- [x] Commit, push, PR в `main` без merge ([#45](https://github.com/rebit-pro/rabit-api/pull/45)). В PR — ограничения и post-review gate.
 - [ ] T06: ручная проверка автозаполнения email пользователем.
 - [ ] После review без блокеров: полный `make test-e2e`, desktop/mobile визуальная проверка.
 

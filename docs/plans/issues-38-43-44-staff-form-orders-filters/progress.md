@@ -3,19 +3,20 @@
 ## Точка продолжения
 
 - Дата: 2026-09-22.
-- Ветка: `codex/issues-38-43-44-staff-form-orders-filters`, upstream снят до первого push.
+- Ветка: `codex/issues-38-43-44-staff-form-orders-filters`, upstream `origin/codex/issues-38-43-44-staff-form-orders-filters`.
+- PR: [#45](https://github.com/rebit-pro/rabit-api/pull/45), OPEN в `main`, не сливать до review и полного gate. Код — commits `c5d2053` (#43) и `04f1100` (#44/#38). Точный HEAD — `git rev-parse HEAD`, сверять с `gh pr view 45 --json headRefOid`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-38-43-44-staff-form-orders-filters`. Основной checkout `/home/user/rabit-api` остаётся на `main`.
 - Base: `a43e4ea183dccf99659cd3c99322ba25f28ac1ce` (`origin/main`).
-- Issues: [#43](https://github.com/rebit-pro/rabit-api/issues/43), [#44](https://github.com/rebit-pro/rabit-api/issues/44), [#38](https://github.com/rebit-pro/rabit-api/issues/38), все OPEN. PR ещё нет.
+- Issues: [#43](https://github.com/rebit-pro/rabit-api/issues/43), [#44](https://github.com/rebit-pro/rabit-api/issues/44), [#38](https://github.com/rebit-pro/rabit-api/issues/38), все OPEN. Закроются merge PR #45 (`Closes`).
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md).
 - Завершено:
   - воспроизведение #43, прототип #44, создание issues, план;
   - реализация #43/#44/#38 и расширение live E2E;
   - быстрые проверки и стаб-прогон ветки и `main`.
-- Сейчас: commit, push и PR в `main` без merge.
+- Сейчас: PR #45 ждёт review. Код не менять до замечаний.
 - Следующий шаг: review PR. После review без блокеров — полный `make test-e2e` (T08 и live-часть T01–T05/T07/T09/T10, T14).
 - Блокеров нет. Открыто T06: ручная проверка автозаполнения email в Яндекс Браузере и Chrome пользователем.
-- Рабочее дерево до commit: изменены 5 файлов `frontend/` и добавлены `plan.md`/`progress.md`.
+- Рабочее дерево: чистое после commit/push этой записи.
 - Следующая проверка после изменения base: `npm run check && npm run test:commerce` в контейнере Playwright (команда в плане).
 
 ## Хронология
