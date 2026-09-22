@@ -4,11 +4,11 @@
 
 - 2026-09-22.
   - Ветка `codex/d3-child-transfers`, worktree `/home/user/rabit-api-worktrees/d3-child-transfers`; основной checkout `/home/user/rabit-api` остаётся на `main`.
-  - Base — `a43e4ea183dccf99659cd3c99322ba25f28ac1ce` (`main`: merge F2 `44f2e36` + документы развёртывания F2).
+  - Base — `57b2a816c7fc9a6e3145bd7fd6fc3b0b96aeb4a2` (`main` после PR #45); проверенный ревьюером коммит — `a7696d5`, `main` влит merge-коммитом `47366ab`.
   - Документы: `plan.md`, `docs/waves/d3/`; PR https://github.com/rebit-pro/rabit-api/pull/46.
 - Завершено: решения, графы, контракт, backend, frontend, E2E-спецификации и верификатор, документы; быстрые проверки PASS.
-- Сейчас: PR [#46](https://github.com/rebit-pro/rabit-api/pull/46) ждёт ревью.
-- Один следующий шаг: после ревью без блокирующих замечаний — финальный `make test-e2e` и визуальная проверка (решение пользователя от 2026-09-22).
+- Сейчас: ревью PR [#46](https://github.com/rebit-pro/rabit-api/pull/46) без блокирующих замечаний; финальный `make test-e2e`, затем по поручению пользователя merge и развёртывание.
+- Один следующий шаг: финальный `make test-e2e` и визуальная проверка desktop/mobile.
 - Блокеры: нет. Браузерные, интеграционные и визуальные кейсы — PENDING до финального gate.
 - Рабочее дерево: `tools/__pycache__/` — локальный кэш py_compile, не коммитится.
 - Команды проверки:
@@ -144,6 +144,13 @@
 
 - `git push -u origin codex/d3-child-transfers` — PASS; `gh pr create --base main` — https://github.com/rebit-pro/rabit-api/pull/46.
 - В описании: ответственность модулей, решения D3-DEC-01…08, зависимости, быстрые проверки, ограничения и условие merge — финальный `make test-e2e` и визуальная проверка после ревью без блокирующих замечаний.
+
+### 2026-09-22 — ревью и поручение финального gate
+
+- Ревью PR #46 (комментарий 2026-09-22T15:33:25Z): статическая проверка `a7696d5` относительно `a43e4ea`, подтверждённых блокирующих замечаний нет; тесты и E2E ревьюер не запускал.
+- Пользователь: «ревью ветки прошло. Замечаний нету блокирующих… можно прогонять итоговые E2E тесты и деплой на сервер».
+- `git fetch --prune origin`: `origin/main` = `57b2a81` (PR #45: форма сотрудника, фильтры заказов — файлы D3 не затронуты). `git merge --no-edit origin/main` → `47366ab` без конфликтов, force-push не нужен.
+- `baseline.commit` обоих графов → `57b2a81`; `render-waves.py` — PASS; `validate.py` — passed; `verify-wave-graph.py` — 40/99 `["D3"]`, канон 41/99 `["E6","D3"]`; patch MoreFoto пересобран, dry-run применения — PASS.
 
 ## Результаты тест-кейсов
 
