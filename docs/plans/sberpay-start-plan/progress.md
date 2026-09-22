@@ -1,16 +1,14 @@
-# Прогресс: СберПэй для Битрикс «Старт»
+# Прогресс платёжного плана MoreFoto
 
 ## Точка продолжения
 
-- Ветка `codex/sberpay-start-plan`; base/main/origin/main `8cba22c7655b5886d5fe663523214bcd059e674b`. Опубликованы план `2308bf5` и статус договора `2a8f016`; итоговый HEAD — коммит с записью PR (`git rev-parse HEAD`).
-- PR: https://github.com/rebit-pro/rabit-api/pull/35 — открыт в main, только план. Issue не создавалась.
-- Документы: `plan.md`, `docs/waves/graph.json`, `/home/user/MoreFoto/docs/04-bitrix-modules/backend-waves.json`.
-- Завершено: исходники/инструкции/ветки, подтверждены Старт и UI MoreFoto, создана ветка, описана адаптация.
-- Сейчас: план опубликован, PR #35 создан; текущая задача завершена. Договор эквайринга в процессе получения, реализация отложена.
-- Следующий шаг: review планового PR #35; реализацию оплаты сейчас не начинать. Возобновить её отдельной задачей при наступлении соответствующих волн и получении условий договора/настроек; E5/F2 и решения остаются зависимостями.
-- Блокеры runtime: E5/F2 не реализованы/не приняты; D09 частично открыт (refund contract/фискализация/sandbox), D12 остаётся gate. Плановый срез не заблокирован.
-- В PR только пять плановых файлов: `docs/waves/graph.json`, `docs/plans/sberpay-start-plan/{plan,progress}.md`, `docs/waves/sberpay-start/{morefoto-plan-sync.patch,verification.json}`. Runtime не менялся. Канонические правки MoreFoto применены локально, их проверенный patch сохранён в ветке; соседний MoreFoto не является git-репозиторием. Перед финальным push изменены только отметка P7 и этот журнал; после push проверить чистое дерево.
-- Команды: `python3 tools/verify-wave-graph.py docs/waves/graph.json`; `python3 /home/user/MoreFoto/docs/04-bitrix-modules/wave_graph.py /home/user/MoreFoto/docs/04-bitrix-modules/backend-waves.json`; `git diff --check`.
+- Ветка: `codex/sberpay-start-plan`, PR https://github.com/rebit-pro/rabit-api/pull/35. Историческое имя сохранено; активный провайдер — ЮKassa.
+- Checkout: `/home/user/rabit-api-worktrees/yookassa-plan`; main/base `4b507b3b3c27719888e38f582b48e6a56c0c5946`, текущий HEAD `608a607247ae2d3ee4df9d8960b5131faab7ac71` (включён слитый main).
+- Завершено: прочитаны прежний план/PR, подтверждён merge E5 #37; зафиксирован выбор ЮKassa/чеков, переключателя расходов и округления вверх до 50 ₽.
+- Сейчас: графы, канонические материалы и проверки завершены; следующий шаг — commit/push и обновление заголовка/описания PR #35.
+- Блокеры runtime G1: F2 #40 не merged; D09-параметры/служебный API и D12 остаются открыты. Выбор ЮKassa закрывает поставщиков, не все настройки. 3,8% — расчётный ориентир до проверки эффективной ставки договора.
+- Дерево: изменены plan.md/progress.md, graph.json и новый отчёт docs/waves/yookassa-mvp/. Основной checkout `rabit-api` на main не изменён. MoreFoto обновлён адресно; прежние F2/D3/N1 сохранены. Добавочный patch и исходные SHA включаются в PR.
+- Следующая проверка: `python3 tools/verify-wave-graph.py docs/waves/graph.json`; `python3 /home/user/MoreFoto/docs/04-bitrix-modules/wave_graph.py /home/user/MoreFoto/docs/04-bitrix-modules/backend-waves.json`; `git diff --check`.
 
 ## 2026-09-21 — Источник и уточнения
 
@@ -74,3 +72,30 @@ Sandbox запуск команд не работает (`setup refresh had erro
 Коммит `2a8f016` сохранил статус договора и запрос публикации. Push `HEAD:refs/heads/codex/sberpay-start-plan` по HTTPS через gh credential helper успешен. Команда `gh pr create --repo rebit-pro/rabit-api --base main --head codex/sberpay-start-plan --title 'План интеграции СберПэй для MoreFoto на Битрикс Старт' --body-file /tmp/rabit-sberpay-plan-pr-body.md` создала https://github.com/rebit-pro/rabit-api/pull/35; PR прикреплён к задаче Codex.
 
 P7 закрыт. Перед завершающим push повторяется `git diff --cached --check`; после push проверить `gh pr view 35 --json url,state,baseRefName,headRefName,headRefOid` и `git status --short`. Merge/deployment/реализация не выполняются.
+
+## 2026-09-22 — ЮKassa первым провайдером и E6
+
+Пользователь выбрал ЮKassa (ЮMoney для бизнеса) со встроенными чеками; СберПэй остаётся необязательным резервом только с решённой фискализацией. В ответе на уточнение выбрано округление вверх до 50 ₽ для заранее общей цены. Публичные 2,8% + 1% у ЮKassa без применимого НДС, СБП индивидуально; это зафиксировано как открытая проверка тарифа, не повод откладывать сам план.
+
+Создан изолированный worktree существующей ветки PR #35. `git merge --no-edit main` завершился без конфликтов; включены только слитые изменения E5. Runtime отсутствует: текущая задача продолжает согласование/обновление платёжного плана, необходимые зависимости G1 ещё не слиты.
+
+YK-01…YK-07: PENDING. Runtime E6/G1/G2/I2: PENDING, прогоны не выполнялись.
+
+
+## 2026-09-22 — Граф, проверки и подготовка публикации
+
+В оба графа внесены ЮKassa/встроенные чеки и E6. Только N2 получил зависимость E6; G1/G2/I2 сохранили runtime-зависимости. E5 отмечена merged по факту GitHub. F2/D3/N1 канонического плана сохранены побайтно как объекты JSON. В PR не переносился соседний незамерженный план F2/N1.
+
+Первая проверка DAG прошла; `git diff --check` выявил лишнюю пустую строку EOF plan.md — исправлено. Генератор/API-валидатор прошли, но `node docs/05-rest-api/validate-postman.cjs` в WSL дал `node: command not found`. Использован штатный bundled Node.js Windows, статическая проверка завершилась PASS. Это исправления окружения/формата, не runtime-прогоны.
+
+| ID | Статус | Дата | Команда / доказательство |
+| --- | --- | --- | --- |
+| YK-01 | PASS | 2026-09-22 | `python3 tools/verify-wave-graph.py docs/waves/graph.json`: 41/99/35, 10 отрицательных fixtures, ready E6 |
+| YK-02 | PASS | 2026-09-22 | `python3 /home/user/MoreFoto/docs/04-bitrix-modules/wave_graph.py /home/user/MoreFoto/docs/04-bitrix-modules/backend-waves.json`: 41/99/35, ready E6/F2 |
+| YK-03 | PASS | 2026-09-22 | `python3 docs/04-bitrix-modules/render-waves.py`, `python3 docs/05-rest-api/build.py`, `python3 docs/05-rest-api/validate.py` из MoreFoto; повторная генерация не меняет SHA. Bundled `node.exe docs/05-rest-api/validate-postman.cjs`: 144 scripts, 99 positive/198 negative fixtures, только offline |
+| YK-04 | PASS | 2026-09-22 | Адресные Python assertions: исходные 99 владельцев и dependencies сохранены (кроме новой E6→N2); F2/D3/N1 канонической версии не изменены; `git -C /home/user/MoreFoto apply --check --reverse .../morefoto-plan-update.patch` PASS |
+| YK-05 | PASS | 2026-09-22 | `python3 -` с целочисленной формулой: 8 примеров, 6850 граничных значений, минимальность шага и компенсация ставки, скидка 50% → 275 ₽. Результаты в verification.json; это проверка спецификации |
+| YK-06 | PASS | 2026-09-22 | `git diff --check` PASS; staged diff проверяется перед commit и должен завершиться без ошибок |
+| YK-07 | PENDING | 2026-09-22 | Commit/push и `gh pr view 35 --json title,headRefOid,baseRefName,url` |
+
+Backend/frontend/runtime/HTTP/E2E: PENDING для будущих реализаций, в плановом PR не запускались. Реальный merchant не создан и оплата не включена.
