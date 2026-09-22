@@ -227,3 +227,13 @@
 - `gh pr edit 37 --repo rebit-pro/rabit-api --body-file …` — в «Проверках» описаны исправление `8806fc2`, быстрые проверки и отложенный полный gate; условие merge — повторное ревью и финальный gate.
 - `gh pr comment 37 --repo rebit-pro/rabit-api --body-file …` — PASS: https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775712600. `gh api repos/rebit-pro/rabit-api/issues/comments/5775712600` и `gh pr view 37 --json body` совпадают с подготовленными текстами (без учёта завершающего перевода строки).
 - `gh pr view 37 --json headRefOid,baseRefOid,state,mergeable` — head 8806fc2, base 8cba22c, OPEN, MERGEABLE.
+
+### 2026-09-22 — поручение: issue и merge
+
+- Пользователь: «запиши этот, не блокер в issues. А ветку Е5 отправь, пожалуйста, в Майн». Повторное ревью исправления B1 пользователь не требует; по `CLAUDE.md` перед merge обязателен полный `make test-e2e` на итоговом HEAD и визуальная проверка — выполняются перед слиянием.
+- `git fetch origin --prune`: `origin/main` = 8cba22c, ветка = origin/codex/e5-order-checkout = 7889f27, рабочее дерево чистое.
+- `gh issue list --state all --limit 100` — issue о мигании экрана восстановления нет. PR #30 слит merge-коммитом (`7e606e5`, два родителя), ветка сохранена; в репозитории `delete_branch_on_merge=false`.
+- План дополнен разделом «Issue мигания восстановления, финальный gate и merge».
+- `gh issue create --repo rebit-pro/rabit-api --title "E5: не скрывать экран восстановления оформления на время повторной отправки" --body-file …` — PASS: https://github.com/rebit-pro/rabit-api/issues/41 (P3; ссылки на HEAD 7889f27). `gh issue view 41` — OPEN, тело совпадает с подготовленным. E5-ISSUE-FLICKER PASS.
+- E2E-сценарий E5-FIX2-E2E снимает экран восстановления с удержанным `PURCHASE_DISABLED` на 390×844 и 1280×900 (`e5-mobile-recovery.png`, `e5-desktop-recovery.png`), затем продолжает на desktop. `npm run check` в контейнере Playwright — exit 0.
+- Следующий шаг: commit, затем полный `make test-e2e` на этом HEAD.

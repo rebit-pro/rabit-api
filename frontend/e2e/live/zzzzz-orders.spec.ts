@@ -418,7 +418,7 @@ test('E5: 502 after a committed order keeps the attempt and recovers the same ke
   await recover(page, keys[0]!, 'gateway.e5@example.test');
 });
 
-test('E5: refusals while recovering keep the attempt until the same order is replayed', async ({ page }) => {
+test('E5: refusals while recovering keep the attempt until the same order is replayed', async ({ page }, info) => {
   await fillCheckout(page, 'Отказ при повторе', 'refusal.e5@example.test', 5);
   const attempts: { key: string; body: string | null }[] = [];
   const created: { id: string; accessKey: string }[] = [];
@@ -442,6 +442,14 @@ test('E5: refusals while recovering keep the attempt until the same order is rep
   await expect(page.getByTestId('checkout-recovery')).toContainText('Результат отправки не подтверждён');
   await page.getByTestId('recover-order').click();
   await expect(page.getByTestId('checkout-recovery')).toContainText('Оформление заказов сейчас недоступно');
+  // Visual check of the kept refusal; the scenario continues on the desktop viewport.
+  for (const viewport of [
+    { name: 'mobile', width: 390, height: 844 },
+    { name: 'desktop', width: 1280, height: 900 }
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.screenshot({ path: info.outputPath('e5-' + viewport.name + '-recovery.png'), fullPage: true, animations: 'disabled' });
+  }
   await page.reload();
   await page.getByTestId('recover-order').click();
   await expect(page.getByTestId('checkout-recovery')).toContainText('Сервер пока не принял повтор');

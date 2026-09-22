@@ -263,3 +263,24 @@ Scope: frontend `orders/live/rules.ts`, `orders/composables/useLiveCheckout.ts`;
 | E5-FIX2-RULES | `checkoutOutcome` для первой отправки и восстановления | Первая отправка: 4xx сбрасывают попытку как раньше; восстановление: `PURCHASE_DISABLED`, 408, 429, неизвестный 4xx, `GALLERY_NOT_*`, `IDEMPOTENCY_CONFLICT` → `unknown`; коды после поиска → field/recalculate/message | `npm run test:commerce` |
 | E5-FIX2-E2E | Заказ сохранён, ответ 502; повтор → 403 `PURCHASE_DISABLED`; reload; повтор → 429; повтор к серверу | Экран восстановления после каждого отказа, K и тело в localStorage не меняются; 201 с исходными id/accessKey; служебный поиск — 1 заказ; `verify-orders.php` PASS | `make test-e2e` |
 | E5-FIX2-CHECK | Изменённые frontend-файлы | lint, vue-tsc, tsc e2e PASS | `npm run check` |
+
+## Issue мигания восстановления, финальный gate и merge — 2026-09-22
+
+Поручение пользователя: «запиши этот, не блокер в issues. А ветку Е5 отправь, пожалуйста, в Майн».
+Scope: отдельный issue о мигании экрана восстановления на время повтора; обязательный по `CLAUDE.md` полный `make test-e2e` на итоговом HEAD (новый сценарий E5-FIX2-E2E ещё не выполнялся) и визуальная проверка desktop/mobile; при PASS — merge PR #37 в `main` merge-коммитом, как PR #30.
+Вне scope: исправление мигания (отдельный issue); развёртывание (не поручено); синхронизация графа «E5 merged» — в ветке следующей волны, как для E4; включение `MOREFOTO_CHECKOUT_ENABLED` на stage/production.
+Решение: экран восстановления ранее не входил в визуальную проверку. Новый сценарий снимает его с удержанным отказом на 390×844 и 1280×900; снимки добавляются к восьми прежним.
+Риск: красный gate блокирует merge — тогда причина фиксируется в progress и сообщается пользователю без слияния.
+
+- [x] Issue: сценарий, ссылки на код, ожидаемое исправление и приёмка; без дубликатов.
+- [x] E2E: снимки экрана восстановления mobile/desktop в сценарии E5-FIX2-E2E; `npm run check`.
+- [ ] Полный `make test-e2e` на итоговом HEAD, логи верификаторов, просмотр снимков.
+- [ ] Отчёты `docs/waves/e5` (verification, visual, README), plan/progress; commit/push; описание и комментарий PR.
+- [ ] Merge: `main` не сдвинут, `gh pr merge 37 --merge --match-head-commit <sha>`; проверка merge-коммита в `origin/main`.
+
+| ID | Предусловия / действие | Ожидаемый результат | Команда |
+| --- | --- | --- | --- |
+| E5-ISSUE-FLICKER | Нет открытого issue о мигании | Issue создан и повторно прочитан | `gh issue create --body-file …`; `gh issue view` |
+| E5-GATE-FINAL | Итоговый HEAD ветки | Браузер без падений и пропусков (включая E5-FIX2-E2E), `verify-storefront.php` и `verify-orders.php` PASS | `make test-e2e …` |
+| E5-VISUAL-FINAL | Снимки нового прогона | 10 снимков desktop/mobile без переполнения; восстановление показывает причину удержания | просмотр PNG, SHA-256 в `visual.json` |
+| E5-MERGE | Gate PASS, `main` = 8cba22c | PR #37 MERGED, merge-коммит — предок `origin/main` | `gh pr merge 37 --merge --match-head-commit <sha>`; `gh pr view 37 --json state,mergeCommit`; `git merge-base --is-ancestor` |
