@@ -2,12 +2,12 @@
 
 ## Точка продолжения
 
-- 2026-09-22. Ветка `codex/e5-order-checkout` от `main` `8cba22c7655b5886d5fe663523214bcd059e674b`; публикуется для ревью. Граф: E5 `review`. Документация: `plan.md`, `docs/waves/e5/{README.md,verification.json,visual.json,morefoto-contract.patch}`, раздел E5 в `docs/architecture.md`.
+- 2026-09-22. Ветка `codex/e5-order-checkout` от `main` `8cba22c7655b5886d5fe663523214bcd059e674b`, опубликована; PR [#37](https://github.com/rebit-pro/rabit-api/pull/37) на ревью. Граф: E5 `review`. Документация: `plan.md`, `docs/waves/e5/{README.md,verification.json,visual.json,morefoto-contract.patch}`, раздел E5 в `docs/architecture.md`.
 - Завершено: backend, frontend, E2E-спецификация и верификатор; быстрые проверки PASS; два браузерных прогона (последний 67/69, падения — локатор теста, исправлено).
-- Сейчас: коммит, push и PR на ревью.
+- Сейчас: ожидание ревью PR #37.
 - Следующий шаг: по итогам ревью, если нет блокирующих замечаний, — финальный `make test-e2e` (браузер + `verify-orders.php` + снимки служебных экранов), затем обновить отчёты и передать PR на merge решению пользователя.
 - Блокеры: нет. Условие merge — финальный gate после ревью. Вне E5: коллизия имени D3 ждёт решения пользователя.
-- Рабочее дерево: всё закоммичено в ветку задачи.
+- Рабочее дерево: чистое, ветка отслеживает `origin/codex/e5-order-checkout`.
 - Команда финального gate: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
 
 ## Хронология
@@ -65,6 +65,11 @@
 - Быстрые проверки на итоговом состоянии: php-cs-fixer по 104 изменённым PHP (исправлен 1 — `verify-orders.php`), PHPStan — No errors, PHPUnit — OK 473/1877, phplint — 726 файлов OK; frontend `npm run check` — PASS, `npm run test:commerce` — 164/164, `npm run build` — PASS.
 - Граф: E5 `review` в `docs/waves/graph.json` и каноне MoreFoto, `render-waves.py` — PASS, `verify-wave-graph.py` для обоих — 40 волн, 99 API, `readyFromMain=["E5"]`; patch канона обновлён.
 
+### 2026-09-22 — публикация на ревью
+
+- `git fetch origin --prune`: `origin/main` = `8cba22c`, `git merge-base --is-ancestor origin/main HEAD` — PASS. Коммиты `0c4a852` (backend) и `9b52c68` (frontend, E2E, документы).
+- `git push -u origin codex/e5-order-checkout` — PASS; `gh pr create --base main` — https://github.com/rebit-pro/rabit-api/pull/37. В описании: ответственность, решения, зависимости, быстрые проверки, результат браузерного прогона и условие merge — финальный gate после ревью.
+
 ## Результаты тест-кейсов
 
 `PASS*` — подтверждено unit и HTTP в прогоне `rabit-e2e-c14d949a108e`; повтор в финальном gate после ревью.
@@ -93,4 +98,4 @@
 | E5-ARCH | PASS | 2026-09-22 | PHPUnit 472/1874 (включая `OrderArchitectureTest`), PHPStan No errors, php-cs-fixer по изменённым файлам |
 | E5-UI | PENDING | — | Оформление и заказ по ключу desktop/mobile — PASS в прогоне; служебные экраны — финальный gate |
 | E5-REGRESSION | PENDING | — | 67/69 в последнем прогоне; повтор полного набора — финальный gate |
-| E5-PUBLISH | PENDING | — | Коммит, push и PR выполняются сейчас |
+| E5-PUBLISH | PASS | 2026-09-22 | `git diff --check` PASS; `origin/main` = base `8cba22c`; `git push -u origin codex/e5-order-checkout`; `gh pr create` → PR #37. Merge — после ревью и финального gate |

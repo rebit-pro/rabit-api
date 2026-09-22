@@ -85,5 +85,5 @@
   },
   "mergeAllowed": false,
   "nextStep": "Review the PR; if there are no blocking comments, run the final make test-e2e, record results and screenshots, then merge on the user's decision.",
-  "pr": null
+  "pr": "https://github.com/rebit-pro/rabit-api/pull/37"
 }
