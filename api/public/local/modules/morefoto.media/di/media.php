@@ -37,7 +37,9 @@ use Rebit\Share\Contracts\Organization\GroupReferenceInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 use Rebit\Share\Contracts\Media\StaffChildReferenceInterface;
 use Rebit\Share\Infrastructure\Messenger\AmqpConnectionFactory;
+use Rebit\Share\Shared\Enum\LogChannelEnum;
 use Rebit\Share\Shared\Enum\MessengerQueueEnum;
+use Rebit\Share\Shared\Facade\Log;
 use Symfony\Component\Messenger\Transport\TransportInterface;
 
 return [
@@ -82,6 +84,7 @@ return [
             ServiceLocator::getInstance()->get(PhotoRepository::class),
             ServiceLocator::getInstance()->get(PrivatePhotoStorageInterface::class),
             ServiceLocator::getInstance()->get(PreviewRendererInterface::class),
+            Log::channel(LogChannelEnum::media),
         ],
     ],
     UploadPhotoUseCase::class => [
@@ -93,6 +96,7 @@ return [
             ServiceLocator::getInstance()->get(PrivatePhotoStorageInterface::class),
             ServiceLocator::getInstance()->get(PhotoRepository::class),
             ServiceLocator::getInstance()->get(MediaPublisherInterface::class),
+            Log::channel(LogChannelEnum::media),
         ],
     ],
     ListPhotosUseCase::class => [
@@ -146,6 +150,7 @@ return [
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(PhotoRepository::class),
             ServiceLocator::getInstance()->get(MediaPublisherInterface::class),
+            Log::channel(LogChannelEnum::media),
         ],
     ],
     MediaController::class => [

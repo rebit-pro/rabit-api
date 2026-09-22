@@ -9,5 +9,8 @@ final readonly class PreviewOutputDto
     public function __construct(
         public string $thumbSrc,
         public string $previewSrc,
+        public int $decodeMs,
+        public int $thumbMs,
+        public int $previewMs,
     ) {}
 }

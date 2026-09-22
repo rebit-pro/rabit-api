@@ -9,11 +9,18 @@ use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
 use Morefoto\Media\Application\Photo\Dto\UploadPhotoOutputDto;
 use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
+use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
+/**
+ * Принимает приватный оригинал в редактируемую группу и регистрирует его без дубля по содержимому в съёмке.
+ *
+ * Сразу ставит подготовку превью в очередь; при сбое публикации оставляет задание pending для dispatcher и пишет
+ * в журнал этап и класс ошибки, а длительности приёма позволяют отличить задержку сервера от задержки очереди.
+ */
 final readonly class UploadPhotoUseCase
 {
     public function __construct(
@@ -23,6 +30,7 @@ final readonly class UploadPhotoUseCase
         private PrivatePhotoStorageInterface $storage,
         private PhotoRepository $photos,
         private MediaPublisherInterface $publisher,
+        private LoggerInterface $logger,
     ) {}
 
     public function execute(
@@ -42,8 +50,11 @@ final readonly class UploadPhotoUseCase
         if (!$scope->groupEditable) {
             throw new HttpException('GROUP_MEDIA_LOCKED', 409);
         }
+        $started = hrtime(true);
         $photo = $this->inspector->inspect($tmpName, $filename, $bytes, $clientFingerprint);
+        $inspected = hrtime(true);
         $originalPath = $this->storage->store($scope->shootPublicId, $photo);
+        $stored = hrtime(true);
         try {
             $registration = $this->photos->register(
                 publicId: Uuid::uuid4()->toString(),
@@ -58,14 +69,18 @@ final readonly class UploadPhotoUseCase
             }
             throw $error;
         }
-        if ($registration->processingRequired) {
-            try {
-                $this->publisher->process($registration->publicId, $registration->revision);
-                $this->photos->markPublished($registration->publicId);
-            } catch (\Throwable) {
-                // The durable pending marker is replayed by app:media:dispatch-pending.
-            }
-        }
+        $registered = hrtime(true);
+        $published = $registration->processingRequired && $this->publish($registration->publicId, $registration->revision);
+        $this->logger->info('Photo upload accepted.', [
+            'photoId' => $registration->publicId,
+            'status' => $registration->status,
+            'bytes' => $bytes,
+            'published' => $published,
+            'inspectMs' => self::milliseconds($started, $inspected),
+            'storeMs' => self::milliseconds($inspected, $stored),
+            'registerMs' => self::milliseconds($stored, $registered),
+            'publishMs' => self::milliseconds($registered, hrtime(true)),
+        ]);
 
         return new UploadPhotoOutputDto(
             id: $registration->publicId,
@@ -73,5 +88,35 @@ final readonly class UploadPhotoUseCase
             revision: $registration->revision,
             existingPhotoId: $registration->existingPhotoId,
         );
+    }
+
+    /**
+     * The durable pending marker is replayed by app:media:dispatch-pending, so a failure here must not fail the upload.
+     */
+    private function publish(string $photoId, int $revision): bool
+    {
+        $stage = 'publish';
+        try {
+            $this->publisher->process($photoId, $revision);
+            $stage = 'markPublished';
+            $this->photos->markPublished($photoId);
+
+            return true;
+        } catch (\Throwable $error) {
+            $this->logger->warning('Photo job remains pending after immediate publish failure.', [
+                'photoId' => $photoId,
+                'revision' => $revision,
+                'stage' => $stage,
+                'exception' => $error::class,
+                'previous' => null === $error->getPrevious() ? null : $error->getPrevious()::class,
+            ]);
+
+            return false;
+        }
+    }
+
+    private static function milliseconds(float|int $from, float|int $to): int
+    {
+        return (int)(($to - $from) / 1_000_000);
     }
 }

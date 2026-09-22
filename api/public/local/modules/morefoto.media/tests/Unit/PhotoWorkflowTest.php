@@ -13,6 +13,7 @@ use Morefoto\Media\Application\Photo\UseCase\UploadPhotoUseCase;
 use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Rebit\Share\Contracts\Organization\Dto\MediaScopeOutputDto;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
@@ -93,6 +94,7 @@ final class PhotoWorkflowTest extends TestCase
             $storage,
             new PhotoRepository(),
             $publisher,
+            new NullLogger(),
         );
 
         $this->expectException(HttpException::class);

@@ -20,6 +20,7 @@ final readonly class GdPreviewRenderer implements PreviewRendererInterface
         if (!extension_loaded('gd') || !function_exists('imagewebp') || !is_file($originalPath)) {
             throw new MediaStorageException('Image renderer is unavailable.');
         }
+        $started = hrtime(true);
         $source = match ($mimeType) {
             'image/jpeg' => imagecreatefromjpeg($originalPath),
             'image/png' => imagecreatefrompng($originalPath),
@@ -29,9 +30,12 @@ final readonly class GdPreviewRenderer implements PreviewRendererInterface
         if (!$source instanceof \GdImage) {
             throw new MediaStorageException('Cannot decode private original.');
         }
+        $decoded = hrtime(true);
         try {
             $thumb = $this->writeVariant($source, $photoId, 'thumb', 320);
+            $thumbDone = hrtime(true);
             $preview = $this->writeVariant($source, $photoId, 'preview', 1200);
+            $previewDone = hrtime(true);
         } finally {
             imagedestroy($source);
         }
@@ -39,7 +43,15 @@ final readonly class GdPreviewRenderer implements PreviewRendererInterface
         return new PreviewOutputDto(
             thumbSrc: rtrim($this->publicUrl, '/') . '/' . $thumb,
             previewSrc: rtrim($this->publicUrl, '/') . '/' . $preview,
+            decodeMs: self::milliseconds($started, $decoded),
+            thumbMs: self::milliseconds($decoded, $thumbDone),
+            previewMs: self::milliseconds($thumbDone, $previewDone),
         );
+    }
+
+    private static function milliseconds(float|int $from, float|int $to): int
+    {
+        return (int)(($to - $from) / 1_000_000);
     }
 
     private function writeVariant(\GdImage $source, string $photoId, string $variant, int $longest): string
