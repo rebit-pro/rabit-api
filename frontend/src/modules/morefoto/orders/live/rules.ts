@@ -3,7 +3,7 @@ import type { BuyerErrors } from '../types.js';
 import type { ApiProblem, CreatedOrder, LiveOrderQuote, StaffOrderFilters } from './types.js';
 
 export type CheckoutOutcome =
-  | { kind: 'unknown' }
+  | { kind: 'unknown'; message: string }
   | { kind: 'field'; errors: BuyerErrors }
   | { kind: 'recalculate'; message: string }
   | { kind: 'message'; message: string };
@@ -18,11 +18,39 @@ const fieldCodes: Record<string, [keyof BuyerErrors, string]> = {
 };
 
 /**
- * Classifies a failed order submission. Only a 4xx answer proves that nothing was stored; no answer, 5xx or an
- * unexpected failure may hide a committed order, so the same body is repeated with the same key.
+ * Codes the server answers only after it found no order under the Idempotency-Key. INVALID_CART may also come from
+ * the format check, which rejects the same body on every attempt alike.
  */
-export function checkoutOutcome(problem: ApiProblem): CheckoutOutcome {
-  if (problem.network || problem.status === null || problem.status >= 500) return { kind: 'unknown' };
+const unusedKeyCodes = new Set([
+  ...Object.keys(fieldCodes),
+  'GALLERY_CLOSED',
+  'PRICE_CHANGED',
+  'QUOTE_STALE',
+  'QUOTE_EXPIRED',
+  'QUOTE_ALREADY_USED',
+  'INVALID_CART',
+  'DUPLICATE_CART_LINE',
+  'DIGITAL_ALREADY_IN_BUNDLE',
+  'STAFF_ELIGIBILITY_REQUIRED'
+]);
+
+/**
+ * Classifies a failed order submission. No answer, 5xx or an unexpected failure may hide a committed order, so the
+ * same body is repeated with the same key. A 4xx to a first attempt proves its fresh key unused; while recovering,
+ * only a code answered after the key lookup does, and PURCHASE_DISABLED, 408/429 or an unknown 4xx keep the attempt.
+ */
+export function checkoutOutcome(problem: ApiProblem, recovering: boolean): CheckoutOutcome {
+  if (problem.network || problem.status === null || problem.status >= 500) {
+    return {
+      kind: 'unknown',
+      message:
+        'Результат отправки не подтверждён. Нажмите «Повторить отправку»: если заказ уже создан, откроется он же, второй заказ не появится.'
+    };
+  }
+  if (recovering && !unusedKeyCodes.has(problem.code)) {
+    const reason = problem.code === 'PURCHASE_DISABLED' ? 'Оформление заказов сейчас недоступно.' : 'Сервер пока не принял повтор.';
+    return { kind: 'unknown', message: reason + ' Прошлая отправка сохранена — повторите её позже.' };
+  }
   const field = fieldCodes[problem.code];
   if (field) return { kind: 'field', errors: { [field[0]]: field[1] } };
   switch (problem.code) {

@@ -373,6 +373,7 @@ async function recover(page: Page, key: string, email: string) {
   await login(page);
   const found = await body(await page.request.get('/api/v1/orders?q=' + encodeURIComponent(email), { headers: await auth(page) }));
   expect(found.meta.total).toBe(1);
+  return { order: payload.data as { id: string; accessKey: string }, body: response.request().postData() };
 }
 
 test('E5: lost response survives group closure and reload, then recovers the same order', async ({ page }) => {
@@ -415,6 +416,41 @@ test('E5: 502 after a committed order keeps the attempt and recovers the same ke
     )
   ).toBe(keys[0]);
   await recover(page, keys[0]!, 'gateway.e5@example.test');
+});
+
+test('E5: refusals while recovering keep the attempt until the same order is replayed', async ({ page }) => {
+  await fillCheckout(page, 'Отказ при повторе', 'refusal.e5@example.test', 5);
+  const attempts: { key: string; body: string | null }[] = [];
+  const created: { id: string; accessKey: string }[] = [];
+  // PURCHASE_DISABLED is answered before the key lookup, 429 by an intermediate service: neither proves the key unused.
+  const refusals = [
+    { status: 403, json: { error: { code: 'PURCHASE_DISABLED', message: 'PURCHASE_DISABLED' } } },
+    { status: 429, contentType: 'text/html', body: '<html><body>Too Many Requests</body></html>' }
+  ];
+  await page.route('**/orders', async (route) => {
+    attempts.push({ key: route.request().headers()['idempotency-key']!, body: route.request().postData() });
+    if (created.length) {
+      await route.fulfill(refusals.shift()!);
+      return;
+    }
+    const response = await route.fetch();
+    expect(response.status()).toBe(201);
+    created.push((await response.json()).data);
+    await route.fulfill({ status: 502, contentType: 'text/html', body: '<html><body>Bad Gateway</body></html>' });
+  });
+  await page.getByTestId('create-order').click();
+  await expect(page.getByTestId('checkout-recovery')).toContainText('Результат отправки не подтверждён');
+  await page.getByTestId('recover-order').click();
+  await expect(page.getByTestId('checkout-recovery')).toContainText('Оформление заказов сейчас недоступно');
+  await page.reload();
+  await page.getByTestId('recover-order').click();
+  await expect(page.getByTestId('checkout-recovery')).toContainText('Сервер пока не принял повтор');
+  expect(refusals).toHaveLength(0);
+  const replayed = await recover(page, attempts[0]!.key, 'refusal.e5@example.test');
+  expect(replayed.order).toMatchObject({ id: created[0]!.id, accessKey: created[0]!.accessKey });
+  // The committed attempt, both refused repeats and the replay carry the same key and the exact same body.
+  for (const attempt of attempts) expect(attempt).toEqual(attempts[0]);
+  expect(replayed.body).toBe(attempts[0]!.body);
 });
 
 test('E5: changed price at checkout asks the buyer to confirm the new total', async ({ page, browser, baseURL }) => {

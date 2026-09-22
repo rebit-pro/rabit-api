@@ -2,14 +2,15 @@
 
 ## Точка продолжения
 
-- 2026-09-22. Второй круг ревью PR [#37](https://github.com/rebit-pro/rabit-api/pull/37), ветка codex/e5-order-checkout.
-- Проверяемый HEAD: daa2dfbc1c50a7e6a84713f99212e2a43309bfed; main/base: 8cba22c7655b5886d5fe663523214bcd059e674b; продуктовые исправления B1–B3: 5435ebc.
-- Завершено: прочитаны ответы автора и результат gate (70/70, отчёт на 5435ebc), сверены коммиты и чистое рабочее дерево.
-- Сейчас: второй круг завершён; note опубликован и повторно прочитан через gh: https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775455991. Один следующий шаг: разработчику исправить потерю pending на промежуточном 4xx при восстановлении.
-- Блокеры: B1 частично открыт — 403 PURCHASE_DISABLED при повторе после неизвестного исхода стирает pending/requestId до выяснения результата первой попытки. B2/B3 закрыты по коду; #38/#39 остаются неблокирующими issues. Прогоны и E2E в этом ревью не запускаются.
-- Рабочее дерево до ревью чистое; plan.md/progress.md сохраняются отдельным локальным документационным коммитом поверх daa2dfb, без push. Продуктовый код не менялся; удалённый PR сохраняет проверенный HEAD daa2dfb.
-- Команды продолжения: git diff 46c442e..daa2dfb -- frontend/src/modules/morefoto/orders api/public/local/modules/morefoto.commerce; /home/user/.local/bin/gh pr view 37 --json headRefOid,baseRefOid,comments.
-- Merge и развёртывание отложены пользователем до второго ревью; этот запрос разрешает только ревью.
+- 2026-09-22. Исправление B1 после второго круга ревью PR [#37](https://github.com/rebit-pro/rabit-api/pull/37), ветка codex/e5-order-checkout.
+- Base/main: 8cba22c7655b5886d5fe663523214bcd059e674b (после `git fetch` не сдвинулся); PR head до исправления: daa2dfbc1c50a7e6a84713f99212e2a43309bfed; локальный 3e7680b — документация второго круга.
+- Note второго круга: https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775455991 — единственный блокер P1: B1 частично. B2/B3 закрыты; #38/#39 — неблокирующие issues.
+- Завершено: подход подтверждён пользователем («Реализовать, E2E после ревью»); `rules.ts`/`useLiveCheckout.ts` исправлены, unit-тест восстановления и E2E-цепочка 502 → 403 → reload → 429 → повтор написаны; `npm run check` и `npm run test:commerce` 167/167 — PASS.
+- Сейчас: commit исправления, push, ответ на ревью в PR и дополнение описания PR. Один следующий шаг после публикации: повторное ревью исправления.
+- Блокеры: нет. Открыто: полный `make test-e2e` на новом HEAD (E5-FIX2-E2E, E5-UI, E5-REGRESSION для нового кода) — после ревью без блокирующих замечаний, по решению пользователя.
+- Рабочее дерево: изменения rules.ts, useLiveCheckout.ts, orders-live.test.mjs, zzzzz-orders.spec.ts, docs/waves/e5/README.md, plan.md, progress.md — входят в commit исправления.
+- Команды следующей проверки: `docker run --rm --network none -v /home/user/rabit-api/frontend:/app -v rabit-e5-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`; после ревью — `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
+- Merge и развёртывание отложены пользователем.
 
 ## Хронология
 
@@ -99,6 +100,9 @@
 | E5-UI | PASS | 2026-09-22 | Браузер 70/70; просмотрены 8 снимков desktop/mobile (`docs/waves/e5/visual.json`) |
 | E5-REGRESSION | PASS | 2026-09-22 | Полный браузерный набор 70/70 без пропусков и нестабильных тестов |
 | E5-PUBLISH | PASS | 2026-09-22 | `git diff --check` PASS; `origin/main` = base `8cba22c`; `git push -u origin codex/e5-order-checkout`; `gh pr create` → PR #37. Merge — после ревью и финального gate |
+| E5-FIX2-RULES | PASS | 2026-09-22 | `npm run test:commerce` в контейнере Playwright — 167/167: при восстановлении `PURCHASE_DISABLED`, 408, 429, неизвестный 4xx, `GALLERY_NOT_*`, `IDEMPOTENCY_CONFLICT` → `unknown`; коды после поиска сбрасывают попытку; первая отправка без изменений |
+| E5-FIX2-CHECK | PASS | 2026-09-22 | `npm run check` — ESLint, vue-tsc, tsc e2e, exit 0 |
+| E5-FIX2-E2E | PENDING | 2026-09-22 | Сценарий `E5: refusals while recovering keep the attempt until the same order is replayed` написан, не запускался; выполняется полным `make test-e2e` после ревью без блокеров |
 
 
 ### 2026-09-22 — начало статического ревью PR #37
@@ -193,3 +197,26 @@
 - Вердикт: B2/B3 закрыты по коду; B1 частично открыт, один P1-блокер. Новых неблокирующих issues нет; #38/#39 не дублируются. Merge не рекомендован до исправления B1.
 - Новые тестовые/E2E-прогоны не запускались, продуктовый код не менялся. Результаты автора прочитаны как ранее полученное доказательство, не как новый запуск.
 - Перед завершением: git diff --check для документации; локальный commit plan.md/progress.md без push. Merge/deployment не выполняются.
+
+
+### 2026-09-22 — исправление B1 после второго круга: анализ
+
+- Пользователь: «по волне Е5 прошел второй круг ревью. Б1 пункт частично не реализован до конца. Прочитай… в ПР комментарии последний». Прочитан note https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775455991 (`gh pr view 37 --json comments`).
+- `git fetch origin --prune`: `origin/main` = 8cba22c, предок HEAD; `gh pr view 37` — OPEN, MERGEABLE, head daa2dfb.
+- Подтверждено чтением кода: `CreateOrderUseCase:40–42` отдаёт 403 `PURCHASE_DISABLED` до транзакции; `GALLERY_NOT_FOUND` (контекст галереи), `GALLERY_NOT_READY` и `IDEMPOTENCY_CONFLICT` — тоже до поиска по ключу; `rules.ts:44–45` → `message`, `useLiveCheckout.ts:100–101` стирают pending и меняют ключ, синхронный watcher сохраняет это в localStorage. Замечание воспроизводится по коду.
+- Коды после поиска (доказывают отсутствие заказа по ключу): `GALLERY_CLOSED`, поля покупателя, `QUOTE_*`, `PRICE_CHANGED`, `QUOTE_ALREADY_USED`, `INVALID_CART`, `DUPLICATE_CART_LINE`, `DIGITAL_ALREADY_IN_BUNDLE`, `STAFF_ELIGIBILITY_REQUIRED`. `INVALID_CART` также бросает `StorefrontMapper` до use case, но для того же тела это детерминированный отказ.
+- `verify-orders.php` уже сверяет число заказов в БД с числом запомненных браузером — новая E2E-цепочка закроет «заказ в БД один» на MySQL.
+- План записан в plan.md; тест-кейсы E5-FIX2-RULES, E5-FIX2-E2E, E5-FIX2-CHECK — PENDING. Продуктовый код не менялся, прогоны не запускались.
+
+
+### 2026-09-22 — исправление B1 после второго круга: реализация
+
+- Пользователь выбрал «Реализовать, E2E после ревью»: правки, быстрые проверки, push и ответ в PR; полный `make test-e2e` — после ревью без блокирующих замечаний.
+- `rules.ts`: `checkoutOutcome(problem, recovering)`. Нет ответа, 5xx, неожиданная ошибка → `unknown` с прежним текстом. При восстановлении попытку сбрасывают только коды, которые сервер отдаёт после поиска по ключу повтора (`unusedKeyCodes`: поля покупателя, `GALLERY_CLOSED`, `PRICE_CHANGED`, `QUOTE_*`, `QUOTE_ALREADY_USED`, ошибки корзины); прочие ответы → `unknown` с причиной («Оформление заказов сейчас недоступно.» / «Сервер пока не принял повтор.») и «Прошлая отправка сохранена — повторите её позже.». Первая отправка классифицируется как раньше.
+- `useLiveCheckout.ts`: `recovery = draft.pending !== null` фиксируется до отправки и передаётся в правила; сообщение `unknown` берётся из правил; pending и ключ сбрасываются только при другом исходе.
+- Unit: новый тест восстановления; существующие вызовы получили `recovering=false`.
+- E2E `zzzzz-orders.spec.ts`: `recover()` возвращает повторённый заказ и тело запроса; новый сценарий — реальный 201 заменён на 502, повтор → 403 `PURCHASE_DISABLED` (ответ маршрута в формате единой ошибки), reload, повтор → 429 HTML, повтор к серверу. Проверяются экран восстановления после каждого отказа, один ключ и одно тело во всех попытках, исходные id/accessKey, один заказ в служебном поиске; `verify-orders.php` сверяет число заказов в БД с запомненными браузером.
+- `docs/waves/e5/README.md`: правило восстановления дополнено.
+- `docker run --rm --network none -v /home/user/rabit-api/frontend:/app -v rabit-e5-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run test:commerce'` — 167/167 PASS.
+- Тот же контейнер, `npm run check` — первый запуск FAIL: prettier требовал перенос длинного сообщения в `rules.ts:46`; исправлено вручную; повтор — exit 0 (ESLint, vue-tsc, tsc e2e). `npm run test:commerce` повторно — 167/167.
+- `git diff --check` — PASS. Backend не менялся: PHPUnit/PHPStan/php-cs-fixer не требуются.

@@ -13,18 +13,18 @@ import {
 const problem = (code, status = 409) => ({ status, code, network: false });
 
 test('only an unanswered order request may be repeated with the same idempotency key', () => {
-  assert.deepEqual(checkoutOutcome({ status: null, code: '', network: true }), { kind: 'unknown' });
+  assert.equal(checkoutOutcome({ status: null, code: '', network: true }, false).kind, 'unknown');
   for (const code of ['PRICE_CHANGED', 'QUOTE_STALE', 'QUOTE_EXPIRED', 'QUOTE_ALREADY_USED']) {
-    assert.equal(checkoutOutcome(problem(code)).kind, 'recalculate', code);
+    assert.equal(checkoutOutcome(problem(code), false).kind, 'recalculate', code);
   }
-  assert.equal(checkoutOutcome(problem('GALLERY_CLOSED')).kind, 'message');
-  assert.equal(checkoutOutcome(problem('PURCHASE_DISABLED', 403)).kind, 'message');
+  assert.equal(checkoutOutcome(problem('GALLERY_CLOSED'), false).kind, 'message');
+  assert.equal(checkoutOutcome(problem('PURCHASE_DISABLED', 403), false).kind, 'message');
 });
 
 test('server field codes land on the matching checkout field', () => {
-  assert.deepEqual(Object.keys(checkoutOutcome(problem('INVALID_BUYER_EMAIL', 422)).errors), ['email']);
-  assert.deepEqual(Object.keys(checkoutOutcome(problem('REVIEW_REQUIRED', 422)).errors), ['reviewed']);
-  assert.deepEqual(Object.keys(checkoutOutcome(problem('RECEIPT_CHANNEL_UNAVAILABLE', 422)).errors), ['receiptChannel']);
+  assert.deepEqual(Object.keys(checkoutOutcome(problem('INVALID_BUYER_EMAIL', 422), false).errors), ['email']);
+  assert.deepEqual(Object.keys(checkoutOutcome(problem('REVIEW_REQUIRED', 422), false).errors), ['reviewed']);
+  assert.deepEqual(Object.keys(checkoutOutcome(problem('RECEIPT_CHANNEL_UNAVAILABLE', 422), false).errors), ['receiptChannel']);
 });
 
 test('order lines never invent image URLs; a trusted thumbnail source is optional', () => {
@@ -96,10 +96,37 @@ test('idempotency keys are 32 lowercase hex characters', () => {
 });
 
 test('5xx, proxy pages and unexpected failures keep the attempt for a safe repeat', () => {
-  for (const status of [500, 502, 503, 504]) assert.deepEqual(checkoutOutcome({ status, code: '', network: false }), { kind: 'unknown' });
-  assert.deepEqual(checkoutOutcome({ status: null, code: '', network: false }), { kind: 'unknown' });
-  assert.equal(checkoutOutcome({ status: 400, code: 'MALFORMED_JSON', network: false }).kind, 'message');
-  assert.equal(checkoutOutcome({ status: 404, code: 'GALLERY_NOT_FOUND', network: false }).kind, 'message');
+  for (const status of [500, 502, 503, 504]) assert.equal(checkoutOutcome({ status, code: '', network: false }, false).kind, 'unknown');
+  assert.equal(checkoutOutcome({ status: null, code: '', network: false }, false).kind, 'unknown');
+  assert.equal(checkoutOutcome({ status: 400, code: 'MALFORMED_JSON', network: false }, false).kind, 'message');
+  assert.equal(checkoutOutcome({ status: 404, code: 'GALLERY_NOT_FOUND', network: false }, false).kind, 'message');
+});
+
+test('while recovering, only an answer given after the key lookup releases the stored attempt', () => {
+  const beforeLookup = [
+    problem('PURCHASE_DISABLED', 403),
+    { status: 408, code: '', network: false },
+    { status: 429, code: '', network: false },
+    problem('GALLERY_NOT_READY'),
+    problem('GALLERY_NOT_FOUND', 404),
+    problem('IDEMPOTENCY_CONFLICT'),
+    problem('VALIDATION_FAILED', 422),
+    problem('SOMETHING_NEW', 400)
+  ];
+  for (const refusal of beforeLookup) {
+    assert.equal(checkoutOutcome(refusal, true).kind, 'unknown', refusal.code || String(refusal.status));
+  }
+  assert.match(checkoutOutcome(problem('PURCHASE_DISABLED', 403), true).message, /^Оформление заказов сейчас недоступно\./);
+  assert.match(checkoutOutcome({ status: 429, code: '', network: false }, true).message, /Прошлая отправка сохранена/);
+  for (const code of ['PRICE_CHANGED', 'QUOTE_STALE', 'QUOTE_EXPIRED', 'QUOTE_ALREADY_USED']) {
+    assert.equal(checkoutOutcome(problem(code), true).kind, 'recalculate', code);
+  }
+  for (const code of ['GALLERY_CLOSED', 'INVALID_CART', 'DUPLICATE_CART_LINE', 'DIGITAL_ALREADY_IN_BUNDLE', 'STAFF_ELIGIBILITY_REQUIRED']) {
+    assert.equal(checkoutOutcome(problem(code, 422), true).kind, 'message', code);
+  }
+  assert.deepEqual(Object.keys(checkoutOutcome(problem('INVALID_BUYER_EMAIL', 422), true).errors), ['email']);
+  // A first attempt used a fresh key, so the same refusals prove it unused.
+  assert.equal(checkoutOutcome({ status: 429, code: '', network: false }, false).kind, 'message');
 });
 
 test('a success status counts only with a real order and personal key', () => {

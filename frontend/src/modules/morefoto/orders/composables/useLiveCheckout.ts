@@ -73,7 +73,9 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
   async function submit(): Promise<void> {
     if (busy.value) return;
     error.value = '';
-    errors.value = draft.pending ? {} : validateBuyer(draft, false);
+    // A stored attempt may already have created the order, so its key is released only by a proof from the server.
+    const recovery = draft.pending !== null;
+    errors.value = recovery ? {} : validateBuyer(draft, false);
     if (Object.keys(errors.value).length) {
       await focus('[name="buyer-' + Object.keys(errors.value)[0] + '"]');
       return;
@@ -89,14 +91,13 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
       await router.replace('/orders/access/' + order.accessKey);
       return;
     } catch (cause) {
-      const outcome = checkoutOutcome(apiProblem(cause));
+      const outcome = checkoutOutcome(apiProblem(cause), recovery);
       if (outcome.kind === 'unknown') {
-        error.value =
-          'Результат отправки не подтверждён. Нажмите «Повторить отправку»: если заказ уже создан, откроется он же, второй заказ не появится.';
+        error.value = outcome.message;
         await focus('#checkout-error');
         return;
       }
-      // A definitive answer means nothing was stored: the next attempt starts with a fresh key.
+      // The answer proves that nothing is stored under this key: the next attempt starts with a fresh one.
       draft.pending = null;
       draft.requestId = newRequestId();
       if (outcome.kind === 'field') {
