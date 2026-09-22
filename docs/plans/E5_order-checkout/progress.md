@@ -2,14 +2,14 @@
 
 ## Точка продолжения
 
-- 2026-09-22. Исправление B1 после второго круга ревью PR [#37](https://github.com/rebit-pro/rabit-api/pull/37), ветка codex/e5-order-checkout.
-- Base/main: 8cba22c7655b5886d5fe663523214bcd059e674b (после `git fetch` не сдвинулся); PR head до исправления: daa2dfbc1c50a7e6a84713f99212e2a43309bfed; локальный 3e7680b — документация второго круга.
-- Note второго круга: https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775455991 — единственный блокер P1: B1 частично. B2/B3 закрыты; #38/#39 — неблокирующие issues.
-- Завершено: подход подтверждён пользователем («Реализовать, E2E после ревью»); `rules.ts`/`useLiveCheckout.ts` исправлены, unit-тест восстановления и E2E-цепочка 502 → 403 → reload → 429 → повтор написаны; `npm run check` и `npm run test:commerce` 167/167 — PASS.
-- Сейчас: commit исправления, push, ответ на ревью в PR и дополнение описания PR. Один следующий шаг после публикации: повторное ревью исправления.
-- Блокеры: нет. Открыто: полный `make test-e2e` на новом HEAD (E5-FIX2-E2E, E5-UI, E5-REGRESSION для нового кода) — после ревью без блокирующих замечаний, по решению пользователя.
-- Рабочее дерево: изменения rules.ts, useLiveCheckout.ts, orders-live.test.mjs, zzzzz-orders.spec.ts, docs/waves/e5/README.md, plan.md, progress.md — входят в commit исправления.
-- Команды следующей проверки: `docker run --rm --network none -v /home/user/rabit-api/frontend:/app -v rabit-e5-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`; после ревью — `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
+- 2026-09-22. Исправление B1 после второго круга ревью PR [#37](https://github.com/rebit-pro/rabit-api/pull/37) опубликовано, ветка codex/e5-order-checkout.
+- Base/main: 8cba22c7655b5886d5fe663523214bcd059e674b; продуктовое исправление: 8806fc286ed9049f39c03c2c51a33f4db1e79ae9 (PR head после push); далее только документация.
+- Ответ на ревью: https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775712600; описание PR дополнено (раздел «Проверки», условие merge).
+- Завершено: `rules.ts`/`useLiveCheckout.ts`, unit-тест восстановления, E2E-цепочка 502 → 403 → reload → 429 → повтор; `npm run check` и `npm run test:commerce` 167/167 — PASS.
+- Сейчас: ожидание повторного ревью исправления B1. Один следующий шаг: при ревью без блокеров — полный `make test-e2e` на итоговом HEAD (закрывает E5-FIX2-E2E), визуальная проверка и отчёты.
+- Блокеры: нет. Открыто: E5-FIX2-E2E — PENDING; gate на 5435ebc новый frontend-код не покрывает.
+- Рабочее дерево: чистое после документационного коммита.
+- Команды следующей проверки: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`; `/home/user/.local/bin/gh pr view 37 --json headRefOid,comments`.
 - Merge и развёртывание отложены пользователем.
 
 ## Хронология
@@ -220,3 +220,10 @@
 - `docker run --rm --network none -v /home/user/rabit-api/frontend:/app -v rabit-e5-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run test:commerce'` — 167/167 PASS.
 - Тот же контейнер, `npm run check` — первый запуск FAIL: prettier требовал перенос длинного сообщения в `rules.ts:46`; исправлено вручную; повтор — exit 0 (ESLint, vue-tsc, tsc e2e). `npm run test:commerce` повторно — 167/167.
 - `git diff --check` — PASS. Backend не менялся: PHPUnit/PHPStan/php-cs-fixer не требуются.
+
+### 2026-09-22 — исправление B1 опубликовано
+
+- Commit `8806fc2` (`fix(e5): keep an unconfirmed checkout through refusals before the key lookup`); `git push origin codex/e5-order-checkout` — PASS, `daa2dfb..8806fc2`.
+- `gh pr edit 37 --repo rebit-pro/rabit-api --body-file …` — в «Проверках» описаны исправление `8806fc2`, быстрые проверки и отложенный полный gate; условие merge — повторное ревью и финальный gate.
+- `gh pr comment 37 --repo rebit-pro/rabit-api --body-file …` — PASS: https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775712600. `gh api repos/rebit-pro/rabit-api/issues/comments/5775712600` и `gh pr view 37 --json body` совпадают с подготовленными текстами (без учёта завершающего перевода строки).
+- `gh pr view 37 --json headRefOid,baseRefOid,state,mergeable` — head 8806fc2, base 8cba22c, OPEN, MERGEABLE.
