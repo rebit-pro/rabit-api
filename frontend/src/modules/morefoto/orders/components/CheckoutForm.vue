@@ -39,6 +39,7 @@ const { quote, catalog, draft, busy, error, errors, oldTotal, capabilities, prev
           :errors="errors"
           :busy="busy"
           :max-available="capabilities.maxAvailable"
+          :receipt-available="capabilities.receiptAvailable"
           @change="Object.assign(draft, $event)"
         />
         <OrderComposition :quote="quote" />

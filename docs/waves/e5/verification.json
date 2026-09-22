@@ -1,0 +1,89 @@
+{
+  "wave": "E5",
+  "status": "review",
+  "date": "2026-09-22",
+  "branch": "codex/e5-order-checkout",
+  "base": "8cba22c7655b5886d5fe663523214bcd059e674b",
+  "decisions": "E5-DEC-01..05 accepted by the user on 2026-09-22",
+  "checks": {
+    "phpLint": {
+      "status": "passed",
+      "files": 726
+    },
+    "phpstan": {
+      "status": "passed",
+      "errors": 0
+    },
+    "phpunit": {
+      "status": "passed",
+      "tests": 473,
+      "assertions": 1877
+    },
+    "style": {
+      "status": "passed",
+      "checkedPhpFiles": 104,
+      "note": "php-cs-fixer applied to changed PHP files only"
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "production build"
+      ],
+      "unitTests": 164
+    },
+    "contract": {
+      "status": "passed",
+      "requests": 99,
+      "postmanPositive": 99,
+      "postmanNegative": 198
+    },
+    "graph": {
+      "status": "passed",
+      "waves": 40,
+      "apiIds": 99,
+      "readyFromMain": [
+        "E5"
+      ]
+    },
+    "schema": {
+      "status": "passed",
+      "proof": "DDL applied twice on disposable mysql:8.0; constraint violations rejected"
+    },
+    "browser": {
+      "status": "pending",
+      "lastRun": "rabit-e2e-c14d949a108e",
+      "passed": 67,
+      "failed": 2,
+      "skipped": 0,
+      "note": "All E5 API scenarios, lost response and price change UI passed. The two failures were test locators on the staff search field; fixed with accessible labels, not re-run. Final gate runs after review without blockers (user decision 2026-09-22)."
+    },
+    "integration": {
+      "status": "pending",
+      "proof": "verify-orders.php written, not executed yet; runs after the browser suite in the final gate"
+    },
+    "visual": {
+      "status": "pending",
+      "viewports": [
+        "desktop",
+        "mobile"
+      ],
+      "artifacts": [
+        "screenshots/e5-desktop-checkout.png",
+        "screenshots/e5-desktop-order.png",
+        "screenshots/e5-mobile-checkout.png",
+        "screenshots/e5-mobile-order.png"
+      ],
+      "note": "Buyer checkout and order captured; staff list/card to be captured in the final gate"
+    }
+  },
+  "cleanup": {
+    "stopped": true,
+    "errors": []
+  },
+  "mergeAllowed": false,
+  "nextStep": "Review the PR; if there are no blocking comments, run the final make test-e2e, record results and screenshots, then merge on the user's decision.",
+  "pr": null
+}

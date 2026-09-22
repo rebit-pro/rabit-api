@@ -51,12 +51,16 @@ final readonly class CreateOrderUseCase
 
     private function place(string $galleryToken, IdempotencyKey $key, CreateOrderInputDto $input): CreatedOrderOutputDto
     {
-        if ('preparing' === $this->gallery->context($galleryToken)->state) {
+        $state = $this->gallery->context($galleryToken)->state;
+        if ('preparing' === $state) {
             throw new HttpException('GALLERY_NOT_READY', 409);
         }
         $replay = $this->receipts->reserve($galleryToken, $key, $input);
         if (null !== $replay) {
             return $replay;
+        }
+        if ('open' !== $state) {
+            throw new HttpException('GALLERY_CLOSED', 409);
         }
         $buyer = $input->buyer;
         $accepted = $this->buyers->accept($buyer->name, $buyer->phone, $buyer->email, $buyer->comment, $buyer->receiptChannel, $buyer->reviewed, $this->availability->receiptChannels());

@@ -14,8 +14,13 @@ interface State {
   catalog: Catalog;
   lines: Line[];
   quote: CartQuote | null;
+  quoteToken: string | null;
   busy: boolean;
   error: string;
+}
+interface Calculation {
+  quote: CartQuote;
+  quoteToken: string;
 }
 const states = shallowReactive(new Map<string, State>());
 const empty: CartQuote = {
@@ -69,15 +74,15 @@ function message(cause: unknown): string {
   }
   return cause instanceof Error ? cause.message : 'Не удалось рассчитать корзину.';
 }
-async function calculate(state: State, lines: Line[]): Promise<CartQuote> {
-  const { data } = await api.post<{ quote: CartQuote }>('/api/v1/public/galleries/' + state.token + '/quotes', {
+async function calculate(state: State, lines: Line[]): Promise<Calculation> {
+  const { data } = await api.post<Calculation>('/api/v1/public/galleries/' + state.token + '/quotes', {
     lines: lines.map(({ assignmentId, productId, quantity }) => ({
       assignmentId,
       productId,
       quantity
     }))
   });
-  return data.quote;
+  return { quote: data.quote, quoteToken: data.quoteToken };
 }
 export async function loadStorefront(token: string, gallery: GallerySnapshot): Promise<void> {
   if (gallery.state === 'preparing') {
@@ -94,6 +99,7 @@ export async function loadStorefront(token: string, gallery: GallerySnapshot): P
         },
         lines: read(gallery.groupId),
         quote: null,
+        quoteToken: null,
         busy: false,
         error: ''
       })
@@ -112,6 +118,7 @@ export async function loadStorefront(token: string, gallery: GallerySnapshot): P
         catalog: { products: [], giftThreshold: 0, giftForStaff: false, revision: 0 },
         lines: read(gallery.groupId),
         quote: null,
+        quoteToken: null,
         busy: false,
         error: message(cause)
       })
@@ -124,6 +131,7 @@ export async function loadStorefront(token: string, gallery: GallerySnapshot): P
     catalog,
     lines: read(gallery.groupId),
     quote: null,
+    quoteToken: null,
     busy: false,
     error: ''
   });
@@ -136,9 +144,12 @@ export async function refreshStorefront(groupId: string): Promise<void> {
   state.busy = true;
   state.error = '';
   try {
-    state.quote = await calculate(state, state.lines);
+    const calculation = await calculate(state, state.lines);
+    state.quote = calculation.quote;
+    state.quoteToken = calculation.quoteToken;
   } catch (cause) {
     state.quote = null;
+    state.quoteToken = null;
     state.error = message(cause);
   } finally {
     state.busy = false;
@@ -149,10 +160,11 @@ async function persist(state: State, lines: Line[]): Promise<void> {
   state.busy = true;
   state.error = '';
   try {
-    const quote = await calculate(state, lines);
+    const calculation = await calculate(state, lines);
     localStorage.setItem(key(state.gallery.groupId), JSON.stringify(lines));
     state.lines = lines;
-    state.quote = quote;
+    state.quote = calculation.quote;
+    state.quoteToken = calculation.quoteToken;
   } catch (cause) {
     state.error = message(cause);
     throw new Error(state.error);
@@ -222,4 +234,12 @@ export async function clearLive(token: string): Promise<void> {
   state.lines = [];
   state.error = '';
   if (state.gallery.state !== 'open') state.quote = null;
+}
+/** Drops the local selection after the server confirmed the order; other groups keep their carts. */
+export function forgetLiveCart(groupId: string): void {
+  const state = liveState(groupId);
+  localStorage.removeItem(key(groupId));
+  state.lines = [];
+  state.quote = empty;
+  state.quoteToken = null;
 }

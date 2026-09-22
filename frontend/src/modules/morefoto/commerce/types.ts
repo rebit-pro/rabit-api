@@ -12,12 +12,18 @@ export interface Product {
   staffDiscount: boolean;
   active: boolean;
 }
+export interface CatalogCapabilities {
+  receiptChannels: string[];
+  purchaseEnabled: boolean;
+}
 export interface Catalog {
   products: Product[];
   giftThreshold: number;
   giftForStaff: boolean;
   revision: number;
   conditionsRevision?: number;
+  capabilities?: CatalogCapabilities;
+  purchaseTerms?: string | null;
 }
 export interface CartLine {
   assignmentId?: string;

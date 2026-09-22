@@ -1,0 +1,28 @@
+{
+  "wave": "E5",
+  "status": "partial",
+  "fixture": "rabit-e2e-c14d949a108e",
+  "viewports": [
+    "1280x900",
+    "390x844"
+  ],
+  "screenshots": [
+    {
+      "file": "docs/waves/e5/screenshots/e5-desktop-checkout.png",
+      "sha256": "d9a55e336a9c14bb4d2027fd40a532f27dc0bb38df05e24cd1e7aff2ebb4685c"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-desktop-order.png",
+      "sha256": "dbc86279eb2a5e4d17236175aff2a765149b87b29d0d15545b7f701df96d0846"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-mobile-checkout.png",
+      "sha256": "296efee806859a4ce74ff39bb48f345d260f0f4704fcdb1c1509f9f3ae8ce76d"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-mobile-order.png",
+      "sha256": "21da9035acfb762d5fe8b57fc83ff09da512426d28eed8bf251d87073d934d00"
+    }
+  ],
+  "inspection": "Просмотрены оформление и страница заказа на desktop и mobile: без горизонтального переполнения, без demo-хранилища, миниатюры в заказе заменены кодами кадров по E5-DEC-03. На mobile-снимке оформления кнопка отправки снята во время серверного пересчёта (выключена); теперь пересчёт показывается индикатором загрузки. Служебные список и карточка будут сняты в финальном прогоне."
+}

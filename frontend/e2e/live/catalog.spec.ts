@@ -39,25 +39,30 @@ test('неверный пароль отклонён сервером; роль 
   expect((await me.json()).data.permissions).toContain('catalog.manage');
 });
 
-test('неподключённые публичные разделы недоступны в настоящем режиме', async ({ page }) => {
+test('неподключённая оплата недоступна в настоящем режиме', async ({ page }) => {
   const apiRequests: string[] = [];
   page.on('request', (request) => {
     if (new URL(request.url()).pathname.startsWith('/api/')) apiRequests.push(request.url());
   });
-  for (const path of ['/g/a8-disabled/checkout', '/orders/access/a8-disabled', '/orders/access/a8-disabled/payment']) {
-    await page.goto(path);
-    await expect(page).toHaveURL(/\/feature-unavailable$/);
-    await expect(
-      page.getByRole('heading', {
-        name: 'Раздел пока недоступен',
-        exact: true
-      })
-    ).toBeVisible();
-    expect(await page.evaluate(() => Object.keys(localStorage).some((key) => key.startsWith('morefoto:demo:')))).toBe(false);
-  }
+  await page.goto('/orders/access/a8-disabled/payment');
+  await expect(page).toHaveURL(/\/feature-unavailable$/);
+  await expect(
+    page.getByRole('heading', {
+      name: 'Раздел пока недоступен',
+      exact: true
+    })
+  ).toBeVisible();
   expect(apiRequests).toEqual([]);
   await page.getByRole('link', { name: 'На главную', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Вход в MoreFoto', exact: true })).toBeVisible();
+});
+
+test('оформление и заказ по ссылке честно сообщают о недействительном ключе', async ({ page }) => {
+  await page.goto('/orders/access/a8-disabled');
+  await expect(page.getByTestId('order-unavailable')).toContainText('Заказ недоступен');
+  await page.goto('/g/a8-disabled/checkout');
+  await expect(page.getByText('Ссылка на группу недействительна.')).toBeVisible();
+  expect(await page.evaluate(() => Object.keys(localStorage).some((key) => key.startsWith('morefoto:demo:')))).toBe(false);
 });
 
 test('создание и изменение сохраняются в БД и видны в новой сессии', async ({ page, browser, baseURL }) => {

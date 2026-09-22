@@ -53,6 +53,17 @@ final class OrderCheckoutUseCaseTest extends TestCase
         $this->useCase(state: 'preparing')->execute(str_repeat('a', 64), new IdempotencyKey(str_repeat('b', 32)), $this->input());
     }
 
+    public function testClosedGroupRejectsNewOrderBeforeQuoteValidation(): void
+    {
+        $receipts = $this->createStub(CheckoutReceipts::class);
+        $receipts->method('reserve')->willReturn(null);
+        $quotes = $this->createMock(ValidateQuoteUseCase::class);
+        $quotes->expects(self::never())->method('executeWithinTransaction');
+        $this->expectException(HttpException::class);
+        $this->expectExceptionMessage('GALLERY_CLOSED');
+        $this->useCase(state: 'closed', receipts: $receipts, quotes: $quotes)->execute(str_repeat('a', 64), new IdempotencyKey(str_repeat('b', 32)), $this->input());
+    }
+
     public function testReplayReturnsOriginalOrderBeforeRevalidatingQuoteOrGroup(): void
     {
         $original = $this->created('original-key');

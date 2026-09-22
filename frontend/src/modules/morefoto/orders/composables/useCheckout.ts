@@ -1,4 +1,5 @@
 import { computed, nextTick, reactive, shallowRef, watch } from 'vue';
+import { isMockApiEnabled } from '@/mocks/config';
 import { useRouter } from 'vue-router';
 import { quoteCart } from '../../commerce/services/cart';
 import { getCatalog } from '../../commerce/mocks/catalog';
@@ -15,7 +16,11 @@ import {
 } from '../services/checkout';
 import { validateBuyer } from '../services/validation';
 import type { BuyerErrors } from '../types';
+import { useLiveCheckout } from './useLiveCheckout';
 export function useCheckout(gallery: GallerySnapshot, token: string) {
+  return isMockApiEnabled ? useDemoCheckout(gallery, token) : useLiveCheckout(gallery, token);
+}
+function useDemoCheckout(gallery: GallerySnapshot, token: string) {
   const router = useRouter();
   const quote = shallowRef(quoteCart(gallery));
   const catalog = shallowRef(getCatalog(gallery.groupId));
@@ -24,7 +29,7 @@ export function useCheckout(gallery: GallerySnapshot, token: string) {
   const error = shallowRef('');
   const errors = shallowRef<BuyerErrors>({});
   const oldTotal = shallowRef<number | null>(null);
-  const capabilities = shallowRef(checkoutCapabilities());
+  const capabilities = shallowRef({ ...checkoutCapabilities(), receiptAvailable: true });
   const previous = computed(() => readOrders().find((order) => order.requestId === draft.requestId && order.groupId === gallery.groupId));
   // A new non-empty cart is an explicit new purchase; an empty one can recover the previous result.
   if (previous.value && quote.value.lines.length) {
@@ -41,7 +46,7 @@ export function useCheckout(gallery: GallerySnapshot, token: string) {
   async function submit() {
     if (busy.value) return;
     error.value = '';
-    capabilities.value = checkoutCapabilities();
+    capabilities.value = { ...checkoutCapabilities(), receiptAvailable: true };
     errors.value = validateBuyer(draft, capabilities.value.maxAvailable);
     if (Object.keys(errors.value).length) {
       await focusError();
