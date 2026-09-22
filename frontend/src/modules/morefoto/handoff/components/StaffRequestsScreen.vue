@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { computed, shallowRef } from 'vue';
 import { useRoute } from 'vue-router';
-import { isMockApiEnabled } from '@/mocks/config';
 import AdminDialog from '../../management/components/AdminDialog.vue';
 import RequestFields from './RequestFields.vue';
 import RequestReview from './RequestReview.vue';
 import { useHandoff } from '../useHandoff';
 import { useHandoffEditor } from '../useHandoffEditor';
-import { reviewRequest } from '../rules';
+import { useTransferPreview } from '../useTransferPreview';
 import { formatMoment, requestStatus } from '../display';
-import type { StaffCommand, StaffRequest, RequestPreview } from '../types';
+import type { StaffCommand, StaffRequest } from '../types';
 import '../handoff.css';
 const route = useRoute(),
   { auth, data, loading, error, reload } = useHandoff(),
@@ -22,7 +21,6 @@ const { command, busy, errors, restored, error: saveError } = editor;
 const selected = computed(() => data.value?.requests.find((r) => r.id === route.params.requestId));
 const reviewing = computed(() => ['curator', 'organizer'].includes(data.value?.role ?? ''));
 const createAllowed = computed(() => ['teacher', 'organizer'].includes(data.value?.role ?? ''));
-const transferEnabled = isMockApiEnabled;
 const titles = { submit: 'Передать список куратору', clarify: 'Запросить уточнение', confirm: 'Подтвердить перенос' };
 const requests = computed(
   () =>
@@ -31,26 +29,7 @@ const requests = computed(
       .slice()
       .reverse() ?? []
 );
-function previewFor(request: StaffRequest): RequestPreview {
-  return reviewRequest(request, data.value!.groups, { photos: data.value!.photos, covers: {} });
-}
-const preview = computed(() => {
-  if (!transferEnabled || !selected.value || !reviewing.value || selected.value.status !== 'submitted') return null;
-  try {
-    return previewFor(selected.value);
-  } catch {
-    return null;
-  }
-});
-const previewError = computed(() => {
-  if (!transferEnabled || !selected.value || !reviewing.value || selected.value.status !== 'submitted') return '';
-  try {
-    previewFor(selected.value);
-    return '';
-  } catch (e) {
-    return e instanceof Error ? e.message : 'Набор недоступен.';
-  }
-});
+const { preview, error: previewError } = useTransferPreview(data, selected, reviewing);
 function open(action: StaffCommand['action'], request?: StaffRequest) {
   editor.open(
     () => {
@@ -70,7 +49,7 @@ function open(action: StaffCommand['action'], request?: StaffRequest) {
         comment: current?.comment ?? '',
         reason: '',
         confirmed: false,
-        signature: action === 'confirm' && current ? previewFor(current).signature : ''
+        signature: action === 'confirm' && current ? (preview.value?.signature ?? '') : ''
       };
     },
     (request?.id ?? 'new') + ':' + action
@@ -127,10 +106,7 @@ function change(value: Partial<StaffCommand>) {
             selected.status === 'clarification' ? 'Уточнить список' : 'Изменить список'
           }}</v-btn>
           <v-btn v-if="reviewing" variant="outlined" @click="open('clarify', selected)">Запросить уточнение</v-btn>
-          <v-btn
-            v-if="transferEnabled && reviewing && selected.status === 'submitted'"
-            :disabled="!preview"
-            @click="open('confirm', selected)"
+          <v-btn v-if="reviewing && selected.status === 'submitted'" :disabled="!preview" @click="open('confirm', selected)"
             >Проверить и перенести</v-btn
           >
         </div>

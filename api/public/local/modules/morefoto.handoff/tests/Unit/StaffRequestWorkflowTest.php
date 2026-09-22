@@ -36,7 +36,7 @@ final class StaffRequestWorkflowTest extends TestCase
             'Список группы',
             self::callback(static fn(array $rows): bool => 30 === $rows[0]['groupId'] && 40 === $rows[0]['childId']),
         )->willReturn(50);
-        $repository->expects(self::once())->method('appendHistory')->with(50, 'submitted', self::isInstanceOf(StaffRequestActorOutputDto::class), 'Список группы', true);
+        $repository->expects(self::once())->method('appendHistory')->with(50, 'submitted', 7, 'Воспитатель', 'Список группы', true);
         $repository->expects(self::once())->method('saveIdempotency');
         $workflow = $this->workflow($repository, 30);
         $result = $workflow->save(7, null, new IdempotencyKey(str_repeat('a', 32)), new StaffRequestMutationInputDto(

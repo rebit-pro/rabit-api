@@ -143,7 +143,7 @@ final readonly class StaffRequestWorkflow
                 $nativeId = (int)$previous['ID'];
                 $revision = $this->requests->resubmit($nativeId, (int)$previous['REVISION'], $input->comment, $resolved);
             }
-            $this->requests->appendHistory($nativeId, 'submitted', $actor, $input->comment, true);
+            $this->requests->appendHistory($nativeId, 'submitted', $actor->id, $actor->name, $input->comment, true);
             $output = new StaffRequestMutationOutputDto($publicId, $revision, 'submitted');
             $this->remember($actor->id, $resource, $key, $hash, $output);
 
@@ -174,7 +174,7 @@ final readonly class StaffRequestWorkflow
                 throw new HttpException('REVISION_CONFLICT', 409);
             }
             $revision = $this->requests->clarify((int)$request['ID'], (int)$request['REVISION']);
-            $this->requests->appendHistory((int)$request['ID'], 'clarification', $actor, $input->comment, true);
+            $this->requests->appendHistory((int)$request['ID'], 'clarification', $actor->id, $actor->name, $input->comment, true);
             $output = new StaffRequestMutationOutputDto($requestId, $revision, 'clarification');
             $this->remember($actor->id, $resource, $key, $hash, $output);
 

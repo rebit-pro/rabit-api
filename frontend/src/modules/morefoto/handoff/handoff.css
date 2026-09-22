@@ -140,6 +140,13 @@
   overflow-wrap:anywhere
 }
 
+.handoff-previews figure:not(:has(img)) figcaption {
+  padding:10px 4px;
+  font-size:14px;
+  background:#edf1f4;
+  border-radius:8px
+}
+
 .handoff-actions {
   margin-top:20px
 }

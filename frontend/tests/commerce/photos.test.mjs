@@ -9,6 +9,7 @@ import {
   nextSequence,
   duplicatePhoto,
   completeChildSelection,
+  childTransferErrorText,
   validChildCode
 } from '../../src/modules/morefoto/photos/rules.ts';
 test('Фотографии: границы размера, пустой файл и запрещённый формат', () => {
@@ -59,4 +60,18 @@ test('Полный набор исключает часть ребёнка, не
   ];
   assert.equal(completeChildSelection(photos, ['1', '2']), true);
   for (const ids of [[], ['1'], ['1', '2', '3'], ['1', '2', 'missing']]) assert.equal(completeChildSelection(photos, ids), false);
+});
+test('D3 child transfer refusals are explained, shared frames name their codes', () => {
+  assert.equal(
+    childTransferErrorText('TARGET_CODE_TAKEN'),
+    'Этот код уже занят в целевой группе. Выберите другой код: существующие наборы не объединяются.'
+  );
+  assert.equal(
+    childTransferErrorText('SHARED_PHOTO', ['A002', 'A005']),
+    'Кадры A002, A005 назначены ещё и другому ребёнку этой группы. Такой набор нельзя перенести.'
+  );
+  assert.match(childTransferErrorText('SHARED_PHOTO'), /^Кадры набора /);
+  assert.equal(childTransferErrorText('CHILD_HAS_ORDERS'), 'По этому набору уже есть заказы. Перенос недоступен.');
+  assert.equal(childTransferErrorText('REVISION_CONFLICT'), null);
+  assert.equal(childTransferErrorText(undefined), null);
 });

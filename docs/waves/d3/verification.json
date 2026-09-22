@@ -1,0 +1,115 @@
+{
+  "wave": "D3",
+  "status": "review-pending",
+  "date": "2026-09-22",
+  "branch": "codex/d3-child-transfers",
+  "base": "a43e4ea183dccf99659cd3c99322ba25f28ac1ce",
+  "pr": "https://github.com/rebit-pro/rabit-api/pull/46",
+  "dependencies": {
+    "D2": "#21",
+    "F1": "#25",
+    "E5": "#37",
+    "F2": "#40"
+  },
+  "decisions": [
+    "D3-DEC-01 purchased frames: staff transfer allowed, orders unchanged, no retroactive discount",
+    "D3-DEC-02 MED-07 only before handover and without orders; closed staff target refused",
+    "D3-DEC-03 shared frame with a staying child blocks the transfer",
+    "D3-DEC-04 single staff group of the shoot, next free codes, frame numbers kept",
+    "D3-DEC-05 moved cover replaced by the first remaining frame, empty target cover takes the first moved frame",
+    "D3-DEC-06 correctionPhotos follow the child",
+    "D3-DEC-07 D11 accepted, D12 removed from D3 gates",
+    "D3-DEC-08 PR #32 materials moved to OPS-stage-media-recovery"
+  ],
+  "scope": [
+    "MED-07",
+    "HND-10",
+    "HND-11"
+  ],
+  "verifies": [
+    "MED-02",
+    "MED-04",
+    "MED-05",
+    "MED-06",
+    "HND-02",
+    "HND-03",
+    "HND-04",
+    "HND-08",
+    "HND-09",
+    "COM-10",
+    "COM-13"
+  ],
+  "checks": {
+    "migrationDdl": {
+      "result": "PASS",
+      "command": "disposable mysql:8.0 (--network none, tmpfs): ALTER, CHECK/FK refusals, down(), repeated up()"
+    },
+    "phpLint": {
+      "result": "PASS",
+      "command": "php -l over changed files in rabit-api-php-cli:d1-local"
+    },
+    "phpstan": {
+      "result": "PASS",
+      "command": "vendor/bin/phpstan analyse --configuration=phpstan.neon",
+      "note": "No errors"
+    },
+    "phpunit": {
+      "result": "PASS",
+      "command": "vendor/bin/phpunit --colors=never --display-phpunit-notices",
+      "tests": 561,
+      "assertions": 2639,
+      "newTests": 50
+    },
+    "style": {
+      "result": "PASS",
+      "command": "php-cs-fixer fix --config=public/local/php-cs-fixer.php over changed PHP files"
+    },
+    "frontend": {
+      "result": "PASS",
+      "command": "npm run check && npm run test:commerce && npm run build (playwright:v1.52.0-jammy, rabit-e5-node)",
+      "unitTests": 172
+    },
+    "graph": {
+      "result": "PASS",
+      "command": "python3 tools/verify-wave-graph.py docs/waves/graph.json and the MoreFoto canon",
+      "readyFromMain": [
+        "D3"
+      ]
+    },
+    "contract": {
+      "result": "PASS",
+      "command": "MoreFoto docs/05-rest-api build.py, validate.py (passed, 99 requests, 41 waves), validate-postman.cjs (99/198)"
+    },
+    "browserE2E": {
+      "result": "PENDING",
+      "command": "make test-e2e after review without blocking findings",
+      "specs": [
+        "frontend/e2e/live/zzzzzz-transfers.spec.ts",
+        "frontend/e2e/live/zzz-handoff.spec.ts (disabled transfer without a staff group)"
+      ]
+    },
+    "integration": {
+      "result": "PENDING",
+      "command": "api/tools/e2e/verify-transfers.php in make test-e2e"
+    },
+    "visualDesktopMobile": {
+      "result": "PENDING",
+      "screenshots": [
+        "d3-desktop-child-transfer.png",
+        "d3-mobile-child-transfer.png",
+        "d3-desktop-staff-transfer.png",
+        "d3-mobile-staff-transfer.png"
+      ]
+    }
+  },
+  "remaining": [
+    "code review of the D3 PR",
+    "final make test-e2e with browser, MySQL verifiers and desktop/mobile screenshots",
+    "merge and deployment as separate user actions"
+  ],
+  "complete": false,
+  "baseHistory": [
+    "44f2e36367351614fab66fdc58fa3dc7ee3899b3 (F2 merge)",
+    "a43e4ea183dccf99659cd3c99322ba25f28ac1ce (F2 deployment docs; rebased without conflicts)"
+  ]
+}
