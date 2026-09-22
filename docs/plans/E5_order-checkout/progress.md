@@ -2,10 +2,10 @@
 
 ## Точка продолжения
 
-- 2026-09-22. Ветка `codex/e5-order-checkout`, PR [#37](https://github.com/rebit-pro/rabit-api/pull/37); проверенный HEAD `5435ebc` (исправления B1–B3), отчёты по gate — следующий docs-коммит.
-- Завершено: B1–B3, ответ на ревью, финальный `make test-e2e` PASS (70/70, оба верификатора MySQL), визуальная проверка 8 экранов, отчёты `docs/waves/e5`.
+- 2026-09-22. Ветка `codex/e5-order-checkout`, PR [#37](https://github.com/rebit-pro/rabit-api/pull/37); проверенный код — `5435ebc` (исправления B1–B3), после него только docs-коммиты с отчётами (`e2ba2b5` и журнал). Рабочее дерево чистое.
+- Завершено: B1–B3, ответ на ревью, финальный `make test-e2e` PASS (70/70, оба верификатора MySQL), визуальная проверка 8 экранов, отчёты `docs/waves/e5`; описание PR обновлено, результаты gate опубликованы [комментарием](https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775362711).
 - Решение пользователя: merge в `main` и развёртывание отложены до второго круга ревью.
-- Следующий шаг: дождаться второго ревью PR #37; merge и развёртывание на app.morefoto36.ru — только по новому указанию (процедура — ниже).
+- Следующий шаг: дождаться второго ревью PR #37. Если после него изменится код, повторить быстрые проверки и затронутые сценарии `make test-e2e`; merge и развёртывание на app.morefoto36.ru — только по новому указанию (процедура — ниже).
 - Блокеры: нет. Вне E5: коллизия имени D3; #38/#39 — отдельные issues.
 - Процедура развёртывания: каталог `/srv/morefoto/releases/e5-<UTC>-<sha>`; `services-before.json` пяти сервисов; `backup.sh` + `restore-check.sh` по образцу E4 (БД `morefoto_stage_c4_20260913`); `git archive <merge>:api`, `vendor` и `backend.conf` из релиза E4, точки монтирования `public/upload`, `public/bitrix`, `public/local/.settings.php`; `migrate.sh up Version20260922120001` (без подмены модуля commerce); `--mount-add` нового `/app` для fpm, backend (+`backend.conf`), consumer, dispatcher; frontend `docker build … VITE_API_MOCKS_ENABLED=false` из чистого worktree merge-коммита, `docker save | ssh … docker load`, `nginx -t`, `docker service update --image`; флаг `MOREFOTO_CHECKOUT_ENABLED` не задаётся; откат — `--mount-add` путей релиза E4 и предыдущий образ frontend.
 
@@ -159,3 +159,7 @@
 
 - `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` на `5435ebc` (стенд `rabit-e2e-c2a30ffb9621`) — exit 0: phplint 726, PHPStan OK, PHPUnit 474/1880, frontend check/unit 166/build PASS, Notification H1 PASS, браузер 70 expected / 0 unexpected / 0 skipped / 0 flaky; `storefront-integration.log` — «E4 integration passed…»; `orders-integration.log` — «E5 integration passed: no raw secrets; one order per quote and receipt; key revoke, expiry, reissue and gallery independence; replay after closure, closed group and expired quote; access change during read; migration replay and protected down(); search on 1011 orders: 7 SQL for 10 and 100 rows, 7.5 ms per page of 100». Стенд остановлен, `cleanupErrors=[]`.
 - Визуальная проверка: просмотрены 8 снимков (оформление, заказ по ключу, служебные список и карточка на 1280×900 и 390×844) — PASS; сохранены в `docs/waves/e5/screenshots`, SHA-256 в `visual.json`.
+
+### 2026-09-22 — публикация gate в PR
+
+- `gh pr edit 37 --body-file …` — раздел «Проверки» заменён результатами финального gate, добавлено условие второго круга ревью; `gh pr comment 37 …` — [комментарий](https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775362711) с итогами gate и ссылками на отчёты `e2ba2b5`. Merge и развёртывание не выполнялись по решению пользователя.
