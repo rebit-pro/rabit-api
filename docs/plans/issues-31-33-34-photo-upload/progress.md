@@ -9,10 +9,10 @@
 - Issues: [#31](https://github.com/rebit-pro/rabit-api/issues/31), [#33](https://github.com/rebit-pro/rabit-api/issues/33), [#34](https://github.com/rebit-pro/rabit-api/issues/34) — OPEN. PR ещё нет.
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md).
 - Завершено: разведка пайплайна, чтение production-агрегатов, решения пользователя, план.
-- Сейчас: backend #34 и frontend #33/#31 реализованы, быстрые проверки зелёные. Идёт mock BDD фото.
-- Следующий шаг: результат mock BDD → opt-in бенч → commit, push, PR.
+- Сейчас: реализация и быстрые проверки завершены (mock BDD `@r08` 24/24), commit сделан, публикуется PR.
+- Следующий шаг: review PR. После review без блокеров — полный `make test-e2e` (T06–T08, T14) и, с согласия пользователя, opt-in бенч T13.
 - Блокеров нет. Открыто: согласие пользователя на opt-in замер 50 кадров (T13) и на чтение production-логов после деплоя (T15).
-- Рабочее дерево: изменения backend `morefoto.media` и frontend `photos` не закоммичены. Пустые `api/vendor` и `api/var` — точки монтирования для проверок, в git не попадают.
+- Рабочее дерево: закоммичено (`bdb7be8` #34, `0a273dd` #33/#31, `c536f85` docs и эта запись). Пустые `api/vendor` и `api/var` — точки монтирования для проверок, в git не попадают.
 
 ## Хронология
 
@@ -63,12 +63,25 @@
   - php-cs-fixer применён к изменённым файлам.
 - Frontend: `npm run lint:fix` exit 0; `npm run check` exit 0 (после замены индексации `checkDelays` из-за `noUncheckedIndexedAccess`); `npm run test:commerce` 169/169.
 
+- Opt-in бенч `frontend/e2e/live/zz-media-bench.spec.ts`:
+  - 50 JPEG 6000×4000 с подмешанным шумом генерируются в браузере через OffscreenCanvas;
+  - отчёт `media-bench.json`: время передачи и путь «принят → готово» (p50/p95), общее время, параллельность;
+  - исключён из обычного прогона через `testIgnore`, потому что гейт падает при `skipped > 0`;
+  - `tools/run-browser-e2e.py` передаёт `E2E_MEDIA_BENCH`/`E2E_MEDIA_BENCH_COUNT` в контейнер браузера.
+- Mock BDD фото: `TS_NODE_PROJECT=tsconfig.e2e.json npx cucumber-js --config cucumber.mjs --tags @r08` при `npm run e2e:server` в контейнере Playwright.
+  - С `--network none` все 24 сценария падают на логине (остаётся `/login`), это окружение: код авторизации ветка не трогает.
+  - С сетью: 24 scenarios passed, 48 steps passed.
+  - Позиционный путь к feature не заменяет `paths` из `cucumber.mjs`, поэтому фильтр — только через `--tags`.
+- Логирование: на стенде нет ошибок файлового обработчика Monolog (FPM и media). На production в канал `media` уже пишет `LoggerFilter`, новые записи не добавляют точек отказа.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда / доказательство |
 |---|---|---|---|
 | T01–T05 | PASS | 2026-09-22 | PHPUnit `PhotoPipelineDiagnosticsTest` (5 тестов) в полном прогоне 516/516 |
-| T06–T10 | PENDING | — | — |
+| T06–T08 | PENDING | — | live E2E `zz-media.spec.ts` в полном gate после review |
+| T09 | PASS | 2026-09-22 | mock BDD `--tags @r08`: 24/24 сценария, 48/48 шагов (с сетью) |
+| T10 | PENDING | — | лимит 2000 — константа `photoLimits.batch`, проверка выбором >50 файлов в live E2E/бенче |
 | T11 | PASS | 2026-09-22 | `npm run check` exit 0, `npm run test:commerce` 169/169 |
 | T12 | PASS | 2026-09-22 | phplint OK, PHPStan No errors, PHPUnit 516/516, CS Fixer применён |
 | T13 | PENDING | — | нужно согласие пользователя |
