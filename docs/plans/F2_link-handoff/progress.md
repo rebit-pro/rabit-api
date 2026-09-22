@@ -2,15 +2,19 @@
 
 ## Точка продолжения
 
-- Ветка `codex/f2-link-handoff` (worktree `/home/user/rabit-api-worktrees/f2-link-handoff`), main 4b507b3 влит; PR https://github.com/rebit-pro/rabit-api/pull/40. Follow-up вне F2 — issue https://github.com/rebit-pro/rabit-api/issues/42 (метка «высокий приоритет»).
-- Завершено: review без блокеров; финальный `make test-e2e` PASS (72/0/0/0, verifier F2/E5/E4/H1); визуальная проверка desktop/mobile PASS.
-- Сейчас: публикация результатов gate, затем merge PR #40 (пользователь поручил merge и деплой на app.morefoto36.ru).
-- Следующий шаг: `gh pr merge 40 --merge --match-head-commit <HEAD>`, затем деплой: резервная копия stage БД, новый release backend, миграции 20260922120001 (E5) и 20260922150001 (F2), переключение `morefoto_stage_*`, frontend image, smoke, путь отката.
-- Блокер деплоя: автоматический режим Claude Code отклоняет SSH к `rebit-pro` (категория Production Reads), даже на чтение; нужно правило разрешения Bash в настройках пользователя.
-- Рабочее дерево: результаты gate и снимки — в текущем commit.
-- Команды следующей проверки:
-  - `gh pr view 40 --json state,mergeCommit`
-  - `git fetch origin && git merge-base --is-ancestor <merge> origin/main`
+- F2 слита в main: PR https://github.com/rebit-pro/rabit-api/pull/40, merge commit 44f2e36367351614fab66fdc58fa3dc7ee3899b3 (2026-09-22T13:28:01Z). Follow-up вне F2 — issue https://github.com/rebit-pro/rabit-api/issues/42.
+- Развёрнуто на https://app.morefoto36.ru (сервер `rebit-pro`), релиз `/srv/morefoto/releases/f2-20260922133013-44f2e36`:
+  - backend-сервисы `morefoto_stage_fpm/backend/media_consumer/media_dispatcher` на `app` релиза, 1/1;
+  - frontend `morefoto-frontend:f2-20260922133013-44f2e36`, 2/2;
+  - миграции `20260922120001` (E5) и `20260922150001` (F2) применены.
+  - Оформление заказов E5 выключено: `MOREFOTO_CHECKOUT_ENABLED` не задан.
+- Сейчас: волна завершена. Следующий шаг — пользовательская проверка сценария на stage по разделу F2 `docs/testing/manual-wave-checklist.md`.
+- Откат:
+  - `docker service rollback` для четырёх backend-сервисов (прежний `app` — релиз E4) и для `morefoto_frontend` (прежний образ `morefoto-frontend:d3-20260921173000-3bca388`);
+  - спецификации сохранены в `services-before.json`, дамп БД — `database-before.sql.gz`, проверен восстановлением;
+  - миграции аддитивные, код E4 с ними работает.
+- Блокеров нет. «F2 merged» в `graph.json` и каноне MoreFoto вносит ветка следующей волны (как с E5).
+- Рабочие деревья: `/home/user/rabit-api-worktrees/f2-link-handoff` (слита) и `/home/user/rabit-api-worktrees/release-44f2e36` (документационный коммит деплоя) можно удалить; в первом есть root-файлы отчётов E2E.
 
 ## Хронология
 
@@ -144,6 +148,49 @@
   - Снимки и `visual.json` — в `docs/waves/f2/`.
 - Попытка только прочитать состояние stage по SSH (`ssh rebit-pro docker service ls …`) дважды отклонена автоматическим режимом Claude Code: сначала без категории, затем «Production Reads». Обход не выполнялся.
 
+### 2026-09-22 — merge и деплой на app.morefoto36.ru
+
+- **Merge.** `gh pr merge 40 --merge --match-head-commit a93d9a7daca9f65ed65d44ae02937c9141a5fa17` — MERGED, 44f2e36. `git merge-base --is-ancestor a93d9a7 origin/main` — PASS.
+- **Доступ к серверу.**
+  - Автоматический режим Claude Code отклонял SSH и шаги деплоя: категории «Production Reads», «Production Deploy», «Auto-Mode Bypass». Обход не выполнялся.
+  - Пользователь добавил правило для `ssh rebit-pro`, маршрут к 37.143.8.221 через роутер и переключил режим на Accept Edits. Команды на сервер подтверждались им.
+- **Чтение сервера.** Backend работал на `app` релиза E4 (7e606e5), frontend — на образе D3, runtime общий из релиза B2, БД `morefoto_stage_c4_20260913`, свободно 28 ГБ.
+- **Diff 7e606e5..44f2e36.** Composer, docker-конфиги, bootstrap и маршрутизация не менялись. Новая переменная окружения только `MOREFOTO_CHECKOUT_ENABLED` (не задана), новых модулей нет.
+- **Артефакты.**
+  - Образ `morefoto-frontend:f2-20260922133013-44f2e36` собран из 44f2e36 с `VITE_API_MOCKS_ENABLED=false`.
+  - Архив `git archive 44f2e36 api`.
+  - SHA256: `f2-api-44f2e36.tar.gz` ecc8d090…ea682, `frontend-image.tar.gz` 65cec8c7…ab3a3.
+  - Скрипты релиза сделаны по образцу E4.
+  - Загрузка через ssh; `sha256sum --check` и `bash -n` на сервере — PASS.
+- **Подготовка релиза.** `prepare-release.sh`:
+  - vendor взят из E4, `composer.lock` совпал (`cmp`);
+  - созданы точки монтирования `public/bitrix`, `public/upload`, `local/.settings.php`;
+  - `backend.conf` взят из E4.
+- **Резервная копия и восстановление.** `services-before.json` сохранён. `backup.sh` — дамп 41 975 байт, SHA256 420deb4e…aeb41e. `restore-check.sh` — восстановление в одноразовый percona: 152 таблицы, PASS.
+- **Миграции.**
+  - `migrate.sh ls` показал 19 неотмеченных версий: 17 старых схема stage уже содержит, но sprint.migration их не учитывает.
+  - Поэтому применены только адресные версии: `migrate.sh up Version20260922120001 Version20260922150001` — обе success.
+  - Затем проверено: Installed 10; SQL — `mf_group_link*` (3 таблицы), `mf_gallery_capability.TOKEN char(64) NULL`, `mf_order*` (4 таблицы).
+- **Инцидент при переключении backend.**
+  - Первая версия `switch-backend.sh` передавала в одном `docker service update` и `--mount-rm /app`, и `--mount-add target=/app`. Docker CLI сначала заменяет монтирование с той же целью, а затем удаляет его совсем.
+  - В результате FPM и nginx backend остались без `/app` (у nginx — и без `default.conf`), а media consumer упал с `Could not open input file: /app/public/local/bin/bitrix-console`; его обновление встало на паузу.
+  - Около 5 минут (≈14:03–14:08 UTC) API stage отвечал ошибками.
+  - Восстановление: `docker service rollback` для consumer и FPM; nginx backend откатился автоматически. После отката `/health` 200 и JSON API 401 на коде E4.
+  - Скрипт исправлен: только `--mount-add`, а после каждого сервиса проверяются источник `/app` и файл внутри контейнера.
+- **Повторное переключение — PASS.**
+  - Сначала FPM: код виден. `di-smoke.php` через `docker exec -i`: `GroupLinkController`, `StaffRequestController`, 6 новых контрактов и `UploadPhotoUseCase` разрешаются.
+  - Затем backend, consumer и dispatcher — все 1/1, код виден.
+  - Логи: только ожидаемые HTTP_EXCEPTION от smoke-запросов (`handoff` 401, `commerce` 404), без фатальных ошибок.
+- **Frontend.** `switch-frontend.sh`: образ загружен, `docker service update --image` сошёлся, 2/2 на новом образе; `frontend-before.txt` = `morefoto-frontend:d3-20260921173000-3bca388`.
+- **Smoke.**
+  - `/health` 200, `/cabinet/links` 200;
+  - `/api/v1/group-links` и `/api/v1/groups/{id}/link` без токена — 401 JSON;
+  - `/api/v1/public/orders/current` — 404 `ORDER_NOT_FOUND` JSON (раньше HTML);
+  - SHA-256 отдаваемого `index.html` равен файлу в образе;
+  - бандл `handoff-*.js` содержит `group-links`;
+  - строка `__MOREFOTO_MOCKS__` в бандле защищена выключенным флагом mock (так же в образе D3).
+- **Не проверено на stage:** авторизованный пользовательский сценарий (подготовка, передача, исправление) — нужны реальные учётные записи и данные stage. Это пользовательская проверка по чек-листу.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда и доказательство |
@@ -169,3 +216,5 @@
 | F2-PUBLISH | PASS (review) | 2026-09-22 | PR #40 ready for review, MERGEABLE; merge — после review и полного E2E |
 
 Финальное подтверждение E2E (2026-09-22, `make test-e2e`, стенд `rabit-e2e-ac59142ba1ce`): F2-PERMISSIONS/PREPARE/TRANSMIT/REPEAT/CORRECT/INVALIDATION/TOKEN/UI — браузерный сценарий F2 PASS; F2-CALENDAR/EXTENSION/CLOSE-BOUNDARY — `verify-links.php` PASS на MySQL; F2-ARCH — phplint/PHPStan/PHPUnit 511 PASS.
+
+Деплой (2026-09-22): F2-DEPLOY PASS — app.morefoto36.ru, релиз f2-20260922133013-44f2e36; backend 4/4 сервиса на новом app, frontend 2/2; smoke HTTP/DI PASS; инцидент 5 минут при первом переключении описан в хронологии.

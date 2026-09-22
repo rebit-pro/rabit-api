@@ -1,6 +1,6 @@
 {
   "wave": "F2",
-  "status": "gate-passed",
+  "status": "deployed",
   "date": "2026-09-22",
   "branch": "codex/f2-link-handoff",
   "base": "4b507b3b3c27719888e38f582b48e6a56c0c5946",
@@ -93,13 +93,46 @@
     }
   },
   "remaining": [
-    "merge PR #40",
-    "deployment to app.morefoto36.ru with DB backup, migrations 20260922120001 and 20260922150001, rollback path"
+    "user acceptance on stage by docs/testing/manual-wave-checklist.md (F2)"
   ],
   "complete": true,
   "baseHistory": [
     "8cba22c7655b5886d5fe663523214bcd059e674b",
     "4b507b3b3c27719888e38f582b48e6a56c0c5946 (E5 merged, main merged into the branch)"
   ],
-  "testedSource": "2de43f7 (main 4b507b3 + F2)"
+  "testedSource": "2de43f7 (main 4b507b3 + F2)",
+  "merge": {
+    "pr": "https://github.com/rebit-pro/rabit-api/pull/40",
+    "commit": "44f2e36367351614fab66fdc58fa3dc7ee3899b3",
+    "mergedAt": "2026-09-22T13:28:01Z"
+  },
+  "deployment": {
+    "target": "https://app.morefoto36.ru",
+    "server": "rebit-pro",
+    "release": "/srv/morefoto/releases/f2-20260922133013-44f2e36",
+    "frontendImage": "morefoto-frontend:f2-20260922133013-44f2e36",
+    "previousFrontendImage": "morefoto-frontend:d3-20260921173000-3bca388",
+    "previousBackendRelease": "/srv/morefoto/releases/e4-20260921151701-7e606e5",
+    "migrations": [
+      "Version20260922120001",
+      "Version20260922150001"
+    ],
+    "backup": {
+      "file": "database-before.sql.gz",
+      "bytes": 41975,
+      "restoreCheck": "PASS, 152 tables"
+    },
+    "smoke": {
+      "health": 200,
+      "cabinetLinks": 200,
+      "groupLinksUnauthenticated": 401,
+      "groupLinkUnauthenticated": 401,
+      "ordersCurrent": "404 ORDER_NOT_FOUND",
+      "indexSha256Match": true,
+      "diSmoke": "PASS"
+    },
+    "incident": "about 5 minutes (≈14:03–14:08 UTC) of API errors: --mount-rm and --mount-add of /app in one docker service update dropped the mount; rolled back and re-switched with --mount-add only",
+    "rollback": "docker service rollback morefoto_stage_fpm morefoto_stage_backend morefoto_stage_media_consumer morefoto_stage_media_dispatcher morefoto_frontend (one by one); services-before.json; database-before.sql.gz",
+    "notVerified": "authorized user scenario on stage (needs stage accounts and data)"
+  }
 }
