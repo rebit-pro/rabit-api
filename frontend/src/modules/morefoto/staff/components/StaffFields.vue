@@ -20,7 +20,14 @@ function roleChanged(): void {
 </script>
 <template>
   <v-text-field v-model="model.name" label="Имя сотрудника" aria-label="Имя сотрудника" maxlength="100" />
-  <v-text-field v-model="model.email" label="Email сотрудника" aria-label="Email сотрудника" type="email" autocomplete="off" />
+  <!-- Chromium ignores autocomplete="off" on email fields; an unrecognized token stops it offering the organizer's own addresses. -->
+  <v-text-field
+    v-model="model.email"
+    label="Email сотрудника"
+    aria-label="Email сотрудника"
+    type="email"
+    autocomplete="staff-invite-email"
+  />
   <v-select v-model="model.role" :items="roles" label="Роль" aria-label="Роль сотрудника" @update:model-value="roleChanged" />
   <v-checkbox
     v-model="model.active"
