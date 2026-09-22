@@ -4,10 +4,10 @@
   "date": "2026-09-22",
   "branch": "codex/e5-order-checkout",
   "base": "8cba22c7655b5886d5fe663523214bcd059e674b",
-  "head": "5435ebc11388b932064528c4f84b542caea53f5d",
-  "fixture": "rabit-e2e-c2a30ffb9621",
+  "head": "0bd8f76530215db423257d14b3272e2cb0950e98",
+  "fixture": "rabit-e2e-d2f60778297f",
   "decisions": "E5-DEC-01..05 accepted by the user on 2026-09-22",
-  "review": "PR #37 review note B1-B3 fixed in 5435ebc; non-blocking #38/#39 remain separate issues",
+  "review": "PR #37: first review B1-B3 fixed in 5435ebc; second review B1 remainder (refusal before the key lookup while recovering) fixed in 8806fc2; non-blocking #38/#39/#41 remain separate issues",
   "checks": {
     "phpLint": {
       "status": "passed",
@@ -34,7 +34,7 @@
         "E2E TypeScript",
         "production build"
       ],
-      "unitTests": 166
+      "unitTests": 167
     },
     "contract": {
       "status": "passed",
@@ -56,15 +56,15 @@
     },
     "browser": {
       "status": "passed",
-      "passed": 70,
+      "passed": 71,
       "failed": 0,
       "skipped": 0,
       "flaky": 0,
-      "e5Scenarios": "idempotency, 4x concurrent same key, 3 keys on one quote, rejections, PRICE_CHANGED, personal key, staff scope, buyer and staff UI desktop/mobile, lost response with group closure and reload, 502 after commit, price change confirmation"
+      "e5Scenarios": "idempotency, 4x concurrent same key, 3 keys on one quote, rejections, PRICE_CHANGED, personal key, staff scope, buyer and staff UI desktop/mobile, lost response with group closure and reload, 502 after commit, price change confirmation, recovery kept through 403 PURCHASE_DISABLED, reload and 429, then the same order replayed"
     },
     "integration": {
       "status": "passed",
-      "proof": "orders-integration.log: no raw secrets; one order per quote and receipt; key revoke, expiry, reissue and gallery independence; replay after closure, closed group and expired quote; access change during read; migration replay and protected down(); search on 1011 orders: 7 SQL for 10 and 100 rows, 7.5 ms per page of 100. storefront-integration.log: E4 integration passed"
+      "proof": "orders-integration.log: no raw secrets; one order per quote and receipt; key revoke, expiry, reissue and gallery independence; replay after closure, closed group and expired quote; access change during read; migration replay and protected down(); search on 1012 orders: 7 SQL for 10 and 100 rows, 7.7 ms per page of 100. storefront-integration.log: E4 integration passed. notification.log: Notification H1 integration passed"
     },
     "visual": {
       "status": "passed",
@@ -75,10 +75,12 @@
       "artifacts": [
         "screenshots/e5-desktop-checkout.png",
         "screenshots/e5-desktop-order.png",
+        "screenshots/e5-desktop-recovery.png",
         "screenshots/e5-desktop-staff-card.png",
         "screenshots/e5-desktop-staff-list.png",
         "screenshots/e5-mobile-checkout.png",
         "screenshots/e5-mobile-order.png",
+        "screenshots/e5-mobile-recovery.png",
         "screenshots/e5-mobile-staff-card.png",
         "screenshots/e5-mobile-staff-list.png"
       ]
@@ -88,7 +90,7 @@
     "stopped": true,
     "errors": []
   },
-  "mergeAllowed": false,
-  "nextStep": "Second review round requested by the user on 2026-09-22; merge into main and deployment to app.morefoto36.ru only on a new instruction.",
+  "mergeAllowed": true,
+  "nextStep": "User instructed merge into main on 2026-09-22 after this gate; deployment to app.morefoto36.ru and enabling MOREFOTO_CHECKOUT_ENABLED remain separate decisions.",
   "pr": "https://github.com/rebit-pro/rabit-api/pull/37"
 }

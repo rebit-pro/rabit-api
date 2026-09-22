@@ -2,15 +2,13 @@
 
 ## Точка продолжения
 
-- 2026-09-22. Исправление B1 после второго круга ревью PR [#37](https://github.com/rebit-pro/rabit-api/pull/37) опубликовано, ветка codex/e5-order-checkout.
-- Base/main: 8cba22c7655b5886d5fe663523214bcd059e674b; продуктовое исправление: 8806fc286ed9049f39c03c2c51a33f4db1e79ae9 (PR head после push); далее только документация.
-- Ответ на ревью: https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775712600; описание PR дополнено (раздел «Проверки», условие merge).
-- Завершено: `rules.ts`/`useLiveCheckout.ts`, unit-тест восстановления, E2E-цепочка 502 → 403 → reload → 429 → повтор; `npm run check` и `npm run test:commerce` 167/167 — PASS.
-- Сейчас: ожидание повторного ревью исправления B1. Один следующий шаг: при ревью без блокеров — полный `make test-e2e` на итоговом HEAD (закрывает E5-FIX2-E2E), визуальная проверка и отчёты.
-- Блокеры: нет. Открыто: E5-FIX2-E2E — PENDING; gate на 5435ebc новый frontend-код не покрывает.
-- Рабочее дерево: чистое после документационного коммита.
-- Команды следующей проверки: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`; `/home/user/.local/bin/gh pr view 37 --json headRefOid,comments`.
-- Merge и развёртывание отложены пользователем.
+- 2026-09-22. Подготовка merge PR [#37](https://github.com/rebit-pro/rabit-api/pull/37) в `main` по поручению пользователя, ветка codex/e5-order-checkout.
+- Base/main: 8cba22c7655b5886d5fe663523214bcd059e674b; финальный gate — на 0bd8f76530215db423257d14b3272e2cb0950e98 (стенд `rabit-e2e-d2f60778297f`); после него только документация и отчёты.
+- Завершено: исправление B1 (`8806fc2`), issue [#41](https://github.com/rebit-pro/rabit-api/issues/41) о мигании экрана восстановления, полный `make test-e2e` — PASS (браузер 71/71, верификаторы E4/E5/H1), визуальная проверка 10 снимков — PASS, отчёты `docs/waves/e5` обновлены.
+- Сейчас: публикация документационного коммита, описание и комментарий PR, затем merge. Один следующий шаг: `gh pr merge 37 --repo rebit-pro/rabit-api --merge --match-head-commit <HEAD>` при `origin/main` = 8cba22c.
+- Блокеры: нет. Неблокирующие #38, #39, #41 — отдельные issues. Развёртывание не поручено; `MOREFOTO_CHECKOUT_ENABLED` на stage/production не включается.
+- После merge: `gh pr view 37 --json state,mergeCommit`, `git fetch origin --prune`, `git merge-base --is-ancestor <merge> origin/main`; «E5 merged» в `docs/waves/graph.json` и каноне MoreFoto — в ветке следующей волны.
+- Рабочее дерево: отчёты, снимки и plan/progress входят в документационный коммит.
 
 ## Хронология
 
@@ -102,7 +100,11 @@
 | E5-PUBLISH | PASS | 2026-09-22 | `git diff --check` PASS; `origin/main` = base `8cba22c`; `git push -u origin codex/e5-order-checkout`; `gh pr create` → PR #37. Merge — после ревью и финального gate |
 | E5-FIX2-RULES | PASS | 2026-09-22 | `npm run test:commerce` в контейнере Playwright — 167/167: при восстановлении `PURCHASE_DISABLED`, 408, 429, неизвестный 4xx, `GALLERY_NOT_*`, `IDEMPOTENCY_CONFLICT` → `unknown`; коды после поиска сбрасывают попытку; первая отправка без изменений |
 | E5-FIX2-CHECK | PASS | 2026-09-22 | `npm run check` — ESLint, vue-tsc, tsc e2e, exit 0 |
-| E5-FIX2-E2E | PENDING | 2026-09-22 | Сценарий `E5: refusals while recovering keep the attempt until the same order is replayed` написан, не запускался; выполняется полным `make test-e2e` после ревью без блокеров |
+| E5-FIX2-E2E | PASS | 2026-09-22 | `make test-e2e` на `0bd8f76` (`rabit-e2e-d2f60778297f`): сценарий `E5: refusals while recovering keep the attempt until the same order is replayed` — passed с первой попытки; `verify-orders.php` — 1012 заказов в БД совпадают с запомненными браузером |
+| E5-ISSUE-FLICKER | PASS | 2026-09-22 | `gh issue create` → #41, `gh issue view 41` — OPEN, тело совпадает |
+| E5-GATE-FINAL | PASS | 2026-09-22 | `make test-e2e …` на `0bd8f76`: phplint 726, PHPStan 0, PHPUnit 474/1880, frontend check/unit 167/build, Notification H1, браузер 71 expected / 0 unexpected / 0 skipped / 0 flaky, E4 и E5 integration passed; стенд остановлен, `cleanupErrors=[]` |
+| E5-VISUAL-FINAL | PASS | 2026-09-22 | Просмотрены 10 снимков 1280×900 и 390×844, включая восстановление; SHA-256 в `docs/waves/e5/visual.json` |
+| E5-MERGE | PENDING | 2026-09-22 | Выполняется после публикации этого коммита: `gh pr merge 37 --merge --match-head-commit <HEAD>` |
 
 
 ### 2026-09-22 — начало статического ревью PR #37
@@ -237,3 +239,13 @@
 - `gh issue create --repo rebit-pro/rabit-api --title "E5: не скрывать экран восстановления оформления на время повторной отправки" --body-file …` — PASS: https://github.com/rebit-pro/rabit-api/issues/41 (P3; ссылки на HEAD 7889f27). `gh issue view 41` — OPEN, тело совпадает с подготовленным. E5-ISSUE-FLICKER PASS.
 - E2E-сценарий E5-FIX2-E2E снимает экран восстановления с удержанным `PURCHASE_DISABLED` на 390×844 и 1280×900 (`e5-mobile-recovery.png`, `e5-desktop-recovery.png`), затем продолжает на desktop. `npm run check` в контейнере Playwright — exit 0.
 - Следующий шаг: commit, затем полный `make test-e2e` на этом HEAD.
+
+### 2026-09-22 — финальный gate на 0bd8f76 и подготовка merge
+
+- Commit `0bd8f76` (`test(e5): capture the checkout recovery screen for the visual check`), рабочее дерево чистое.
+- `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` — exit 0, стенд `rabit-e2e-d2f60778297f`, `state.json`: commit 0bd8f76, `stopped: true`, `cleanupErrors: []`.
+- Логи стенда (`api/var/e2e/rabit-e2e-d2f60778297f/`): phplint — 726 файлов OK; PHPStan — No errors; PHPUnit — OK (474 tests, 1880 assertions); `test:commerce` — 167/167; `npm run check` без ошибок; production build — PASS; Notification H1 integration passed; браузер — 71 expected / 0 unexpected / 0 skipped / 0 flaky (`frontend/reports/e2e-live/results.json`), три сценария восстановления passed с первой попытки; `storefront-integration.log` — E4 integration passed; `orders-integration.log` — E5 integration passed, поиск на 1012 заказах: 7 SQL для 10 и 100 строк, 7,7 мс на страницу из 100.
+- Визуальная проверка: просмотрены 10 снимков (оформление, восстановление с причиной удержания, заказ по ключу, служебные список и карточка; 1280×900 и 390×844) — переполнения и demo-хранилища нет; бледная «Найти» совпадает со снимком прошлого gate. Снимки скопированы в `docs/waves/e5/screenshots`, SHA-256 в `visual.json`.
+- `python3 tools/verify-wave-graph.py docs/waves/graph.json` — exit 0, 40 волн, `readyFromMain=["E5"]`; граф в этом круге не менялся.
+- Отчёты: `verification.json` (head 0bd8f76, 71 браузерный сценарий, unit 167, `mergeAllowed: true`), `visual.json`, README «Проверки».
+- Следующий шаг: документационный commit, push, описание и комментарий PR, затем `gh pr merge 37 --merge --match-head-commit <HEAD>` при неизменном `main`.

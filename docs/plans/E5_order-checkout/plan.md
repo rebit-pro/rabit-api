@@ -252,7 +252,7 @@ Scope: frontend `orders/live/rules.ts`, `orders/composables/useLiveCheckout.ts`;
 - [x] Unit-тесты правил: первая отправка и восстановление для `PURCHASE_DISABLED`, 408, 429, неизвестного 4xx, `GALLERY_NOT_READY`/`GALLERY_NOT_FOUND`, `IDEMPOTENCY_CONFLICT`; разрешающие коды при восстановлении.
 - [x] E2E: commit → 502 → повтор 403 `PURCHASE_DISABLED` → reload → повтор 429 → повтор к серверу: тот же ключ и тело, исходные id/accessKey, один заказ (служебный поиск и `verify-orders.php`) — сценарий написан, выполняется в полном gate.
 - [x] Быстрые проверки frontend, журнал, commit/push, ответ на ревью в PR.
-- [ ] Полный `make test-e2e` — после ревью без блокирующих замечаний (решение пользователя 2026-09-22); до этого E5-FIX2-E2E — PENDING.
+- [x] Полный `make test-e2e` — выполнен перед merge по поручению пользователя: PASS на `0bd8f76`, E5-FIX2-E2E PASS.
 
 Критерии приёмки: цепочка из ревью (commit → потерянный ответ/502 → 403 `PURCHASE_DISABLED` → reload → повтор тем же K и телом) возвращает исходные id/accessKey, заказ в БД один; временный 429 при восстановлении не меняет K и тело; первая отправка и разрешающие коды ведут себя как раньше.
 
@@ -274,9 +274,9 @@ Scope: отдельный issue о мигании экрана восстано�
 
 - [x] Issue: сценарий, ссылки на код, ожидаемое исправление и приёмка; без дубликатов.
 - [x] E2E: снимки экрана восстановления mobile/desktop в сценарии E5-FIX2-E2E; `npm run check`.
-- [ ] Полный `make test-e2e` на итоговом HEAD, логи верификаторов, просмотр снимков.
-- [ ] Отчёты `docs/waves/e5` (verification, visual, README), plan/progress; commit/push; описание и комментарий PR.
-- [ ] Merge: `main` не сдвинут, `gh pr merge 37 --merge --match-head-commit <sha>`; проверка merge-коммита в `origin/main`.
+- [x] Полный `make test-e2e` на итоговом HEAD, логи верификаторов, просмотр снимков.
+- [x] Отчёты `docs/waves/e5` (verification, visual, README), plan/progress; commit/push; описание и комментарий PR.
+- [ ] Merge: `main` не сдвинут, `gh pr merge 37 --merge --match-head-commit <sha>`; проверка merge-коммита в `origin/main` — выполняется сразу после публикации этого документационного коммита; результат фиксируется в графе следующей волны, как для E4.
 
 | ID | Предусловия / действие | Ожидаемый результат | Команда |
 | --- | --- | --- | --- |

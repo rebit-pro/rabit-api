@@ -1,7 +1,7 @@
 {
   "wave": "E5",
   "status": "passed",
-  "fixture": "rabit-e2e-c2a30ffb9621",
+  "fixture": "rabit-e2e-d2f60778297f",
   "viewports": [
     "1280x900",
     "390x844"
@@ -13,15 +13,19 @@
     },
     {
       "file": "docs/waves/e5/screenshots/e5-desktop-order.png",
-      "sha256": "f5073a2a3535051816ca8bb32948f343120f6787fcc38ff324f8df8053290dbd"
+      "sha256": "fd7f66b09ed20fafd8858555a93414fef3b144573adf5c484569b8ada65d138e"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-desktop-recovery.png",
+      "sha256": "3666356ecb1724ae70114f9b363d9885741ab3cc2ee6a8042830cd760e748db3"
     },
     {
       "file": "docs/waves/e5/screenshots/e5-desktop-staff-card.png",
-      "sha256": "d02c1f8775db8aa56f3729bda393bf1c618b513f205cc895eebf73ab225ccb43"
+      "sha256": "536142b6f027862e75806a4f26c77f4f62866b28175f4b9f539e105d85d774a5"
     },
     {
       "file": "docs/waves/e5/screenshots/e5-desktop-staff-list.png",
-      "sha256": "c05d61d3605209eff13c2acfdb4a13b17c803f633c78bbe7ece4e06831a934a8"
+      "sha256": "39473a6256b096bf78313d7d5cdccc7b9ff31e0094afe0d6ce49436deb5d354c"
     },
     {
       "file": "docs/waves/e5/screenshots/e5-mobile-checkout.png",
@@ -29,16 +33,20 @@
     },
     {
       "file": "docs/waves/e5/screenshots/e5-mobile-order.png",
-      "sha256": "c86c966ecbac490446b1aff62b5025a9495bb74810f8961312d16f4e6b8fd05f"
+      "sha256": "ed49d3d64b6d682d610cb2b012fbf3111bddd89e9a7bd81b606983d8ebf704f2"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-mobile-recovery.png",
+      "sha256": "f899e9269a56c2b722ed4c2a90f10903ff23b03b92aab4bbd3fe011347070950"
     },
     {
       "file": "docs/waves/e5/screenshots/e5-mobile-staff-card.png",
-      "sha256": "ee95aa352c36861eda9c04d308644d7adb85cadbaea965201044a184c2e4296c"
+      "sha256": "81a946ecb94b77ff94ddbb80c1786b9ad802291556d0c4e1cc527331badadf9b"
     },
     {
       "file": "docs/waves/e5/screenshots/e5-mobile-staff-list.png",
-      "sha256": "9dab63f3ae413841971c41c32423e7613e9d6e49f800fbecd0ee1f8d49883df6"
+      "sha256": "f71ff95f3649a0f84184c5c4159fa52461c07a68780c41d125a07723e57e16c1"
     }
   ],
-  "inspection": "Просмотрены все восемь снимков: оформление, заказ по ключу, служебные список и карточка на desktop и mobile. Горизонтального переполнения нет, demo-хранилище не используется. В заказе по ключу вместо миниатюр коды кадров (E5-DEC-03); организатор видит служебное превью. Кнопка оформления видна; текст «куратор учреждения» при пустом имени. Нижняя часть бокового меню на полностраничном desktop-снимке не прокрашена — это особенность фиксированной навигации при склейке снимка, не дефект."
+  "inspection": "Просмотрены все десять снимков финального gate на 0bd8f76: оформление, восстановление неподтверждённой отправки, заказ по ключу, служебные список и карточка на desktop и mobile. Горизонтального переполнения нет, demo-хранилище не используется. Экран восстановления показывает причину удержания («Оформление заказов сейчас недоступно. Прошлая отправка сохранена — повторите её позже.»), текст переносится на 390 px, кнопка «Повторить отправку» видна. В заказе по ключу вместо миниатюр коды кадров (E5-DEC-03); организатор видит служебное превью. Кнопка оформления видна; текст «куратор учреждения» при пустом имени. Бледная кнопка «Найти» в списке — состояние сразу после нажатия, как на снимке прошлого gate. Нижняя часть бокового меню на полностраничном desktop-снимке не прокрашена — это особенность фиксированной навигации при склейке снимка, не дефект."
 }
