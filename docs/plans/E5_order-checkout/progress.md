@@ -2,13 +2,14 @@
 
 ## Точка продолжения
 
-- 2026-09-22. Ветка `codex/e5-order-checkout` от `main` `8cba22c7655b5886d5fe663523214bcd059e674b`, опубликована; PR [#37](https://github.com/rebit-pro/rabit-api/pull/37) на ревью. Граф: E5 `review`. Документация: `plan.md`, `docs/waves/e5/{README.md,verification.json,visual.json,morefoto-contract.patch}`, раздел E5 в `docs/architecture.md`.
-- Завершено: backend, frontend, E2E-спецификация и верификатор; быстрые проверки PASS; два браузерных прогона (последний 67/69, падения — локатор теста, исправлено).
-- Сейчас: ожидание ревью PR #37.
-- Следующий шаг: по итогам ревью, если нет блокирующих замечаний, — финальный `make test-e2e` (браузер + `verify-orders.php` + снимки служебных экранов), затем обновить отчёты и передать PR на merge решению пользователя.
-- Блокеры: нет. Условие merge — финальный gate после ревью. Вне E5: коллизия имени D3 ждёт решения пользователя.
-- Рабочее дерево: чистое, ветка отслеживает `origin/codex/e5-order-checkout`.
-- Команда финального gate: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
+- 2026-09-22. Статическое ревью PR [#37](https://github.com/rebit-pro/rabit-api/pull/37), ветка codex/e5-order-checkout.
+- Base: 8cba22c7655b5886d5fe663523214bcd059e674b; проверяемый HEAD: 46c442e6b2817a3e9ca2c2413b1c197190c9e61a.
+- Завершено: сверены PR, инструкции, согласованные решения, состояние ветки и открытые issues.
+- Сейчас: ревью завершено; note https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5774904959 опубликован, неблокирующие issues #38/#39 созданы и повторно прочитаны через gh.
+- Следующий шаг: разработчику исправить B1–B3 из note; затем повторное ревью и отдельно согласованный финальный gate.
+- Блокеры кода: потеря ключа повтора при HTTP 5xx; недоступность восстановления после закрытия группы/сбоя пересчёта; PRICE_CHANGED вместо QUOTE_STALE при изменении количества (противоречит обязательному верификатору); тесты и E2E по прямому указанию пользователя не запускаются. Прежний финальный gate остаётся отложенным.
+- Рабочее дерево до ревью чистое; результаты ревью сохраняются отдельным локальным документационным коммитом plan.md и progress.md поверх проверенного HEAD. Push этого коммита не выполняется; удалённый PR остаётся на проверенном 46c442e. Продуктовый код не менялся.
+- Следующие команды: /home/user/.local/bin/gh pr view 37 --json headRefOid,baseRefOid,comments; git status --short; git log -1 --oneline. После исправления — статическое чтение затронутых сценариев B1–B3. GitHub — только /home/user/.local/bin/gh.
 
 ## Хронология
 
@@ -99,3 +100,40 @@
 | E5-UI | PENDING | — | Оформление и заказ по ключу desktop/mobile — PASS в прогоне; служебные экраны — финальный gate |
 | E5-REGRESSION | PENDING | — | 67/69 в последнем прогоне; повтор полного набора — финальный gate |
 | E5-PUBLISH | PASS | 2026-09-22 | `git diff --check` PASS; `origin/main` = base `8cba22c`; `git push -u origin codex/e5-order-checkout`; `gh pr create` → PR #37. Merge — после ревью и финального gate |
+
+
+### 2026-09-22 — начало статического ревью PR #37
+
+- Запрос пользователя: только код, без прогонов/E2E; блокирующие находки — note в PR через gh, неблокирующие — отдельные issues.
+- E5-RV-01 PASS: git status --short пустой; gh pr view 37 --json baseRefOid,headRefOid — base 8cba22c, head 46c442e; локальный HEAD совпадает. Diff: 145 файлов, +6514/-114.
+- E5-RV-02 PENDING; E5-RV-03 PENDING; E5-RV-04 PENDING.
+- Открытые issues #23/#24/#26/#27/#28/#31/#33/#34 прочитаны по заголовкам для исключения дублирования.
+- Обычный sandbox не инициализируется (helper_unknown_error); чтение и gh доступны через разрешённый запуск exec вне sandbox.
+
+
+### 2026-09-22 — статическая проверка и перепроверка находок
+
+- Прочитаны оформление/повтор/ключи, SQL-репозитории и миграция, DI и HTTP DTO/controller/mapper, Access/Media, frontend composables/screens, маршруты, nginx, тесты и runner. Никакие PHPUnit/frontend/E2E/SQL-прогоны не запускались.
+- E5-RV-02 FAIL (статическое ревью): B1 — checkoutOutcome считает HTTP 502/504 окончательным отказом, useLiveCheckout удаляет pending и меняет requestId; подтверждённый на сервере заказ становится недоступен для replay. B2 — pending не участвует в canSubmit/render: после закрытия группы и перезагрузки loadStorefront не получает quote, CheckoutForm скрывает форму, хотя сервер разрешает replay. B3 — money() включает quantity/id; смена количества при том же quote бросает QuotePriceChangedException, а verify-storefront.php:79 ожидает QUOTE_STALE; runner запускает его до verify-orders.php.
+- Неблокирующие: N1 — clearable VTextField присваивает null через Vuetify validation.reset(), useStaffOrders.apply вызывает filters.q.trim(); обход — «Сбросить». N2 — institutionId/shootId/groupId отсутствуют в StaffOrderFilters, URL mapper и служебной форме, хотя backend COM-12 их поддерживает.
+- E5-RV-03 PASS: решения E5-DEC-01…05 учтены; открытые issues #23/#24/#26/#27/#28/#31/#33/#34 не дублируют эти находки (#28 относится к F1). Миниатюры проверены до PhotoImage: используют авторизованный blob-запрос, замечания нет. Nginx задаёт no-referrer; недоказанная утечка не включается.
+- Доказательства: чтение файлов с номерами строк; git diff origin/main...HEAD; gh issue list --state open --limit 100 --json number,title,url; установленный frontend/node_modules/vuetify/lib/composables/validation.js:122–125. E5-RV-04 PENDING.
+
+
+### 2026-09-22 — публикация неблокирующих issues
+
+- gh issue create --repo rebit-pro/rabit-api --title … --body-file /tmp/rabit-pr37-review-20260922/issue-1.md — PASS: #38 https://github.com/rebit-pro/rabit-api/issues/38 (clearable → null → trim).
+- Та же команда с issue-2.md — PASS: #39 https://github.com/rebit-pro/rabit-api/issues/39 (фильтры учреждения/съёмки/группы).
+- Перед созданием gh issue list --state all --limit 100 — дубликатов нет.
+- Note с B1/B2/P1 и B3/P2 (блокирует обязательный верификатор) подготовлен в /tmp/rabit-pr37-review-20260922/review-note.md; следующим действием gh pr comment 37 --body-file …
+- git diff --check — PASS (формат документации; это не тестовый прогон).
+
+
+### 2026-09-22 — ревью завершено
+
+- gh pr comment 37 --repo rebit-pro/rabit-api --body-file /tmp/rabit-pr37-review-20260922/review-note.md — PASS: https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5774904959.
+- E5-RV-04 PASS: gh api repos/rebit-pro/rabit-api/issues/comments/5774904959; gh issue view 38/39 --json title,body,url,state — опубликованные тела совпадают с подготовленными текстами, issues OPEN.
+- Повторный gh pr view 37 --json headRefOid,baseRefOid,state — PASS: PR OPEN, HEAD/base остались 46c442e/8cba22c. Ревью относится именно к ним.
+- Итог: B1/B2 — P1, B3 — P2, блокирующий финальный gate; PR не рекомендован к merge до исправлений. Неблокирующий долг — #38 и #39.
+- Тесты, E2E, контейнеры и приложение в этом ревью не запускались. git diff --check ранее PASS; прежние runtime-статусы выше оставлены как история реализации.
+- Перед завершением: локальный документационный коммит только plan.md/progress.md, без push; удалённый продуктовый HEAD сохраняется. Merge/deployment не выполняются.
