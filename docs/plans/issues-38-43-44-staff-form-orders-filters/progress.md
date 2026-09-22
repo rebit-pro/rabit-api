@@ -12,9 +12,10 @@
 - Завершено:
   - воспроизведение #43, прототип #44, создание issues, план;
   - реализация #43/#44/#38 и расширение live E2E;
-  - быстрые проверки и стаб-прогон ветки и `main`.
-- Сейчас: PR #45 ждёт review. Код не менять до замечаний.
-- Следующий шаг: review PR. После review без блокеров — полный `make test-e2e` (T08 и live-часть T01–T05/T07/T09/T10, T14).
+  - быстрые проверки и стаб-прогон ветки и `main`;
+  - полный `make test-e2e` (73/73) и визуальная проверка desktop/mobile.
+- Сейчас: пользователь поручил merge и деплой в production (2026-09-22). Полный gate PASS, визуальная проверка desktop/mobile выполнена.
+- Следующий шаг: `gh pr merge 45 --merge --match-head-commit <HEAD>`, затем frontend-only релиз на `app.morefoto36.ru`.
 - Блокеров нет. Открыто T06: ручная проверка автозаполнения email в Яндекс Браузере и Chrome пользователем.
 - Рабочее дерево: чистое после commit/push этой записи.
 - Следующая проверка после изменения base: `npm run check && npm run test:commerce` в контейнере Playwright (команда в плане).
@@ -75,16 +76,26 @@
   Проверки ловят все три дефекта.
 - `git diff --check`: без замечаний. Основной checkout `/home/user/rabit-api` остался чистым.
 
+### 2026-09-22 — review и финальный gate
+
+- Пользователь поручил влить PR #45 в `main` и выкатить на production. Это review без блокирующих замечаний, поэтому запущен финальный gate.
+- `git fetch origin`: `main` не изменился (`a43e4ea`); PR #45 `MERGEABLE`/`CLEAN`.
+- Команда из worktree: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` — exit 0.
+  - Этапы: frontend check, test:commerce, сборка с реальным API, backend lint/static analysis/PHPUnit, реальная схема Bitrix, контракт Notification на MySQL, фикстура E4, браузерный E2E.
+  - `frontend/reports/e2e-live/results.json`: expected 73, unexpected 0, flaky 0, skipped 0, 265 с.
+  - `staff.spec.ts` 5/5, включая новый «B2: форма показывает замену занятой группы и сохраняет видимые значения». `zzzzz-orders.spec.ts` 10/10, включая desktop/mobile со сценарием очистки поиска.
+- Визуальная проверка на реальном backend: `e5-desktop-staff-list.png`, `e5-mobile-staff-list.png` и `b2-desktop-staff.png`. Панель фильтров в две строки на desktop и в столбик на 390px, кнопки в строке поиска, обрезки нет.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда / доказательство |
 |---|---|---|---|
-| T01–T05 | PASS (стабы) / PENDING (live) | 2026-09-22 | стаб-прогон ветки PASS, на `main` FAIL; live E2E `staff.spec.ts` — после review |
+| T01–T05 | PASS | 2026-09-22 | стаб-прогон ветки PASS, на `main` FAIL; live E2E `staff.spec.ts` 5/5 в полном gate |
 | T06 | PENDING | — | ручная проверка пользователя в Яндекс Браузере и Chrome |
-| T07 | PASS (стабы) / PENDING (live) | 2026-09-22 | 6 ширин: кнопки в строке поиска, нет обрезки и горизонтальной прокрутки; live-скриншоты e5 staff-list — после review |
-| T08 | PENDING | — | live E2E `zzzzz-orders.spec.ts` после review |
-| T09–T10 | PASS (стабы) / PENDING (live) | 2026-09-22 | 6 ширин PASS, на `main` T10 FAIL; live — после review |
+| T07 | PASS | 2026-09-22 | стабы на 6 ширинах; live-скриншоты `e5-desktop/mobile-staff-list.png`, проверка горизонтальной прокрутки в спеке |
+| T08 | PASS | 2026-09-22 | live E2E `zzzzz-orders.spec.ts` desktop/mobile: карточка → «Все заказы» → поиск восстановлен |
+| T09–T10 | PASS | 2026-09-22 | стабы на 6 ширинах (на `main` T10 FAIL); live E2E desktop/mobile: крестик → «Найти» → `q` нет, «Сбросить» неактивна, `pageerror` нет |
 | T11 | PASS | 2026-09-22 | `npm run check` exit 0 |
 | T12 | PASS | 2026-09-22 | `npm run test:commerce` 169/169 |
 | T13 | PASS | 2026-09-22 | `git diff --stat`: 3 файла `frontend/src` + 2 live-спеки, demo-экраны и backend не затронуты |
-| T14 | PENDING | — | полный `make test-e2e` после review без блокеров |
+| T14 | PASS | 2026-09-22 | полный `make test-e2e` exit 0, 73/73 |

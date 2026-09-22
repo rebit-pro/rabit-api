@@ -65,7 +65,7 @@
 - [x] Браузерный прогон на стабах по ветке (T01–T05, T07, T09, T10) и контрольный прогон тех же шагов на `main`.
 - [x] Commit, push, PR в `main` без merge ([#45](https://github.com/rebit-pro/rabit-api/pull/45)). В PR — ограничения и post-review gate.
 - [ ] T06: ручная проверка автозаполнения email пользователем.
-- [ ] После review без блокеров: полный `make test-e2e`, desktop/mobile визуальная проверка.
+- [x] После review без блокеров: полный `make test-e2e` (73/73), desktop/mobile визуальная проверка.
 
 ## Критерии приёмки
 
