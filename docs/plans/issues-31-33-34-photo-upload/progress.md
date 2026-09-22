@@ -3,13 +3,14 @@
 ## Точка продолжения
 
 - Дата: 2026-09-22.
-- Ветка: `codex/issues-31-33-34-photo-upload`, upstream снят до первого push.
+- Ветка: `codex/issues-31-33-34-photo-upload`, upstream `origin/codex/issues-31-33-34-photo-upload`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-31-33-34-photo-upload`. Основной checkout `/home/user/rabit-api` остаётся на `main`.
 - Base: `5b750c0` (`origin/main`, включает PR #45 и запись его деплоя).
-- Issues: [#31](https://github.com/rebit-pro/rabit-api/issues/31), [#33](https://github.com/rebit-pro/rabit-api/issues/33), [#34](https://github.com/rebit-pro/rabit-api/issues/34) — OPEN. PR ещё нет.
+- Issues: [#31](https://github.com/rebit-pro/rabit-api/issues/31), [#33](https://github.com/rebit-pro/rabit-api/issues/33), [#34](https://github.com/rebit-pro/rabit-api/issues/34) — OPEN, закроются merge PR (`Closes`).
+- PR: [#47](https://github.com/rebit-pro/rabit-api/pull/47), OPEN в `main`, не сливать до review и полного gate. Точный HEAD — `git rev-parse HEAD`, сверять с `gh pr view 47 --json headRefOid`.
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md).
 - Завершено: разведка пайплайна, чтение production-агрегатов, решения пользователя, план.
-- Сейчас: реализация и быстрые проверки завершены (mock BDD `@r08` 24/24), commit сделан, публикуется PR.
+- Сейчас: PR #47 ждёт review. Код не менять до замечаний.
 - Следующий шаг: review PR. После review без блокеров — полный `make test-e2e` (T06–T08, T14) и, с согласия пользователя, opt-in бенч T13.
 - Блокеров нет. Открыто: согласие пользователя на opt-in замер 50 кадров (T13) и на чтение production-логов после деплоя (T15).
 - Рабочее дерево: закоммичено (`bdb7be8` #34, `0a273dd` #33/#31, `c536f85` docs и эта запись). Пустые `api/vendor` и `api/var` — точки монтирования для проверок, в git не попадают.
