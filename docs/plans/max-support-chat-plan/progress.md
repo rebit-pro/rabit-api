@@ -4,15 +4,15 @@
 
 - Ветка: `codex/max-support-chat-plan`.
 - Worktree: `/home/user/rabit-api-worktrees/max-support-chat-plan`.
-- Base и HEAD при старте: `5b750c07e964e279e3517292dae6517643f3e7be` (`origin/main`, проверен fetch 22.09.2026).
-- PR/issue: ещё не создан; существующих открытых задач по MAX не найдено.
+- Base: `5b750c07e964e279e3517292dae6517643f3e7be` (`origin/main`, повторно проверен fetch перед push). Проверенный head с полным планом: `0da91d32b22acdf5303d0e5e4b9cf82ef5cce621`; итоговый HEAD включает последующий commit финализации этого журнала, точный SHA: `git rev-parse HEAD`.
+- PR: [#48 — План чата клиента MoreFoto с куратором через MAX](https://github.com/rebit-pro/rabit-api/pull/48), draft, base `main`. Отдельный issue не создавался.
 - Связанные материалы: `plan.md`, `docs/waves/graph.json` (K1/H1), `docs/architecture.md`, соседний MoreFoto `docs/05-rest-api/README.md`.
-- Завершено: чтение инструкций, просмотр main, PR/issues, источников MAX; создан изолированный worktree.
-- Сейчас: итоговая проверка документов перед commit/push.
-- Следующий шаг: создать draft PR только с plan.md и progress.md.
-- Блокеры реализации: выбор UX MAX, доступ к подтверждённому боту, зависимости K1, отсутствие live-проверки reply/webhook.
-- Рабочее дерево: только новые `docs/plans/max-support-chat-plan/plan.md` и `progress.md`; код не менялся.
-- Следующая проверка: `git diff --cached --check`; после публикации `gh pr view --json number,url,isDraft,baseRefName,headRefName,files`.
+- Завершено: исследование проекта/MAX, полный план, DOC-01…05, commit/push, draft PR #48.
+- Сейчас: документ готов к обсуждению; финализирован журнал результатов. Продуктовая реализация не начата.
+- Следующий шаг: обсудить CHAT-D01…06 в PR и выбрать место чата в графе; до этого не начинать продуктовый код.
+- Открытые решения реализации: CHAT-D01…06; отдельная группа на клиента не подтверждена API, личный бот предложен; зависимости K1 и live MAX ещё не закрыты. Для документационного результата блокеров нет.
+- Рабочее дерево: два документа входят в PR; финальный docs-only commit сохраняет отметки проверок и эту точку продолжения. Ожидаемое состояние после push — чистое; проверить `git status --short`. Чужих файлов и runtime-изменений нет.
+- Команды продолжения: `git status --short`; `git rev-parse HEAD`; `gh pr view 48 --json number,url,isDraft,baseRefName,headRefName,headRefOid,files`; `git diff --check origin/main...HEAD`.
 
 ## Журнал
 
@@ -35,7 +35,7 @@
 | DOC-02 | PASS | 22.09.2026 | 11 страниц dev.max.ru открыты; официальная OpenAPI прочитана через gh с фиксированным ref, источники помещены в план |
 | DOC-03 | PASS | 22.09.2026 | `python3 tools/verify-wave-graph.py docs/waves/graph.json`: 40 волн, 99 endpoints, 35 исторических ID, 10 negative fixtures; K1 blocked. Код H1 и отсутствие Support проверены |
 | DOC-04 | PASS | 22.09.2026 | `python3 /tmp/rabit-max-plan-check.py`: 2 файла, 18 ID, 25 Markdown-ссылок, локальные цели существуют; `git diff --cached --check` чист |
-| DOC-05 | PENDING | 22.09.2026 | PR ещё не создан |
+| DOC-05 | PASS | 22.09.2026 | `gh pr view 48 --json number,url,isDraft,baseRefName,headRefName,headRefOid,files`: draft=true, base=main, нужная ветка и ровно 2 файла |
 
 Runtime-тесты, браузерный E2E и MAX round-trip не запускались: текущая задача документарная, интеграции ещё нет.
 
@@ -75,5 +75,13 @@ Runtime-тесты, браузерный E2E и MAX round-trip не запуск
 - `python3 tools/verify-wave-graph.py docs/waves/graph.json` — PASS: 40 волн, 99 API ID, 35 legacy ID, все 10 отрицательных сценариев отклонены. K1 явно находится в blocked.
 - Backend/frontend/runtime/browser/MAX проверки не выполнялись и не отмечены PASS. Draft PR предназначен для обсуждения плана, не подтверждает готовность продукта к merge.
 
-- python3 /tmp/rabit-max-plan-check.py — PASS: 2 files, 18 testCases, 25 markdownLinks, localLinks/scope PASS. Временный скрипт не входит в PR.
+- `python3 /tmp/rabit-max-plan-check.py` — PASS: 2 files, 18 testCases, 25 markdownLinks, localLinks/scope PASS. Временный скрипт не входит в PR.
 - Перед commit/push: подготовлен только документационный diff; следующий шаг — публикация draft PR без merge.
+
+### 22.09.2026 — PR опубликован, финализация
+
+- `git commit -m "docs: plan MoreFoto support chat with MAX"` — PASS, `0da91d32b22acdf5303d0e5e4b9cf82ef5cce621`.
+- `git push -u origin codex/max-support-chat-plan` — PASS.
+- `gh pr create --draft --base main --head codex/max-support-chat-plan --title "План чата клиента MoreFoto с куратором через MAX" --body-file /tmp/rabit-max-plan-pr-body.md` — PASS, PR #48. PR прикреплён к текущей задаче Codex.
+- `gh pr view 48 --json number,url,isDraft,baseRefName,headRefName,headRefOid,files` — PASS: draft, main, нужная ветка, только plan.md/progress.md. `git status --short` после первого push пустой.
+- Перед заключительным commit/push обновлены checklist документа и точка продолжения; смысл плана не изменён. Merge и deployment не выполнялись. Ответ на optional-вопрос о предпочтительном UX пока не получен; вариант личного бота остаётся предложением.
