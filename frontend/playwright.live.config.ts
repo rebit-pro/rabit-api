@@ -5,6 +5,8 @@ if (!['frontend', '127.0.0.1', 'localhost'].includes(new URL(baseURL).hostname))
 }
 export default defineConfig({
   testDir: './e2e/live',
+  // The #33/#34 media bench uploads a heavy batch and runs only on request.
+  testIgnore: process.env.E2E_MEDIA_BENCH ? [] : ['**/zz-media-bench.spec.ts'],
   fullyParallel: false,
   workers: 1,
   retries: 0,

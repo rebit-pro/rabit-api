@@ -58,6 +58,8 @@ export interface CoverResult {
   photoId: string;
   revision: number;
 }
+// Matches PHP max_execution_time: the shared 15 s timeout cuts large originals on slow uplinks.
+const uploadTimeout = 300_000;
 function idempotencyKey(): string {
   return crypto.randomUUID().replace(/-/g, '');
 }
@@ -107,8 +109,9 @@ export const photosApi = {
     return (
       await api.post('/api/v1/shoots/' + encodeURIComponent(shootId) + '/photos', body, {
         signal,
+        timeout: uploadTimeout,
         headers: { 'Content-Type': 'multipart/form-data' },
-        onUploadProgress: (event) => onProgress(event.total ? Math.min(75, Math.round((event.loaded / event.total) * 75)) : 20)
+        onUploadProgress: (event) => onProgress(event.total ? Math.round((event.loaded / event.total) * 100) : 0)
       })
     ).data;
   }

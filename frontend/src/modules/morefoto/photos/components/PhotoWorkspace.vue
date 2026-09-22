@@ -39,7 +39,7 @@ const {
   transfer
 } = workspace;
 const queue = usePhotoQueue(String(route.params.shootId));
-const { jobs, busy: uploading, error: uploadError, queued, accepted, failed } = queue;
+const { jobs, busy: uploading, paused, error: uploadError, queued, accepted, waiting, failed } = queue;
 const groupItems = computed(() =>
   groups.value.map((item) => ({
     title: item.name + (item.state === 'preparing' ? ' · Подготовка' : ' · Подборка опубликована'),
@@ -123,14 +123,17 @@ async function confirmMove(toId: string, code: string) {
         :jobs="jobs"
         :groups="groups"
         :busy="uploading"
+        :paused="paused"
         :disabled="busy || !editable"
         :queued="queued"
         :accepted="accepted"
+        :waiting="waiting"
         :failed="failed"
         :error="uploadError"
         :group-name="group.name"
         @files="queue.add($event, group.id)"
         @start="queue.start"
+        @pause="queue.pause"
         @retry="queue.retry"
         @clear="queue.clear"
         @remove="queue.remove"

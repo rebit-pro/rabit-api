@@ -26,7 +26,7 @@ export interface PhotoState {
   photos: ManagedPhoto[];
   covers: Record<string, string>;
 }
-export type QueueStatus = 'queued' | 'processing' | 'done' | 'duplicate' | 'error' | 'interrupted';
+export type QueueStatus = 'queued' | 'uploading' | 'processing' | 'done' | 'duplicate' | 'error' | 'interrupted';
 export interface UploadJob {
   id: string;
   shootId: string;
@@ -38,6 +38,9 @@ export interface UploadJob {
   progress: number;
   message: string;
   serverId?: string;
+  acceptedAt?: number;
+  checkAt?: number;
+  checks?: number;
 }
 export interface PreparedPhoto {
   fingerprint: string;

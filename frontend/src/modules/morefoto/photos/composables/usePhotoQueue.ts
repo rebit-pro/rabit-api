@@ -1,5 +1,6 @@
 import { computed, onScopeDispose, shallowRef } from 'vue';
 import { onBeforeRouteLeave } from 'vue-router';
+import { isAxiosError } from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import { isMockApiEnabled } from '@/mocks/config';
 import { fileProblem, photoLimits } from '../rules';
@@ -8,6 +9,14 @@ import { acceptPhoto, editableGroup } from '../service';
 import { photoApiError, photosApi } from '../api';
 import { photosChangedEvent } from '../repository';
 import type { UploadJob } from '../types';
+
+const duplicateMessage = 'Такой файл уже есть в этой съёмке. Второй кадр не создан.';
+const acceptedMessage = 'Файл принят. Сервер готовит защищённые превью';
+// Accepted photos share one status budget per queue instead of polling each of a thousand files.
+const checksPerTick = 2;
+const checkDelay = (checks: number): number => [2000, 5000][checks - 1] ?? 10000;
+const slowAfter = 10 * 60 * 1000;
+const refreshEvery = 5000;
 
 export function usePhotoQueue(shootId: string) {
   const auth = useAuthStore();
@@ -21,8 +30,8 @@ export function usePhotoQueue(shootId: string) {
   }
   const jobs = shallowRef<UploadJob[]>(
     initial.map((job) =>
-      (isMockApiEnabled && ['queued', 'processing'].includes(job.status)) ||
-      (!isMockApiEnabled && job.status === 'queued') ||
+      (isMockApiEnabled && ['queued', 'uploading', 'processing'].includes(job.status)) ||
+      (!isMockApiEnabled && ['queued', 'uploading'].includes(job.status)) ||
       (!isMockApiEnabled && job.status === 'processing' && !job.serverId)
         ? {
             ...job,
@@ -35,17 +44,53 @@ export function usePhotoQueue(shootId: string) {
   );
   const files = new Map<string, File>();
   const busy = shallowRef(false);
+  const paused = shallowRef(false);
   const error = shallowRef('');
   const controller = new AbortController();
   let alive = true;
+  let persistTimer = 0;
+  let trackTimer = 0;
+  let refreshTimer = 0;
+  let refreshedAt = 0;
   const queued = computed(() => jobs.value.filter((job) => job.status === 'queued').length);
   const accepted = computed(() => jobs.value.filter((job) => job.status === 'done').length);
+  const waiting = computed(() => jobs.value.filter((job) => job.status === 'uploading' || job.status === 'processing').length);
   const failed = computed(() => jobs.value.filter((job) => ['error', 'interrupted'].includes(job.status)).length);
-  const persist = () => sessionStorage.setItem(key, JSON.stringify(jobs.value));
+  function write() {
+    try {
+      sessionStorage.setItem(key, JSON.stringify(jobs.value));
+    } catch {
+      /* The queue keeps working in memory when the session storage is full. */
+    }
+  }
+  function persist(now: boolean) {
+    if (now) {
+      window.clearTimeout(persistTimer);
+      persistTimer = 0;
+      write();
+    } else if (!persistTimer) {
+      persistTimer = window.setTimeout(() => {
+        persistTimer = 0;
+        write();
+      }, 1000);
+    }
+  }
   function update(id: string, value: Partial<UploadJob>) {
     if (alive) {
       jobs.value = jobs.value.map((job) => (job.id === id ? { ...job, ...value } : job));
-      persist();
+      persist('status' in value);
+    }
+  }
+  function refreshWorkspace() {
+    const wait = refreshedAt + refreshEvery - Date.now();
+    if (wait <= 0) {
+      refreshedAt = Date.now();
+      window.dispatchEvent(new Event(photosChangedEvent));
+    } else if (!refreshTimer) {
+      refreshTimer = window.setTimeout(() => {
+        refreshTimer = 0;
+        refreshWorkspace();
+      }, wait);
     }
   }
   function add(list: File[], groupId: string) {
@@ -59,21 +104,22 @@ export function usePhotoQueue(shootId: string) {
       }
     }
     if (list.length > photoLimits.batch) {
-      error.value = 'Выберите не больше 50 файлов за раз.';
+      error.value = 'Выберите не больше ' + photoLimits.batch + ' файлов за раз.';
       return;
     }
+    const identity = (name: string, bytes: number, modified: number) => JSON.stringify([name, bytes, modified]);
+    const interrupted = new Map(
+      jobs.value
+        .filter((job) => job.groupId === groupId && job.status === 'interrupted')
+        .map((job) => [identity(job.filename, job.bytes, job.modified), job])
+    );
+    const replaced = new Map<string, UploadJob>();
+    const added: UploadJob[] = [];
     for (const file of list) {
-      const interrupted = jobs.value.find(
-        (job) =>
-          job.groupId === groupId &&
-          job.filename === file.name &&
-          job.bytes === file.size &&
-          job.modified === file.lastModified &&
-          job.status === 'interrupted'
-      );
+      const previous = interrupted.get(identity(file.name, file.size, file.lastModified));
       const problem = fileProblem(file);
       const job: UploadJob = {
-        id: interrupted?.id ?? crypto.randomUUID(),
+        id: previous?.id ?? crypto.randomUUID(),
         shootId,
         groupId,
         filename: file.name,
@@ -81,96 +127,130 @@ export function usePhotoQueue(shootId: string) {
         modified: file.lastModified,
         progress: 0,
         status: problem ? 'error' : 'queued',
-        message: problem || 'Готов к подготовке'
+        message: problem || (isMockApiEnabled ? 'Готов к подготовке' : 'Готов к отправке')
       };
       files.set(job.id, file);
-      jobs.value = interrupted ? jobs.value.map((item) => (item.id === job.id ? job : item)) : [...jobs.value, job];
+      if (previous) replaced.set(job.id, job);
+      else added.push(job);
     }
-    persist();
+    jobs.value = [...jobs.value.map((job) => replaced.get(job.id) ?? job), ...added];
+    persist(true);
   }
-  async function poll(jobId: string, photoId: string) {
-    for (let attempt = 0; attempt < 120 && !controller.signal.aborted; attempt++) {
-      const photo = await photosApi.detail(photoId);
+  async function check(job: UploadJob) {
+    const checks = (job.checks ?? 0) + 1;
+    const later = { checks, checkAt: Date.now() + checkDelay(checks) };
+    try {
+      const photo = await photosApi.detail(job.serverId!);
       if (photo.status === 'ready') {
-        update(jobId, { status: 'done', progress: 100, message: 'Защищённые превью готовы' });
-        window.dispatchEvent(new Event(photosChangedEvent));
-        return;
-      }
-      if (photo.status === 'failed') {
-        update(jobId, {
+        update(job.id, { status: 'done', progress: 100, message: 'Защищённые превью готовы' });
+        refreshWorkspace();
+      } else if (photo.status === 'failed') {
+        update(job.id, {
           status: 'error',
           progress: 100,
           message: 'Сервер не смог подготовить превью. Повторно выберите исходный файл.'
         });
-        return;
+      } else if (photo.status === 'duplicate') {
+        update(job.id, { status: 'duplicate', progress: 100, message: duplicateMessage });
+      } else {
+        const slow = Date.now() - (job.acceptedAt ?? Date.now()) > slowAfter;
+        update(job.id, { ...later, message: slow ? 'Обработка задерживается. Статус проверяется автоматически' : acceptedMessage });
       }
-      if (photo.status === 'duplicate') {
-        update(jobId, {
-          status: 'duplicate',
-          progress: 100,
-          message: 'Такой файл уже есть в этой съёмке. Второй кадр не создан.'
-        });
-        return;
-      }
-      update(jobId, { progress: Math.min(95, 78 + attempt), message: 'Сервер готовит защищённые превью' });
-      await new Promise((resolve) => window.setTimeout(resolve, 500));
+    } catch (cause) {
+      if (!alive || controller.signal.aborted) return;
+      if (isAxiosError(cause) && [403, 404].includes(cause.response?.status ?? 0))
+        update(job.id, { status: 'error', message: photoApiError(cause) });
+      else update(job.id, { ...later, message: 'Статус пока не получен. Проверка повторится автоматически' });
     }
-    if (!controller.signal.aborted)
-      update(jobId, { status: 'error', message: 'Обработка продолжается дольше минуты. Обновите страницу для проверки статуса.' });
   }
-  async function processLive(job: UploadJob, file: File) {
-    update(job.id, { status: 'processing', progress: 5, message: 'Отправляем приватный оригинал' });
-    const result = await photosApi.upload(shootId, job.groupId, file, controller.signal, (progress) =>
-      update(job.id, { progress, message: 'Отправляем приватный оригинал' })
-    );
-    update(job.id, { serverId: result.id, progress: 78, message: 'Файл принят. Ожидаем защищённые превью' });
+  function track() {
+    if (!isMockApiEnabled && alive && !trackTimer) trackTimer = window.setTimeout(tick, 1000);
+  }
+  async function tick() {
+    trackTimer = 0;
+    if (!alive || controller.signal.aborted) return;
+    const now = Date.now();
+    const due = jobs.value
+      .filter((job) => job.status === 'processing' && job.serverId && (job.checkAt ?? 0) <= now)
+      .sort((left, right) => (left.checkAt ?? 0) - (right.checkAt ?? 0))
+      .slice(0, checksPerTick);
+    await Promise.all(due.map(check));
+    if (jobs.value.some((job) => job.status === 'processing' && job.serverId)) track();
+  }
+  function uploadProgress(id: string, progress: number) {
+    const job = jobs.value.find((item) => item.id === id);
+    if (job && (100 <= progress || 5 <= progress - job.progress)) update(id, { progress });
+  }
+  async function uploadLive(job: UploadJob, file: File) {
+    update(job.id, { status: 'uploading', progress: 0, message: 'Отправляем приватный оригинал' });
+    const result = await photosApi.upload(shootId, job.groupId, file, controller.signal, (progress) => uploadProgress(job.id, progress));
     files.delete(job.id);
     if (result.status === 'duplicate') {
-      update(job.id, {
-        status: 'duplicate',
-        progress: 100,
-        message: 'Такой файл уже есть в этой съёмке. Второй кадр не создан.'
-      });
+      update(job.id, { serverId: result.id, status: 'duplicate', progress: 100, message: duplicateMessage });
       return;
     }
-    await poll(job.id, result.id);
+    const now = Date.now();
+    update(job.id, {
+      serverId: result.id,
+      status: 'processing',
+      progress: 100,
+      message: acceptedMessage,
+      acceptedAt: now,
+      checkAt: now + checkDelay(1),
+      checks: 0
+    });
+    track();
+  }
+  async function prepareMock(job: UploadJob, file: File) {
+    update(job.id, { status: 'processing', progress: 5, message: 'Читаем и проверяем файл' });
+    const token = auth.getAccessToken() ?? '';
+    editableGroup(token, shootId, job.groupId);
+    const prepared = await preparePhoto(file, controller.signal, (progress) =>
+      update(job.id, { progress, message: progress < 50 ? 'Проверяем изображение' : 'Готовим защищённые превью' })
+    );
+    update(job.id, { progress: 90, message: 'Сохраняем в браузере' });
+    const result = await acceptPhoto(token, job, prepared, controller.signal);
+    update(job.id, {
+      status: result,
+      progress: 100,
+      message: result === 'done' ? 'Файл подготовлен' : duplicateMessage
+    });
+    files.delete(job.id);
+  }
+  async function worker() {
+    while (alive && !controller.signal.aborted && !paused.value) {
+      const job = jobs.value.find((item) => item.status === 'queued');
+      if (!job) return;
+      const file = files.get(job.id);
+      if (!file) {
+        update(job.id, { status: 'interrupted', message: 'Выберите исходный файл снова.' });
+        continue;
+      }
+      try {
+        if (isMockApiEnabled) await prepareMock(job, file);
+        else await uploadLive(job, file);
+      } catch (cause) {
+        if (!controller.signal.aborted) update(job.id, { status: 'error', progress: 0, message: photoApiError(cause) });
+      }
+    }
   }
   async function start() {
     if (busy.value) return;
     busy.value = true;
+    paused.value = false;
     error.value = '';
     try {
-      for (const job of jobs.value.filter((item) => item.status === 'queued')) {
-        if (controller.signal.aborted) break;
-        const file = files.get(job.id);
-        if (!file) {
-          update(job.id, { status: 'interrupted', message: 'Выберите исходный файл снова.' });
-          continue;
-        }
-        try {
-          if (isMockApiEnabled) {
-            update(job.id, { status: 'processing', progress: 5, message: 'Читаем и проверяем файл' });
-            const token = auth.getAccessToken() ?? '';
-            editableGroup(token, shootId, job.groupId);
-            const prepared = await preparePhoto(file, controller.signal, (progress) =>
-              update(job.id, { progress, message: progress < 50 ? 'Проверяем изображение' : 'Готовим защищённые превью' })
-            );
-            update(job.id, { progress: 90, message: 'Сохраняем в браузере' });
-            const result = await acceptPhoto(token, job, prepared, controller.signal);
-            update(job.id, {
-              status: result,
-              progress: 100,
-              message: result === 'done' ? 'Файл подготовлен' : 'Такой файл уже есть в этой съёмке. Второй кадр не создан.'
-            });
-            files.delete(job.id);
-          } else await processLive(job, file);
-        } catch (cause) {
-          if (!controller.signal.aborted) update(job.id, { status: 'error', message: photoApiError(cause) });
-        }
-      }
+      // Browser-side demo preparation is CPU bound, so it stays sequential.
+      await Promise.all(Array.from({ length: isMockApiEnabled ? 1 : photoLimits.parallel }, worker));
     } finally {
-      if (alive) busy.value = false;
+      if (alive) {
+        busy.value = false;
+        persist(true);
+      }
     }
+  }
+  function pause() {
+    if (busy.value) paused.value = true;
   }
   function retry(id: string) {
     if (busy.value) return;
@@ -184,14 +264,14 @@ export function usePhotoQueue(shootId: string) {
   function clear() {
     if (!busy.value) {
       jobs.value = jobs.value.filter((job) => !['done', 'duplicate'].includes(job.status));
-      persist();
+      persist(true);
     }
   }
   function remove(id: string) {
     if (!busy.value) {
       jobs.value = jobs.value.filter((job) => job.id !== id);
       files.delete(id);
-      persist();
+      persist(true);
     }
   }
   function beforeUnload(event: BeforeUnloadEvent) {
@@ -210,24 +290,12 @@ export function usePhotoQueue(shootId: string) {
     alive = false;
     controller.abort();
     files.clear();
+    window.clearTimeout(trackTimer);
+    window.clearTimeout(refreshTimer);
+    window.clearTimeout(persistTimer);
+    write();
     window.removeEventListener('beforeunload', beforeUnload);
   });
-  if (!isMockApiEnabled && jobs.value.some((job) => job.status === 'processing' && job.serverId)) {
-    queueMicrotask(async () => {
-      if (busy.value || !alive) return;
-      busy.value = true;
-      try {
-        for (const job of jobs.value.filter((item) => item.status === 'processing' && item.serverId)) {
-          try {
-            await poll(job.id, job.serverId!);
-          } catch (cause) {
-            if (alive && !controller.signal.aborted) update(job.id, { status: 'error', message: photoApiError(cause) });
-          }
-        }
-      } finally {
-        if (alive) busy.value = false;
-      }
-    });
-  }
-  return { jobs, busy, error, queued, accepted, failed, add, start, retry, clear, remove };
+  if (jobs.value.some((job) => job.status === 'processing' && job.serverId)) track();
+  return { jobs, busy, paused, error, queued, accepted, waiting, failed, add, start, pause, retry, clear, remove };
 }
