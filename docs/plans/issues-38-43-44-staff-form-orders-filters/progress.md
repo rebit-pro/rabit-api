@@ -4,20 +4,23 @@
 
 - Дата: 2026-09-22.
 - Ветка: `codex/issues-38-43-44-staff-form-orders-filters`, upstream `origin/codex/issues-38-43-44-staff-form-orders-filters`.
-- PR: [#45](https://github.com/rebit-pro/rabit-api/pull/45), OPEN в `main`, не сливать до review и полного gate. Код — commits `c5d2053` (#43) и `04f1100` (#44/#38). Точный HEAD — `git rev-parse HEAD`, сверять с `gh pr view 45 --json headRefOid`.
+- PR: [#45](https://github.com/rebit-pro/rabit-api/pull/45) MERGED 2026-09-22T15:39:37Z, merge commit `57b2a816c7fc9a6e3145bd7fd6fc3b0b96aeb4a2`; проверенный HEAD ветки — `dcd517b`.
+- Production: `app.morefoto36.ru`, frontend `morefoto-frontend:issues45-20260922154012-57b2a81` (2/2), backend не менялся.
 - Worktree: `/home/user/rabit-api-worktrees/issues-38-43-44-staff-form-orders-filters`. Основной checkout `/home/user/rabit-api` остаётся на `main`.
 - Base: `a43e4ea183dccf99659cd3c99322ba25f28ac1ce` (`origin/main`).
-- Issues: [#43](https://github.com/rebit-pro/rabit-api/issues/43), [#44](https://github.com/rebit-pro/rabit-api/issues/44), [#38](https://github.com/rebit-pro/rabit-api/issues/38), все OPEN. Закроются merge PR #45 (`Closes`).
+- Issues: [#43](https://github.com/rebit-pro/rabit-api/issues/43), [#44](https://github.com/rebit-pro/rabit-api/issues/44), [#38](https://github.com/rebit-pro/rabit-api/issues/38) — CLOSED (completed) merge PR #45.
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md).
 - Завершено:
   - воспроизведение #43, прототип #44, создание issues, план;
   - реализация #43/#44/#38 и расширение live E2E;
   - быстрые проверки и стаб-прогон ветки и `main`;
-  - полный `make test-e2e` (73/73) и визуальная проверка desktop/mobile.
-- Сейчас: пользователь поручил merge и деплой в production (2026-09-22). Полный gate PASS, визуальная проверка desktop/mobile выполнена.
-- Следующий шаг: `gh pr merge 45 --merge --match-head-commit <HEAD>`, затем frontend-only релиз на `app.morefoto36.ru`.
+  - полный `make test-e2e` (73/73) и визуальная проверка desktop/mobile;
+  - merge и frontend-only деплой на production, smoke PASS.
+- Сейчас: задача завершена.
+- Следующий шаг: пользовательская проверка на production — создание сотрудника-воспитателя, затем подготовка и передача ссылки по чек-листу F2, плюс T06.
 - Блокеров нет. Открыто T06: ручная проверка автозаполнения email в Яндекс Браузере и Chrome пользователем.
-- Рабочее дерево: чистое после commit/push этой записи.
+- Откат frontend: `ssh rebit-pro "docker service rollback morefoto_frontend"` (прежний образ `morefoto-frontend:f2-20260922133013-44f2e36`).
+- Рабочие деревья: `/home/user/rabit-api-worktrees/issues-38-43-44-staff-form-orders-filters` слита, её можно удалить. В ней отчёты E2E (`frontend/reports`, `api/var/e2e`), они не в git.
 - Следующая проверка после изменения base: `npm run check && npm run test:commerce` в контейнере Playwright (команда в плане).
 
 ## Хронология
@@ -85,6 +88,24 @@
   - `frontend/reports/e2e-live/results.json`: expected 73, unexpected 0, flaky 0, skipped 0, 265 с.
   - `staff.spec.ts` 5/5, включая новый «B2: форма показывает замену занятой группы и сохраняет видимые значения». `zzzzz-orders.spec.ts` 10/10, включая desktop/mobile со сценарием очистки поиска.
 - Визуальная проверка на реальном backend: `e5-desktop-staff-list.png`, `e5-mobile-staff-list.png` и `b2-desktop-staff.png`. Панель фильтров в две строки на desktop и в столбик на 390px, кнопки в строке поиска, обрезки нет.
+
+### 2026-09-22 — merge и деплой на app.morefoto36.ru
+
+- **Merge.** `gh pr merge 45 --merge --match-head-commit dcd517ba9e103e5e442521979f8c3085e9ba2ef3` — MERGED, `57b2a81`. `git merge-base --is-ancestor dcd517b origin/main` — PASS. Issues #38/#43/#44 закрылись по `Closes`.
+- **Объём релиза.** В diff PR изменены только `frontend/`, E2E-спеки и docs. Backend, миграции, env и docker-конфиги не менялись, поэтому переключается только сервис `morefoto_frontend`.
+- **Сборка.**
+  - `git archive 57b2a81 frontend`, затем `docker build -f frontend/docker/production/nginx/Dockerfile --build-arg VITE_API_MOCKS_ENABLED=false --build-arg VITE_APP_VERSION=issues45-20260922154012-57b2a81`.
+  - Образ `sha256:7f354662f967…`. Архив `frontend-image.tar.gz` SHA256 `1a02f065aebd…dd55`.
+  - Локальный smoke контейнера: `/health`, `/cabinet/users`, `/cabinet/orders`, `/cabinet/links` — 200. Бандл содержит `staff-invite-email` (StaffManagementScreen) и `staff-orders__refine` (CuratorPage).
+- **Доступ к серверу.** Первая попытка записи на сервер отклонена автоматическим режимом Claude Code. Пользователь переключил режим, команды на сервер выполнены с его подтверждением. Обход не выполнялся.
+- **Загрузка.** Каталог `/srv/morefoto/releases/issues45-20260922154012-57b2a81`, узел Swarm один (Leader). `sha256sum --check` и `bash -n switch-frontend.sh` — PASS.
+- **Переключение.** `switch-frontend.sh` (по образцу F2): `frontend-before.txt` = `morefoto-frontend:f2-20260922133013-44f2e36`; `docker service update --detach=false --image` — converged, 2/2 на новом образе.
+- **Smoke production:**
+  - `/health` 200, `/cabinet/users|orders|links` 200 HTML;
+  - `/api/v1/me` без токена — 401 JSON;
+  - SHA-256 отдаваемого `index.html` совпадает с файлом в образе;
+  - отдаваемые `StaffManagementScreen-DM_2HHKr.js` и `CuratorPage-BX2RfFNN.css` содержат новый код.
+- **Не проверено на production:** авторизованные сценарии — нужна реальная учётная запись организатора. Это пользовательская проверка.
 
 ## Результаты тест-кейсов
 
