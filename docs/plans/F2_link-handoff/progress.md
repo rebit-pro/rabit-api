@@ -2,17 +2,17 @@
 
 ## Точка продолжения
 
-- Ветка `codex/f2-link-handoff` в worktree `/home/user/rabit-api-worktrees/f2-link-handoff`. Base `origin/main` 8cba22c7655b5886d5fe663523214bcd059e674b. PR ещё нет.
+- Ветка `codex/f2-link-handoff` в worktree `/home/user/rabit-api-worktrees/f2-link-handoff`. Base `origin/main` 8cba22c7655b5886d5fe663523214bcd059e674b. Draft PR https://github.com/rebit-pro/rabit-api/pull/40 (план; реализация добавляется в ту же ветку).
 - Основной checkout `/home/user/rabit-api` занят параллельной сессией E5 (PR #37); его не трогать.
 - Завершено:
   - перестановка F2 перед D3 в `docs/waves/graph.json` и каноническом плане MoreFoto;
   - сбор спецификации и кода;
   - согласование четырёх решений (см. plan.md);
   - plan/progress.
-- Сейчас: первый commit (граф + план), затем миграция и межмодульные контракты.
+- Сейчас: реализация — миграция и межмодульные контракты.
 - Следующий шаг: миграция `Version20260922150001` и контракты rebit.share.
 - Блокеров нет. Полный `make test-e2e` — только после review без блокеров (указание пользователя от 22.09.2026 по E5).
-- Рабочее дерево: `docs/waves/graph.json`, `docs/waves/f2/morefoto-graph.patch`, `docs/plans/F2_link-handoff/*` — к первому commit. Внешний MoreFoto уже изменён (без Git), резервная копия исходных файлов в scratchpad сессии.
+- Рабочее дерево: граф и план закоммичены (29fd8eb) и опубликованы. Внешний MoreFoto уже изменён (без Git), резервная копия исходных файлов в scratchpad сессии.
 - Команды следующей проверки:
   - `python3 tools/verify-wave-graph.py docs/waves/graph.json`
   - `python3 /home/user/MoreFoto/docs/05-rest-api/validate.py`
@@ -39,6 +39,13 @@
   - `sentAt` не раньше выдачи ключа;
   - заявки F1 блокируют подготовку до D3;
   - собственная revision ссылки.
+
+### 2026-09-22 — публикация плана
+
+- Первый commit 29fd8eb «docs(f2): reorder F2 before D3 and plan link handoff»; `git diff --check` PASS.
+- `git fetch origin`: main не изменился (8cba22c). `git push -u origin codex/f2-link-handoff` — PASS.
+- По указанию пользователя создан PR с планом: `gh pr create --draft` → https://github.com/rebit-pro/rabit-api/pull/40. Draft выбран, так как реализация добавляется в ту же ветку и PR до неё не сливается.
+- Следующий шаг — реализация без паузы (указание пользователя).
 
 ## Результаты тест-кейсов
 
