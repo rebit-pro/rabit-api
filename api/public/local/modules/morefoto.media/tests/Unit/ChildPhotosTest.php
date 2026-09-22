@@ -26,9 +26,9 @@ final class ChildPhotosTest extends TestCase
             'CODE' => 'AB', 'SEQUENCE_NO' => '3', 'UF_WIDTH' => '1200', 'UF_HEIGHT' => '800', 'UF_REVISION' => '2',
         ], false);
         $photos = $this->createMock(GalleryPhotoRepository::class);
-        $photos->expects(self::once())->method('children')->with(10, 20, [7, 8])->willReturn($result);
+        $photos->expects(self::once())->method('children')->with(20, [7, 8])->willReturn($result);
 
-        $items = (new ChildPhotos($photos, new GalleryAssignmentMapper()))->ready(10, 20, [7, 0, 8, 7, -1]);
+        $items = (new ChildPhotos($photos, new GalleryAssignmentMapper()))->ready(20, [7, 0, 8, 7, -1]);
 
         self::assertCount(1, $items);
         self::assertSame('AB003', $items[0]->code);
@@ -41,6 +41,6 @@ final class ChildPhotosTest extends TestCase
         $photos = $this->createMock(GalleryPhotoRepository::class);
         $photos->expects(self::never())->method('children');
 
-        self::assertSame([], (new ChildPhotos($photos, new GalleryAssignmentMapper()))->ready(10, 20, [0]));
+        self::assertSame([], (new ChildPhotos($photos, new GalleryAssignmentMapper()))->ready(20, [0]));
     }
 }

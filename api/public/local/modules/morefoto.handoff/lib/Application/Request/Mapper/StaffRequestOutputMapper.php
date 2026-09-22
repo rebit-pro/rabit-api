@@ -24,6 +24,7 @@ final readonly class StaffRequestOutputMapper
             rows: $view['rows'],
             comment: $view['comment'],
             history: $view['history'],
+            results: $view['results'],
             staffEligibility: $view['staffEligibility'],
         );
     }

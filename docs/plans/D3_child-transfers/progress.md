@@ -7,8 +7,8 @@
   - Base — `44f2e36367351614fab66fdc58fa3dc7ee3899b3` (merge F2, PR #40); PR D3 ещё нет.
   - Документы: `docs/plans/D3_child-transfers/plan.md`.
 - Завершено: решения D3-DEC-01…08 приняты; оба графа синхронизированы и проверены; контракт MoreFoto уточнён и провалидирован; материалы PR #32 перенесены в `OPS-stage-media-recovery`, правило ID записано.
-- Сейчас: реализация backend — миграция, Media (MED-07 и участник переноса), Commerce (заказы детей), Handoff (HND-10/11, `results`).
-- Один следующий шаг: миграция столбцов результата в `mf_staff_request_row` и её проверка на одноразовом MySQL 8.0.
+- Сейчас: frontend live — перенос ребёнка в рабочем месте фото и льготный перенос на экране заявок.
+- Один следующий шаг: api-клиенты MED-07/HND-10/HND-11 и live-ветка `saveStaffRequest`.
 - Блокеры: нет. Неслитые PR #29/#35/#36 в D3 не переносятся.
 - Рабочее дерево: документационный коммит; дальше — незакоммиченный код в работе.
 - Команды проверки:
@@ -96,6 +96,26 @@
   - Копия исходного `docs` MoreFoto сохранена во временном каталоге сессии для итогового patch.
 - DEC-08: `git mv` материалов PR #32 в `docs/plans/OPS-stage-media-recovery/` (с `visual/`), ссылки обновлены, заголовки и пометка об истории; `docs/waves/d3/` освобождён. Правило ID волн добавлено в AGENTS.md и CLAUDE.md (файлы идентичны).
 
+### 2026-09-22 — backend
+
+- Миграция `Version20260922180001`: столбцы результата переноса в `mf_staff_request_row` с CHECK «все или ничего» и FK целевой группы; добавлена в `api/tools/e2e/prepare.php`.
+  - DDL на одноразовом `mysql:8.0` (`--network none`, tmpfs): применение, отказ частичного результата и неверного кода (CHECK), отказ неизвестной группы (FK), `down()` и повторный `up()` — PASS.
+- Контракты `rebit.share`: `Contracts/Media/ChildTransferInterface` (+ DTO набора, кадра и перемещения), `Contracts/Commerce/ChildOrdersInterface`; `ChildPhotosInterface::ready(shootId, childIds)` — кадры в текущей группе ребёнка (DEC-06), вызов E5 и тест обновлены.
+- Media:
+  - `ChildTransferPolicy` (коды A…ZZZ как `childCodeAt` прототипа, сверка набора, совместные кадры), `ChildTransferRepository` (SQL), `ChildTransfers` — реализация контракта: блокировка ревизии съёмки и строк детей, перенос ребёнка и кадров с сохранением ID, замена обложек (DEC-05), CAS ревизии.
+  - MED-07: `TransferChildUseCase` (права → блокировка → повтор → состояние групп → ревизия → набор → совместные кадры → код → заказы), чистый `ChildTransferController`, RequestDto, мапперы, DI `di/transfer.php`, маршрут. Отказы Access переводятся в коды (обход #42).
+- Commerce: `OrderRepository::childrenWithOrders` и адаптер `Infrastructure/Transfer/ChildOrders`.
+- Handoff:
+  - `StaffTransferPolicy` (план, целевые коды, подпись SHA-256, SET_CHANGED/SHARED_PHOTO/TARGET_GROUP_CLOSED), `StaffTransferPlanner`, `StaffTransferGuard`;
+  - HND-10 `GetStaffTransferPreviewUseCase`, HND-11 `ConfirmStaffTransferUseCase` (порядок блокировок F2, повтор по ключу и по состоянию transferred, журнал повтора без результатов — они в строках);
+  - `results` в HND-08, `rows[].childCode` на момент переноса; `appendHistory` принимает ID и имя актора;
+  - `BitrixHandoffTransaction(attempts)`: ограниченный повтор при deadlock только для HND-11 (F1/F2 — одна попытка, как раньше).
+- Проверки:
+  - `php -l` для изменённых файлов — PASS;
+  - PHPUnit (`PHPUNIT` из плана) — OK, 561 тест / 2636 проверок, без уведомлений; до тестов D3 — 511/2463;
+  - `vendor/bin/phpstan analyse --configuration=phpstan.neon` — No errors (сначала 10 ошибок типов моков в новых тестах, исправлено);
+  - php-cs-fixer по 62 изменённым PHP-файлам — исправлено 6, повторный PHPUnit — OK.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда и доказательство |
@@ -105,7 +125,7 @@
 | D3-GRAPH | PASS | 2026-09-22 | `verify-wave-graph.py`: 40 волн, 99 API, `readyFromMain=["D3"]`; канон — 41 волна, `["E6","D3"]`; 10 негативных фикстур |
 | D3-CONTRACT | PENDING | 2026-09-22 | `build.py`/`validate.py`/`validate-postman.cjs` — PASS; patch и сверка с кодом — перед PR |
 | D3-OPS-RENAME | PENDING | 2026-09-22 | Перенос выполнен (`git mv`), проверка ссылок — перед PR |
-| D3-MIGRATION | PENDING | — | — |
+| D3-MIGRATION | PENDING | 2026-09-22 | DDL на одноразовом MySQL 8.0 — PASS (CHECK, FK, `down()`, повторный `up()`); установка на стенде — `make test-e2e` |
 | D3-MOVE | PENDING | — | — |
 | D3-MOVE-REJECT | PENDING | — | — |
 | D3-MOVE-IDEM | PENDING | — | — |
@@ -123,7 +143,7 @@
 | D3-PREPARATION | PENDING | — | — |
 | D3-COVER | PENDING | — | — |
 | D3-LOCKS | PENDING | — | — |
-| D3-ARCH | PENDING | — | — |
+| D3-ARCH | PENDING | 2026-09-22 | PHPUnit 561/2636 (архитектура контроллеров, контракты DTO), PHPStan 0, php-cs-fixer; итог — перед PR |
 | D3-UI | PENDING | — | — |
 | D3-REGRESSION | PENDING | — | — |
 | D3-PUBLISH | PENDING | — | — |
