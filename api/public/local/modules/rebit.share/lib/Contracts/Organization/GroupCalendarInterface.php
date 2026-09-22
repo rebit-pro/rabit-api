@@ -6,6 +6,7 @@ namespace Rebit\Share\Contracts\Organization;
 
 use Rebit\Share\Contracts\Organization\Dto\CalendarCommandInputDto;
 use Rebit\Share\Contracts\Organization\Dto\CalendarMutationOutputDto;
+use Rebit\Share\Contracts\Organization\Dto\LinkSentInputDto;
 
 interface GroupCalendarInterface
 {
@@ -25,4 +26,17 @@ interface GroupCalendarInterface
 
     /** Explicit extension only: later than existing close and server time, with reason, actor, revision and idempotency. */
     public function extend(CalendarCommandInputDto $input, \DateTimeImmutable $newClosesAt): CalendarMutationOutputDto;
+
+    /**
+     * Records the manual delivery moment reported by staff; never later than server time.
+     * The first fact sets close +7 and delivery +7 calendar days; a repeated fact preserves every deadline.
+     * Requires lock() and actor authorization; the caller owns idempotency and the operation ID.
+     */
+    public function recordLinkSent(LinkSentInputDto $input): CalendarMutationOutputDto;
+
+    /**
+     * Replaces an erroneous recorded delivery moment and recalculates the deadlines, keeping a later agreed extension.
+     * Requires lock(), actor authorization and a reason; the caller owns idempotency and the operation ID.
+     */
+    public function correctLinkSent(LinkSentInputDto $input): CalendarMutationOutputDto;
 }

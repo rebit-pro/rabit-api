@@ -30,6 +30,23 @@ final readonly class SalesConditionsRepository
         return $this->query('SELECT REVISION,INHERIT,GIFT_THRESHOLD,GIFT_FOR_STAFF FROM mf_group_sales_conditions WHERE GROUP_ID=' . $this->positive($groupId) . ' ' . ($forUpdate ? 'FOR UPDATE' : 'LOCK IN SHARE MODE'))->fetch();
     }
 
+    /**
+     * @param list<int> $groupIds
+     *
+     * @return array<int, array{REVISION: int|string, INHERIT: int|string, GIFT_THRESHOLD: int|string, GIFT_FOR_STAFF: int|string}>
+     */
+    public function groups(array $groupIds): array
+    {
+        $ids = implode(',', array_map($this->positive(...), $groupIds));
+        $result = $this->query('SELECT GROUP_ID,REVISION,INHERIT,GIFT_THRESHOLD,GIFT_FOR_STAFF FROM mf_group_sales_conditions WHERE GROUP_ID IN (' . $ids . ') LOCK IN SHARE MODE');
+        $groups = [];
+        while (false !== ($row = $result->fetch())) {
+            $groups[(int)$row['GROUP_ID']] = $row;
+        }
+
+        return $groups;
+    }
+
     public function globalProducts(): Result
     {
         return $this->query('SELECT ' . self::PRODUCT_FIELDS . ' FROM b_hlbd_mf_product p ORDER BY p.UF_NAME ASC,p.ID ASC');

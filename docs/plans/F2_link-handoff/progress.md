@@ -9,10 +9,10 @@
   - сбор спецификации и кода;
   - согласование четырёх решений (см. plan.md);
   - plan/progress.
-- Сейчас: реализация — миграция и межмодульные контракты.
-- Следующий шаг: миграция `Version20260922150001` и контракты rebit.share.
+- Сейчас: backend F2 реализован и покрыт unit-тестами; следующий этап — live frontend экрана ссылок.
+- Следующий шаг: frontend `/cabinet/links` в live-режиме (HND-01…05), затем E2E-спецификация и verifier.
 - Блокеров нет. Полный `make test-e2e` — только после review без блокеров (указание пользователя от 22.09.2026 по E5).
-- Рабочее дерево: граф и план закоммичены (29fd8eb) и опубликованы. Внешний MoreFoto уже изменён (без Git), резервная копия исходных файлов в scratchpad сессии.
+- Рабочее дерево: backend F2 закоммичен отдельным коммитом (см. хронологию). Внешний MoreFoto уже изменён (без Git), резервная копия исходных файлов в scratchpad сессии.
 - Команды следующей проверки:
   - `python3 tools/verify-wave-graph.py docs/waves/graph.json`
   - `python3 /home/user/MoreFoto/docs/05-rest-api/validate.py`
@@ -47,14 +47,48 @@
 - По указанию пользователя создан PR с планом: `gh pr create --draft` → https://github.com/rebit-pro/rabit-api/pull/40. Draft выбран, так как реализация добавляется в ту же ветку и PR до неё не сливается.
 - Следующий шаг — реализация без паузы (указание пользователя).
 
+### 2026-09-22 — backend F2
+
+- Миграция `Version20260922150001`: `mf_gallery_capability.TOKEN` (сырой ключ по решению пользователя) + индекс активных ключей группы; таблицы `mf_group_link`, `mf_group_link_history`, `mf_group_link_idempotency` с CHECK-ограничениями; откат запрещён при наличии данных.
+- Контракты rebit.share:
+  - `GroupCalendarInterface::recordLinkSent/correctLinkSent`, `GroupDirectoryInterface` (Organization);
+  - `GroupLinkAccessInterface` (Access);
+  - `GalleryLinkInterface`, `GroupMaterialsInterface` (Media);
+  - `Contracts/Commerce/GroupSalesReadinessInterface`.
+- Поставщики:
+  - календарь с правилами D10 и журналом Organization; `CalendarRuleViolation` → 422/409;
+  - каталог групп со scope/state/пагинацией;
+  - `GroupLinkAccess` с порядком блокировок;
+  - `GalleryLinks` и `GroupMaterials`; `GroupSalesReadiness` через те же share-блокировки, что E3.
+- Гонка MED-05/06: после `lockRevision` повторно проверяется `groupEditable`.
+- Handoff:
+  - доменные политики готовности (подпись и коды проблем в camelCase по правилу enum проекта), прав D08 и даты передачи;
+  - репозиторий в Infrastructure;
+  - сессия команды: порядок блокировок, идемпотентность после блокировки группы;
+  - 5 UseCase, чистый контроллер, маршруты, DI, установщик.
+- Встречное подключение Commerce ↔ Handoff в Bitrix даёт `E_USER_WARNING` («Module is in loading progress»), поэтому Handoff получает контракт Commerce лениво через ServiceLocator (`init.php` загружает оба модуля).
+- Проверки в образе `rabit-api-php-cli:d1-local` с vendor основного checkout (read-only):
+  - `php -l` 85 файлов — PASS;
+  - первый PHPStan — FAIL: 1 ошибка «left side of ?? is not nullable» (повторный `find()` после блокировок). Добавлен `@phpstan-impure` контракту каталога, повтор — PASS;
+  - PHPUnit unit до тестов F2 — 281/1266 PASS.
+- Тесты F2:
+  - `GroupCalendarDeliveryTest` 8;
+  - `LinkPolicyTest` 9;
+  - `GroupLinkControllerArchitectureTest` 2 — первый прогон FAIL: ложное срабатывание подстроки `Bitrix\` на разрешённом `Rebit\Share\Infrastructure\Bitrix\ControllerJson`; подстрока убрана, проверка по токенам осталась;
+  - `GroupLinkContractTest` 11;
+  - `GroupLinkWorkflowTest` 5;
+  - `MediaLockRecheckTest` 2.
+- Полный unit-набор после тестов — `phpunit --testsuite=unit` 318 tests / 1459 assertions PASS; PHPStan без ошибок; php-cs-fixer по 89 изменённым файлам исправил форматирование 3 тестов.
+- В `api/tools/e2e/prepare.php` добавлена миграция `20260922150001`.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда и доказательство |
 | --- | --- | --- | --- |
 | F2-GRAPH | PASS | 2026-09-22 | `verify-wave-graph.py` (40/99/10 negative, ready E5+F2), MoreFoto `validate.py` и `validate-postman.cjs` exit 0 |
-| F2-CALENDAR | PENDING | — | — |
-| F2-READINESS | PENDING | — | — |
-| F2-PERMISSIONS | PENDING | — | — |
+| F2-CALENDAR | PASS (unit) | 2026-09-22 | `GroupCalendarDeliveryTest` 8/24: +7/+7 МСК, год/29 февраля/UTC, будущее, повтор, исправление, продление, граница `now == closesAt`. Сервисный слой — PENDING verifier MySQL |
+| F2-READINESS | PASS (unit) | 2026-09-22 | `LinkPolicyTest`: коды проблем и изменение подписи от названия/воспитателя/материалов/условий/заявок |
+| F2-PERMISSIONS | PASS (unit), E2E PENDING | 2026-09-22 | `LinkPolicyTest` матрица D08; `GroupLinkWorkflowTest` 403/404 для куратора, руководителя, воспитателя, чужого куратора |
 | F2-PREPARE | PENDING | — | — |
 | F2-TRANSMIT | PENDING | — | — |
 | F2-REPEAT | PENDING | — | — |
@@ -62,11 +96,11 @@
 | F2-EXTENSION | PENDING | — | — |
 | F2-CLOSE-BOUNDARY | PENDING | — | — |
 | F2-INVALIDATION | PENDING | — | — |
-| F2-RACE-MEDIA | PENDING | — | — |
+| F2-RACE-MEDIA | PASS (unit) | 2026-09-22 | `MediaLockRecheckTest` 2/8: разметка и обложка после ожидания блокировки → GROUP_LOCKED, запись не выполняется |
 | F2-GALLERY-QUOTE | PENDING | — | — |
 | F2-TOKEN | PENDING | — | — |
-| F2-ARCH | PENDING | — | — |
-| F2-CONTRACT | PENDING | — | — |
+| F2-ARCH | PASS (частично) | 2026-09-22 | architecture-тест контроллера, DTO-архитектура F1 покрывает новые DTO, PHPStan 0, php-cs-fixer; финальный прогон — перед PR |
+| F2-CONTRACT | PASS (unit) | 2026-09-22 | `GroupLinkContractTest` 11/66: строгий JSON, INVALID_SENT_AT, REVIEW/CONFIRMATION_REQUIRED, INVALID_REASON, фильтры, форма ответов |
 | F2-UI | PENDING | — | — |
 | F2-VISUAL | PENDING | — | — |
 | F2-PUBLISH | PENDING | — | — |

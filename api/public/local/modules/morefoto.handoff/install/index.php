@@ -22,9 +22,9 @@ final class Morefoto_Handoff extends CModule
                 throw new RuntimeException('Required module is unavailable: ' . $dependency);
             }
         }
-        foreach (['mf_staff_request', 'mf_staff_request_row', 'mf_staff_request_history', 'mf_staff_request_idempotency'] as $table) {
+        foreach (['mf_staff_request', 'mf_staff_request_row', 'mf_staff_request_history', 'mf_staff_request_idempotency', 'mf_group_link', 'mf_group_link_history', 'mf_group_link_idempotency'] as $table) {
             if (!Application::getConnection()->isTableExists($table)) {
-                throw new RuntimeException('Apply the F1 handoff migration first: missing ' . $table);
+                throw new RuntimeException('Apply the F1 and F2 handoff migrations first: missing ' . $table);
             }
         }
         if (!ModuleManager::isModuleInstalled($this->MODULE_ID)) {

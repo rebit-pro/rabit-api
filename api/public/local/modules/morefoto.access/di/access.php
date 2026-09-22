@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Bitrix\Main\DI\ServiceLocator;
+use Morefoto\Access\Application\Authorization\Service\GroupLinkAccess;
 use Morefoto\Access\Application\Authorization\Service\StaffRequestAccess;
 use Morefoto\Access\Application\Staff\Contract\AssignmentDirectoryInterface;
 use Morefoto\Access\Application\Staff\UseCase\SaveStaffUseCase;
@@ -30,10 +31,18 @@ use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Morefoto\Access\Domain\Assignment\Repository\GroupAssignmentRepository;
 use Morefoto\Access\Application\Assignment\Service\GroupAccess;
 use Rebit\Share\Contracts\Access\GroupAccessInterface;
+use Rebit\Share\Contracts\Access\GroupLinkAccessInterface;
 use Rebit\Share\Contracts\Access\StaffRequestAccessInterface;
 
 return [
     StaffRequestAccessInterface::class => ['constructor' => static fn(): StaffRequestAccessInterface => new StaffRequestAccess(ServiceLocator::getInstance()->get(StaffAuthorization::class))],
+    GroupLinkAccessInterface::class => [
+        'constructor' => static fn(): GroupLinkAccessInterface => new GroupLinkAccess(
+            ServiceLocator::getInstance()->get(StaffAuthorization::class),
+            ServiceLocator::getInstance()->get(InstitutionAssignmentRepository::class),
+            ServiceLocator::getInstance()->get(IdentityGatewayInterface::class),
+        ),
+    ],
     AssignmentDirectoryInterface::class => [
         'constructor' => static fn(): AssignmentDirectoryInterface => new OrganizationAssignmentDirectory(),
     ],

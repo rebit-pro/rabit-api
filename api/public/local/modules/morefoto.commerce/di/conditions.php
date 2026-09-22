@@ -11,10 +11,19 @@ use Morefoto\Commerce\Application\Conditions\UseCase\SaveGlobalConditionsUseCase
 use Morefoto\Commerce\Application\Conditions\UseCase\SaveGroupConditionsUseCase;
 use Morefoto\Commerce\Domain\Catalog\Repository\CatalogRepository;
 use Morefoto\Commerce\Domain\Conditions\Repository\SalesConditionsRepository;
+use Morefoto\Commerce\Infrastructure\Handoff\GroupSalesReadiness;
+use Rebit\Share\Contracts\Commerce\GroupSalesReadinessInterface;
 
 $services = [
     SalesConditionsRepository::class => ['className' => SalesConditionsRepository::class],
     ConditionsProducts::class => ['className' => ConditionsProducts::class],
+    GroupSalesReadinessInterface::class => [
+        'constructor' => static fn(): GroupSalesReadinessInterface => new GroupSalesReadiness(
+            ServiceLocator::getInstance()->get(SalesConditionsRepository::class),
+            ServiceLocator::getInstance()->get(CatalogRepository::class),
+            ServiceLocator::getInstance()->get(ConditionsProducts::class),
+        ),
+    ],
 ];
 $dependencies = [
     GetGlobalConditionsUseCase::class => [SalesConditionsRepository::class, CatalogRepository::class, CatalogTransactionInterface::class, ConditionsProducts::class],
