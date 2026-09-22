@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { crc32, deflateSync } from 'node:zlib';
 import { test, expect, type APIResponse, type Browser, type Page, type Response } from '@playwright/test';
 import { login, token } from './helpers.js';
@@ -56,6 +56,18 @@ function png(seed: number): Buffer {
     chunk('IDAT', deflateSync(raw)),
     chunk('IEND', Buffer.alloc(0))
   ]);
+}
+/** The E5 verifier accounts for every order in the database, so D3 adds its orders to the shared browser record. */
+function rememberOrder(created: { id: string; accessKey: string }, idempotencyKey: string) {
+  const path = 'var/e5-orders.json';
+  const record = existsSync(path)
+    ? JSON.parse(readFileSync(path, 'utf8'))
+    : { accessKeys: [], idempotencyKeys: [], galleryToken: '', orderIds: [] };
+  record.orderIds.push(created.id);
+  record.accessKeys.push(created.accessKey);
+  record.idempotencyKeys.push(idempotencyKey);
+  mkdirSync('var', { recursive: true });
+  writeFileSync(path, JSON.stringify(record));
 }
 async function body(response: APIResponse | Response, status = 200) {
   expect(response.status(), await response.text()).toBe(status);
@@ -171,7 +183,7 @@ async function withoutGifts(page: Page, groupId: string) {
         conditionsRevision: snapshot.conditionsRevision,
         inherit: false,
         giftEnabled: false,
-        giftThreshold: snapshot.giftThreshold,
+        giftThreshold: 0,
         giftForStaff: false,
         products: snapshot.products.map((item: { id: string; price: number; active: boolean; staffDiscount: boolean }) => ({
           id: item.id,
@@ -211,7 +223,8 @@ async function preview(page: Page, requestId: string, status = 200) {
   return body(await page.request.get('/api/v1/staff-requests/' + requestId + '/transfer-preview', { headers: await auth(page) }), status);
 }
 async function chooseChild(page: Page, code: string) {
-  await page.getByRole('combobox', { name: 'Показать кадры', exact: true }).press('Enter');
+  // The frames filter has no accessible name, so it is opened through its test id.
+  await page.getByTestId('photo-filter').click();
   await page.getByRole('option', { name: 'Ребёнок ' + code, exact: true }).click();
   await page.getByRole('button', { name: 'Перенести весь набор', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Перенести набор ребёнка ' + code, exact: true })).toBeVisible();
@@ -280,7 +293,7 @@ test('D3: организатор переносит полный набор ре
 
   await page.goto('/cabinet/institutions/' + institution.id + '/shoots/' + shoot.id + '/photos?group=' + from.id);
   await chooseChild(page, 'A');
-  const submit = page.getByRole('button', { name: /^Перенести \d+ кадра$/ });
+  const submit = page.getByRole('dialog').getByRole('button', { name: 'Перенести набор', exact: true });
   await submit.click();
   await expect(page.getByRole('alert').filter({ hasText: 'Этот код уже занят в целевой группе' })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('d3-desktop-child-transfer.png'), fullPage: true, animations: 'disabled' });
@@ -365,6 +378,8 @@ test('D3: куратор переносит детей сотрудника по
   await label(page, shoot.id, staff.id, [s1], 'A');
   await assign(page, 'teacher@example.invalid', 'teacher', institution.id, regular.id);
   await assign(page, 'curator@example.invalid', 'curator', institution.id);
+  // Earlier specs may leave the global gift policy invalid (two active bundles); D3 prices must not depend on it.
+  await withoutGifts(page, regular.id);
   await withoutGifts(page, staff.id);
 
   const gallery = '/api/v1/public/galleries/' + (await openGallery(page, regular.id));
@@ -376,16 +391,19 @@ test('D3: куратор переносит детей сотрудника по
     (await body(await page.request.get(path))).data.children
       .flatMap((child: { photos: { id: string; assignmentId: string }[] }) => child.photos)
       .find((photo: { id: string }) => photo.id === photoId).assignmentId as string;
-  const buy = async (path: string, photoId: string, status = 201) => {
+  const buy = async (path: string, photoId: string) => {
     const lines = [{ assignmentId: await assignmentOf(path, photoId), productId: product.id, quantity: 1 }];
     const priced = (await body(await page.request.post(path + '/quotes', { data: { lines } }))).data;
-    return body(
+    const idempotencyKey = key();
+    const created = await body(
       await page.request.post(path + '/orders', {
-        headers: { 'Idempotency-Key': key() },
+        headers: { 'Idempotency-Key': idempotencyKey },
         data: { lines, buyer, quoteToken: priced.quoteToken }
       }),
-      status
+      201
     );
+    rememberOrder(created.data, idempotencyKey);
+    return created;
   };
   const order = (await buy(gallery, r1)).data;
   const cartLines = [{ assignmentId: await assignmentOf(gallery, r2), productId: product.id, quantity: 1 }];

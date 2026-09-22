@@ -29,11 +29,13 @@ set_exception_handler(static function(Throwable $error): never {
     fwrite(STDERR, $error::class . ': ' . $error->getMessage() . PHP_EOL);
     exit(1);
 });
-foreach (['morefoto.organization', 'morefoto.media', 'morefoto.handoff', 'morefoto.commerce', 'sprint.migration'] as $module) {
+foreach (['morefoto.organization', 'morefoto.media', 'morefoto.handoff', 'morefoto.commerce'] as $module) {
     if (!Loader::includeModule($module)) {
         throw new RuntimeException('Missing verification module ' . $module);
     }
 }
+// Same as the E5 verifier: the migration base class is loaded for the replay check only.
+Loader::includeModule('sprint.migration');
 $connection = Application::getConnection();
 $services = ServiceLocator::getInstance();
 $fixture = json_decode((string)file_get_contents('/runtime/d3-transfers.json'), true, 8, JSON_THROW_ON_ERROR);
@@ -71,7 +73,7 @@ $check(0 === $count('SELECT COUNT(*) FROM mf_order_line l LEFT JOIN mf_photo_ass
     WHERE a.PUBLIC_ID IS NULL'), 'order lines still resolve their child-photo relation');
 $check(0 === $count("SELECT COUNT(*) FROM (SELECT REQUEST_ID FROM mf_staff_request_history WHERE KIND='transferred' GROUP BY REQUEST_ID HAVING COUNT(*)<>1) repeated"), 'one transfer event per request');
 $check(0 === $count("SELECT COUNT(*) FROM mf_staff_request r WHERE (r.STATUS='transferred')
-    <> NOT EXISTS (SELECT 1 FROM mf_staff_request_row rr WHERE rr.REQUEST_ID=r.ID AND rr.TRANSFER_GROUP_ID IS NULL)"), 'results exist exactly for transferred requests');
+    <> (NOT EXISTS (SELECT 1 FROM mf_staff_request_row rr WHERE rr.REQUEST_ID=r.ID AND rr.TRANSFER_GROUP_ID IS NULL))"), 'results exist exactly for transferred requests');
 $check(0 === $count('SELECT COUNT(*) FROM mf_photo_assignment a INNER JOIN mf_media_child c ON c.ID=a.CHILD_ID INNER JOIN b_hlbd_mf_photo p ON p.ID=a.PHOTO_ID
     WHERE p.UF_GROUP_ID<>c.GROUP_ID'), 'no child is separated from its frames');
 $proof[] = count($rows) . ' transferred rows consistent';

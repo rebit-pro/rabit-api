@@ -1,6 +1,6 @@
 # D3 — атомарные переносы ребёнка и служебной заявки
 
-Ветка `codex/d3-child-transfers` от main `a43e4ea183dccf99659cd3c99322ba25f28ac1ce` (merge F2 `44f2e36`, PR #40, и документы его развёртывания). PR https://github.com/rebit-pro/rabit-api/pull/46.
+Ветка `codex/d3-child-transfers` от main `a43e4ea183dccf99659cd3c99322ba25f28ac1ce` (merge F2 `44f2e36`, PR #40, и документы его развёртывания); после ревью влит `main` `57b2a81` (PR #45). PR https://github.com/rebit-pro/rabit-api/pull/46.
 
 - **Зависимости:** D2 (#21), F1 (#25), E5 (#37), F2 (#40) — в main. Гейты D03 и D05 приняты ранее. D11 принят 22.09.2026 по решениям D3-DEC-01…06, D12 снят с D3 по D3-DEC-07 (`decisionEvidence` в графах).
 - **План и журнал:** `docs/plans/D3_child-transfers/`. Материалы оперативного PR #32, ранее занимавшие ID D3, перенесены в `docs/plans/OPS-stage-media-recovery/` (D3-DEC-08, #42 п. 3).
