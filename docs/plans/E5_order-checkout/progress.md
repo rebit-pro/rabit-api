@@ -2,12 +2,14 @@
 
 ## Точка продолжения
 
-- 2026-09-22. Ветка `codex/e5-order-checkout`, PR [#37](https://github.com/rebit-pro/rabit-api/pull/37); проверенный код — `5435ebc` (исправления B1–B3), после него только docs-коммиты с отчётами (`e2ba2b5` и журнал). Рабочее дерево чистое.
-- Завершено: B1–B3, ответ на ревью, финальный `make test-e2e` PASS (70/70, оба верификатора MySQL), визуальная проверка 8 экранов, отчёты `docs/waves/e5`; описание PR обновлено, результаты gate опубликованы [комментарием](https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775362711).
-- Решение пользователя: merge в `main` и развёртывание отложены до второго круга ревью.
-- Следующий шаг: дождаться второго ревью PR #37. Если после него изменится код, повторить быстрые проверки и затронутые сценарии `make test-e2e`; merge и развёртывание на app.morefoto36.ru — только по новому указанию (процедура — ниже).
-- Блокеры: нет. Вне E5: коллизия имени D3; #38/#39 — отдельные issues.
-- Процедура развёртывания: каталог `/srv/morefoto/releases/e5-<UTC>-<sha>`; `services-before.json` пяти сервисов; `backup.sh` + `restore-check.sh` по образцу E4 (БД `morefoto_stage_c4_20260913`); `git archive <merge>:api`, `vendor` и `backend.conf` из релиза E4, точки монтирования `public/upload`, `public/bitrix`, `public/local/.settings.php`; `migrate.sh up Version20260922120001` (без подмены модуля commerce); `--mount-add` нового `/app` для fpm, backend (+`backend.conf`), consumer, dispatcher; frontend `docker build … VITE_API_MOCKS_ENABLED=false` из чистого worktree merge-коммита, `docker save | ssh … docker load`, `nginx -t`, `docker service update --image`; флаг `MOREFOTO_CHECKOUT_ENABLED` не задаётся; откат — `--mount-add` путей релиза E4 и предыдущий образ frontend.
+- 2026-09-22. Второй круг ревью PR [#37](https://github.com/rebit-pro/rabit-api/pull/37), ветка codex/e5-order-checkout.
+- Проверяемый HEAD: daa2dfbc1c50a7e6a84713f99212e2a43309bfed; main/base: 8cba22c7655b5886d5fe663523214bcd059e674b; продуктовые исправления B1–B3: 5435ebc.
+- Завершено: прочитаны ответы автора и результат gate (70/70, отчёт на 5435ebc), сверены коммиты и чистое рабочее дерево.
+- Сейчас: второй круг завершён; note опубликован и повторно прочитан через gh: https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775455991. Один следующий шаг: разработчику исправить потерю pending на промежуточном 4xx при восстановлении.
+- Блокеры: B1 частично открыт — 403 PURCHASE_DISABLED при повторе после неизвестного исхода стирает pending/requestId до выяснения результата первой попытки. B2/B3 закрыты по коду; #38/#39 остаются неблокирующими issues. Прогоны и E2E в этом ревью не запускаются.
+- Рабочее дерево до ревью чистое; plan.md/progress.md сохраняются отдельным локальным документационным коммитом поверх daa2dfb, без push. Продуктовый код не менялся; удалённый PR сохраняет проверенный HEAD daa2dfb.
+- Команды продолжения: git diff 46c442e..daa2dfb -- frontend/src/modules/morefoto/orders api/public/local/modules/morefoto.commerce; /home/user/.local/bin/gh pr view 37 --json headRefOid,baseRefOid,comments.
+- Merge и развёртывание отложены пользователем до второго ревью; этот запрос разрешает только ревью.
 
 ## Хронология
 
@@ -163,3 +165,31 @@
 ### 2026-09-22 — публикация gate в PR
 
 - `gh pr edit 37 --body-file …` — раздел «Проверки» заменён результатами финального gate, добавлено условие второго круга ревью; `gh pr comment 37 …` — [комментарий](https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775362711) с итогами gate и ссылками на отчёты `e2ba2b5`. Merge и развёртывание не выполнялись по решению пользователя.
+
+
+### 2026-09-22 — начало второго круга ревью
+
+- Пользователь поручил второй круг, фокус — блокирующие замечания; неблокирующие — issues.
+- E5-RV2-01 PASS: gh pr view 37 и git rev-parse HEAD — daa2dfb, base 8cba22c; git status --short пустой; AGENTS.md/CLAUDE.md с первого круга не менялись.
+- Diff с 46c442e: 20 файлов (+355/-90), единственный продуктовый коммит 5435ebc; остальные изменения — документация/отчёты и снимки.
+- E5-RV2-02 PENDING; E5-RV2-03 PENDING; E5-RV2-04 PENDING.
+
+
+### 2026-09-22 — результат статической проверки второго круга
+
+- E5-RV2-02 FAIL: единственный оставшийся блокер B1/P1. Цепочка: успешный commit + потерянный ответ/502 → повтор при выключенном MOREFOTO_CHECKOUT_ENABLED → 403 PURCHASE_DISABLED до receipts lookup (CreateOrderUseCase:40–44) → outcome message (rules.ts:44–45) → pending=null и новый requestId (useLiveCheckout.ts:99–101), синхронно в localStorage. После включения флага прежний заказ нельзя восстановить; новый quote допускает второй заказ. Временные неизвестные 408/429 имеют ту же ошибочную классификацию.
+- B2 PASS по статическому коду: recovery-ветка CheckoutForm раньше пустой корзины; точное pending-тело отправляется без fresh quote/open.
+- B3 PASS по статическому коду: composition(id, quantity) сравнивается отдельно и раньше денег; изменённый состав даёт QUOTE_STALE.
+- E5-RV2-03 PASS (чтение доказательств, без нового запуска): docs/waves/e5/verification.json указывает 5435ebc; git diff --name-only 5435ebc..daa2dfb содержит только docs/отчёты/снимки. Локально прочитаны api/var/e2e/rabit-e2e-c2a30ffb9621/{orders-integration.log,storefront-integration.log} с сообщениями E5/E4 integration passed. Исходники нового E2E выполняют сразу успешный повтор после 502/abort; цепочка с промежуточным 4xx не покрыта.
+- Новый неблокирующий долг не добавляется; #38/#39 уже существуют. Дубликатов issues не создаётся.
+- Note подготовлен: /tmp/rabit-pr37-review2-20260922/review-note.md. Следующая команда: gh pr comment 37 --repo rebit-pro/rabit-api --body-file /tmp/rabit-pr37-review2-20260922/review-note.md.
+
+
+### 2026-09-22 — второй круг опубликован
+
+- gh pr comment 37 --repo rebit-pro/rabit-api --body-file /tmp/rabit-pr37-review2-20260922/review-note.md — PASS: https://github.com/rebit-pro/rabit-api/pull/37#issuecomment-5775455991.
+- E5-RV2-04 PASS: gh api repos/rebit-pro/rabit-api/issues/comments/5775455991 — текст публикации точно совпадает с подготовленным note.
+- Перед публикацией gh pr view 37 --json headRefOid,baseRefOid,state — HEAD daa2dfb, base 8cba22c, OPEN.
+- Вердикт: B2/B3 закрыты по коду; B1 частично открыт, один P1-блокер. Новых неблокирующих issues нет; #38/#39 не дублируются. Merge не рекомендован до исправления B1.
+- Новые тестовые/E2E-прогоны не запускались, продуктовый код не менялся. Результаты автора прочитаны как ранее полученное доказательство, не как новый запуск.
+- Перед завершением: git diff --check для документации; локальный commit plan.md/progress.md без push. Merge/deployment не выполняются.
