@@ -6,11 +6,14 @@
   - Ветка `codex/d3-child-transfers`, worktree `/home/user/rabit-api-worktrees/d3-child-transfers`; основной checkout `/home/user/rabit-api` остаётся на `main`.
   - Base — `57b2a816c7fc9a6e3145bd7fd6fc3b0b96aeb4a2` (`main` после PR #45); проверенный ревьюером коммит — `a7696d5`, `main` влит merge-коммитом `47366ab`.
   - Документы: `plan.md`, `docs/waves/d3/`; PR https://github.com/rebit-pro/rabit-api/pull/46.
-- Завершено: волна реализована, ревью без блокеров, PR [#46](https://github.com/rebit-pro/rabit-api/pull/46) влит пользователем 2026-09-22 (merge `533c06b`, head `a7696d5`).
-- Сейчас: правки после ревью (текст диалога переноса, спецификация gate, верификатор) вынесены в ветку `codex/ops-d3-gate-fixes` от `main` `533c06b` и идут в `main` отдельным PR по поручению пользователя; затем развёртывание backend и frontend stage.
-- Один следующий шаг: после merge follow-up PR собрать релиз из нового `main` и выполнить развёртывание по рецепту F2 с адресной миграцией `Version20260922180001`.
-- Блокеры: нет. Незакрыто: верификатор `verify-transfers.php` (инварианты БД, откат при внедрённом сбое) ни разу не проходил целиком — прогон 3 упал на его собственной ошибке SQL, прогон 4 оборвался на сети при `npm ci`. Браузерный сценарий D3 в прогоне 3 — PASS (76/0/0/0).
+- Завершено: волна реализована, ревью без блокеров, PR [#46](https://github.com/rebit-pro/rabit-api/pull/46) влит (merge `533c06b`), догоняющий PR [#49](https://github.com/rebit-pro/rabit-api/pull/49) влит (merge `21311db`), stage развёрнут на релизе `d3-20260922191601-21311db`.
+- Сейчас: записаны итоги развёртывания и визуальные артефакты.
+- Один следующий шаг: прогнать полный `make test-e2e` на `main` `21311db`, чтобы закрыть верификатор `verify-transfers.php` (единственная незакрытая проверка волны).
+- Блокеры: нет. Открыто: инварианты БД и откат при внедрённом сбое проверены только unit-тестами; пользовательский сценарий переноса на stage не проходился.
 - Рабочее дерево: чисто; `tools/__pycache__/` — локальный кэш py_compile, не коммитится.
+- Команды проверки:
+  - финальный gate — `E2E` из раздела тест-кейсов плана;
+  - состояние stage — `ssh rebit-pro docker service ls`, релиз `/srv/morefoto/releases/d3-20260922191601-21311db`.
 
 ## Хронология
 
@@ -184,6 +187,21 @@
 - Пользователь влил PR #46: merge `533c06b`, head ветки `a7696d5`. Правки после ревью в `main` не попали — остались в рабочем дереве.
 - По поручению «свои изменения добавь в main» создана ветка `codex/ops-d3-gate-fixes` от `main` `533c06b`; в неё перенесены docs-коммит `1503200` и правки текста диалога, live-спецификации, mock-шага R08 и `verify-transfers.php`.
 - Прямой коммит в `main` не выполняется: изменения идут отдельным PR.
+
+### 2026-09-22 — развёртывание stage app.morefoto36.ru
+
+- Пользователь влил PR #46 и поручил деплой backend и frontend; догоняющие правки собраны в PR #49 (`21311db`) и влиты перед сборкой релиза.
+- **Дельта к развёрнутому F2 (`44f2e36..21311db`).** `composer.lock` без изменений (vendor скопирован из релиза F2), новых модулей и переменных окружения нет; добавлены маршруты HND-10/11 и MED-07, `di/transfer.php` в `morefoto.media/.settings.php` и миграция `Version20260922180001`.
+- **Артефакты.** `git archive 21311db api` → `d3-api-21311db.tar.gz`; образ `morefoto-frontend:d3-20260922191601-21311db` собран с `VITE_API_MOCKS_ENABLED=false`; `SHA256SUMS` и `bash -n` проверены после загрузки на сервер. Сборка образа с первого раза упала на недоступности Docker Hub по IPv6 — повтор прошёл.
+- **Резервная копия.** `backup.sh` — дамп 45 682 байта; `restore-check.sh` — восстановление в одноразовый percona, 159 таблиц.
+  - Скрипт проверки восстановления исправлен: прежняя проба «SELECT 1» успевала пройти на временном сервере инициализации, поэтому восстановление падало с «Can't connect ... mysql.sock». Теперь ожидается строка `ready for connections` после `MySQL init process done`.
+- **Миграция.** `migrate.sh ls` — единственная неустановленная `Version20260922180001`; `migrate.sh up Version20260922180001` — success, после применения Installed 11.
+- **Backend.** Сначала `morefoto_stage_fpm`, затем DI-проверка из контейнера: `ChildTransferInterface → ChildTransfers`, `ChildOrdersInterface → ChildOrders`, `TransferChildUseCase`, `ChildTransferController`, `GetStaffTransferPreviewUseCase`, `ConfirmStaffTransferUseCase`, `StaffRequestController` — 7 сервисов. Затем nginx backend, media consumer и dispatcher; у всех `/app` указывает на новый релиз, код виден в контейнере, реплики 1/1.
+- **Frontend.** `switch-frontend.sh`: образ загружен, сервис сошёлся, 2/2 на новом образе; прежний — `morefoto-frontend:issues45-20260922154012-57b2a81`.
+- **Smoke.** `/health` 200, `/cabinet/links` и `/cabinet/institutions` 200; MED-07, HND-10, HND-11 и legacy media без токена — 401; SHA-256 отдаваемого `index.html` совпал с файлом в образе; в отдаваемых чанках есть «Кадров в наборе» (MED-07) и `transfer-preview` (HND-10).
+  - Промежуточная ошибка проверки моя: для MED-07 сначала напечатал тело вместо статуса и принял 401 за 503. В теле ответа на 401 общий обработчик отдаёт `code: SERVICE_UNAVAILABLE` — это общее поведение `ApiJsonExceptionResponse`, не дефект D3.
+- **Откат.** `services-before.json` в каталоге релиза; backend — `docker service rollback <service>`, frontend — `docker service rollback morefoto_frontend` (прежний образ в `frontend-before.txt`), миграция — `down()` отказывается удалять столбцы при наличии результатов.
+- **Не проверено на stage:** пользовательский сценарий переноса (организатор и куратор) на реальных учётных записях — остаётся за пользователем по чек-листу.
 
 ## Результаты тест-кейсов
 
