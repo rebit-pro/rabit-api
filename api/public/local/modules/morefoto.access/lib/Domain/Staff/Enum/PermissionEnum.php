@@ -15,4 +15,5 @@ enum PermissionEnum: string
     case ORGANIZATION_MANAGE = 'organization.manage';
     case CATALOG_MANAGE = 'catalog.manage';
     case MEDIA_MANAGE = 'media.manage';
+    case ORDER_READ = 'order.read';
 }

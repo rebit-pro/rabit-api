@@ -26,6 +26,6 @@ final class StorefrontController extends PrivateApiJsonController
 
     public function quoteAction(CreateQuoteRequestDto $request): ControllerJson
     {
-        return $this->json($this->mapper->quote($this->quote->execute($request->token, $this->mapper->lines($request)), $request->token));
+        return $this->json($this->mapper->quote($this->quote->execute($request->token, $this->mapper->lines($request->lines)), $request->token));
     }
 }

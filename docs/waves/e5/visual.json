@@ -1,0 +1,52 @@
+{
+  "wave": "E5",
+  "status": "passed",
+  "fixture": "rabit-e2e-d2f60778297f",
+  "viewports": [
+    "1280x900",
+    "390x844"
+  ],
+  "screenshots": [
+    {
+      "file": "docs/waves/e5/screenshots/e5-desktop-checkout.png",
+      "sha256": "d9a55e336a9c14bb4d2027fd40a532f27dc0bb38df05e24cd1e7aff2ebb4685c"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-desktop-order.png",
+      "sha256": "fd7f66b09ed20fafd8858555a93414fef3b144573adf5c484569b8ada65d138e"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-desktop-recovery.png",
+      "sha256": "3666356ecb1724ae70114f9b363d9885741ab3cc2ee6a8042830cd760e748db3"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-desktop-staff-card.png",
+      "sha256": "536142b6f027862e75806a4f26c77f4f62866b28175f4b9f539e105d85d774a5"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-desktop-staff-list.png",
+      "sha256": "39473a6256b096bf78313d7d5cdccc7b9ff31e0094afe0d6ce49436deb5d354c"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-mobile-checkout.png",
+      "sha256": "1b176c621c3861e368f2f83381eb44360c43ef6f6a7b0c39bdaceaa8e0e84db1"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-mobile-order.png",
+      "sha256": "ed49d3d64b6d682d610cb2b012fbf3111bddd89e9a7bd81b606983d8ebf704f2"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-mobile-recovery.png",
+      "sha256": "f899e9269a56c2b722ed4c2a90f10903ff23b03b92aab4bbd3fe011347070950"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-mobile-staff-card.png",
+      "sha256": "81a946ecb94b77ff94ddbb80c1786b9ad802291556d0c4e1cc527331badadf9b"
+    },
+    {
+      "file": "docs/waves/e5/screenshots/e5-mobile-staff-list.png",
+      "sha256": "f71ff95f3649a0f84184c5c4159fa52461c07a68780c41d125a07723e57e16c1"
+    }
+  ],
+  "inspection": "Просмотрены все десять снимков финального gate на 0bd8f76: оформление, восстановление неподтверждённой отправки, заказ по ключу, служебные список и карточка на desktop и mobile. Горизонтального переполнения нет, demo-хранилище не используется. Экран восстановления показывает причину удержания («Оформление заказов сейчас недоступно. Прошлая отправка сохранена — повторите её позже.»), текст переносится на 390 px, кнопка «Повторить отправку» видна. В заказе по ключу вместо миниатюр коды кадров (E5-DEC-03); организатор видит служебное превью. Кнопка оформления видна; текст «куратор учреждения» при пустом имени. Бледная кнопка «Найти» в списке — состояние сразу после нажатия, как на снимке прошлого gate. Нижняя часть бокового меню на полностраничном desktop-снимке не прокрашена — это особенность фиксированной навигации при склейке снимка, не дефект."
+}

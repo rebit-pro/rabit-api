@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace Morefoto\Commerce\Application\Storefront\UseCase;
 
 use Morefoto\Commerce\Application\Conditions\UseCase\GetGroupConditionsUseCase;
+use Morefoto\Commerce\Application\Order\Service\CheckoutAvailability;
 use Morefoto\Commerce\Application\Storefront\Dto\CatalogOutputDto;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
-/** Возвращает действующие товары и условия группы после проверки приватной ссылки. */
+/** Возвращает действующие товары и условия группы после проверки приватной ссылки.
+ * Сообщает покупателю, включено ли оформление и какие каналы чека реально подключены.
+ */
 final readonly class GetStorefrontCatalogUseCase
 {
-    public function __construct(private GalleryAccessInterface $gallery, private GetGroupConditionsUseCase $conditions) {}
+    public function __construct(private GalleryAccessInterface $gallery, private GetGroupConditionsUseCase $conditions, private CheckoutAvailability $checkout) {}
 
     public function execute(string $token): CatalogOutputDto
     {
@@ -28,6 +31,6 @@ final readonly class GetStorefrontCatalogUseCase
             }
         }
 
-        return new CatalogOutputDto($products, $conditions->giftThreshold, $conditions->giftForStaff, $conditions->catalogRevision, $conditions->conditionsRevision);
+        return new CatalogOutputDto($products, $conditions->giftThreshold, $conditions->giftForStaff, $conditions->catalogRevision, $conditions->conditionsRevision, $this->checkout->enabled(), $this->checkout->receiptChannels());
     }
 }

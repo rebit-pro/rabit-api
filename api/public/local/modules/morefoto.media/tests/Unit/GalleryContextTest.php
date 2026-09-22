@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Media\Tests\Unit;
 
+use Morefoto\Media\Application\Gallery\Mapper\GalleryAssignmentMapper;
 use Morefoto\Media\Application\Gallery\Service\GalleryAccess;
 use Morefoto\Media\Domain\Gallery\Repository\GalleryCapabilityRepository;
 use Morefoto\Media\Domain\Gallery\Repository\GalleryPhotoRepository;
@@ -35,7 +36,7 @@ final class GalleryContextTest extends TestCase
         $photos->expects(self::never())->method('photoId');
         $clock = $this->createStub(ClockInterface::class);
         $clock->method('now')->willReturn(new \DateTimeImmutable('2026-09-21T10:00:00Z'));
-        $context = (new GalleryAccess($keys, $groups, $photos, new GalleryAvailability(), $clock))->context(str_repeat('a', 64));
+        $context = (new GalleryAccess($keys, $groups, $photos, new GalleryAvailability(), $clock, new GalleryAssignmentMapper()))->context(str_repeat('a', 64));
         self::assertSame('open', $context->state);
         self::assertSame(2, $context->capabilityRevision);
         self::assertSame('group-id', $context->group->publicId);
