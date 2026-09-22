@@ -39,7 +39,7 @@
 
 **E2E и документы:**
 
-- `api/tools/e2e/prepare.php`: миграция и фикстура со staff-группой, совместным кадром и заказом.
+- `api/tools/e2e/prepare.php`: миграция D3; данные сценариев (staff-группа, совместный кадр, заказ) спецификация создаёт через API.
 - Live-спецификация desktop/mobile; MySQL-верификатор `api/tools/e2e/verify-transfers.php`; обновить ожидание `zzz-handoff.spec.ts` (кнопка переноса больше не скрыта).
 - `docs/waves/d3/`: README, verification, visual, patch контракта.
 - Раздел в `docs/architecture.md`, раздел в `docs/testing/manual-wave-checklist.md`.
@@ -58,7 +58,7 @@
 
 - В `main` и предки HEAD: D2 (PR #21, `31ebf8a`), F1 (PR #25, `6b81647`), E5 (PR #37, `4b507b3`), F2 (PR #40, merge `44f2e36`, 2026-09-22T13:28:01Z).
 - Ветка `codex/d3-child-transfers` (worktree `/home/user/rabit-api-worktrees/d3-child-transfers`). Создана от `4b507b3` во время деплоя F2 и без коммитов перемотана fast-forward на `44f2e36`.
-- Decision gates: D03 и D05 приняты; D11 и D12 открыты. По `verify-wave-graph.py` D3 сейчас blocked. Реализация начинается только после подтверждения D3-DEC-01…08 и записи решений в оба графа.
+- Decision gates: D03 и D05 приняты ранее; D11 принят 22.09.2026 (D3-DEC-01…06), D12 снят с gates D3 (D3-DEC-07). После записи в оба графа `verify-wave-graph.py` даёт `readyFromMain=["D3"]`.
 - Проверка — `main` плюс только diff D3. Правки неслитых PR #29/#35/#36 в канон не переносятся: E6 в каноне MoreFoto — из неслитого #35.
 
 ## Решения
@@ -200,26 +200,26 @@
 - [x] Графы:
   - F2 merged (PR #40, `44f2e36`), D3 inProgress, решения по DEC-07 — в `docs/waves/graph.json` и каноне;
   - `render-waves.py`, `verify-wave-graph.py` для обоих графов.
-- [ ] Контракт:
-  - [x] уточнить MED-07, HND-08/09/10/11, HND-02, COM-13 в `build.py` MoreFoto: коды ошибок, `results`, `hasOrders`, ответ MED-07; валидаторы;
-  - [ ] patch в `docs/waves/d3/` (после окончательной сверки с кодом).
-- [ ] Материалы PR #32 и правило именования — по DEC-08.
-- [ ] Миграция и `prepare.php`; проверка на одноразовом MySQL 8.0.
-- [ ] Media:
+- [x] Контракт:
+  - [x] уточнить MED-07, HND-08/09/10/11, HND-02, COM-13 в `build.py` MoreFoto: коды ошибок, `results`, `hasOrders`, `targetGroupName`, ответ MED-07; валидаторы;
+  - [x] patch в `docs/waves/d3/morefoto-contract.patch`.
+- [x] Материалы PR #32 и правило именования — по DEC-08.
+- [x] Миграция и `prepare.php`; проверка на одноразовом MySQL 8.0.
+- [x] Media:
   - политика, репозиторий, `TransferChildUseCase`;
   - контроллер, DTO, mapper, маршрут, DI;
   - `ChildTransferInterface` и адаптер; `ChildPhotosInterface`.
-- [ ] Commerce: `ChildOrdersInterface` и адаптер.
-- [ ] Handoff:
+- [x] Commerce: `ChildOrdersInterface` и адаптер.
+- [x] Handoff:
   - политика превью и signature, UseCase HND-10/HND-11;
   - `results` в HND-08;
   - действия контроллера, DI, маршруты.
-- [ ] Проверки кода: unit и архитектурные тесты, русские phpDoc, PHPStan, php-cs-fixer по изменённым файлам.
-- [ ] Frontend live: api-клиенты, диалог переноса, экран заявки (preview, `hasOrders`, подтверждение, результаты), unit-тесты.
-- [ ] E2E:
-  - фикстура и live-спецификация desktop/mobile;
-  - MySQL-верификатор: атомарность, конкуренция, заказы, подготовка, право сотрудника, миграция.
-- [ ] Документы: `docs/waves/d3/`, `docs/architecture.md`, manual checklist.
+- [x] Проверки кода: unit и архитектурные тесты, русские phpDoc, PHPStan, php-cs-fixer по изменённым файлам.
+- [x] Frontend live: api-клиенты, диалог переноса, экран заявки (preview, `hasOrders`, подтверждение, результаты), unit-тесты.
+- [x] E2E написаны (запуск — после review):
+  - live-спецификация `zzzzzz-transfers.spec.ts` desktop/mobile, ожидание F1 обновлено;
+  - MySQL-верификатор `verify-transfers.php`: инварианты, внедрённый сбой, повтор, миграция; подключён в runner.
+- [x] Документы: `docs/waves/d3/`, `docs/architecture.md`, manual checklist.
 - [ ] Сдача:
   - быстрые проверки, commit и push, один PR в `main`;
   - финальный `make test-e2e` и визуальная проверка — после ревью без блокирующих замечаний;

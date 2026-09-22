@@ -169,6 +169,7 @@ final class StaffTransferUseCaseTest extends TestCase
             ], true, self::SIGNATURE),
             targetGroupId: 90,
             targetGroupPublicId: 'staff-group',
+            targetGroupName: 'Сотрудники',
             rows: $this->rows(),
             sets: [],
         ));

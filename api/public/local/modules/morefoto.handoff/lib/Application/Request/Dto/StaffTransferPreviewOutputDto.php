@@ -18,6 +18,7 @@ final readonly class StaffTransferPreviewOutputDto
      */
     public function __construct(
         public string $targetGroupId,
+        public string $targetGroupName,
         public array $bundles,
         public string $signature,
         public bool $hasOrders,

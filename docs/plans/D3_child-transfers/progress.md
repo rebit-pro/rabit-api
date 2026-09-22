@@ -4,17 +4,17 @@
 
 - 2026-09-22.
   - Ветка `codex/d3-child-transfers`, worktree `/home/user/rabit-api-worktrees/d3-child-transfers`; основной checkout `/home/user/rabit-api` остаётся на `main`.
-  - Base — `44f2e36367351614fab66fdc58fa3dc7ee3899b3` (merge F2, PR #40); PR D3 ещё нет.
-  - Документы: `docs/plans/D3_child-transfers/plan.md`.
-- Завершено: решения D3-DEC-01…08 приняты; оба графа синхронизированы и проверены; контракт MoreFoto уточнён и провалидирован; материалы PR #32 перенесены в `OPS-stage-media-recovery`, правило ID записано.
-- Сейчас: frontend live — перенос ребёнка в рабочем месте фото и льготный перенос на экране заявок.
-- Один следующий шаг: api-клиенты MED-07/HND-10/HND-11 и live-ветка `saveStaffRequest`.
-- Блокеры: нет. Неслитые PR #29/#35/#36 в D3 не переносятся.
-- Рабочее дерево: документационный коммит; дальше — незакоммиченный код в работе.
+  - Base — `44f2e36367351614fab66fdc58fa3dc7ee3899b3` (merge F2, PR #40).
+  - Документы: `plan.md`, `docs/waves/d3/`.
+- Завершено: решения, графы, контракт, backend, frontend, E2E-спецификации и верификатор, документы; быстрые проверки PASS.
+- Сейчас: публикация — commit, push, один PR в `main`.
+- Один следующий шаг: после ревью без блокирующих замечаний — финальный `make test-e2e` и визуальная проверка (решение пользователя от 2026-09-22).
+- Блокеры: нет. Браузерные, интеграционные и визуальные кейсы — PENDING до финального gate.
+- Рабочее дерево: `tools/__pycache__/` — локальный кэш py_compile, не коммитится.
 - Команды проверки:
-  - `git -C /home/user/rabit-api-worktrees/d3-child-transfers status -sb`
-  - `python3 tools/verify-wave-graph.py docs/waves/graph.json`
-  - PHPUnit — команда `PHPUNIT` из раздела тест-кейсов плана.
+  - PHPUnit — `PHPUNIT` из раздела тест-кейсов плана;
+  - frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e5-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`;
+  - финальный gate — `E2E` из раздела тест-кейсов плана.
 
 ## Хронология
 
@@ -116,6 +116,24 @@
   - `vendor/bin/phpstan analyse --configuration=phpstan.neon` — No errors (сначала 10 ошибок типов моков в новых тестах, исправлено);
   - php-cs-fixer по 62 изменённым PHP-файлам — исправлено 6, повторный PHPUnit — OK.
 
+### 2026-09-22 — frontend, E2E и документы
+
+- HND-10 отдаёт `targetGroupName`: в live-области заявок есть только обычные группы, имя папки сотрудников берётся из ответа (backend, тесты, `build.py`; `validate.py` — passed, Postman — PASS).
+- Frontend:
+  - `ReviewBundle`/`RequestPreview` обобщены по типу кадра: демо работает с полными кадрами, live — с ID, кодом и служебным превью;
+  - `useTransferPreview` — превью переноса (демо — локальные правила, live — HND-10), предупреждение о заказах, коды кадров без миниатюр для куратора (служебные превью только у организатора);
+  - live HND-11 в `saveStaffRequest`, тексты отказов переноса в `rules.ts` (чистые функции с тестами);
+  - live MED-07 в рабочем месте фото (`photosApi.transferChild`), тексты отказов, обновление списка при `SET_CHANGED`.
+- E2E:
+  - `frontend/e2e/live/zzzzzz-transfers.spec.ts`: перенос ребёнка (отказы, занятый код в UI, обложки, повтор ключа, совместный кадр на mobile), льготный перенос после заказа (превью, устаревшая подпись, UI-подтверждение, повтор, заказ и `correctionPhotos`, старая корзина, блокировка разметки, сброс подготовки, льгота и право сотрудника), 4 параллельных подтверждения и неоднозначная цель; различающиеся PNG генерируются в тесте;
+  - `zzz-handoff.spec.ts`: кнопка переноса есть, но заблокирована без папки сотрудников;
+  - `api/tools/e2e/verify-transfers.php` и вызов в `tools/run-browser-e2e.py` (`D3 integration passed`).
+- Документы: `docs/waves/d3/README.md`, `verification.json` (review-pending), `morefoto-contract.patch` (9 файлов MoreFoto), разделы в `docs/architecture.md` и `docs/testing/manual-wave-checklist.md`.
+- Проверки:
+  - frontend в `playwright:v1.52.0-jammy` с томом `rabit-e5-node` (lockfile не менялся с E5): `npm run check` — PASS (сначала prettier и 6 ошибок типов спецификации — исправлено), `npm run test:commerce` — 172/172, `npm run build` — PASS;
+  - PHPUnit — OK, 561/2639 без уведомлений; PHPStan — No errors; php-cs-fixer — исправлен 1 файл (`verify-transfers.php`); `php -l` верификатора — PASS; `python3 -m py_compile tools/run-browser-e2e.py` — PASS;
+  - ссылки после DEC-08: старые пути остались только в пометке об истории OPS.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда и доказательство |
@@ -123,27 +141,27 @@
 | D3-BASE | PASS | 2026-09-22 | `gh pr view 40`: MERGED, `44f2e36`; `git merge-base --is-ancestor` для `31ebf8a`, `6b81647`, `4b507b3`, `44f2e36` — PASS; HEAD = `origin/main` = `44f2e36` |
 | D3-DECISIONS | PASS | 2026-09-22 | «Подтверждаю все восемь решений, начинай»; записано в plan, графах (`decisionEvidence`) и реестре MoreFoto |
 | D3-GRAPH | PASS | 2026-09-22 | `verify-wave-graph.py`: 40 волн, 99 API, `readyFromMain=["D3"]`; канон — 41 волна, `["E6","D3"]`; 10 негативных фикстур |
-| D3-CONTRACT | PENDING | 2026-09-22 | `build.py`/`validate.py`/`validate-postman.cjs` — PASS; patch и сверка с кодом — перед PR |
-| D3-OPS-RENAME | PENDING | 2026-09-22 | Перенос выполнен (`git mv`), проверка ссылок — перед PR |
+| D3-CONTRACT | PASS | 2026-09-22 | `build.py`, `validate.py` (passed, 99 запросов, 41 волна), `validate-postman.cjs` (99/198); контракт сверен с кодом (`targetGroupName`); `docs/waves/d3/morefoto-contract.patch` |
+| D3-OPS-RENAME | PASS | 2026-09-22 | `git mv` в `docs/plans/OPS-stage-media-recovery/`; `grep` старых путей — только пометка об истории; правило в AGENTS.md/CLAUDE.md |
 | D3-MIGRATION | PENDING | 2026-09-22 | DDL на одноразовом MySQL 8.0 — PASS (CHECK, FK, `down()`, повторный `up()`); установка на стенде — `make test-e2e` |
-| D3-MOVE | PENDING | — | — |
-| D3-MOVE-REJECT | PENDING | — | — |
-| D3-MOVE-IDEM | PENDING | — | — |
-| D3-PREVIEW | PENDING | — | — |
-| D3-PREVIEW-REJECT | PENDING | — | — |
-| D3-TRANSFER | PENDING | — | — |
-| D3-TRANSFER-REPEAT | PENDING | — | — |
-| D3-TRANSFER-STALE | PENDING | — | — |
-| D3-MULTI | PENDING | — | — |
-| D3-SHARED | PENDING | — | — |
-| D3-ATOMIC | PENDING | — | — |
-| D3-CONCURRENCY | PENDING | — | — |
-| D3-ORDERS | PENDING | — | — |
-| D3-ELIGIBILITY | PENDING | — | — |
-| D3-PREPARATION | PENDING | — | — |
-| D3-COVER | PENDING | — | — |
-| D3-LOCKS | PENDING | — | — |
-| D3-ARCH | PENDING | 2026-09-22 | PHPUnit 561/2636 (архитектура контроллеров, контракты DTO), PHPStan 0, php-cs-fixer; итог — перед PR |
-| D3-UI | PENDING | — | — |
-| D3-REGRESSION | PENDING | — | — |
+| D3-MOVE | PENDING | 2026-09-22 | Unit PASS (`TransferChildUseCaseTest`, `ChildTransfersTest`); HTTP/UI — финальный gate |
+| D3-MOVE-REJECT | PENDING | 2026-09-22 | Unit PASS (8 отказов, коды Access, маппер); HTTP — финальный gate |
+| D3-MOVE-IDEM | PENDING | 2026-09-22 | Unit PASS (повтор и конфликт ключа); HTTP — финальный gate |
+| D3-PREVIEW | PENDING | 2026-09-22 | Unit PASS (`StaffTransferPolicyTest`, контракт превью); HTTP/UI — финальный gate |
+| D3-PREVIEW-REJECT | PENDING | 2026-09-22 | Unit PASS (роли, область, состояния, SET_CHANGED/SHARED_PHOTO/TARGET_GROUP_CLOSED); HTTP — финальный gate |
+| D3-TRANSFER | PENDING | 2026-09-22 | Unit PASS (порядок блокировок, перенос, результаты, история); HTTP/UI — финальный gate |
+| D3-TRANSFER-REPEAT | PENDING | 2026-09-22 | Unit PASS (повтор по состоянию, конфликт ключа); HTTP — финальный gate |
+| D3-TRANSFER-STALE | PENDING | 2026-09-22 | Unit PASS (`SIGNATURE_CONFLICT`, `REVISION_CONFLICT`); HTTP — финальный gate |
+| D3-MULTI | PENDING | 2026-09-22 | Unit PASS (две строки, общий кадр переносится один раз); верификатор — финальный gate |
+| D3-SHARED | PENDING | 2026-09-22 | Unit PASS (детали `photoCodes`); HTTP/UI mobile — финальный gate |
+| D3-ATOMIC | PENDING | 2026-09-22 | Верификатор с внедрённым сбоем написан; запуск — финальный gate |
+| D3-CONCURRENCY | PENDING | 2026-09-22 | 4 параллельных HND-11 в спецификации; сериализация с COM-10 — по порядку блокировок, отдельного теста нет |
+| D3-ORDERS | PENDING | 2026-09-22 | Спецификация и верификатор написаны; запуск — финальный gate |
+| D3-ELIGIBILITY | PENDING | 2026-09-22 | Спецификация (льгота 7500 и `STAFF_ELIGIBILITY_REQUIRED`); запуск — финальный gate |
+| D3-PREPARATION | PENDING | 2026-09-22 | Спецификация (`prepared=false`, `LINK_NOT_PREPARED`); запуск — финальный gate |
+| D3-COVER | PENDING | 2026-09-22 | Unit PASS (`ChildTransfersTest`); HTTP — финальный gate |
+| D3-LOCKS | PENDING | 2026-09-22 | Unit F2 (`MediaLockRecheckTest`) PASS; HTTP после заказа — финальный gate |
+| D3-ARCH | PASS | 2026-09-22 | PHPUnit 561/2639 (архитектура `ChildTransferController` и `StaffRequestController`, контракты DTO), PHPStan 0, php-cs-fixer по изменённым файлам |
+| D3-UI | PENDING | 2026-09-22 | Frontend check/unit/build PASS; браузер и 4 снимка desktop/mobile — финальный gate |
+| D3-REGRESSION | PENDING | 2026-09-22 | PHPUnit 561 и frontend unit 172 PASS; полный браузерный набор — финальный gate |
 | D3-PUBLISH | PENDING | — | — |

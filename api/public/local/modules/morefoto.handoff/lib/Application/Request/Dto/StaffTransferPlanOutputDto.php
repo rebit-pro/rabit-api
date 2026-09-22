@@ -24,6 +24,7 @@ final readonly class StaffTransferPlanOutputDto
         public StaffTransferPlan $plan,
         public int $targetGroupId,
         public string $targetGroupPublicId,
+        public string $targetGroupName,
         public array $rows,
         public array $sets,
     ) {}

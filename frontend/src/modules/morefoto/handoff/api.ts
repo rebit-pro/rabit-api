@@ -1,7 +1,8 @@
 import { isAxiosError } from 'axios';
 import api from '@/api/http';
 import type { StaffRole } from '../types';
-import type { StaffCommand, StaffRequest } from './types';
+import { staffTransferErrorText } from './rules';
+import type { ServerTransferPreview, StaffCommand, StaffRequest } from './types';
 
 interface StaffRequestScope {
   role: StaffRole;
@@ -18,6 +19,9 @@ interface MutationResult {
   id: string;
   revision: number;
   status: StaffRequest['status'];
+}
+interface TransferResult extends MutationResult {
+  results: NonNullable<StaffRequest['results']>;
 }
 const key = (value: string) => value.replace(/-/g, '');
 
@@ -47,6 +51,19 @@ export const staffRequestsApi = {
         : api.put<MutationResult>('/api/v1/staff-requests/' + encodeURIComponent(command.id), body, config))
     ).data;
   },
+  async transferPreview(id: string): Promise<ServerTransferPreview> {
+    return (await api.get<ServerTransferPreview>('/api/v1/staff-requests/' + encodeURIComponent(id) + '/transfer-preview')).data;
+  },
+  async transfer(command: StaffCommand): Promise<TransferResult> {
+    if (command.id === null || command.revision === null) throw new Error('Список для переноса не выбран.');
+    return (
+      await api.post<TransferResult>(
+        '/api/v1/staff-requests/' + encodeURIComponent(command.id) + '/transfers',
+        { reason: command.reason.trim(), confirmed: command.confirmed, revision: command.revision, signature: command.signature },
+        { headers: { 'Idempotency-Key': key(command.requestId) } }
+      )
+    ).data;
+  },
   async clarify(command: StaffCommand): Promise<MutationResult> {
     if (command.id === null || command.revision === null) throw new Error('Список для уточнения не выбран.');
     return (
@@ -59,9 +76,12 @@ export const staffRequestsApi = {
   }
 };
 
-export function staffRequestError(cause: unknown): string {
+export function staffRequestError(cause: unknown, action: StaffCommand['action'] = 'submit'): string {
   if (!isAxiosError(cause)) return cause instanceof Error ? cause.message : 'Не удалось сохранить список.';
-  const code = (cause.response?.data as { error?: { code?: string } } | undefined)?.error?.code;
+  const error = (cause.response?.data as { error?: { code?: string; details?: { photoCodes?: string[] } } } | undefined)?.error;
+  const code = error?.code;
+  const transfer = action === 'confirm' ? staffTransferErrorText(code, error?.details?.photoCodes) : null;
+  if (transfer) return transfer;
   if (code === 'REVISION_CONFLICT') return 'Список уже изменён. Загрузите актуальную версию и повторите действие.';
   if (code === 'IDEMPOTENCY_CONFLICT') return 'Эта попытка уже использована с другими данными. Закройте форму и откройте её снова.';
   if (code === 'CHILD_ALREADY_PENDING') return 'Этот ребёнок уже есть в списке на проверке.';

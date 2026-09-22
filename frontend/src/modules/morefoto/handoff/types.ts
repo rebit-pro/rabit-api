@@ -116,14 +116,34 @@ export interface StaffCommand {
 }
 export type HandoffCommand = LinkCommand | StaffCommand;
 export type HandoffErrors = Record<string, string>;
-export interface ReviewBundle {
+/** Кадр в проверке переноса: демо-режим передаёт полные ManagedPhoto, live — только ID, код и служебное превью. */
+export type ReviewPhoto = Pick<ManagedPhoto, 'id' | 'code' | 'previewSrc'>;
+export interface ReviewBundle<P extends ReviewPhoto = ManagedPhoto> {
   row: SubmittedRow;
-  photos: ManagedPhoto[];
+  photos: P[];
   targetCode: string;
+  hasOrders?: boolean;
 }
-export interface RequestPreview {
+export interface RequestPreview<P extends ReviewPhoto = ManagedPhoto> {
   targetGroupId: string;
-  bundles: ReviewBundle[];
+  targetGroupName?: string;
+  bundles: ReviewBundle<P>[];
   signature: string;
   hasOrders: boolean;
+}
+/** HND-10: полный текущий набор каждого ребёнка заявки с целевыми кодами папки сотрудников. */
+export interface ServerTransferPreview {
+  targetGroupId: string;
+  targetGroupName: string;
+  bundles: {
+    rowId: string;
+    groupId: string;
+    childCode: string;
+    targetCode: string;
+    hasOrders: boolean;
+    photos: { id: string; code: string; revision: number }[];
+  }[];
+  signature: string;
+  hasOrders: boolean;
+  revision: number;
 }

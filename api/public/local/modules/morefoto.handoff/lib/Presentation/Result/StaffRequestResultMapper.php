@@ -61,6 +61,7 @@ final readonly class StaffRequestResultMapper
     {
         return new StaffTransferPreviewResultDto(
             targetGroupId: $output->targetGroupId,
+            targetGroupName: $output->targetGroupName,
             bundles: $output->bundles,
             signature: $output->signature,
             hasOrders: $output->hasOrders,

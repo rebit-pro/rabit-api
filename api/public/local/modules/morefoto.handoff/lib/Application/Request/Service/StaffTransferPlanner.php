@@ -63,6 +63,7 @@ final readonly class StaffTransferPlanner
             plan: $this->policy->plan((string)$request['PUBLIC_ID'], (int)$request['REVISION'], $target->publicId, $status, $rows, $sets, $codes, $ordered),
             targetGroupId: $target->id,
             targetGroupPublicId: $target->publicId,
+            targetGroupName: $target->name,
             rows: $rows,
             sets: $sets,
         );

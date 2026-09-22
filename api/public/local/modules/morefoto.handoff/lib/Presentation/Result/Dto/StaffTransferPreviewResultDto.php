@@ -20,6 +20,7 @@ final readonly class StaffTransferPreviewResultDto implements ResultDtoInterface
      */
     public function __construct(
         public string $targetGroupId,
+        public string $targetGroupName,
         public array $bundles,
         public string $signature,
         public bool $hasOrders,

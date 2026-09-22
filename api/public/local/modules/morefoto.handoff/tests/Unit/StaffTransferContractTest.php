@@ -51,8 +51,8 @@ final class StaffTransferContractTest extends TestCase
         $result = ['rowId' => 'row-1', 'fromGroupId' => 'group-a', 'fromChildCode' => 'A', 'targetGroupId' => 'staff-group', 'targetChildCode' => 'C', 'photoIds' => ['photo-1']];
 
         self::assertSame(
-            ['targetGroupId' => 'staff-group', 'bundles' => [$bundle], 'signature' => str_repeat('a', 64), 'hasOrders' => true, 'revision' => 3],
-            json_decode($serializer->serialize($mapper->preview(new StaffTransferPreviewOutputDto('staff-group', [$bundle], str_repeat('a', 64), true, 3))), true, 16, JSON_THROW_ON_ERROR),
+            ['targetGroupId' => 'staff-group', 'targetGroupName' => 'Сотрудники', 'bundles' => [$bundle], 'signature' => str_repeat('a', 64), 'hasOrders' => true, 'revision' => 3],
+            json_decode($serializer->serialize($mapper->preview(new StaffTransferPreviewOutputDto('staff-group', 'Сотрудники', [$bundle], str_repeat('a', 64), true, 3))), true, 16, JSON_THROW_ON_ERROR),
         );
         self::assertSame(
             ['id' => self::REQUEST, 'revision' => 4, 'status' => 'transferred', 'results' => [$result]],

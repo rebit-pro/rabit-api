@@ -32,6 +32,7 @@ final readonly class GetStaffTransferPreviewUseCase
 
         return new StaffTransferPreviewOutputDto(
             targetGroupId: $planned->targetGroupPublicId,
+            targetGroupName: $planned->targetGroupName,
             bundles: $planned->plan->bundles,
             signature: $planned->plan->signature,
             hasOrders: $planned->plan->hasOrders,
