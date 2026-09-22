@@ -346,17 +346,37 @@ for (const viewport of [
   });
 }
 
-test('E5: lost checkout response is repeated with the same key and creates one order', async ({ page }) => {
+async function fillCheckout(page: Page, name: string, email: string, quantity: number) {
   await page.goto('/g/' + fixture.open.token);
   await page.evaluate(({ groupId, line }) => localStorage.setItem('morefoto:cart:v1:' + groupId, JSON.stringify([line])), {
     groupId: fixture.open.groupId,
-    line: { assignmentId: assignment, productId: printId, quantity: 3 }
+    line: { assignmentId: assignment, productId: printId, quantity }
   });
   await page.goto('/g/' + fixture.open.token + '/checkout');
-  await page.getByRole('textbox', { name: 'Имя покупателя', exact: true }).fill('Потерянный ответ');
+  await page.getByRole('textbox', { name: 'Имя покупателя', exact: true }).fill(name);
   await page.locator('[name="buyer-phone"]').fill('+7 900 555-05-06');
-  await page.getByRole('textbox', { name: 'Email', exact: true }).fill('lost.e5@example.test');
+  await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
   await page.getByLabel('Состав и демонстрационные условия проверены').check();
+}
+/** Recovers an unconfirmed attempt on its own screen and proves the server replayed the one stored order. */
+async function recover(page: Page, key: string, email: string) {
+  await page.unroute('**/orders');
+  await page.unroute(/\/api\/v1\/public\/galleries\/[a-f0-9]{64}$/);
+  const replayed = page.waitForResponse((r) => r.url().endsWith('/orders') && r.request().method() === 'POST');
+  await page.getByTestId('recover-order').click();
+  const response = await replayed;
+  expect(response.status()).toBe(201);
+  expect(response.request().headers()['idempotency-key']).toBe(key);
+  const payload = await response.json();
+  remember(payload.data);
+  await expect(page.getByTestId('order-number')).toHaveText('Заказ ' + payload.data.number);
+  await login(page);
+  const found = await body(await page.request.get('/api/v1/orders?q=' + encodeURIComponent(email), { headers: await auth(page) }));
+  expect(found.meta.total).toBe(1);
+}
+
+test('E5: lost response survives group closure and reload, then recovers the same order', async ({ page }) => {
+  await fillCheckout(page, 'Потерянный ответ', 'lost.e5@example.test', 3);
   const keys: string[] = [];
   await page.route('**/orders', async (route) => {
     keys.push(route.request().headers()['idempotency-key']!);
@@ -364,19 +384,37 @@ test('E5: lost checkout response is repeated with the same key and creates one o
     await route.abort();
   });
   await page.getByTestId('create-order').click();
-  await expect(page.locator('#checkout-error')).toContainText('Ответ сервера не получен');
-  await page.unroute('**/orders');
-  const replayed = page.waitForResponse((r) => r.url().endsWith('/orders') && r.request().method() === 'POST');
+  await expect(page.getByTestId('checkout-recovery')).toContainText('Результат отправки не подтверждён');
+  // The group closes before the buyer returns: the stored attempt must not depend on a fresh quote.
+  await page.route(/\/api\/v1\/public\/galleries\/[a-f0-9]{64}$/, async (route) => {
+    const response = await route.fetch();
+    const payload = await response.json();
+    await route.fulfill({ response, json: { ...payload, data: { ...payload.data, state: 'closed' } } });
+  });
+  await page.reload();
+  await expect(page.getByTestId('checkout-recovery')).toBeVisible();
+  await expect(page.getByText('Сначала выберите фотографии')).toHaveCount(0);
+  await recover(page, keys[0]!, 'lost.e5@example.test');
+});
+
+test('E5: 502 after a committed order keeps the attempt and recovers the same key', async ({ page }) => {
+  await fillCheckout(page, 'Ответ прокси', 'gateway.e5@example.test', 4);
+  const keys: string[] = [];
+  await page.route('**/orders', async (route) => {
+    keys.push(route.request().headers()['idempotency-key']!);
+    const response = await route.fetch();
+    expect(response.status()).toBe(201);
+    await route.fulfill({ status: 502, contentType: 'text/html', body: '<html><body>Bad Gateway</body></html>' });
+  });
   await page.getByTestId('create-order').click();
-  const response = await replayed;
-  expect(response.status()).toBe(201);
-  expect(response.request().headers()['idempotency-key']).toBe(keys[0]);
-  const payload = await response.json();
-  remember(payload.data);
-  await expect(page.getByTestId('order-number')).toHaveText('Заказ ' + payload.data.number);
-  await login(page);
-  const found = await body(await page.request.get('/api/v1/orders?q=lost.e5@example.test', { headers: await auth(page) }));
-  expect(found.meta.total).toBe(1);
+  await expect(page.getByTestId('checkout-recovery')).toContainText('Результат отправки не подтверждён');
+  expect(
+    await page.evaluate(
+      (groupId) => JSON.parse(localStorage.getItem('morefoto:live:checkout:' + groupId) ?? '{}').requestId,
+      fixture.open.groupId
+    )
+  ).toBe(keys[0]);
+  await recover(page, keys[0]!, 'gateway.e5@example.test');
 });
 
 test('E5: changed price at checkout asks the buyer to confirm the new total', async ({ page, browser, baseURL }) => {

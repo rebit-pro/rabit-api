@@ -46,7 +46,10 @@ final readonly class ValidateQuoteUseCase
         }
         $result = $this->calculator->calculate($galleryToken, $lines);
         if (!hash_equals($row['FINGERPRINT'], $result['fingerprint'])) {
-            if ($this->moneyChanged($row['SNAPSHOT_JSON'], $result['quote'])) {
+            $stored = $this->snapshot($row['SNAPSHOT_JSON']);
+            // A different composition is a stale quote even if its sums differ; only the same composition with new money is a price change.
+            if (null !== $stored && $this->composition($stored) === $this->composition($result['quote'])
+                && $this->money($stored) !== $this->money($result['quote'])) {
                 throw new QuotePriceChangedException('Quote money changed after recalculation.');
             }
             throw new HttpException('QUOTE_STALE', 409);
@@ -55,16 +58,32 @@ final readonly class ValidateQuoteUseCase
         return new ValidatedQuoteOutputDto(new QuoteOutputDto($result['quote'], $quoteToken, $expires->format(DATE_ATOM)), $result['gallery']);
     }
 
-    /** @param CartQuote $current */
-    private function moneyChanged(string $snapshot, array $current): bool
+    /** @return null|array<array-key, mixed> */
+    private function snapshot(string $json): ?array
     {
         try {
-            $stored = json_decode($snapshot, true, 16, JSON_THROW_ON_ERROR);
+            $stored = json_decode($json, true, 16, JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
-            return false;
+            return null;
         }
 
-        return !is_array($stored) || $this->money($stored) !== $this->money($current);
+        return is_array($stored) ? $stored : null;
+    }
+
+    /**
+     * @param array<array-key, mixed> $quote
+     *
+     * @return list<array{mixed, mixed}>
+     */
+    private function composition(array $quote): array
+    {
+        $lines = [];
+        foreach ($this->lines($quote) as $line) {
+            $lines[] = [$line['id'] ?? null, $line['quantity'] ?? null];
+        }
+        sort($lines);
+
+        return $lines;
     }
 
     /**
@@ -75,12 +94,10 @@ final readonly class ValidateQuoteUseCase
     private function money(array $quote): array
     {
         $lines = [];
-        foreach (is_array($quote['lines'] ?? null) ? $quote['lines'] : [] as $line) {
-            $lines[] = is_array($line) ? [
-                $line['id'] ?? null, $line['quantity'] ?? null, $line['unitPrice'] ?? null,
-                $line['total'] ?? null, $line['discount'] ?? null, $line['coveredByGift'] ?? null,
-            ] : null;
+        foreach ($this->lines($quote) as $line) {
+            $lines[] = [$line['id'] ?? null, $line['unitPrice'] ?? null, $line['total'] ?? null, $line['discount'] ?? null, $line['coveredByGift'] ?? null];
         }
+        sort($lines);
 
         return [
             'lines' => $lines,
@@ -90,5 +107,22 @@ final readonly class ValidateQuoteUseCase
             'giftSaving' => $quote['giftSaving'] ?? null,
             'total' => $quote['total'] ?? null,
         ];
+    }
+
+    /**
+     * @param array<array-key, mixed> $quote
+     *
+     * @return list<array<array-key, mixed>>
+     */
+    private function lines(array $quote): array
+    {
+        $lines = [];
+        foreach (is_array($quote['lines'] ?? null) ? $quote['lines'] : [] as $line) {
+            if (is_array($line)) {
+                $lines[] = $line;
+            }
+        }
+
+        return $lines;
     }
 }

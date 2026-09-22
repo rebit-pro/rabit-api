@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router';
 import { forgetLiveCart, liveQuote, liveState, refreshStorefront } from '../../commerce/services/storefront';
 import type { GallerySnapshot } from '../../gallery/types';
 import { apiProblem, liveOrdersApi } from '../live/api';
-import { checkoutOutcome, newRequestId } from '../live/rules';
+import { checkoutOutcome, isCreatedOrder, newRequestId } from '../live/rules';
 import type { CheckoutBody } from '../live/types';
 import { validateBuyer } from '../services/validation';
 import type { BuyerErrors, CheckoutDraft } from '../types';
@@ -43,6 +43,8 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
   const submitting = shallowRef(false);
   // A running server recalculation also blocks submission and is shown as loading, not as a silently disabled button.
   const busy = computed(() => submitting.value || state.busy);
+  // An unconfirmed attempt is recovered on its own screen, independent of a fresh quote or an open group.
+  const recovering = computed(() => draft.pending !== null && !submitting.value);
   const error = shallowRef('');
   const errors = shallowRef<BuyerErrors>({});
   const oldTotal = shallowRef<number | null>(null);
@@ -80,7 +82,8 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
     const attempt = draft.pending ?? body();
     draft.pending = attempt;
     try {
-      const order = await liveOrdersApi.create(token, attempt, draft.requestId);
+      const order: unknown = await liveOrdersApi.create(token, attempt, draft.requestId);
+      if (!isCreatedOrder(order)) throw new Error('Unconfirmed order response.');
       forgetLiveCart(gallery.groupId);
       localStorage.removeItem(storageKey(gallery.groupId));
       await router.replace('/orders/access/' + order.accessKey);
@@ -88,7 +91,8 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
     } catch (cause) {
       const outcome = checkoutOutcome(apiProblem(cause));
       if (outcome.kind === 'unknown') {
-        error.value = 'Ответ сервера не получен. Нажмите «Создать тестовый заказ» ещё раз: повтор вернёт тот же заказ и не создаст второй.';
+        error.value =
+          'Результат отправки не подтверждён. Нажмите «Повторить отправку»: если заказ уже создан, откроется он же, второй заказ не появится.';
         await focus('#checkout-error');
         return;
       }
@@ -112,5 +116,5 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
       submitting.value = false;
     }
   }
-  return { quote, catalog, draft, busy, error, errors, oldTotal, capabilities, previous, canSubmit, submit };
+  return { quote, catalog, draft, busy, error, errors, oldTotal, capabilities, previous, canSubmit, recovering, submit };
 }

@@ -57,6 +57,18 @@ final class StorefrontQuoteTokenTest extends TestCase
         $this->validator('2026-09-21 10:15:00', 'new', $quote)->execute(str_repeat('a', 64), str_repeat('b', 64), []);
     }
 
+    public function testChangedCompositionIsStaleEvenWhenItsMoneyDiffers(): void
+    {
+        $this->expectException(HttpException::class);
+        $this->expectExceptionMessage('QUOTE_STALE');
+        $quote = self::QUOTE;
+        $quote['lines'][0]['quantity'] = 2;
+        $quote['lines'][0]['total'] = 50000;
+        $quote['total'] = 50000;
+        $quote['subtotal'] = 50000;
+        $this->validator('2026-09-21 10:15:00', 'new', $quote)->execute(str_repeat('a', 64), str_repeat('b', 64), []);
+    }
+
     public function testCurrentQuoteReturnsValidatedGalleryContext(): void
     {
         $result = $this->validator('2026-09-21 10:15:00', 'old', self::QUOTE)->execute(str_repeat('a', 64), str_repeat('b', 64), []);

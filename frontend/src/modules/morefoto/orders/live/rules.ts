@@ -1,6 +1,6 @@
 import type { CartQuote } from '../../commerce/types.js';
 import type { BuyerErrors } from '../types.js';
-import type { ApiProblem, LiveOrderQuote, StaffOrderFilters } from './types.js';
+import type { ApiProblem, CreatedOrder, LiveOrderQuote, StaffOrderFilters } from './types.js';
 
 export type CheckoutOutcome =
   | { kind: 'unknown' }
@@ -17,9 +17,12 @@ const fieldCodes: Record<string, [keyof BuyerErrors, string]> = {
   RECEIPT_CHANNEL_UNAVAILABLE: ['receiptChannel', 'Этот канал чека сейчас не подключён.']
 };
 
-/** Classifies a failed order submission; only an unanswered request may be repeated with the same key. */
+/**
+ * Classifies a failed order submission. Only a 4xx answer proves that nothing was stored; no answer, 5xx or an
+ * unexpected failure may hide a committed order, so the same body is repeated with the same key.
+ */
 export function checkoutOutcome(problem: ApiProblem): CheckoutOutcome {
-  if (problem.network) return { kind: 'unknown' };
+  if (problem.network || problem.status === null || problem.status >= 500) return { kind: 'unknown' };
   const field = fieldCodes[problem.code];
   if (field) return { kind: 'field', errors: { [field[0]]: field[1] } };
   switch (problem.code) {
@@ -46,7 +49,7 @@ export function checkoutOutcome(problem: ApiProblem): CheckoutOutcome {
     case 'STAFF_ELIGIBILITY_REQUIRED':
       return { kind: 'message', message: 'Состав корзины больше недоступен. Вернитесь в корзину и уточните выбор.' };
     default:
-      return { kind: 'message', message: 'Сервер не создал заказ. Заполнение сохранено — попробуйте ещё раз.' };
+      return { kind: 'message', message: 'Сервер отклонил заказ. Заполнение сохранено — проверьте данные и попробуйте ещё раз.' };
   }
 }
 
@@ -95,4 +98,16 @@ export function staffOrderError(problem: ApiProblem): string {
 
 export function newRequestId(random: () => string = () => crypto.randomUUID()): string {
   return random().replace(/-/g, '');
+}
+
+/** A success status alone is not proof: a proxy page without the order must keep the attempt for a safe repeat. */
+export function isCreatedOrder(value: unknown): value is CreatedOrder {
+  if (!value || typeof value !== 'object') return false;
+  const order = value as Record<string, unknown>;
+  return (
+    typeof order.id === 'string' &&
+    typeof order.number === 'string' &&
+    typeof order.accessKey === 'string' &&
+    /^[a-f0-9]{64}$/.test(order.accessKey)
+  );
 }

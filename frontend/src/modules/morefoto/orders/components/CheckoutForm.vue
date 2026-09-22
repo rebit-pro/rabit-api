@@ -7,13 +7,22 @@ import OrderComposition from './OrderComposition.vue';
 import CheckoutTerms from './CheckoutTerms.vue';
 import CheckoutContacts from './CheckoutContacts.vue';
 const props = defineProps<{ gallery: GallerySnapshot; token: string }>();
-const { quote, catalog, draft, busy, error, errors, oldTotal, capabilities, previous, canSubmit, submit } = useCheckout(
+const { quote, catalog, draft, busy, error, errors, oldTotal, capabilities, previous, canSubmit, recovering, submit } = useCheckout(
   props.gallery,
   props.token
 );
 </script>
 <template>
-  <section v-if="!quote.lines.length && previous" class="mf-panel mf-empty">
+  <section v-if="recovering" class="mf-panel mf-empty" data-testid="checkout-recovery">
+    <v-icon icon="mdi-cloud-sync-outline" color="primary" size="42" />
+    <h2 class="my-4">Проверим прошлую отправку</h2>
+    <p class="mf-muted mb-5">
+      Подтверждение предыдущей отправки заказа не получено. Повторите её: если заказ уже создан, откроется он же, второй заказ не появится.
+    </p>
+    <v-alert v-if="error" id="checkout-error" type="warning" variant="tonal" class="mb-5" role="alert" tabindex="-1">{{ error }}</v-alert>
+    <v-btn color="primary" :loading="busy" :disabled="busy" data-testid="recover-order" @click="submit">Повторить отправку</v-btn>
+  </section>
+  <section v-else-if="!quote.lines.length && previous" class="mf-panel mf-empty">
     <v-icon icon="mdi-check-circle-outline" color="primary" size="42" />
     <h2 class="my-4">Заказ уже создан</h2>
     <p class="mf-muted mb-5">Повторно оформлять этот выбор не нужно.</p>

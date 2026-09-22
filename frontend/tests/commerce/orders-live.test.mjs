@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   checkoutOutcome,
+  isCreatedOrder,
   newRequestId,
   orderQuoteAsCart,
   staffFiltersFromQuery,
@@ -92,4 +93,18 @@ test('idempotency keys are 32 lowercase hex characters', () => {
     newRequestId(() => 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'),
     'aaaaaaaabbbb4ccc8dddeeeeeeeeeeee'
   );
+});
+
+test('5xx, proxy pages and unexpected failures keep the attempt for a safe repeat', () => {
+  for (const status of [500, 502, 503, 504]) assert.deepEqual(checkoutOutcome({ status, code: '', network: false }), { kind: 'unknown' });
+  assert.deepEqual(checkoutOutcome({ status: null, code: '', network: false }), { kind: 'unknown' });
+  assert.equal(checkoutOutcome({ status: 400, code: 'MALFORMED_JSON', network: false }).kind, 'message');
+  assert.equal(checkoutOutcome({ status: 404, code: 'GALLERY_NOT_FOUND', network: false }).kind, 'message');
+});
+
+test('a success status counts only with a real order and personal key', () => {
+  assert.equal(isCreatedOrder({ id: 'order', number: 'MF-000001', accessKey: 'a'.repeat(64) }), true);
+  assert.equal(isCreatedOrder('<html>Bad gateway</html>'), false);
+  assert.equal(isCreatedOrder({ id: 'order', number: 'MF-000001', accessKey: 'undefined' }), false);
+  assert.equal(isCreatedOrder(null), false);
 });
