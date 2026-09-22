@@ -3,11 +3,11 @@
 ## Точка продолжения
 
 - Ветка: `codex/sberpay-start-plan`, PR https://github.com/rebit-pro/rabit-api/pull/35. Историческое имя сохранено; активный провайдер — ЮKassa.
-- Checkout: `/home/user/rabit-api-worktrees/yookassa-plan`; main/base `4b507b3b3c27719888e38f582b48e6a56c0c5946`, текущий HEAD `608a607247ae2d3ee4df9d8960b5131faab7ac71` (включён слитый main).
+- Checkout: `/home/user/rabit-api-worktrees/yookassa-plan`; main/base `4b507b3b3c27719888e38f582b48e6a56c0c5946`, проверенный содержательный HEAD `29e590a4d705df76cd6ad2b70de9318d03875e8e`; после него только завершающая отметка публикации в plan/progress (точный HEAD журнала — `git rev-parse HEAD`).
 - Завершено: прочитаны прежний план/PR, подтверждён merge E5 #37; зафиксирован выбор ЮKassa/чеков, переключателя расходов и округления вверх до 50 ₽.
-- Сейчас: графы, канонические материалы и проверки завершены; следующий шаг — commit/push и обновление заголовка/описания PR #35.
+- Завершено: графы, канонические материалы, проверки и публикация PR #35 с новым заголовком/описанием. Следующий самостоятельный шаг — реализация E6 в отдельной ветке от актуального main; G1 начинает после merge F2 и закрытия оставшихся решений.
 - Блокеры runtime G1: F2 #40 не merged; D09-параметры/служебный API и D12 остаются открыты. Выбор ЮKassa закрывает поставщиков, не все настройки. 3,8% — расчётный ориентир до проверки эффективной ставки договора.
-- Дерево: изменены plan.md/progress.md, graph.json и новый отчёт docs/waves/yookassa-mvp/. Основной checkout `rabit-api` на main не изменён. MoreFoto обновлён адресно; прежние F2/D3/N1 сохранены. Добавочный patch и исходные SHA включаются в PR.
+- Дерево: все содержательные правки опубликованы; завершающие plan/progress коммитятся отдельно, после push ожидается чистое дерево. Основной checkout `rabit-api` на main не изменён. MoreFoto обновлён адресно; прежние F2/D3/N1 сохранены. Добавочный patch и исходные SHA опубликованы в PR.
 - Следующая проверка: `python3 tools/verify-wave-graph.py docs/waves/graph.json`; `python3 /home/user/MoreFoto/docs/04-bitrix-modules/wave_graph.py /home/user/MoreFoto/docs/04-bitrix-modules/backend-waves.json`; `git diff --check`.
 
 ## 2026-09-21 — Источник и уточнения
@@ -96,6 +96,12 @@ YK-01…YK-07: PENDING. Runtime E6/G1/G2/I2: PENDING, прогоны не вып
 | YK-04 | PASS | 2026-09-22 | Адресные Python assertions: исходные 99 владельцев и dependencies сохранены (кроме новой E6→N2); F2/D3/N1 канонической версии не изменены; `git -C /home/user/MoreFoto apply --check --reverse .../morefoto-plan-update.patch` PASS |
 | YK-05 | PASS | 2026-09-22 | `python3 -` с целочисленной формулой: 8 примеров, 6850 граничных значений, минимальность шага и компенсация ставки, скидка 50% → 275 ₽. Результаты в verification.json; это проверка спецификации |
 | YK-06 | PASS | 2026-09-22 | `git diff --check` PASS; staged diff проверяется перед commit и должен завершиться без ошибок |
-| YK-07 | PENDING | 2026-09-22 | Commit/push и `gh pr view 35 --json title,headRefOid,baseRefName,url` |
+| YK-07 | PASS | 2026-09-22 | Commit `29e590a`, HTTPS push через gh credential helper, `gh pr edit 35 --title ... --body-file /tmp/rabit-yookassa-pr35-body.md`; `gh pr view` подтвердил title/head/base/url |
 
 Backend/frontend/runtime/HTTP/E2E: PENDING для будущих реализаций, в плановом PR не запускались. Реальный merchant не создан и оплата не включена.
+
+## 2026-09-22 — План опубликован
+
+Коммит `29e590a` опубликован в существующую ветку PR #35. Заголовок: «План MVP: ЮKassa с чеками и учёт расходов в цене (E6)». Описание переписано вокруг текущего решения, исходный аудит СберПэй сохранён как история. Первая попытка `gh pr edit` завершилась временной сетевой ошибкой api.github.com; повтор после чтения состояния успешен. GitHub подтвердил head/base/title. P1–P6 завершены, YK-01–YK-07 PASS. Финальные отметки plan/progress публикуются отдельным docs-коммитом; после него проверяются чистота обоих checkout и head PR.
+
+Оплата/ценовая опция ещё не реализованы и не включены. F2 продолжает отдельную работу; изменение плана не подменяет merge зависимости. Следующий готовый по зависимостям продуктовый срез — E6; параметры merchant/чеков и D12 для G1 уточняются в его плане.
