@@ -38,7 +38,7 @@ async function submit(): Promise<void> {
   busy.value = true;
   error.value = '';
   try {
-    await auth.startSession(await accessApi.acceptInvitation(token, password.value));
+    await auth.startSession(await accessApi.acceptInvitation(token, password.value), '/cabinet/welcome');
   } catch (cause) {
     const code = apiErrorCode(cause);
     if (code?.startsWith('LINK_')) problem.value = code;

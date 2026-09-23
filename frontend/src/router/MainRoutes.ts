@@ -131,6 +131,12 @@ const MainRoutes: RouteRecordRaw = {
       }
     },
     {
+      name: 'CabinetWelcome',
+      path: 'welcome',
+      component: () => import('@/modules/morefoto/views/WelcomePage.vue'),
+      meta: { title: 'Добро пожаловать' }
+    },
+    {
       name: 'CabinetProfile',
       path: 'profile',
       component: () => import('@/modules/morefoto/views/ProfilePage.vue'),

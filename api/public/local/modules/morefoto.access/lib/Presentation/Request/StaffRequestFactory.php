@@ -7,6 +7,7 @@ namespace Morefoto\Access\Presentation\Request;
 use Bitrix\Main\HttpRequest;
 use Morefoto\Access\Application\Staff\Dto\ListStaffInputDto;
 use Morefoto\Access\Application\Staff\Dto\StaffMutationInputDto;
+use Morefoto\Access\Domain\Staff\Enum\AccountStatusEnum;
 use Morefoto\Access\Domain\Staff\Enum\RoleEnum;
 use Rebit\Share\Shared\Exception\HttpException;
 
@@ -15,7 +16,7 @@ final readonly class StaffRequestFactory
     public function listing(HttpRequest $request): ListStaffInputDto
     {
         $data = $this->query($request);
-        if ([] !== array_diff(array_keys($data), ['q', 'role', 'active', 'page', 'pageSize'])) {
+        if ([] !== array_diff(array_keys($data), ['q', 'role', 'active', 'accountStatus', 'page', 'pageSize'])) {
             throw new HttpException('UNKNOWN_FIELD', 422);
         }
         foreach (['page', 'pageSize'] as $field) {
@@ -40,8 +41,15 @@ final readonly class StaffRequestFactory
                 throw new HttpException('INVALID_ACTIVE', 422);
             }
         }
+        $accountStatus = null;
+        if (isset($data['accountStatus'])) {
+            $accountStatus = is_string($data['accountStatus']) ? AccountStatusEnum::tryFrom($data['accountStatus']) : null;
+            if (null === $accountStatus) {
+                throw new HttpException('INVALID_ACCOUNT_STATUS', 422);
+            }
+        }
 
-        return new ListStaffInputDto(trim($data['q'] ?? ''), $role, $active, (int)($data['page'] ?? 1), (int)($data['pageSize'] ?? 25));
+        return new ListStaffInputDto(trim($data['q'] ?? ''), $role, $active, $accountStatus, (int)($data['page'] ?? 1), (int)($data['pageSize'] ?? 25));
     }
 
     public function mutation(HttpRequest $request, bool $create): StaffMutationInputDto

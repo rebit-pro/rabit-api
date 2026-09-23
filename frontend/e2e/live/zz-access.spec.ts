@@ -49,7 +49,11 @@ test('B4: приглашение по ссылке — пароль, вход и
   const accept = page.waitForResponse((r) => r.url().endsWith('/accept'));
   await setNewPassword(page, invitedPassword, 'Задать пароль и войти');
   expect((await accept).status()).toBe(200);
-  await expect(page.getByRole('heading', { name: 'Профиль', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/cabinet\/welcome$/);
+  await expect(page.getByRole('heading', { name: 'Добро пожаловать, b4-invited!', exact: true })).toBeVisible();
+  const next = page.getByRole('region', { name: 'Что дальше', exact: true });
+  await expect(next.getByRole('link', { name: 'Ссылки и сроки', exact: true })).toBeVisible();
+  await expect(next.getByRole('link', { name: 'Сотрудники', exact: true })).toHaveCount(0);
 
   await logout(page);
   await page.goto('/access/invite/' + inviteToken);
@@ -118,9 +122,15 @@ test('B4: смена пароля в профиле проверяет теку�
   await expect(page.getByRole('heading', { name: 'Профиль', exact: true })).toBeVisible();
 });
 
-test('B4: организатор видит приглашение и отправляет его повторно', async ({ page }) => {
+test('B4: организатор находит ожидающих регистрации и повторяет приглашение', async ({ page }) => {
   await login(page);
   await page.getByLabel('Основная навигация').getByRole('link', { name: 'Сотрудники', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Статус', exact: true }).press('Enter');
+  await page.getByRole('option', { name: 'Ожидает регистрации', exact: true }).click();
+  const filtered = page.waitForResponse((r) => r.url().includes('/api/v1/users?') && r.url().includes('accountStatus=pending'));
+  await page.getByRole('button', { name: 'Найти', exact: true }).click();
+  expect((await filtered).status()).toBe(200);
+  await expect(page.getByRole('button', { name: 'Редактировать сотрудника teacher', exact: true })).toHaveCount(0);
   const row = page.getByRole('button', { name: 'Редактировать сотрудника B2 Новый учитель' });
   await expect(row).toContainText('Ожидает регистрации');
   await expect(row).toContainText('приглашение отправлено');

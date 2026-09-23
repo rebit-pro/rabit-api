@@ -10,7 +10,7 @@ export const staffApi = {
         pageSize: 25,
         ...(filters.q ? { q: filters.q } : {}),
         ...(filters.role ? { role: filters.role } : {}),
-        ...(filters.active === null ? {} : { active: filters.active })
+        ...(filters.accountStatus ? { accountStatus: filters.accountStatus } : {})
       },
       unwrapEnvelope: false
     });

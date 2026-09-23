@@ -226,12 +226,15 @@ export const useAuthStore = defineStore('auth', () => {
     await router.push(allowed && candidate ? candidate : fallback);
   }
 
-  /** Session opened by an invitation or a password reset link: the server already checked the new password. */
-  async function startSession(response: LoginResponse): Promise<void> {
+  /**
+   * Session opened by an invitation or a password reset link: the server already checked the new password.
+   * `target` is honoured only for a staff role; without one the home path explains the missing access.
+   */
+  async function startSession(response: LoginResponse, target?: string): Promise<void> {
     setSession(response.token, response.user, response.expiresAt);
     returnUrl.value = null;
     await ensureProfile();
-    await router.push(homePath.value);
+    await router.push(target && isStaffRole(user.value?.role) ? target : homePath.value);
   }
 
   async function requestRegistrationCode(email: string, password: string): Promise<RequestRegistrationCodeResponse> {

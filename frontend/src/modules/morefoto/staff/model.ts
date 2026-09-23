@@ -66,7 +66,7 @@ export interface StaffDraft {
 export interface StaffFilters {
   q: string;
   role: StaffRole | null;
-  active: boolean | null;
+  accountStatus: AccountStatus | null;
 }
 export interface StaffMutationResult {
   id: number;

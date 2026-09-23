@@ -7,6 +7,11 @@ namespace Rebit\Auth\Tests\Application\Auth\UseCase;
 use Bitrix\Main\Type\DateTime;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Rebit\Auth\Application\Access\Dto\AcceptInvitationInputDto;
+use Rebit\Auth\Application\Access\Service\AccessLinkGuard;
+use Rebit\Auth\Application\Access\Service\SessionIssuer;
+use Rebit\Auth\Application\Access\UseCase\AcceptAccessInvitationUseCase;
+use Rebit\Auth\Application\Access\UseCase\IssueAccessInvitationUseCase;
 use Rebit\Auth\Application\Auth\Contract\AuthTransactionInterface;
 use Rebit\Auth\Application\Auth\Contract\RegistrationConfirmationMailerInterface;
 use Rebit\Auth\Application\Auth\Contract\TokenGeneratorInterface;
@@ -14,14 +19,23 @@ use Rebit\Auth\Application\Auth\Dto\Request\ConfirmRegistrationRequestDto;
 use Rebit\Auth\Application\Auth\Dto\Request\RequestRegistrationCodeRequestDto;
 use Rebit\Auth\Application\Auth\UseCase\ConfirmRegistrationUseCase;
 use Rebit\Auth\Application\Auth\UseCase\RequestRegistrationCodeUseCase;
+use Rebit\Auth\Domain\Access\Service\PasswordPolicy;
 use Rebit\Auth\Domain\Registration\Entity\RegistrationConfirmation;
 use Rebit\Auth\Domain\Registration\Repository\RegistrationConfirmationRepository;
 use Rebit\Auth\Domain\Registration\Service\RegistrationCodeGenerator;
 use Rebit\Auth\Domain\User\Entity\UserRegistrationState;
 use Rebit\Auth\Domain\User\Repository\UserRepository;
+use Rebit\Auth\Tests\Application\Access\InMemoryAccessAccounts;
+use Rebit\Auth\Tests\Application\Access\InMemoryAccessLinks;
+use Rebit\Auth\Tests\Application\Access\RecordingAccessMailer;
+use Rebit\Auth\Tests\Application\Access\RecordingSessions;
+use Rebit\Auth\Tests\Application\Access\SequenceAccessTokens;
+use Rebit\Auth\Tests\Application\Access\SequenceSessionTokens;
 use Rebit\Auth\Tests\Support\FrozenClock;
 use Rebit\Auth\Tests\Support\ImmediateTransaction;
 use Rebit\Share\Shared\Exception\HttpException;
+
+require_once __DIR__ . '/../../Access/AccessFakes.php';
 
 /**
  * @internal
@@ -91,6 +105,42 @@ final class RegistrationSafetyTest extends TestCase
         yield 'already active' => [true, false, 'user@example.test'];
         yield 'active inconsistent pending' => [true, true, 'user@example.test'];
         yield 'different email' => [false, true, 'changed@example.test'];
+    }
+
+    /**
+     * B4: the registration code stays a backend path. An account it activated must not be taken over by the
+     * invitation link still sitting in the mailbox; the reverse direction is the "already active" case above.
+     */
+    public function testStaleInvitationCannotTakeOverAccountActivatedByCode(): void
+    {
+        $accounts = new InMemoryAccessAccounts();
+        $accounts->add(7, 'user@example.test', active: false, pending: true);
+        $links = new InMemoryAccessLinks();
+        $mailer = new RecordingAccessMailer();
+        $sessions = new RecordingSessions();
+        $clock = new FrozenClock(self::NOW);
+        (new IssueAccessInvitationUseCase($accounts, $links, new SequenceAccessTokens(), $mailer, $clock, 168, 60))->execute(7, 1);
+        $accounts->activate(7);
+        $passwordHash = $accounts->accounts[7]->passwordHash;
+        $accept = new AcceptAccessInvitationUseCase(
+            $links,
+            $accounts,
+            new AccessLinkGuard(),
+            new PasswordPolicy(),
+            new SessionIssuer(new SequenceSessionTokens(), $sessions, $clock, 24),
+            $clock,
+            new ImmediateTransaction(),
+        );
+
+        try {
+            $accept->execute(new AcceptInvitationInputDto($mailer->sent[0][1]->token, 'someone else password'));
+            self::fail('A stale invitation must not change the password of an active account.');
+        } catch (HttpException $error) {
+            self::assertSame('LINK_USED', $error->getMessage());
+            self::assertSame(410, $error->getCode());
+        }
+        self::assertSame($passwordHash, $accounts->accounts[7]->passwordHash);
+        self::assertSame([], $sessions->tokens);
     }
 
     public function testCodeAtExactDeadlineIsExpired(): void
