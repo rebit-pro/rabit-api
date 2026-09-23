@@ -35,15 +35,19 @@ function assignments(photo: ManagedPhoto) {
       : [])
   );
 }
-export function nextChildCode(photos: ManagedPhoto[], groupId: string): string {
-  const codes = new Set(
-    photos.filter((item) => item.groupId === groupId).flatMap((item) => assignments(item).map((assignment) => assignment.childCode))
-  );
+export function freeChildCode(codes: ReadonlySet<string>): string {
   for (let i = 0; i < 18278; i++) {
     const code = childCodeAt(i);
     if (!codes.has(code)) return code;
   }
   throw new Error('Достигнут предел кодов детей.');
+}
+export function nextChildCode(photos: ManagedPhoto[], groupId: string): string {
+  return freeChildCode(
+    new Set(
+      photos.filter((item) => item.groupId === groupId).flatMap((item) => assignments(item).map((assignment) => assignment.childCode))
+    )
+  );
 }
 export function photoCode(child: string, sequence: number): string {
   return child + String(sequence).padStart(3, '0');

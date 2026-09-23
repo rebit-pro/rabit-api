@@ -1,16 +1,55 @@
 import { computed, onMounted, onScopeDispose, shallowRef, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { isMockApiEnabled } from '@/mocks/config';
 import { useOrganization } from '../../organization/composables/useOrganization';
 import { structureApi, structureError } from '../../structure/api';
 import { photosChangedEvent, photoStateKey, readPhotos } from '../repository';
 import { assignPhotos, chooseCover, moveChild } from '../service';
-import { nextChildCode, validChildCode } from '../rules';
-import { childTransferError, photoApiError, photoApiErrorCode, photosApi, type ServerPhoto } from '../api';
+import { freeChildCode, validChildCode } from '../rules';
+import { localPhotoPage, photoFilter, photoPage, photoPages, photoPageSize, type PhotoGroupSummary } from '../paging';
+import { managedPreviewSource } from '../previews';
+import { childTransferError, photoApiError, photoApiErrorCode, photosApi, type PhotoListQuery, type ServerPhoto } from '../api';
 import type { ManagedGroup, ManagedInstitution, OrganizationSnapshot, PhotoShoot } from '../../organization/types';
 import type { Group } from '../../structure/model';
-import type { ManagedPhoto, PhotoState } from '../types';
+import type { ManagedPhoto } from '../types';
+
+type ReadyPhoto = ServerPhoto & { thumbSrc: string; previewSrc: string };
+interface PageData {
+  items: ManagedPhoto[];
+  total: number;
+  summary: PhotoGroupSummary;
+  covers: Record<string, string>;
+}
+const emptySummary: PhotoGroupSummary = { photos: 0, unassigned: 0, children: [] };
+function isReady(item: ServerPhoto): item is ReadyPhoto {
+  return item.status === 'ready' && !!item.thumbSrc && !!item.previewSrc;
+}
+function managedPhoto(item: ReadyPhoto): ManagedPhoto {
+  return {
+    id: item.id,
+    code: item.code ?? item.filename,
+    thumbSrc: item.thumbSrc,
+    previewSrc: item.previewSrc,
+    width: item.width,
+    height: item.height,
+    shootId: item.shootId,
+    groupId: item.groupId,
+    originalGroupId: item.originalGroupId,
+    childCode: item.childCode,
+    sequence: item.sequence,
+    assignments: item.assignments,
+    filename: item.filename,
+    bytes: item.bytes,
+    fingerprint: item.fingerprint,
+    source: 'server',
+    revision: item.revision
+  };
+}
+function filterQuery(filter: string): PhotoListQuery {
+  if (filter === 'all') return {};
+  return filter === 'unassigned' ? { assigned: false } : { childCode: filter };
+}
 
 export function usePhotoWorkspace() {
   const route = useRoute();
@@ -23,13 +62,18 @@ export function usePhotoWorkspace() {
   const liveReady = shallowRef(false);
   const contextLoading = shallowRef(false);
   const contextError = shallowRef('');
-  const photos = shallowRef<PhotoState>(isMockApiEnabled ? readPhotos() : { photos: [], covers: {} });
+  // One page of the selected group and a summary of the whole group: the screen never holds the full shoot.
+  const items = shallowRef<ManagedPhoto[]>([]);
+  const total = shallowRef(0);
+  const summary = shallowRef<PhotoGroupSummary>(emptySummary);
+  const cover = shallowRef<{ id: string; thumbSrc: string }>();
   const mediaRevision = shallowRef(1);
   const mediaLoading = shallowRef(false);
   let mediaRequest = 0;
   const selectedGroupId = shallowRef(typeof route.query.group === 'string' ? route.query.group : '');
+  const filter = shallowRef(photoFilter(route.query.filter));
+  const page = shallowRef(photoPage(route.query.page));
   const selected = shallowRef<string[]>([]);
-  const filter = shallowRef('all');
   const busy = shallowRef(false);
   const error = shallowRef('');
   const notice = shallowRef('');
@@ -62,60 +106,59 @@ export function usePhotoWorkspace() {
   });
   const loading = computed(() => (isMockApiEnabled ? organization!.loading.value : contextLoading.value) || mediaLoading.value);
   const loadError = computed(() => (isMockApiEnabled ? organization!.error.value : contextError.value));
+  const group = computed(() => groups.value.find((item) => item.id === selectedGroupId.value));
+  const editable = computed(() => group.value?.state === 'preparing');
+  const childCodes = computed(() => summary.value.children);
+  const suggestedCode = computed(() => freeChildCode(new Set(summary.value.children)));
+  const pages = computed(() => photoPages(total.value));
+  // Everything that defines the shown page: a change reloads it and is written to the URL.
+  const pageKey = computed(() => (group.value ? [group.value.id, filter.value, page.value].join('|') : ''));
+  function coverSource(id: string, shown: ManagedPhoto[]): string {
+    const onPage = shown.find((item) => item.id === id)?.thumbSrc;
+    if (onPage) return onPage;
+    return isMockApiEnabled ? (readPhotos().photos.find((item) => item.id === id)?.thumbSrc ?? '') : managedPreviewSource(id, 'thumb');
+  }
+  function applyPage(next: PageData) {
+    const coverId = next.covers[group.value?.id ?? ''];
+    items.value = next.items;
+    total.value = next.total;
+    summary.value = next.summary;
+    cover.value = coverId ? { id: coverId, thumbSrc: coverSource(coverId, next.items) } : undefined;
+    selected.value = selected.value.filter((id) => next.items.some((item) => item.id === id));
+    // A page emptied by labelling or a child moved to another group must not leave the screen on an empty view.
+    if (page.value > photoPages(next.total)) setPage(photoPages(next.total));
+    else if (filter.value !== 'all' && filter.value !== 'unassigned' && !next.summary.children.includes(filter.value)) setFilter('all');
+  }
   async function refreshPhotos(): Promise<boolean> {
+    const groupId = group.value?.id;
+    if (!groupId) {
+      applyPage({ items: [], total: 0, summary: emptySummary, covers: {} });
+      return true;
+    }
     if (isMockApiEnabled) {
-      photos.value = readPhotos();
-      selected.value = selected.value.filter((id) => photos.value.photos.some((item) => item.id === id));
+      const state = readPhotos();
+      applyPage({ ...localPhotoPage(state.photos, groupId, filter.value, page.value), covers: state.covers });
       return true;
     }
     const ticket = ++mediaRequest;
     mediaLoading.value = true;
     error.value = '';
     try {
-      const serverPhotos: ServerPhoto[] = [];
-      let page = 1;
-      let total = 0;
-      let covers: Record<string, string> = {};
-      let revision = 1;
-      do {
-        const result = await photosApi.list(routeShootId, page);
-        serverPhotos.push(...result.items);
-        total = result.meta.total;
-        if (page === 1) {
-          covers = result.covers;
-          revision = result.revision;
-        }
-        page++;
-      } while (serverPhotos.length < total && page <= 1000);
+      const result = await photosApi.list(routeShootId, {
+        groupId,
+        status: 'ready',
+        page: page.value,
+        pageSize: photoPageSize,
+        ...filterQuery(filter.value)
+      });
       if (!alive || ticket !== mediaRequest) return false;
-      const ready = serverPhotos.filter(
-        (item): item is ServerPhoto & { thumbSrc: string; previewSrc: string } =>
-          item.status === 'ready' && !!item.thumbSrc && !!item.previewSrc
-      );
-      mediaRevision.value = revision;
-      photos.value = {
-        covers,
-        photos: ready.map<ManagedPhoto>((item) => ({
-          id: item.id,
-          code: item.code ?? item.filename,
-          thumbSrc: item.thumbSrc,
-          previewSrc: item.previewSrc,
-          width: item.width,
-          height: item.height,
-          shootId: item.shootId,
-          groupId: item.groupId,
-          originalGroupId: item.originalGroupId,
-          childCode: item.childCode,
-          sequence: item.sequence,
-          assignments: item.assignments,
-          filename: item.filename,
-          bytes: item.bytes,
-          fingerprint: item.fingerprint,
-          source: 'server',
-          revision: item.revision
-        }))
-      };
-      selected.value = selected.value.filter((id) => photos.value.photos.some((item) => item.id === id));
+      mediaRevision.value = result.revision;
+      applyPage({
+        items: result.items.filter(isReady).map(managedPhoto),
+        total: result.meta.total,
+        summary: result.summary ?? emptySummary,
+        covers: result.covers
+      });
       return true;
     } catch (cause) {
       if (alive && ticket === mediaRequest) error.value = photoApiError(cause);
@@ -124,25 +167,75 @@ export function usePhotoWorkspace() {
       if (alive && ticket === mediaRequest) mediaLoading.value = false;
     }
   }
+  /** All frames of one child in the selected group, for the set preview and the full-set transfer. */
+  async function childPhotos(code: string): Promise<ManagedPhoto[]> {
+    const groupId = group.value?.id ?? '';
+    if (isMockApiEnabled)
+      return readPhotos().photos.filter(
+        (item) => item.groupId === groupId && item.assignments.some((assignment) => assignment.childCode === code)
+      );
+    const photos: ManagedPhoto[] = [];
+    for (let next = 1; ; next++) {
+      const result = await photosApi.list(routeShootId, { groupId, childCode: code, status: 'ready', page: next, pageSize: 100 });
+      photos.push(...result.items.filter(isReady).map(managedPhoto));
+      if (!result.items.length || photos.length >= result.meta.total) return photos;
+    }
+  }
+  function syncRoute() {
+    const query: LocationQueryRaw = { ...route.query };
+    delete query.group;
+    delete query.filter;
+    delete query.page;
+    if (selectedGroupId.value) query.group = selectedGroupId.value;
+    if (filter.value !== 'all') query.filter = filter.value;
+    if (page.value > 1) query.page = String(page.value);
+    if (route.query.group !== query.group || route.query.filter !== query.filter || route.query.page !== query.page)
+      void router.replace({ query });
+  }
+  function changeGroup(id: string) {
+    if (id === selectedGroupId.value) return;
+    selectedGroupId.value = id;
+    filter.value = 'all';
+    page.value = 1;
+    selected.value = [];
+    error.value = '';
+    notice.value = '';
+  }
+  function setFilter(value: string) {
+    if (value === filter.value) return;
+    filter.value = value;
+    page.value = 1;
+    selected.value = [];
+  }
+  function setPage(value: number) {
+    if (value === page.value) return;
+    page.value = value;
+    selected.value = [];
+  }
+  function pickGroup(list: ManagedGroup[]) {
+    if (list.length && !list.some((item) => item.id === selectedGroupId.value))
+      changeGroup((list.find((item) => item.state === 'preparing') ?? list[0])!.id);
+  }
   async function reloadLive() {
     contextLoading.value = true;
     contextError.value = '';
     try {
-      const [parent, page] = await Promise.all([
+      const [parent, structure] = await Promise.all([
         structureApi.institution(routeInstitutionId, { shootsPage: 1, groupsPage: 1 }, 1),
         structureApi.list({ kind: 'group', institutionId: routeInstitutionId, shootId: routeShootId }, 1, 100)
       ]);
-      if (!page.shoot || page.shoot.id !== routeShootId || page.shoot.institutionId !== routeInstitutionId)
+      if (!structure.shoot || structure.shoot.id !== routeShootId || structure.shoot.institutionId !== routeInstitutionId)
         throw new Error('Съёмка не относится к этому учреждению.');
+      const before = pageKey.value;
       liveInstitution.value = parent;
-      liveShoot.value = page.shoot;
-      liveGroups.value = page.items
+      liveShoot.value = structure.shoot;
+      liveGroups.value = structure.items
         .filter((item): item is Group => 'groupKind' in item)
         .map((item) => ({
           id: item.id,
           institutionId: routeInstitutionId,
           shootId: routeShootId,
-          shootName: page.shoot!.name,
+          shootName: structure.shoot!.name,
           name: item.name,
           kind: item.groupKind,
           teacherId: item.teacherId,
@@ -152,8 +245,10 @@ export function usePhotoWorkspace() {
           closesAt: item.closesAt,
           sentAt: item.sentAt ?? undefined
         }));
+      pickGroup(liveGroups.value);
       liveReady.value = true;
-      await refreshPhotos();
+      // A new page key is loaded by its watcher; a repeated load of the same page is requested here.
+      if (pageKey.value === before) await refreshPhotos();
     } catch (cause) {
       if (alive) {
         liveReady.value = false;
@@ -165,41 +260,15 @@ export function usePhotoWorkspace() {
   }
   const reload = isMockApiEnabled ? organization!.reload : reloadLive;
   if (!isMockApiEnabled) onMounted(() => void reloadLive());
-  const group = computed(() => groups.value.find((item) => item.id === selectedGroupId.value));
-  const editable = computed(() => group.value?.state === 'preparing');
-  const groupPhotos = computed(() => photos.value.photos.filter((item) => item.groupId === group.value?.id));
-  const childCodes = computed(() =>
-    [...new Set(groupPhotos.value.flatMap((item) => item.assignments.map((assignment) => assignment.childCode)))].sort()
-  );
-  const visible = computed(() =>
-    groupPhotos.value.filter(
-      (item) =>
-        filter.value === 'all' ||
-        (filter.value === 'unassigned'
-          ? item.assignments.length === 0
-          : item.assignments.some((assignment) => assignment.childCode === filter.value))
-    )
-  );
-  const suggestedCode = computed(() => (group.value ? nextChildCode(photos.value.photos, group.value.id) : 'A'));
-  const cover = computed(() => groupPhotos.value.find((item) => item.id === photos.value.covers[group.value?.id ?? '']));
-  const assignmentsEnabled = true;
-  const transferEnabled = true;
-  watch(
-    groups,
-    (value) => {
-      if (!value.length) return;
-      if (!value.some((item) => item.id === selectedGroupId.value))
-        selectedGroupId.value = (value.find((item) => item.state === 'preparing') ?? value[0])?.id ?? '';
-    },
-    { immediate: true }
-  );
-  watch(selectedGroupId, (id) => {
-    if (id && route.query.group !== id) void router.replace({ query: { ...route.query, group: id } });
-    selected.value = [];
-    filter.value = 'all';
-    error.value = '';
-    notice.value = '';
+  watch(groups, pickGroup, { immediate: true });
+  watch(pageKey, () => {
+    syncRoute();
+    void refreshPhotos();
   });
+  if (pageKey.value) {
+    syncRoute();
+    void refreshPhotos();
+  }
   const storage = (event: StorageEvent) => {
     if (isMockApiEnabled && (event.key === null || event.key === 'morefoto:demo:' + photoStateKey)) void refreshPhotos();
   };
@@ -311,6 +380,7 @@ export function usePhotoWorkspace() {
   return {
     data,
     loading,
+    mediaLoading,
     loadError,
     reload,
     institution,
@@ -318,16 +388,21 @@ export function usePhotoWorkspace() {
     groups,
     group,
     selectedGroupId,
+    changeGroup,
     editable,
-    groupPhotos,
-    assignmentsEnabled,
-    transferEnabled,
+    items,
+    total,
+    page,
+    pages,
+    setPage,
+    summary,
     childCodes,
-    visible,
+    childPhotos,
     cover,
     suggestedCode,
     selected,
     filter,
+    setFilter,
     busy,
     error,
     notice,

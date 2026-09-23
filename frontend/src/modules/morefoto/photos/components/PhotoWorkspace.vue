@@ -3,6 +3,8 @@ import { computed, shallowRef } from 'vue';
 import { useRoute } from 'vue-router';
 import { usePhotoWorkspace } from '../composables/usePhotoWorkspace';
 import { usePhotoQueue } from '../composables/usePhotoQueue';
+import { photoApiError } from '../api';
+import type { ManagedPhoto } from '../types';
 import OrganizationLoadState from '../../organization/components/OrganizationLoadState.vue';
 import PhotoUpload from './PhotoUpload.vue';
 import PhotoCollection from './PhotoCollection.vue';
@@ -14,6 +16,7 @@ const workspace = usePhotoWorkspace();
 const {
   data,
   loading,
+  mediaLoading,
   loadError,
   reload,
   institution,
@@ -21,16 +24,21 @@ const {
   groups,
   group,
   selectedGroupId,
+  changeGroup,
   editable,
-  assignmentsEnabled,
-  transferEnabled,
-  groupPhotos,
+  items,
+  total,
+  page,
+  pages,
+  setPage,
+  summary,
   childCodes,
-  visible,
+  childPhotos,
   cover,
   suggestedCode,
   selected,
   filter,
+  setFilter,
   busy,
   error,
   notice,
@@ -46,23 +54,48 @@ const groupItems = computed(() =>
     value: item.id
   }))
 );
-const unassigned = computed(() => groupPhotos.value.filter((photo) => photo.assignments.length === 0).length);
 const preview = shallowRef(false);
 const previewChild = shallowRef('');
+const previewPhotos = shallowRef<ManagedPhoto[]>([]);
+const previewLoading = shallowRef(false);
+const previewError = shallowRef('');
+let previewRequest = 0;
 const move = shallowRef<{ child: string; ids: string[] } | null>(null);
+const moveLoading = shallowRef(false);
 const targets = computed(() =>
   groups.value.filter((item) => item.id !== group.value?.id && item.kind === group.value?.kind && item.state === 'preparing')
 );
-function showPreview(code = '') {
+// Sets span pages, so the preview and the transfer read the child's frames from the server when opened.
+async function loadPreview(code: string) {
+  const ticket = ++previewRequest;
   previewChild.value = code;
-  preview.value = true;
+  previewPhotos.value = [];
+  previewError.value = '';
+  if (!code) return;
+  previewLoading.value = true;
+  try {
+    const photos = await childPhotos(code);
+    if (ticket === previewRequest) previewPhotos.value = photos;
+  } catch (cause) {
+    if (ticket === previewRequest) previewError.value = photoApiError(cause);
+  } finally {
+    if (ticket === previewRequest) previewLoading.value = false;
+  }
 }
-function showMove(code: string) {
+function showPreview(code = '') {
+  preview.value = true;
+  void loadPreview(code || childCodes.value[0] || '');
+}
+async function showMove(code: string) {
   error.value = '';
-  move.value = {
-    child: code,
-    ids: groupPhotos.value.filter((photo) => photo.assignments.some((assignment) => assignment.childCode === code)).map((photo) => photo.id)
-  };
+  moveLoading.value = true;
+  try {
+    move.value = { child: code, ids: (await childPhotos(code)).map((photo) => photo.id) };
+  } catch (cause) {
+    error.value = photoApiError(cause);
+  } finally {
+    moveLoading.value = false;
+  }
 }
 async function confirmMove(toId: string, code: string) {
   if (move.value && (await transfer(move.value.child, toId, code, move.value.ids))) move.value = null;
@@ -88,11 +121,12 @@ async function confirmMove(toId: string, code: string) {
     </header>
     <div class="photo-context mb-6">
       <v-select
-        v-model="selectedGroupId"
+        :model-value="selectedGroupId"
         :items="groupItems"
         label="Группа съёмки"
         data-testid="photo-group"
         :disabled="busy || !!move"
+        @update:model-value="changeGroup"
       /><v-btn variant="outlined" :disabled="!childCodes.length" @click="showPreview()">Предпросмотр</v-btn>
     </div>
     <p v-if="!group" class="mf-panel">В съёмке пока нет групп. Добавьте группу на странице съёмки.</p>
@@ -101,18 +135,11 @@ async function confirmMove(toId: string, code: string) {
         <div>
           <h2>{{ group.name }}</h2>
           <p class="mt-2" data-testid="photo-readiness">
-            Кадров: {{ groupPhotos.length }} · Детей: {{ childCodes.length }} · Без ребёнка: {{ unassigned }}
+            Кадров: {{ summary.photos }} · Детей: {{ childCodes.length }} · Без ребёнка: {{ summary.unassigned }}
           </p>
           <p class="mf-muted mt-2">{{ cover ? 'Обложка группы выбрана' : 'Обложка группы ещё не выбрана' }}</p>
         </div>
-        <GalleryImage
-          v-if="cover"
-          :src="cover.thumbSrc"
-          alt="Обложка группы"
-          :width="cover.width"
-          :height="cover.height"
-          class="group-cover"
-        />
+        <GalleryImage v-if="cover" :src="cover.thumbSrc" alt="Обложка группы" class="group-cover" />
       </section>
       <v-alert v-if="!editable" type="info" variant="tonal" class="mb-6"
         >Подборка уже опубликована. Здесь можно просмотреть наборы; изменения доступны в группах со статусом «Подготовка».</v-alert
@@ -142,20 +169,36 @@ async function confirmMove(toId: string, code: string) {
       <v-alert v-if="notice" type="success" variant="tonal" role="status" class="mb-5">{{ notice }}</v-alert>
       <PhotoCollection
         v-model:selected="selected"
-        v-model:filter="filter"
-        :photos="visible"
+        :filter="filter"
+        :photos="items"
+        :total="total"
+        :page="page"
+        :pages="pages"
+        :loading="mediaLoading"
         :child-codes="childCodes"
         :cover-id="cover?.id"
-        :disabled="!editable || !assignmentsEnabled"
-        :allow-move="transferEnabled"
-        :busy="busy || uploading"
+        :disabled="!editable"
+        :allow-move="true"
+        :busy="busy || uploading || moveLoading"
         :suggested-code="suggestedCode"
+        @update:filter="setFilter"
+        @update:page="setPage"
         @assign="assign"
         @cover="setCover"
         @preview="showPreview"
         @move="showMove"
       />
-      <PhotoPreview :open="preview" :photos="groupPhotos" :initial-child="previewChild" :group-name="group.name" @close="preview = false" />
+      <PhotoPreview
+        :open="preview"
+        :codes="childCodes"
+        :child="previewChild"
+        :photos="previewPhotos"
+        :loading="previewLoading"
+        :error="previewError"
+        :group-name="group.name"
+        @update:child="loadPreview"
+        @close="preview = false"
+      />
       <ChildMoveDialog
         :open="!!move"
         :groups="targets"
