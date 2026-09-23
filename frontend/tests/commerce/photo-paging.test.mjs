@@ -18,26 +18,32 @@ function photo(id, groupId, codes = []) {
 
 test('Фото: страница, итог и сводка группы считаются как на сервере', () => {
   const photos = [
-    ...Array.from({ length: 100 }, (_, index) => photo('g1-' + index, 'g1', index < 30 ? ['A'] : index < 40 ? ['B', 'AA'] : [])),
+    ...Array.from({ length: 130 }, (_, index) => photo('g1-' + index, 'g1', index < 30 ? ['A'] : index < 40 ? ['B', 'AA'] : [])),
     photo('g2-0', 'g2', ['C'])
   ];
 
   const second = localPhotoPage(photos, 'g1', 'all', 2);
-  assert.equal(photoPageSize, 48);
-  assert.equal(second.items.length, 48);
-  assert.equal(second.items[0].id, 'g1-48');
-  assert.equal(second.total, 100);
-  assert.deepEqual(second.summary, { photos: 100, unassigned: 60, children: ['A', 'AA', 'B'] });
+  assert.equal(photoPageSize, 60);
+  assert.equal(second.items.length, 60);
+  assert.equal(second.items[0].id, 'g1-60');
+  assert.equal(second.total, 130);
+  assert.deepEqual(second.summary, { photos: 130, unassigned: 90, children: ['A', 'AA', 'B'] });
+  assert.equal(localPhotoPage(photos, 'g1', 'all', 3).items.length, 10);
 
   const unassigned = localPhotoPage(photos, 'g1', 'unassigned', 2);
-  assert.equal(unassigned.total, 60);
-  assert.equal(unassigned.items.length, 12);
+  assert.equal(unassigned.total, 90);
+  assert.equal(unassigned.items.length, 30);
   assert.deepEqual(unassigned.summary, second.summary);
 
   const child = localPhotoPage(photos, 'g1', 'AA', 1);
   assert.equal(child.total, 10);
   assert.ok(child.items.every((item) => item.assignments.some((assignment) => assignment.childCode === 'AA')));
   assert.equal(localPhotoPage(photos, 'g1', 'all', 4).items.length, 0);
+});
+
+test('Фото: полная страница заполняет последний ряд при любом числе колонок', () => {
+  // The frame grid has 1–5 columns within the 1320 px cabinet content.
+  for (const columns of [1, 2, 3, 4, 5]) assert.equal(photoPageSize % columns, 0, columns + ' columns');
 });
 
 test('Фото: номер страницы и фильтр из URL проверяются', () => {
@@ -47,8 +53,8 @@ test('Фото: номер страницы и фильтр из URL прове�
   assert.equal(photoFilter('AB'), 'AB');
   for (const value of [undefined, 'a', 'A001', 'ABCD', 'all ', ['A']]) assert.equal(photoFilter(value), 'all');
   assert.equal(photoPages(0), 1);
-  assert.equal(photoPages(48), 1);
-  assert.equal(photoPages(49), 2);
+  assert.equal(photoPages(60), 1);
+  assert.equal(photoPages(61), 2);
 });
 
 test('Фото: свободный код ребёнка берётся из сводки группы', () => {
