@@ -4,13 +4,13 @@
 
 - Дата: 2026-09-23.
 - Ветка: `codex/u-design-system` от `main` `bb35665` (merge PR #50); worktree `/home/user/rabit-api-worktrees/u-design-system`.
-- PR: открывается draft после коммитов U1.
+- PR: [#53](https://github.com/rebit-pro/rabit-api/pull/53) draft, base `main`; head — коммиты U1a `a144f1e`, U1b `de5a5f0` и этот журнал.
 - Документация: [план](plan.md), мастер-план [design-ux-plan](../design-ux-plan/plan.md), отчёт пакета [docs/waves/design-ux](../../waves/design-ux/README.md).
-- Завершено: U1a (очистка frontend) и U1b (граф, пакет design-ux, D3 merged, канонический патч MoreFoto); проверки DX-U1-01/03/04/05/06 — PASS.
-- Сейчас: коммиты U1, push, draft PR.
+- Завершено: U1a (очистка frontend) и U1b (граф, пакет design-ux, D3 merged, канонический патч MoreFoto); проверки DX-U1-01/03/04/05/06 — PASS; draft PR #53.
+- Сейчас: U1 завершена.
 - Следующий шаг: U2 — детализировать план волны (токены, шрифты, замена глобальных стилей Berry), затем код.
 - Блокеры: нет.
-- Рабочее дерево: изменения U1a/U1b до коммита.
+- Рабочее дерево: чистое после коммита журнала; node_modules — volume `rabit-u-node` (после `npm uninstall`) и чистый `rabit-u-node-ci` (`npm ci` на новом lockfile).
 - Команды следующей проверки: быстрые frontend-проверки из раздела 11 плана; `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
 
 ## Тест-кейсы
