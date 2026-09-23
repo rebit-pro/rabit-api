@@ -547,10 +547,12 @@ test('#54/#55: большая группа открывается страниц
   ).data;
   const listing = '/api/v1/shoots/' + shoot.id + '/photos';
   const authorization = { Authorization: 'Bearer ' + (await token(page)) };
-  // 50 frames: a full page of 48 and a second page of two.
-  for (let first = 0; first < 50; first += 5)
+  // A full page (photoPageSize in src/modules/morefoto/photos/paging.ts) and a second page of two frames.
+  const perPage = 60;
+  const frames = perPage + 2;
+  for (let first = 0; first < frames; first += 5)
     await Promise.all(
-      Array.from({ length: 5 }, async (_, offset) =>
+      Array.from({ length: Math.min(5, frames - first) }, async (_, offset) =>
         result(
           await page.request.post(listing, {
             headers: authorization,
@@ -570,7 +572,7 @@ test('#54/#55: большая группа открывается страниц
           .data.meta.total,
       { timeout: 120000 }
     )
-    .toBe(50);
+    .toBe(frames);
 
   const lists: URL[] = [];
   const thumbs: string[] = [];
@@ -609,12 +611,12 @@ test('#54/#55: большая группа открывается страниц
 
   await page.addInitScript(() => performance.setResourceTimingBufferSize(1000));
   await page.goto('/cabinet/institutions/' + institution.id + '/shoots/' + shoot.id + '/photos?group=' + group.id);
-  await expect(page.getByTestId('photo-page-status')).toHaveText('Показано 48 из 50');
-  await expect(cards).toHaveCount(48);
-  await expect(page.getByTestId('photo-readiness')).toHaveText('Кадров: 50 · Детей: 0 · Без ребёнка: 50');
+  await expect(page.getByTestId('photo-page-status')).toHaveText('Показано ' + perPage + ' из ' + frames);
+  await expect(cards).toHaveCount(perPage);
+  await expect(page.getByTestId('photo-readiness')).toHaveText('Кадров: ' + frames + ' · Детей: 0 · Без ребёнка: ' + frames);
   expect(lists).toHaveLength(1);
-  expect(Object.fromEntries(lists[0]!.searchParams)).toEqual({ groupId: group.id, status: 'ready', page: '1', pageSize: '48' });
-  await showAll(48);
+  expect(Object.fromEntries(lists[0]!.searchParams)).toEqual({ groupId: group.id, status: 'ready', page: '1', pageSize: String(perPage) });
+  await showAll(perPage);
   await expect(page.getByText('Кадр не загрузился', { exact: true })).toHaveCount(0);
   expect(thumbs.filter((url) => url === broken)).toHaveLength(2);
   // Resource Timing keeps start and end on one sub-millisecond clock of the page: the queue starts the next
@@ -624,21 +626,21 @@ test('#54/#55: большая группа открывается страниц
       .filter((entry) => /^\/api\/v1\/photos\/[0-9a-f-]{36}\/thumb$/.test(new URL(entry.name).pathname) && entry.responseEnd > 0)
       .map((entry) => ({ start: entry.startTime, end: entry.responseEnd }))
   );
-  expect(previewSpans.length).toBeGreaterThanOrEqual(48);
+  expect(previewSpans.length).toBeGreaterThanOrEqual(perPage);
   expect(peakOverlap(previewSpans)).toBeLessThanOrEqual(6);
   await page.screenshot({ path: testInfo.outputPath('q54-desktop-photos.png'), fullPage: true, animations: 'disabled' });
 
   await pageButton(2).click();
   await expect(page).toHaveURL(/[?&]page=2(&|$)/);
   await expect(cards).toHaveCount(2);
-  await expect(page.getByTestId('photo-page-status')).toHaveText('Показано 2 из 50');
+  await expect(page.getByTestId('photo-page-status')).toHaveText('Показано 2 из ' + frames);
   await showAll(2);
   expect(lists).toHaveLength(2);
   // Frames already shown come from the page cache when the list returns to them.
   const downloaded = thumbs.length;
   await pageButton(1).click();
-  await expect(cards).toHaveCount(48);
-  await showAll(48);
+  await expect(cards).toHaveCount(perPage);
+  await showAll(perPage);
   await pageButton(2).click();
   await expect(cards).toHaveCount(2);
   await showAll(2);
@@ -652,7 +654,7 @@ test('#54/#55: большая группа открывается страниц
   await page.getByTestId('child-code').locator('input').fill('A');
   await page.getByRole('button', { name: 'Назначить ребёнку', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Кадры назначены ребёнку.' })).toBeVisible();
-  await expect(page.getByTestId('photo-readiness')).toHaveText('Кадров: 50 · Детей: 1 · Без ребёнка: 49');
+  await expect(page.getByTestId('photo-readiness')).toHaveText('Кадров: ' + frames + ' · Детей: 1 · Без ребёнка: ' + (frames - 1));
   expect(lists).toHaveLength(beforeAssignment + 1);
   expect(lists[lists.length - 1]!.searchParams.get('page')).toBe('2');
 

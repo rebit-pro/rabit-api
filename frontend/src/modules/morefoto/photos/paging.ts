@@ -1,7 +1,7 @@
 import type { ManagedPhoto } from './types.js';
 
-// 48 fills whole rows at 2, 3, 4 and 6 columns of the frame grid.
-export const photoPageSize = 48;
+// The 1320 px content fits 1–5 columns of 220 px frames; 60 fills the last row at each of them.
+export const photoPageSize = 60;
 export interface PhotoGroupSummary {
   photos: number;
   unassigned: number;
