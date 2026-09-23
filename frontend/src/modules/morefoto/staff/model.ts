@@ -1,3 +1,4 @@
+import type { AvatarRef } from '@/api/auth';
 import type { StaffRole } from '../types';
 export type AccountStatus = 'pending' | 'active' | 'blocked';
 /** Personal invitation of a pending staff member; the link itself only travels in the letter. */
@@ -17,6 +18,7 @@ export interface StaffSummary {
   accountStatus: AccountStatus;
   assignmentCount: number;
   invitation?: StaffInvitation | null;
+  avatar?: AvatarRef | null;
 }
 export interface StaffDetail extends Omit<StaffSummary, 'assignmentCount'> {
   institutionIds: string[];

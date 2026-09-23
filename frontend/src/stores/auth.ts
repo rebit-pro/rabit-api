@@ -226,6 +226,12 @@ export const useAuthStore = defineStore('auth', () => {
     await router.push(allowed && candidate ? candidate : fallback);
   }
 
+  /** Re-reads the profile after the employee changed it (a new avatar), keeping the session. */
+  async function reloadProfile(): Promise<void> {
+    verifiedToken = null;
+    await ensureProfile();
+  }
+
   /**
    * Session opened by an invitation or a password reset link: the server already checked the new password.
    * `target` is honoured only for a staff role; without one the home path explains the missing access.
@@ -270,6 +276,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     clearSession,
     startSession,
+    reloadProfile,
     restoreSession,
     getAccessToken,
     login,

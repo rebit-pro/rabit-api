@@ -9,8 +9,15 @@ import type { AccountStatus, StaffInvitation, StaffSummary } from '../model';
 import { staffApi, staffError } from '../api';
 import { formatMoment } from '../../handoff/display';
 import MfStatus from '@/components/status/MfStatus.vue';
+import MfAvatar from '@/components/avatar/MfAvatar.vue';
+import { avatarSeed } from '@/components/avatar/avatar';
+import type { AvatarRef } from '@/api/auth';
+import { useAuthStore } from '@/stores/auth';
+import AvatarEditor from '../../avatar/AvatarEditor.vue';
+import { avatarApi } from '../../avatar/api';
 import { accountStatusTone } from '../../ui/statusTone';
 const { snapshot, loading, error, filters, reload, page, pages } = useStaffManagement();
+const auth = useAuthStore();
 const notice = shallowRef('');
 const editor = useStaffEditor(async () => {
   notice.value = 'Изменения сохранены. Активные сессии затронутых сотрудников завершены.';
@@ -56,6 +63,13 @@ async function resend(): Promise<void> {
     resending.value = false;
   }
 }
+async function avatarChanged(avatar: AvatarRef | null): Promise<void> {
+  const item = selected.value;
+  if (!item) return;
+  selected.value = { ...item, avatar };
+  if (item.id === auth.user?.id) await auth.reloadProfile();
+  await reload();
+}
 function edit(item?: StaffSummary): void {
   notice.value = '';
   invitationNotice.value = '';
@@ -99,8 +113,17 @@ function edit(item?: StaffSummary): void {
         @click="edit(item)"
       >
         <span class="staff-person"
-          ><strong>{{ item.name }}</strong
-          ><small>{{ item.email }}</small></span
+          ><MfAvatar
+            :seed="avatarSeed(item.id, item.email)"
+            :name="item.name"
+            :email="item.email"
+            :size="32"
+            :src="item.avatar?.thumbUrl"
+            decorative
+          /><span class="staff-person__text"
+            ><strong>{{ item.name }}</strong
+            ><small>{{ item.email }}</small></span
+          ></span
         >
         <span><small>Роль</small>{{ roleLabels[item.role] }}</span>
         <span><small>Назначения</small>{{ item.assignmentCount }}</span>
@@ -128,6 +151,17 @@ function edit(item?: StaffSummary): void {
     @save="editor.save"
     @reset="editor.refresh"
   >
+    <AvatarEditor
+      v-if="selected"
+      class="mb-5"
+      :seed="avatarSeed(selected.id, selected.email)"
+      :name="selected.name"
+      :email="selected.email"
+      :avatar="selected.avatar"
+      :save="(file: File) => avatarApi.save(selected!.id, file)"
+      :remove="() => avatarApi.remove(selected!.id)"
+      @changed="avatarChanged"
+    />
     <div v-if="selected?.accountStatus === 'pending'" class="staff-invitation" data-testid="staff-invitation">
       <p>{{ invitationText(selected.invitation) }}</p>
       <v-alert v-if="invitationNotice" type="success" variant="tonal" role="status">{{ invitationNotice }}</v-alert>
@@ -176,7 +210,8 @@ function edit(item?: StaffSummary): void {
 .staff-row {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(190px, 2fr) minmax(120px, 1fr) 100px minmax(140px, auto) 24px;
+  /* Every row is its own grid: fixed tracks keep the columns aligned when a status carries the invitation date. */
+  grid-template-columns: minmax(190px, 2fr) minmax(120px, 1fr) 100px 210px 24px;
   gap: 16px;
   align-items: center;
   padding: 18px 20px;
@@ -203,8 +238,16 @@ function edit(item?: StaffSummary): void {
   color: var(--mf-color-text-secondary);
   font-size: 12px;
 }
-.staff-person {
+.staff-row .staff-person {
+  display: flex;
+  align-items: center;
+  gap: var(--mf-space-3);
   overflow-wrap: anywhere;
+}
+.staff-row .staff-person__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
 }
 .staff-empty {
   display: grid;

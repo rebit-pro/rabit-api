@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { AVATAR_NEUTRAL_TONE, avatarInitials, avatarTone } from './avatar';
+import { useProtectedImage } from '@/composables/useProtectedImage';
 
 type AvatarStatus = 'pending' | 'expired' | 'blocked';
 
@@ -14,9 +15,12 @@ const props = withDefaults(
     you?: boolean;
     /** Next to a visible name the avatar is decoration and stays out of the accessibility tree. */
     decorative?: boolean;
+    /** Versioned photo address from the API; the initials stay underneath while it loads or when it fails. */
+    src?: string | null;
   }>(),
-  { name: null, email: null, size: 32, status: null, you: false, decorative: false }
+  { name: null, email: null, size: 32, status: null, you: false, decorative: false, src: null }
 );
+const { source } = useProtectedImage(() => props.src);
 
 const statusText: Record<AvatarStatus, string> = {
   pending: 'ожидает регистрации',
@@ -50,6 +54,7 @@ const label = computed(() => {
     :aria-hidden="decorative ? 'true' : undefined"
   >
     <span class="mf-avatar__letters" aria-hidden="true">{{ letters }}</span>
+    <img v-if="source" :src="source" alt="" class="mf-avatar__photo" decoding="async" data-testid="avatar-photo" />
     <span v-if="status && size >= 40" class="mf-avatar__badge" aria-hidden="true">
       <v-icon :icon="badgeIcon[status]" />
     </span>
@@ -73,6 +78,14 @@ const label = computed(() => {
   letter-spacing: 0.02em;
   line-height: 1;
   user-select: none;
+}
+.mf-avatar__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
 }
 .mf-avatar--24 {
   --mf-avatar-size: 24px;

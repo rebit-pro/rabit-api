@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import MfAvatar from '../avatar/MfAvatar.vue';
 
-defineProps<{ name: string; email: string; seed: string; roleLabel: string; profileTo: string }>();
+defineProps<{ name: string; email: string; seed: string; roleLabel: string; profileTo: string; avatarSrc?: string | null }>();
 defineEmits<{ logout: [] }>();
 </script>
 
@@ -9,13 +9,13 @@ defineEmits<{ logout: [] }>();
   <v-menu location="bottom end" :offset="8" content-class="morefoto-app mf-ui-overlay">
     <template #activator="{ props: activator }">
       <v-btn v-bind="activator" variant="text" color="secondary" class="mf-user-menu" aria-label="Меню пользователя">
-        <MfAvatar :seed="seed" :name="name" :email="email" :size="32" decorative />
+        <MfAvatar :seed="seed" :name="name" :email="email" :size="32" :src="avatarSrc" decorative />
         <v-icon icon="mdi-chevron-down" size="18" class="mf-user-menu__chevron" />
       </v-btn>
     </template>
     <div class="mf-user-menu__panel">
       <div class="mf-user-menu__who">
-        <MfAvatar :seed="seed" :name="name" :email="email" :size="40" decorative />
+        <MfAvatar :seed="seed" :name="name" :email="email" :size="40" :src="avatarSrc" decorative />
         <div class="mf-user-menu__text">
           <strong>{{ name }}</strong>
           <span>{{ email }}</span>

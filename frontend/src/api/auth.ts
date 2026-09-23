@@ -30,6 +30,13 @@ export interface ConfirmRegistrationRequest {
   code: string;
 }
 
+/** Versioned avatar addresses from the API; without them the client draws initials. */
+export interface AvatarRef {
+  version: number;
+  thumbUrl: string;
+  fullUrl: string;
+}
+
 export interface AuthUser {
   role?: StaffRole;
   permissions?: string[];
@@ -37,6 +44,7 @@ export interface AuthUser {
   id: number;
   email: string;
   name: string;
+  avatar?: AvatarRef | null;
 }
 
 export interface LoginResponse {

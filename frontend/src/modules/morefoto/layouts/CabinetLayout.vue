@@ -83,6 +83,7 @@ watch(
         :email="auth.user?.email ?? ''"
         :seed="userSeed"
         :role-label="roleLabel"
+        :avatar-src="auth.user?.avatar?.thumbUrl"
         profile-to="/cabinet/profile"
         class="mf-appbar__user"
         @logout="auth.logout()"
@@ -90,7 +91,7 @@ watch(
     </v-app-bar>
     <v-navigation-drawer v-model="drawer" :permanent="mdAndUp" :temporary="!mdAndUp" width="248" class="mf-sidebar">
       <RouterLink to="/cabinet/profile" class="mf-sidebar__user" :aria-label="'Профиль: ' + userName">
-        <MfAvatar :seed="userSeed" :name="userName" :email="auth.user?.email" :size="40" decorative />
+        <MfAvatar :seed="userSeed" :name="userName" :email="auth.user?.email" :size="40" :src="auth.user?.avatar?.thumbUrl" decorative />
         <span class="mf-sidebar__who">
           <strong>{{ userName }}</strong>
           <span>{{ roleLabel }}</span>

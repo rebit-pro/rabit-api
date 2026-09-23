@@ -3,9 +3,13 @@ import { computed } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { isStaffRole, roleLabels } from '../types';
 import ChangePasswordForm from './ChangePasswordForm.vue';
+import AvatarEditor from '../avatar/AvatarEditor.vue';
+import { avatarApi } from '../avatar/api';
+import { avatarSeed } from '@/components/avatar/avatar';
 
 const auth = useAuthStore();
 const role = computed(() => (isStaffRole(auth.user?.role) ? roleLabels[auth.user.role] : 'Доступ не назначен'));
+const seed = computed(() => avatarSeed(auth.user?.id, auth.user?.email));
 </script>
 
 <template>
@@ -15,6 +19,16 @@ const role = computed(() => (isStaffRole(auth.user?.role) ? roleLabels[auth.user
   </header>
   <section class="mf-panel mf-profile">
     <h2>Данные учётной записи</h2>
+    <AvatarEditor
+      class="mt-5"
+      :seed="seed"
+      :name="auth.user?.name"
+      :email="auth.user?.email"
+      :avatar="auth.user?.avatar"
+      :save="avatarApi.saveMine"
+      :remove="avatarApi.removeMine"
+      @changed="auth.reloadProfile()"
+    />
     <dl>
       <div>
         <dt>Имя</dt>
