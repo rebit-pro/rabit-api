@@ -221,7 +221,8 @@ def test_live(state):
     (ROOT / "frontend/var").mkdir(exist_ok=True)
     docker("cp", state["id"] + "-fpm:/runtime/e4-fixture.json", str(ROOT / "frontend/var/e4-fixture.json"))
     print("Running real browser E2E", flush=True)
-    docker("run", "--rm", "--network", "container:" + state["id"] + "-frontend", "--shm-size=1g", *state["nodeArgs"], "--env", "E2E_BASE_URL=http://127.0.0.1", IMAGE, "npm", "run", "test:e2e:live", log=Path(state["report"], "browser.log"))
+    bench = [arg for name in ("E2E_MEDIA_BENCH", "E2E_MEDIA_BENCH_COUNT") if os.environ.get(name) for arg in ("--env", name + "=" + os.environ[name])]
+    docker("run", "--rm", "--network", "container:" + state["id"] + "-frontend", "--shm-size=1g", *state["nodeArgs"], "--env", "E2E_BASE_URL=http://127.0.0.1", *bench, IMAGE, "npm", "run", "test:e2e:live", log=Path(state["report"], "browser.log"))
     results = json.loads((ROOT / "frontend/reports/e2e-live/results.json").read_text())
     stats = results["stats"]
     if stats["unexpected"] or stats["skipped"] or stats["expected"] < 34:

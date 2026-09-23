@@ -1,4 +1,4 @@
-import { test, expect, type APIResponse, type Page } from '@playwright/test';
+import { test, expect, type APIResponse, type Page, type Request } from '@playwright/test';
 import { login, token } from './helpers.js';
 
 const png = Buffer.from(
@@ -6,6 +6,27 @@ const png = Buffer.from(
   'base64'
 );
 const problems = new WeakMap<Page, string[]>();
+
+function crc32(bytes: Buffer): number {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+// A tEXt chunk before IEND gives a valid PNG with its own SHA-256, so the server does not treat it as a duplicate.
+function pngVariant(label: string): Buffer {
+  const type = Buffer.from('tEXt', 'latin1');
+  const text = Buffer.from('Comment\0' + label, 'latin1');
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(text.length);
+  const checksum = Buffer.alloc(4);
+  checksum.writeUInt32BE(crc32(Buffer.concat([type, text])));
+  const end = png.length - 12;
+  return Buffer.concat([png.subarray(0, end), length, type, text, checksum, png.subarray(end)]);
+}
 
 async function result(response: APIResponse, status: number) {
   expect(response.status(), await response.text()).toBe(status);
@@ -387,4 +408,101 @@ test('D1/D2: приватное фото получает M:N-разметку �
   await expect(page.getByTestId('photo-card')).toContainText('A001 · B001');
   await expect(page.getByTestId('photo-card')).toContainText('Обложка');
   await page.screenshot({ path: testInfo.outputPath('d2-mobile-assignments.png'), fullPage: true });
+});
+
+test('#33: партия отправляется по два файла без ожидания превью и переживает обновление страницы', async ({ page }) => {
+  test.setTimeout(120000);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await login(page);
+  const suffix = crypto.randomUUID().slice(0, 8);
+  const institution = (
+    await result(
+      await page.request.post('/api/v1/institutions', {
+        headers: await headers(page),
+        data: { name: 'Q33 Детский сад ' + suffix, address: 'Москва' }
+      }),
+      201
+    )
+  ).data;
+  const shoot = (
+    await result(
+      await page.request.post('/api/v1/institutions/' + institution.id + '/shoots', {
+        headers: await headers(page),
+        data: { name: 'Q33 Съёмка', date: '2026-10-20' }
+      }),
+      201
+    )
+  ).data;
+  const group = (
+    await result(
+      await page.request.post('/api/v1/shoots/' + shoot.id + '/groups', {
+        headers: await headers(page),
+        data: { name: 'Q33 Ромашки', groupKind: 'regular' }
+      }),
+      201
+    )
+  ).data;
+  await page.goto('/cabinet/institutions/' + institution.id + '/shoots/' + shoot.id + '/photos?group=' + group.id);
+  await expect(page.getByText('Q33 Ромашки', { exact: true })).toBeVisible();
+
+  const uploads = '/api/v1/shoots/' + shoot.id + '/photos';
+  const isUpload = (request: Request) => request.method() === 'POST' && new URL(request.url()).pathname === uploads;
+  // Overlap is read from the browser network timings: Playwright delivers request events in its own order.
+  const spans: { start: number; end: number }[] = [];
+  const finished: number[] = [];
+  const checks: number[] = [];
+  page.on('request', (request) => {
+    if (!isUpload(request) && request.method() === 'GET' && /^\/api\/v1\/photos\/[0-9a-f-]{36}$/.test(new URL(request.url()).pathname))
+      checks.push(Date.now());
+  });
+  const settle = (request: Request) => {
+    if (!isUpload(request)) return;
+    finished.push(Date.now());
+    const timing = request.timing();
+    spans.push({ start: timing.startTime, end: timing.startTime + Math.max(timing.responseEnd, 0) });
+  };
+  page.on('requestfinished', settle);
+  page.on('requestfailed', settle);
+  const overlap = () => {
+    const edges = spans.flatMap(({ start, end }) => [
+      { at: start, delta: 1 },
+      { at: end, delta: -1 }
+    ]);
+    edges.sort((left, right) => left.at - right.at || left.delta - right.delta);
+    let current = 0;
+
+    return edges.reduce((peak, edge) => Math.max(peak, (current += edge.delta)), 0);
+  };
+
+  const input = page.locator('input[type="file"][aria-label="Выбрать фотографии"]');
+  const files = [1, 2, 3, 4, 5].map((index) => ({
+    name: 'batch-' + index + '.png',
+    mimeType: 'image/png',
+    buffer: pngVariant(suffix + '-' + index)
+  }));
+  await input.setInputFiles([
+    ...files.slice(0, 2),
+    { name: 'batch-broken.png', mimeType: 'image/png', buffer: Buffer.from('not an image') },
+    ...files.slice(2)
+  ]);
+  await page.getByRole('button', { name: 'Загрузить на сервер', exact: true }).click();
+  const rows = page.locator('[data-upload-id]');
+  for (const file of files) await expect(rows.filter({ hasText: file.name })).toContainText('Готово', { timeout: 30000 });
+  await expect(rows.filter({ hasText: 'batch-broken.png' })).toContainText('Ошибка');
+  await expect(rows.filter({ hasText: 'batch-broken.png' })).toContainText('Сервер отклонил файл');
+  expect(finished).toHaveLength(6);
+  expect(overlap()).toBeLessThanOrEqual(2);
+  // Statuses are checked from two seconds after acceptance, so more POSTs than the parallel limit end before the first check.
+  expect(finished.filter((time) => time < Math.min(...checks)).length).toBeGreaterThanOrEqual(3);
+  await expect(page.getByTestId('photo-card')).toHaveCount(5);
+
+  await input.setInputFiles({ name: 'after-reload.png', mimeType: 'image/png', buffer: pngVariant(suffix + '-reload') });
+  await page.getByRole('button', { name: 'Загрузить на сервер', exact: true }).click();
+  await expect(rows.filter({ hasText: 'after-reload.png' })).toContainText('Обрабатывается');
+  await expect(page.getByRole('button', { name: 'Пауза', exact: true })).toHaveCount(0);
+  const sent = finished.length;
+  await page.reload();
+  await expect(page.locator('[data-upload-id]').filter({ hasText: 'after-reload.png' })).toContainText('Готово', { timeout: 30000 });
+  expect(finished).toHaveLength(sent);
+  await expect(page.getByTestId('photo-card')).toHaveCount(6);
 });

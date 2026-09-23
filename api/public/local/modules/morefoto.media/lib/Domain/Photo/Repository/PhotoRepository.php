@@ -125,13 +125,44 @@ final readonly class PhotoRepository
         return is_array($row) ? (int)$row['TOTAL'] : 0;
     }
 
-    public function pendingJobs(int $limit): Result
+    /**
+     * Rows younger than $minAgeSeconds are left to the immediate publisher and its deduplication window.
+     */
+    public function pendingJobs(int $limit, int $minAgeSeconds): Result
     {
-        if (1 > $limit || 500 < $limit) {
-            throw new \InvalidArgumentException('Invalid pending job limit.');
+        if (1 > $limit || 500 < $limit || 0 > $minAgeSeconds || 3600 < $minAgeSeconds) {
+            throw new \InvalidArgumentException('Invalid pending job selection.');
         }
 
-        return $this->query("SELECT UF_PUBLIC_ID,UF_REVISION FROM b_hlbd_mf_photo WHERE UF_STATUS='processing' AND UF_JOB_STATE='pending' ORDER BY ID LIMIT {$limit}");
+        return $this->query(
+            'SELECT UF_PUBLIC_ID,UF_REVISION,TIMESTAMPDIFF(SECOND,UF_UPDATED_AT,UTC_TIMESTAMP()) AS PENDING_SECONDS'
+            . " FROM b_hlbd_mf_photo WHERE UF_STATUS='processing' AND UF_JOB_STATE='pending'"
+            . " AND UF_UPDATED_AT<=UTC_TIMESTAMP()-INTERVAL {$minAgeSeconds} SECOND ORDER BY ID LIMIT {$limit}",
+        );
+    }
+
+    /**
+     * @return null|array{
+     *     UF_STATUS: string,
+     *     UF_ORIGINAL_PATH: null|string,
+     *     UF_MIME_TYPE: string,
+     *     UF_WIDTH: int|string,
+     *     UF_HEIGHT: int|string,
+     *     UF_ATTEMPTS: int|string,
+     *     CREATED_SECONDS: int|string,
+     *     UPDATED_SECONDS: int|string,
+     * }
+     */
+    public function processingJob(string $publicId): ?array
+    {
+        $row = $this->query(
+            'SELECT UF_STATUS,UF_ORIGINAL_PATH,UF_MIME_TYPE,UF_WIDTH,UF_HEIGHT,UF_ATTEMPTS,'
+            . 'TIMESTAMPDIFF(SECOND,UF_CREATED_AT,UTC_TIMESTAMP()) AS CREATED_SECONDS,'
+            . 'TIMESTAMPDIFF(SECOND,UF_UPDATED_AT,UTC_TIMESTAMP()) AS UPDATED_SECONDS'
+            . ' FROM b_hlbd_mf_photo WHERE UF_PUBLIC_ID=' . $this->quote($publicId) . ' LIMIT 1',
+        )->fetch();
+
+        return is_array($row) ? $row : null;
     }
 
     public function markPublished(string $publicId): void
