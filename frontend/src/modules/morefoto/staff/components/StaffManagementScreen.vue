@@ -118,7 +118,7 @@ function edit(item?: StaffSummary): void {
   align-items: center;
   padding: 18px 20px;
   border: 0;
-  border-bottom: 1px solid #e2e8ec;
+  border-bottom: 1px solid var(--mf-color-border);
   background: transparent;
   color: inherit;
   text-align: left;
@@ -129,7 +129,7 @@ function edit(item?: StaffSummary): void {
 }
 .staff-row:hover,
 .staff-row:focus-visible {
-  background: #f4f8fa;
+  background: var(--mf-color-bg);
   outline: none;
 }
 .staff-row span {
@@ -137,7 +137,7 @@ function edit(item?: StaffSummary): void {
   gap: 2px;
 }
 .staff-row small {
-  color: #61717d;
+  color: var(--mf-color-text-secondary);
   font-size: 12px;
 }
 .staff-person {
@@ -148,7 +148,7 @@ function edit(item?: StaffSummary): void {
   place-items: center;
   gap: 8px;
   padding: 48px 20px;
-  color: #61717d;
+  color: var(--mf-color-text-secondary);
 }
 @media (max-width: 760px) {
   .staff-filters {

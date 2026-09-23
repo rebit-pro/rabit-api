@@ -96,17 +96,17 @@ const periodTo = computed(() => ({
 </template>
 <style scoped>
 .group-summary {
-  border: 1px solid #dde2e5;
+  border: 1px solid var(--mf-color-border);
   border-radius: 8px;
   padding: 24px;
   min-width: 0;
-  background: #fff;
+  background: var(--mf-color-surface);
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
 .group-summary--staff {
-  border-top: 3px solid #4f7771;
+  border-top: 3px solid var(--mf-color-primary);
 }
 .group-summary__header {
   display: flex;
@@ -128,7 +128,7 @@ const periodTo = computed(() => ({
   display: flex;
   gap: 8px;
   align-items: center;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 .group-summary__totals,
 .group-summary__dates {
@@ -138,13 +138,13 @@ const periodTo = computed(() => ({
 }
 .group-summary__totals {
   padding: 16px 0;
-  border-block: 1px solid #e7ebed;
+  border-block: 1px solid var(--mf-color-border);
 }
 .group-summary__totals > div:last-child {
   grid-column: 1/-1;
 }
 .group-summary dt {
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   font-size: 14px;
   margin-bottom: 6px;
 }
@@ -162,20 +162,20 @@ const periodTo = computed(() => ({
 .group-summary__url {
   display: grid;
   gap: 6px;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   font-size: 14px;
 }
 .group-summary__url input {
   width: 100%;
   min-width: 0;
-  border: 1px solid #8d9b9e;
+  border: 1px solid var(--mf-color-border-strong);
   border-radius: 4px;
   padding: 10px 12px;
-  color: #253638;
-  background: #fafcfb;
+  color: var(--mf-color-text);
+  background: var(--mf-color-bg);
 }
 .group-summary__url input:focus-visible {
-  outline: 2px solid #346d66;
+  outline: 2px solid var(--mf-color-focus);
   outline-offset: 2px;
 }
 .group-summary__actions {
@@ -188,7 +188,7 @@ const periodTo = computed(() => ({
   max-width: 100%;
 }
 .group-summary__notice {
-  color: #315b53;
+  color: var(--mf-color-link);
   overflow-wrap: anywhere;
 }
 @media (max-width: 600px) {

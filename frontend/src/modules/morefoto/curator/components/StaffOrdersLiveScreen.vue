@@ -155,7 +155,7 @@ const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => ph
 }
 .staff-orders__total {
   margin-bottom: 12px;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 .staff-orders__list {
   list-style: none;

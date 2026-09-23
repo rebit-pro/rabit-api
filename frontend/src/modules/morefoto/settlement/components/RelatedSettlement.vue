@@ -42,7 +42,7 @@ const events = computed(() => {
   font-size: 18px;
 }
 .related-sale__event {
-  border-top: 1px solid #dce3e8;
+  border-top: 1px solid var(--mf-color-border);
   padding: 16px 0;
   margin-top: 12px;
 }

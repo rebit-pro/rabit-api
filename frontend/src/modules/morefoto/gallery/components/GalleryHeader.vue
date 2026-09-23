@@ -79,18 +79,18 @@ const remaining = computed(() => {
   font-size: 16px;
 }
 .gallery-context {
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   font-size: 14px;
   line-height: 1.6;
 }
 .gallery-context span {
   margin: 0 8px;
-  color: #8a9aa6;
+  color: var(--mf-color-text-tertiary);
 }
 .gallery-conditions {
   flex: 0 0 292px;
   padding: 22px 24px 14px;
-  background: #eaf3f9;
+  background: var(--mf-color-selected);
   border-radius: 12px;
   font-size: 14px;
   line-height: 1.6;
@@ -100,11 +100,11 @@ const remaining = computed(() => {
   gap: 10px;
   align-items: center;
   margin-bottom: 10px;
-  color: #24658a;
+  color: var(--mf-color-link);
 }
 .gallery-remaining {
   margin-top: 4px;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 .gallery-help {
   margin-left: -12px;

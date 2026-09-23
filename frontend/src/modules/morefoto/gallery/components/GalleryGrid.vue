@@ -29,14 +29,14 @@ defineEmits<{ open: [photo: GalleryPhoto] }>();
 }
 .photo-card {
   min-width: 0;
-  background: #fff;
-  border: 1px solid #dce4ea;
+  background: var(--mf-color-surface);
+  border: 1px solid var(--mf-color-border);
   border-radius: 10px;
   overflow: hidden;
   transition: border-color 0.15s;
 }
 .photo-card:hover {
-  border-color: #7babc9;
+  border-color: var(--mf-color-primary);
 }
 .photo-card__image {
   aspect-ratio: 2/3;
@@ -50,12 +50,12 @@ defineEmits<{ open: [photo: GalleryPhoto] }>();
   gap: 12px;
   padding: 15px 16px;
   text-align: left;
-  color: #24658a;
+  color: var(--mf-color-link);
   min-height: 64px;
 }
 .photo-card__label {
   display: block;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   font-size: 10px;
   letter-spacing: 0.12em;
   margin-bottom: 4px;
@@ -63,10 +63,10 @@ defineEmits<{ open: [photo: GalleryPhoto] }>();
 .photo-card__open strong {
   font-size: 14px;
   font-weight: 600;
-  color: #1e1e1e;
+  color: var(--mf-color-text);
 }
 .photo-card:focus-within {
-  outline: 2px solid #24658a;
+  outline: 2px solid var(--mf-color-focus);
   outline-offset: 3px;
 }
 @media (max-width: 1000px) {

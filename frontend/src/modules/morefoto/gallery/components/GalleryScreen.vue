@@ -118,7 +118,7 @@ const helpOpen = shallowRef(false);
 <style scoped>
 .gallery-shell {
   min-height: 100svh;
-  background: #f8fafb;
+  background: var(--mf-color-bg);
 }
 .gallery-topbar {
   display: flex;
@@ -133,14 +133,14 @@ const helpOpen = shallowRef(false);
 }
 .gallery-topbar__caption {
   font-size: 13px;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   margin-left: auto;
 }
 .gallery-demo {
-  border-block: 1px solid #dce4ea;
-  background: #edf4f8;
+  border-block: 1px solid var(--mf-color-border);
+  background: var(--mf-color-selected);
   text-align: center;
-  color: #506775;
+  color: var(--mf-color-text-secondary);
   padding: 10px 20px;
   font-size: 12px;
   line-height: 1.6;
@@ -185,8 +185,8 @@ const helpOpen = shallowRef(false);
   max-width: 1240px;
   margin: 0 auto;
   padding: 24px 0;
-  border-top: 1px solid #dce4ea;
-  color: #5e6872;
+  border-top: 1px solid var(--mf-color-border);
+  color: var(--mf-color-text-secondary);
   font-size: 12px;
 }
 @media (max-width: 767px) {

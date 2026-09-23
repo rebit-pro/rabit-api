@@ -138,7 +138,7 @@ function photoCodes(photo: ManagedPhoto): string {
   align-items: center;
   flex-wrap: wrap;
   padding: 20px;
-  background: #f4f7fa;
+  background: var(--mf-color-bg);
   border-radius: 4px;
 }
 .collection-code {
@@ -146,7 +146,7 @@ function photoCodes(photo: ManagedPhoto): string {
   min-width: 0;
 }
 .collection-code__error {
-  color: #b42318;
+  color: var(--mf-tone-danger-fg);
   font-size: 12px;
   line-height: 1.4;
   margin-top: 6px;
@@ -157,7 +157,7 @@ function photoCodes(photo: ManagedPhoto): string {
   gap: 20px;
 }
 .photo-card {
-  border: 1px solid #dce4ea;
+  border: 1px solid var(--mf-color-border);
   border-radius: 4px;
   overflow: hidden;
   min-width: 0;
@@ -173,14 +173,14 @@ function photoCodes(photo: ManagedPhoto): string {
   font-weight: 600;
 }
 .photo-filename {
-  color: #5a6a7c;
+  color: var(--mf-color-text-secondary);
   font-size: 13px;
   overflow-wrap: anywhere;
   margin-top: 4px;
 }
 .photo-cover {
   display: inline-block;
-  color: #186b44;
+  color: var(--mf-tone-success-fg);
   font-size: 12px;
   margin-left: 8px;
 }

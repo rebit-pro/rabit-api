@@ -23,8 +23,8 @@ defineProps<{ snapshot: ConditionsSnapshot }>();
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
-  background: #dce3e8;
-  border: 1px solid #dce3e8;
+  background: var(--mf-color-border);
+  border: 1px solid var(--mf-color-border);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -33,7 +33,7 @@ defineProps<{ snapshot: ConditionsSnapshot }>();
   flex-direction: column;
   gap: 8px;
   padding: 20px;
-  background: white;
+  background: var(--mf-color-surface);
   min-width: 0;
 }
 .conditions-summary strong {

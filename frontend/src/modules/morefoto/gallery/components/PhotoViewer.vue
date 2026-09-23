@@ -111,7 +111,7 @@ watch(
   position: relative;
   height: min(64svh, 760px);
   min-height: 180px;
-  background: #e9eef2;
+  background: var(--mf-color-surface-2);
 }
 .photo-viewer .photo-viewer__nav {
   position: absolute;
@@ -140,7 +140,7 @@ watch(
   font-size: 15px;
 }
 .photo-viewer__counter span {
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   font-size: 12px;
 }
 @media (max-width: 767px) {

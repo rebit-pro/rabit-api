@@ -266,17 +266,17 @@ table {
 caption {
   text-align: left;
   padding-bottom: var(--mf-space-3);
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 th,
 td {
   padding: 4px 8px;
-  border-bottom: 1px solid #dce4ea;
+  border-bottom: 1px solid var(--mf-color-border);
   overflow-wrap: anywhere;
   vertical-align: middle;
 }
 th {
-  background: #f3f7fa;
+  background: var(--mf-color-bg);
   min-height: var(--mf-table-header);
   font-weight: 600;
 }
@@ -309,7 +309,7 @@ td:last-child {
   font-variant-numeric: tabular-nums;
 }
 .ui-table-selected {
-  background: #edf5fa;
+  background: var(--mf-color-selected);
 }
 .ui-table-sort {
   display: inline-flex;
@@ -373,7 +373,7 @@ td:last-child {
   }
   .ui-table-card {
     padding: 16px;
-    border: 1px solid #dce4ea;
+    border: 1px solid var(--mf-color-border);
     border-radius: 8px;
     min-width: 0;
   }
@@ -407,7 +407,7 @@ td:last-child {
   .ui-table-card dt {
     min-width: 0;
     overflow-wrap: anywhere;
-    color: #5e6872;
+    color: var(--mf-color-text-secondary);
   }
   .ui-table-card dd {
     margin: 0;
@@ -416,7 +416,7 @@ td:last-child {
   summary {
     min-height: 44px;
     padding-block: 12px;
-    color: #24658a;
+    color: var(--mf-color-link);
     cursor: pointer;
     font-size: var(--mf-text-small);
     overflow-wrap: anywhere;

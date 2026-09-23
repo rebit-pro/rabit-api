@@ -87,24 +87,24 @@ watch(error, async (value) => {
 }
 .payment-total-label {
   font-size: 13px;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   margin: 28px 0 6px;
 }
 .payment-total {
   font-size: 40px;
   line-height: 1.3;
   font-weight: 600;
-  color: #24658a;
+  color: var(--mf-color-link);
   margin-bottom: 24px;
 }
 .payment-note {
   font-size: 13px;
   line-height: 1.7;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 .payment-feedback {
   padding: 16px;
-  background: #fff3df;
+  background: var(--mf-tone-warning-bg);
   border-radius: 6px;
   font-size: 14px;
   line-height: 1.7;
@@ -112,8 +112,8 @@ watch(error, async (value) => {
 }
 .payment-notice {
   padding: 16px;
-  background: #eaf3f9;
-  color: #24658a;
+  background: var(--mf-color-selected);
+  color: var(--mf-color-link);
   border-radius: 6px;
   font-size: 14px;
   line-height: 1.7;

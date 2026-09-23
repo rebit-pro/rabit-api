@@ -62,7 +62,7 @@ const events = computed(() =>
 }
 .case-timeline li {
   padding: 16px 0;
-  border-bottom: 1px solid #dce3e8;
+  border-bottom: 1px solid var(--mf-color-border);
 }
 .case-timeline li p {
   margin-top: 6px;

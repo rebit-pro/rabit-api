@@ -93,7 +93,7 @@ const kinds = { physical: 'Печатный товар', digital: 'Один эл
   grid-template-columns: minmax(0, 1fr) minmax(160px, 0.6fr);
   gap: 16px;
   padding: 20px 0;
-  border-top: 1px solid #dce3e8;
+  border-top: 1px solid var(--mf-color-border);
   min-width: 0;
 }
 .condition-name {
@@ -111,7 +111,7 @@ const kinds = { physical: 'Печатный товар', digital: 'Один эл
 .gift-fields {
   margin-top: 24px;
   padding-top: 24px;
-  border-top: 1px solid #dce3e8;
+  border-top: 1px solid var(--mf-color-border);
 }
 @media (max-width: 600px) {
   .condition-product,

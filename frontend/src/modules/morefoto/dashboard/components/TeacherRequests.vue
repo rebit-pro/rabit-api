@@ -62,7 +62,7 @@ defineProps<{
   min-width: 0;
 }
 .teacher-requests__row {
-  border-top: 1px solid #dde2e5;
+  border-top: 1px solid var(--mf-color-border);
   margin-top: 20px;
   padding-top: 20px;
 }
