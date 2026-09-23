@@ -85,6 +85,8 @@ export interface HandoffWorkspace {
   photos: ManagedPhoto[];
   role: StaffRole;
   now: string;
+  /** U5 server split of the visible staff requests; the demo counts its local list instead. */
+  requestSummary?: Record<'submitted' | 'clarification' | 'transferred', number>;
 }
 export interface LinkCommand {
   kind: 'link';

@@ -41,17 +41,24 @@ export interface LiveLinkDetail extends LiveLinkItem {
   referenceNow: string;
   history: LiveLinkEvent[];
 }
-interface LinkPage {
+/** U5: counters of the whole visible scope, independent of the state filter and paging. */
+export interface LinkCounters {
+  referenceNow: string;
+  byState: { preparing: number; open: number; closed: number };
+  closingSoon: number;
+  prepared: number;
+}
+export interface LinkPage {
   items: LiveLinkItem[];
-  meta: { page: number; pageSize: number; total: number; totalPages: number };
+  meta: { page: number; pageSize: number; total: number; totalPages: number; summary?: LinkCounters };
 }
 const key = (value: string) => value.replace(/-/g, '');
 const path = (groupId: string) => '/api/v1/groups/' + encodeURIComponent(groupId);
 
 export const linksApi = {
-  async list(page = 1): Promise<LinkPage> {
+  async list(page = 1, filters: { state?: LiveLinkItem['state']; pageSize?: number } = {}): Promise<LinkPage> {
     const response = await api.get<{ data: { items: LiveLinkItem[] }; meta: LinkPage['meta'] }>('/api/v1/group-links', {
-      params: { page, pageSize: 100 },
+      params: { page, pageSize: filters.pageSize ?? 100, ...(filters.state ? { state: filters.state } : {}) },
       unwrapEnvelope: false
     });
     return { items: response.data.data.items, meta: response.data.meta };

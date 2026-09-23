@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/auth';
 import { isMockApiEnabled } from '@/mocks/config';
 import { isStaffRole, roleLabels } from '../types';
 import { cabinetNavigation } from './navigation';
+import { useNavigationCounters } from './useNavigationCounters';
 import MfLogo from '@/components/brand/MfLogo.vue';
 import MfAvatar from '@/components/avatar/MfAvatar.vue';
 import { avatarSeed } from '@/components/avatar/avatar';
@@ -39,11 +40,15 @@ const roleLabel = computed(() => (isStaffRole(auth.user?.role) ? roleLabels[auth
 const userName = computed(() => auth.user?.name?.trim() || auth.user?.email || 'Сотрудник');
 const userSeed = computed(() => avatarSeed(auth.user?.id, auth.user?.email));
 const sectionTitle = computed(() => String(route.meta.title ?? ''));
+const staffRole = computed(() => (isStaffRole(auth.user?.role) ? auth.user.role : null));
+const counters = useNavigationCounters(() => staffRole.value);
+const countId = (path: string) => 'nav-count' + path.replace(/\//g, '-');
 const navigation = computed(() =>
   cabinetNavigation({
-    role: isStaffRole(auth.user?.role) ? auth.user.role : null,
+    role: staffRole.value,
     permissions: auth.user?.permissions ?? [],
-    demo: isMockApiEnabled
+    demo: isMockApiEnabled,
+    counters: counters.value
   })
 );
 // The app bar gets its shadow only after the page has scrolled (design plan 7.4).
@@ -107,8 +112,15 @@ watch(
               :to="item.to"
               :title="item.title"
               :prepend-icon="item.icon"
+              :aria-describedby="item.count ? countId(item.to) : undefined"
               class="mf-navigation-item"
-            />
+            >
+              <!-- The badge stays out of the link name, so the section keeps its plain name for assistive tech. -->
+              <template v-if="item.count" #append>
+                <span class="mf-navigation-count" aria-hidden="true">{{ item.count }}</span>
+                <span :id="countId(item.to)" hidden>{{ item.count }} ждут вашего внимания</span>
+              </template>
+            </v-list-item>
           </v-list>
         </section>
       </nav>
@@ -203,6 +215,18 @@ watch(
 .mf-sidebar__list {
   padding: 0;
   background: transparent;
+}
+.mf-navigation-count {
+  min-width: 22px;
+  padding: 1px var(--mf-space-2);
+  border-radius: var(--mf-radius-full);
+  background: var(--mf-tone-warning-bg);
+  color: var(--mf-tone-warning-fg);
+  font-size: var(--mf-text-xs);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-weight: var(--mf-weight-semibold);
+  line-height: 18px;
+  text-align: center;
 }
 .mf-navigation-item {
   position: relative;

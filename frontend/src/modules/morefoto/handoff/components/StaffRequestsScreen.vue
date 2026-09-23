@@ -11,6 +11,9 @@ import { formatMoment, requestStatus } from '../display';
 import type { StaffCommand, StaffRequest } from '../types';
 import '../handoff.css';
 import MfStatus from '@/components/status/MfStatus.vue';
+import MfStatTile from '@/components/viz/MfStatTile.vue';
+import { plural } from '@/components/viz/measures';
+import { CHART_CATEGORY } from '../../ui/chartPalette';
 import { toneOf } from '@/components/status/tones';
 import { staffRequestTone } from '../../ui/statusTone';
 const route = useRoute(),
@@ -25,13 +28,33 @@ const selected = computed(() => data.value?.requests.find((r) => r.id === route.
 const reviewing = computed(() => ['curator', 'organizer'].includes(data.value?.role ?? ''));
 const createAllowed = computed(() => ['teacher', 'organizer'].includes(data.value?.role ?? ''));
 const titles = { submit: 'Передать список куратору', clarify: 'Запросить уточнение', confirm: 'Подтвердить перенос' };
+type RequestState = keyof typeof requestStatus;
+const statusFilter = shallowRef<RequestState | null>(null);
 const requests = computed(
   () =>
     data.value?.requests
       .filter((r) => !route.query.shoot || r.shootId === route.query.shoot)
+      .filter((r) => null === statusFilter.value || r.status === statusFilter.value)
       .slice()
       .reverse() ?? []
 );
+// Live counts come from the server summary (U5); the demo keeps every list locally and counts it.
+const statusCounts = computed(() => {
+  if (!data.value) return null;
+  if (data.value.requestSummary) return data.value.requestSummary;
+  const counts: Record<RequestState, number> = { submitted: 0, clarification: 0, transferred: 0 };
+  for (const request of data.value.requests) counts[request.status as RequestState] += 1;
+  return counts;
+});
+const statusIcons: Record<RequestState, string> = {
+  submitted: 'mdi-clipboard-text-clock-outline',
+  clarification: 'mdi-message-question-outline',
+  transferred: 'mdi-check-circle-outline'
+};
+const lists = ['список', 'списка', 'списков'] as const;
+function toggleStatus(status: RequestState): void {
+  statusFilter.value = statusFilter.value === status ? null : status;
+}
 const { preview, error: previewError } = useTransferPreview(data, selected, reviewing);
 function open(action: StaffCommand['action'], request?: StaffRequest) {
   editor.open(
@@ -126,6 +149,25 @@ function change(value: Partial<StaffCommand>) {
       </article>
     </template>
     <template v-else>
+      <section v-if="statusCounts && reviewing" class="handoff-tiles" aria-label="Списки по статусу" data-testid="request-tiles">
+        <MfStatTile
+          v-for="(label, status) in requestStatus"
+          :key="status"
+          :label="label"
+          :value="statusCounts[status]"
+          :unit="plural(statusCounts[status], lists)"
+          :pastel="CHART_CATEGORY.requests"
+          :icon="statusIcons[status]"
+          selectable
+          :active="statusFilter === status"
+          @select="toggleStatus(status)"
+        />
+      </section>
+      <p v-else-if="statusCounts" class="handoff-pills" aria-label="Мои списки по статусу">
+        <MfStatus v-for="(label, status) in requestStatus" :key="status" :tone="toneOf(staffRequestTone, status)"
+          >{{ label }}: {{ statusCounts[status] }}</MfStatus
+        >
+      </p>
       <p v-if="!requests.length" class="handoff-empty">
         Списков пока нет.
         {{ createAllowed ? 'Добавьте детей сотрудников по кодам из галереи.' : 'Здесь появятся списки от ответственных ваших учреждений.' }}

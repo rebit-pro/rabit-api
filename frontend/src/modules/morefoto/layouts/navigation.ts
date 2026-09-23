@@ -4,6 +4,8 @@ export interface NavigationItem {
   title: string;
   to: string;
   icon: string;
+  /** Things waiting for the user in this section (U5 summaries); absent or zero shows no badge. */
+  count?: number;
 }
 
 export interface NavigationGroup {
@@ -16,6 +18,8 @@ export interface NavigationContext {
   permissions: readonly string[];
   /** Demo mode shows the product screens that have no live API yet. */
   demo: boolean;
+  /** Waiting items by section path, e.g. groups to check under «Ссылки и сроки». */
+  counters?: Readonly<Record<string, number>>;
 }
 
 const item = (title: string, to: string, icon: string): NavigationItem => ({ title, to, icon });
@@ -24,13 +28,13 @@ const item = (title: string, to: string, icon: string): NavigationItem => ({ tit
  * Cabinet menu grouped into daily work and settings. Visibility mirrors the router guards: a role or permission
  * hides an item, it never grants access. The profile lives in the user block and the user menu.
  */
-export function cabinetNavigation({ role, permissions, demo }: NavigationContext): NavigationGroup[] {
+export function cabinetNavigation({ role, permissions, demo, counters = {} }: NavigationContext): NavigationGroup[] {
   if (null === role) return [];
   const can = (permission: string) => permissions.includes(permission);
   const work: NavigationItem[] = [];
   const settings: NavigationItem[] = [];
+  work.push(item('teacher' === role ? 'Мои группы' : 'Обзор', '/cabinet/overview', 'mdi-view-dashboard-outline'));
   if (demo) {
-    work.push(item('teacher' === role ? 'Мои группы' : 'Обзор', '/cabinet/overview', 'mdi-view-dashboard-outline'));
     if ('organizer' === role) work.push(item('Учреждения', '/cabinet/institutions', 'mdi-home-city-outline'));
     work.push(item('Ссылки и сроки', '/cabinet/links', 'mdi-link-variant'));
     if ('head' !== role) work.push(item('Списки сотрудников', '/cabinet/staff-requests', 'mdi-account-check-outline'));
@@ -56,8 +60,9 @@ export function cabinetNavigation({ role, permissions, demo }: NavigationContext
     if (can('catalog.manage')) settings.push(item('Каталог и цены', '/cabinet/catalog', 'mdi-tag-outline'));
     if (can('staff.manage')) settings.push(item('Сотрудники', '/cabinet/users', 'mdi-account-group-outline'));
   }
+  const counted = (items: NavigationItem[]) => items.map((entry) => (counters[entry.to] ? { ...entry, count: counters[entry.to] } : entry));
   return [
-    { title: 'Работа', items: work },
-    { title: 'Настройки', items: settings }
+    { title: 'Работа', items: counted(work) },
+    { title: 'Настройки', items: counted(settings) }
   ].filter((group) => group.items.length > 0);
 }

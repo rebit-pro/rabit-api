@@ -10,6 +10,10 @@ import { staffApi, staffError } from '../api';
 import { formatMoment } from '../../handoff/display';
 import MfStatus from '@/components/status/MfStatus.vue';
 import MfAvatar from '@/components/avatar/MfAvatar.vue';
+import MfStatTile from '@/components/viz/MfStatTile.vue';
+import MfDistribution from '@/components/viz/MfDistribution.vue';
+import { plural } from '@/components/viz/measures';
+import { CHART_CATEGORY, ROLE_PASTEL } from '../../ui/chartPalette';
 import { avatarSeed } from '@/components/avatar/avatar';
 import type { AvatarRef } from '@/api/auth';
 import { useAuthStore } from '@/stores/auth';
@@ -28,6 +32,24 @@ const statusLabels: Record<AccountStatus, string> = {
   pending: 'Ожидает регистрации',
   blocked: 'Доступ отключён'
 };
+const statusIcons: Record<AccountStatus, string> = {
+  pending: 'mdi-account-clock-outline',
+  active: 'mdi-account-check-outline',
+  blocked: 'mdi-account-lock-outline'
+};
+const summary = computed(() => snapshot.value?.meta.summary ?? null);
+const roleSegments = computed(() =>
+  (Object.keys(roleLabels) as (keyof typeof roleLabels)[]).map((role) => ({
+    key: role,
+    label: roleLabels[role],
+    value: summary.value?.byRole[role] ?? 0,
+    pastel: ROLE_PASTEL[role]
+  }))
+);
+function toggleStatus(status: AccountStatus): void {
+  filters.accountStatus = filters.accountStatus === status ? null : status;
+  void reload(1);
+}
 const statusItems = [
   { title: 'Все статусы', value: null },
   ...(Object.entries(statusLabels) as [AccountStatus, string][]).map(([value, title]) => ({ value, title }))
@@ -88,6 +110,25 @@ function edit(item?: StaffSummary): void {
       <v-btn variant="outlined" :disabled="loading" @click="reload()">Обновить</v-btn>
     </div>
   </header>
+  <section v-if="summary" class="staff-summary mb-5" aria-label="Сотрудники по статусу учётки" data-testid="staff-tiles">
+    <div class="staff-tiles">
+      <MfStatTile
+        v-for="status in ['pending', 'active', 'blocked'] as AccountStatus[]"
+        :key="status"
+        :label="statusLabels[status]"
+        :value="summary.byAccountStatus[status]"
+        :unit="plural(summary.byAccountStatus[status], ['сотрудник', 'сотрудника', 'сотрудников'])"
+        :pastel="CHART_CATEGORY.staff"
+        :icon="statusIcons[status]"
+        selectable
+        :active="filters.accountStatus === status"
+        @select="toggleStatus(status)"
+      />
+    </div>
+    <div class="mf-panel">
+      <MfDistribution title="Сотрудники по ролям" :segments="roleSegments" :unit-forms="['сотрудника', 'сотрудников', 'сотрудников']" />
+    </div>
+  </section>
   <form class="staff-filters mb-5" aria-label="Фильтры сотрудников" @submit.prevent="reload(1)">
     <v-text-field v-model="filters.q" label="Имя или email" clearable hide-details />
     <v-select v-model="filters.role" :items="roleItems" label="Роль" hide-details />
@@ -197,6 +238,15 @@ function edit(item?: StaffSummary): void {
   border: 1px solid var(--mf-tone-pending-border);
   border-radius: var(--mf-radius-sm);
   background: var(--mf-tone-pending-bg);
+}
+.staff-summary {
+  display: grid;
+  gap: var(--mf-space-4);
+}
+.staff-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: var(--mf-space-4);
 }
 .staff-filters {
   display: grid;

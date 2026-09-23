@@ -44,6 +44,7 @@ router.beforeEach(async (to) => {
         'Catalog',
         'Users',
         'GroupConditions',
+        'CabinetOverview',
         'CabinetProfile',
         'CabinetWelcome',
         'OrganizationList',

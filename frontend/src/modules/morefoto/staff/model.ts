@@ -49,7 +49,14 @@ export interface AssignmentOptions {
 }
 export interface StaffPage {
   items: StaffSummary[];
-  meta: { page: number; pageSize: number; total: number; totalPages: number };
+  meta: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    /** U5: each split ignores its own filter, so a tile shows what the list will hold after a click. */
+    summary?: { byAccountStatus: Record<AccountStatus, number>; byRole: Record<string, number> };
+  };
 }
 export interface StaffDraft {
   id: number | null;

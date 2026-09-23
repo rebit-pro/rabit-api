@@ -191,3 +191,17 @@
 
 
 }
+
+.handoff-tiles {
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap:var(--mf-space-4);
+  margin-bottom:var(--mf-space-5)
+}
+
+.handoff-pills {
+  display:flex;
+  flex-wrap:wrap;
+  gap:var(--mf-space-2);
+  margin-bottom:var(--mf-space-5)
+}

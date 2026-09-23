@@ -98,7 +98,7 @@ const MainRoutes: RouteRecordRaw = {
       name: 'CabinetOverview',
       path: 'overview',
       component: () => import('@/modules/morefoto/views/OverviewPage.vue'),
-      meta: { title: 'Личный кабинет' }
+      meta: { title: 'Обзор' }
     },
     {
       name: 'OrganizationList',

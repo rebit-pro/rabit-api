@@ -178,9 +178,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const homePath = computed(() => {
-    if (!isStaffRole(user.value?.role)) return '/access-unavailable';
-    if (isMockApiEnabled) return '/cabinet/overview';
-    return user.value?.permissions?.includes('catalog.manage') ? '/cabinet/catalog' : '/cabinet/profile';
+    // U6: every staff role starts on the overview built from server summaries.
+    return isStaffRole(user.value?.role) ? '/cabinet/overview' : '/access-unavailable';
   });
 
   async function ensureProfile(): Promise<void> {

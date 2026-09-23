@@ -104,6 +104,19 @@ time {
   font-variant-numeric: tabular-nums lining-nums;
 }
 
+// Text for screen readers only: every chart carries its numbers as a table or list here.
+.mf-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 @media print {
   *,
   *::before,

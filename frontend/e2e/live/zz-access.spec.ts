@@ -59,7 +59,7 @@ test('B4: приглашение по ссылке — пароль, вход и
   await page.goto('/access/invite/' + inviteToken);
   await expect(page.getByTestId('access-link-problem')).toContainText('Ссылка уже использована');
   await signIn(page, 'b4-invited@example.invalid', invitedPassword);
-  await expect(page.getByRole('heading', { name: 'Профиль', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/cabinet\/overview$/);
 });
 
 test('B4: ожидающий регистрации сотрудник получает общий ответ и подсказки', async ({ page }) => {
@@ -86,13 +86,13 @@ test('B4: сброс пароля по ссылке завершает преж�
   const oldContext = await browser.newContext();
   const old = await oldContext.newPage();
   await signIn(old, 'b4-reset@example.invalid', password);
-  await expect(old.getByRole('heading', { name: 'Профиль', exact: true })).toBeVisible();
+  await expect(old).toHaveURL(/\/cabinet\/overview$/);
 
   await page.goto('/access/reset/' + resetToken);
   const confirm = page.waitForResponse((r) => r.url().endsWith('/confirm'));
   await setNewPassword(page, resetPassword, 'Сохранить пароль и войти');
   expect((await confirm).status()).toBe(200);
-  await expect(page.getByRole('heading', { name: 'Профиль', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/cabinet\/overview$/);
 
   await old.reload();
   await expect(old).toHaveURL(/\/login\?reason=revoked$/);
@@ -106,7 +106,8 @@ test('B4: сброс пароля по ссылке завершает преж�
 
 test('B4: смена пароля в профиле проверяет текущий пароль', async ({ page }) => {
   await signIn(page, 'b4-reset@example.invalid', resetPassword);
-  await expect(page.getByRole('heading', { name: 'Профиль', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/cabinet\/overview$/);
+  await page.goto('/cabinet/profile');
   const security = page.getByTestId('profile-security');
   await security.getByLabel('Текущий пароль', { exact: true }).fill('wrong-password-b4');
   await security.getByLabel('Новый пароль', { exact: true }).fill(resetPassword + '-changed');
