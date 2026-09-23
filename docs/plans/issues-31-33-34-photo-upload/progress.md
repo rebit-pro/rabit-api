@@ -7,11 +7,12 @@
 - Worktree: `/home/user/rabit-api-worktrees/issues-31-33-34-photo-upload`. Основной checkout `/home/user/rabit-api` остаётся на `main`.
 - Base: `bb35665` (`origin/main` на 2026-09-23, включает D3 и записи её деплоя). Прежний base — `5b750c0`.
 - Issues: [#31](https://github.com/rebit-pro/rabit-api/issues/31), [#33](https://github.com/rebit-pro/rabit-api/issues/33), [#34](https://github.com/rebit-pro/rabit-api/issues/34) — OPEN, закроются merge PR (`Closes`).
-- PR: [#47](https://github.com/rebit-pro/rabit-api/pull/47), OPEN в `main`, не сливать до review и полного gate. Точный HEAD — `git rev-parse HEAD`, сверять с `gh pr view 47 --json headRefOid`.
+- PR: [#47](https://github.com/rebit-pro/rabit-api/pull/47) MERGED 2026-09-23T07:38:51Z, merge commit `aee6808`; проверенный HEAD ветки — `4ddc1aa`.
+- Production: релиз `issues47-20260923073920-aee6808`, backend 4/4 сервиса и frontend 2/2 на новом коде.
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md).
 - Завершено: разведка пайплайна, чтение production-агрегатов, решения пользователя, план.
-- Сейчас: gate PASS на обновлённом base. Идут merge PR #47 и релиз.
-- Следующий шаг: merge → релиз backend и frontend по процедуре F2 → smoke → замеры на production по логам `media` после реальной загрузки.
+- Сейчас: задача на production. Открыт только замер по реальной загрузке.
+- Следующий шаг: пользователь загружает реальную съёмку, после чего снимаются p50/p95 по логам `media` (T15) и принимается решение о числе media workers. Открыт также opt-in бенч T13.
 - Блокеров нет. Открыто: согласие пользователя на opt-in замер 50 кадров (T13) и на чтение production-логов после деплоя (T15).
 - Рабочее дерево: закоммичено (`bdb7be8` #34, `0a273dd` #33/#31, `c536f85` docs и эта запись). Пустые `api/vendor` и `api/var` — точки монтирования для проверок, в git не попадают.
 
@@ -87,6 +88,19 @@
 - Первый прогон gate упал: в сценарии #33 `maxInFlight` показал 3 при лимите 2. Причина — в тесте: параллельность считалась по событиям Playwright `request`/`requestfinished`, а они доставляются в тест в собственном порядке. Исправлено: перекрытие вычисляется из сетевых таймингов каждого запроса (`request.timing()`), тот же приём применён в бенче. Код приложения не менялся.
 - Повторный полный `make test-e2e`: exit 0, `expected` 77, `unexpected` 0, `flaky` 0, 5 мин 10 с. Сценарий «#33: партия отправляется по два файла…» — PASS (9,9 с), остальные media-сценарии PASS.
 
+### 2026-09-23 — merge и деплой на app.morefoto36.ru
+
+- **Merge.** `gh pr merge 47 --merge --match-head-commit 4ddc1aa…` — MERGED, `aee6808`. Issues #31/#33/#34 закрылись по `Closes`.
+- **Сборка релиза** из merge-коммита: `git archive aee6808 api` (845 КБ) и образ `morefoto-frontend:issues47-20260923073920-aee6808` с `VITE_API_MOCKS_ENABLED=false`. В образе есть строки новой очереди.
+- **Подготовка на сервере.** `services-before.json` для пяти сервисов сохранён. `prepare-release.sh`: распаковка, проверка маркерного файла `DispatchPendingOutputDto.php`, совпадение `composer.lock` с предыдущим релизом, vendor скопирован оттуда же, созданы точки монтирования. Итог — `app` 411 МБ.
+- **Backend.** `switch-backend.sh` (только `--mount-add`, проверка источника `/app` и файла внутри контейнера): `morefoto_stage_fpm`, `morefoto_stage_backend`, `morefoto_stage_media_consumer`, `morefoto_stage_media_dispatcher` — все переключены, код виден в контейнерах. Миграций нет, схема БД не менялась, дамп не делался.
+- **Smoke backend.** `/health` 200, `/api/v1/me` 401 JSON. `app:media:dispatch-pending --limit=5` в контейнере dispatcher: `[OK] Опубликовано задач: 0, ошибок: 0.` — новый формат вывода и DI с логгером работают.
+- **Frontend.** `switch-frontend.sh`: прежний образ `morefoto-frontend:d3-20260922191601-21311db` записан в `frontend-before.txt`, новый загружен, сервис 2/2.
+- **Smoke frontend.** `/health`, `/cabinet/users`, `/cabinet/orders`, `/cabinet/links` — 200; SHA-256 отдаваемого `index.html` совпадает с файлом в образе; отдаваемый чанк `PhotoWorkspacePage` содержит новый статус «Загружается оригинал».
+- **Журнал.** `runtime/logs/logstash/media-2026-09-23.log` пишется; записи `Photo upload accepted.` и `Photo previews ready.` появятся после первой реальной загрузки.
+- **Откат.** Backend: `docker service rollback` для четырёх сервисов (прежний релиз `d3-20260922191601-21311db`). Frontend: `docker service rollback morefoto_frontend` (образ из `frontend-before.txt`).
+- **Инцидент процесса.** Запись деплоя сначала ушла коммитом в чужой checkout `/home/user/rabit-api`, переключённый на ветку `codex/design-ux-plan`. Коммит снят через `git reset --soft` с восстановлением только своего файла; незакоммиченные правки соседней сессии не тронуты. Запись сделана из отдельного worktree от `origin/main`.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -99,4 +113,4 @@
 | T12 | PASS | 2026-09-22 | phplint OK, PHPStan No errors, PHPUnit 516/516, CS Fixer применён |
 | T13 | PENDING | — | нужно согласие пользователя |
 | T14 | PASS | 2026-09-23 | `make test-e2e` exit 0 на base `bb35665` |
-| T15 | PENDING | — | после деплоя, нужно согласие |
+| T15 | PENDING | — | после реальной загрузки: чтение `media-*.log` на production |
