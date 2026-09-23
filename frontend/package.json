@@ -12,7 +12,7 @@
     "check": "npm run lint && npm run lint:styles && npm run typecheck && npm run typecheck:e2e && npm run test:ui",
     "lint": "eslint . --ignore-pattern .gitignore",
     "lint:fix": "npm run lint -- --fix",
-    "lint:styles": "stylelint \"src/**/*.{vue,scss}\"",
+    "lint:styles": "stylelint \"src/**/*.{vue,scss,css}\"",
     "e2e:server": "cross-env VITE_API_URL=/api VITE_API_MOCKS_ENABLED=true vite --host 127.0.0.1 --port 4173 --strictPort",
     "test:e2e": "cross-env TS_NODE_PROJECT=tsconfig.e2e.json cucumber-js --config cucumber.mjs",
     "test:e2e:run": "start-server-and-test e2e:server http://127.0.0.1:4173 test:e2e",
