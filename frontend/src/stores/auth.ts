@@ -195,7 +195,9 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(profile));
         verifiedToken = currentToken;
       } catch (cause) {
-        if (token.value !== currentToken) return;
+        // A newer sign-in replaced the token while /me was on its way. A token cleared by the 401 handler is not a
+        // replacement: the guard must see the error to name the reason of the sign-in page.
+        if (token.value !== currentToken && token.value !== null) return;
         if (isAxiosError(cause) && cause.response?.status === 403 && user.value) {
           user.value = { id: user.value.id, name: user.value.name, email: user.value.email };
           localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user.value));
