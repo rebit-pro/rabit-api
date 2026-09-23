@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { countdown, countLabel, percent, plural } from '../../src/components/viz/measures.ts';
+import { countdown, countLabel, percent, plural, processed } from '../../src/components/viz/measures.ts';
 import { CHART_CATEGORY } from '../../src/modules/morefoto/ui/chartPalette.ts';
 
 const now = '2026-09-23T09:00:00+03:00';
@@ -33,4 +33,10 @@ test('every category has its own pastel of the eight', () => {
   assert.equal(new Set(indices).size, indices.length);
   assert.ok(indices.every((index) => index >= 0 && index <= 7));
   assert.equal(CHART_CATEGORY.other, 7);
+});
+
+test('processed frames: everything but the processing ones, an empty set is not 100 %', () => {
+  assert.deepEqual(processed({ processing: 0, ready: 0, failed: 0, duplicate: 0 }), { done: 0, total: 0, percent: 0 });
+  assert.deepEqual(processed({ processing: 4, ready: 0, failed: 0, duplicate: 0 }), { done: 0, total: 4, percent: 0 });
+  assert.deepEqual(processed({ processing: 1, ready: 6, failed: 2, duplicate: 1 }), { done: 9, total: 10, percent: 90 });
 });

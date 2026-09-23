@@ -6,6 +6,13 @@ export interface Institution {
   revision: number;
   curatorId: number | null;
   headId: number | null;
+  /** Names of the responsible staff (DS-11); null when nobody is assigned or the name is empty. */
+  curatorName: string | null;
+  headName: string | null;
+  /** Counters of the whole institution, only in the institution list (U5). */
+  shootCount?: number;
+  groupCount?: number;
+  openGroupCount?: number;
 }
 export interface Shoot {
   id: string;
@@ -34,6 +41,11 @@ export interface PageMeta {
   total: number;
   totalPages: number;
 }
+export type GroupStateCounts = Record<Group['status'], number>;
+/** A page of groups carries the split of all groups of the institution or the shoot by state (U5). */
+export interface GroupPageMeta extends PageMeta {
+  summary?: { byState: GroupStateCounts };
+}
 export interface StructureScope {
   kind: StructureKind;
   institutionId?: string;
@@ -41,11 +53,11 @@ export interface StructureScope {
 }
 export interface ShootDetail extends Shoot {
   assignmentSignature: string;
-  groups: { items: Group[]; meta: PageMeta };
+  groups: { items: Group[]; meta: GroupPageMeta };
 }
 export interface InstitutionDetail extends Institution {
   shoots: { items: Shoot[]; meta: PageMeta };
-  groups: { items: Group[]; meta: PageMeta };
+  groups: { items: Group[]; meta: GroupPageMeta };
   summary: { availability: 'unavailable'; reason: 'dependenciesNotReady' };
   assignmentSignature?: string;
 }
@@ -55,8 +67,10 @@ export interface InstitutionPages {
 }
 export interface StructurePage {
   items: StructureItem[];
-  meta: PageMeta;
+  meta: GroupPageMeta;
   shoot?: ShootDetail;
+  /** Name of the institution of the shoot page, for the breadcrumbs. */
+  institutionName?: string;
 }
 export interface StructureFields {
   name: string;

@@ -11,6 +11,9 @@ import PhotoCollection from './PhotoCollection.vue';
 import PhotoPreview from './PhotoPreview.vue';
 import ChildMoveDialog from './ChildMoveDialog.vue';
 import GalleryImage from '../../gallery/components/GalleryImage.vue';
+import MfBreadcrumbs from '@/components/navigation/MfBreadcrumbs.vue';
+import ShootTabs from '../../structure/components/ShootTabs.vue';
+import PhotoStats from './PhotoStats.vue';
 const route = useRoute();
 const workspace = usePhotoWorkspace();
 const {
@@ -32,6 +35,7 @@ const {
   pages,
   setPage,
   summary,
+  stats,
   childCodes,
   childPhotos,
   cover,
@@ -54,6 +58,17 @@ const groupItems = computed(() =>
     value: item.id
   }))
 );
+const institutionId = String(route.params.institutionId);
+const shootId = String(route.params.shootId);
+const crumbs = computed(() => [
+  { title: 'Учреждения', to: '/cabinet/institutions' },
+  { title: institution.value?.name ?? 'Учреждение', to: '/cabinet/institutions/' + encodeURIComponent(institutionId) },
+  {
+    title: shoot.value?.name ?? 'Съёмка',
+    to: '/cabinet/institutions/' + encodeURIComponent(institutionId) + '/shoots/' + encodeURIComponent(shootId)
+  },
+  { title: 'Фотографии' }
+]);
 const preview = shallowRef(false);
 const previewChild = shallowRef('');
 const previewPhotos = shallowRef<ManagedPhoto[]>([]);
@@ -102,9 +117,7 @@ async function confirmMove(toId: string, code: string) {
 }
 </script>
 <template>
-  <RouterLink :to="'/cabinet/institutions/' + route.params.institutionId + '/shoots/' + route.params.shootId" class="mf-back"
-    >← {{ shoot?.name ?? 'К съёмке' }}</RouterLink
-  >
+  <MfBreadcrumbs :items="crumbs" />
   <OrganizationLoadState
     v-if="!shoot || !institution"
     class="mt-6"
@@ -119,6 +132,7 @@ async function confirmMove(toId: string, code: string) {
       <h1>Фотографии съёмки</h1>
       <p class="mf-muted">Подготовьте превью и соберите полный набор для каждого ребёнка.</p>
     </header>
+    <ShootTabs :institution-id="institutionId" :shoot-id="shootId" current="photos" />
     <div class="photo-context mb-6">
       <v-select
         :model-value="selectedGroupId"
@@ -127,19 +141,34 @@ async function confirmMove(toId: string, code: string) {
         data-testid="photo-group"
         :disabled="busy || !!move"
         @update:model-value="changeGroup"
-      /><v-btn variant="outlined" :disabled="!childCodes.length" @click="showPreview()">Предпросмотр</v-btn>
+      />
+      <div class="photo-preview-action">
+        <v-btn
+          variant="outlined"
+          :disabled="!childCodes.length"
+          :aria-describedby="childCodes.length ? undefined : 'photo-preview-hint'"
+          @click="showPreview()"
+          >Предпросмотр</v-btn
+        >
+        <p v-if="group && !childCodes.length" id="photo-preview-hint" class="mf-muted">
+          Назначьте кадры ребёнку, чтобы включить предпросмотр.
+        </p>
+      </div>
     </div>
     <p v-if="!group" class="mf-panel">В съёмке пока нет групп. Добавьте группу на странице съёмки.</p>
     <template v-else>
       <section class="mf-panel photo-readiness mb-6" aria-label="Состояние подборки">
-        <div>
-          <h2>{{ group.name }}</h2>
-          <p class="mt-2" data-testid="photo-readiness">
-            Кадров: {{ summary.photos }} · Детей: {{ childCodes.length }} · Без ребёнка: {{ summary.unassigned }}
-          </p>
-          <p class="mf-muted mt-2">{{ cover ? 'Обложка группы выбрана' : 'Обложка группы ещё не выбрана' }}</p>
+        <div class="photo-readiness__head">
+          <div>
+            <h2>{{ group.name }}</h2>
+            <p class="mt-2" data-testid="photo-readiness">
+              Кадров: {{ summary.photos }} · Детей: {{ childCodes.length }} · Без ребёнка: {{ summary.unassigned }}
+            </p>
+            <p class="mf-muted mt-2">{{ cover ? 'Обложка группы выбрана' : 'Обложка группы ещё не выбрана' }}</p>
+          </div>
+          <GalleryImage v-if="cover" :src="cover.thumbSrc" alt="Обложка группы" class="group-cover" />
         </div>
-        <GalleryImage v-if="cover" :src="cover.thumbSrc" alt="Обложка группы" class="group-cover" />
+        <PhotoStats v-if="stats" :stats="stats" class="mt-5" />
       </section>
       <v-alert v-if="!editable" type="info" variant="tonal" class="mb-6"
         >Подборка уже опубликована. Здесь можно просмотреть наборы; изменения доступны в группах со статусом «Подготовка».</v-alert
@@ -216,19 +245,27 @@ async function confirmMove(toId: string, code: string) {
 <style scoped>
 .photo-context {
   display: flex;
-  align-items: center;
-  gap: 20px;
+  align-items: flex-start;
+  gap: var(--mf-space-5);
   flex-wrap: wrap;
 }
 .photo-context > .v-input {
   flex: 1 1 260px;
   max-width: 540px;
 }
-.photo-readiness {
+.photo-preview-action {
+  display: grid;
+  gap: var(--mf-space-1);
+  max-width: 320px;
+}
+.photo-preview-action p {
+  font-size: var(--mf-text-sm);
+}
+.photo-readiness__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: var(--mf-space-5);
   flex-wrap: wrap;
 }
 .group-cover {

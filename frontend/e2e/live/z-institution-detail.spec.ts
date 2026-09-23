@@ -208,6 +208,8 @@ test('C4: куратор и руководитель читают только �
       expect(data).not.toHaveProperty('assignmentSignature');
       expect(data.curatorId).toBe(curator.id);
       expect(data.headId).toBe(head.id);
+      // DS-11: the card names the responsible staff instead of their numbers.
+      expect([data.curatorName, data.headName]).toEqual([curator.name, head.name]);
       expect(
         (
           await viewer.request.get(`${api}/${foreign.id}`, {
@@ -216,6 +218,9 @@ test('C4: куратор и руководитель читают только �
         ).status()
       ).toBe(404);
       await viewer.goto(`${cabinet}/${own.id}`);
+      await expect(viewer.getByTestId('institution-curator')).toContainText(curator.name);
+      await expect(viewer.getByTestId('institution-head')).toContainText(head.name);
+      await expect(viewer.getByTestId('institution-overview')).not.toContainText('Сотрудник №');
       await expect(shoots(viewer).getByTestId('structure-row')).toHaveCount(1);
       await expect(groups(viewer).getByTestId('structure-row')).toHaveCount(1);
       await expect(viewer.getByRole('button', { name: 'Новая съёмка', exact: true })).toHaveCount(0);

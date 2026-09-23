@@ -656,7 +656,7 @@ test('#54/#55: большая группа открывается страниц
   expect(lists).toHaveLength(beforeAssignment + 1);
   expect(lists[lists.length - 1]!.searchParams.get('page')).toBe('2');
 
-  await page.getByRole('link', { name: '← Q54 Съёмка', exact: true }).click();
+  await page.getByLabel('Хлебные крошки').getByRole('link', { name: 'Q54 Съёмка', exact: true }).click();
   await expect(page).toHaveURL(new RegExp('/shoots/' + shoot.id + '$'));
   await page.goBack();
   await expect(page).toHaveURL(/[?&]page=2(&|$)/);

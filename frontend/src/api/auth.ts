@@ -37,6 +37,13 @@ export interface AvatarRef {
   fullUrl: string;
 }
 
+/** The organizer's contact for help with access (DS-12); any part may be missing. */
+export interface SupportContact {
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+}
+
 export interface AuthUser {
   role?: StaffRole;
   permissions?: string[];
@@ -45,6 +52,7 @@ export interface AuthUser {
   email: string;
   name: string;
   avatar?: AvatarRef | null;
+  support?: SupportContact | null;
 }
 
 export interface LoginResponse {

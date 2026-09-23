@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { countLabel } from '@/components/viz/measures';
 import { money } from '../../commerce/money';
 import type { ConditionsSnapshot } from '../api';
 defineProps<{ snapshot: ConditionsSnapshot }>();
@@ -6,7 +7,8 @@ defineProps<{ snapshot: ConditionsSnapshot }>();
 <template>
   <div class="conditions-summary" data-testid="conditions-summary">
     <div>
-      <span class="mf-muted">В продаже</span><strong>{{ snapshot.products.filter((product) => product.active).length }} позиций</strong>
+      <span class="mf-muted">В продаже</span
+      ><strong>{{ countLabel(snapshot.products.filter((product) => product.active).length, ['позиция', 'позиции', 'позиций']) }}</strong>
     </div>
     <div>
       <span class="mf-muted">Подарочный комплект</span>

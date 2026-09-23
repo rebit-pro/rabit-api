@@ -11,8 +11,9 @@ import { plural } from '@/components/viz/measures';
 import { toneOf } from '@/components/status/tones';
 import { isStaffRole, roleHeadings } from '../types';
 import { CHART_CATEGORY } from '../ui/chartPalette';
-import { groupStateTone, linkStatus, staffRequestTone } from '../ui/statusTone';
+import { linkStatus, staffRequestTone } from '../ui/statusTone';
 import { requestStatus } from '../handoff/display';
+import { groupStateSegments } from '../ui/groupStates';
 import { useLiveOverview } from './useLiveOverview';
 
 const auth = useAuthStore();
@@ -37,15 +38,7 @@ const queue = computed<QueueItem[]>(
       };
     }) ?? []
 );
-const stateSegments = computed(() => {
-  const counts = scope.value?.counters.byState ?? { preparing: 0, open: 0, closed: 0 };
-  return [
-    // Two neutral states would merge in one bar: here «готовятся» is the work in progress (info).
-    { key: 'preparing', label: 'Готовятся', value: counts.preparing, tone: 'info' as const },
-    { key: 'open', label: 'Приём открыт', value: counts.open, tone: groupStateTone.open },
-    { key: 'closed', label: 'Приём завершён', value: counts.closed, tone: groupStateTone.closed }
-  ];
-});
+const stateSegments = computed(() => groupStateSegments(scope.value?.counters.byState ?? { preparing: 0, open: 0, closed: 0 }));
 const finance = ['Оплачено', 'Подтверждённые возвраты', 'Итого после возвратов'];
 </script>
 

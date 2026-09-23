@@ -21,6 +21,20 @@ export function percent(part: number, whole: number): number {
   return whole > 0 ? Math.round((part / whole) * 100) : 0;
 }
 
+/**
+ * Share of frames the server has finished with (design plan INF-05): ready, failed and duplicate frames are done,
+ * only the processing ones are left. An empty set counts as nothing to do, not as 100 %.
+ */
+export function processed(byStatus: { processing: number; ready: number; failed: number; duplicate: number }): {
+  done: number;
+  total: number;
+  percent: number;
+} {
+  const total = byStatus.processing + byStatus.ready + byStatus.failed + byStatus.duplicate;
+  const done = total - byStatus.processing;
+  return { done, total, percent: percent(done, total) };
+}
+
 export interface Countdown {
   /** Whole days left until the closing moment; negative when overdue, null when the link is not sent yet. */
   days: number | null;

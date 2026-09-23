@@ -6,6 +6,7 @@ import ChangePasswordForm from './ChangePasswordForm.vue';
 import AvatarEditor from '../avatar/AvatarEditor.vue';
 import { avatarApi } from '../avatar/api';
 import { avatarSeed } from '@/components/avatar/avatar';
+import SupportContactCard from './SupportContactCard.vue';
 
 const auth = useAuthStore();
 const role = computed(() => (isStaffRole(auth.user?.role) ? roleLabels[auth.user.role] : 'Доступ не назначен'));
@@ -47,4 +48,10 @@ const seed = computed(() => avatarSeed(auth.user?.id, auth.user?.email));
     <v-btn variant="outlined" color="primary" class="mt-6" @click="auth.logout()">Выйти из кабинета</v-btn>
   </section>
   <ChangePasswordForm />
+  <section class="mf-panel mf-profile mt-6" aria-labelledby="profile-help-title">
+    <h2 id="profile-help-title">Помощь</h2>
+    <p class="mf-muted mt-2">Если нужен доступ к учреждению или группе либо что-то не работает — напишите организатору.</p>
+    <SupportContactCard v-if="auth.user?.support" :contact="auth.user.support" class="mt-4" />
+    <p v-else class="mf-muted mt-2">Контакт организатора пока не указан.</p>
+  </section>
 </template>

@@ -1,16 +1,20 @@
 <script setup lang="ts">
 import { computed, shallowRef } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import MfBreadcrumbs from '@/components/navigation/MfBreadcrumbs.vue';
+import MfDistribution from '@/components/viz/MfDistribution.vue';
 import AdminDialog from '../../management/components/AdminDialog.vue';
+import { groupStateSegments } from '../../ui/groupStates';
 import StructureFields from './StructureFields.vue';
 import StructureList from './StructureList.vue';
+import ShootTabs from './ShootTabs.vue';
 import { useStructurePage } from '../useStructurePage';
 import { useStructureEditor } from '../useStructureEditor';
 import type { StructureItem, StructureScope } from '../model';
 const props = defineProps<{ scope: StructureScope }>();
 const auth = useAuthStore();
 const canManage = computed(() => auth.user?.role === 'organizer' && !!auth.user.permissions?.includes('organization.manage'));
-const { snapshot, loading, error, query, reload, page, pages } = useStructurePage(props.scope);
+const { snapshot, loading, error, query, institutionName, reload, page, pages } = useStructurePage(props.scope);
 const notice = shallowRef('');
 const editor = useStructureEditor(props.scope, async () => {
   notice.value = 'Изменения сохранены.';
@@ -48,6 +52,34 @@ const title = computed(() =>
           })[draft.value.kind]
 );
 const disabled = computed(() => loading.value || !snapshot.value || !!error.value);
+const institutionPath = computed(() => '/cabinet/institutions/' + encodeURIComponent(props.scope.institutionId ?? ''));
+const crumbs = computed(() =>
+  props.scope.kind === 'group'
+    ? [
+        { title: 'Учреждения', to: '/cabinet/institutions' },
+        { title: institutionName.value || 'Учреждение', to: institutionPath.value },
+        { title: snapshot.value?.shoot?.name ?? 'Съёмка' }
+      ]
+    : []
+);
+const groupStates = computed(() => {
+  const counts = snapshot.value?.meta.summary?.byState;
+  return counts ? groupStateSegments(counts) : null;
+});
+const emptyTitle = computed(
+  () => ({ institution: 'Учреждений пока нет', shoot: 'Съёмок пока нет', group: 'Групп пока нет' })[props.scope.kind]
+);
+const emptyText = computed(() =>
+  query.value.trim()
+    ? 'По этому началу названия ничего не найдено.'
+    : canManage.value
+      ? {
+          institution: 'Добавьте первое учреждение, чтобы планировать съёмки.',
+          shoot: 'Добавьте съёмку учреждения.',
+          group: 'Добавьте группы съёмки: у каждой будут свои фотографии и ссылка для родителей.'
+        }[props.scope.kind]
+      : 'Организатор ещё не добавил записи или не назначил вам учреждения.'
+);
 function edit(item?: StructureItem): void {
   if (canManage.value && !disabled.value) {
     notice.value = '';
@@ -59,12 +91,7 @@ function editShoot(): void {
 }
 </script>
 <template>
-  <nav v-if="scope.kind !== 'institution'" class="mf-actions mb-5" aria-label="Навигация по структуре">
-    <RouterLink to="/cabinet/institutions">Учреждения</RouterLink>
-    <RouterLink v-if="scope.kind === 'group'" :to="'/cabinet/institutions/' + encodeURIComponent(scope.institutionId ?? '')"
-      >Съёмки учреждения</RouterLink
-    >
-  </nav>
+  <MfBreadcrumbs v-if="crumbs.length" :items="crumbs" />
   <header class="mf-page-heading">
     <p class="mf-eyebrow">ОРГАНИЗАЦИЯ СЪЁМОК</p>
     <h1>{{ heading }}</h1>
@@ -78,22 +105,10 @@ function editShoot(): void {
       <v-btn v-if="canManage && scope.kind === 'group'" variant="outlined" :disabled="disabled" @click="editShoot"
         >Редактировать съёмку</v-btn
       >
-      <v-btn
-        v-if="canManage && scope.kind === 'group'"
-        variant="outlined"
-        :disabled="disabled"
-        :to="
-          '/cabinet/institutions/' +
-          encodeURIComponent(scope.institutionId ?? '') +
-          '/shoots/' +
-          encodeURIComponent(scope.shootId ?? '') +
-          '/photos'
-        "
-        >Фотографии</v-btn
-      >
       <v-btn variant="outlined" :disabled="loading" @click="reload()">Обновить список</v-btn>
     </div>
   </header>
+  <ShootTabs v-if="scope.kind === 'group'" :institution-id="scope.institutionId ?? ''" :shoot-id="scope.shootId ?? ''" current="groups" />
   <form v-if="scope.kind === 'institution'" class="structure-search mf-actions mb-5" @submit.prevent="reload(1)">
     <v-text-field
       :model-value="query"
@@ -112,8 +127,21 @@ function editShoot(): void {
   <v-alert v-if="notice" type="success" variant="tonal" role="status" class="mb-5">{{ notice }}</v-alert>
   <section v-if="snapshot && !error" aria-label="Записи структуры">
     <h2 v-if="scope.kind === 'group'" class="mb-4">Группы</h2>
+    <div v-if="groupStates && snapshot.meta.total" class="mf-panel structure-states mb-5">
+      <MfDistribution title="Группы по состоянию приёма" :segments="groupStates" :unit-forms="['группы', 'групп', 'групп']" />
+    </div>
     <p class="mf-muted mb-4">Всего: {{ snapshot.meta.total }}</p>
-    <StructureList :items="snapshot.items" :scope="scope" :disabled="disabled" :can-manage="canManage" @edit="edit" />
+    <StructureList
+      :items="snapshot.items"
+      :scope="scope"
+      :disabled="disabled"
+      :can-manage="canManage"
+      :empty-title="emptyTitle"
+      :empty-text="emptyText"
+      :create-label="canManage && !query.trim() ? createLabel : ''"
+      @edit="edit"
+      @create="edit()"
+    />
     <nav v-if="pages > 1" class="mf-actions mt-5" aria-label="Страницы структуры">
       <v-btn variant="outlined" :disabled="loading || page === 1" @click="reload(page - 1)">Предыдущая</v-btn>
       <span role="status">Страница {{ page }} из {{ pages }}</span>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import MfStatus from '@/components/status/MfStatus.vue';
 import { money } from '../../commerce/money';
 import type { CatalogProduct } from '../api';
 withDefaults(defineProps<{ products: CatalogProduct[]; disabled: boolean; editable?: boolean }>(), { editable: true });
@@ -15,8 +16,8 @@ defineEmits<{ edit: [product: CatalogProduct] }>();
       </div>
       <div class="catalog-price">
         <strong>{{ money(product.price) }}</strong>
-        <span>{{ product.active ? 'В продаже' : 'Отключено' }}</span>
-        <span v-if="product.staffDiscount">Скидка сотрудникам 50%</span>
+        <MfStatus :tone="product.active ? 'success' : 'neutral'">{{ product.active ? 'В продаже' : 'Отключено' }}</MfStatus>
+        <span v-if="product.staffDiscount" class="mf-muted">Скидка сотрудникам 50%</span>
       </div>
       <v-btn
         v-if="editable !== false"
@@ -32,12 +33,12 @@ defineEmits<{ edit: [product: CatalogProduct] }>();
 <style scoped>
 .catalog-grid {
   display: grid;
-  gap: 16px;
+  gap: var(--mf-space-4);
 }
 .catalog-product {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: var(--mf-space-6);
 }
 .catalog-copy {
   flex: 1;
@@ -45,26 +46,27 @@ defineEmits<{ edit: [product: CatalogProduct] }>();
   overflow-wrap: anywhere;
 }
 .catalog-copy h2 {
-  font-size: 20px;
+  font-size: var(--mf-text-lg);
 }
 .catalog-copy p {
-  margin-top: 8px;
+  margin-top: var(--mf-space-2);
   white-space: pre-wrap;
 }
 .catalog-price {
   display: grid;
-  gap: 6px;
+  justify-items: start;
+  gap: var(--mf-space-2);
   flex-shrink: 0;
-  font-size: 14px;
+  font-size: var(--mf-text-sm);
 }
 .catalog-price strong {
-  font-size: 20px;
+  font-size: var(--mf-text-lg);
 }
 @media (max-width: 700px) {
   .catalog-product {
     align-items: stretch;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--mf-space-4);
   }
 }
 </style>
