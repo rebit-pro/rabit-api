@@ -68,30 +68,38 @@ test('#33/#34: замер партии типичных фото на изоли
   }
 
   const uploads = '/api/v1/shoots/' + shoot.id + '/photos';
-  const started = new Map<Request, number>();
+  const isUpload = (request: Request) => request.method() === 'POST' && new URL(request.url()).pathname === uploads;
+  // Transfer time and overlap come from the browser network timings, not from the event delivery order.
+  const spans: { start: number; end: number }[] = [];
   const transfer: number[] = [];
   const accepted = new Map<string, number>();
   const ready = new Map<string, number>();
-  let inFlight = 0;
-  let maxInFlight = 0;
-  page.on('request', (request) => {
-    if (request.method() === 'POST' && new URL(request.url()).pathname === uploads) {
-      started.set(request, Date.now());
-      maxInFlight = Math.max(maxInFlight, ++inFlight);
-    }
+  page.on('requestfinished', (request) => {
+    if (!isUpload(request)) return;
+    const timing = request.timing();
+    spans.push({ start: timing.startTime, end: timing.startTime + Math.max(timing.responseEnd, 0) });
+    transfer.push(Math.round(Math.max(timing.responseEnd, 0)));
   });
   page.on('response', async (response) => {
     const request = response.request();
     const path = new URL(response.url()).pathname;
-    if (started.has(request)) {
-      inFlight--;
-      transfer.push(Date.now() - started.get(request)!);
+    if (isUpload(request)) {
       if (202 === response.status()) accepted.set((await response.json()).data.id, Date.now());
     } else if (request.method() === 'GET' && /^\/api\/v1\/photos\/[0-9a-f-]{36}$/.test(path) && response.ok()) {
       const photo = (await response.json()).data as { id: string; status: string };
       if ('ready' === photo.status && !ready.has(photo.id)) ready.set(photo.id, Date.now());
     }
   });
+  const overlap = () => {
+    const edges = spans.flatMap(({ start, end }) => [
+      { at: start, delta: 1 },
+      { at: end, delta: -1 }
+    ]);
+    edges.sort((left, right) => left.at - right.at || left.delta - right.delta);
+    let current = 0;
+
+    return edges.reduce((peak, edge) => Math.max(peak, (current += edge.delta)), 0);
+  };
 
   const begin = Date.now();
   await page.locator('input[type="file"][aria-label="Выбрать фотографии"]').setInputFiles(paths);
@@ -102,13 +110,13 @@ test('#33/#34: замер партии типичных фото на изоли
   const report = {
     count,
     averageMegabytes: Math.round((bytes / count / 1024 / 1024) * 10) / 10,
-    parallel: maxInFlight,
+    parallel: overlap(),
     totalSeconds: Math.round(total / 1000),
     transferMs: { p50: percentile(transfer, 0.5), p95: percentile(transfer, 0.95) },
     acceptedToReadyMs: { p50: percentile(readiness, 0.5), p95: percentile(readiness, 0.95) }
   };
   writeFileSync(testInfo.outputPath('media-bench.json'), JSON.stringify(report, null, 2));
   console.log('Media bench: ' + JSON.stringify(report));
-  expect(maxInFlight).toBeLessThanOrEqual(2);
+  expect(overlap()).toBeLessThanOrEqual(2);
   expect(readiness).toHaveLength(count);
 });

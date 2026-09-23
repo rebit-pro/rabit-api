@@ -447,23 +447,32 @@ test('#33: партия отправляется по два файла без �
 
   const uploads = '/api/v1/shoots/' + shoot.id + '/photos';
   const isUpload = (request: Request) => request.method() === 'POST' && new URL(request.url()).pathname === uploads;
-  let inFlight = 0;
-  let maxInFlight = 0;
+  // Overlap is read from the browser network timings: Playwright delivers request events in its own order.
+  const spans: { start: number; end: number }[] = [];
   const finished: number[] = [];
   const checks: number[] = [];
   page.on('request', (request) => {
-    if (isUpload(request)) maxInFlight = Math.max(maxInFlight, ++inFlight);
-    else if (request.method() === 'GET' && /^\/api\/v1\/photos\/[0-9a-f-]{36}$/.test(new URL(request.url()).pathname))
+    if (!isUpload(request) && request.method() === 'GET' && /^\/api\/v1\/photos\/[0-9a-f-]{36}$/.test(new URL(request.url()).pathname))
       checks.push(Date.now());
   });
   const settle = (request: Request) => {
-    if (isUpload(request)) {
-      inFlight--;
-      finished.push(Date.now());
-    }
+    if (!isUpload(request)) return;
+    finished.push(Date.now());
+    const timing = request.timing();
+    spans.push({ start: timing.startTime, end: timing.startTime + Math.max(timing.responseEnd, 0) });
   };
   page.on('requestfinished', settle);
   page.on('requestfailed', settle);
+  const overlap = () => {
+    const edges = spans.flatMap(({ start, end }) => [
+      { at: start, delta: 1 },
+      { at: end, delta: -1 }
+    ]);
+    edges.sort((left, right) => left.at - right.at || left.delta - right.delta);
+    let current = 0;
+
+    return edges.reduce((peak, edge) => Math.max(peak, (current += edge.delta)), 0);
+  };
 
   const input = page.locator('input[type="file"][aria-label="Выбрать фотографии"]');
   const files = [1, 2, 3, 4, 5].map((index) => ({
@@ -482,7 +491,7 @@ test('#33: партия отправляется по два файла без �
   await expect(rows.filter({ hasText: 'batch-broken.png' })).toContainText('Ошибка');
   await expect(rows.filter({ hasText: 'batch-broken.png' })).toContainText('Сервер отклонил файл');
   expect(finished).toHaveLength(6);
-  expect(maxInFlight).toBeLessThanOrEqual(2);
+  expect(overlap()).toBeLessThanOrEqual(2);
   // Statuses are checked from two seconds after acceptance, so more POSTs than the parallel limit end before the first check.
   expect(finished.filter((time) => time < Math.min(...checks)).length).toBeGreaterThanOrEqual(3);
   await expect(page.getByTestId('photo-card')).toHaveCount(5);
