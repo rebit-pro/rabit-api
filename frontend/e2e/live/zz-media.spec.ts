@@ -573,7 +573,7 @@ test('#54/#55: большая группа открывается страниц
     .toBe(50);
 
   const lists: URL[] = [];
-  const thumbs: { url: string; start: number; end: number }[] = [];
+  const thumbs: string[] = [];
   const thumbPath = /^\/api\/v1\/photos\/[0-9a-f-]{36}\/thumb$/;
   const isThumb = (request: Request) => thumbPath.test(new URL(request.url()).pathname);
   page.on('request', (request) => {
@@ -581,7 +581,7 @@ test('#54/#55: большая группа открывается страниц
     if (request.method() === 'GET' && url.pathname === listing) lists.push(url);
   });
   const settle = (request: Request) => {
-    if (isThumb(request)) thumbs.push({ url: request.url(), ...span(request) });
+    if (isThumb(request)) thumbs.push(request.url());
   };
   page.on('requestfinished', settle);
   page.on('requestfailed', settle);
@@ -607,6 +607,7 @@ test('#54/#55: большая группа открывается страниц
   const pageButton = (number: number) =>
     page.getByTestId('photo-pagination').getByRole('button', { name: 'Перейти на страницу ' + number, exact: true });
 
+  await page.addInitScript(() => performance.setResourceTimingBufferSize(1000));
   await page.goto('/cabinet/institutions/' + institution.id + '/shoots/' + shoot.id + '/photos?group=' + group.id);
   await expect(page.getByTestId('photo-page-status')).toHaveText('Показано 48 из 50');
   await expect(cards).toHaveCount(48);
@@ -615,8 +616,16 @@ test('#54/#55: большая группа открывается страниц
   expect(Object.fromEntries(lists[0]!.searchParams)).toEqual({ groupId: group.id, status: 'ready', page: '1', pageSize: '48' });
   await showAll(48);
   await expect(page.getByText('Кадр не загрузился', { exact: true })).toHaveCount(0);
-  expect(thumbs.filter((thumb) => thumb.url === broken)).toHaveLength(2);
-  expect(peakOverlap(thumbs)).toBeLessThanOrEqual(6);
+  expect(thumbs.filter((url) => url === broken)).toHaveLength(2);
+  // Resource Timing keeps start and end on one sub-millisecond clock of the page: the queue starts the next
+  // preview right after the previous one ends, and Playwright's millisecond start times would overlap them.
+  const previewSpans = await page.evaluate(() =>
+    (performance.getEntriesByType('resource') as PerformanceResourceTiming[])
+      .filter((entry) => /^\/api\/v1\/photos\/[0-9a-f-]{36}\/thumb$/.test(new URL(entry.name).pathname) && entry.responseEnd > 0)
+      .map((entry) => ({ start: entry.startTime, end: entry.responseEnd }))
+  );
+  expect(previewSpans.length).toBeGreaterThanOrEqual(48);
+  expect(peakOverlap(previewSpans)).toBeLessThanOrEqual(6);
   await page.screenshot({ path: testInfo.outputPath('q54-desktop-photos.png'), fullPage: true, animations: 'disabled' });
 
   await pageButton(2).click();

@@ -5,16 +5,16 @@
 - Дата: 2026-09-23.
 - Ветка: `codex/issues-54-55-57-large-shoot`, upstream `origin/codex/issues-54-55-57-large-shoot`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-54-55-57-large-shoot`. Основной checkout `/home/user/rabit-api` занят другой сессией (`codex/design-ux-plan`), в нём не работать.
-- Base: `origin/main` `5f658e5`.
+- Base: `origin/main` `2cc2360` (merge PR #58, оптимизация E2E), влит в ветку merge-коммитом `cd8c655`. Прежний base — `5f658e5`.
 - Issues: [#54](https://github.com/rebit-pro/rabit-api/issues/54), [#55](https://github.com/rebit-pro/rabit-api/issues/55), [#57](https://github.com/rebit-pro/rabit-api/issues/57) — закроются merge PR. Follow-up по `MediaController` — [#59](https://github.com/rebit-pro/rabit-api/issues/59).
-- PR: [#60](https://github.com/rebit-pro/rabit-api/pull/60) в `main`, OPEN.
+- PR: [#60](https://github.com/rebit-pro/rabit-api/pull/60) в `main`, OPEN, на ревью.
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md), предыдущий журнал [#47](../issues-31-33-34-photo-upload/progress.md).
 - Завершено:
   - #57 (`4edc593`), backend #54 (`e2663c4`), frontend #55 (`e73c72d`), frontend #54 (`f727d24`), live E2E-сценарий (`d025312`);
   - все быстрые проверки и stub-проверка UI.
-- Сейчас: PR #60 открыт, ждёт review и E2E.
-- Следующий шаг: после merge PR #58 (оптимизация E2E) обновить base ветки до нового `main`, повторить быстрые проверки и по команде пользователя запустить полный `make test-e2e`.
-- Блокер gate: пользователь сообщил, что оптимизация E2E в `main`, но на 2026-09-23 PR #58 ещё OPEN, `origin/main` = `5f658e5`. Gate до merge #58 не запускается: правило «актуальный main плюс собственный diff».
+- Сейчас: идёт полный `make test-e2e` на base `2cc2360` (новый раннер из #58).
+- Следующий шаг: разобрать результат gate (`api/var/e2e/<run>/`: `state.json`, `<стенд>/<группа>/results.json`, скриншоты), записать T12–T15, T17.
+- Блокеров нет.
 - Открыто: каноническое описание MED-02 в `../MoreFoto` (D9) — после merge.
 - Рабочее дерево: закоммичено. Пустые `api/vendor`, `api/var` и `frontend/node_modules` — точки монтирования docker-проверок, в git не попадают.
 - Команды проверок:
@@ -59,6 +59,24 @@
 - Пользователь сообщил: «Оптимизация E2E тестов завершена и уже в ветке main».
   - Проверено `git ls-remote` и `gh pr view 58`: PR #58 (`codex/ops-e2e-optimization`, head `dbba991`) ещё OPEN, `origin/main` = `5f658e5`.
   - Обновлять base не на что. Gate запускается после merge #58 и команды пользователя.
+
+### 2026-09-23 — merge #58 и gate
+
+- Пользователь разрешил слить #58 и запустить E2E.
+  - Первая попытка `gh pr merge 58` отклонена классификатором авто-режима («Merge Without Review»), следом отклонена и read-only команда. Работа остановлена, пользователю предложены варианты.
+  - После прямого поручения («58 сливай в мейн, к 60 подключай мейн новый и прогоняй E2E») `gh pr merge 58 --merge --match-head-commit c0166b4…` → MERGED, merge commit `2cc2360`.
+- `git merge origin/main` в ветку: без конфликтов, `cd8c655`, push. Ревью #60 идёт параллельно.
+- Запущен полный gate: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`. Новый сценарий в `zz-media.spec.ts` входит в группу `a` из `groups.json`, правка групп не нужна.
+
+- Gate 1 (`rabit-e2e-f027c8f31037`, 239,7 с): FAIL.
+  - Все проверки до браузера PASS.
+  - Группа `b` PASS: 31 тест и 4 MySQL-верификатора.
+  - Группа `a`: 46 из 47 PASS. Упал новый сценарий «#54/#55» на строке `peakOverlap(thumbs) <= 6`: получено 7.
+  - До этой строки сценарий прошёл: один GET списка с верными параметрами, 48 карточек, сводка, все 48 превью видны, «Кадр не загрузился» нет, сбойное превью запрошено ровно 2 раза.
+- Разбор: HAR из `trace.zip` показывает пик одновременных `/thumb` = 6, то есть лимит соблюдён. Причина — в замере.
+  - `request.timing()` даёт начало с точностью до 1 мс, а конец с дробной частью.
+  - Очередь запускает следующее превью сразу после завершения предыдущего, поэтому соседние запросы ложно накладывались.
+  - Исправление только в тесте: пик считается по Resource Timing API страницы (один монотонный таймер, субмиллисекундная точность — «браузерные тайминги» из приёмки #55). Буфер Resource Timing поднят до 1000 записей.
 
 ### 2026-09-23 — frontend #55 и #54
 
