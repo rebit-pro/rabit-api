@@ -14,14 +14,12 @@ use Rebit\Auth\Presentation\Access\Dto\AccessInvitationRequestDto;
 use Rebit\Auth\Presentation\Access\Dto\ConfirmPasswordResetRequestDto;
 use Rebit\Auth\Presentation\Access\Dto\PasswordResetRequestDto;
 use Rebit\Share\Infrastructure\Bitrix\ControllerJson;
-use Rebit\Share\Infrastructure\Controller\AcceptedJsonTrait;
 use Rebit\Share\Infrastructure\Controller\PrivateApiJsonController;
+use Rebit\Share\Infrastructure\Controller\Responses\EmptyResponse;
 
 /** Personal links from letters: invitation (AUTH-05, AUTH-06) and forgotten password (AUTH-07, AUTH-08). */
 final class AccessLinkController extends PrivateApiJsonController
 {
-    use AcceptedJsonTrait;
-
     public function __construct(
         private readonly GetAccessInvitationUseCase $invitation,
         private readonly AcceptAccessInvitationUseCase $acceptInvitation,
@@ -42,11 +40,11 @@ final class AccessLinkController extends PrivateApiJsonController
         return $this->json($this->acceptInvitation->execute($this->input->accept($request)));
     }
 
-    public function requestPasswordResetAction(PasswordResetRequestDto $request): ControllerJson
+    public function requestPasswordResetAction(PasswordResetRequestDto $request): EmptyResponse
     {
         $this->requestReset->execute($this->input->reset($request));
 
-        return $this->acceptedJson(['accepted' => true]);
+        return $this->accepted();
     }
 
     public function confirmPasswordResetAction(ConfirmPasswordResetRequestDto $request): ControllerJson

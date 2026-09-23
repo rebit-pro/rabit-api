@@ -1356,9 +1356,9 @@
  | AUTH-04 · **Н** | **POST** /auth/register/confirm | Подтвердить регистрацию (унаследовано); Гость | email, code | **200**; token, expiresAt, user | A1; inheritedAuth |
 +| AUTH-05 · **П** | **GET** /auth/invitations/{invitation_token} | Приглашение по ссылке из письма; Гость | — | **200**; maskedEmail, name, expiresAt | B4; product |
 +| AUTH-06 · **П** | **POST** /auth/invitations/{invitation_token}/accept | Задать пароль по приглашению и войти; Гость | password | **200**; token, expiresAt, user{id,email,name} | B4; product |
-+| AUTH-07 · **П** | **POST** /auth/password-resets | Запросить ссылку для нового пароля; Гость | email | **202**; accepted: true | B4; product |
++| AUTH-07 · **П** | **POST** /auth/password-resets | Запросить ссылку для нового пароля; Гость | email | **202**; без тела | B4; product |
 +| AUTH-08 · **П** | **POST** /auth/password-resets/{reset_token}/confirm | Сохранить новый пароль по ссылке и войти; Гость | password | **200**; token, expiresAt, user{id,email,name} | B4; product |
-+| AUTH-09 · **П** | **PATCH** /me/password | Сменить пароль в профиле; О/К/Р/В | currentPassword, newPassword | **200**; changed: true | B4; product |
++| AUTH-09 · **П** | **PATCH** /me/password | Сменить пароль в профиле; О/К/Р/В | currentPassword, newPassword | **204**; без тела | B4; product |
  
  - **AUTH-01:** GeeTest проверяется в LoginUseCase: при включённой серверной капче добавить captcha{lot_number,captcha_output,pass_token,gen_time} с актуальным результатом виджета. В реальном UserDto нет role: получить её через ACC-01. Демо-пароль фронтенда не является серверным доступом.
  - **AUTH-02:** Фактический контроллер возвращает 200 и data: [], а не 204.
@@ -1408,14 +1408,14 @@
 +    sample={"token":"example-token-not-valid","expiresAt":"2026-10-02T12:00:00+03:00","user":{"id":10,"email":"curator@example.test","name":"Куратор тест"}},
 +    note="Пароль не короче 10 символов и не равен email (422 PASSWORD_WEAK). Активирует pending-учётку, ссылка одноразовая. Сессия принадлежит приглашённому сотруднику и намеренно не заменяет staff_token.")
 +add("auth","AUTH-07","POST","/auth/password-resets","Запросить ссылку для нового пароля","Гость",
-+    "accepted: true",{"email":"{{login_email}}"},code=202,idem=False,sample={"accepted":True},
++    "без тела",{"email":"{{login_email}}"},code=202,idem=False,fmt="empty",
 +    note="Ответ одинаков для любого адреса: существование учётки не раскрывается, повтор чаще 60 секунд молча пропускается. Pending-учётке повторно уходит приглашение. Отправляет настоящее письмо через H1 — только на тестовом окружении.")
 +add("auth","AUTH-08","POST","/auth/password-resets/{reset_token}/confirm","Сохранить новый пароль по ссылке и войти","Гость",
 +    "token, expiresAt, user{id,email,name}",{"password":"{{new_password}}"},idem=False,
 +    sample={"token":"example-token-not-valid","expiresAt":"2026-10-02T12:00:00+03:00","user":{"id":1,"email":"qa@example.test","name":"Тест"}},
 +    note="Ссылка из письма сброса: одноразовая, действует 60 минут; 404/410 как в AUTH-05, 422 PASSWORD_WEAK. Новая сессия заменяет прежнюю (одна сессия на сотрудника) и намеренно не заменяет staff_token.")
 +add("auth","AUTH-09","PATCH","/me/password","Сменить пароль в профиле",ALL,
-+    "changed: true",{"currentPassword":"{{login_password}}","newPassword":"{{new_password}}"},idem=False,sample={"changed":True},
++    "без тела",{"currentPassword":"{{login_password}}","newPassword":"{{new_password}}"},code=204,idem=False,fmt="empty",
 +    note="422 CURRENT_PASSWORD_INVALID или PASSWORD_WEAK. Текущая сессия сохраняется. Меняет пароль тестовой учётки — после проверки вернуть прежний.")
  # Roles and assignments.
  add("access","ACC-01","GET","/me","Профиль и права текущего сотрудника",ALL,
@@ -1458,7 +1458,16 @@
  "staff_token":"","staff_role":"","token_expires_at":"","current_user_id":"",
  "user_id":"","institution_id":"","shoot_id":"","group_id":"","target_group_id":"","photo_id":"","assignment_id":"","product_id":"",
  "order_id":"","order_key":"","order_line_id":"","staff_request_id":"","support_id":"",
-@@ -691,7 +717,7 @@
+@@ -595,6 +621,8 @@
+     ]
+     if ep["format"]=="text":
+         test += ["pm.test('Тело health', function () { pm.expect(pm.response.text()).to.eql('alive'); });"]
++    elif ep["format"]=="empty":
++        test += ["pm.test('Ответ без тела', function () { pm.expect(pm.response.text()).to.eql(''); });"]
+     elif ep["format"] in {"binary","csv"}:
+         accepted="text/csv" if ep["format"]=="csv" else "application/zip|application/octet-stream|image/jpeg|image/png|image/webp"
+         test += [
+@@ -691,7 +719,7 @@
  - [Машиночитаемый реестр](endpoints.json) — метод, путь, владелец, вход, выход, права, источник и статус каждой операции.
  - [Генератор](build.py) — единый источник карты и коллекции. [Проверка](validate.py) — соответствие реестру, переменные, JSON и схема Postman.
  
@@ -1467,7 +1476,7 @@
  
  [Карта модулей и результаты аудита](../04-bitrix-modules/README.md) фиксируют владельцев сценариев и правила реализации. [Предметная область](../02-domain/README.md) и [БД](../03-database/README.md) содержат принятую в A6 (W05) модель и схему Access/Organization. Остальные части уточняются перед соответствующей волной; бизнес-проверка R17 и открытые коммерческие решения сохраняют свой статус. Наличие записи в реестре не доказывает готовый HTTP.
  
-@@ -1003,7 +1029,7 @@
+@@ -1003,7 +1031,7 @@
      # The path prefix does not include a leading slash, to keep URL object and raw URL identical.
      DEFAULTS["api_prefix"]="api/api/v1"
      counts={key:sum(e["module"]==key for e in ENDPOINTS) for key in MODULES}
@@ -1476,7 +1485,7 @@
      parts += ["| Владелец | Ответственность | Запросов |\n| --- | --- | --- |\n"]
      for mid,(name,title,about,source) in MODULES.items():
          parts.append(f"| {name} | {title} | {counts[mid]} |\n")
-@@ -1034,7 +1060,7 @@
+@@ -1034,7 +1062,7 @@
          "status":"design-proposal","wavePlan":"../04-bitrix-modules/backend-waves.json","modules":MODULES,"endpoints":ENDPOINTS})+"\n",encoding="utf-8")
      collection={"info":{"_postman_id":str(uuid.uuid5(uuid.NAMESPACE_URL,"morefoto/rest-api/v1")),
          "name":"MoreFoto — REST API по модулям (проект)","schema":SCHEMA_URL,
@@ -1487,7 +1496,7 @@
      by_id = {item["name"].split(" · ")[0]:item for folder in folders for item in folder["item"]}
 --- a/docs/05-rest-api/endpoints.json
 +++ b/docs/05-rest-api/endpoints.json
-@@ -247,6 +247,164 @@
+@@ -247,6 +247,160 @@
        ]
      },
      {
@@ -1561,7 +1570,7 @@
 +      "path": "/auth/password-resets",
 +      "title": "Запросить ссылку для нового пароля",
 +      "roles": "Гость",
-+      "output": "accepted: true",
++      "output": "без тела",
 +      "body": {
 +        "email": "{{login_email}}"
 +      },
@@ -1570,11 +1579,9 @@
 +      "note": "Ответ одинаков для любого адреса: существование учётки не раскрывается, повтор чаще 60 секунд молча пропускается. Pending-учётке повторно уходит приглашение. Отправляет настоящее письмо через H1 — только на тестовом окружении.",
 +      "status": "П",
 +      "save": {},
-+      "sample": {
-+        "accepted": true
-+      },
++      "sample": {},
 +      "source": "frontend/src/api/auth.ts",
-+      "format": "json",
++      "format": "empty",
 +      "idem": false,
 +      "scope": "product",
 +      "routeFile": "api/public/local/modules/rebit.auth/routes.php",
@@ -1625,21 +1632,19 @@
 +      "path": "/me/password",
 +      "title": "Сменить пароль в профиле",
 +      "roles": "О/К/Р/В",
-+      "output": "changed: true",
++      "output": "без тела",
 +      "body": {
 +        "currentPassword": "{{login_password}}",
 +        "newPassword": "{{new_password}}"
 +      },
-+      "code": 200,
++      "code": 204,
 +      "query": [],
 +      "note": "422 CURRENT_PASSWORD_INVALID или PASSWORD_WEAK. Текущая сессия сохраняется. Меняет пароль тестовой учётки — после проверки вернуть прежний.",
 +      "status": "П",
 +      "save": {},
-+      "sample": {
-+        "changed": true
-+      },
++      "sample": {},
 +      "source": "frontend/src/api/auth.ts",
-+      "format": "json",
++      "format": "empty",
 +      "idem": false,
 +      "scope": "product",
 +      "routeFile": "api/public/local/modules/rebit.auth/routes.php",
@@ -1652,7 +1657,7 @@
        "module": "access",
        "id": "ACC-01",
        "method": "GET",
-@@ -310,9 +468,14 @@
+@@ -310,9 +464,14 @@
            "active",
            "",
            "true/false"
@@ -1668,7 +1673,7 @@
        "status": "П",
        "save": {},
        "sample": {
-@@ -326,7 +489,8 @@
+@@ -326,7 +485,8 @@
        "implementationWave": "B2",
        "verificationWaves": [
          "N1",
@@ -1678,7 +1683,7 @@
        ]
      },
      {
-@@ -476,6 +640,35 @@
+@@ -476,6 +636,35 @@
        ]
      },
      {
@@ -1714,7 +1719,7 @@
        "module": "organization",
        "id": "ORG-01",
        "method": "GET",
-@@ -556,7 +749,8 @@
+@@ -556,7 +745,8 @@
        "verificationWaves": [
          "B2",
          "N1",
@@ -1724,7 +1729,7 @@
        ]
      },
      {
-@@ -671,7 +865,9 @@
+@@ -671,7 +861,9 @@
        "verificationWaves": [
          "F2",
          "N1",
@@ -1735,7 +1740,7 @@
        ]
      },
      {
-@@ -825,7 +1021,8 @@
+@@ -825,7 +1017,8 @@
          "F2",
          "K2",
          "N1",
@@ -1745,7 +1750,7 @@
        ]
      },
      {
-@@ -1041,7 +1238,8 @@
+@@ -1041,7 +1234,8 @@
        "verificationWaves": [
          "D2",
          "D3",
@@ -1755,7 +1760,7 @@
        ]
      },
      {
-@@ -1809,7 +2007,8 @@
+@@ -1809,7 +2003,8 @@
          "K2",
          "M1",
          "N1",
@@ -1765,7 +1770,7 @@
        ]
      },
      {
-@@ -1908,7 +2107,8 @@
+@@ -1908,7 +2103,8 @@
        "verificationWaves": [
          "K2",
          "N1",
@@ -1775,7 +1780,7 @@
        ]
      },
      {
-@@ -2087,7 +2287,8 @@
+@@ -2087,7 +2283,8 @@
        "implementationWave": "F1",
        "verificationWaves": [
          "N1",
@@ -2038,7 +2043,7 @@
        "item": []
      },
      {
-@@ -12261,7 +12273,760 @@
+@@ -12261,7 +12273,625 @@
      },
      {
        "name": "N2 — Сквозная приёмка и управляемое включение",
@@ -2317,7 +2322,7 @@
 +                "password-resets"
 +              ]
 +            },
-+            "description": "**AUTH-07 — rebit.auth**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Гость.\n\nОтвет: accepted: true.\n\nОтвет одинаков для любого адреса: существование учётки не раскрывается, повтор чаще 60 секунд молча пропускается. Pending-учётке повторно уходит приглашение. Отправляет настоящее письмо через H1 — только на тестовом окружении.\n\nИсточник: frontend/src/api/auth.ts.\n\nОбласть: product. Основная волна: B4. Проверки: N2.",
++            "description": "**AUTH-07 — rebit.auth**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Гость.\n\nОтвет: без тела.\n\nОтвет одинаков для любого адреса: существование учётки не раскрывается, повтор чаще 60 секунд молча пропускается. Pending-учётке повторно уходит приглашение. Отправляет настоящее письмо через H1 — только на тестовом окружении.\n\nИсточник: frontend/src/api/auth.ts.\n\nОбласть: product. Основная волна: B4. Проверки: N2.",
 +            "body": {
 +              "mode": "raw",
 +              "raw": "{\n  \"email\": \"{{login_email}}\"\n}",
@@ -2336,76 +2341,12 @@
 +                "exec": [
 +                  "const expected = 202;",
 +                  "pm.test('AUTH-07: HTTP '+expected, function () { pm.response.to.have.status(expected); });",
-+                  "pm.test('JSON Content-Type', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/application\\/json/i); });",
-+                  "let payload;",
-+                  "try { payload = pm.response.json(); } catch (e) {",
-+                  "  pm.test('Корректный JSON', function () { throw e; });",
-+                  "}",
-+                  "if (payload !== undefined) {",
-+                  "  pm.test('Конверт data без error', function () {",
-+                  "    pm.expect(payload).to.have.property('data');",
-+                  "    pm.expect(payload).not.to.have.property('error');",
-+                  "  });",
-+                  "  const data = payload.data;",
-+                  "  if (pm.response.code === expected && data !== undefined) {",
-+                  "  }",
-+                  "}"
++                  "pm.test('Ответ без тела', function () { pm.expect(pm.response.text()).to.eql(''); });"
 +                ]
 +              }
 +            }
 +          ],
-+          "response": [
-+            {
-+              "name": "Пример контракта (не ответ сервера)",
-+              "originalRequest": {
-+                "method": "POST",
-+                "auth": {
-+                  "type": "noauth"
-+                },
-+                "header": [
-+                  {
-+                    "key": "Accept",
-+                    "value": "application/json"
-+                  },
-+                  {
-+                    "key": "Content-Type",
-+                    "value": "application/json"
-+                  }
-+                ],
-+                "url": {
-+                  "raw": "{{base_url}}/{{api_prefix}}/auth/password-resets",
-+                  "host": [
-+                    "{{base_url}}"
-+                  ],
-+                  "path": [
-+                    "{{api_prefix}}",
-+                    "auth",
-+                    "password-resets"
-+                  ]
-+                },
-+                "description": "**AUTH-07 — rebit.auth**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Гость.\n\nОтвет: accepted: true.\n\nОтвет одинаков для любого адреса: существование учётки не раскрывается, повтор чаще 60 секунд молча пропускается. Pending-учётке повторно уходит приглашение. Отправляет настоящее письмо через H1 — только на тестовом окружении.\n\nИсточник: frontend/src/api/auth.ts.\n\nОбласть: product. Основная волна: B4. Проверки: N2.",
-+                "body": {
-+                  "mode": "raw",
-+                  "raw": "{\n  \"email\": \"{{login_email}}\"\n}",
-+                  "options": {
-+                    "raw": {
-+                      "language": "json"
-+                    }
-+                  }
-+                }
-+              },
-+              "status": "Accepted",
-+              "code": 202,
-+              "_postman_previewlanguage": "json",
-+              "header": [
-+                {
-+                  "key": "Content-Type",
-+                  "value": "application/json"
-+                }
-+              ],
-+              "body": "{\n  \"data\": {\n    \"accepted\": true\n  }\n}"
-+            }
-+          ]
++          "response": []
 +        },
 +        {
 +          "id": "2d2208d0-b98a-52e4-85a1-8ba7e2118f1e",
@@ -2566,7 +2507,7 @@
 +                "password"
 +              ]
 +            },
-+            "description": "**AUTH-09 — rebit.auth**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: changed: true.\n\n422 CURRENT_PASSWORD_INVALID или PASSWORD_WEAK. Текущая сессия сохраняется. Меняет пароль тестовой учётки — после проверки вернуть прежний.\n\nИсточник: frontend/src/api/auth.ts.\n\nОбласть: product. Основная волна: B4. Проверки: N2.",
++            "description": "**AUTH-09 — rebit.auth**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: без тела.\n\n422 CURRENT_PASSWORD_INVALID или PASSWORD_WEAK. Текущая сессия сохраняется. Меняет пароль тестовой учётки — после проверки вернуть прежний.\n\nИсточник: frontend/src/api/auth.ts.\n\nОбласть: product. Основная волна: B4. Проверки: N2.",
 +            "body": {
 +              "mode": "raw",
 +              "raw": "{\n  \"currentPassword\": \"{{login_password}}\",\n  \"newPassword\": \"{{new_password}}\"\n}",
@@ -2583,85 +2524,14 @@
 +              "script": {
 +                "type": "text/javascript",
 +                "exec": [
-+                  "const expected = 200;",
++                  "const expected = 204;",
 +                  "pm.test('AUTH-09: HTTP '+expected, function () { pm.response.to.have.status(expected); });",
-+                  "pm.test('JSON Content-Type', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/application\\/json/i); });",
-+                  "let payload;",
-+                  "try { payload = pm.response.json(); } catch (e) {",
-+                  "  pm.test('Корректный JSON', function () { throw e; });",
-+                  "}",
-+                  "if (payload !== undefined) {",
-+                  "  pm.test('Конверт data без error', function () {",
-+                  "    pm.expect(payload).to.have.property('data');",
-+                  "    pm.expect(payload).not.to.have.property('error');",
-+                  "  });",
-+                  "  const data = payload.data;",
-+                  "  if (pm.response.code === expected && data !== undefined) {",
-+                  "  }",
-+                  "}"
++                  "pm.test('Ответ без тела', function () { pm.expect(pm.response.text()).to.eql(''); });"
 +                ]
 +              }
 +            }
 +          ],
-+          "response": [
-+            {
-+              "name": "Пример контракта (не ответ сервера)",
-+              "originalRequest": {
-+                "method": "PATCH",
-+                "auth": {
-+                  "type": "bearer",
-+                  "bearer": [
-+                    {
-+                      "key": "token",
-+                      "value": "{{staff_token}}",
-+                      "type": "string"
-+                    }
-+                  ]
-+                },
-+                "header": [
-+                  {
-+                    "key": "Accept",
-+                    "value": "application/json"
-+                  },
-+                  {
-+                    "key": "Content-Type",
-+                    "value": "application/json"
-+                  }
-+                ],
-+                "url": {
-+                  "raw": "{{base_url}}/{{api_prefix}}/me/password",
-+                  "host": [
-+                    "{{base_url}}"
-+                  ],
-+                  "path": [
-+                    "{{api_prefix}}",
-+                    "me",
-+                    "password"
-+                  ]
-+                },
-+                "description": "**AUTH-09 — rebit.auth**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: changed: true.\n\n422 CURRENT_PASSWORD_INVALID или PASSWORD_WEAK. Текущая сессия сохраняется. Меняет пароль тестовой учётки — после проверки вернуть прежний.\n\nИсточник: frontend/src/api/auth.ts.\n\nОбласть: product. Основная волна: B4. Проверки: N2.",
-+                "body": {
-+                  "mode": "raw",
-+                  "raw": "{\n  \"currentPassword\": \"{{login_password}}\",\n  \"newPassword\": \"{{new_password}}\"\n}",
-+                  "options": {
-+                    "raw": {
-+                      "language": "json"
-+                    }
-+                  }
-+                }
-+              },
-+              "status": "OK",
-+              "code": 200,
-+              "_postman_previewlanguage": "json",
-+              "header": [
-+                {
-+                  "key": "Content-Type",
-+                  "value": "application/json"
-+                }
-+              ],
-+              "body": "{\n  \"data\": {\n    \"changed\": true\n  }\n}"
-+            }
-+          ]
++          "response": []
 +        },
 +        {
 +          "id": "178a29b5-7099-5b63-97b4-937081c62256",
@@ -2838,7 +2708,7 @@
    },
    "item": [
      {
-@@ -398,6 +398,599 @@
+@@ -398,6 +398,464 @@
              }
            ],
            "response": []
@@ -3090,7 +2960,7 @@
 +                "password-resets"
 +              ]
 +            },
-+            "description": "**AUTH-07 — rebit.auth**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Гость.\n\nОтвет: accepted: true.\n\nОтвет одинаков для любого адреса: существование учётки не раскрывается, повтор чаще 60 секунд молча пропускается. Pending-учётке повторно уходит приглашение. Отправляет настоящее письмо через H1 — только на тестовом окружении.\n\nИсточник: frontend/src/api/auth.ts.\n\nОбласть: product. Основная волна: B4. Проверки: N2.",
++            "description": "**AUTH-07 — rebit.auth**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Гость.\n\nОтвет: без тела.\n\nОтвет одинаков для любого адреса: существование учётки не раскрывается, повтор чаще 60 секунд молча пропускается. Pending-учётке повторно уходит приглашение. Отправляет настоящее письмо через H1 — только на тестовом окружении.\n\nИсточник: frontend/src/api/auth.ts.\n\nОбласть: product. Основная волна: B4. Проверки: N2.",
 +            "body": {
 +              "mode": "raw",
 +              "raw": "{\n  \"email\": \"{{login_email}}\"\n}",
@@ -3109,76 +2979,12 @@
 +                "exec": [
 +                  "const expected = 202;",
 +                  "pm.test('AUTH-07: HTTP '+expected, function () { pm.response.to.have.status(expected); });",
-+                  "pm.test('JSON Content-Type', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/application\\/json/i); });",
-+                  "let payload;",
-+                  "try { payload = pm.response.json(); } catch (e) {",
-+                  "  pm.test('Корректный JSON', function () { throw e; });",
-+                  "}",
-+                  "if (payload !== undefined) {",
-+                  "  pm.test('Конверт data без error', function () {",
-+                  "    pm.expect(payload).to.have.property('data');",
-+                  "    pm.expect(payload).not.to.have.property('error');",
-+                  "  });",
-+                  "  const data = payload.data;",
-+                  "  if (pm.response.code === expected && data !== undefined) {",
-+                  "  }",
-+                  "}"
++                  "pm.test('Ответ без тела', function () { pm.expect(pm.response.text()).to.eql(''); });"
 +                ]
 +              }
 +            }
 +          ],
-+          "response": [
-+            {
-+              "name": "Пример контракта (не ответ сервера)",
-+              "originalRequest": {
-+                "method": "POST",
-+                "auth": {
-+                  "type": "noauth"
-+                },
-+                "header": [
-+                  {
-+                    "key": "Accept",
-+                    "value": "application/json"
-+                  },
-+                  {
-+                    "key": "Content-Type",
-+                    "value": "application/json"
-+                  }
-+                ],
-+                "url": {
-+                  "raw": "{{base_url}}/{{api_prefix}}/auth/password-resets",
-+                  "host": [
-+                    "{{base_url}}"
-+                  ],
-+                  "path": [
-+                    "{{api_prefix}}",
-+                    "auth",
-+                    "password-resets"
-+                  ]
-+                },
-+                "description": "**AUTH-07 — rebit.auth**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Гость.\n\nОтвет: accepted: true.\n\nОтвет одинаков для любого адреса: существование учётки не раскрывается, повтор чаще 60 секунд молча пропускается. Pending-учётке повторно уходит приглашение. Отправляет настоящее письмо через H1 — только на тестовом окружении.\n\nИсточник: frontend/src/api/auth.ts.\n\nОбласть: product. Основная волна: B4. Проверки: N2.",
-+                "body": {
-+                  "mode": "raw",
-+                  "raw": "{\n  \"email\": \"{{login_email}}\"\n}",
-+                  "options": {
-+                    "raw": {
-+                      "language": "json"
-+                    }
-+                  }
-+                }
-+              },
-+              "status": "Accepted",
-+              "code": 202,
-+              "_postman_previewlanguage": "json",
-+              "header": [
-+                {
-+                  "key": "Content-Type",
-+                  "value": "application/json"
-+                }
-+              ],
-+              "body": "{\n  \"data\": {\n    \"accepted\": true\n  }\n}"
-+            }
-+          ]
++          "response": []
 +        },
 +        {
 +          "id": "2d2208d0-b98a-52e4-85a1-8ba7e2118f1e",
@@ -3339,7 +3145,7 @@
 +                "password"
 +              ]
 +            },
-+            "description": "**AUTH-09 — rebit.auth**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: changed: true.\n\n422 CURRENT_PASSWORD_INVALID или PASSWORD_WEAK. Текущая сессия сохраняется. Меняет пароль тестовой учётки — после проверки вернуть прежний.\n\nИсточник: frontend/src/api/auth.ts.\n\nОбласть: product. Основная волна: B4. Проверки: N2.",
++            "description": "**AUTH-09 — rebit.auth**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: без тела.\n\n422 CURRENT_PASSWORD_INVALID или PASSWORD_WEAK. Текущая сессия сохраняется. Меняет пароль тестовой учётки — после проверки вернуть прежний.\n\nИсточник: frontend/src/api/auth.ts.\n\nОбласть: product. Основная волна: B4. Проверки: N2.",
 +            "body": {
 +              "mode": "raw",
 +              "raw": "{\n  \"currentPassword\": \"{{login_password}}\",\n  \"newPassword\": \"{{new_password}}\"\n}",
@@ -3356,89 +3162,18 @@
 +              "script": {
 +                "type": "text/javascript",
 +                "exec": [
-+                  "const expected = 200;",
++                  "const expected = 204;",
 +                  "pm.test('AUTH-09: HTTP '+expected, function () { pm.response.to.have.status(expected); });",
-+                  "pm.test('JSON Content-Type', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/application\\/json/i); });",
-+                  "let payload;",
-+                  "try { payload = pm.response.json(); } catch (e) {",
-+                  "  pm.test('Корректный JSON', function () { throw e; });",
-+                  "}",
-+                  "if (payload !== undefined) {",
-+                  "  pm.test('Конверт data без error', function () {",
-+                  "    pm.expect(payload).to.have.property('data');",
-+                  "    pm.expect(payload).not.to.have.property('error');",
-+                  "  });",
-+                  "  const data = payload.data;",
-+                  "  if (pm.response.code === expected && data !== undefined) {",
-+                  "  }",
-+                  "}"
++                  "pm.test('Ответ без тела', function () { pm.expect(pm.response.text()).to.eql(''); });"
 +                ]
 +              }
 +            }
 +          ],
-+          "response": [
-+            {
-+              "name": "Пример контракта (не ответ сервера)",
-+              "originalRequest": {
-+                "method": "PATCH",
-+                "auth": {
-+                  "type": "bearer",
-+                  "bearer": [
-+                    {
-+                      "key": "token",
-+                      "value": "{{staff_token}}",
-+                      "type": "string"
-+                    }
-+                  ]
-+                },
-+                "header": [
-+                  {
-+                    "key": "Accept",
-+                    "value": "application/json"
-+                  },
-+                  {
-+                    "key": "Content-Type",
-+                    "value": "application/json"
-+                  }
-+                ],
-+                "url": {
-+                  "raw": "{{base_url}}/{{api_prefix}}/me/password",
-+                  "host": [
-+                    "{{base_url}}"
-+                  ],
-+                  "path": [
-+                    "{{api_prefix}}",
-+                    "me",
-+                    "password"
-+                  ]
-+                },
-+                "description": "**AUTH-09 — rebit.auth**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: changed: true.\n\n422 CURRENT_PASSWORD_INVALID или PASSWORD_WEAK. Текущая сессия сохраняется. Меняет пароль тестовой учётки — после проверки вернуть прежний.\n\nИсточник: frontend/src/api/auth.ts.\n\nОбласть: product. Основная волна: B4. Проверки: N2.",
-+                "body": {
-+                  "mode": "raw",
-+                  "raw": "{\n  \"currentPassword\": \"{{login_password}}\",\n  \"newPassword\": \"{{new_password}}\"\n}",
-+                  "options": {
-+                    "raw": {
-+                      "language": "json"
-+                    }
-+                  }
-+                }
-+              },
-+              "status": "OK",
-+              "code": 200,
-+              "_postman_previewlanguage": "json",
-+              "header": [
-+                {
-+                  "key": "Content-Type",
-+                  "value": "application/json"
-+                }
-+              ],
-+              "body": "{\n  \"data\": {\n    \"changed\": true\n  }\n}"
-+            }
-+          ]
++          "response": []
          }
        ]
      },
-@@ -570,6 +1163,12 @@
+@@ -570,6 +1028,12 @@
                    "description": "true/false"
                  },
                  {
@@ -3451,7 +3186,7 @@
                    "key": "page",
                    "value": "{{page}}",
                    "description": "Страница начиная с 1"
-@@ -581,7 +1180,7 @@
+@@ -581,7 +1045,7 @@
                  }
                ]
              },
@@ -3460,7 +3195,7 @@
            },
            "event": [
              {
-@@ -665,6 +1264,12 @@
+@@ -665,6 +1129,12 @@
                        "description": "true/false"
                      },
                      {
@@ -3473,7 +3208,7 @@
                        "key": "page",
                        "value": "{{page}}",
                        "description": "Страница начиная с 1"
-@@ -676,7 +1281,7 @@
+@@ -676,7 +1146,7 @@
                      }
                    ]
                  },
@@ -3482,7 +3217,7 @@
                },
                "status": "OK",
                "code": 200,
-@@ -1140,6 +1745,115 @@
+@@ -1140,6 +1610,115 @@
              }
            ],
            "response": []
@@ -3598,7 +3333,7 @@
          }
        ]
      },
-@@ -1284,7 +1998,7 @@
+@@ -1284,7 +1863,7 @@
                  }
                ]
              },
@@ -3607,7 +3342,7 @@
            },
            "event": [
              {
-@@ -1384,7 +2098,7 @@
+@@ -1384,7 +1963,7 @@
                      }
                    ]
                  },
@@ -3616,7 +3351,7 @@
                },
                "status": "OK",
                "code": 200,
-@@ -1619,7 +2333,7 @@
+@@ -1619,7 +2198,7 @@
                  }
                ]
              },
@@ -3625,7 +3360,7 @@
            },
            "event": [
              {
-@@ -1709,7 +2423,7 @@
+@@ -1709,7 +2288,7 @@
                      }
                    ]
                  },
@@ -3634,7 +3369,7 @@
                },
                "status": "OK",
                "code": 200,
-@@ -2213,7 +2927,7 @@
+@@ -2213,7 +2792,7 @@
                  }
                ]
              },
@@ -3643,7 +3378,7 @@
            },
            "event": [
              {
-@@ -2828,7 +3542,7 @@
+@@ -2828,7 +3407,7 @@
                  }
                ]
              },
@@ -3652,7 +3387,7 @@
            },
            "event": [
              {
-@@ -2930,7 +3644,7 @@
+@@ -2930,7 +3509,7 @@
                      }
                    ]
                  },
@@ -3661,7 +3396,7 @@
                },
                "status": "OK",
                "code": 200,
-@@ -4993,7 +5707,7 @@
+@@ -4993,7 +5572,7 @@
                  }
                ]
              },
@@ -3670,7 +3405,7 @@
            },
            "event": [
              {
-@@ -5148,7 +5862,7 @@
+@@ -5148,7 +5727,7 @@
                      }
                    ]
                  },
@@ -3679,7 +3414,7 @@
                },
                "status": "OK",
                "code": 200,
-@@ -5348,7 +6062,7 @@
+@@ -5348,7 +5927,7 @@
                  }
                ]
              },
@@ -3688,7 +3423,7 @@
            },
            "event": [
              {
-@@ -5443,7 +6157,7 @@
+@@ -5443,7 +6022,7 @@
                      }
                    ]
                  },
@@ -3697,7 +3432,7 @@
                },
                "status": "OK",
                "code": 200,
-@@ -5899,7 +6613,7 @@
+@@ -5899,7 +6478,7 @@
                  }
                ]
              },
@@ -3706,7 +3441,7 @@
            },
            "event": [
              {
-@@ -5994,7 +6708,7 @@
+@@ -5994,7 +6573,7 @@
                      }
                    ]
                  },
@@ -3742,6 +3477,17 @@
        "key": "staff_token",
        "value": "",
        "enabled": true,
+--- a/docs/05-rest-api/validate-postman.cjs
++++ b/docs/05-rest-api/validate-postman.cjs
+@@ -97,7 +97,7 @@
+     const failures=[];
+     const pm={environment,expect:expectation,test:(name,fn)=>{try{fn();}catch(error){failures.push(name+': '+error.message);}},
+       response:{code:status,headers:{get:k=>k==='Content-Type'?contentType:k==='Content-Disposition'?'attachment; filename="test.zip"':undefined},
+-        text:()=>mode==='html'?'<html>SPA</html>':'alive',json:()=>{if(mode==='html')throw Error('Not JSON');return payload;},
++        text:()=>mode==='html'?'<html>SPA</html>':ep.format==='empty'?'':'alive',json:()=>{if(mode==='html')throw Error('Not JSON');return payload;},
+         to:{have:{status:expected=>assert.equal(status,expected)}}}};
+     vm.runInNewContext(test,{pm,Set,RegExp,Number,Error});
+     if(mode==='success') {assert.deepEqual(failures,[],ep.id+' success: '+failures.join('; '));happy++;}
 --- a/docs/05-rest-api/validate.py
 +++ b/docs/05-rest-api/validate.py
 @@ -41,7 +41,7 @@
@@ -3775,9 +3521,7 @@
    "sha256": {
 -    "build.py": "f67837843f75b24bd3d7b435207749a4b4d8e4ebca953090486e056c9c6c07bc",
 -    "validate.py": "3fc1c1fdcd9f7fe16b33e9d61ff611c707eea67878f94fc8fc82136acf7d77ed",
-+    "build.py": "0b87bccf2641ac89cadfd95d1b39c18ea8cb59c5a0b696cc29ddc5e71ade5596",
-+    "validate.py": "0500faadd90484b691aafcda01b743c64cee6b811619214d01632b19f628b421",
-     "validate-postman.cjs": "1a55325f9338e83a13831b89e00bb29f54f9ce340728fd9b53e318d0e14cf510",
+-    "validate-postman.cjs": "1a55325f9338e83a13831b89e00bb29f54f9ce340728fd9b53e318d0e14cf510",
 -    "../04-bitrix-modules/README.md": "02a4f3b66767f7f68a7eb28d2021967f34b4d35780c3dee986eb06d848602ba5",
 -    "../04-bitrix-modules/backend-waves.json": "73e3dae4b2dde5037b9bf3c2422fa17e2c7fb89910d7bc9536ef6032e07d6a92",
 -    "../04-bitrix-modules/backend-waves.md": "5232543a1b9d4932aed4fce5b939d28e18bf9e33e574fe3f909ea635d2dcff9a",
@@ -3789,15 +3533,18 @@
 -    "postman/MoreFoto.backend-waves.postman_collection.json": "4260cdd74a40b4a1106275fc00259d831ef7b8cd74adc844b9d9b4132d3d546b",
 -    "postman/MoreFoto.local.postman_environment.json": "d4bba2bd1430f2c6e10d7fc916faa677504c539f8fedac2b777e057bce2e74b3",
 -    "postman/MoreFoto.stage.postman_environment.json": "3bc2686c533d440d968867d02740039fee2236b864e5e66699604312c4781813"
++    "build.py": "2afb0d026e62cbed01f2c8c58e49e825f02d06562be7c2f6c10ddb59589076ce",
++    "validate.py": "0500faadd90484b691aafcda01b743c64cee6b811619214d01632b19f628b421",
++    "validate-postman.cjs": "b4003232e99c8fe0d02ee5e73586a608e7a1708dff4237a1603bb67f66d7f02e",
 +    "../04-bitrix-modules/README.md": "cf05d6db3489a038907b17475bbf6e1ff596ae3a36984e16be08ef2dd7f9ea86",
 +    "../04-bitrix-modules/backend-waves.json": "0355598dd1fde0bf5d305ba831c6b4958a4dda212995bd95a543bdc6db1c1737",
 +    "../04-bitrix-modules/backend-waves.md": "97571670596497e39593e7bd1f419283f156bca5387f80d385661ad768890004",
 +    "../04-bitrix-modules/render-waves.py": "b502e757c9fd854c81d7f828a7a03bb58569f5f3cb0a582eed98b53c358327ec",
 +    "../04-bitrix-modules/wave_graph.py": "031e14b1312851cc491dabf3a48d7a8c9a61b16e634f93400284c0f3fe50b2db",
-+    "README.md": "d984778376be4f3c59ae6a56cee57e81405fb6bd8a5adf37108ca3c6d3e2db35",
-+    "endpoints.json": "e828a2e57f938df7709af0f0dc488fb0d6ba161f6c1ead950819af4a2cf4adb6",
-+    "postman/MoreFoto.postman_collection.json": "27dcbf83e8f2236041c76167eb1c1da67993c8260a553d7dae13662fcdc9fc43",
-+    "postman/MoreFoto.backend-waves.postman_collection.json": "ef766e3fbecb492431f5b3b8059c9a538071d470c393d919aeb23b546e589396",
++    "README.md": "da2904d577ca72c02d98a48941c9d3dd2e6661f55aad23d452bd23ba579e6bc6",
++    "endpoints.json": "b605688f1766a048a3c69ec8468ec4bc6c1720a34466458b96730a5d3cdf0fe0",
++    "postman/MoreFoto.postman_collection.json": "1e41deec7400fc53f5430b9c753b86b6aa4406fc0eaaa2270894f85d697d4183",
++    "postman/MoreFoto.backend-waves.postman_collection.json": "86d187940ec54f51f8fb203f7ef47980a4b53a87a991d523198afe29ec42e253",
 +    "postman/MoreFoto.local.postman_environment.json": "661ce499ca584e881988187c9db8f976d93321dce8180d2dcd0f21ca9d937e81",
 +    "postman/MoreFoto.stage.postman_environment.json": "59fe7a1e2a398c87d5007fbeb560fbe204fff99fbe1c768ab1e2f1abdabbd622"
    },

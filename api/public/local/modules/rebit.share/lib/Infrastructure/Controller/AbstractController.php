@@ -16,6 +16,7 @@ use Bitrix\Main\SystemException;
 use Rebit\Share\Infrastructure\Controller\Filters\LoggerFilter;
 use Rebit\Share\Infrastructure\Controller\Request\RequestParameterFactory;
 use Rebit\Share\Infrastructure\Controller\Responses\AbstractResponse;
+use Rebit\Share\Infrastructure\Controller\Responses\EmptyResponse;
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\AutoWire\Parameter;
 use Bitrix\Main\Engine\FallbackAction;
@@ -92,16 +93,13 @@ abstract class AbstractController extends Controller
     }
 
     /**
-     * Возвращает пустой ответ с кодом 204, используется после удаления
+     * Возвращает пустой ответ с кодом 204, используется после удаления или изменения без результата
      *
      * @throws ArgumentTypeException
      */
-    final public function noContent(): HttpResponse
+    final public function noContent(): EmptyResponse
     {
-        return (new HttpResponse())
-            ->setContent(null)
-            ->setStatus(self::HTTP_NO_CONTENT_CODE)
-        ;
+        return new EmptyResponse(self::HTTP_NO_CONTENT_CODE);
     }
 
     /**
@@ -109,12 +107,19 @@ abstract class AbstractController extends Controller
      *
      * @throws ArgumentTypeException
      */
-    final public function created(): HttpResponse
+    final public function created(): EmptyResponse
     {
-        return (new HttpResponse())
-            ->setContent(null)
-            ->setStatus(self::HTTP_CREATED_CODE)
-        ;
+        return new EmptyResponse(self::HTTP_CREATED_CODE);
+    }
+
+    /**
+     * Возвращает пустой ответ с кодом 202: запрос принят, а результат клиенту не раскрывается
+     *
+     * @throws ArgumentTypeException
+     */
+    final public function accepted(): EmptyResponse
+    {
+        return new EmptyResponse(self::HTTP_ACCEPTED_CODE);
     }
 
     /**
