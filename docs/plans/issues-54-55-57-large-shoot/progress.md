@@ -12,8 +12,8 @@
 - Завершено:
   - #57 (`4edc593`), backend #54 (`e2663c4`), frontend #55 (`e73c72d`), frontend #54 (`f727d24`), live E2E-сценарий (`d025312`);
   - все быстрые проверки и stub-проверка UI.
-- Сейчас: исправлено блокирующее замечание review (P1, сессия превью); запускается полный gate 3.
-- Следующий шаг: разобрать результат gate (`api/var/e2e/<run>/`: `state.json`, `<стенд>/<группа>/results.json`, скриншоты), записать T12–T15, T17.
+- Сейчас: полный gate PASS на head `52d1b50` (79/79). PR #60 ждёт подтверждения ревьюером исправления P1 и merge по поручению пользователя.
+- Следующий шаг: после одобрения review и поручения пользователя — merge PR #60, затем деплой: сначала backend, потом frontend. После деплоя — T16 по `media-*.log` на production.
 - Блокеров нет.
 - Открыто: каноническое описание MED-02 в `../MoreFoto` (D9) — после merge.
 - Рабочее дерево: закоммичено. Пустые `api/vendor`, `api/var` и `frontend/node_modules` — точки монтирования docker-проверок, в git не попадают.
@@ -96,7 +96,19 @@
   - Все проверки до браузера PASS. Группа `b` PASS: 31 тест и 4 верификатора.
   - Группа `a`: 47 из 48, T18 (сессия) PASS. Большой сценарий «#54/#55» прошёл пик превью по Resource Timing, страницы, кеш, reload, разметку и возврат, но упал на последней проверке: `scrollWidth <= clientWidth` на 390 px.
 - Разбор по скриншоту падения: сразу после `setViewportSize` с 1440 на 390 боковое меню ещё уезжало, контент был сдвинут на время анимации Vuetify. Это переходное состояние живой страницы, а не вёрстка экрана: в stub-прогоне с паузой после ресайза прокрутки нет.
-- Исправление теста по образцу соседних спек (`staff`, `D1/D2`): мобильный размер, затем reload той же страницы 2 и проверка `scrollWidth <= innerWidth` на свежей отрисовке.
+- Исправление теста по образцу соседних спек (`staff`, `D1/D2`): мобильный размер, затем reload той же страницы 2 и проверка `scrollWidth <= innerWidth` на свежей отрисовке. Коммит `52d1b50`, push.
+- Gate 4 (`rabit-e2e-aaae2a1e023c`, 242,6 с): **PASS**, exit 0.
+  - Все проверки PASS: npm ci, lint, типы, `test:commerce`, build, php-lint, PHPStan, PHPUnit, миграции, Notification на MySQL.
+  - Группа `a`: expected 48, unexpected 0, flaky 0, skipped 0.
+  - Группа `b`: expected 31, unexpected 0, flaky 0, skipped 0.
+  - MySQL-верификаторы storefront, orders, links, transfers — PASS.
+  - Итог runner: `Browser scenarios passed: 79 {'b': 31, 'a': 48} (full gate)`.
+- Визуальная проверка скриншотов стенда:
+  - `q54-desktop-photos.png`: настоящие превью с водяным знаком, «Показано 48 из 50», пагинация;
+  - `q54-mobile-photos.png`: 390 px, страница 2, «Показано 2 из 50», A001 и «Без ребёнка», предложенный код B, без горизонтальной прокрутки.
+  На мобильном снимке превью ещё в состоянии загрузки: снимок сделан сразу после reload, раскладку это не затрагивает.
+  Артефакты: `api/var/e2e/rabit-e2e-aaae2a1e023c/a/a/artifacts/zz-media--54-55-*/`.
+- Mock BDD `@r08`: 24/24 сценария, 48/48 шагов. Demo-режим фото проверен: локальные страницы, предпросмотр и перенос с набором по запросу, превью из IndexedDB.
 
 ### 2026-09-23 — frontend #55 и #54
 
@@ -140,5 +152,10 @@
 | T08 | PASS | 2026-09-23 | `tests/commerce/photo-paging.test.mjs` (3 теста) в `npm run test:commerce` 182/182 |
 | T09 | PASS | 2026-09-23 | `tests/commerce/photo-previews.test.mjs` (7 тестов) в `npm run test:commerce` 182/182 |
 | T10 | PASS | 2026-09-23 | `npm run check` exit 0 (eslint, vue-tsc, tsc e2e) |
-| T12–T15, T17 | PENDING | — | E2E по команде пользователя |
+| T12 | PASS | 2026-09-23 | gate 4: сценарий «#54/#55»: один GET списка с `groupId/status/page/pageSize`, страница в URL, reload, разметка — один GET страницы, возврат со страницы съёмки |
+| T13 | PASS | 2026-09-23 | gate 4: пик превью ≤ 6 по Resource Timing, однократный сбой восстановлен без «Повторить», повторный визит без повторной загрузки |
+| T14 | PASS | 2026-09-23 | gate 4: 390 px без горизонтальной прокрутки, скриншоты desktop/mobile |
+| T15 | PASS | 2026-09-23 | mock BDD `@r08`: 24 scenarios / 48 steps passed, 3 мин 06 с (`npm run e2e:server` + `TS_NODE_PROJECT=tsconfig.e2e.json npx cucumber-js --config cucumber.mjs --tags @r08` в контейнере Playwright с сетью, том `rabit-issues545557-node`) |
+| T17 | PASS | 2026-09-23 | `make test-e2e …` на base `2cc2360` + diff, head `52d1b50`: 79/79, 242,6 с |
+| T18 | PASS | 2026-09-23 | gate 4: «#55: превью прежней сессии отменяются при выходе…»; stub-контроль на коде до исправления воспроизводит сброс сессии |
 | T16 | PENDING | — | после деплоя |
