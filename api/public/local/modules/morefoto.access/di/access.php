@@ -33,6 +33,9 @@ use Morefoto\Access\Application\Assignment\Service\GroupAccess;
 use Rebit\Share\Contracts\Access\GroupAccessInterface;
 use Rebit\Share\Contracts\Access\GroupLinkAccessInterface;
 use Rebit\Share\Contracts\Access\StaffRequestAccessInterface;
+use Morefoto\Access\Presentation\Staff\StaffInvitationInputMapper;
+use Morefoto\Access\Presentation\Controller\StaffInvitationController;
+use Morefoto\Access\Application\Staff\UseCase\ResendStaffInvitationUseCase;
 
 return [
     StaffRequestAccessInterface::class => ['constructor' => static fn(): StaffRequestAccessInterface => new StaffRequestAccess(ServiceLocator::getInstance()->get(StaffAuthorization::class))],
@@ -57,6 +60,7 @@ return [
             ServiceLocator::getInstance()->get(InstitutionAssignmentRepository::class),
             ServiceLocator::getInstance()->get(GroupAssignmentRepository::class),
             ServiceLocator::getInstance()->get(InstitutionAccessInterface::class),
+            ServiceLocator::getInstance()->get(StaffIdentityGatewayInterface::class),
         ],
     ],
     SaveStaffUseCase::class => [
@@ -70,6 +74,23 @@ return [
             ServiceLocator::getInstance()->get(InstitutionAssignmentRepository::class),
             ServiceLocator::getInstance()->get(GroupAssignmentRepository::class),
             ServiceLocator::getInstance()->get(InstitutionAccessInterface::class),
+        ],
+    ],
+    ResendStaffInvitationUseCase::class => [
+        'className' => ResendStaffInvitationUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(StaffAuthorization::class),
+            ServiceLocator::getInstance()->get(AccessStateRepository::class),
+            ServiceLocator::getInstance()->get(StaffManagementRepository::class),
+            ServiceLocator::getInstance()->get(StaffIdentityGatewayInterface::class),
+        ],
+    ],
+    StaffInvitationInputMapper::class => ['className' => StaffInvitationInputMapper::class],
+    StaffInvitationController::class => [
+        'className' => StaffInvitationController::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(ResendStaffInvitationUseCase::class),
+            ServiceLocator::getInstance()->get(StaffInvitationInputMapper::class),
         ],
     ],
     StaffController::class => [

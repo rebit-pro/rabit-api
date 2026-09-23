@@ -34,6 +34,7 @@ use Rebit\Share\Infrastructure\Exception\RequestParameterException;
 abstract class AbstractController extends Controller
 {
     public const int HTTP_CREATED_CODE = 201;
+    public const int HTTP_ACCEPTED_CODE = 202;
 
     public const int HTTP_NO_CONTENT_CODE = 204;
 

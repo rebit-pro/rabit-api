@@ -67,7 +67,7 @@ final class TokenResolverTest extends TestCase
         ;
 
         $this->expectException(HttpException::class);
-        $this->expectExceptionMessage('Unauthorized');
+        $this->expectExceptionMessage('SESSION_REVOKED');
         $this->expectExceptionCode(401);
 
         $this->tokenResolver->resolveUserId('nonexistent-token');
@@ -83,7 +83,7 @@ final class TokenResolverTest extends TestCase
         ;
 
         $this->expectException(HttpException::class);
-        $this->expectExceptionMessage('Token expired');
+        $this->expectExceptionMessage('TOKEN_EXPIRED');
         $this->expectExceptionCode(401);
 
         $this->tokenResolver->resolveUserId('expired-token');

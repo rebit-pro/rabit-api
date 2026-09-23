@@ -33,12 +33,13 @@ final readonly class TokenResolver implements TokenResolverInterface
 
         $userToken = $this->repository->findByToken($token);
 
+        // A token that no longer matches was replaced by a newer sign-in or revoked by the organizer.
         if (null === $userToken) {
-            throw new HttpException('Unauthorized', 401);
+            throw new HttpException('SESSION_REVOKED', 401);
         }
 
         if (null === $userToken->expiresAt || $userToken->expiresAt->getTimestamp() <= $this->clock->now()) {
-            throw new HttpException('Token expired', 401);
+            throw new HttpException('TOKEN_EXPIRED', 401);
         }
 
         return $userToken->userId;

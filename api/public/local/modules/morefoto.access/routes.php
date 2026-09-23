@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Bitrix\Main\Routing\RoutingConfigurator;
 use Morefoto\Access\Presentation\Controller\ProfileController;
 use Morefoto\Access\Presentation\Controller\StaffController;
+use Morefoto\Access\Presentation\Controller\StaffInvitationController;
 
 return static function(RoutingConfigurator $routes): void {
     $routes->get('/api/v1/me', [ProfileController::class, 'meAction']);
@@ -13,4 +14,5 @@ return static function(RoutingConfigurator $routes): void {
     $routes->post('/api/v1/users', [StaffController::class, 'createAction']);
     $routes->get('/api/v1/users/{user_id}', [StaffController::class, 'getAction']);
     $routes->patch('/api/v1/users/{user_id}', [StaffController::class, 'updateAction']);
+    $routes->post('/api/v1/users/{user_id}/invitations', [StaffInvitationController::class, 'resendAction']);
 };

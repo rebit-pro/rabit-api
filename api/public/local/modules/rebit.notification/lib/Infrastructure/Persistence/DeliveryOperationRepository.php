@@ -25,8 +25,8 @@ final readonly class DeliveryOperationRepository implements DeliveryOperationRep
         return $this->transaction(function(Connection $connection) use ($id, $input, $payloadHash, $now): DeliveryOperationDto {
             $timestamp = $this->date($now);
             $connection->queryExecute(sprintf(
-                'INSERT INTO %s (ID,CONSUMER_KEY,DEDUP_KEY,PAYLOAD_HASH,CHANNEL,RECIPIENT,SUBJECT,BODY,STATUS,ATTEMPTS,MAX_ATTEMPTS,CREATED_AT,UPDATED_AT) '
-                . "VALUES(%s,%s,%s,%s,'email',%s,%s,%s,'pending',0,%d,%s,%s) "
+                'INSERT INTO %s (ID,CONSUMER_KEY,DEDUP_KEY,PAYLOAD_HASH,CHANNEL,RECIPIENT,SUBJECT,BODY,BODY_HTML,STATUS,ATTEMPTS,MAX_ATTEMPTS,CREATED_AT,UPDATED_AT) '
+                . "VALUES(%s,%s,%s,%s,'email',%s,%s,%s,%s,'pending',0,%d,%s,%s) "
                 . 'ON DUPLICATE KEY UPDATE ID=ID',
                 self::OPERATION_TABLE,
                 $this->quote($id),
@@ -36,6 +36,7 @@ final readonly class DeliveryOperationRepository implements DeliveryOperationRep
                 $this->quote($input->recipient),
                 $this->quote($input->subject),
                 $this->quote($input->body),
+                null === $input->bodyHtml ? 'NULL' : $this->quote($input->bodyHtml),
                 $input->maxAttempts,
                 $this->quote($timestamp),
                 $this->quote($timestamp),
@@ -312,6 +313,7 @@ final readonly class DeliveryOperationRepository implements DeliveryOperationRep
             maxAttempts: (int)$row['MAX_ATTEMPTS'],
             nextAttemptAt: null === $row['NEXT_ATTEMPT_AT'] ? null : (string)$row['NEXT_ATTEMPT_AT'],
             acceptedAt: null === $row['ACCEPTED_AT'] ? null : (string)$row['ACCEPTED_AT'],
+            bodyHtml: null === ($row['BODY_HTML'] ?? null) ? null : (string)$row['BODY_HTML'],
         );
     }
 

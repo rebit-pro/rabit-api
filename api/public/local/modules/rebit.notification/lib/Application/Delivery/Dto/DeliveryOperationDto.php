@@ -19,6 +19,7 @@ final readonly class DeliveryOperationDto
         public int $maxAttempts,
         public ?string $nextAttemptAt = null,
         public ?string $acceptedAt = null,
+        public ?string $bodyHtml = null,
     ) {}
 
     public function output(): NotificationOperationOutputDto

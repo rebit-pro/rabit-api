@@ -16,5 +16,6 @@ final readonly class StaffOutputDto
         public int $accessRevision,
         public string $accountStatus,
         public int $assignmentCount,
+        public ?StaffInvitationStateOutputDto $invitation = null,
     ) {}
 }

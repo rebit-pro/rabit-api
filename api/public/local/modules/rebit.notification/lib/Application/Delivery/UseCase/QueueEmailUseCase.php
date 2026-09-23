@@ -28,12 +28,14 @@ final readonly class QueueEmailUseCase implements EmailNotificationInterface
 
     public function queue(EmailNotificationInputDto $input): NotificationOperationOutputDto
     {
+        // The HTML part joins the hash only when present, so plain-text operations keep their stored hashes.
         $payloadHash = hash('sha256', implode("\0", [
             'email',
             mb_strtolower($input->recipient),
             $input->subject,
             $input->body,
             (string)$input->maxAttempts,
+            ...(null === $input->bodyHtml ? [] : ['html', $input->bodyHtml]),
         ]));
         $operation = $this->operations->createOrGet(
             id: $this->uuid(),

@@ -24,5 +24,6 @@ final readonly class StaffDetailOutputDto implements ResponseDtoInterface
         public array $institutionIds,
         public array $groupIds,
         public string $assignmentSignature,
+        public ?StaffInvitationStateOutputDto $invitation = null,
     ) {}
 }

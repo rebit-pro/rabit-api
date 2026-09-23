@@ -49,11 +49,11 @@ final readonly class LoginUseCase
         $user = $this->userRepository->findActiveByEmailForUpdate($dto->email);
 
         if (null === $user) {
-            throw new HttpException('Invalid credentials', 401);
+            throw new HttpException('INVALID_CREDENTIALS', 401);
         }
 
         if (!password_verify($dto->password, $user->passwordHash)) {
-            throw new HttpException('Invalid credentials', 401);
+            throw new HttpException('INVALID_CREDENTIALS', 401);
         }
 
         $token = $this->tokenGenerator->generate();

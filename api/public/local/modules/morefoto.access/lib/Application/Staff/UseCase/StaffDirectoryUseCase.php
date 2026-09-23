@@ -17,6 +17,9 @@ use Morefoto\Access\Domain\Staff\Enum\PermissionEnum;
 use Morefoto\Access\Domain\Staff\Repository\StaffManagementRepository;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Shared\Exception\HttpException;
+use Morefoto\Access\Application\Staff\Dto\StaffInvitationStateOutputDto;
+use Rebit\Share\Application\Contract\Auth\Dto\StaffInvitationOutputDto;
+use Rebit\Share\Application\Contract\Auth\StaffIdentityGatewayInterface;
 
 final readonly class StaffDirectoryUseCase
 {
@@ -27,15 +30,27 @@ final readonly class StaffDirectoryUseCase
         private InstitutionAssignmentRepository $institutions,
         private GroupAssignmentRepository $groups,
         private InstitutionAccessInterface $access,
+        private StaffIdentityGatewayInterface $identities,
     ) {}
 
     public function list(int $actorUserId, ListStaffInputDto $input): StaffPageOutputDto
     {
         $this->authorization->assertCan($actorUserId, PermissionEnum::STAFF_MANAGE);
         [$result, $total] = $this->staff->list($input);
-        $items = [];
+        $rows = [];
         while (false !== ($row = $result->fetch())) {
-            $items[] = $this->summary($row);
+            $rows[] = $row;
+        }
+        $pending = [];
+        foreach ($rows as $row) {
+            if (1 === (int)$row['AUTH_PENDING']) {
+                $pending[] = (int)$row['UF_USER_ID'];
+            }
+        }
+        $invitations = [] === $pending ? [] : $this->identities->invitations($pending);
+        $items = [];
+        foreach ($rows as $row) {
+            $items[] = $this->summary($row, $invitations[(int)$row['UF_USER_ID']] ?? null);
         }
 
         return new StaffPageOutputDto($items, $input->page, $input->pageSize, $total);
@@ -83,6 +98,7 @@ final readonly class StaffDirectoryUseCase
             institutionIds: $institutionIds,
             groupIds: $groupIds,
             assignmentSignature: $this->access->signature(),
+            invitation: 1 === (int)$row['AUTH_PENDING'] ? $this->invitation($this->identities->invitations([$profile->userId])[$profile->userId] ?? null) : null,
         );
     }
 
@@ -132,7 +148,7 @@ final readonly class StaffDirectoryUseCase
         $staff = [];
         $result = $this->staff->all();
         while (false !== ($row = $result->fetch())) {
-            $staff[] = $this->summary($row);
+            $staff[] = $this->summary($row, null);
         }
         if ($signature !== $this->access->signature()) {
             throw new HttpException('ASSIGNMENTS_CHANGED', 409);
@@ -142,7 +158,7 @@ final readonly class StaffDirectoryUseCase
     }
 
     /** @param array<string,mixed> $row */
-    private function summary(array $row): StaffOutputDto
+    private function summary(array $row, ?StaffInvitationOutputDto $invitation): StaffOutputDto
     {
         $profile = $this->staff->profile($row);
 
@@ -156,7 +172,13 @@ final readonly class StaffDirectoryUseCase
             accessRevision: $profile->accessRevision,
             accountStatus: $this->status($row, $profile->active),
             assignmentCount: (int)$row['ASSIGNMENT_COUNT'],
+            invitation: $this->invitation($invitation),
         );
+    }
+
+    private function invitation(?StaffInvitationOutputDto $invitation): ?StaffInvitationStateOutputDto
+    {
+        return null === $invitation ? null : new StaffInvitationStateOutputDto($invitation->sentAt, $invitation->expiresAt, $invitation->state);
     }
 
     /** @param array<string,mixed> $row */
