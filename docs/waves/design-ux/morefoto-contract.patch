@@ -234,7 +234,7 @@
        ],
        "outcome": "Подтверждена готовность функций и известны восстановление, включение и пределы гарантий.",
        "scope": [
-@@ -2410,6 +2441,454 @@
+@@ -2410,6 +2441,461 @@
        "inputBoundary": "Установленные и принятые в main контракты/схема: N1, E6. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
        "outputBoundary": "Без новых публичных HTTP-операций; Подтверждена готовность функций и известны восстановление, включение и пределы гарантий.",
        "mergeCheck": "Отдельный PR к актуальному main; все dependsOn уже merged. Проверки на main + только этот diff, без файлов/коммитов незамерженных волн; установить миграции и DI своего сценария. Повторить проверку после обновления base."
@@ -654,7 +654,8 @@
 +      "title": "Ссылки, списки сотрудников, заказы, сотрудники",
 +      "kind": "implementation",
 +      "owners": [
-+        "frontend"
++        "frontend",
++        "morefoto.handoff"
 +      ],
 +      "dependsOn": [
 +        "U4",
@@ -665,18 +666,24 @@
 +        "D08"
 +      ],
 +      "endpointIds": [],
-+      "verifiesEndpointIds": [],
++      "verifiesEndpointIds": [
++        "HND-01",
++        "HND-06",
++        "HND-08"
++      ],
 +      "outcome": "Экраны ссылок и сроков, списков сотрудников, заказов и сотрудников на компонентах U4 с таймлайном сроков, статусами и действиями приглашения.",
 +      "scope": [
-+        "MfTimeline и чек-лист проблем ссылок; шаговый статус списков, режим чтения для head (DS-14).",
-+        "Заказы с ru-форматом периода и статусами; сотрудники в UiDataTable с аватаром, фильтрами в query и действиями приглашения."
++        "«Ссылки и сроки»: сроки на MfTimeline, чек-лист проблем со ссылками на вкладки съёмки и списки (организатор), раздельные сообщения успеха и ошибки, «Только просмотр» для руководителя.",
++        "«Списки сотрудников»: DS-14 — руководитель учреждения читает списки своих учреждений (HND-06/08, меню и маршруты), шаги «Передан → Проверка → Перенесён», свёрнутая история.",
++        "Обзор учителя: куратор учреждения в карточке группы (INF-11, curatorName в HND-01 одним чтением назначений на страницу). Заказы: «Оплачено» без пометки демонстрации в live, быстрый период 7/30 дней.",
++        "Не входит: серверная постраничная загрузка экранов ссылок и списков (счётчики уже серверные с U6), автодополнение кодов из галереи, аватары участников истории, подтверждение отключения доступа и смены роли — follow-up."
 +      ],
 +      "review": [
-+        "Раздельные success/error; подтверждение отключения доступа и смены роли."
++        "Чтение руководителем — только своя область; мутации списков по-прежнему 403 для руководителя."
 +      ],
 +      "acceptance": [
-+        "npm run check, build.",
-+        "Финальный gate: live-спеки экранов."
++        "PHPUnit: область и запрет изменений для руководителя, куратор в HND-01; npm run check, build.",
++        "Финальный gate: zzz-handoff — руководитель входит в списки через меню и видит «Только просмотр»; zzzz-links — «Только просмотр»; zzzzzzz-overview — куратор в карточке учителя; shell — меню руководителя."
 +      ],
 +      "activation": "Обновлённые экраны ссылок, списков, заказов и сотрудников.",
 +      "legacyIds": [],
@@ -689,7 +696,7 @@
      }
    ],
    "paymentIntegration": {
-@@ -2473,5 +2952,27 @@
+@@ -2473,5 +2959,27 @@
        "Перед реальными продажами обязательны возвраты, чеки, восстановление unknown, HTTP/E2E и visual; этот PR только план."
      ],
      "taskPlan": "rabit-api/docs/plans/sberpay-start-plan/plan.md"
@@ -925,7 +932,7 @@
  
  **Состав:**
  
-@@ -1545,6 +1562,325 @@
+@@ -1545,6 +1562,328 @@
  
  **Подключение:** После приёмки можно согласовать production-выпуск. Сам запуск не входит в подготовку этого плана.
  
@@ -1223,7 +1230,7 @@
 +
 +Экраны ссылок и сроков, списков сотрудников, заказов и сотрудников на компонентах U4 с таймлайном сроков, статусами и действиями приглашения.
 +
-+**Владельцы:** `frontend`.
++**Владельцы:** `frontend`, `morefoto.handoff`.
 +**Зависит от:** U4, B4. **Разблокирует:** нет.
 +**Решения:** D01, D08. **Статус:** в работе.
 +**Первичные REST:** нет новых REST.
@@ -1231,27 +1238,30 @@
 +**Вход:** Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U4, B4. Решения: D01, D08.
 +**Выход:** Экраны ссылок и сроков, списков сотрудников, заказов и сотрудников на компонентах U4 с таймлайном сроков, статусами и действиями приглашения.
 +**Независимый merge:** Коммит волны в ветке codex/u-design-system: быстрые проверки на main + diff пакета до этой волны включительно. Merge только вместе с пакетом после финального make test-e2e, demo-регресса и визуальной проверки desktop/mobile.
++**Повторная проверка:** HND-01, HND-06, HND-08.
 +
 +**Состав:**
 +
-+- MfTimeline и чек-лист проблем ссылок; шаговый статус списков, режим чтения для head (DS-14).
-+- Заказы с ru-форматом периода и статусами; сотрудники в UiDataTable с аватаром, фильтрами в query и действиями приглашения.
++- «Ссылки и сроки»: сроки на MfTimeline, чек-лист проблем со ссылками на вкладки съёмки и списки (организатор), раздельные сообщения успеха и ошибки, «Только просмотр» для руководителя.
++- «Списки сотрудников»: DS-14 — руководитель учреждения читает списки своих учреждений (HND-06/08, меню и маршруты), шаги «Передан → Проверка → Перенесён», свёрнутая история.
++- Обзор учителя: куратор учреждения в карточке группы (INF-11, curatorName в HND-01 одним чтением назначений на страницу). Заказы: «Оплачено» без пометки демонстрации в live, быстрый период 7/30 дней.
++- Не входит: серверная постраничная загрузка экранов ссылок и списков (счётчики уже серверные с U6), автодополнение кодов из галереи, аватары участников истории, подтверждение отключения доступа и смены роли — follow-up.
 +
 +**Предмет ревью:**
 +
-+- Раздельные success/error; подтверждение отключения доступа и смены роли.
++- Чтение руководителем — только своя область; мутации списков по-прежнему 403 для руководителя.
 +
 +**Проверка готовности:**
 +
-+- npm run check, build.
-+- Финальный gate: live-спеки экранов.
++- PHPUnit: область и запрет изменений для руководителя, куратор в HND-01; npm run check, build.
++- Финальный gate: zzz-handoff — руководитель входит в списки через меню и видит «Только просмотр»; zzzz-links — «Только просмотр»; zzzzzzz-overview — куратор в карточке учителя; shell — меню руководителя.
 +
 +**Подключение:** Обновлённые экраны ссылок, списков, заказов и сотрудников.
 +
  ## Поддержание графа
  
  Источник — [backend-waves.json](backend-waves.json), проверка — [wave_graph.py](wave_graph.py), генерация этой страницы — [render-waves.py](render-waves.py). Method/path/payload остаются в [build.py](../05-rest-api/build.py). После изменения пересобрать артефакты:
-@@ -1557,4 +1893,4 @@
+@@ -1557,4 +1896,4 @@
  node docs/05-rest-api/validate-postman.cjs
  ```
  
@@ -1477,7 +1487,7 @@
  | COM-13 · **П** | **GET** /orders/{order_id} | Служебная карточка заказа; О/К | — | **200**; StaffOrder, period, version, correctionPhotos | E5; product |
  
  - **COM-03:** price — целые копейки (в UI строка рублей), printCount — целое число. Тип physical/digital/bundle. Выключение active вместо несуществующего сценария удаления.
-@@ -315,12 +340,12 @@
+@@ -315,25 +340,25 @@
  
  | ID / статус | Метод и путь | Сценарий / доступ | Вход | Успешный ответ | Волна / область |
  | --- | --- | --- | --- | --- | --- |
@@ -1488,22 +1498,23 @@
  | HND-04 · **П** | **POST** /groups/{group_id}/link-transmissions | Отметить фактическую передачу ссылки; О/К/В | revision, signature, sentAt, confirmed | **200**; revision, sentAt, closesAt, deliveryAt | F2; product |
  | HND-05 · **П** | **POST** /groups/{group_id}/link-date-corrections | Исправить дату передачи; О/К | reason, confirmed, revision, signature, sentAt | **200**; revision, sentAt, closesAt, deliveryAt | F2; product |
 -| HND-06 · **П** | **GET** /staff-requests | Списки детей сотрудников; О/К/В | —; query: institutionId, shootId, status; page, pageSize | **200**; items&lt;StaffRequest&gt;, meta | F1; product |
-+| HND-06 · **П** | **GET** /staff-requests | Списки детей сотрудников; О/К/В | —; query: institutionId, shootId, status; page, pageSize | **200**; items&lt;StaffRequest&gt;, meta{summary: byStatus} | F1; product |
++| HND-06 · **П** | **GET** /staff-requests | Списки детей сотрудников; О/К/Р/В | —; query: institutionId, shootId, status; page, pageSize | **200**; items&lt;StaffRequest&gt;, meta{summary: byStatus} | F1; product |
  | HND-07 · **П** | **POST** /staff-requests | Подать список сотрудников; О/В | institutionId, shootId, rows, comment | **201**; id, revision, status | F1; product |
- | HND-08 · **П** | **GET** /staff-requests/{staff_request_id} | Карточка списка; О/К/В | — | **200**; id, rows, revision, status, history, results? | F1; product |
+-| HND-08 · **П** | **GET** /staff-requests/{staff_request_id} | Карточка списка; О/К/В | — | **200**; id, rows, revision, status, history, results? | F1; product |
++| HND-08 · **П** | **GET** /staff-requests/{staff_request_id} | Карточка списка; О/К/Р/В | — | **200**; id, rows, revision, status, history, results? | F1; product |
  | HND-09 · **П** | **PUT** /staff-requests/{staff_request_id} | Исправить и повторно подать свой список; О/В | institutionId, shootId, rows, comment, revision | **200**; id, revision, status | F1; product |
-@@ -328,12 +353,12 @@
+ | HND-10 · **П** | **GET** /staff-requests/{staff_request_id}/transfer-preview | Проверить полный набор перед переносом; О/К | — | **200**; targetGroupId, targetGroupName, bundles, signature, hasOrders, revision | D3; product |
  | HND-11 · **П** | **POST** /staff-requests/{staff_request_id}/transfers | Подтвердить льготный перенос; О/К | reason, confirmed, revision, signature | **200**; id, revision, status, results | D3; product |
  | HND-12 · **П** | **POST** /staff-requests/{staff_request_id}/clarifications | Запросить уточнение списка; О/К | revision, comment, confirmed | **200**; id, revision, status | F1; product |
  
 -- **HND-01:** F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.
-+- **HND-01:** U5: meta.summary — счётчики всей области с фильтрами учреждения и съёмки, без фильтра state: byState {preparing, open, closed}, closingSoon (открытые, закрываются в 72 часа), prepared (готовящиеся с подтверждённой подготовкой), referenceNow. F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.
++- **HND-01:** U5: meta.summary — счётчики всей области с фильтрами учреждения и съёмки, без фильтра state: byState {preparing, open, closed}, closingSoon (открытые, закрываются в 72 часа), prepared (готовящиеся с подтверждённой подготовкой), referenceNow. F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount; U8 (INF-11): curatorName — куратор учреждения группы или null. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.
  - **HND-02:** F2: galleryToken — действующий ключ галереи, выдаётся первой HND-03 (до неё null); сырой ключ хранится для повторного копирования по решению 22.09.2026, покупатель разрешается по SHA-256. revision — версия ссылки Handoff (отсутствующая запись — 1), не UF_REVISION группы. signature — SHA-256 серверного состояния: кадры с revision/статусом, назначения, обложка, действующие условия и товары, название/тип группы, воспитатель, незавершённые заявки сотрудников. problems — noPhotos, photosProcessing, unassignedPhotos, noProducts, staffRequestsPending (заявки submitted/clarification со строками группы блокируют подготовку до их переноса HND-11; перенос меняет signature обеих групп и сбрасывает подготовку). prepared — передача записана либо подпись подготовки совпадает с текущей без проблем. history[]: kind prepared/transmitted/corrected, actorId, actorName, at, sentAt, closesAt, deliveryAt, previousSentAt, previousClosesAt, previousDeliveryAt, reason. Вне области — 404 GROUP_NOT_FOUND. Ответ no-store.
  - **HND-03:** Актуальны все фотографии, условия и списки; проблемы блокируют проверку. F2: Idempotency-Key 32 hex. photosReviewed/conditionsReviewed/staffReviewed/confirmed = true, иначе 422 REVIEW_REQUIRED. Устаревшие revision/signature — 409 REVISION_CONFLICT/SIGNATURE_CONFLICT; проблемы — 409 LINK_NOT_READY; после передачи — 409 LINK_ALREADY_SENT; куратор, руководитель, воспитатель — 403 FORBIDDEN. Выдаёт ключ галереи, если действующего нет.
  - **HND-04:** Фиксирует факт ручной отправки в чат. Не отправляет сообщение. Семь календарных дней от sentAt; повтор не сдвигает срок. F2: sentAt — ISO 8601 с offset и целыми секундами (422 INVALID_SENT_AT), не позже серверного now (422 SENT_AT_IN_FUTURE) и не раньше минуты выдачи ключа (422 SENT_AT_BEFORE_LINK); confirmed=true (422 CONFIRMATION_REQUIRED). Нужны актуальная подготовка (409 LINK_NOT_PREPARED) и signature (409 SIGNATURE_CONFLICT). closesAt = sentAt + 7, deliveryAt = closesAt + 7 календарных дней Europe/Moscow; пишет журнал Organization. Повтор после записанного факта — 200 с текущими сроками без истории, даже с другим ключом и устаревшей формой; тот же ключ с другим телом — 409 IDEMPOTENCY_CONFLICT. Руководитель — 403.
  - **HND-05:** Сохраняются старые даты и причина; пересчитываются сроки, учитываются продления. F2: reason 5–500 символов после trim (422 INVALID_REASON), confirmed=true. До передачи — 409 LINK_NOT_SENT; та же дата — 422 SENT_AT_UNCHANGED; границы sentAt как в HND-04. closesAt = max(sentAt + 7, согласованное продление), deliveryAt = closesAt + 7 календарных дней Europe/Moscow; сдвиг назад может сразу закрыть приём. Воспитатель и руководитель — 403. Ограничения D12 после оплаты/производства добавляют G1 и волны L.
 -- **HND-06:** Воспитатель видит собственные списки в назначенной области.
-+- **HND-06:** Воспитатель видит собственные списки в назначенной области. U5: meta.summary.byStatus {submitted, clarification, transferred} — вся видимая область с фильтрами, кроме status.
++- **HND-06:** Воспитатель видит собственные списки в назначенной области. U8 (DS-14): руководитель учреждения читает списки своих учреждений, изменения ему недоступны (HND-07/09/10/11 — 403). U5: meta.summary.byStatus {submitted, clarification, transferred} — вся видимая область с фильтрами, кроме status.
  - **HND-08:** D3: results[] — итог переноса HND-11 (rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds), до переноса пустой список. rows[].childCode после переноса — код на момент переноса.
  - **HND-09:** Только автор и допустимое состояние; после transferred редактирование запрещено (409 REQUEST_TRANSFERRED).
  - **HND-10:** Сервер находит все фотографии по кодам строк, проверяет актуальность исходной группы и свободные целевые коды. D3: организатор и куратор своей области; руководитель и воспитатель — 403 FORBIDDEN, чужая или отсутствующая заявка — 404 STAFF_REQUEST_NOT_FOUND. Только submitted: transferred — 409 REQUEST_TRANSFERRED, clarification — 409 REQUEST_NOT_SUBMITTED. Цель — единственная staff-группа съёмки (нет — 409 STAFF_GROUP_REQUIRED, несколько — 409 STAFF_GROUP_AMBIGUOUS), закрытая — 409 TARGET_GROUP_CLOSED. Каждая строка берёт весь текущий набор ребёнка; ребёнок вне исходной группы, пустой набор или потерянный кадр поданного списка — 409 SET_CHANGED; кадр, общий с ребёнком вне заявки, — 409 SHARED_PHOTO с error.details.photoCodes. targetCode — следующие свободные коды staff-группы (A…Z, AA…) в порядке строк. bundles[]: rowId, groupId, childCode, targetCode, hasOrders, photos[{id, code, revision}]. hasOrders — есть заказы детей заявки в любом статусе; заказы переносом не меняются. signature — SHA-256 проверяемого состояния, revision — версия заявки. Ответ no-store.
@@ -1640,22 +1651,29 @@
 +add("handoff","HND-01","GET","/group-links","Ссылки и сроки по доступной области",ALL,"items<LinkGroup>, meta{summary: referenceNow, byState, closingSoon, prepared}",sample=list_sample,
      query=[("institutionId","","Учреждение"),("shootId","","Съёмка"),("state","","preparing/open/closed")],
 -    note="F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.")
-+    note="U5: meta.summary — счётчики всей области с фильтрами учреждения и съёмки, без фильтра state: byState {preparing, open, closed}, closingSoon (открытые, закрываются в 72 часа), prepared (готовящиеся с подтверждённой подготовкой), referenceNow. F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.")
++    note="U5: meta.summary — счётчики всей области с фильтрами учреждения и съёмки, без фильтра state: byState {preparing, open, closed}, closingSoon (открытые, закрываются в 72 часа), prepared (готовящиеся с подтверждённой подготовкой), referenceNow. F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount; U8 (INF-11): curatorName — куратор учреждения группы или null. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.")
  add("handoff","HND-02","GET","/groups/{group_id}/link","Подготовка, ссылка и история группы",ALL,
      "groupId, name, kind, institutionId, institutionName, shootId, shootName, galleryToken, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, referenceNow, photoCount, childCount, history",
      save={"gallery_token":"galleryToken","link_revision":"revision","link_signature":"signature"},
-@@ -259,9 +303,9 @@
+@@ -259,15 +303,15 @@
  add("handoff","HND-05","POST","/groups/{group_id}/link-date-corrections","Исправить дату передачи",OK,
      "revision, sentAt, closesAt, deliveryAt",reason(revision=rev("link_revision"),signature="{{link_signature}}",sentAt="{{sent_at}}"),
      save={"link_revision":"revision"},note="Сохраняются старые даты и причина; пересчитываются сроки, учитываются продления. F2: reason 5–500 символов после trim (422 INVALID_REASON), confirmed=true. До передачи — 409 LINK_NOT_SENT; та же дата — 422 SENT_AT_UNCHANGED; границы sentAt как в HND-04. closesAt = max(sentAt + 7, согласованное продление), deliveryAt = closesAt + 7 календарных дней Europe/Moscow; сдвиг назад может сразу закрыть приём. Воспитатель и руководитель — 403. Ограничения D12 после оплаты/производства добавляют G1 и волны L.")
 -add("handoff","HND-06","GET","/staff-requests","Списки детей сотрудников","О/К/В","items<StaffRequest>, meta",
-+add("handoff","HND-06","GET","/staff-requests","Списки детей сотрудников","О/К/В","items<StaffRequest>, meta{summary: byStatus}",
++add("handoff","HND-06","GET","/staff-requests","Списки детей сотрудников",ALL,"items<StaffRequest>, meta{summary: byStatus}",
      query=[("institutionId","","Учреждение"),("shootId","","Съёмка"),("status","","submitted/clarification/transferred")],sample=list_sample,
 -    note="Воспитатель видит собственные списки в назначенной области.")
-+    note="Воспитатель видит собственные списки в назначенной области. U5: meta.summary.byStatus {submitted, clarification, transferred} — вся видимая область с фильтрами, кроме status.")
++    note="Воспитатель видит собственные списки в назначенной области. U8 (DS-14): руководитель учреждения читает списки своих учреждений, изменения ему недоступны (HND-07/09/10/11 — 403). U5: meta.summary.byStatus {submitted, clarification, transferred} — вся видимая область с фильтрами, кроме status.")
  staff_request={"institutionId":"{{institution_id}}","shootId":"{{shoot_id}}",
      "rows":[{"id":"row-1","groupId":"{{group_id}}","code":"A001"}],"comment":"Тестовый список"}
  add("handoff","HND-07","POST","/staff-requests","Подать список сотрудников","О/В","id, revision, status",staff_request,
+     code=201,save={"staff_request_id":"id","staff_request_revision":"revision"},
+     sample={"id":"staff-request-example","revision":1,"status":"submitted"})
+-add("handoff","HND-08","GET","/staff-requests/{staff_request_id}","Карточка списка","О/К/В",
++add("handoff","HND-08","GET","/staff-requests/{staff_request_id}","Карточка списка",ALL,
+     "id, rows, revision, status, history, results?",save={"staff_request_revision":"revision"},
+     note="D3: results[] — итог переноса HND-11 (rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds), до переноса пустой список. rows[].childCode после переноса — код на момент переноса.")
+ add("handoff","HND-09","PUT","/staff-requests/{staff_request_id}","Исправить и повторно подать свой список","О/В",
 @@ -446,6 +490,12 @@
          {"key":"file","type":"file","src":[],"description":"Технический тестовый файл; не оригинал фотографии MoreFoto"},
          {"key":"moduleId","type":"text","value":"{{upload_module_id}}","description":"Существующий технический moduleId; не разрешение на доступ к чужому модулю"},
@@ -2276,45 +2294,68 @@
          ]
        ],
 -      "note": "F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.",
-+      "note": "U5: meta.summary — счётчики всей области с фильтрами учреждения и съёмки, без фильтра state: byState {preparing, open, closed}, closingSoon (открытые, закрываются в 72 часа), prepared (готовящиеся с подтверждённой подготовкой), referenceNow. F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.",
++      "note": "U5: meta.summary — счётчики всей области с фильтрами учреждения и съёмки, без фильтра state: byState {preparing, open, closed}, closingSoon (открытые, закрываются в 72 часа), prepared (готовящиеся с подтверждённой подготовкой), referenceNow. F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount; U8 (INF-11): curatorName — куратор учреждения группы или null. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.",
        "status": "П",
        "save": {},
        "sample": {
-@@ -1908,7 +2263,8 @@
+@@ -1908,7 +2263,9 @@
        "verificationWaves": [
          "K2",
          "N1",
 -        "N2"
 +        "N2",
-+        "U5"
++        "U5",
++        "U8"
        ]
      },
      {
-@@ -2053,7 +2409,7 @@
+@@ -2052,8 +2409,8 @@
+       "method": "GET",
        "path": "/staff-requests",
        "title": "Списки детей сотрудников",
-       "roles": "О/К/В",
+-      "roles": "О/К/В",
 -      "output": "items<StaffRequest>, meta",
++      "roles": "О/К/Р/В",
 +      "output": "items<StaffRequest>, meta{summary: byStatus}",
        "body": null,
        "code": 200,
        "query": [
-@@ -2073,7 +2429,7 @@
+@@ -2073,7 +2430,7 @@
            "submitted/clarification/transferred"
          ]
        ],
 -      "note": "Воспитатель видит собственные списки в назначенной области.",
-+      "note": "Воспитатель видит собственные списки в назначенной области. U5: meta.summary.byStatus {submitted, clarification, transferred} — вся видимая область с фильтрами, кроме status.",
++      "note": "Воспитатель видит собственные списки в назначенной области. U8 (DS-14): руководитель учреждения читает списки своих учреждений, изменения ему недоступны (HND-07/09/10/11 — 403). U5: meta.summary.byStatus {submitted, clarification, transferred} — вся видимая область с фильтрами, кроме status.",
        "status": "П",
        "save": {},
        "sample": {
-@@ -2087,7 +2443,8 @@
+@@ -2087,7 +2444,9 @@
        "implementationWave": "F1",
        "verificationWaves": [
          "N1",
 -        "N2"
 +        "N2",
-+        "U5"
++        "U5",
++        "U8"
+       ]
+     },
+     {
+@@ -2139,7 +2498,7 @@
+       "method": "GET",
+       "path": "/staff-requests/{staff_request_id}",
+       "title": "Карточка списка",
+-      "roles": "О/К/В",
++      "roles": "О/К/Р/В",
+       "output": "id, rows, revision, status, history, results?",
+       "body": null,
+       "code": 200,
+@@ -2159,7 +2518,8 @@
+       "verificationWaves": [
+         "D3",
+         "N1",
+-        "N2"
++        "N2",
++        "U8"
        ]
      },
      {
@@ -2604,7 +2645,7 @@
                ]
              },
 -            "description": "**HND-06 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/В.\n\nОтвет: items<StaffRequest>, meta.\n\nВоспитатель видит собственные списки в назначенной области.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: N1, N2."
-+            "description": "**HND-06 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/В.\n\nОтвет: items<StaffRequest>, meta{summary: byStatus}.\n\nВоспитатель видит собственные списки в назначенной области. U5: meta.summary.byStatus {submitted, clarification, transferred} — вся видимая область с фильтрами, кроме status.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: N1, N2, U5."
++            "description": "**HND-06 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: items<StaffRequest>, meta{summary: byStatus}.\n\nВоспитатель видит собственные списки в назначенной области. U8 (DS-14): руководитель учреждения читает списки своих учреждений, изменения ему недоступны (HND-07/09/10/11 — 403). U5: meta.summary.byStatus {submitted, clarification, transferred} — вся видимая область с фильтрами, кроме status.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: N1, N2, U5, U8."
            },
            "event": [
              {
@@ -2613,10 +2654,19 @@
                    ]
                  },
 -                "description": "**HND-06 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/В.\n\nОтвет: items<StaffRequest>, meta.\n\nВоспитатель видит собственные списки в назначенной области.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: N1, N2."
-+                "description": "**HND-06 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/В.\n\nОтвет: items<StaffRequest>, meta{summary: byStatus}.\n\nВоспитатель видит собственные списки в назначенной области. U5: meta.summary.byStatus {submitted, clarification, transferred} — вся видимая область с фильтрами, кроме status.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: N1, N2, U5."
++                "description": "**HND-06 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: items<StaffRequest>, meta{summary: byStatus}.\n\nВоспитатель видит собственные списки в назначенной области. U8 (DS-14): руководитель учреждения читает списки своих учреждений, изменения ему недоступны (HND-07/09/10/11 — 403). U5: meta.summary.byStatus {submitted, clarification, transferred} — вся видимая область с фильтрами, кроме status.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: N1, N2, U5, U8."
                },
                "status": "OK",
                "code": 200,
+@@ -4893,7 +4942,7 @@
+                 "{{staff_request_id}}"
+               ]
+             },
+-            "description": "**HND-08 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/В.\n\nОтвет: id, rows, revision, status, history, results?.\n\nD3: results[] — итог переноса HND-11 (rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds), до переноса пустой список. rows[].childCode после переноса — код на момент переноса.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: D3, N1, N2."
++            "description": "**HND-08 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: id, rows, revision, status, history, results?.\n\nD3: results[] — итог переноса HND-11 (rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds), до переноса пустой список. rows[].childCode после переноса — код на момент переноса.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: D3, N1, N2, U8."
+           },
+           "event": [
+             {
 @@ -5392,7 +5441,7 @@
      },
      {
@@ -2658,7 +2708,7 @@
                ]
              },
 -            "description": "**HND-01 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: items<LinkGroup>, meta.\n\nF2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F2. Проверки: K2, N1, N2."
-+            "description": "**HND-01 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: items<LinkGroup>, meta{summary: referenceNow, byState, closingSoon, prepared}.\n\nU5: meta.summary — счётчики всей области с фильтрами учреждения и съёмки, без фильтра state: byState {preparing, open, closed}, closingSoon (открытые, закрываются в 72 часа), prepared (готовящиеся с подтверждённой подготовкой), referenceNow. F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F2. Проверки: K2, N1, N2, U5."
++            "description": "**HND-01 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: items<LinkGroup>, meta{summary: referenceNow, byState, closingSoon, prepared}.\n\nU5: meta.summary — счётчики всей области с фильтрами учреждения и съёмки, без фильтра state: byState {preparing, open, closed}, closingSoon (открытые, закрываются в 72 часа), prepared (готовящиеся с подтверждённой подготовкой), referenceNow. F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount; U8 (INF-11): curatorName — куратор учреждения группы или null. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F2. Проверки: K2, N1, N2, U5, U8."
            },
            "event": [
              {
@@ -2667,7 +2717,7 @@
                    ]
                  },
 -                "description": "**HND-01 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: items<LinkGroup>, meta.\n\nF2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F2. Проверки: K2, N1, N2."
-+                "description": "**HND-01 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: items<LinkGroup>, meta{summary: referenceNow, byState, closingSoon, prepared}.\n\nU5: meta.summary — счётчики всей области с фильтрами учреждения и съёмки, без фильтра state: byState {preparing, open, closed}, closingSoon (открытые, закрываются в 72 часа), prepared (готовящиеся с подтверждённой подготовкой), referenceNow. F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F2. Проверки: K2, N1, N2, U5."
++                "description": "**HND-01 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: items<LinkGroup>, meta{summary: referenceNow, byState, closingSoon, prepared}.\n\nU5: meta.summary — счётчики всей области с фильтрами учреждения и съёмки, без фильтра state: byState {preparing, open, closed}, closingSoon (открытые, закрываются в 72 часа), prepared (готовящиеся с подтверждённой подготовкой), referenceNow. F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount; U8 (INF-11): curatorName — куратор учреждения группы или null. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F2. Проверки: K2, N1, N2, U5, U8."
                },
                "status": "OK",
                "code": 200,
@@ -3736,7 +3786,7 @@
 +    },
 +    {
 +      "name": "U8 — Ссылки, списки сотрудников, заказы, сотрудники",
-+      "description": "Экраны ссылок и сроков, списков сотрудников, заказов и сотрудников на компонентах U4 с таймлайном сроков, статусами и действиями приглашения.\n\nЗависит от: U4, B4. Разблокирует при выполнении остальных условий: нет. Владельцы: frontend.\n\nВключение: Обновлённые экраны ссылок, списков, заказов и сотрудников.\n\nПроверяет дополнительно: нет. Папка содержит только основные операции волны; это план для отдельного ревью, не сценарий Run all.",
++      "description": "Экраны ссылок и сроков, списков сотрудников, заказов и сотрудников на компонентах U4 с таймлайном сроков, статусами и действиями приглашения.\n\nЗависит от: U4, B4. Разблокирует при выполнении остальных условий: нет. Владельцы: frontend, morefoto.handoff.\n\nВключение: Обновлённые экраны ссылок, списков, заказов и сотрудников.\n\nПроверяет дополнительно: HND-01, HND-06, HND-08. Папка содержит только основные операции волны; это план для отдельного ревью, не сценарий Run all.",
        "item": []
      }
    ]
@@ -5042,7 +5092,7 @@
                ]
              },
 -            "description": "**HND-01 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: items<LinkGroup>, meta.\n\nF2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F2. Проверки: K2, N1, N2."
-+            "description": "**HND-01 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: items<LinkGroup>, meta{summary: referenceNow, byState, closingSoon, prepared}.\n\nU5: meta.summary — счётчики всей области с фильтрами учреждения и съёмки, без фильтра state: byState {preparing, open, closed}, closingSoon (открытые, закрываются в 72 часа), prepared (готовящиеся с подтверждённой подготовкой), referenceNow. F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F2. Проверки: K2, N1, N2, U5."
++            "description": "**HND-01 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: items<LinkGroup>, meta{summary: referenceNow, byState, closingSoon, prepared}.\n\nU5: meta.summary — счётчики всей области с фильтрами учреждения и съёмки, без фильтра state: byState {preparing, open, closed}, closingSoon (открытые, закрываются в 72 часа), prepared (готовящиеся с подтверждённой подготовкой), referenceNow. F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount; U8 (INF-11): curatorName — куратор учреждения группы или null. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F2. Проверки: K2, N1, N2, U5, U8."
            },
            "event": [
              {
@@ -5051,7 +5101,7 @@
                    ]
                  },
 -                "description": "**HND-01 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: items<LinkGroup>, meta.\n\nF2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F2. Проверки: K2, N1, N2."
-+                "description": "**HND-01 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: items<LinkGroup>, meta{summary: referenceNow, byState, closingSoon, prepared}.\n\nU5: meta.summary — счётчики всей области с фильтрами учреждения и съёмки, без фильтра state: byState {preparing, open, closed}, closingSoon (открытые, закрываются в 72 часа), prepared (готовящиеся с подтверждённой подготовкой), referenceNow. F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F2. Проверки: K2, N1, N2, U5."
++                "description": "**HND-01 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: items<LinkGroup>, meta{summary: referenceNow, byState, closingSoon, prepared}.\n\nU5: meta.summary — счётчики всей области с фильтрами учреждения и съёмки, без фильтра state: byState {preparing, open, closed}, closingSoon (открытые, закрываются в 72 часа), prepared (готовящиеся с подтверждённой подготовкой), referenceNow. F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount; U8 (INF-11): curatorName — куратор учреждения группы или null. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F2. Проверки: K2, N1, N2, U5, U8."
                },
                "status": "OK",
                "code": 200,
@@ -5060,7 +5110,7 @@
                ]
              },
 -            "description": "**HND-06 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/В.\n\nОтвет: items<StaffRequest>, meta.\n\nВоспитатель видит собственные списки в назначенной области.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: N1, N2."
-+            "description": "**HND-06 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/В.\n\nОтвет: items<StaffRequest>, meta{summary: byStatus}.\n\nВоспитатель видит собственные списки в назначенной области. U5: meta.summary.byStatus {submitted, clarification, transferred} — вся видимая область с фильтрами, кроме status.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: N1, N2, U5."
++            "description": "**HND-06 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: items<StaffRequest>, meta{summary: byStatus}.\n\nВоспитатель видит собственные списки в назначенной области. U8 (DS-14): руководитель учреждения читает списки своих учреждений, изменения ему недоступны (HND-07/09/10/11 — 403). U5: meta.summary.byStatus {submitted, clarification, transferred} — вся видимая область с фильтрами, кроме status.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: N1, N2, U5, U8."
            },
            "event": [
              {
@@ -5069,10 +5119,19 @@
                    ]
                  },
 -                "description": "**HND-06 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/В.\n\nОтвет: items<StaffRequest>, meta.\n\nВоспитатель видит собственные списки в назначенной области.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: N1, N2."
-+                "description": "**HND-06 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/В.\n\nОтвет: items<StaffRequest>, meta{summary: byStatus}.\n\nВоспитатель видит собственные списки в назначенной области. U5: meta.summary.byStatus {submitted, clarification, transferred} — вся видимая область с фильтрами, кроме status.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: N1, N2, U5."
++                "description": "**HND-06 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: items<StaffRequest>, meta{summary: byStatus}.\n\nВоспитатель видит собственные списки в назначенной области. U8 (DS-14): руководитель учреждения читает списки своих учреждений, изменения ему недоступны (HND-07/09/10/11 — 403). U5: meta.summary.byStatus {submitted, clarification, transferred} — вся видимая область с фильтрами, кроме status.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: N1, N2, U5, U8."
                },
                "status": "OK",
                "code": 200,
+@@ -6204,7 +7252,7 @@
+                 "{{staff_request_id}}"
+               ]
+             },
+-            "description": "**HND-08 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/В.\n\nОтвет: id, rows, revision, status, history, results?.\n\nD3: results[] — итог переноса HND-11 (rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds), до переноса пустой список. rows[].childCode после переноса — код на момент переноса.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: D3, N1, N2."
++            "description": "**HND-08 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: id, rows, revision, status, history, results?.\n\nD3: results[] — итог переноса HND-11 (rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds), до переноса пустой список. rows[].childCode после переноса — код на момент переноса.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: D3, N1, N2, U8."
+           },
+           "event": [
+             {
 --- a/docs/05-rest-api/postman/MoreFoto.stage.postman_environment.json
 +++ b/docs/05-rest-api/postman/MoreFoto.stage.postman_environment.json
 @@ -45,6 +45,36 @@
@@ -5189,18 +5248,18 @@
 -    "postman/MoreFoto.backend-waves.postman_collection.json": "4260cdd74a40b4a1106275fc00259d831ef7b8cd74adc844b9d9b4132d3d546b",
 -    "postman/MoreFoto.local.postman_environment.json": "d4bba2bd1430f2c6e10d7fc916faa677504c539f8fedac2b777e057bce2e74b3",
 -    "postman/MoreFoto.stage.postman_environment.json": "3bc2686c533d440d968867d02740039fee2236b864e5e66699604312c4781813"
-+    "build.py": "66da600155340105df050ce5238460635c0f66dff869a56fdd66e13de2bd75a9",
++    "build.py": "15188667486645549cd95653ec5524d44d9f49b8db7382aef5301ba07d6e1be5",
 +    "validate.py": "18a387833a1581f8445fe731787bbe5a0407d9fe95950c4138c881792a4ba939",
 +    "validate-postman.cjs": "879a609e16602ab971c3296eacb0b0d0c702d840d842d8942c3b410240543877",
 +    "../04-bitrix-modules/README.md": "786c34ef6c226a57e141c206f88eee75dc04e46226ce982d8ce5d0c9ec457023",
-+    "../04-bitrix-modules/backend-waves.json": "0e8f2ca4b4f3bb9f6cc328183ac5bff42985777b8fcffb97fb9e6b4d35841ade",
-+    "../04-bitrix-modules/backend-waves.md": "7efc86ff6dedd5ee61d09817db22d973bfafd5896ccd13f11eea285d39e0a9d8",
++    "../04-bitrix-modules/backend-waves.json": "bdd4aa625cf99f912cb3258314ae2a6a238db6fd6157a7a9d24fb34f516a154c",
++    "../04-bitrix-modules/backend-waves.md": "1a54c57c981f40360faae36186fdd0c7f8f75111cd702f0d10d826ca2a7fd36a",
 +    "../04-bitrix-modules/render-waves.py": "b502e757c9fd854c81d7f828a7a03bb58569f5f3cb0a582eed98b53c358327ec",
 +    "../04-bitrix-modules/wave_graph.py": "031e14b1312851cc491dabf3a48d7a8c9a61b16e634f93400284c0f3fe50b2db",
-+    "README.md": "47e10be46a7db2dade4c5cb24478a3910481cbdda985d634c4693b84df688214",
-+    "endpoints.json": "9b3f9af73544dcafe49f0fe6d49e000026683ba95c1b939205d69dde4344904e",
-+    "postman/MoreFoto.postman_collection.json": "a8d5ecbd8689006786867fc5c30325e5f197ad5a5adfa9bb7b67e019efaf0d43",
-+    "postman/MoreFoto.backend-waves.postman_collection.json": "e0d8bd7ddaf24fb27db238056471970edd3e0d71ee189800f35416d7194b2823",
++    "README.md": "4b0465449f21abc82134770c07ba8edd51e9b308c2f70ddda1007d0db7f9269f",
++    "endpoints.json": "284674a9189e6975c5d4f0467f4834622c00c57e3820537a0b27c39a104ee987",
++    "postman/MoreFoto.postman_collection.json": "04c350a837de7e92e045108505ce62757250c0f107582402b70eeef48d834337",
++    "postman/MoreFoto.backend-waves.postman_collection.json": "df608edeb7896421a4502e86dac6a021456e804d1fd4bab735cc29317c5bf9fd",
 +    "postman/MoreFoto.local.postman_environment.json": "83b1156b34630e0d248c5079dcbbc0f1b039edb06d1c3029c47f0e312e5f3cbb",
 +    "postman/MoreFoto.stage.postman_environment.json": "0298c5fa230d687240b2a1a264bebcc86368576c378af78f3573b584e7ed5f11"
    },
