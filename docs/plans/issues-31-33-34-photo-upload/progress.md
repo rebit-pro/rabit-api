@@ -10,8 +10,8 @@
 - PR: [#47](https://github.com/rebit-pro/rabit-api/pull/47), OPEN в `main`, не сливать до review и полного gate. Точный HEAD — `git rev-parse HEAD`, сверять с `gh pr view 47 --json headRefOid`.
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md).
 - Завершено: разведка пайплайна, чтение production-агрегатов, решения пользователя, план.
-- Сейчас: пользователь поручил довести задачу до production. Base обновлён, идёт полный `make test-e2e`.
-- Следующий шаг: gate → merge PR #47 → релиз backend и frontend по процедуре F2 → smoke → замеры на production по логам `media`.
+- Сейчас: gate PASS на обновлённом base. Идут merge PR #47 и релиз.
+- Следующий шаг: merge → релиз backend и frontend по процедуре F2 → smoke → замеры на production по логам `media` после реальной загрузки.
 - Блокеров нет. Открыто: согласие пользователя на opt-in замер 50 кадров (T13) и на чтение production-логов после деплоя (T15).
 - Рабочее дерево: закоммичено (`bdb7be8` #34, `0a273dd` #33/#31, `c536f85` docs и эта запись). Пустые `api/vendor` и `api/var` — точки монтирования для проверок, в git не попадают.
 
@@ -84,16 +84,19 @@
 - php-cs-fixer по всем изменённым PHP (74 файла, включая пришедшие из D3): 0 требующих правок.
 - Запущен полный `make test-e2e` на обновлённом base.
 
+- Первый прогон gate упал: в сценарии #33 `maxInFlight` показал 3 при лимите 2. Причина — в тесте: параллельность считалась по событиям Playwright `request`/`requestfinished`, а они доставляются в тест в собственном порядке. Исправлено: перекрытие вычисляется из сетевых таймингов каждого запроса (`request.timing()`), тот же приём применён в бенче. Код приложения не менялся.
+- Повторный полный `make test-e2e`: exit 0, `expected` 77, `unexpected` 0, `flaky` 0, 5 мин 10 с. Сценарий «#33: партия отправляется по два файла…» — PASS (9,9 с), остальные media-сценарии PASS.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда / доказательство |
 |---|---|---|---|
 | T01–T05 | PASS | 2026-09-22 | PHPUnit `PhotoPipelineDiagnosticsTest` (5 тестов) в полном прогоне 516/516 |
-| T06–T08 | PENDING | — | live E2E `zz-media.spec.ts` в полном gate после review |
+| T06–T08 | PASS | 2026-09-23 | полный `make test-e2e` 77/77; сценарий партии с битым файлом и reload — PASS |
 | T09 | PASS | 2026-09-22 | mock BDD `--tags @r08`: 24/24 сценария, 48/48 шагов (с сетью) |
 | T10 | PENDING | — | лимит 2000 — константа `photoLimits.batch`, проверка выбором >50 файлов в live E2E/бенче |
 | T11 | PASS | 2026-09-22 | `npm run check` exit 0, `npm run test:commerce` 169/169 |
 | T12 | PASS | 2026-09-22 | phplint OK, PHPStan No errors, PHPUnit 516/516, CS Fixer применён |
 | T13 | PENDING | — | нужно согласие пользователя |
-| T14 | PENDING | — | после review |
+| T14 | PASS | 2026-09-23 | `make test-e2e` exit 0 на base `bb35665` |
 | T15 | PENDING | — | после деплоя, нужно согласие |
