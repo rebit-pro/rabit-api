@@ -18,6 +18,10 @@ use Rebit\Share\Application\Contract\Auth\StaffIdentityGatewayInterface;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
+/**
+ * Создаёт или изменяет сотрудника по решению организатора: учётку ожидания, роль, доступ и назначения с проверкой
+ * версии и конфликтов. При изменении доступа отзывает сессии, а сотруднику без пароля отправляет приглашение.
+ */
 final readonly class SaveStaffUseCase
 {
     public function __construct(

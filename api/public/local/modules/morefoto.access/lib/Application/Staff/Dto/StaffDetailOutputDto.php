@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Access\Application\Staff\Dto;
 
+use Morefoto\Access\Application\Avatar\Dto\AvatarOutputDto;
 use Rebit\Share\Shared\Interface\ResponseDtoInterface;
 
 final readonly class StaffDetailOutputDto implements ResponseDtoInterface
@@ -25,5 +26,6 @@ final readonly class StaffDetailOutputDto implements ResponseDtoInterface
         public array $groupIds,
         public string $assignmentSignature,
         public ?StaffInvitationStateOutputDto $invitation = null,
+        public ?AvatarOutputDto $avatar = null,
     ) {}
 }

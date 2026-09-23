@@ -12,7 +12,9 @@ use Rebit\Share\Infrastructure\Controller\Auth\AuthenticatedControllerInterface;
 use Rebit\Share\Infrastructure\Controller\Auth\AuthenticatedControllerTrait;
 use Rebit\Share\Infrastructure\Controller\Filters\BearerTokenFilter;
 use Rebit\Share\Infrastructure\Controller\Responses\ApiJsonExceptionResponse;
+use Rebit\Share\Application\Contract\File\Dto\ImageContentOutputDto;
 use Rebit\Share\Application\Contract\File\Dto\PreviewContentOutputDto;
+use Rebit\Share\Infrastructure\Controller\Responses\ImageResponse;
 use Rebit\Share\Infrastructure\Controller\Responses\PreviewResponse;
 
 /**
@@ -45,7 +47,8 @@ abstract class AuthenticatedApiJsonController extends BaseJsonController impleme
     public function finalizeResponse(Response|string $response): void
     {
         parent::finalizeResponse($response);
-        if ($response instanceof HttpResponse) {
+        // A versioned image keeps its private long-lived cache; every other authenticated answer is not stored.
+        if ($response instanceof HttpResponse && !$response instanceof ImageResponse) {
             $response->addHeader('Cache-Control', 'no-store');
         }
     }
@@ -54,5 +57,12 @@ abstract class AuthenticatedApiJsonController extends BaseJsonController impleme
         PreviewContentOutputDto $content,
     ): PreviewResponse {
         return new PreviewResponse($content);
+    }
+
+    final protected function image(
+        ImageContentOutputDto $image,
+        ?string $ifNoneMatch,
+    ): ImageResponse {
+        return new ImageResponse($image, $ifNoneMatch);
     }
 }

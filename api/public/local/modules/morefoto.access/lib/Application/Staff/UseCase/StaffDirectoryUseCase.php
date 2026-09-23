@@ -18,9 +18,15 @@ use Morefoto\Access\Domain\Staff\Repository\StaffManagementRepository;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 use Morefoto\Access\Application\Staff\Dto\StaffInvitationStateOutputDto;
+use Morefoto\Access\Application\Avatar\Dto\AvatarOutputDto;
+use Morefoto\Access\Application\Avatar\Mapper\AvatarOutputMapper;
 use Rebit\Share\Application\Contract\Auth\Dto\StaffInvitationOutputDto;
 use Rebit\Share\Application\Contract\Auth\StaffIdentityGatewayInterface;
 
+/**
+ * Отдаёт организатору справочник сотрудников: страницу списка с фильтрами, карточку с назначениями и данные формы
+ * назначений с подписью состояния. Статус учётки, приглашение и аватар показываются без ссылок и токенов доступа.
+ */
 final readonly class StaffDirectoryUseCase
 {
     public function __construct(
@@ -31,6 +37,7 @@ final readonly class StaffDirectoryUseCase
         private GroupAssignmentRepository $groups,
         private InstitutionAccessInterface $access,
         private StaffIdentityGatewayInterface $identities,
+        private AvatarOutputMapper $avatars,
     ) {}
 
     public function list(int $actorUserId, ListStaffInputDto $input): StaffPageOutputDto
@@ -99,6 +106,7 @@ final readonly class StaffDirectoryUseCase
             groupIds: $groupIds,
             assignmentSignature: $this->access->signature(),
             invitation: 1 === (int)$row['AUTH_PENDING'] ? $this->invitation($this->identities->invitations([$profile->userId])[$profile->userId] ?? null) : null,
+            avatar: $this->avatar($profile->userId, $row),
         );
     }
 
@@ -173,7 +181,14 @@ final readonly class StaffDirectoryUseCase
             accountStatus: $this->status($row, $profile->active),
             assignmentCount: (int)$row['ASSIGNMENT_COUNT'],
             invitation: $this->invitation($invitation),
+            avatar: $this->avatar($profile->userId, $row),
         );
+    }
+
+    /** @param array<string,mixed> $row */
+    private function avatar(int $userId, array $row): ?AvatarOutputDto
+    {
+        return $this->avatars->map($userId, null === ($row['AVATAR_VERSION'] ?? null) ? null : (int)$row['AVATAR_VERSION']);
     }
 
     private function invitation(?StaffInvitationOutputDto $invitation): ?StaffInvitationStateOutputDto

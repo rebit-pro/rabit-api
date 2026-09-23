@@ -6,6 +6,8 @@ namespace Morefoto\Access\Tests\Unit;
 
 use Bitrix\Main\ORM\Query\Result;
 use Morefoto\Access\Application\Authorization\Service\StaffAuthorization;
+use Morefoto\Access\Application\Avatar\Contract\StaffAvatarRepositoryInterface;
+use Morefoto\Access\Application\Avatar\Mapper\AvatarOutputMapper;
 use Morefoto\Access\Application\Profile\UseCase\GetProfileUseCase;
 use Morefoto\Access\Domain\Assignment\Repository\GroupAssignmentRepository;
 use Morefoto\Access\Domain\Assignment\Repository\InstitutionAssignmentRepository;
@@ -22,7 +24,7 @@ final class TeacherAuthorizationTest extends TestCase
 {
     public function testProfileReportsOnlyActualGroupScope(): void
     {
-        $result = (new GetProfileUseCase($this->authorization([100]), new PermissionPolicy()))->execute(21);
+        $result = (new GetProfileUseCase($this->authorization([100]), new PermissionPolicy(), $this->createStub(StaffAvatarRepositoryInterface::class), new AvatarOutputMapper()))->execute(21);
         self::assertSame(['profile.read', 'group.read'], $result->permissions);
     }
 
@@ -41,7 +43,7 @@ final class TeacherAuthorizationTest extends TestCase
 
     public function testUnassignedTeacherKeepsOnlyProfile(): void
     {
-        $result = (new GetProfileUseCase($this->authorization([]), new PermissionPolicy()))->execute(21);
+        $result = (new GetProfileUseCase($this->authorization([]), new PermissionPolicy(), $this->createStub(StaffAvatarRepositoryInterface::class), new AvatarOutputMapper()))->execute(21);
         self::assertSame(['profile.read'], $result->permissions);
     }
 

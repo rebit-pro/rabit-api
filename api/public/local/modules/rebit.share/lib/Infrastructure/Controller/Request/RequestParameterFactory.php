@@ -30,6 +30,7 @@ final readonly class RequestParameterFactory
         RequestToDtoMapper::class,
         RequestToEntityMapper::class,
         RequestFileToDtoMapper::class,
+        RequestImageToDtoMapper::class,
     ];
 
     /**

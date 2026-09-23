@@ -18,6 +18,8 @@ use Morefoto\Access\Infrastructure\Adapter\AccessGuard;
 use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Morefoto\Access\Application\Bootstrap\UseCase\BootstrapOrganizerUseCase;
 use Morefoto\Access\Application\Profile\UseCase\GetProfileUseCase;
+use Morefoto\Access\Application\Avatar\Contract\StaffAvatarRepositoryInterface;
+use Morefoto\Access\Application\Avatar\Mapper\AvatarOutputMapper;
 use Morefoto\Access\Domain\Staff\Repository\AccessStateRepository;
 use Morefoto\Access\Domain\Staff\Repository\StaffProfileRepository;
 use Morefoto\Access\Domain\Staff\Service\PermissionPolicy;
@@ -61,6 +63,7 @@ return [
             ServiceLocator::getInstance()->get(GroupAssignmentRepository::class),
             ServiceLocator::getInstance()->get(InstitutionAccessInterface::class),
             ServiceLocator::getInstance()->get(StaffIdentityGatewayInterface::class),
+            ServiceLocator::getInstance()->get(AvatarOutputMapper::class),
         ],
     ],
     SaveStaffUseCase::class => [
@@ -143,6 +146,8 @@ return [
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(StaffAuthorization::class),
             ServiceLocator::getInstance()->get(PermissionPolicy::class),
+            ServiceLocator::getInstance()->get(StaffAvatarRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(AvatarOutputMapper::class),
         ],
     ],
     BootstrapOrganizerUseCase::class => [

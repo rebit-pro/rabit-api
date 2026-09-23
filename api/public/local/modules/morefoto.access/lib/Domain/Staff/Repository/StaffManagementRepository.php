@@ -149,11 +149,11 @@ final readonly class StaffManagementRepository
     private function select(): string
     {
         return 'SELECT p.UF_USER_ID,p.UF_ROLE,p.UF_ACTIVE,p.UF_REVISION,p.UF_ACCESS_REVISION,'
-            . 'u.NAME,u.EMAIL,u.ACTIVE AS AUTH_ACTIVE,COALESCE(uf.UF_AUTH_REGISTRATION_PENDING,0) AS AUTH_PENDING,'
+            . 'u.NAME,u.EMAIL,u.ACTIVE AS AUTH_ACTIVE,COALESCE(uf.UF_AUTH_REGISTRATION_PENDING,0) AS AUTH_PENDING,a.VERSION AS AVATAR_VERSION,'
             . '((SELECT COUNT(*) FROM b_hlbd_mf_institution_assignment ia WHERE ia.UF_USER_ID=p.UF_USER_ID)'
             . '+(SELECT COUNT(*) FROM b_hlbd_mf_group_assignment ga WHERE ga.UF_USER_ID=p.UF_USER_ID)) AS ASSIGNMENT_COUNT '
             . 'FROM b_hlbd_mf_staff_profile p JOIN b_user u ON u.ID=p.UF_USER_ID '
-            . 'LEFT JOIN b_uts_user uf ON uf.VALUE_ID=u.ID';
+            . 'LEFT JOIN b_uts_user uf ON uf.VALUE_ID=u.ID LEFT JOIN mf_staff_avatar a ON a.USER_ID=p.UF_USER_ID';
     }
 
     private function query(string $sql): Result
