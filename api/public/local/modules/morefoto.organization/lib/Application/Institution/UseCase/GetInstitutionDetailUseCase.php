@@ -111,6 +111,8 @@ final readonly class GetInstitutionDetailUseCase
             revision: (int)$institution['UF_REVISION'],
             curatorId: $assignment->curatorId,
             headId: $assignment->headId,
+            curatorName: $assignment->curatorName,
+            headName: $assignment->headName,
             shoots: new StructurePageOutputDto($shoots, ['page' => $input->shoots->page, 'pageSize' => $input->shoots->pageSize, 'total' => $shootTotal, 'totalPages' => (int)ceil($shootTotal / $input->shoots->pageSize)]),
             groups: new StructurePageOutputDto($groups, ['page' => $input->groups->page, 'pageSize' => $input->groups->pageSize, 'total' => $groupTotal, 'totalPages' => (int)ceil($groupTotal / $input->groups->pageSize), 'summary' => ['byState' => $byState]]),
             assignmentSignature: 'organizer' === $scope->role ? $signature : null,

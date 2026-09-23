@@ -54,6 +54,8 @@ final readonly class ListVisibleInstitutionsUseCase
                 revision: (int)$row['UF_REVISION'],
                 curatorId: $slot->curatorId,
                 headId: $slot->headId,
+                curatorName: $slot->curatorName,
+                headName: $slot->headName,
                 shootCount: (int)$row['SHOOT_COUNT'],
                 groupCount: (int)$row['GROUP_COUNT'],
                 openGroupCount: (int)$row['OPEN_GROUP_COUNT'],

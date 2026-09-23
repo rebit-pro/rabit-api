@@ -6,5 +6,10 @@ namespace Rebit\Share\Contracts\Access\Dto;
 
 final readonly class InstitutionAssignmentOutputDto
 {
-    public function __construct(public ?int $curatorId = null, public ?int $headId = null) {}
+    public function __construct(
+        public ?int $curatorId = null,
+        public ?int $headId = null,
+        public ?string $curatorName = null,
+        public ?string $headName = null,
+    ) {}
 }

@@ -16,6 +16,9 @@ use Morefoto\Organization\Presentation\Controller\InstitutionController;
 use Morefoto\Organization\Presentation\Request\InstitutionRequestFactory;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
+use Morefoto\Organization\Presentation\Controller\InstitutionDetailController;
+use Morefoto\Organization\Presentation\Institution\InstitutionDetailInputMapper;
+use Morefoto\Organization\Presentation\Institution\Result\InstitutionDetailResultMapper;
 
 return [
     InstitutionOperationRepository::class => ['className' => InstitutionOperationRepository::class],
@@ -57,7 +60,16 @@ return [
             ServiceLocator::getInstance()->get(SaveInstitutionUseCase::class),
             ServiceLocator::getInstance()->get(InstitutionRequestFactory::class),
             ServiceLocator::getInstance()->get(TokenResolverInterface::class),
+        ],
+    ],
+    InstitutionDetailInputMapper::class => ['className' => InstitutionDetailInputMapper::class],
+    InstitutionDetailResultMapper::class => ['className' => InstitutionDetailResultMapper::class],
+    InstitutionDetailController::class => [
+        'className' => InstitutionDetailController::class,
+        'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(GetInstitutionDetailUseCase::class),
+            ServiceLocator::getInstance()->get(InstitutionDetailInputMapper::class),
+            ServiceLocator::getInstance()->get(InstitutionDetailResultMapper::class),
         ],
     ],
 ];
