@@ -75,7 +75,7 @@ const helpOpen = shallowRef(false);
           Приём заказов завершён. Фотографии можно посмотреть; новые заказы сейчас не принимаются.
         </v-alert>
         <section v-if="gallery.state === 'preparing'" class="mf-panel gallery-empty">
-          <v-icon icon="mdi-image-clock-outline" size="40" color="primary" />
+          <v-icon icon="mdi-timer-sand" size="40" color="primary" />
           <h2>Фотографии ещё готовятся</h2>
           <p class="mf-muted">Ответственный сообщит, когда галерея будет открыта.</p>
         </section>

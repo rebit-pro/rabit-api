@@ -2,8 +2,8 @@ import { createVuetify } from 'vuetify';
 import { ru } from 'vuetify/locale';
 import { MoreFotoTheme } from '@/theme/MoreFotoTheme';
 import { morefotoUiDefaults } from '@/modules/morefoto/ui/defaults';
-import '@mdi/font/css/materialdesignicons.css';
-import { aliases, mdi } from 'vuetify/iconsets/mdi';
+import { aliases } from 'vuetify/iconsets/mdi-svg';
+import { mfSvgIcons } from './iconset';
 import { icons } from './mdi-icon';
 
 export default createVuetify({
@@ -19,7 +19,7 @@ export default createVuetify({
       ...icons
     },
     sets: {
-      mdi
+      mdi: mfSvgIcons
     }
   },
   theme: {

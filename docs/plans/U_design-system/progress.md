@@ -6,9 +6,9 @@
 - Ветка: `codex/u-design-system` от `main` `bb35665` (merge PR #50); worktree `/home/user/rabit-api-worktrees/u-design-system`.
 - PR: [#53](https://github.com/rebit-pro/rabit-api/pull/53) draft, base `main`; head — коммиты U1a `a144f1e`, U1b `de5a5f0` и этот журнал.
 - Документация: [план](plan.md), мастер-план [design-ux-plan](../design-ux-plan/plan.md), отчёт пакета [docs/waves/design-ux](../../waves/design-ux/README.md).
-- Завершено: U1, U2 (`d7c3661`), U3 (`1a944fa`), draft PR #53; U4a — статусы, уведомления, пустые состояния, панели, меню, диалог.
-- Сейчас: U4b — перевод hex на токены и гейт hex в линтерах.
-- Следующий шаг: U4c — иконки через `@mdi/js` вместо `@mdi/font`, затем журнал и коммит U4.
+- Завершено: U1, U2 (`d7c3661`), U3 (`1a944fa`), U4 (`c001fc5`, `eedc437` и коммит иконок), draft PR #53.
+- Сейчас: push U4.
+- Следующий шаг: B4 — приглашения, первый вход и пароли (backend `rebit.auth`/`morefoto.access`, письма H1, экраны доступа); сначала детали волны в плане и сверка backend-фактов.
 - Блокеры: нет.
 - Рабочее дерево: чистое после коммита журнала; node_modules — volume `rabit-u-node` (после `npm uninstall`) и чистый `rabit-u-node-ci` (`npm ci` на новом lockfile).
 - Команды следующей проверки: быстрые frontend-проверки из раздела 11 плана; `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
@@ -32,6 +32,8 @@
 | DX-U3-03 | PASS | 2026-09-23 | стенд скриншотов: каркас 1440/390, открытое меню пользователя, drawer, вход, playground «Бренд» | логотип во всех лок-апах, группы «Работа»/«Настройки», блок пользователя, активный пункт с полосой, меню с именем/email/ролью, вход с stacked-логотипом; горизонтальной прокрутки нет |
 | DX-U4-01 | PASS | 2026-09-23 | `npm run test:ui` (`tests/ui/status-tone.test.mjs`) | 18/18: у каждого статуса с подписью (оплата, производство, списки, доступ, состояние группы) есть тон, «заблокирован» — danger, «ожидает регистрации» — pending, неизвестное — neutral, карточка ссылки по закрытию/передаче/подготовке |
 | DX-U4-03 | PASS | 2026-09-23 | `npm run check` (+ `lint:styles`), негативная проверка stylelint/ESLint через stdin | hex вне токенов — 0 (151 замена в 42 файлах, 4 `white`); stylelint 0 замечаний; на входе с hex, `white` и `var(--mf-sea-600)` stylelint даёт 3 ошибки, ESLint — ошибку на hex в строке и шаблоне |
+| DX-U4-02 | PENDING | 2026-09-23 | финальный gate | `make test-e2e` и визуальная проверка экранов модулей |
+| DX-U4-04 | PASS | 2026-09-23 | `npm run test:ui` (`tests/ui/icons.test.mjs`), `npx vite build` | 57 имён `mdi-*` из `src` есть в реестре, значения — SVG-пути; `materialdesignicons` в `dist` нет; CSS 743 301 → 442 642 байт, `dist` 11,5 → 7,7 МБ, главный чанк +25 КБ (пути иконок); скриншоты U4b → U4c — 0,07–0,15 % пикселей (сглаживание) |
 | DX-FIN-01 | PENDING | — | — | финальный gate |
 | DX-FIN-02 | PENDING | — | — | финальный gate |
 | DX-FIN-03 | PENDING | — | — | финальный gate |
@@ -105,4 +107,10 @@
 - Все hex в CSS-объявлениях `.vue`/`.scss` (вне `_tokens.scss`) заменены скриптом по таблице «тип свойства + цвет → семантический токен» (соответствие 7.7): серые тексты → `text-secondary`/`text-tertiary`, графит → `text`, синий текст → `link`, контур фокуса → `focus`, серые границы → `border`/`border-hover`/`border-strong`, голубые фоны → `selected`, светлые → `bg`/`surface-2`, тёплые/зелёные фоны и тексты → тона warning/success/danger. Бирюзовые акценты demo-экранов (#278579, #277c78, #1c7b78, #4f7771, #166864, #315b53, #346d66) сведены к единственному акценту sea (`primary`/`link`/`focus`). Остатков нет; hex в TS и атрибутах шаблонов не было; 4 `background: white` → `surface`.
 - Гейт: `stylelint.config.mjs` (`color-no-hex`, `color-named: never`, запрет `--mf-sea|ink|pastel-*` вне токенов), `npm run lint:styles` в `npm run check`; ESLint `no-restricted-syntax` на hex в строках и шаблонах `src/**/*.{ts,vue}` кроме `theme/tokens.ts`. Stylelint 16.26.1, postcss-html 1.8.1, postcss-scss 4.0.9 — точные версии; lockfile +79 пакетов, без смен версий.
 - Скриншоты U4a → U4b: изменились только оттенки шапок таблиц (#f3f7fa → bg #f5f8fa) и отдельные блоки пользователей/каталога/playground (0,1–3,5 % пикселей), поломок нет.
+
+### 2026-09-23 — U4c: иконки через @mdi/js
+
+- Реестр `src/plugins/icons.ts` (57 используемых имён `mdi-*` → пути `@mdi/js`, генерируется скриптом с проверкой, что экспорт существует) и набор `src/plugins/iconset.ts` — обёртка над `VSvgIcon` Vuetify (роль и `aria-hidden` сохраняются); внутренние иконки Vuetify — алиасы `vuetify/iconsets/mdi-svg`. `@mdi/font` удалён.
+- Найдено попутно: `mdi-image-clock-outline` (пустое состояние галереи «Фотографии ещё готовятся») нет ни в `@mdi/js`, ни в CSS шрифта 7.4.47 — на проде там пустое место. Заменено на `mdi-timer-sand`.
+- Тест `tests/ui/icons.test.mjs`: каждое имя `mdi-*` в `src` есть в реестре, значения — SVG-пути. E2E и стили на классы `.mdi-*` не опираются.
 
