@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Rebit\Notification\Tests\Unit\Delivery;
 
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Rebit\Notification\Application\Delivery\Contract\DeliveryOperationRepositoryInterface;
@@ -17,6 +19,7 @@ use Rebit\Notification\Application\Delivery\UseCase\DispatchPendingEmailUseCase;
 use Rebit\Notification\Application\Delivery\UseCase\QueueEmailUseCase;
 use Rebit\Share\Application\Contract\Notification\Dto\EmailNotificationInputDto;
 use Rebit\Share\Application\Contract\Notification\NotificationDeduplicationConflictException;
+use Rebit\Share\Infrastructure\Logger\CommonLoggerProcessor;
 
 /**
  * @internal
@@ -136,6 +139,31 @@ final class DeliveryUseCasesTest extends TestCase
 
         self::assertSame('failed', $repository->operation->status);
         self::assertSame(0, $transport->calls);
+    }
+
+    public function testPublishFailureRecordsSurviveTheCommonLogSanitizer(): void
+    {
+        $handler = new TestHandler();
+        $logger = new Logger('notification', [$handler]);
+        $publisher = new RecordingPublisher();
+        $publisher->fail = true;
+
+        (new QueueEmailUseCase(new InMemoryDeliveryRepository(), $publisher, new FixedNotificationClock(), $logger))->queue($this->input());
+        (new DispatchPendingEmailUseCase($this->pendingRepository(), $publisher, new FixedNotificationClock(), $logger))->execute(100);
+
+        self::assertSame([
+            'Notification operation remains pending after publish failure.',
+            'Notification operation remains pending after recovery publish failure.',
+        ], array_column($handler->getRecords(), 'message'));
+        foreach ($handler->getRecords() as $record) {
+            $sanitized = (new CommonLoggerProcessor(['message' => $record['message'], 'context' => $record['context'], 'extra' => []]))();
+            $actual = $sanitized['context'];
+            ksort($actual);
+
+            self::assertSame($record['message'], $sanitized['message']);
+            self::assertSame(['exception' => \RuntimeException::class, 'operationId' => $record['context']['operationId']], $actual);
+            self::assertMatchesRegularExpression('/^[0-9a-f-]{36}$/D', $actual['operationId']);
+        }
     }
 
     private function input(): EmailNotificationInputDto

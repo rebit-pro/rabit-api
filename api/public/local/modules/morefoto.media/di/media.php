@@ -28,6 +28,9 @@ use Morefoto\Media\Infrastructure\Messenger\MediaPublisher;
 use Morefoto\Media\Presentation\Command\DispatchPendingMediaCommand;
 use Morefoto\Media\Presentation\Command\MediaConsumerCommand;
 use Morefoto\Media\Presentation\Controller\MediaController;
+use Morefoto\Media\Presentation\Controller\PhotoListController;
+use Morefoto\Media\Presentation\Photo\PhotoListInputMapper;
+use Morefoto\Media\Presentation\Photo\PhotoListResultMapper;
 use Morefoto\Media\Presentation\Request\MediaRequestFactory;
 use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
 use Rebit\Share\Application\Contract\Messenger\MessageConsumerRunnerInterface;
@@ -50,6 +53,8 @@ return [
     PhotoFileInspector::class => ['className' => PhotoFileInspector::class],
     PhotoRowMapper::class => ['className' => PhotoRowMapper::class],
     MediaRequestFactory::class => ['className' => MediaRequestFactory::class],
+    PhotoListInputMapper::class => ['className' => PhotoListInputMapper::class],
+    PhotoListResultMapper::class => ['className' => PhotoListResultMapper::class],
     PrivatePhotoStorageInterface::class => [
         'constructor' => static function(): PrivatePhotoStorageInterface {
             $root = (string)getenv('MOREFOTO_PRIVATE_MEDIA_PATH');
@@ -153,10 +158,17 @@ return [
             Log::channel(LogChannelEnum::media),
         ],
     ],
+    PhotoListController::class => [
+        'className' => PhotoListController::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(ListPhotosUseCase::class),
+            ServiceLocator::getInstance()->get(PhotoListInputMapper::class),
+            ServiceLocator::getInstance()->get(PhotoListResultMapper::class),
+        ],
+    ],
     MediaController::class => [
         'className' => MediaController::class,
         'constructorParams' => static fn(): array => [
-            ServiceLocator::getInstance()->get(ListPhotosUseCase::class),
             ServiceLocator::getInstance()->get(UploadPhotoUseCase::class),
             ServiceLocator::getInstance()->get(GetPhotoUseCase::class),
             ServiceLocator::getInstance()->get(AssignPhotosUseCase::class),

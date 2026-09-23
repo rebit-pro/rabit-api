@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, shallowRef, watch } from 'vue';
+import { computed, onBeforeUnmount, shallowRef, watch } from 'vue';
 import PhotoImage from '../../photos/components/PhotoImage.vue';
+import { failedPreviews, previewRetryRound } from '../../photos/previews';
 const props = withDefaults(defineProps<{ src: string; alt: string; eager?: boolean }>(), { eager: false });
 const loaded = shallowRef(false);
 const failed = shallowRef(false);
@@ -14,6 +15,17 @@ watch(
     attempt.value = 0;
   }
 );
+// Shared counter behind «Повторить все»: each failed frame on screen is counted exactly once.
+let counted = false;
+function count(value: boolean) {
+  if (value !== counted) failedPreviews.value += value ? 1 : -1;
+  counted = value;
+}
+watch(failed, count, { flush: 'sync' });
+watch(previewRetryRound, () => {
+  if (failed.value) retry();
+});
+onBeforeUnmount(() => count(false));
 function retry() {
   loaded.value = false;
   failed.value = false;

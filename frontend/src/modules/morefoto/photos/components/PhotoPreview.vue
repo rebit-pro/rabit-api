@@ -6,37 +6,43 @@ let returnFocus: HTMLElement | null = null;
 function restoreFocus() {
   if (returnFocus?.isConnected) returnFocus.focus();
 }
-const props = defineProps<{ open: boolean; photos: ManagedPhoto[]; initialChild: string; groupName: string }>();
-defineEmits<{ close: [] }>();
-const child = shallowRef('');
+// The dialog gets the frames of one child at a time: the workspace keeps only one page of the group.
+const props = defineProps<{
+  open: boolean;
+  codes: string[];
+  child: string;
+  photos: ManagedPhoto[];
+  loading: boolean;
+  error: string;
+  groupName: string;
+}>();
+defineEmits<{ close: []; 'update:child': [code: string] }>();
 const index = shallowRef(0);
-const codes = computed(() =>
-  [...new Set(props.photos.flatMap((photo) => photo.assignments.map((assignment) => assignment.childCode)))].sort()
-);
+function sequence(photo: ManagedPhoto): number {
+  return photo.assignments.find((assignment) => assignment.childCode === props.child)?.sequence ?? 0;
+}
 const bundle = computed(() =>
   props.photos
-    .filter((photo) => photo.assignments.some((assignment) => assignment.childCode === child.value))
-    .sort(
-      (a, b) =>
-        (a.assignments.find((assignment) => assignment.childCode === child.value)?.sequence ?? 0) -
-        (b.assignments.find((assignment) => assignment.childCode === child.value)?.sequence ?? 0)
-    )
+    .filter((photo) => photo.assignments.some((assignment) => assignment.childCode === props.child))
+    .sort((a, b) => sequence(a) - sequence(b))
 );
 const photo = computed(() => bundle.value[Math.min(index.value, bundle.value.length - 1)]);
-const code = computed(() => photo.value?.assignments.find((assignment) => assignment.childCode === child.value)?.code ?? '');
+const code = computed(() => photo.value?.assignments.find((assignment) => assignment.childCode === props.child)?.code ?? '');
 watch(
   () => props.open,
   (value) => {
     if (value) {
       returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      child.value = props.initialChild || codes.value[0] || '';
       index.value = 0;
     }
   }
 );
-watch(child, () => {
-  index.value = 0;
-});
+watch(
+  () => props.child,
+  () => {
+    index.value = 0;
+  }
+);
 </script>
 <template>
   <v-dialog
@@ -55,19 +61,26 @@ watch(child, () => {
         <v-btn variant="outlined" @click="$emit('close')">Закрыть просмотр</v-btn>
       </div>
       <v-select
-        v-model="child"
+        :model-value="child"
         :items="codes.map((value) => ({ title: 'Ребёнок ' + value, value }))"
         label="Ребёнок"
         class="mt-5"
         data-testid="preview-child"
+        @update:model-value="$emit('update:child', $event)"
       />
-      <template v-if="photo">
+      <div v-if="loading" class="preview-state py-6" role="status">
+        <v-progress-circular indeterminate size="28" width="3" color="primary" />
+        <span>Загружаем кадры набора…</span>
+      </div>
+      <v-alert v-else-if="error" type="error" variant="tonal" role="alert" class="mt-4">{{ error }}</v-alert>
+      <template v-else-if="photo">
         <GalleryImage
           :key="photo.id"
           :src="photo.previewSrc"
           :alt="'Кадр ' + code"
           :width="photo.width"
           :height="photo.height"
+          eager
           class="preview-image mt-4"
         />
         <div class="preview-navigation mt-4">
@@ -81,6 +94,11 @@ watch(child, () => {
   </v-dialog>
 </template>
 <style scoped>
+.preview-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 .preview-heading > div {
   min-width: 0;
 }

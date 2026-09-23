@@ -7,7 +7,6 @@ namespace Morefoto\Media\Presentation\Request;
 use Bitrix\Main\Application;
 use Bitrix\Main\HttpRequest;
 use Morefoto\Media\Application\Photo\Dto\AssignPhotosInputDto;
-use Morefoto\Media\Application\Photo\Dto\ListPhotosInputDto;
 use Morefoto\Media\Application\Photo\Dto\SetCoverInputDto;
 use Morefoto\Media\Domain\Photo\ValueObject\IdempotencyKey;
 use Rebit\Share\Shared\Exception\HttpException;
@@ -44,36 +43,6 @@ final readonly class MediaRequestFactory
             'groupId' => $groupId,
             'fingerprint' => null === $fingerprint || '' === $fingerprint ? null : strtolower($fingerprint),
         ];
-    }
-
-    public function listing(HttpRequest $request): ListPhotosInputDto
-    {
-        $query = $this->query($request);
-        if ([] !== array_diff(array_keys($query), ['groupId', 'childCode', 'assigned', 'page', 'pageSize'])) {
-            throw new HttpException('UNKNOWN_FIELD', 422);
-        }
-        $groupId = $query['groupId'] ?? null;
-        if (null !== $groupId && (!is_string($groupId) || 1 !== preg_match('/^[a-f0-9-]{36}$/D', $groupId))) {
-            throw new HttpException('INVALID_GROUP', 422);
-        }
-        $page = $this->positive($query, 'page', 1, 1000000);
-        $pageSize = $this->positive($query, 'pageSize', 50, 100);
-        $childCode = $query['childCode'] ?? null;
-        if (null !== $childCode && (!is_string($childCode) || 1 !== preg_match('/^[A-Z]{1,3}$/D', $childCode))) {
-            throw new HttpException('INVALID_CHILD_CODE', 422);
-        }
-        $assigned = $query['assigned'] ?? null;
-        if (null !== $assigned && !in_array($assigned, ['true', 'false', '1', '0'], true)) {
-            throw new HttpException('INVALID_ASSIGNED_FILTER', 422);
-        }
-
-        return new ListPhotosInputDto(
-            $groupId,
-            $page,
-            $pageSize,
-            $childCode,
-            null === $assigned ? null : in_array($assigned, ['true', '1'], true),
-        );
     }
 
     /** @return array{input:AssignPhotosInputDto,key:IdempotencyKey} */
@@ -130,20 +99,6 @@ final readonly class MediaRequestFactory
         }
 
         return $value;
-    }
-
-    /** @param array<string,mixed> $query */
-    private function positive(array $query, string $field, int $default, int $maximum): int
-    {
-        if (!array_key_exists($field, $query)) {
-            return $default;
-        }
-        $value = $query[$field];
-        if (!is_scalar($value) || 1 !== preg_match('/^[1-9][0-9]{0,6}$/D', (string)$value) || $maximum < (int)$value) {
-            throw new HttpException('INVALID_PAGE', 422);
-        }
-
-        return (int)$value;
     }
 
     /**

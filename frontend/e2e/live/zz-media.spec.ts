@@ -1,4 +1,4 @@
-import { test, expect, type APIResponse, type Page, type Request } from '@playwright/test';
+import { test, expect, type APIResponse, type Page, type Request, type Route } from '@playwright/test';
 import { login, token } from './helpers.js';
 
 const png = Buffer.from(
@@ -26,6 +26,24 @@ function pngVariant(label: string): Buffer {
   checksum.writeUInt32BE(crc32(Buffer.concat([type, text])));
   const end = png.length - 12;
   return Buffer.concat([png.subarray(0, end), length, type, text, checksum, png.subarray(end)]);
+}
+
+// Peak number of requests in flight, rebuilt from browser network timings: Playwright delivers request events in its own order.
+function peakOverlap(spans: { start: number; end: number }[]): number {
+  const edges = spans.flatMap(({ start, end }) => [
+    { at: start, delta: 1 },
+    { at: end, delta: -1 }
+  ]);
+  edges.sort((left, right) => left.at - right.at || left.delta - right.delta);
+  let current = 0;
+
+  return edges.reduce((peak, edge) => Math.max(peak, (current += edge.delta)), 0);
+}
+
+function span(request: Request): { start: number; end: number } {
+  const timing = request.timing();
+
+  return { start: timing.startTime, end: timing.startTime + Math.max(timing.responseEnd, 0) };
 }
 
 async function result(response: APIResponse, status: number) {
@@ -447,7 +465,6 @@ test('#33: партия отправляется по два файла без �
 
   const uploads = '/api/v1/shoots/' + shoot.id + '/photos';
   const isUpload = (request: Request) => request.method() === 'POST' && new URL(request.url()).pathname === uploads;
-  // Overlap is read from the browser network timings: Playwright delivers request events in its own order.
   const spans: { start: number; end: number }[] = [];
   const finished: number[] = [];
   const checks: number[] = [];
@@ -458,21 +475,10 @@ test('#33: партия отправляется по два файла без �
   const settle = (request: Request) => {
     if (!isUpload(request)) return;
     finished.push(Date.now());
-    const timing = request.timing();
-    spans.push({ start: timing.startTime, end: timing.startTime + Math.max(timing.responseEnd, 0) });
+    spans.push(span(request));
   };
   page.on('requestfinished', settle);
   page.on('requestfailed', settle);
-  const overlap = () => {
-    const edges = spans.flatMap(({ start, end }) => [
-      { at: start, delta: 1 },
-      { at: end, delta: -1 }
-    ]);
-    edges.sort((left, right) => left.at - right.at || left.delta - right.delta);
-    let current = 0;
-
-    return edges.reduce((peak, edge) => Math.max(peak, (current += edge.delta)), 0);
-  };
 
   const input = page.locator('input[type="file"][aria-label="Выбрать фотографии"]');
   const files = [1, 2, 3, 4, 5].map((index) => ({
@@ -491,7 +497,7 @@ test('#33: партия отправляется по два файла без �
   await expect(rows.filter({ hasText: 'batch-broken.png' })).toContainText('Ошибка');
   await expect(rows.filter({ hasText: 'batch-broken.png' })).toContainText('Сервер отклонил файл');
   expect(finished).toHaveLength(6);
-  expect(overlap()).toBeLessThanOrEqual(2);
+  expect(peakOverlap(spans)).toBeLessThanOrEqual(2);
   // Statuses are checked from two seconds after acceptance, so more POSTs than the parallel limit end before the first check.
   expect(finished.filter((time) => time < Math.min(...checks)).length).toBeGreaterThanOrEqual(3);
   await expect(page.getByTestId('photo-card')).toHaveCount(5);
@@ -505,4 +511,243 @@ test('#33: партия отправляется по два файла без �
   await expect(page.locator('[data-upload-id]').filter({ hasText: 'after-reload.png' })).toContainText('Готово', { timeout: 30000 });
   expect(finished).toHaveLength(sent);
   await expect(page.getByTestId('photo-card')).toHaveCount(6);
+});
+
+test('#54/#55: большая группа открывается страницей, превью идут очередью и переживают сбой', async ({ page }, testInfo) => {
+  test.setTimeout(240000);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await login(page);
+  const suffix = crypto.randomUUID().slice(0, 8);
+  const institution = (
+    await result(
+      await page.request.post('/api/v1/institutions', {
+        headers: await headers(page),
+        data: { name: 'Q54 Детский сад ' + suffix, address: 'Москва' }
+      }),
+      201
+    )
+  ).data;
+  const shoot = (
+    await result(
+      await page.request.post('/api/v1/institutions/' + institution.id + '/shoots', {
+        headers: await headers(page),
+        data: { name: 'Q54 Съёмка', date: '2026-10-20' }
+      }),
+      201
+    )
+  ).data;
+  const group = (
+    await result(
+      await page.request.post('/api/v1/shoots/' + shoot.id + '/groups', {
+        headers: await headers(page),
+        data: { name: 'Q54 Ромашки', groupKind: 'regular' }
+      }),
+      201
+    )
+  ).data;
+  const listing = '/api/v1/shoots/' + shoot.id + '/photos';
+  const authorization = { Authorization: 'Bearer ' + (await token(page)) };
+  // 50 frames: a full page of 48 and a second page of two.
+  for (let first = 0; first < 50; first += 5)
+    await Promise.all(
+      Array.from({ length: 5 }, async (_, offset) =>
+        result(
+          await page.request.post(listing, {
+            headers: authorization,
+            multipart: {
+              groupId: group.id,
+              file: { name: 'q54-' + (first + offset) + '.png', mimeType: 'image/png', buffer: pngVariant(suffix + '-' + (first + offset)) }
+            }
+          }),
+          202
+        )
+      )
+    );
+  await expect
+    .poll(
+      async () =>
+        (await result(await page.request.get(listing + '?status=ready&pageSize=1&groupId=' + group.id, { headers: authorization }), 200))
+          .data.meta.total,
+      { timeout: 120000 }
+    )
+    .toBe(50);
+
+  const lists: URL[] = [];
+  const thumbs: string[] = [];
+  const thumbPath = /^\/api\/v1\/photos\/[0-9a-f-]{36}\/thumb$/;
+  const isThumb = (request: Request) => thumbPath.test(new URL(request.url()).pathname);
+  page.on('request', (request) => {
+    const url = new URL(request.url());
+    if (request.method() === 'GET' && url.pathname === listing) lists.push(url);
+  });
+  const settle = (request: Request) => {
+    if (isThumb(request)) thumbs.push(request.url());
+  };
+  page.on('requestfinished', settle);
+  page.on('requestfailed', settle);
+  // One network failure of the first preview must be recovered by the automatic retry, without «Повторить».
+  let broken = '';
+  await page.route(
+    (url) => thumbPath.test(url.pathname),
+    async (route) => {
+      if (broken) return route.continue();
+      broken = route.request().url();
+      await route.abort('failed');
+    }
+  );
+  const cards = page.getByTestId('photo-card');
+  // Frames load only near the viewport, so the list is walked the way a person scrolls it.
+  const showAll = async (count: number) => {
+    for (let index = 0; index < count; index++) {
+      const image = cards.nth(index).locator('img');
+      await image.scrollIntoViewIfNeeded();
+      await expect.poll(() => image.evaluate((node) => (node as HTMLImageElement).naturalWidth), { timeout: 30000 }).toBeGreaterThan(0);
+    }
+  };
+  const pageButton = (number: number) =>
+    page.getByTestId('photo-pagination').getByRole('button', { name: 'Перейти на страницу ' + number, exact: true });
+
+  await page.addInitScript(() => performance.setResourceTimingBufferSize(1000));
+  await page.goto('/cabinet/institutions/' + institution.id + '/shoots/' + shoot.id + '/photos?group=' + group.id);
+  await expect(page.getByTestId('photo-page-status')).toHaveText('Показано 48 из 50');
+  await expect(cards).toHaveCount(48);
+  await expect(page.getByTestId('photo-readiness')).toHaveText('Кадров: 50 · Детей: 0 · Без ребёнка: 50');
+  expect(lists).toHaveLength(1);
+  expect(Object.fromEntries(lists[0]!.searchParams)).toEqual({ groupId: group.id, status: 'ready', page: '1', pageSize: '48' });
+  await showAll(48);
+  await expect(page.getByText('Кадр не загрузился', { exact: true })).toHaveCount(0);
+  expect(thumbs.filter((url) => url === broken)).toHaveLength(2);
+  // Resource Timing keeps start and end on one sub-millisecond clock of the page: the queue starts the next
+  // preview right after the previous one ends, and Playwright's millisecond start times would overlap them.
+  const previewSpans = await page.evaluate(() =>
+    (performance.getEntriesByType('resource') as PerformanceResourceTiming[])
+      .filter((entry) => /^\/api\/v1\/photos\/[0-9a-f-]{36}\/thumb$/.test(new URL(entry.name).pathname) && entry.responseEnd > 0)
+      .map((entry) => ({ start: entry.startTime, end: entry.responseEnd }))
+  );
+  expect(previewSpans.length).toBeGreaterThanOrEqual(48);
+  expect(peakOverlap(previewSpans)).toBeLessThanOrEqual(6);
+  await page.screenshot({ path: testInfo.outputPath('q54-desktop-photos.png'), fullPage: true, animations: 'disabled' });
+
+  await pageButton(2).click();
+  await expect(page).toHaveURL(/[?&]page=2(&|$)/);
+  await expect(cards).toHaveCount(2);
+  await expect(page.getByTestId('photo-page-status')).toHaveText('Показано 2 из 50');
+  await showAll(2);
+  expect(lists).toHaveLength(2);
+  // Frames already shown come from the page cache when the list returns to them.
+  const downloaded = thumbs.length;
+  await pageButton(1).click();
+  await expect(cards).toHaveCount(48);
+  await showAll(48);
+  await pageButton(2).click();
+  await expect(cards).toHaveCount(2);
+  await showAll(2);
+  expect(thumbs).toHaveLength(downloaded);
+
+  await page.reload();
+  await expect(page).toHaveURL(/[?&]page=2(&|$)/);
+  await expect(cards).toHaveCount(2);
+  const beforeAssignment = lists.length;
+  await cards.first().getByRole('checkbox').check();
+  await page.getByTestId('child-code').locator('input').fill('A');
+  await page.getByRole('button', { name: 'Назначить ребёнку', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Кадры назначены ребёнку.' })).toBeVisible();
+  await expect(page.getByTestId('photo-readiness')).toHaveText('Кадров: 50 · Детей: 1 · Без ребёнка: 49');
+  expect(lists).toHaveLength(beforeAssignment + 1);
+  expect(lists[lists.length - 1]!.searchParams.get('page')).toBe('2');
+
+  await page.getByRole('link', { name: '← Q54 Съёмка', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp('/shoots/' + shoot.id + '$'));
+  await page.goBack();
+  await expect(page).toHaveURL(/[?&]page=2(&|$)/);
+  await expect(cards).toHaveCount(2);
+
+  // A fresh mobile render, as in the other specs: resizing a live page first animates the desktop drawer away.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  await expect(page).toHaveURL(/[?&]page=2(&|$)/);
+  await expect(cards).toHaveCount(2);
+  await expect(page.getByTestId('photo-pagination')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('q54-mobile-photos.png'), fullPage: true, animations: 'disabled' });
+});
+
+test('#55: превью прежней сессии отменяются при выходе и не сбрасывают новый вход', async ({ page }) => {
+  test.setTimeout(120000);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await login(page);
+  const suffix = crypto.randomUUID().slice(0, 8);
+  const institution = (
+    await result(
+      await page.request.post('/api/v1/institutions', {
+        headers: await headers(page),
+        data: { name: 'Q55 Детский сад ' + suffix, address: 'Москва' }
+      }),
+      201
+    )
+  ).data;
+  const shoot = (
+    await result(
+      await page.request.post('/api/v1/institutions/' + institution.id + '/shoots', {
+        headers: await headers(page),
+        data: { name: 'Q55 Съёмка', date: '2026-10-20' }
+      }),
+      201
+    )
+  ).data;
+  const group = (
+    await result(
+      await page.request.post('/api/v1/shoots/' + shoot.id + '/groups', {
+        headers: await headers(page),
+        data: { name: 'Q55 Ромашки', groupKind: 'regular' }
+      }),
+      201
+    )
+  ).data;
+  const listing = '/api/v1/shoots/' + shoot.id + '/photos';
+  const authorization = { Authorization: 'Bearer ' + (await token(page)) };
+  await result(
+    await page.request.post(listing, {
+      headers: authorization,
+      multipart: { groupId: group.id, file: { name: 'q55-session.png', mimeType: 'image/png', buffer: pngVariant(suffix + '-session') } }
+    }),
+    202
+  );
+  await expect
+    .poll(
+      async () =>
+        (await result(await page.request.get(listing + '?status=ready&pageSize=1&groupId=' + group.id, { headers: authorization }), 200))
+          .data.meta.total,
+      { timeout: 60000 }
+    )
+    .toBe(1);
+
+  // The preview of the first session stays in flight until that session ends and the next one begins.
+  const thumbPath = /^\/api\/v1\/photos\/[0-9a-f-]{36}\/thumb$/;
+  const held: Route[] = [];
+  const cancelled: string[] = [];
+  await page.route(
+    (url) => thumbPath.test(url.pathname),
+    (route) => {
+      held.push(route);
+    }
+  );
+  page.on('requestfailed', (request) => {
+    if (thumbPath.test(new URL(request.url()).pathname)) cancelled.push(request.failure()?.errorText ?? '');
+  });
+  await page.goto('/cabinet/institutions/' + institution.id + '/shoots/' + shoot.id + '/photos?group=' + group.id);
+  await expect(page.getByTestId('photo-card')).toHaveCount(1);
+  await expect.poll(() => held.length).toBe(1);
+  const loggedOut = page.waitForResponse((response) => response.url().endsWith('/auth/logout'));
+  await page.getByRole('button', { name: 'Выйти', exact: true }).click();
+  await loggedOut;
+  await expect.poll(() => cancelled).toEqual(['net::ERR_ABORTED']);
+
+  await login(page);
+  const current = await token(page);
+  // A late 401 of the ended session must not reach the shared interceptor that clears the session.
+  await held[0]!.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: { code: 'UNAUTHORIZED' } }) });
+  await expect(page.getByRole('button', { name: 'Новая продукция', exact: true })).toBeEnabled();
+  expect(await token(page)).toBe(current);
+  await expect(page).not.toHaveURL(/\/login/);
 });
