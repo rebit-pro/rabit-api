@@ -7,7 +7,7 @@
   - Прогретый гейт: медиана 243 с (четыре прогона, 237–269 с) против 503 с до изменений.
   - Холодный гейт: 302 с.
   - Состав: 77 сценариев (A 46 + B 31) и 4 верификатора.
-- PR [#58](https://github.com/rebit-pro/rabit-api/pull/58), commit `7103ebf`. Merge в `main` выполняется сразу после PR по разрешению пользователя от 2026-09-23 («после PR можно мержить main»), чтобы параллельные ветки получили новый runner. Deployment не нужен: меняется только локальный гейт.
+- PR [#58](https://github.com/rebit-pro/rabit-api/pull/58) OPEN, MERGEABLE/CLEAN. Пользователь разрешил merge сразу после PR («после PR можно мержить main»), чтобы параллельные ветки получили новый runner. Попытка `gh pr merge 58 --merge --match-head-commit 7576859…` отклонена правилами разрешений режима auto (Merge Without Review): merge выполняет пользователь или разрешает его отдельно. Deployment не нужен: меняется только локальный гейт.
 - Следующий шаг после merge: параллельным веткам влить `main`. Новый live spec в ветке нужно добавить ровно в одну группу `frontend/e2e/live/groups.json`, иначе конфиг Playwright и runner откажутся запускаться.
 - Блокеров нет.
 - Открыто по решению пользователя:
@@ -126,6 +126,7 @@ make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rab
 - `check_results` перенесён внутрь этапа браузера: его провал теперь записывается в `stages` и включает fail-fast. Проверка на подготовленных `results.json` отклоняет пропущенный spec, flaky, skipped, ошибку загрузки и чужую группу. `validate` отклоняет неизвестную и пустую группу. Контрольный полный прогон итогового кода `rabit-e2e-67591296b6f3`: PASS, 77/77 (A 46 + B 31), 4 верификатора, `full gate`, 237 с wall; до браузера — 52 с, A — 178,1 с, B — 117,2 с; все этапы `passed`, ресурсов запуска 0, `cleanupErrors` пуст.
 - Временные probe-тома удалены (`docker volume rm rabit-ops-probe-*`).
 - `git commit` `7103ebf`, `git push -u origin codex/ops-e2e-optimization`, `gh pr create` — PR #58. Перед merge `main` сдвинулся с `aee6808` на `5f658e5`: один docs-коммит в `docs/plans/issues-31-33-34-photo-upload/progress.md`. Файлы гейта (runner, live spec, конфиги, `package.json`, `api/tools/e2e`) не менялись, повторять проверки не требуется. `gh pr view 58`: MERGEABLE, CLEAN.
+- `7576859` — журнал с PR #58 и сдвигом base, push. `gh pr merge 58 --merge --match-head-commit 7576859…` отклонён правилами разрешений режима auto. PR остаётся открытым и готовым к merge; ждём действия пользователя.
 
 ## Тест-кейсы
 
