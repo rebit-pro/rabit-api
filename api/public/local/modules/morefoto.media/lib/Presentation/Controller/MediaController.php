@@ -8,7 +8,6 @@ use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Response;
 use Morefoto\Media\Application\Photo\UseCase\AssignPhotosUseCase;
 use Morefoto\Media\Application\Photo\UseCase\GetPhotoUseCase;
-use Morefoto\Media\Application\Photo\UseCase\ListPhotosUseCase;
 use Morefoto\Media\Application\Photo\UseCase\SetGroupCoverUseCase;
 use Morefoto\Media\Application\Photo\UseCase\UploadPhotoUseCase;
 use Morefoto\Media\Presentation\Request\MediaRequestFactory;
@@ -28,7 +27,6 @@ final class MediaController extends BaseJsonController implements AuthenticatedC
     use AuthenticatedControllerTrait;
 
     public function __construct(
-        private readonly ListPhotosUseCase $list,
         private readonly UploadPhotoUseCase $upload,
         private readonly GetPhotoUseCase $detail,
         private readonly AssignPhotosUseCase $assignments,
@@ -37,15 +35,6 @@ final class MediaController extends BaseJsonController implements AuthenticatedC
         private readonly TokenResolverInterface $tokens,
     ) {
         parent::__construct();
-    }
-
-    public function listAction(): ControllerJson
-    {
-        return $this->json($this->list->execute(
-            $this->getAuthUserId(),
-            $this->requests->routeId('shoot_id'),
-            $this->requests->listing($this->getRequest()),
-        ));
     }
 
     public function uploadAction(): ControllerJson
@@ -97,7 +86,6 @@ final class MediaController extends BaseJsonController implements AuthenticatedC
         $filters = ['prefilters' => [new BearerTokenFilter($this->tokens), new LoggerFilter()]];
 
         return [
-            'list' => $filters,
             'upload' => $filters,
             'detail' => $filters,
             'assignment' => $filters,

@@ -101,14 +101,15 @@ final readonly class PhotoRepository
         ?int $groupId,
         ?string $childCode,
         ?bool $assigned,
+        ?string $status,
         int $limit,
         int $offset,
     ): Result {
         if (1 > $limit || 100 < $limit || 0 > $offset) {
             throw new \InvalidArgumentException('Invalid photo page.');
         }
-        $pageCondition = $this->filterCondition($shootId, $groupId, $childCode, $assigned, 'page_photo');
-        $condition = $this->filterCondition($shootId, $groupId, $childCode, $assigned, 'p');
+        $pageCondition = $this->filterCondition($shootId, $groupId, $childCode, $assigned, $status, 'page_photo');
+        $condition = $this->filterCondition($shootId, $groupId, $childCode, $assigned, $status, 'p');
 
         return $this->query(
             $this->baseSelect()
@@ -117,12 +118,33 @@ final readonly class PhotoRepository
         );
     }
 
-    public function count(int $shootId, ?int $groupId, ?string $childCode, ?bool $assigned): int
+    public function count(int $shootId, ?int $groupId, ?string $childCode, ?bool $assigned, ?string $status): int
     {
-        $condition = $this->filterCondition($shootId, $groupId, $childCode, $assigned, 'p');
+        $condition = $this->filterCondition($shootId, $groupId, $childCode, $assigned, $status, 'p');
         $row = $this->query('SELECT COUNT(*) AS TOTAL FROM b_hlbd_mf_photo p WHERE ' . $condition)->fetch();
 
         return is_array($row) ? (int)$row['TOTAL'] : 0;
+    }
+
+    /**
+     * Codes of the group's children that currently have at least one frame of this group.
+     *
+     * @return list<string>
+     */
+    public function childCodes(int $shootId, int $groupId): array
+    {
+        $result = $this->query(
+            'SELECT DISTINCT child.CODE FROM mf_media_child child '
+            . 'INNER JOIN mf_photo_assignment assignment ON assignment.CHILD_ID=child.ID '
+            . 'INNER JOIN b_hlbd_mf_photo p ON p.ID=assignment.PHOTO_ID AND p.UF_GROUP_ID=child.GROUP_ID '
+            . "WHERE child.SHOOT_ID={$shootId} AND child.GROUP_ID={$groupId} ORDER BY child.CODE",
+        );
+        $codes = [];
+        while (false !== ($row = $result->fetch())) {
+            $codes[] = (string)$row['CODE'];
+        }
+
+        return $codes;
     }
 
     /**
@@ -211,11 +233,15 @@ final readonly class PhotoRepository
         ?int $groupId,
         ?string $childCode,
         ?bool $assigned,
+        ?string $status,
         string $alias,
     ): string {
         $condition = "{$alias}.UF_SHOOT_ID={$shootId}";
         if (null !== $groupId) {
             $condition .= " AND {$alias}.UF_GROUP_ID={$groupId}";
+        }
+        if (null !== $status) {
+            $condition .= " AND {$alias}.UF_STATUS=" . $this->quote($status);
         }
         $assignment = 'SELECT 1 FROM mf_photo_assignment filter_assignment '
             . 'INNER JOIN mf_media_child filter_child ON filter_child.ID=filter_assignment.CHILD_ID '

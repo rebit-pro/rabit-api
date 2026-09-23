@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Morefoto\Media\Application\Photo\Dto;
+namespace Morefoto\Media\Presentation\Photo\Dto;
 
+use Morefoto\Media\Application\Photo\Dto\PhotoOutputDto;
+use Rebit\Share\Application\Interface\ResultDtoInterface;
 use Rebit\Share\Contracts\Organization\Dto\MediaGroupOutputDto;
 
-final readonly class PhotoPageOutputDto
+final readonly class PhotoPageResultDto implements ResultDtoInterface
 {
     /**
      * @param list<PhotoOutputDto>                   $items
@@ -20,6 +22,6 @@ final readonly class PhotoPageOutputDto
         public array $covers,
         public int $revision,
         public array $meta,
-        public ?PhotoGroupSummaryOutputDto $summary,
+        public ?PhotoGroupSummaryResultDto $summary,
     ) {}
 }
