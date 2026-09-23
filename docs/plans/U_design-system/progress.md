@@ -4,14 +4,14 @@
 
 - Дата: 2026-09-23.
 - Ветка: `codex/u-design-system` от `main` `bb35665` (merge PR #50); worktree `/home/user/rabit-api-worktrees/u-design-system`.
-- PR: [#53](https://github.com/rebit-pro/rabit-api/pull/53) draft, base `main`; head — коммиты U1a `a144f1e`, U1b `de5a5f0` и этот журнал.
+- PR: [#53](https://github.com/rebit-pro/rabit-api/pull/53) draft, base `main`; head — коммиты U1–U4, серия B4 и этот журнал.
 - Документация: [план](plan.md), мастер-план [design-ux-plan](../design-ux-plan/plan.md), отчёт пакета [docs/waves/design-ux](../../waves/design-ux/README.md).
-- Завершено: U1, U2 (`d7c3661`), U3 (`1a944fa`), U4 (`c001fc5`, `eedc437` и коммит иконок), draft PR #53.
-- Сейчас: push U4.
-- Следующий шаг: B4 — приглашения, первый вход и пароли (backend `rebit.auth`/`morefoto.access`, письма H1, экраны доступа); сначала детали волны в плане и сверка backend-фактов.
-- Блокеры: нет.
-- Рабочее дерево: чистое после коммита журнала; node_modules — volume `rabit-u-node` (после `npm uninstall`) и чистый `rabit-u-node-ci` (`npm ci` на новом lockfile).
-- Команды следующей проверки: быстрые frontend-проверки из раздела 11 плана; `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
+- Завершено: U1, U2 (`d7c3661`), U3 (`1a944fa`), U4 (`c001fc5`, `eedc437`, `6962cf9`), B4 (`3295ad1` backend, `92ae90d` экраны, `717136b` «Что дальше» и фильтр статуса, коммит реестра и журнала), draft PR #53.
+- Сейчас: push серии B4 и обновление описания PR.
+- Следующий шаг: B3 — аватары с фото (ACC-07…ACC-10, раздел 8.3 мастер-плана); сначала детали волны в плане (раздел 4.5) и сверка фактов `morefoto.access`/`rebit.share` (файлы, хранилище, права).
+- Блокеры: нет. Открытые решения: нет; follow-up B4 записаны в плане (письмо кода регистрации, отзыв ссылки при отключении pending-сотрудника, письма при смене email активного сотрудника).
+- Рабочее дерево: чистое после коммита журнала; node_modules — volume `rabit-u-node`, vendor — `rabit-u-vendor`; канонический `../MoreFoto` изменён на месте, копия до пакета — в scratchpad сессии (`morefoto-before`), патч пересоздаётся diff'ом.
+- Команды следующей проверки: быстрые frontend-проверки из раздела 11 плана; backend `vendor/bin/phpunit`, `phpstan analyse`, php-cs-fixer по изменённым файлам (образ `rabit-api-php-cli:d3-webp`, volume `rabit-u-vendor`); `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
 
 ## Тест-кейсы
 
@@ -34,6 +34,10 @@
 | DX-U4-03 | PASS | 2026-09-23 | `npm run check` (+ `lint:styles`), негативная проверка stylelint/ESLint через stdin | hex вне токенов — 0 (151 замена в 42 файлах, 4 `white`); stylelint 0 замечаний; на входе с hex, `white` и `var(--mf-sea-600)` stylelint даёт 3 ошибки, ESLint — ошибку на hex в строке и шаблоне |
 | DX-U4-02 | PENDING | 2026-09-23 | финальный gate | `make test-e2e` и визуальная проверка экранов модулей |
 | DX-U4-04 | PASS | 2026-09-23 | `npm run test:ui` (`tests/ui/icons.test.mjs`), `npx vite build` | 57 имён `mdi-*` из `src` есть в реестре, значения — SVG-пути; `materialdesignicons` в `dist` нет; CSS 743 301 → 442 642 байт, `dist` 11,5 → 7,7 МБ, главный чанк +25 КБ (пути иконок); скриншоты U4b → U4c — 0,07–0,15 % пикселей (сглаживание) |
+| DX-B4-U1 | PASS | 2026-09-23 | `vendor/bin/phpunit --filter 'AccessUseCasesTest\|H1AccessLinkMailerTest\|LoginUseCaseTest\|TokenResolverTest'` | 32 теста, 149 проверок: хэш вместо токена, cooldown `RATE_LIMITED`, `INVITATION_NOT_AVAILABLE`, маска email, `LINK_EXPIRED`/`LINK_USED`, слабый пароль, активация и одноразовость, одинаковый ответ сброса, приглашение для pending, замена сессии, неверный текущий пароль, экранирование имени в HTML, коды `INVALID_CREDENTIALS`/`SESSION_REVOKED`/`TOKEN_EXPIRED` |
+| DX-B4-U2 | PASS | 2026-09-23 | `vendor/bin/phpunit --filter 'BitrixEmailTransportTest\|DeliveryUseCasesTest'` | 10 тестов, 35 проверок: HTML уходит без повторного экранирования, хэш полезной нагрузки учитывает `bodyHtml`, текстовые операции сохраняют прежний хэш |
+| DX-B4-U3 | PASS | 2026-09-23 | `vendor/bin/phpunit --filter RegistrationSafetyTest` | 14 тестов, 63 проверки; новый: устаревшая ссылка приглашения для учётки, активированной кодом, — `LINK_USED` 410, пароль и сессия не меняются |
+| DX-B4-01…05 | PENDING | 2026-09-23 | финальный gate: `zz-access.spec.ts`, `verify-access.php` | спека (6 сценариев) и верификатор написаны, `typecheck:e2e` и `php -l` зелёные; запуск — после всех волн |
 | DX-FIN-01 | PENDING | — | — | финальный gate |
 | DX-FIN-02 | PENDING | — | — | финальный gate |
 | DX-FIN-03 | PENDING | — | — | финальный gate |
@@ -113,4 +117,16 @@
 - Реестр `src/plugins/icons.ts` (57 используемых имён `mdi-*` → пути `@mdi/js`, генерируется скриптом с проверкой, что экспорт существует) и набор `src/plugins/iconset.ts` — обёртка над `VSvgIcon` Vuetify (роль и `aria-hidden` сохраняются); внутренние иконки Vuetify — алиасы `vuetify/iconsets/mdi-svg`. `@mdi/font` удалён.
 - Найдено попутно: `mdi-image-clock-outline` (пустое состояние галереи «Фотографии ещё готовятся») нет ни в `@mdi/js`, ни в CSS шрифта 7.4.47 — на проде там пустое место. Заменено на `mdi-timer-sand`.
 - Тест `tests/ui/icons.test.mjs`: каждое имя `mdi-*` в `src` есть в реестре, значения — SVG-пути. E2E и стили на классы `.mdi-*` не опираются.
+
+### 2026-09-23 — B4: приглашения, первый вход и пароли
+
+- Детали, решения и отличия от мастер-плана — раздел 4.4 плана.
+- `3295ad1` backend: таблица `rebit_auth_access_link` (миграция `Version20260923120002`, down удаляет только пустую), `BODY_HTML` в очереди H1 (`Version20260923120001`); слой `Access` в `rebit.auth` — 6 UseCase с русским phpDoc, SQL-репозиторий, генератор токена 32 байта base64url, письма через H1 (consumer `auth-invite`/`auth-reset`, дедупликация по `issuedAt`, HTML только из нашего шаблона с экранированием); маршруты AUTH-05…AUTH-09 в `PrivateApiJsonController` (no-store, no-referrer) и чистых контроллерах; машинные коды вместо английских сообщений входа и токена; `morefoto.access` — выпуск приглашения при создании pending-сотрудника и смене его email, ACC-11 и состояние приглашения в списке и карточке.
+- `92ae90d` экраны: `/access/invite`, `/access/recover`, `/access/reset` в общем `AccessShell`, словарь кодов `authErrors.ts`, `reason=revoked|session-expired` в перехватчике 401 и guard, ссылки помощи под формой входа, смена пароля в профиле, статус и повтор приглашения у сотрудника; E2E-фикстуры (в БД только SHA-256 тестовых токенов), верификатор `verify-access.php` в раннере, спека `zz-access`.
+- Сверка с разделом 10.1 мастер-плана нашла три пропуска, закрытых `717136b`: экран «Что дальше» после принятия приглашения (разделы из `cabinetNavigation`, «Начать работу», «Профиль»), фильтр `accountStatus` в списке сотрудников (F11) и расширение `RegistrationSafetyTest`. `v-form.reset()` в форме смены пароля заменён явной очисткой полей — reset ставит `null`, а правила ждут строку.
+- Реестр: B4 получил AUTH-05…AUTH-09 и ACC-11, `endpointCount` 99 → 105 в `docs/waves/graph.json` и каноническом `backend-waves.json`, N2 перепроверяет и их; в каноническом `build.py` — 6 контрактов (`idem=False`: ключ идемпотентности не поддерживается), фильтр `accountStatus` и `invitation` в ACC-02, секретные переменные Postman `invitation_token`, `reset_token`, `new_password`; счётчики «99» в `render-waves.py`, README и описании коллекции берутся из реестра. Проверки: `wave_graph.py` (51 волна, 105 ID), `render-waves.py`, `build.py`, `validate.py`, `validate-postman.cjs` — зелёные; локальный валидатор — 50 волн, 105 ID, 13 негативных fixtures. Патч пересоздан (16 файлов, 3 849 строк) и воспроизводит канонический каталог из копии до пакета (`patch -p1` + `diff -rq` без расхождений).
+- Быстрые проверки на `717136b`: PHPUnit 578/578, PHPStan без ошибок, php-cs-fixer по изменённым файлам; `npm run check` (lint, stylelint, vue-tsc, tsc e2e, unit 20/20), `test:commerce` 172/172, `vite build`.
+- Скриншоты без backend (demo): «Что дальше» для organizer и teacher на 1440/390, профиль с блоком «Безопасность» на 390 — вёрстка ровная; подсветка одной строки на снимке — наведение курсора, оставшегося после входа. Экран сотрудников в demo — отдельный компонент, фильтр статуса проверяется live-спекой.
+- Покрытие и границы: браузер не читает письма, поэтому цепочка «организатор создал сотрудника → письмо» проверяется верификатором MySQL (последнее письмо `auth-invite` сотрудника из B2 несёт ссылку, хэш которой хранится), а «ссылка → пароль → вход» — спекой на фикстурном токене. Выпуск приглашения в `SaveStaffUseCase` и фильтр статуса не имеют unit-обвязки (SQL Bitrix) и проверяются там же.
+- Замечание: публикация в RabbitMQ идёт внутри транзакции сохранения сотрудника; если consumer прочтёт операцию до commit, он её пропустит, и письмо отправит `app:notification:dispatch-pending` из cron (раз в минуту, `api/docker/common/cron/crontab`) — задержка до минуты, не потеря. Это существующее свойство H1.
 
