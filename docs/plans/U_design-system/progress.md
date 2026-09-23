@@ -7,8 +7,8 @@
 - PR: [#53](https://github.com/rebit-pro/rabit-api/pull/53) draft, base `main`; head — коммиты U1–U4, серия B4 и этот журнал.
 - Документация: [план](plan.md), мастер-план [design-ux-plan](../design-ux-plan/plan.md), отчёт пакета [docs/waves/design-ux](../../waves/design-ux/README.md).
 - Завершено: U1, U2 (`d7c3661`), U3 (`1a944fa`), U4 (`c001fc5`, `eedc437`, `6962cf9`, `b869a00`), B4 (`3295ad1`, `92ae90d`, `717136b`, `74011c8`, `f5f2f68`, `faa8d6d`, `72f27e7`), B3 (`604d79c`, `42b7ec7`, `b196a78`), U5 (`b3c887f`, `a6953f2`), U6 (`585f8e3`, `e36213d`), DS-11 (`4825a8d`), слияние `main` (`7a2c978`), исправления по гейту (`35cc188`, `026f6e3`, `a3d4fe9`, `4229282`) — полный гейт на `4229282` зелёный; draft PR #53.
-- Сейчас: U8 закоммичен; финальный gate на голове ветки, затем demo Cucumber, визуальная проверка, PR ready, merge и выкатка (разрешение пользователя 2026-09-23 ~14:50).
-- Следующий шаг: `make test-e2e` в `/home/user/rabit-api-worktrees/u-gate` на голове ветки.
+- Сейчас: merge PR #53 в `main` и выкатка на app.morefoto36.ru (поручение пользователя 2026-09-23 ~15:15: «мерж в main и деплой, ошибки потом исправлю»).
+- Следующий шаг: после выкатки — demo Cucumber (DX-FIN-02) и визуальная проверка desktop/mobile (DX-FIN-03) на `main`, запись результата.
 - Блокеры: нет. Открытые решения: нет; follow-up B4 записаны в плане (письмо кода регистрации, отзыв ссылки при отключении pending-сотрудника, письма при смене email активного сотрудника).
 - Рабочее дерево: чистое после коммита журнала; node_modules — volume `rabit-u-node`, vendor — `rabit-u-vendor`; канонический `../MoreFoto` изменён на месте, копия до пакета — в scratchpad сессии (`morefoto-before`), патч пересоздаётся diff'ом.
 - Команды следующей проверки: быстрые frontend-проверки из раздела 11 плана; backend `vendor/bin/phpunit`, `phpstan analyse`, php-cs-fixer по изменённым файлам (образ `rabit-api-php-cli:d3-webp`, volume `rabit-u-vendor`); `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
@@ -32,7 +32,7 @@
 | DX-U3-03 | PASS | 2026-09-23 | стенд скриншотов: каркас 1440/390, открытое меню пользователя, drawer, вход, playground «Бренд» | логотип во всех лок-апах, группы «Работа»/«Настройки», блок пользователя, активный пункт с полосой, меню с именем/email/ролью, вход с stacked-логотипом; горизонтальной прокрутки нет |
 | DX-U4-01 | PASS | 2026-09-23 | `npm run test:ui` (`tests/ui/status-tone.test.mjs`) | 18/18: у каждого статуса с подписью (оплата, производство, списки, доступ, состояние группы) есть тон, «заблокирован» — danger, «ожидает регистрации» — pending, неизвестное — neutral, карточка ссылки по закрытию/передаче/подготовке |
 | DX-U4-03 | PASS | 2026-09-23 | `npm run check` (+ `lint:styles`), негативная проверка stylelint/ESLint через stdin | hex вне токенов — 0 (151 замена в 42 файлах, 4 `white`); stylelint 0 замечаний; на входе с hex, `white` и `var(--mf-sea-600)` stylelint даёт 3 ошибки, ESLint — ошибку на hex в строке и шаблоне |
-| DX-U4-02 | PENDING | 2026-09-23 | финальный gate | `make test-e2e` и визуальная проверка экранов модулей |
+| DX-U4-02 | PASS | 2026-09-23 | финальный gate на `30abfb8` | `make test-e2e` full gate; визуальная проверка — в DX-FIN-03 |
 | DX-U4-04 | PASS | 2026-09-23 | `npm run test:ui` (`tests/ui/icons.test.mjs`), `npx vite build` | 57 имён `mdi-*` из `src` есть в реестре, значения — SVG-пути; `materialdesignicons` в `dist` нет; CSS 743 301 → 442 642 байт, `dist` 11,5 → 7,7 МБ, главный чанк +25 КБ (пути иконок); скриншоты U4b → U4c — 0,07–0,15 % пикселей (сглаживание) |
 | DX-B4-U1 | PASS | 2026-09-23 | `vendor/bin/phpunit --filter 'AccessUseCasesTest\|H1AccessLinkMailerTest\|LoginUseCaseTest\|TokenResolverTest'` | 32 теста, 149 проверок: хэш вместо токена, cooldown `RATE_LIMITED`, `INVITATION_NOT_AVAILABLE`, маска email, `LINK_EXPIRED`/`LINK_USED`, слабый пароль, активация и одноразовость, одинаковый ответ сброса, приглашение для pending, замена сессии, неверный текущий пароль, экранирование имени в HTML, коды `INVALID_CREDENTIALS`/`SESSION_REVOKED`/`TOKEN_EXPIRED` |
 | DX-B4-U2 | PASS | 2026-09-23 | `vendor/bin/phpunit --filter 'BitrixEmailTransportTest\|DeliveryUseCasesTest'` | 10 тестов, 35 проверок: HTML уходит без повторного экранирования, хэш полезной нагрузки учитывает `bodyHtml`, текстовые операции сохраняют прежний хэш |
@@ -48,10 +48,10 @@
 | DX-U6-01 | PASS | 2026-09-23 | `make test-e2e` на `4229282`, `zzzzzzz-overview` | 3 сценария; reduced motion, фильтр плитками |
 | DX-U7-U1 | PASS | 2026-09-23 | `vendor/bin/phpunit` (`InstitutionDetailControllerTest`, `SupportContactTest`, `GetProfileUseCaseTest`) | граница чистого контроллера ORG-04, страницы и 422 для `pageSize` > 100, имена в результате без `assignmentSignature` для чужой роли; контакт поддержки обрезается, пустой — `null`; полный прогон 646/646, PHPStan без ошибок |
 | DX-U7-U2 | PASS | 2026-09-23 | `npm run check` (`tests/viz/viz.test.mjs`) | доля обработанных кадров: 0 из 0 — 0 %, всё в обработке — 0 %, ошибки и повторы считаются обработанными; unit 27/27 |
-| DX-U7-01 | PENDING | 2026-09-23 | финальный gate: `zz-u7-screens`, `z-institution-detail`, `conditions`, `zz-media` | спеки написаны и обновлены, `typecheck:e2e` и ESLint зелёные; скриншоты с заглушками API на 1440/390 |
+| DX-U7-01 | PASS | 2026-09-23 | финальный gate на `30abfb8` | `zz-u7-screens`, `z-institution-detail`, `conditions`, `zz-media` в группе a 64/64 |
 | DX-U8-U1 | PASS | 2026-09-23 | `vendor/bin/phpunit` (`StaffRequestWorkflowTest`, `GroupLinkWorkflowTest`, `GroupLinkContractTest`) | руководитель: список своей области, чужая карточка 404, изменение 403; куратор в элементах HND-01 и в JSON списка; полный прогон 648/648, PHPStan без ошибок |
-| DX-U8-01 | PENDING | 2026-09-23 | финальный gate: `zzz-handoff`, `zzzz-links`, `zzzzzzz-overview`, `shell` | спеки обновлены, `typecheck:e2e` и ESLint зелёные |
-| DX-FIN-01 | PENDING | — | — | финальный gate |
+| DX-U8-01 | PASS | 2026-09-23 | финальный gate на `30abfb8` | `zzz-handoff`, `zzzz-links`, `zzzzzzz-overview`, `shell` |
+| DX-FIN-01 | PASS | 2026-09-23 | `make test-e2e` на `30abfb8` (`main` `b9a9a82` влит), `rabit-e2e-2b5cbc74391a` | full gate: 102 браузерных сценария (a 64, b 38), верификаторы storefront, orders, links, transfers, avatar, access и контракт Notification; 269 с |
 | DX-FIN-02 | PENDING | — | — | финальный gate |
 | DX-FIN-03 | PENDING | — | — | финальный gate |
 
@@ -209,4 +209,10 @@
 - Гейт на U7 (`c714bed`): b — 38/38, a — 58/64. `c2ab8cf`: пустые списки дублировали действие «Новая …» в шапке и в пустом состоянии; радиокнопка сегмента условий не нажималась (`pointer-events: none`); спека #55 прокручивает к кадру — U7 поставил панели над сеткой, а превью грузятся только у экрана; проверка 390 px — после перезагрузки. Повтор группы a на `c2ab8cf` — 64/64.
 - U8 (раздел 4.9): DS-14 (чтение списков руководителем, backend + меню + маршруты), `curatorName` в HND-01 и куратор в обзоре учителя (INF-11), «Ссылки и сроки» на `MfTimeline` с чек-листом проблем, шаги статуса списка, «Оплачено» без пометки демонстрации в live, быстрый период заказов. Реестр: HND-01 `curatorName`, HND-06/HND-08 для всех ролей с чтением руководителя; U8 в обоих графах; патч пересоздан.
 - Проверки U8: PHPUnit 648/648, PHPStan без ошибок, php-cs-fixer; `npm run check` (unit 27/27, меню руководителя в `navigation.test.mjs`), `test:commerce` 182/182, `vite build`; `build.py`, `validate.py`, `validate-postman.cjs`, `verify-wave-graph.py` зелёные.
+
+### 2026-09-23 — финальный gate и решение о выкатке
+
+- Перед гейтом в ветку влит `main` `b9a9a82` (PR #65: 60 кадров на странице) — `30abfb8`, без конфликтов; быстрые проверки (typecheck:e2e, ESLint, commerce 183/183).
+- DX-FIN-01 PASS на `30abfb8`: full gate, 102 браузерных сценария (a 64, b 38) и все верификаторы.
+- ~15:15 пользователь: «делаю деплой — мерж в main и деплой, ошибки потом исправлю». Demo Cucumber (278 сценариев) и визуальная проверка desktop/mobile переносятся на после выкатки; live-гейт, покрывающий production-режим, зелёный.
 
