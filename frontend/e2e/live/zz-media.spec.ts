@@ -662,9 +662,13 @@ test('#54/#55: большая группа открывается страниц
   await expect(page).toHaveURL(/[?&]page=2(&|$)/);
   await expect(cards).toHaveCount(2);
 
+  // A fresh mobile render, as in the other specs: resizing a live page first animates the desktop drawer away.
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  await expect(page).toHaveURL(/[?&]page=2(&|$)/);
+  await expect(cards).toHaveCount(2);
   await expect(page.getByTestId('photo-pagination')).toBeVisible();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('q54-mobile-photos.png'), fullPage: true, animations: 'disabled' });
 });
 
