@@ -33,18 +33,6 @@ final class StaffController extends BaseJsonController implements AuthenticatedC
         parent::__construct();
     }
 
-    public function listAction(): ControllerJson
-    {
-        $result = $this->directory->list($this->getAuthUserId(), $this->requests->listing($this->getRequest()));
-
-        return $this->json(['items' => $result->items], [
-            'page' => $result->page,
-            'pageSize' => $result->pageSize,
-            'total' => $result->total,
-            'totalPages' => (int)ceil($result->total / $result->pageSize),
-        ]);
-    }
-
     public function getAction(string $user_id): ControllerJson
     {
         return $this->json($this->directory->get($this->getAuthUserId(), $this->userId($user_id)));

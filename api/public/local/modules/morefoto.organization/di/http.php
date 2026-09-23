@@ -36,6 +36,7 @@ return [
             ServiceLocator::getInstance()->get(InstitutionRepository::class),
             ServiceLocator::getInstance()->get(InstitutionAccessInterface::class),
             ServiceLocator::getInstance()->get(TokenResolverInterface::class),
+            ServiceLocator::getInstance()->get(CalendarClockInterface::class),
         ],
     ],
     GetInstitutionDetailUseCase::class => [

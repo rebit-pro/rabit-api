@@ -23,6 +23,7 @@ use Morefoto\Access\Application\Avatar\Mapper\AvatarOutputMapper;
 use Morefoto\Access\Domain\Staff\Repository\AccessStateRepository;
 use Morefoto\Access\Domain\Staff\Repository\StaffProfileRepository;
 use Morefoto\Access\Domain\Staff\Service\PermissionPolicy;
+use Morefoto\Access\Domain\Staff\Service\StaffCountFacets;
 use Morefoto\Access\Presentation\Console\BootstrapOrganizerCommand;
 use Morefoto\Access\Presentation\Controller\ProfileController;
 use Rebit\Share\Application\Contract\Auth\IdentityGatewayInterface;
@@ -37,6 +38,9 @@ use Rebit\Share\Contracts\Access\GroupLinkAccessInterface;
 use Rebit\Share\Contracts\Access\StaffRequestAccessInterface;
 use Morefoto\Access\Presentation\Staff\StaffInvitationInputMapper;
 use Morefoto\Access\Presentation\Controller\StaffInvitationController;
+use Morefoto\Access\Presentation\Controller\StaffListController;
+use Morefoto\Access\Presentation\Staff\Result\StaffListResultMapper;
+use Morefoto\Access\Presentation\Staff\StaffListInputMapper;
 use Morefoto\Access\Application\Staff\UseCase\ResendStaffInvitationUseCase;
 
 return [
@@ -64,6 +68,7 @@ return [
             ServiceLocator::getInstance()->get(InstitutionAccessInterface::class),
             ServiceLocator::getInstance()->get(StaffIdentityGatewayInterface::class),
             ServiceLocator::getInstance()->get(AvatarOutputMapper::class),
+            ServiceLocator::getInstance()->get(StaffCountFacets::class),
         ],
     ],
     SaveStaffUseCase::class => [
@@ -94,6 +99,16 @@ return [
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(ResendStaffInvitationUseCase::class),
             ServiceLocator::getInstance()->get(StaffInvitationInputMapper::class),
+        ],
+    ],
+    StaffListInputMapper::class => ['className' => StaffListInputMapper::class],
+    StaffListResultMapper::class => ['className' => StaffListResultMapper::class],
+    StaffListController::class => [
+        'className' => StaffListController::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(StaffDirectoryUseCase::class),
+            ServiceLocator::getInstance()->get(StaffListInputMapper::class),
+            ServiceLocator::getInstance()->get(StaffListResultMapper::class),
         ],
     ],
     StaffController::class => [
@@ -128,6 +143,7 @@ return [
     StaffProfileRepository::class => ['className' => StaffProfileRepository::class],
     AccessStateRepository::class => ['className' => AccessStateRepository::class],
     PermissionPolicy::class => ['className' => PermissionPolicy::class],
+    StaffCountFacets::class => ['className' => StaffCountFacets::class],
     StaffAuthorization::class => [
         'className' => StaffAuthorization::class,
         'constructorParams' => static fn(): array => [

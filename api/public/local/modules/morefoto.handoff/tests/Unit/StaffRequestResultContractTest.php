@@ -34,12 +34,13 @@ final class StaffRequestResultContractTest extends TestCase
             pageSize: 10,
             total: 11,
             totalPages: 2,
+            byStatus: ['submitted' => 7, 'clarification' => 3, 'transferred' => 1],
         );
         $list = (new StaffRequestResultMapper())->list($outputList);
         $envelope = json_decode($serializer->serialize(['data' => $list, 'meta' => (new StaffRequestResultMapper())->meta($outputList)]), true, 64, JSON_THROW_ON_ERROR);
         self::assertSame([
             'data' => ['items' => [$view], 'scope' => $scope],
-            'meta' => ['page' => 2, 'pageSize' => 10, 'total' => 11, 'totalPages' => 2],
+            'meta' => ['page' => 2, 'pageSize' => 10, 'total' => 11, 'totalPages' => 2, 'summary' => ['byStatus' => ['submitted' => 7, 'clarification' => 3, 'transferred' => 1]]],
         ], $envelope);
     }
 
@@ -53,6 +54,7 @@ final class StaffRequestResultContractTest extends TestCase
             pageSize: 20,
             total: 0,
             totalPages: 0,
+            byStatus: ['submitted' => 0, 'clarification' => 0, 'transferred' => 0],
         );
         $list = (new StaffRequestResultMapper())->list($outputList);
         $serializer = CommonSerializer::createDefault();

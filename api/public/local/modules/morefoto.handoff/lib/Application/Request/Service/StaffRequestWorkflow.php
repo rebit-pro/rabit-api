@@ -52,6 +52,7 @@ final readonly class StaffRequestWorkflow
             pageSize: $input->pageSize,
             total: $page['total'],
             totalPages: (int)ceil($page['total'] / $input->pageSize),
+            byStatus: $page['byStatus'],
         );
     }
 

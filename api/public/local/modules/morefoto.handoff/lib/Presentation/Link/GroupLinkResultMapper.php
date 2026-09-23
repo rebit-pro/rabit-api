@@ -10,6 +10,7 @@ use Morefoto\Handoff\Application\Link\Dto\GroupLinkSummaryOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkCalendarOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkEventOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkPreparationOutputDto;
+use Morefoto\Handoff\Presentation\Link\Result\Dto\GroupLinkCountersResultDto;
 use Morefoto\Handoff\Presentation\Link\Result\Dto\GroupLinkListResultDto;
 use Morefoto\Handoff\Presentation\Link\Result\Dto\GroupLinkResultDto;
 use Morefoto\Handoff\Presentation\Link\Result\Dto\GroupLinkSummaryResultDto;
@@ -24,10 +25,21 @@ final readonly class GroupLinkResultMapper
         return new GroupLinkListResultDto(array_map($this->summary(...), $output->items));
     }
 
-    /** @return array{page: int, pageSize: int, total: int, totalPages: int} */
+    /** @return array{page: int, pageSize: int, total: int, totalPages: int, summary: GroupLinkCountersResultDto} */
     public function meta(GroupLinkPageOutputDto $output): array
     {
-        return ['page' => $output->page, 'pageSize' => $output->pageSize, 'total' => $output->total, 'totalPages' => $output->totalPages];
+        return [
+            'page' => $output->page,
+            'pageSize' => $output->pageSize,
+            'total' => $output->total,
+            'totalPages' => $output->totalPages,
+            'summary' => new GroupLinkCountersResultDto(
+                referenceNow: $output->summary->referenceNow,
+                byState: ['preparing' => $output->summary->preparing, 'open' => $output->summary->open, 'closed' => $output->summary->closed],
+                closingSoon: $output->summary->closingSoon,
+                prepared: $output->summary->prepared,
+            ),
+        ];
     }
 
     public function detail(GroupLinkOutputDto $output): GroupLinkResultDto

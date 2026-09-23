@@ -15,8 +15,8 @@ use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 /**
  * Формирует защищённую страницу фотографий для рабочего пространства разметки.
  *
- * Применяет серверные фильтры и собирает назначения, обложки, revision и данные пагинации в единый
- * выходной DTO.
+ * Применяет серверные фильтры и собирает назначения, обложки, revision, данные пагинации и разбивку обработки всей
+ * съёмки или выбранной группы (сколько готово, в обработке, с ошибкой, дублей и готовых без ребёнка) в единый DTO.
  */
 final readonly class ListPhotosUseCase
 {
@@ -52,6 +52,7 @@ final readonly class ListPhotosUseCase
             covers: $this->media->covers($scope->shootId, $scope->groupId),
             revision: $this->media->revision($scope->shootId),
             meta: ['page' => $input->page, 'pageSize' => $input->pageSize, 'total' => $total],
+            stats: $this->photos->stats($scope->shootId, $scope->groupId),
         );
     }
 }

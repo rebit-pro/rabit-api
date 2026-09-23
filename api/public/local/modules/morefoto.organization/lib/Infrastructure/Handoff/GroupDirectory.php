@@ -7,11 +7,13 @@ namespace Morefoto\Organization\Infrastructure\Handoff;
 use Bitrix\Main\Application;
 use Morefoto\Organization\Application\Calendar\Contract\CalendarClockInterface;
 use Morefoto\Organization\Application\Calendar\Service\CalendarProjection;
+use Morefoto\Organization\Domain\Calendar\Repository\GroupStateSql;
 use Morefoto\Organization\Domain\Calendar\ValueObject\GroupCalendar;
 use Morefoto\Organization\Domain\Structure\Exception\StructureStorageException;
 use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryItemOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryPageOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryQueryInputDto;
+use Rebit\Share\Contracts\Organization\Dto\GroupDirectorySummaryOutputDto;
 use Rebit\Share\Contracts\Organization\GroupDirectoryInterface;
 
 final readonly class GroupDirectory implements GroupDirectoryInterface
@@ -33,7 +35,7 @@ final readonly class GroupDirectory implements GroupDirectoryInterface
             throw new \InvalidArgumentException('Invalid group directory page.');
         }
         $now = $this->clock->now();
-        $where = $this->where($query, $now->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'));
+        $where = $this->where($query, GroupStateSql::utc($now));
         $offset = ($query->page - 1) * $query->pageSize;
         try {
             $connection = Application::getConnection();
@@ -65,15 +67,52 @@ final readonly class GroupDirectory implements GroupDirectoryInterface
         return false === $row ? null : $this->item($row, $this->clock->now());
     }
 
+    public function summary(GroupDirectoryQueryInputDto $query, int $closingWithinHours): GroupDirectorySummaryOutputDto
+    {
+        if (1 > $closingWithinHours || 24 * 31 < $closingWithinHours) {
+            throw new \InvalidArgumentException('Invalid closing horizon.');
+        }
+        $now = $this->clock->now();
+        $utc = GroupStateSql::utc($now);
+        $soon = GroupStateSql::utc($now->modify('+' . $closingWithinHours . ' hours'));
+        $where = $this->where(new GroupDirectoryQueryInputDto($query->institutionIds, $query->groupIds, $query->institutionId, $query->shootId, null, 1, 1), $utc);
+        try {
+            $row = Application::getConnection()->query('SELECT ' . GroupStateSql::counters($utc)
+                . ',COALESCE(SUM(' . GroupStateSql::condition('open', $utc) . " AND g.UF_CLOSES_AT<='{$soon}'),0) AS CLOSING_SOON"
+                . self::SOURCE . ' WHERE ' . $where)->fetch();
+        } catch (\Throwable $error) {
+            throw new StructureStorageException('Cannot count the group directory.', 0, $error);
+        }
+        $byState = GroupStateSql::byState(false === $row ? [] : $row);
+
+        return new GroupDirectorySummaryOutputDto(
+            preparing: $byState['preparing'],
+            open: $byState['open'],
+            closed: $byState['closed'],
+            closingSoon: false === $row ? 0 : (int)$row['CLOSING_SOON'],
+            referenceNow: $now->format(\DateTimeInterface::ATOM),
+        );
+    }
+
+    public function nativeIds(GroupDirectoryQueryInputDto $query): array
+    {
+        $where = $this->where($query, GroupStateSql::utc($this->clock->now()));
+        try {
+            $result = Application::getConnection()->query('SELECT g.ID' . self::SOURCE . ' WHERE ' . $where);
+            $ids = [];
+            while (false !== ($row = $result->fetch())) {
+                $ids[] = (int)$row['ID'];
+            }
+        } catch (\Throwable $error) {
+            throw new StructureStorageException('Cannot read the group directory.', 0, $error);
+        }
+
+        return $ids;
+    }
+
     private function where(GroupDirectoryQueryInputDto $query, string $now): string
     {
-        $conditions = [match ($query->state) {
-            null => '1=1',
-            'preparing' => 'g.UF_SENT_AT IS NULL',
-            'open' => "g.UF_SENT_AT IS NOT NULL AND g.UF_CLOSES_AT>'{$now}'",
-            'closed' => "g.UF_CLOSES_AT<='{$now}'",
-            default => throw new \InvalidArgumentException('Unsupported group state filter.'),
-        }];
+        $conditions = [null === $query->state ? '1=1' : GroupStateSql::condition($query->state, $now)];
         if (null !== $query->institutionIds) {
             $conditions[] = 'i.ID IN (' . $this->ids($query->institutionIds) . ')';
         }

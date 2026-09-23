@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Morefoto\Organization\Application\Institution\UseCase;
 
 use Morefoto\Organization\Application\Calendar\Contract\CalendarClockInterface;
+use Morefoto\Organization\Domain\Calendar\Repository\GroupStateSql;
 use Morefoto\Organization\Application\Institution\Dto\InstitutionDetailInputDto;
 use Morefoto\Organization\Application\Institution\Dto\InstitutionDetailOutputDto;
 use Morefoto\Organization\Application\Structure\Dto\GroupOutputDto;
@@ -20,6 +21,10 @@ use Rebit\Share\Contracts\Access\GroupAccessInterface;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
+/**
+ * Открывает учреждение в пределах области сотрудника: страницы съёмок и групп, назначения и разбивку всех видимых
+ * групп по состояниям приёма. Если доступ или назначения изменились во время чтения, ответ отклоняется целиком.
+ */
 final readonly class GetInstitutionDetailUseCase
 {
     public function __construct(
@@ -64,7 +69,8 @@ final readonly class GetInstitutionDetailUseCase
                 $shoots[] = new ShootOutputDto((string)$row['UF_PUBLIC_ID'], $id->value, (string)$row['UF_NAME'], null === $row['UF_DATE'] ? null : (string)$row['UF_DATE'], (int)$row['UF_REVISION']);
             }
         }
-        $result = $this->structure->institutionGroups($nativeId, $input->groups->pageSize, $input->groups->offset(), $ids);
+        $now = $this->clock->now();
+        $result = $this->structure->institutionGroups($nativeId, $input->groups->pageSize, $input->groups->offset(), $ids, GroupStateSql::utc($now));
         /** @var list<array{
          *     ID: int|string, UF_PUBLIC_ID: string, SHOOT_PUBLIC_ID: string, UF_NAME: string, UF_KIND: string,
          *     UF_REVISION: int|string, UF_TIMEZONE: string, UF_SENT_AT: null|string,
@@ -74,15 +80,16 @@ final readonly class GetInstitutionDetailUseCase
         /** @var list<int> $groupIds */
         $groupIds = [];
         $groupTotal = 0;
+        $byState = GroupStateSql::byState([]);
         while (false !== ($row = $result->fetch())) {
             $groupTotal = (int)$row['TOTAL'];
+            $byState = GroupStateSql::byState($row);
             if (null !== $row['ID']) {
                 $groupRows[] = $row;
                 $groupIds[] = (int)$row['ID'];
             }
         }
         $teachers = $this->groupAccess->assignments($groupIds);
-        $now = $this->clock->now();
         /** @var list<GroupOutputDto> $groups */
         $groups = [];
         foreach ($groupRows as $row) {
@@ -105,7 +112,7 @@ final readonly class GetInstitutionDetailUseCase
             curatorId: $assignment->curatorId,
             headId: $assignment->headId,
             shoots: new StructurePageOutputDto($shoots, ['page' => $input->shoots->page, 'pageSize' => $input->shoots->pageSize, 'total' => $shootTotal, 'totalPages' => (int)ceil($shootTotal / $input->shoots->pageSize)]),
-            groups: new StructurePageOutputDto($groups, ['page' => $input->groups->page, 'pageSize' => $input->groups->pageSize, 'total' => $groupTotal, 'totalPages' => (int)ceil($groupTotal / $input->groups->pageSize)]),
+            groups: new StructurePageOutputDto($groups, ['page' => $input->groups->page, 'pageSize' => $input->groups->pageSize, 'total' => $groupTotal, 'totalPages' => (int)ceil($groupTotal / $input->groups->pageSize), 'summary' => ['byState' => $byState]]),
             assignmentSignature: 'organizer' === $scope->role ? $signature : null,
         );
     }

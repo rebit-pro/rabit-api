@@ -233,3 +233,16 @@ if (!class_exists(Result::class)) {
         }
     }
 }
+
+namespace Bitrix\Main\DB;
+
+if (!class_exists(Result::class)) {
+    /** Стаб результата SQL-запроса: тесты подставляют строки через моки `fetch()`. */
+    class Result
+    {
+        public function fetch(): array|false
+        {
+            return false;
+        }
+    }
+}

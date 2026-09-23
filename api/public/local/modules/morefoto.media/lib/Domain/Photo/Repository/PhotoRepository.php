@@ -125,6 +125,38 @@ final readonly class PhotoRepository
         return is_array($row) ? (int)$row['TOTAL'] : 0;
     }
 
+    public const array STATUSES = ['processing', 'ready', 'failed', 'duplicate'];
+
+    /**
+     * Processing split of the shoot or of one group with one aggregate; the page filters by child and assignment are
+     * not applied. Unassigned counts ready photos without a child, as group readiness does.
+     *
+     * @return array{
+     *     byStatus: array{processing: int, ready: int, failed: int, duplicate: int},
+     *     unassigned: int,
+     * }
+     */
+    public function stats(int $shootId, ?int $groupId): array
+    {
+        $condition = $this->filterCondition($shootId, $groupId, null, null, 'p');
+        $assignment = 'SELECT 1 FROM mf_photo_assignment stats_assignment INNER JOIN mf_media_child stats_child ON stats_child.ID=stats_assignment.CHILD_ID '
+            . 'WHERE stats_assignment.PHOTO_ID=p.ID AND stats_child.GROUP_ID=p.UF_GROUP_ID';
+        $result = $this->query(
+            "SELECT p.UF_STATUS AS STATUS,COUNT(*) AS TOTAL,COALESCE(SUM(p.UF_STATUS='ready' AND NOT EXISTS({$assignment})),0) AS UNASSIGNED"
+            . " FROM b_hlbd_mf_photo p WHERE {$condition} GROUP BY p.UF_STATUS",
+        );
+        $byStatus = array_fill_keys(self::STATUSES, 0);
+        $unassigned = 0;
+        while (false !== ($row = $result->fetch())) {
+            if (array_key_exists((string)$row['STATUS'], $byStatus)) {
+                $byStatus[(string)$row['STATUS']] = (int)$row['TOTAL'];
+            }
+            $unassigned += (int)$row['UNASSIGNED'];
+        }
+
+        return ['byStatus' => $byStatus, 'unassigned' => $unassigned];
+    }
+
     public function pendingJobs(int $limit): Result
     {
         if (1 > $limit || 500 < $limit) {

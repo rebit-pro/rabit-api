@@ -26,7 +26,18 @@ final readonly class StaffRequestRepository
         return is_array($row) ? $row : null;
     }
 
-    /** @return array{items:list<array<string,mixed>>,total:int} */
+    public const array STATUSES = ['submitted', 'clarification', 'transferred'];
+
+    /**
+     * Page of visible requests plus their split by status. The split uses the same visibility and filters except the
+     * status filter, so a client can switch between statuses without losing the other counters.
+     *
+     * @return array{
+     *     items: list<array<string, mixed>>,
+     *     total: int,
+     *     byStatus: array{submitted: int, clarification: int, transferred: int},
+     * }
+     */
     public function page(StaffRequestActorOutputDto $actor, ?string $institutionId, ?string $shootId, ?string $status, int $limit, int $offset): array
     {
         $conditions = [$this->visibility($actor, 'r')];
@@ -36,11 +47,22 @@ final readonly class StaffRequestRepository
         if (null !== $shootId) {
             $conditions[] = 's.UF_PUBLIC_ID=' . $this->quote($shootId);
         }
+        $summaryWhere = implode(' AND ', $conditions);
         if (null !== $status) {
             $conditions[] = 'r.STATUS=' . $this->quote($status);
         }
         $where = implode(' AND ', $conditions);
         $connection = Application::getConnection();
+        $byStatus = array_fill_keys(self::STATUSES, 0);
+        $counts = $connection->query(
+            'SELECT r.STATUS, COUNT(*) AS TOTAL FROM mf_staff_request r INNER JOIN b_hlbd_mf_institution i ON i.ID=r.INSTITUTION_ID '
+            . 'INNER JOIN b_hlbd_mf_shoot s ON s.ID=r.SHOOT_ID WHERE ' . $summaryWhere . ' GROUP BY r.STATUS',
+        );
+        while (false !== ($count = $counts->fetch())) {
+            if (array_key_exists((string)$count['STATUS'], $byStatus)) {
+                $byStatus[(string)$count['STATUS']] = (int)$count['TOTAL'];
+            }
+        }
         $totalRow = $connection->query(
             'SELECT COUNT(*) AS TOTAL FROM mf_staff_request r INNER JOIN b_hlbd_mf_institution i ON i.ID=r.INSTITUTION_ID '
             . 'INNER JOIN b_hlbd_mf_shoot s ON s.ID=r.SHOOT_ID WHERE ' . $where,
@@ -58,7 +80,7 @@ final readonly class StaffRequestRepository
             }
         }
 
-        return ['items' => $items, 'total' => is_array($totalRow) ? (int)$totalRow['TOTAL'] : 0];
+        return ['items' => $items, 'total' => is_array($totalRow) ? (int)$totalRow['TOTAL'] : 0, 'byStatus' => $byStatus];
     }
 
     /** @return array{institutions:list<array{id:string,name:string}>,shoots:list<array{id:string,institutionId:string,name:string}>,groups:list<array{id:string,institutionId:string,shootId:string,shootName:string,name:string,kind:string,state:string}>} */

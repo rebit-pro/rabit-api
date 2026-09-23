@@ -16,6 +16,13 @@ interface GroupLinkRepositoryInterface
      */
     public function states(array $groupIds): array;
 
+    /**
+     * Counts the given groups whose preparation was confirmed and stored; its freshness is checked by transmission.
+     *
+     * @param list<int> $groupIds native group IDs
+     */
+    public function preparedCount(array $groupIds): int;
+
     /** Locks the stored state for a command; an absent state is returned as revision 1. */
     public function lock(int $groupId): LinkState;
 

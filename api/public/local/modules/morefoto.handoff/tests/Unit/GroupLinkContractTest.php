@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Handoff\Tests\Unit;
 
+use Morefoto\Handoff\Application\Link\Dto\GroupLinkCountersOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\GroupLinkOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\GroupLinkPageOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\GroupLinkSummaryOutputDto;
@@ -106,9 +107,11 @@ final class GroupLinkContractTest extends TestCase
             $summary + ['galleryToken' => str_repeat('f', 64), 'referenceNow' => '2026-09-22T08:00:00+00:00', 'history' => [$event]],
             json_decode($serializer->serialize($mapper->detail($detail)), true, 16, JSON_THROW_ON_ERROR),
         );
-        $page = new GroupLinkPageOutputDto([new GroupLinkSummaryOutputDto(...$summary)], 1, 25, 1, 1);
+        $page = new GroupLinkPageOutputDto([new GroupLinkSummaryOutputDto(...$summary)], 1, 25, 1, 1, new GroupLinkCountersOutputDto('2026-09-22T08:00:00+00:00', 2, 1, 0, 1, 1));
         self::assertSame(
-            ['data' => ['items' => [$summary]], 'meta' => ['page' => 1, 'pageSize' => 25, 'total' => 1, 'totalPages' => 1]],
+            ['data' => ['items' => [$summary]], 'meta' => ['page' => 1, 'pageSize' => 25, 'total' => 1, 'totalPages' => 1, 'summary' => [
+                'referenceNow' => '2026-09-22T08:00:00+00:00', 'byState' => ['preparing' => 2, 'open' => 1, 'closed' => 0], 'closingSoon' => 1, 'prepared' => 1,
+            ]]],
             json_decode($serializer->serialize(['data' => $mapper->list($page), 'meta' => $mapper->meta($page)]), true, 16, JSON_THROW_ON_ERROR),
         );
         self::assertArrayNotHasKey('galleryToken', $summary);

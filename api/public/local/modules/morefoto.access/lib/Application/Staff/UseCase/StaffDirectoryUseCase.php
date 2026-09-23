@@ -20,12 +20,13 @@ use Rebit\Share\Shared\Exception\HttpException;
 use Morefoto\Access\Application\Staff\Dto\StaffInvitationStateOutputDto;
 use Morefoto\Access\Application\Avatar\Dto\AvatarOutputDto;
 use Morefoto\Access\Application\Avatar\Mapper\AvatarOutputMapper;
+use Morefoto\Access\Domain\Staff\Service\StaffCountFacets;
 use Rebit\Share\Application\Contract\Auth\Dto\StaffInvitationOutputDto;
 use Rebit\Share\Application\Contract\Auth\StaffIdentityGatewayInterface;
 
 /**
- * Отдаёт организатору справочник сотрудников: страницу списка с фильтрами, карточку с назначениями и данные формы
- * назначений с подписью состояния. Статус учётки, приглашение и аватар показываются без ссылок и токенов доступа.
+ * Отдаёт организатору справочник сотрудников: страницу списка с фильтрами и плитками по статусу и роли, карточку с
+ * назначениями и данные формы назначений с подписью состояния. Приглашение и аватар — без ссылок и токенов доступа.
  */
 final readonly class StaffDirectoryUseCase
 {
@@ -38,6 +39,7 @@ final readonly class StaffDirectoryUseCase
         private InstitutionAccessInterface $access,
         private StaffIdentityGatewayInterface $identities,
         private AvatarOutputMapper $avatars,
+        private StaffCountFacets $facets,
     ) {}
 
     public function list(int $actorUserId, ListStaffInputDto $input): StaffPageOutputDto
@@ -60,7 +62,9 @@ final readonly class StaffDirectoryUseCase
             $items[] = $this->summary($row, $invitations[(int)$row['UF_USER_ID']] ?? null);
         }
 
-        return new StaffPageOutputDto($items, $input->page, $input->pageSize, $total);
+        $facets = $this->facets->split($this->staff->counts($input), $input->role, $input->accountStatus);
+
+        return new StaffPageOutputDto($items, $input->page, $input->pageSize, $total, $facets['byAccountStatus'], $facets['byRole']);
     }
 
     public function get(int $actorUserId, int $userId): StaffDetailOutputDto

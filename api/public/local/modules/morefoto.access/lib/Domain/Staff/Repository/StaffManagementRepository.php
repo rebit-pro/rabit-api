@@ -8,46 +8,45 @@ use Bitrix\Main\Application;
 use Bitrix\Main\DB\Result;
 use Morefoto\Access\Application\Staff\Dto\ListStaffInputDto;
 use Morefoto\Access\Domain\Staff\Entity\StaffProfile;
-use Morefoto\Access\Domain\Staff\Enum\AccountStatusEnum;
 use Morefoto\Access\Domain\Staff\Enum\RoleEnum;
 use Morefoto\Access\Domain\Staff\Exception\AccessStorageException;
 
 final readonly class StaffManagementRepository
 {
+    /** Account status of a staff row, the same rule as StaffDirectoryUseCase::status(): pending wins, then access and identity. */
+    private const string STATUS_SQL = "(CASE WHEN COALESCE(uf.UF_AUTH_REGISTRATION_PENDING,0)=1 THEN 'pending'"
+        . " WHEN COALESCE(p.UF_ACTIVE,0)=1 AND u.ACTIVE='Y' THEN 'active' ELSE 'blocked' END)";
+    private const string SOURCE = ' FROM b_hlbd_mf_staff_profile p JOIN b_user u ON u.ID=p.UF_USER_ID LEFT JOIN b_uts_user uf ON uf.VALUE_ID=u.ID';
+
     /** @return array{Result,int} */
     public function list(ListStaffInputDto $input): array
     {
-        $connection = Application::getConnection();
-        $helper = $connection->getSqlHelper();
-        $where = [];
-        if ('' !== $input->query) {
-            $query = $helper->forSql('%' . $input->query . '%');
-            $where[] = "(u.NAME LIKE '{$query}' OR u.EMAIL LIKE '{$query}')";
-        }
-        if (null !== $input->role) {
-            $where[] = "p.UF_ROLE='" . $input->role->value . "'";
-        }
-        if (null !== $input->active) {
-            $where[] = 'p.UF_ACTIVE=' . ($input->active ? '1' : '0');
-        }
-        if (null !== $input->accountStatus) {
-            // Mirrors StaffDirectoryUseCase::status(): a pending account wins, an active one needs access and identity on.
-            $pending = 'COALESCE(uf.UF_AUTH_REGISTRATION_PENDING,0)';
-            $working = "COALESCE(p.UF_ACTIVE,0)=1 AND u.ACTIVE='Y'";
-            $where[] = match ($input->accountStatus) {
-                AccountStatusEnum::PENDING => "{$pending}=1",
-                AccountStatusEnum::ACTIVE => "{$pending}=0 AND {$working}",
-                AccountStatusEnum::BLOCKED => "{$pending}=0 AND NOT ({$working})",
-            };
-        }
-        $condition = [] === $where ? '' : ' WHERE ' . implode(' AND ', $where);
-        $count = $this->query('SELECT COUNT(*) AS TOTAL FROM b_hlbd_mf_staff_profile p JOIN b_user u ON u.ID=p.UF_USER_ID LEFT JOIN b_uts_user uf ON uf.VALUE_ID=u.ID' . $condition)->fetch();
+        $condition = $this->condition($input, true);
+        $count = $this->query('SELECT COUNT(*) AS TOTAL' . self::SOURCE . $condition)->fetch();
         $offset = ($input->page - 1) * $input->pageSize;
 
         return [
             $this->query($this->select() . $condition . " ORDER BY p.UF_USER_ID LIMIT {$input->pageSize} OFFSET {$offset}"),
             (int)($count['TOTAL'] ?? 0),
         ];
+    }
+
+    /**
+     * Staff of the list's text and access filters counted by role and account status with one aggregate; the role and
+     * status filters are left to the caller, which splits the counts into tiles.
+     *
+     * @return list<array{role: string, accountStatus: string, total: int}>
+     */
+    public function counts(ListStaffInputDto $input): array
+    {
+        $result = $this->query('SELECT p.UF_ROLE AS ROLE,' . self::STATUS_SQL . ' AS ACCOUNT_STATUS,COUNT(*) AS TOTAL' . self::SOURCE
+            . $this->condition($input, false) . ' GROUP BY p.UF_ROLE,ACCOUNT_STATUS');
+        $counts = [];
+        while (false !== ($row = $result->fetch())) {
+            $counts[] = ['role' => (string)$row['ROLE'], 'accountStatus' => (string)$row['ACCOUNT_STATUS'], 'total' => (int)$row['TOTAL']];
+        }
+
+        return $counts;
     }
 
     public function all(): Result
@@ -144,6 +143,26 @@ final readonly class StaffManagementRepository
     {
         return StaffProfile::fromRow($row)
             ?? throw new AccessStorageException('Staff profile row is unavailable.');
+    }
+
+    private function condition(ListStaffInputDto $input, bool $withFacets): string
+    {
+        $where = [];
+        if ('' !== $input->query) {
+            $query = Application::getConnection()->getSqlHelper()->forSql('%' . $input->query . '%');
+            $where[] = "(u.NAME LIKE '{$query}' OR u.EMAIL LIKE '{$query}')";
+        }
+        if (null !== $input->active) {
+            $where[] = 'p.UF_ACTIVE=' . ($input->active ? '1' : '0');
+        }
+        if ($withFacets && null !== $input->role) {
+            $where[] = "p.UF_ROLE='" . $input->role->value . "'";
+        }
+        if ($withFacets && null !== $input->accountStatus) {
+            $where[] = self::STATUS_SQL . "='" . $input->accountStatus->value . "'";
+        }
+
+        return [] === $where ? '' : ' WHERE ' . implode(' AND ', $where);
     }
 
     private function select(): string

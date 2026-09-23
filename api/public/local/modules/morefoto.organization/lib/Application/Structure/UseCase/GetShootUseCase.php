@@ -15,8 +15,13 @@ use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Contracts\Access\GroupAccessInterface;
 use Rebit\Share\Contracts\Access\Dto\GroupAssignmentOutputDto;
 use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
+use Morefoto\Organization\Domain\Calendar\Repository\GroupStateSql;
 use Rebit\Share\Shared\Exception\HttpException;
 
+/**
+ * Открывает организатору съёмку: страницу её групп с ответственными и сроками и разбивку всех групп съёмки по
+ * состояниям приёма. Если доступ или назначения изменились во время чтения, ответ отклоняется целиком.
+ */
 final readonly class GetShootUseCase
 {
     public function __construct(private StructureRepository $structure, private InstitutionAccessInterface $access, private GroupAccessInterface $groupAccess, private TokenResolverInterface $tokens, private CalendarClockInterface $clock) {}
@@ -32,19 +37,21 @@ final readonly class GetShootUseCase
         if (false === $shoot) {
             throw new HttpException('NOT_FOUND', 404);
         }
-        $result = $this->structure->groups((int)$shoot['ID'], $input->pageSize, $input->offset());
+        $now = $this->clock->now();
+        $result = $this->structure->groups((int)$shoot['ID'], $input->pageSize, $input->offset(), GroupStateSql::utc($now));
         $rows = [];
         $ids = [];
         $total = 0;
+        $byState = GroupStateSql::byState([]);
         while (false !== ($row = $result->fetch())) {
             $total = (int)$row['TOTAL'];
+            $byState = GroupStateSql::byState($row);
             if (null !== $row['ID']) {
                 $rows[] = $row;
                 $ids[] = (int)$row['ID'];
             }
         }
         $assignments = $this->groupAccess->assignments($ids);
-        $now = $this->clock->now();
         $items = [];
         foreach ($rows as $row) {
             $assignment = $assignments[(int)$row['ID']] ?? new GroupAssignmentOutputDto();
@@ -64,7 +71,7 @@ final readonly class GetShootUseCase
             name: (string)$shoot['UF_NAME'],
             date: null === $shoot['UF_DATE'] ? null : (string)$shoot['UF_DATE'],
             revision: (int)$shoot['UF_REVISION'],
-            groups: new StructurePageOutputDto($items, ['page' => $input->page, 'pageSize' => $input->pageSize, 'total' => $total, 'totalPages' => (int)ceil($total / $input->pageSize)]),
+            groups: new StructurePageOutputDto($items, ['page' => $input->page, 'pageSize' => $input->pageSize, 'total' => $total, 'totalPages' => (int)ceil($total / $input->pageSize), 'summary' => ['byState' => $byState]]),
             assignmentSignature: $signature,
         );
     }

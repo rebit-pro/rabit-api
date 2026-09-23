@@ -15,5 +15,8 @@ final readonly class VisibleInstitutionOutputDto implements ResponseDtoInterface
         public int $revision,
         public ?int $curatorId,
         public ?int $headId,
+        public int $shootCount,
+        public int $groupCount,
+        public int $openGroupCount,
     ) {}
 }
