@@ -73,7 +73,7 @@ final readonly class UploadPhotoUseCase
         $published = $registration->processingRequired && $this->publish($registration->publicId, $registration->revision);
         $this->logger->info('Photo upload accepted.', [
             'photoId' => $registration->publicId,
-            'status' => $registration->status,
+            'photoStatus' => $registration->status,
             'bytes' => $bytes,
             'published' => $published,
             'inspectMs' => self::milliseconds($started, $inspected),

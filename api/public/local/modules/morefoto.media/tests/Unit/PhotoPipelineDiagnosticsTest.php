@@ -20,6 +20,7 @@ use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
 use Rebit\Share\Contracts\Access\AccessGuardInterface;
+use Rebit\Share\Infrastructure\Logger\CommonLoggerProcessor;
 use Rebit\Share\Contracts\Organization\Dto\MediaScopeOutputDto;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 
@@ -157,6 +158,62 @@ final class PhotoPipelineDiagnosticsTest extends TestCase
         $warning = $logger->first('warning');
         self::assertSame(1, $warning['attempt']);
         self::assertSame(\RuntimeException::class, $warning['exception']);
+    }
+
+    public function testDiagnosticRecordsSurviveTheCommonLogSanitizer(): void
+    {
+        $second = '52345678-abcd-4abc-8abc-123456789abc';
+        $photos = $this->createStub(PhotoRepository::class);
+        $photos->method('register')->willReturn(new PhotoRegistration(self::PHOTO_ID, 'processing', 1, true));
+        $photos->method('pendingJobs')->willReturn(new RowsResult([
+            ['UF_PUBLIC_ID' => self::PHOTO_ID, 'UF_REVISION' => '1', 'PENDING_SECONDS' => '61'],
+            ['UF_PUBLIC_ID' => $second, 'UF_REVISION' => '2', 'PENDING_SECONDS' => '62'],
+        ]));
+        $photos->method('processingJob')->willReturn(self::JOB);
+        $publisher = $this->createStub(MediaPublisherInterface::class);
+        $publisher->method('process')->willReturnCallback(static function(string $photoId) use ($second): void {
+            if ($second !== $photoId) {
+                throw new \RuntimeException(self::SECRET, 0, new \LogicException('inner'));
+            }
+        });
+        $renders = 0;
+        $renderer = $this->createStub(PreviewRendererInterface::class);
+        $renderer->method('render')->willReturnCallback(static function() use (&$renders): PreviewOutputDto {
+            if (1 < ++$renders) {
+                throw new \RuntimeException('Cannot decode private original.');
+            }
+
+            return new PreviewOutputDto('/thumb.webp', '/preview.webp', 900, 40, 120);
+        });
+        $logger = new CollectingLogger();
+
+        $this->upload($photos, $publisher, $logger);
+        (new DispatchPendingPhotoJobsUseCase($photos, $publisher, $logger))->execute(100);
+        $handler = $this->handler($photos, $renderer, $logger);
+        $handler(new ProcessPhotoMessage(self::PHOTO_ID, 2));
+        try {
+            $handler(new ProcessPhotoMessage(self::PHOTO_ID, 2));
+        } catch (\RuntimeException) {
+        }
+
+        self::assertSame([
+            'Photo job remains pending after immediate publish failure.',
+            'Photo upload accepted.',
+            'Pending photo job was not dispatched.',
+            'Pending photo job dispatched.',
+            'Photo previews ready.',
+            'Photo preview preparation failed.',
+        ], array_column($logger->records, 'message'));
+        foreach ($logger->records as $record) {
+            $sanitized = (new CommonLoggerProcessor(['message' => $record['message'], 'context' => $record['context'], 'extra' => []]))();
+            $expected = array_filter($record['context'], static fn(mixed $value): bool => null !== $value);
+            $actual = $sanitized['context'];
+            ksort($expected);
+            ksort($actual);
+
+            self::assertSame($record['message'], $sanitized['message']);
+            self::assertSame($expected, $actual, $record['message']);
+        }
     }
 
     private function upload(

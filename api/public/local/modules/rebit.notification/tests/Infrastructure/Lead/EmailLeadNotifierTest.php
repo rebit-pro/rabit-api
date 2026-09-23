@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Rebit\Notification\Tests\Infrastructure\Lead;
 
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Rebit\Notification\Application\Lead\Dto\LeadAttachmentDto;
 use Rebit\Notification\Application\Lead\Dto\LeadMessageDto;
 use Rebit\Notification\Infrastructure\Lead\EmailLeadNotifier;
+use Rebit\Share\Infrastructure\Logger\CommonLoggerProcessor;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /**
@@ -127,6 +130,18 @@ final class EmailLeadNotifierTest extends TestCase
         $this->expectException(HttpException::class);
 
         $notifier->notify($this->lead());
+    }
+
+    public function testAcceptedLeadRecordSurvivesTheCommonLogSanitizer(): void
+    {
+        $handler = new TestHandler();
+
+        (new EmailLeadNotifier(new Logger('notification', [$handler]), 'rebit@example.com', 's1'))->notify($this->lead());
+
+        $record = $handler->getRecords()[0];
+        $sanitized = (new CommonLoggerProcessor(['message' => $record['message'], 'context' => $record['context'], 'extra' => []]))();
+        self::assertSame('Заявка передана почтовому транспорту', $sanitized['message']);
+        self::assertSame(['event' => 'REBIT_NOTIFICATION_LEAD'], $sanitized['context']);
     }
 
     public function testFailedSendThrows(): void
