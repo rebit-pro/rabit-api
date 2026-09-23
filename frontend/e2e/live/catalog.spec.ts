@@ -200,7 +200,7 @@ test('отзыв сессии возвращает ко входу и затем
   try {
     await login(await other.newPage());
     await page.getByRole('button', { name: 'Обновить каталог', exact: true }).click();
-    await expect(page).toHaveURL(/\/login\?reason=session-expired$/);
+    await expect(page).toHaveURL(/\/login\?reason=revoked$/);
     await page.getByRole('textbox', { name: 'Email', exact: true }).fill('organizer@example.invalid');
     await page.getByLabel('Пароль', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Войти', exact: true }).click();

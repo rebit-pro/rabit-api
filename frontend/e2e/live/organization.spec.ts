@@ -476,7 +476,7 @@ test('C3: отзыв сессии во время редактора не сох
     const second = await fresh.newPage();
     await login(second);
     await save(page, 'POST', `/api/v1/shoots/${event.id}/groups`, 401);
-    await expect(page).toHaveURL(/\/login\?reason=session-expired$/);
+    await expect(page).toHaveURL(/\/login\?reason=revoked$/);
     const detail = await body(
       await second.request.get(`/api/v1/shoots/${event.id}`, {
         headers: await headers(second)
@@ -515,7 +515,7 @@ test('C3: повтор потерянного сохранения после 40
   try {
     await login(await fresh.newPage());
     await save(page, 'POST', `/api/v1/shoots/${event.id}/groups`, 401);
-    await expect(page).toHaveURL(/\/login\?reason=session-expired$/);
+    await expect(page).toHaveURL(/\/login\?reason=revoked$/);
     const pending = await page.evaluate(() => {
       const saved = Object.keys(localStorage).find(
         (name) =>
