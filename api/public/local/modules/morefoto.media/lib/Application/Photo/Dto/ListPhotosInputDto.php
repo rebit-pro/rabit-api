@@ -12,5 +12,6 @@ final readonly class ListPhotosInputDto
         public int $pageSize,
         public ?string $childCode,
         public ?bool $assigned,
+        public ?string $status,
     ) {}
 }

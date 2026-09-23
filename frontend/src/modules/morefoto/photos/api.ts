@@ -36,12 +36,27 @@ export interface ServerMediaGroup {
   name: string;
   kind: string;
 }
+/** Ready frames of the requested group, whatever page or filter is shown. */
+export interface ServerPhotoGroupSummary {
+  photos: number;
+  unassigned: number;
+  children: string[];
+}
 export interface ServerPhotoPage {
   items: ServerPhoto[];
   groups: ServerMediaGroup[];
   covers: Record<string, string>;
   revision: number;
   meta: { page: number; pageSize: number; total: number };
+  summary: ServerPhotoGroupSummary | null;
+}
+export interface PhotoListQuery {
+  groupId?: string;
+  childCode?: string;
+  assigned?: boolean;
+  status?: ServerPhotoStatus;
+  page?: number;
+  pageSize?: number;
 }
 export interface UploadPhotoResult {
   id: string;
@@ -74,14 +89,16 @@ export interface ChildTransferResult {
   childCode: string;
   revision: number;
 }
+// Matches PHP max_execution_time: the shared 15 s timeout cuts large originals on slow uplinks.
+const uploadTimeout = 300_000;
 function idempotencyKey(): string {
   return crypto.randomUUID().replace(/-/g, '');
 }
 
 export const photosApi = {
-  async list(shootId: string, page = 1, pageSize = 100): Promise<ServerPhotoPage> {
+  async list(shootId: string, query: PhotoListQuery): Promise<ServerPhotoPage> {
     const response = await api.get<ServerPhotoPage | null>('/api/v1/shoots/' + encodeURIComponent(shootId) + '/photos', {
-      params: { page, pageSize }
+      params: query
     });
     if (null === response.data || !Array.isArray(response.data.items) || !response.data.meta) {
       throw new Error('Не удалось загрузить список кадров. Повторите попытку.');
@@ -130,8 +147,9 @@ export const photosApi = {
     return (
       await api.post('/api/v1/shoots/' + encodeURIComponent(shootId) + '/photos', body, {
         signal,
+        timeout: uploadTimeout,
         headers: { 'Content-Type': 'multipart/form-data' },
-        onUploadProgress: (event) => onProgress(event.total ? Math.min(75, Math.round((event.loaded / event.total) * 75)) : 20)
+        onUploadProgress: (event) => onProgress(event.total ? Math.round((event.loaded / event.total) * 100) : 0)
       })
     ).data;
   }

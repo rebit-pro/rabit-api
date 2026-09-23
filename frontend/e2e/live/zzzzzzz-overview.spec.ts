@@ -1,7 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 import { login, logout, token } from './helpers.js';
 
-// U6: the live overview and the tiles above lists show exactly the server summaries of U5.
+// U6: the live overview and the tiles above lists show exactly the server summaries of U5. The spec runs after the
+// handoff, order and transfer specs of its group, so the tiles and the queue show real groups.
 async function get(page: Page, path: string) {
   const response = await page.request.get(path, { headers: { Authorization: 'Bearer ' + (await token(page)) } });
   expect(response.status(), path).toBe(200);

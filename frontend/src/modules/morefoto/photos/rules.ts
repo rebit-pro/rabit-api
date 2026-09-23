@@ -1,5 +1,12 @@
 import type { ManagedPhoto } from './types.js';
-export const photoLimits = { batch: 50, bytes: 25 * 1024 * 1024, pixels: 40_000_000, formats: ['image/jpeg', 'image/png', 'image/webp'] };
+// parallel: simultaneous original uploads; the server prepares previews independently of the queue.
+export const photoLimits = {
+  batch: 2000,
+  parallel: 2,
+  bytes: 25 * 1024 * 1024,
+  pixels: 40_000_000,
+  formats: ['image/jpeg', 'image/png', 'image/webp']
+};
 export function fileProblem(file: { name: string; size: number; type: string }): string {
   if (!photoLimits.formats.includes(file.type)) return 'Допустимы JPEG, PNG и WebP.';
   if (!file.size) return 'Файл пуст.';
@@ -28,15 +35,19 @@ function assignments(photo: ManagedPhoto) {
       : [])
   );
 }
-export function nextChildCode(photos: ManagedPhoto[], groupId: string): string {
-  const codes = new Set(
-    photos.filter((item) => item.groupId === groupId).flatMap((item) => assignments(item).map((assignment) => assignment.childCode))
-  );
+export function freeChildCode(codes: ReadonlySet<string>): string {
   for (let i = 0; i < 18278; i++) {
     const code = childCodeAt(i);
     if (!codes.has(code)) return code;
   }
   throw new Error('Достигнут предел кодов детей.');
+}
+export function nextChildCode(photos: ManagedPhoto[], groupId: string): string {
+  return freeChildCode(
+    new Set(
+      photos.filter((item) => item.groupId === groupId).flatMap((item) => assignments(item).map((assignment) => assignment.childCode))
+    )
+  );
 }
 export function photoCode(child: string, sequence: number): string {
   return child + String(sequence).padStart(3, '0');

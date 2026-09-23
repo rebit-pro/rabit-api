@@ -28,7 +28,7 @@ final class PhotoStatsTest extends TestCase
         $photos = $this->createMock(PhotoRepository::class);
         $photos->method('photos')->willReturn($this->createStub(Result::class));
         $photos->method('count')->willReturn(0);
-        // The page is filtered by child and assignment; the processing split is not, but stays inside the same group.
+        // The page is filtered by child, assignment and status; the processing split is not, but stays inside the same group.
         $photos->expects(self::once())->method('stats')->with(5, 10)->willReturn($stats);
         $scopes = $this->createStub(MediaScopeInterface::class);
         $scopes->method('resolve')->willReturn(new MediaScopeOutputDto(3, 5, '12345678-abcd-4abc-8abc-123456789abc', 10, '22345678-abcd-4abc-8abc-123456789abc', true));
@@ -40,7 +40,7 @@ final class PhotoStatsTest extends TestCase
         $access->expects(self::once())->method('assertCan')->with(21, 'media.manage', 3, 10);
 
         $page = (new ListPhotosUseCase($photos, $media, new PhotoRowMapper(), $scopes, $access))
-            ->execute(21, '12345678-abcd-4abc-8abc-123456789abc', new ListPhotosInputDto('22345678-abcd-4abc-8abc-123456789abc', 1, 50, 'A-7', false))
+            ->execute(21, '12345678-abcd-4abc-8abc-123456789abc', new ListPhotosInputDto('22345678-abcd-4abc-8abc-123456789abc', 1, 50, 'A-7', false, 'ready'))
         ;
 
         self::assertSame($stats, $page->stats);

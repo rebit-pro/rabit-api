@@ -1,0 +1,7 @@
+# E2E-гейт: те же пути и правила, что в основном конфиге. Процессов не больше лимита контейнера --cpus 2.
+includes:
+    - ../../phpstan.neon
+
+parameters:
+    parallel:
+        maximumNumberOfProcesses: 2

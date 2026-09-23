@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import { isMockApiEnabled } from '@/mocks/config';
 import type { ManagedGroup } from '../../organization/types';
-import type { UploadJob } from '../types';
+import type { QueueStatus, UploadJob } from '../types';
 defineProps<{ jobs: UploadJob[]; busy: boolean; groups: ManagedGroup[] }>();
 defineEmits<{ retry: [id: string]; remove: [id: string] }>();
-const labels = {
+const labels: Record<QueueStatus, string> = {
   queued: 'В очереди',
-  processing: 'Подготовка',
+  uploading: 'Загружается оригинал',
+  processing: isMockApiEnabled ? 'Подготовка' : 'Обрабатывается',
   done: 'Готово',
   duplicate: 'Повтор файла',
   error: 'Ошибка',
@@ -14,7 +16,7 @@ const labels = {
 </script>
 <template>
   <ul class="upload-queue" aria-label="Очередь файлов">
-    <li v-for="job in jobs" :key="job.id" :data-upload-id="job.id" class="upload-row">
+    <li v-for="job in jobs" :key="job.id" v-memo="[job, busy, groups]" :data-upload-id="job.id" class="upload-row">
       <div>
         <strong>{{ job.filename }}</strong>
         <p class="mf-muted">
@@ -25,9 +27,17 @@ const labels = {
         <span :class="{ 'text-error': job.status === 'error' }">{{ labels[job.status] }}</span>
         <p>{{ job.message }}</p>
         <v-progress-linear
-          v-if="job.status === 'processing'"
+          v-if="job.status === 'uploading' || (isMockApiEnabled && job.status === 'processing')"
           :model-value="job.progress"
-          :aria-label="'Подготовка: ' + job.filename"
+          :aria-label="'Отправка: ' + job.filename"
+          color="primary"
+          height="6"
+          class="mt-2"
+        />
+        <v-progress-linear
+          v-else-if="job.status === 'processing'"
+          indeterminate
+          :aria-label="'Обработка на сервере: ' + job.filename"
           color="primary"
           height="6"
           class="mt-2"

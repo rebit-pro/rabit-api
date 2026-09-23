@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { shallowRef } from 'vue';
 import { isMockApiEnabled } from '@/mocks/config';
+import { photoLimits } from '../rules';
 import type { UploadJob } from '../types';
 import type { ManagedGroup } from '../../organization/types';
 import { writeDemo } from '../../mocks/storage';
@@ -9,14 +10,16 @@ defineProps<{
   jobs: UploadJob[];
   groups: ManagedGroup[];
   busy: boolean;
+  paused: boolean;
   disabled: boolean;
   queued: number;
   accepted: number;
+  waiting: number;
   failed: number;
   error: string;
   groupName: string;
 }>();
-const emit = defineEmits<{ files: [files: File[]]; start: []; retry: [id: string]; clear: []; remove: [id: string] }>();
+const emit = defineEmits<{ files: [files: File[]]; start: []; pause: []; retry: [id: string]; clear: []; remove: [id: string] }>();
 const input = shallowRef<File[]>([]);
 function choose(files: File | File[] | null) {
   const selected = Array.isArray(files) ? files : files ? [files] : [];
@@ -27,7 +30,9 @@ function choose(files: File | File[] | null) {
 <template>
   <section class="mf-panel" aria-labelledby="upload-heading">
     <h2 id="upload-heading">{{ isMockApiEnabled ? 'Подготовить фотографии' : 'Загрузить фотографии' }}</h2>
-    <p class="mf-muted mt-2 mb-5">Файлы попадут в группу «{{ groupName }}». JPEG, PNG, WebP · до 25 МБ и 40 Мп · до 50 файлов за раз.</p>
+    <p class="mf-muted mt-2 mb-5">
+      Файлы попадут в группу «{{ groupName }}». JPEG, PNG, WebP · до 25 МБ и 40 Мп · до {{ photoLimits.batch }} файлов за раз.
+    </p>
     <v-alert v-if="isMockApiEnabled" type="info" variant="tonal" class="mb-5"
       >Демонстрация: создаём превью с водяным знаком в этом браузере. Файлы не отправляются на сервер; исходники сохраните у себя.</v-alert
     >
@@ -44,15 +49,18 @@ function choose(files: File | File[] | null) {
       @update:model-value="choose"
     />
     <div class="mf-actions mt-5">
-      <v-btn :disabled="!queued || busy || disabled" :loading="busy" @click="$emit('start')">{{
-        isMockApiEnabled ? 'Начать подготовку' : 'Загрузить на сервер'
+      <v-btn :disabled="!queued || busy || disabled" :loading="busy && !paused" @click="$emit('start')">{{
+        isMockApiEnabled ? 'Начать подготовку' : paused && queued ? 'Продолжить загрузку' : 'Загрузить на сервер'
+      }}</v-btn
+      ><v-btn v-if="busy && !isMockApiEnabled" variant="outlined" :disabled="paused" @click="$emit('pause')">{{
+        paused ? 'Остановим после текущих файлов' : 'Пауза'
       }}</v-btn
       ><v-btn variant="outlined" :disabled="busy || !jobs.some((job) => ['done', 'duplicate'].includes(job.status))" @click="$emit('clear')"
         >Убрать завершённые из очереди</v-btn
       >
     </div>
     <p class="mt-4" role="status" data-testid="upload-counts">
-      Подготовлено: {{ accepted }} · Требуют внимания: {{ failed }} · В очереди: {{ queued }}
+      Готово: {{ accepted }} · В работе: {{ waiting }} · Требуют внимания: {{ failed }} · В очереди: {{ queued }}
     </p>
     <v-alert v-if="error" type="error" variant="tonal" role="alert" class="mt-4">{{ error }}</v-alert>
     <UploadQueue :jobs="jobs" :busy="busy" :groups="groups" @retry="$emit('retry', $event)" @remove="$emit('remove', $event)" />

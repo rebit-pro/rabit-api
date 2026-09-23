@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { computed, shallowRef, watch } from 'vue';
+import { computed, shallowRef, useTemplateRef, watch } from 'vue';
+import { useDisplay } from 'vuetify';
 import GalleryImage from '../../gallery/components/GalleryImage.vue';
 import { validChildCode } from '../rules';
+import { failedPreviews, retryFailedPreviews } from '../previews';
 import type { ManagedPhoto } from '../types';
 const props = defineProps<{
   photos: ManagedPhoto[];
+  total: number;
+  page: number;
+  pages: number;
+  loading: boolean;
   selected: string[];
   filter: string;
   childCodes: string[];
@@ -17,6 +23,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:selected': [ids: string[]];
   'update:filter': [value: string];
+  'update:page': [value: number];
   assign: [code: string];
   cover: [id: string];
   preview: [code: string];
@@ -45,12 +52,19 @@ function toggle(id: string) {
 function photoCodes(photo: ManagedPhoto): string {
   return photo.assignments.map((assignment) => assignment.code).join(' · ') || 'Без ребёнка';
 }
+const { smAndDown } = useDisplay();
+const section = useTemplateRef<HTMLElement>('section');
+function changePage(value: number) {
+  emit('update:page', value);
+  section.value?.scrollIntoView({ block: 'start' });
+}
 </script>
 <template>
-  <section class="mf-panel" aria-labelledby="collection-heading">
+  <section ref="section" class="mf-panel collection" aria-labelledby="collection-heading" :aria-busy="loading">
+    <v-progress-linear v-if="loading" indeterminate color="primary" class="collection-progress" />
     <div class="collection-heading">
       <h2 id="collection-heading">Кадры группы</h2>
-      <span class="mf-muted">{{ photos.length }} в текущем фильтре</span>
+      <span class="mf-muted" data-testid="photo-page-status">Показано {{ photos.length }} из {{ total }}</span>
     </div>
     <div class="collection-toolbar mt-5">
       <v-select
@@ -90,6 +104,10 @@ function photoCodes(photo: ManagedPhoto): string {
         >Назначить ребёнку</v-btn
       >
     </div>
+    <p v-if="failedPreviews" class="collection-retry mt-4" role="status">
+      <span>Не загрузилось превью: {{ failedPreviews }}</span>
+      <v-btn variant="outlined" size="small" @click="retryFailedPreviews">Повторить все</v-btn>
+    </p>
     <p v-if="!photos.length" class="mf-muted py-8" data-testid="photos-empty">
       Кадров пока нет. Выберите фотографии для подготовки или измените фильтр.
     </p>
@@ -117,9 +135,33 @@ function photoCodes(photo: ManagedPhoto): string {
         </div>
       </article>
     </div>
+    <v-pagination
+      v-if="pages > 1"
+      class="mt-6"
+      :model-value="page"
+      :length="pages"
+      :total-visible="smAndDown ? 5 : 7"
+      density="comfortable"
+      data-testid="photo-pagination"
+      @update:model-value="changePage"
+    />
   </section>
 </template>
 <style scoped>
+.collection {
+  position: relative;
+  scroll-margin-top: 16px;
+}
+.collection-progress {
+  position: absolute;
+  inset: 0 0 auto;
+}
+.collection-retry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 .collection-heading,
 .collection-toolbar {
   display: flex;

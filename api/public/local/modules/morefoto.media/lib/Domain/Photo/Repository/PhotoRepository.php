@@ -101,14 +101,15 @@ final readonly class PhotoRepository
         ?int $groupId,
         ?string $childCode,
         ?bool $assigned,
+        ?string $status,
         int $limit,
         int $offset,
     ): Result {
         if (1 > $limit || 100 < $limit || 0 > $offset) {
             throw new \InvalidArgumentException('Invalid photo page.');
         }
-        $pageCondition = $this->filterCondition($shootId, $groupId, $childCode, $assigned, 'page_photo');
-        $condition = $this->filterCondition($shootId, $groupId, $childCode, $assigned, 'p');
+        $pageCondition = $this->filterCondition($shootId, $groupId, $childCode, $assigned, $status, 'page_photo');
+        $condition = $this->filterCondition($shootId, $groupId, $childCode, $assigned, $status, 'p');
 
         return $this->query(
             $this->baseSelect()
@@ -117,9 +118,9 @@ final readonly class PhotoRepository
         );
     }
 
-    public function count(int $shootId, ?int $groupId, ?string $childCode, ?bool $assigned): int
+    public function count(int $shootId, ?int $groupId, ?string $childCode, ?bool $assigned, ?string $status): int
     {
-        $condition = $this->filterCondition($shootId, $groupId, $childCode, $assigned, 'p');
+        $condition = $this->filterCondition($shootId, $groupId, $childCode, $assigned, $status, 'p');
         $row = $this->query('SELECT COUNT(*) AS TOTAL FROM b_hlbd_mf_photo p WHERE ' . $condition)->fetch();
 
         return is_array($row) ? (int)$row['TOTAL'] : 0;
@@ -128,8 +129,8 @@ final readonly class PhotoRepository
     public const array STATUSES = ['processing', 'ready', 'failed', 'duplicate'];
 
     /**
-     * Processing split of the shoot or of one group with one aggregate; the page filters by child and assignment are
-     * not applied. Unassigned counts ready photos without a child, as group readiness does.
+     * Processing split of the shoot or of one group with one aggregate; the page filters by child, assignment and
+     * status are not applied. Unassigned counts ready photos without a child, as group readiness does.
      *
      * @return array{
      *     byStatus: array{processing: int, ready: int, failed: int, duplicate: int},
@@ -138,7 +139,7 @@ final readonly class PhotoRepository
      */
     public function stats(int $shootId, ?int $groupId): array
     {
-        $condition = $this->filterCondition($shootId, $groupId, null, null, 'p');
+        $condition = $this->filterCondition($shootId, $groupId, null, null, null, 'p');
         $assignment = 'SELECT 1 FROM mf_photo_assignment stats_assignment INNER JOIN mf_media_child stats_child ON stats_child.ID=stats_assignment.CHILD_ID '
             . 'WHERE stats_assignment.PHOTO_ID=p.ID AND stats_child.GROUP_ID=p.UF_GROUP_ID';
         $result = $this->query(
@@ -157,13 +158,65 @@ final readonly class PhotoRepository
         return ['byStatus' => $byStatus, 'unassigned' => $unassigned];
     }
 
-    public function pendingJobs(int $limit): Result
+    /**
+     * Codes of the group's children that currently have at least one frame of this group.
+     *
+     * @return list<string>
+     */
+    public function childCodes(int $shootId, int $groupId): array
     {
-        if (1 > $limit || 500 < $limit) {
-            throw new \InvalidArgumentException('Invalid pending job limit.');
+        $result = $this->query(
+            'SELECT DISTINCT child.CODE FROM mf_media_child child '
+            . 'INNER JOIN mf_photo_assignment assignment ON assignment.CHILD_ID=child.ID '
+            . 'INNER JOIN b_hlbd_mf_photo p ON p.ID=assignment.PHOTO_ID AND p.UF_GROUP_ID=child.GROUP_ID '
+            . "WHERE child.SHOOT_ID={$shootId} AND child.GROUP_ID={$groupId} ORDER BY child.CODE",
+        );
+        $codes = [];
+        while (false !== ($row = $result->fetch())) {
+            $codes[] = (string)$row['CODE'];
         }
 
-        return $this->query("SELECT UF_PUBLIC_ID,UF_REVISION FROM b_hlbd_mf_photo WHERE UF_STATUS='processing' AND UF_JOB_STATE='pending' ORDER BY ID LIMIT {$limit}");
+        return $codes;
+    }
+
+    /**
+     * Rows younger than $minAgeSeconds are left to the immediate publisher and its deduplication window.
+     */
+    public function pendingJobs(int $limit, int $minAgeSeconds): Result
+    {
+        if (1 > $limit || 500 < $limit || 0 > $minAgeSeconds || 3600 < $minAgeSeconds) {
+            throw new \InvalidArgumentException('Invalid pending job selection.');
+        }
+
+        return $this->query(
+            'SELECT UF_PUBLIC_ID,UF_REVISION,TIMESTAMPDIFF(SECOND,UF_UPDATED_AT,UTC_TIMESTAMP()) AS PENDING_SECONDS'
+            . " FROM b_hlbd_mf_photo WHERE UF_STATUS='processing' AND UF_JOB_STATE='pending'"
+            . " AND UF_UPDATED_AT<=UTC_TIMESTAMP()-INTERVAL {$minAgeSeconds} SECOND ORDER BY ID LIMIT {$limit}",
+        );
+    }
+
+    /**
+     * @return null|array{
+     *     UF_STATUS: string,
+     *     UF_ORIGINAL_PATH: null|string,
+     *     UF_MIME_TYPE: string,
+     *     UF_WIDTH: int|string,
+     *     UF_HEIGHT: int|string,
+     *     UF_ATTEMPTS: int|string,
+     *     CREATED_SECONDS: int|string,
+     *     UPDATED_SECONDS: int|string,
+     * }
+     */
+    public function processingJob(string $publicId): ?array
+    {
+        $row = $this->query(
+            'SELECT UF_STATUS,UF_ORIGINAL_PATH,UF_MIME_TYPE,UF_WIDTH,UF_HEIGHT,UF_ATTEMPTS,'
+            . 'TIMESTAMPDIFF(SECOND,UF_CREATED_AT,UTC_TIMESTAMP()) AS CREATED_SECONDS,'
+            . 'TIMESTAMPDIFF(SECOND,UF_UPDATED_AT,UTC_TIMESTAMP()) AS UPDATED_SECONDS'
+            . ' FROM b_hlbd_mf_photo WHERE UF_PUBLIC_ID=' . $this->quote($publicId) . ' LIMIT 1',
+        )->fetch();
+
+        return is_array($row) ? $row : null;
     }
 
     public function markPublished(string $publicId): void
@@ -212,11 +265,15 @@ final readonly class PhotoRepository
         ?int $groupId,
         ?string $childCode,
         ?bool $assigned,
+        ?string $status,
         string $alias,
     ): string {
         $condition = "{$alias}.UF_SHOOT_ID={$shootId}";
         if (null !== $groupId) {
             $condition .= " AND {$alias}.UF_GROUP_ID={$groupId}";
+        }
+        if (null !== $status) {
+            $condition .= " AND {$alias}.UF_STATUS=" . $this->quote($status);
         }
         $assignment = 'SELECT 1 FROM mf_photo_assignment filter_assignment '
             . 'INNER JOIN mf_media_child filter_child ON filter_child.ID=filter_assignment.CHILD_ID '

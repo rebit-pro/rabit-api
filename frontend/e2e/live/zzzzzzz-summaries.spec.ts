@@ -2,7 +2,8 @@ import { test, expect, type APIResponse, type Page } from '@playwright/test';
 import { login, logout, token } from './helpers.js';
 
 // U5: server summaries. Every split must add up to the unfiltered total, a filter must not change the split it
-// filters by, and a curator's counters must stay inside the organizer's ones. Data comes from the earlier specs.
+// filters by, and a curator's counters must stay inside the organizer's ones. The spec runs last in its group, so the
+// links, staff requests, orders and the E4 gallery of the earlier specs are counted.
 type Counts = Record<string, number>;
 
 async function get(page: Page, path: string) {
