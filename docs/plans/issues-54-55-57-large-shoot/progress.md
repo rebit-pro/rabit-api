@@ -6,16 +6,17 @@
 - Ветка: `codex/issues-54-55-57-large-shoot`, upstream `origin/codex/issues-54-55-57-large-shoot`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-54-55-57-large-shoot`. Основной checkout `/home/user/rabit-api` занят другой сессией (`codex/design-ux-plan`), в нём не работать.
 - Base: `origin/main` `2cc2360` (merge PR #58, оптимизация E2E), влит в ветку merge-коммитом `cd8c655`. Прежний base — `5f658e5`.
-- Issues: [#54](https://github.com/rebit-pro/rabit-api/issues/54), [#55](https://github.com/rebit-pro/rabit-api/issues/55), [#57](https://github.com/rebit-pro/rabit-api/issues/57) — закроются merge PR. Follow-up по `MediaController` — [#59](https://github.com/rebit-pro/rabit-api/issues/59).
-- PR: [#60](https://github.com/rebit-pro/rabit-api/pull/60) в `main`, OPEN, на ревью.
+- Issues: [#54](https://github.com/rebit-pro/rabit-api/issues/54), [#55](https://github.com/rebit-pro/rabit-api/issues/55), [#57](https://github.com/rebit-pro/rabit-api/issues/57) — CLOSED при merge. Follow-up: [#59](https://github.com/rebit-pro/rabit-api/issues/59) (`MediaController`), [#62](https://github.com/rebit-pro/rabit-api/issues/62), [#63](https://github.com/rebit-pro/rabit-api/issues/63) (неблокирующие замечания review).
+- PR: [#60](https://github.com/rebit-pro/rabit-api/pull/60) MERGED 2026-09-23T10:20:21Z, merge commit `5e2df6a`; проверенный head ветки — `b9e381a` (gate на `52d1b50`).
+- Production: релиз `issues60-20260923102153-5e2df6a`, backend 4/4 сервиса и frontend 2/2 на новом коде.
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md), предыдущий журнал [#47](../issues-31-33-34-photo-upload/progress.md).
 - Завершено:
   - #57 (`4edc593`), backend #54 (`e2663c4`), frontend #55 (`e73c72d`), frontend #54 (`f727d24`), live E2E-сценарий (`d025312`);
   - все быстрые проверки и stub-проверка UI.
-- Сейчас: полный gate PASS на head `52d1b50` (79/79). PR #60 ждёт подтверждения ревьюером исправления P1 и merge по поручению пользователя.
-- Следующий шаг: после одобрения review и поручения пользователя — merge PR #60, затем деплой: сначала backend, потом frontend. После деплоя — T16 по `media-*.log` на production.
+- Сейчас: задача на production. Открыт только замер по реальной загрузке (T16).
+- Следующий шаг: после реальной загрузки съёмки прочитать на production `media-*.log`: записи `Photo upload accepted.` и `Photo previews ready.` с длительностями (T16; закрывает замер #34/#47).
 - Блокеров нет.
-- Открыто: каноническое описание MED-02 в `../MoreFoto` (D9) — после merge.
+- Открыто: каноническое описание MED-02 в `../MoreFoto` (D9): query `status`, поле `summary`.
 - Рабочее дерево: закоммичено. Пустые `api/vendor`, `api/var` и `frontend/node_modules` — точки монтирования docker-проверок, в git не попадают.
 - Команды проверок:
   - backend: vendor-том `rabit-issues545557-vendor` (засеян из `/home/user/rabit-api/api/vendor`, `composer.lock` совпадает, `composer dump-autoload --no-scripts --no-plugins`), затем `docker run --rm --network none --memory 1536m --cpus 2 --env XDEBUG_MODE=off --mount type=bind,source=<worktree>/api,target=/app,readonly --mount type=volume,source=rabit-issues545557-vendor,target=/app/vendor --tmpfs /app/var:rw,size=256m --workdir /app --entrypoint php rabit-api-php-cli:d1-local vendor/bin/phpunit --colors=never` (так же `vendor/bin/phpstan analyse --no-progress --memory-limit=1G` и `vendor/bin/phplint`);
@@ -139,6 +140,30 @@
   - предпросмотр набора с другой страницы, фильтр на сервере (`assigned=false`) со сбросом страницы, перенос набора;
   - 390 px без горизонтальной прокрутки, без ошибок консоли.
   Первый прогон упал на `/access-unavailable`: заглушке пользователя не хватало права `media.manage`. Код приложения не менялся.
+
+### 2026-09-23 — merge и деплой на app.morefoto36.ru
+
+- **Merge.** Пользователь: «можно сливать в main и делать деплой сразу». `gh pr merge 60 --merge --match-head-commit b9e381a…` → MERGED, `5e2df6a`, issues #54/#55/#57 закрылись. `main` после gate не сдвигался (`2cc2360`), поэтому gate 79/79 относится к слитому коду.
+- **Сборка релиза** из merge-коммита:
+  - `git archive 5e2df6a api` (1727 файлов: против #47 добавилось ровно 12 ожидаемых);
+  - образ `morefoto-frontend:issues60-20260923102153-5e2df6a` с `VITE_API_MOCKS_ENABLED=false`. В чанке `PhotoWorkspacePage` есть «Повторить все», «Не загрузилось превью», `status:"ready"`.
+- **Подготовка на сервере** `/srv/morefoto/releases/issues60-20260923102153-5e2df6a`:
+  - SHA256SUMS OK, `services-before.json` для пяти сервисов;
+  - `prepare-release.sh`: маркер `PhotoListController.php`, `composer.lock` совпал с `issues47-…`, vendor оттуда же; `app` 411 МБ;
+  - миграций нет.
+- **Backend.** Первая попытка `switch-backend.sh` отклонена классификатором авто-режима («Production Deploy»). После явного разрешения пользователя («разрешаю тебе опубликовать деплой») `morefoto_stage_fpm`, `…_backend`, `…_media_consumer`, `…_media_dispatcher` переключены на новый `/app`, код виден в контейнерах, реплики 1/1.
+- **Smoke backend.**
+  - `/health` 200, `/api/v1/me` 401 JSON.
+  - `GET /api/v1/shoots/{uuid}/photos` без токена — 401 JSON с `status=ready` и без него: маршрут ведёт в `PhotoListController`, DI собирается.
+  - Код ошибки 401 у списка теперь `SERVICE_UNAVAILABLE` вместо прежнего `MEDIA_REQUEST_FAILED`. Так отвечают все чистые контроллеры (превью, заявки сотрудников) — известный дефект #42 (коды 401/403/404 теряются в `error.code`). Frontend разбирает ошибки по HTTP-статусу, поведение не меняется.
+  - Журнал `media-2026-09-23.log` пишется с новым кодом. Строк `[REDACTED]` после переключения нет: последняя — 07:56 UTC, из загрузки до выкатки.
+- **Frontend.** `switch-frontend.sh`: прежний образ `morefoto-frontend:issues47-20260923073920-aee6808` в `frontend-before.txt`, новый образ на 2/2 задачах.
+- **Smoke frontend.**
+  - `/health`, `/cabinet/users`, `/cabinet/orders`, `/cabinet/links`, `/cabinet/institutions/…/photos` — 200.
+  - SHA-256 отдаваемого `index.html` совпадает с образом.
+  - Отдаваемый `PhotoWorkspacePage-D2h4Bv1S.js` содержит «Повторить все», «Не загрузилось превью», `status:"ready"`, «Показано».
+- **Откат.** Backend: `docker service rollback` для четырёх сервисов (прежний релиз `issues47-20260923073920-aee6808`, спецификации в `services-before.json`). Frontend: `docker service rollback morefoto_frontend` (образ из `frontend-before.txt`).
+- Запись сделана из временного worktree от `origin/main` (`/home/user/rabit-api-worktrees/deploy-record-60`), общий checkout не затронут.
 
 ## Результаты тест-кейсов
 
