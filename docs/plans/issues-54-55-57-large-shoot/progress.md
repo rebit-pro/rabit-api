@@ -3,18 +3,23 @@
 ## Точка продолжения
 
 - Дата: 2026-09-23.
-- Ветка: `codex/issues-54-55-57-large-shoot`, upstream не задан (push ещё не выполнялся).
+- Ветка: `codex/issues-54-55-57-large-shoot`, push в `origin` выполняется вместе с этой записью.
 - Worktree: `/home/user/rabit-api-worktrees/issues-54-55-57-large-shoot`. Основной checkout `/home/user/rabit-api` занят другой сессией (`codex/design-ux-plan`), в нём не работать.
 - Base: `origin/main` `5f658e5`.
-- Issues: [#54](https://github.com/rebit-pro/rabit-api/issues/54), [#55](https://github.com/rebit-pro/rabit-api/issues/55), [#57](https://github.com/rebit-pro/rabit-api/issues/57) — OPEN.
-- PR: ещё нет.
+- Issues: [#54](https://github.com/rebit-pro/rabit-api/issues/54), [#55](https://github.com/rebit-pro/rabit-api/issues/55), [#57](https://github.com/rebit-pro/rabit-api/issues/57) — закроются merge PR. Follow-up по `MediaController` — [#59](https://github.com/rebit-pro/rabit-api/issues/59).
+- PR: открывается сейчас (номер — в следующей записи).
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md), предыдущий журнал [#47](../issues-31-33-34-photo-upload/progress.md).
-- Завершено: разведка, решения D1/D2, план (`c7f9e5e`), #57 (`4edc593`), backend #54 (`e2663c4`).
-- Сейчас: frontend #55 (очередь превью), затем frontend #54.
-- Следующий шаг: ядро `preview-loader.ts` и его unit-тест.
-- Блокеров нет. E2E не запускать до команды пользователя: он отдельно оптимизирует E2E (2026-09-23).
-- Рабочее дерево: закоммичено, кроме этой записи. Пустые `api/vendor` и `api/var` — точки монтирования для docker-проверок, в git не попадают.
-- Backend-проверки: vendor-том `rabit-issues545557-vendor` (засеян из `/home/user/rabit-api/api/vendor`, `composer.lock` совпадает, `composer dump-autoload --no-scripts --no-plugins`). Команда: `docker run --rm --network none --memory 1536m --cpus 2 --env XDEBUG_MODE=off --mount type=bind,source=<worktree>/api,target=/app,readonly --mount type=volume,source=rabit-issues545557-vendor,target=/app/vendor --tmpfs /app/var:rw,size=256m --workdir /app --entrypoint php rabit-api-php-cli:d1-local vendor/bin/phpunit --colors=never`.
+- Завершено:
+  - #57 (`4edc593`), backend #54 (`e2663c4`), frontend #55 (`e73c72d`), frontend #54 (`f727d24`), live E2E-сценарий (`d025312`);
+  - все быстрые проверки и stub-проверка UI.
+- Сейчас: PR и ожидание E2E.
+- Следующий шаг: после merge PR #58 (оптимизация E2E) обновить base ветки до нового `main`, повторить быстрые проверки и по команде пользователя запустить полный `make test-e2e`.
+- Блокер gate: пользователь сообщил, что оптимизация E2E в `main`, но на 2026-09-23 PR #58 ещё OPEN, `origin/main` = `5f658e5`. Gate до merge #58 не запускается: правило «актуальный main плюс собственный diff».
+- Открыто: каноническое описание MED-02 в `../MoreFoto` (D9) — после merge.
+- Рабочее дерево: закоммичено. Пустые `api/vendor`, `api/var` и `frontend/node_modules` — точки монтирования docker-проверок, в git не попадают.
+- Команды проверок:
+  - backend: vendor-том `rabit-issues545557-vendor` (засеян из `/home/user/rabit-api/api/vendor`, `composer.lock` совпадает, `composer dump-autoload --no-scripts --no-plugins`), затем `docker run --rm --network none --memory 1536m --cpus 2 --env XDEBUG_MODE=off --mount type=bind,source=<worktree>/api,target=/app,readonly --mount type=volume,source=rabit-issues545557-vendor,target=/app/vendor --tmpfs /app/var:rw,size=256m --workdir /app --entrypoint php rabit-api-php-cli:d1-local vendor/bin/phpunit --colors=never` (так же `vendor/bin/phpstan analyse --no-progress --memory-limit=1G` и `vendor/bin/phplint`);
+  - frontend: том `rabit-issues545557-node` (`npm ci` текущего lockfile), затем `docker run --rm --network none -v <worktree>/frontend:/app -v rabit-issues545557-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`.
 
 ## Хронология
 

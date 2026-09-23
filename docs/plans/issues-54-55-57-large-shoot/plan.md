@@ -133,7 +133,7 @@
 ### Исключено
 
 - Виртуализация списка, выбор диапазона и групповая разметка по папкам: это #56, продуктовое обсуждение.
-- Остальные действия `MediaController` (upload, detail, assignment, cover) — follow-up issue.
+- Остальные действия `MediaController` (upload, detail, assignment, cover) — follow-up [#59](https://github.com/rebit-pro/rabit-api/issues/59).
 - Публичная галерея родителей: незащищённые URL и нативная ленивая загрузка.
 - Число media workers — по замеру T16 (закрывает T15 из #47).
 
@@ -150,13 +150,13 @@
 - [x] Разведка кода и production-фактов из issues.
 - [x] Решения пользователя D1, D2.
 - [x] Worktree и ветка от `origin/main` `5f658e5`, upstream снят.
-- [ ] #57: санитайзер, `photoStatus`, тесты media и notification.
-- [ ] #54 backend: чистый контроллер списка, `status`, `summary`, DI, routes, тесты.
-- [ ] #55 frontend: ядро загрузчика, подключение, `PhotoImage`/`GalleryImage`, «Повторить все», unit-тест.
-- [ ] #54 frontend: страница, URL, сводка, наборы по требованию, demo-пейджинг, unit-тест.
-- [ ] E2E-спеки live и mock BDD обновлены (без запуска).
-- [ ] Быстрые проверки: phplint, PHPStan, PHPUnit, php-cs-fixer по изменённым PHP; `npm run check`, `npm run test:commerce`.
-- [ ] Follow-up issue на остальные действия `MediaController`.
+- [x] #57: санитайзер, `photoStatus`, тесты media и notification.
+- [x] #54 backend: чистый контроллер списка, `status`, `summary`, DI, routes, тесты.
+- [x] #55 frontend: ядро загрузчика, подключение, `PhotoImage`/`GalleryImage`, «Повторить все», unit-тест.
+- [x] #54 frontend: страница, URL, сводка, наборы по требованию, demo-пейджинг, unit-тест.
+- [x] E2E-спеки: новый live-сценарий в `zz-media.spec.ts`; mock BDD сверен без правок (без запуска).
+- [x] Быстрые проверки: phplint, PHPStan, PHPUnit, php-cs-fixer по изменённым PHP; `npm run check`, `npm run test:commerce`; stub-проверка UI в браузере.
+- [x] Follow-up issue на остальные действия `MediaController`: [#59](https://github.com/rebit-pro/rabit-api/issues/59).
 - [ ] Commit, push, PR в `main`.
 - [ ] По команде пользователя: полный `make test-e2e`, desktop/mobile.
 - [ ] Review, merge и деплой (backend → frontend) по поручению.
