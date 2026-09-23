@@ -50,7 +50,6 @@ defineEmits<{ logout: [] }>();
   border: 1px solid var(--mf-color-border);
   border-radius: var(--mf-radius-md);
   background: var(--mf-color-surface);
-  box-shadow: var(--mf-shadow-md);
 }
 .mf-user-menu__who {
   display: flex;

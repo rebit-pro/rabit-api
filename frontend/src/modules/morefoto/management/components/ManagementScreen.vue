@@ -63,7 +63,7 @@ watch(
     notice.value = '';
   }
 );
-const title = computed(() => (props.mode === 'users' ? 'Пользователи' : props.mode === 'conditions' ? 'Условия группы' : 'Каталог и цены'));
+const title = computed(() => (props.mode === 'users' ? 'Сотрудники' : props.mode === 'conditions' ? 'Условия группы' : 'Каталог и цены'));
 const dialogTitle = computed(() =>
   command.value?.kind === 'product'
     ? 'Продукция'

@@ -49,9 +49,10 @@
 }
 .mf-panel {
   padding: var(--mf-space-6);
-  background: #fff;
-  border: 1px solid #dce4ea;
-  border-radius: 12px;
+  background: var(--mf-color-surface);
+  border: 1px solid var(--mf-color-border);
+  border-radius: var(--mf-radius-md);
+  box-shadow: var(--mf-shadow-xs);
 }
 .mf-panel h2 {
   font-family: var(--mf-font-display);

@@ -6,6 +6,8 @@ import StaffFields from './StaffFields.vue';
 import { useStaffEditor } from '../useStaffEditor';
 import { useStaffManagement } from '../useStaffManagement';
 import type { AccountStatus, StaffSummary } from '../model';
+import MfStatus from '@/components/status/MfStatus.vue';
+import { accountStatusTone } from '../../ui/statusTone';
 const { snapshot, loading, error, filters, reload, page, pages } = useStaffManagement();
 const notice = shallowRef('');
 const editor = useStaffEditor(async () => {
@@ -69,12 +71,7 @@ function edit(item?: StaffSummary): void {
         >
         <span><small>Роль</small>{{ roleLabels[item.role] }}</span>
         <span><small>Назначения</small>{{ item.assignmentCount }}</span>
-        <v-chip
-          :color="item.accountStatus === 'active' ? 'success' : item.accountStatus === 'pending' ? 'warning' : 'secondary'"
-          size="small"
-        >
-          {{ statusLabels[item.accountStatus] }}
-        </v-chip>
+        <MfStatus :tone="accountStatusTone[item.accountStatus]">{{ statusLabels[item.accountStatus] }}</MfStatus>
         <v-icon icon="mdi-chevron-right" aria-hidden="true" />
       </button>
     </v-card>

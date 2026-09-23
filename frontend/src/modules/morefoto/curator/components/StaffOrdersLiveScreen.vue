@@ -8,6 +8,9 @@ import OrderLiveFacts from '../../orders/components/OrderLiveFacts.vue';
 import { formatMoment, paymentLabels, productionLabels } from '../../orders/formatters';
 import { orderQuoteAsCart } from '../../orders/live/rules';
 import { useStaffOrders } from '../useStaffOrders';
+import MfStatus from '@/components/status/MfStatus.vue';
+import { toneOf } from '@/components/status/tones';
+import { paymentTone, productionTone } from '../../ui/statusTone';
 const route = useRoute();
 const auth = useAuthStore();
 const { orderId, filters, page, card, loading, error, reload, apply, reset } = useStaffOrders();
@@ -47,8 +50,8 @@ const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => ph
         </div>
         <div class="staff-order__state">
           <strong>{{ money(card.quote.total) }}</strong>
-          <v-chip size="small">{{ paymentLabels[card.paymentStatus] }}</v-chip>
-          <v-chip size="small" variant="outlined">{{ productionLabels[card.productionStatus] }}</v-chip>
+          <MfStatus :tone="toneOf(paymentTone, card.paymentStatus)">{{ paymentLabels[card.paymentStatus] }}</MfStatus>
+          <MfStatus :tone="toneOf(productionTone, card.productionStatus)">{{ productionLabels[card.productionStatus] }}</MfStatus>
         </div>
       </header>
       <OrderComposition :quote="orderQuoteAsCart(card.quote, thumb)" />
@@ -102,7 +105,7 @@ const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => ph
           <div class="staff-orders__side">
             <strong>{{ money(order.quote.total) }}</strong>
             <span class="mf-muted">{{ formatMoment(order.createdAt) }}</span>
-            <v-chip size="small">{{ paymentLabels[order.paymentStatus] }}</v-chip>
+            <MfStatus :tone="toneOf(paymentTone, order.paymentStatus)">{{ paymentLabels[order.paymentStatus] }}</MfStatus>
           </div>
         </li>
       </ul>

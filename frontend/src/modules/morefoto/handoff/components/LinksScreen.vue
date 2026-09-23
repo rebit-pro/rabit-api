@@ -14,6 +14,8 @@ import { linkError, linksApi, toLinkGroup } from '../links-api';
 import { isStaffRole } from '../../types';
 import type { LinkCommand, LinkEvent, LinkGroup } from '../types';
 import '../handoff.css';
+import MfStatus from '@/components/status/MfStatus.vue';
+import { linkStatus } from '../../ui/statusTone';
 const live = !isMockApiEnabled,
   authStore = useAuthStore(),
   route = useRoute(),
@@ -137,15 +139,7 @@ async function history(group: LinkGroup, event: Event) {
           <p class="mf-muted">{{ data.scope.institutions.find((i) => i.id === group.institutionId)?.name }} · {{ group.shootName }}</p>
           <h2>{{ group.name }}</h2>
         </div>
-        <v-chip :color="group.state === 'open' ? 'success' : 'secondary'">{{
-          group.state === 'closed'
-            ? 'Приём завершён'
-            : group.sentAt
-              ? 'Приём открыт'
-              : group.prepared
-                ? 'Готова к передаче'
-                : 'Требует проверки'
-        }}</v-chip>
+        <MfStatus :tone="linkStatus(group).tone">{{ linkStatus(group).text }}</MfStatus>
       </header>
       <div class="handoff-dates">
         <div>

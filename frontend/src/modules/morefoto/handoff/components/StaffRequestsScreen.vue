@@ -10,6 +10,9 @@ import { useTransferPreview } from '../useTransferPreview';
 import { formatMoment, requestStatus } from '../display';
 import type { StaffCommand, StaffRequest } from '../types';
 import '../handoff.css';
+import MfStatus from '@/components/status/MfStatus.vue';
+import { toneOf } from '@/components/status/tones';
+import { staffRequestTone } from '../../ui/statusTone';
 const route = useRoute(),
   { auth, data, loading, error, reload } = useHandoff(),
   notice = shallowRef('');
@@ -84,9 +87,7 @@ function change(value: Partial<StaffCommand>) {
               {{ selected.createdByName ?? 'Сотрудник №' + selected.createdBy }} · передан {{ formatMoment(selected.createdAt) }}
             </p>
           </div>
-          <v-chip :color="selected.status === 'transferred' ? 'success' : selected.status === 'clarification' ? 'warning' : 'primary'">{{
-            requestStatus[selected.status]
-          }}</v-chip>
+          <MfStatus :tone="toneOf(staffRequestTone, selected.status)">{{ requestStatus[selected.status] }}</MfStatus>
         </header>
         <v-alert v-if="selected.staffEligibility?.eligible" type="success" variant="tonal" class="mb-5" data-testid="staff-eligibility">
           Право сотрудника подтверждено сервером · {{ formatMoment(selected.staffEligibility.verifiedAt) }}
@@ -136,7 +137,7 @@ function change(value: Partial<StaffCommand>) {
             <h2>{{ data.scope.shoots.find((s) => s.id === request.shootId)?.name }}</h2>
             <p>{{ request.rows.length }} детей · {{ formatMoment(request.createdAt) }}</p>
           </div>
-          <v-chip>{{ requestStatus[request.status] }}</v-chip>
+          <MfStatus :tone="toneOf(staffRequestTone, request.status)">{{ requestStatus[request.status] }}</MfStatus>
         </header>
         <v-btn :to="'/cabinet/staff-requests/' + request.id" variant="outlined">Открыть список</v-btn>
       </article>

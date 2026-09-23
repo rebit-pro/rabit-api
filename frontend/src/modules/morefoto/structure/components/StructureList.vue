@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import type { StructureItem, StructureScope, Group } from '../model';
+import MfStatus from '@/components/status/MfStatus.vue';
+import { toneOf } from '@/components/status/tones';
+import { groupStateTone } from '../../ui/statusTone';
 const props = defineProps<{
   items: StructureItem[];
   scope: StructureScope;
@@ -48,7 +51,7 @@ function group(item: StructureItem): Group | null {
         </h2>
         <p class="mf-muted structure-description">{{ description(item) }}</p>
         <template v-if="group(item)">
-          <v-chip size="small" variant="tonal" class="mt-3">{{ statusLabels[group(item)!.status] }}</v-chip>
+          <MfStatus :tone="toneOf(groupStateTone, group(item)!.status)" class="mt-3">{{ statusLabels[group(item)!.status] }}</MfStatus>
           <p class="mf-muted mt-3">
             {{ group(item)!.teacherId === null ? 'Воспитатель не назначен' : 'Воспитатель назначен' }}
           </p>

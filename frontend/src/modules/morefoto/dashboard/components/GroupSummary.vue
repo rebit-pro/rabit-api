@@ -7,6 +7,9 @@ import { stateLabels } from '../types';
 import { formatMoment } from '../../handoff/display';
 import { money } from '../../commerce/money';
 import { useGroupLink } from '../useGroupLink';
+import MfStatus from '@/components/status/MfStatus.vue';
+import { toneOf } from '@/components/status/tones';
+import { groupStateTone } from '../../ui/statusTone';
 const props = defineProps<{
   readonly group: Group;
   readonly work?: GroupWork;
@@ -32,7 +35,7 @@ const periodTo = computed(() => ({
         <h2 v-if="detail" class="group-summary__title">Сроки и ссылка группы</h2>
         <h3 v-else class="group-summary__title">{{ group.name }}</h3>
       </div>
-      <v-chip :color="group.state === 'open' ? 'success' : 'secondary'" variant="tonal">{{ stateLabels[group.state] }}</v-chip>
+      <MfStatus :tone="toneOf(groupStateTone, group.state)">{{ stateLabels[group.state] }}</MfStatus>
     </header>
     <p class="group-summary__link-state">
       <v-icon :icon="work?.sentAt ? 'mdi-check-circle-outline' : 'mdi-link-variant'" size="18" />{{ linkLabel }}

@@ -18,7 +18,7 @@
     "test:e2e:headed": "cross-env PLAYWRIGHT_HEADLESS=false start-server-and-test e2e:server http://127.0.0.1:4173 test:e2e",
     "test:e2e:install": "playwright install --with-deps chromium",
     "test:commerce": "node --experimental-strip-types --test tests/commerce/*.test.mjs",
-    "test:ui": "node --experimental-strip-types --test tests/tokens/*.test.mjs tests/avatar/*.test.mjs tests/shell/*.test.mjs",
+    "test:ui": "node --experimental-strip-types --test tests/tokens/*.test.mjs tests/avatar/*.test.mjs tests/shell/*.test.mjs tests/ui/*.test.mjs",
     "tokens:build": "node --experimental-strip-types scripts/tokens-build.mjs",
     "test:e2e:live": "playwright test --config playwright.live.config.ts",
     "test:e2e:live:headed": "playwright test --config playwright.live.config.ts --headed"

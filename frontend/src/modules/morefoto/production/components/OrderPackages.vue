@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import type { PrintVersion } from '../types';
 import { packageIds, printCount } from '../rules';
 import { formatMoment } from '../../handoff/display';
+import MfStatus from '@/components/status/MfStatus.vue';
 const props = defineProps<{ version: PrintVersion; editable: boolean }>();
 const emit = defineEmits<{ pack: [orderId: string, packed: boolean] }>();
 const packages = computed(() =>
@@ -34,7 +35,7 @@ const packages = computed(() =>
         @click="emit('pack', pack.id, !pack.checked)"
         >{{ pack.checked ? 'Снять отметку' : 'Скомплектовать пакет' }}</v-btn
       >
-      <v-chip v-else>{{ pack.checked ? 'Скомплектован' : 'Ожидает сверки' }}</v-chip>
+      <MfStatus v-else :tone="pack.checked ? 'success' : 'warning'">{{ pack.checked ? 'Скомплектован' : 'Ожидает сверки' }}</MfStatus>
     </article>
   </section>
 </template>

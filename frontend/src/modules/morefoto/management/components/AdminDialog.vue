@@ -12,9 +12,12 @@ const props = withDefaults(
     footerHint?: string;
     canReset?: boolean;
     fieldsDisabled?: boolean;
+    /** Width by content: sm 480 for confirmations, md 640 for short forms, lg 880 for full editors. */
+    size?: 'sm' | 'md' | 'lg';
   }>(),
-  { canReset: true }
+  { canReset: true, size: 'lg' }
 );
+const widths = { sm: 480, md: 640, lg: 880 } as const;
 const emit = defineEmits<{ close: []; save: []; reset: [] }>();
 let opener: HTMLElement | null = null;
 watch(
@@ -53,7 +56,8 @@ function returnFocus() {
   <v-dialog
     :model-value="open"
     :persistent="busy"
-    max-width="880"
+    :max-width="widths[size]"
+    content-class="admin-dialog-overlay"
     aria-labelledby="admin-title"
     @update:model-value="!$event && emit('close')"
     @after-enter="focusFirst"
@@ -92,7 +96,9 @@ function returnFocus() {
 <style scoped>
 .admin-dialog {
   max-height: 90dvh !important;
-  border-radius: var(--mf-radius-field);
+  border: 1px solid var(--mf-color-border);
+  border-radius: var(--mf-radius-lg) !important;
+  box-shadow: var(--mf-shadow-lg) !important;
 }
 .admin-dialog form {
   display: flex;
@@ -105,13 +111,15 @@ function returnFocus() {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 20px 24px;
-  border-bottom: 1px solid #dce3e8;
+  padding: var(--mf-space-5) var(--mf-space-6);
+  border-bottom: 1px solid var(--mf-color-divider);
   flex-shrink: 0;
 }
 .admin-heading h2 {
-  font-size: 22px;
-  line-height: 1.35;
+  font-family: var(--mf-font-display);
+  font-size: var(--mf-text-xl);
+  font-weight: var(--mf-weight-semibold);
+  line-height: var(--mf-leading-snug);
 }
 .admin-body {
   padding: 24px;
@@ -123,8 +131,8 @@ function returnFocus() {
   min-width: 0;
 }
 .admin-footer {
-  padding: 16px 24px;
-  border-top: 1px solid #dce3e8;
+  padding: var(--mf-space-4) var(--mf-space-6);
+  border-top: 1px solid var(--mf-color-divider);
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -134,13 +142,16 @@ function returnFocus() {
 }
 .admin-footer p {
   width: 100%;
-  font-size: 12px;
+  font-size: var(--mf-text-xs);
 }
 @media (max-width: 600px) {
+  .admin-dialog {
+    border-radius: var(--mf-radius-lg) var(--mf-radius-lg) 0 0 !important;
+  }
   .admin-heading,
   .admin-body,
   .admin-footer {
-    padding: 16px;
+    padding: var(--mf-space-4);
   }
   .admin-footer > .v-btn {
     white-space: normal;
@@ -164,5 +175,16 @@ function returnFocus() {
   height: auto;
   min-height: 48px;
   max-width: 100%;
+}
+</style>
+<style>
+/* On phones the editor becomes a full-width sheet anchored to the bottom edge (design plan 10.4). */
+@media (max-width: 600px) {
+  .admin-dialog-overlay.v-overlay__content {
+    align-self: flex-end;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
 }
 </style>

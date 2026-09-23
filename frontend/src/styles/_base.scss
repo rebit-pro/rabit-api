@@ -63,6 +63,36 @@ body {
   color: var(--mf-color-border);
 }
 
+// Notices (design plan 10.4): tonal alerts take the status tone tokens instead of a tinted currentColor.
+:root .v-alert--variant-tonal {
+  border: 1px solid transparent;
+  border-radius: var(--mf-radius-md);
+}
+
+:root .v-alert--variant-tonal > .v-alert__underlay {
+  display: none;
+}
+
+@each $type, $tone in (success: success, info: info, warning: warning, error: danger) {
+  :root .v-alert--variant-tonal.text-#{$type} {
+    border-color: var(--mf-tone-#{$tone}-border);
+    background: var(--mf-tone-#{$tone}-bg);
+    color: var(--mf-tone-#{$tone}-fg) !important;
+  }
+}
+
+// Menus and popovers float above panels: radius md and the md shadow over a 1px border.
+:root .v-menu > .v-overlay__content {
+  border-radius: var(--mf-radius-md);
+  box-shadow: var(--mf-shadow-md);
+}
+
+:root .v-menu > .v-overlay__content > .v-list,
+:root .v-menu > .v-overlay__content > .v-card {
+  border: 1px solid var(--mf-color-border);
+  border-radius: inherit;
+}
+
 // Hide the drawer scrim immediately on close so it never intercepts clicks during the fade.
 .v-navigation-drawer__scrim.fade-transition-leave-to {
   display: none;

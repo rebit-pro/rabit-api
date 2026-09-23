@@ -5,6 +5,7 @@ import type { UiTableColumn, UiTableRow, UiTableSort } from '../table-types';
 import { tableCellText, tablePageCount } from '../table-values';
 import UiTableCell from './UiTableCell.vue';
 import UiTableRowActions from './UiTableRowActions.vue';
+import MfEmptyState from '@/components/states/MfEmptyState.vue';
 const props = withDefaults(
   defineProps<{
     title: string;
@@ -81,11 +82,7 @@ defineExpose({ focusRow });
       {{ error }}
       <div class="mt-3"><v-btn variant="outlined" @click="$emit('retry')">Повторить загрузку списка</v-btn></div>
     </v-alert>
-    <div v-else-if="!rows.length" class="ui-table-state">
-      <v-icon icon="mdi-text-box-search-outline" size="32" color="primary" />
-      <h3>{{ emptyTitle }}</h3>
-      <p class="mf-muted">{{ emptyDescription }}</p>
-    </div>
+    <MfEmptyState v-else-if="!rows.length" :title="emptyTitle" :text="emptyDescription" icon="mdi-text-box-search-outline" />
     <template v-else>
       <div class="ui-table-mobile-tools">
         <v-select
