@@ -88,7 +88,7 @@ final readonly class StaffRequestRepository
     {
         $scope = match ($actor->role) {
             'organizer' => '1=1',
-            'curator' => 'i.ID IN (' . $this->ids($actor->institutionIds) . ')',
+            'curator', 'head' => 'i.ID IN (' . $this->ids($actor->institutionIds) . ')',
             'teacher' => 'g.ID IN (' . $this->ids($actor->groupIds) . ')',
             default => '1=0',
         };
@@ -427,7 +427,7 @@ final readonly class StaffRequestRepository
     {
         return match ($actor->role) {
             'organizer' => '1=1',
-            'curator' => $alias . '.INSTITUTION_ID IN (' . $this->ids($actor->institutionIds) . ')',
+            'curator', 'head' => $alias . '.INSTITUTION_ID IN (' . $this->ids($actor->institutionIds) . ')',
             'teacher' => $alias . '.CREATED_BY=' . $actor->id . ' AND NOT EXISTS (SELECT 1 FROM mf_staff_request_row visible_row WHERE visible_row.REQUEST_ID=' . $alias . '.ID AND visible_row.GROUP_ID NOT IN (' . $this->ids($actor->groupIds) . '))',
             default => '1=0',
         };

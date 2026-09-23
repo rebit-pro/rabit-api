@@ -100,6 +100,7 @@ final readonly class GroupLinkResultMapper
             deliveryAt: $output->deliveryAt,
             photoCount: $output->photoCount,
             childCount: $output->childCount,
+            curatorName: $output->curatorName,
         );
     }
 

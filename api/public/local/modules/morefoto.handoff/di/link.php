@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Bitrix\Main\DI\ServiceLocator;
 use Morefoto\Handoff\Application\Link\Mapper\GroupLinkOutputMapper;
 use Morefoto\Handoff\Application\Link\Service\GroupLinkCommandSession;
@@ -41,7 +42,7 @@ $services = [
 $dependencies = [
     GroupLinkReadiness::class => [GroupMaterialsInterface::class, GroupSalesReadinessInterface::class, GroupAccessInterface::class, GroupLinkRepositoryInterface::class, LinkReadinessPolicy::class],
     GroupLinkCommandSession::class => [GroupLinkAccessInterface::class, GroupCalendarInterface::class, GroupDirectoryInterface::class, GroupLinkRepositoryInterface::class, GroupLinkReadiness::class, LinkPermissionPolicy::class],
-    ListGroupLinksUseCase::class => [GroupLinkAccessInterface::class, GroupDirectoryInterface::class, GroupLinkReadiness::class, GroupLinkRepositoryInterface::class, LinkPermissionPolicy::class, LinkReadinessPolicy::class, GroupLinkOutputMapper::class],
+    ListGroupLinksUseCase::class => [GroupLinkAccessInterface::class, GroupDirectoryInterface::class, GroupLinkReadiness::class, GroupLinkRepositoryInterface::class, LinkPermissionPolicy::class, LinkReadinessPolicy::class, GroupLinkOutputMapper::class, InstitutionAccessInterface::class],
     GetGroupLinkUseCase::class => [GroupLinkAccessInterface::class, GroupDirectoryInterface::class, GroupLinkReadiness::class, GroupLinkRepositoryInterface::class, GalleryLinkInterface::class, LinkPermissionPolicy::class, LinkReadinessPolicy::class, GroupLinkOutputMapper::class, ClockInterface::class],
     PrepareGroupLinkUseCase::class => [HandoffTransactionInterface::class, GroupLinkCommandSession::class, GroupLinkRepositoryInterface::class, GalleryLinkInterface::class, GroupLinkOutputMapper::class],
     TransmitGroupLinkUseCase::class => [HandoffTransactionInterface::class, GroupLinkCommandSession::class, GroupLinkRepositoryInterface::class, GalleryLinkInterface::class, GroupCalendarInterface::class, LinkReadinessPolicy::class, LinkDeliveryPolicy::class, GroupLinkOutputMapper::class],

@@ -17,9 +17,14 @@ use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryItemOutputDto;
 /** Stateless conversion of link facts and stored command results into Application output DTOs. */
 final readonly class GroupLinkOutputMapper
 {
-    public function summary(GroupDirectoryItemOutputDto $group, LinkAssessmentOutputDto $assessment, int $revision, bool $prepared): GroupLinkSummaryOutputDto
-    {
-        return new GroupLinkSummaryOutputDto(...$this->fields($group, $assessment, $revision, $prepared));
+    public function summary(
+        GroupDirectoryItemOutputDto $group,
+        LinkAssessmentOutputDto $assessment,
+        int $revision,
+        bool $prepared,
+        ?string $curatorName = null,
+    ): GroupLinkSummaryOutputDto {
+        return new GroupLinkSummaryOutputDto(...$this->fields($group, $assessment, $revision, $prepared), curatorName: $curatorName);
     }
 
     /**

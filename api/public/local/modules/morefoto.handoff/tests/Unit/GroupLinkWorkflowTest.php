@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Morefoto\Handoff\Tests\Unit;
 
+use Rebit\Share\Contracts\Access\Dto\InstitutionAssignmentOutputDto;
+use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Morefoto\Handoff\Application\Link\Dto\GroupLinkListInputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkCorrectionInputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkPreparationInputDto;
@@ -102,7 +104,9 @@ final class GroupLinkWorkflowTest extends TestCase
         $this->read = new GetGroupLinkUseCase($access, $this->directory, $readiness, $this->links, $this->gallery, new LinkPermissionPolicy(), new LinkReadinessPolicy(), $mapper, $clock);
         $this->prepare = new PrepareGroupLinkUseCase($transaction, $session, $this->links, $this->gallery, $mapper);
         $this->transmit = new TransmitGroupLinkUseCase($transaction, $session, $this->links, $this->gallery, $this->calendar, new LinkReadinessPolicy(), new LinkDeliveryPolicy(), $mapper);
-        $this->list = new ListGroupLinksUseCase($access, $this->directory, $readiness, $this->links, new LinkPermissionPolicy(), new LinkReadinessPolicy(), $mapper);
+        $institutions = $this->createStub(InstitutionAccessInterface::class);
+        $institutions->method('assignments')->willReturn([3 => new InstitutionAssignmentOutputDto(curatorId: self::CURATOR, headId: self::HEAD, curatorName: 'Мария Иванова')]);
+        $this->list = new ListGroupLinksUseCase($access, $this->directory, $readiness, $this->links, new LinkPermissionPolicy(), new LinkReadinessPolicy(), $mapper, $institutions);
         $this->correct = new CorrectGroupLinkDateUseCase($transaction, $session, $this->links, $this->gallery, $this->calendar, new LinkDeliveryPolicy(), $mapper);
     }
 
@@ -147,9 +151,11 @@ final class GroupLinkWorkflowTest extends TestCase
         self::assertSame([[3], null, 'preparing'], [$preparing->institutionIds, $preparing->groupIds, $preparing->state]);
 
         $seen = count($this->directory->queries);
-        $this->list->execute(self::TEACHER, new GroupLinkListInputDto(null, null, null, 1, 25));
+        $teacherPage = $this->list->execute(self::TEACHER, new GroupLinkListInputDto(null, null, null, 1, 25));
         $teacher = array_slice($this->directory->queries, $seen)[0];
         self::assertSame([null, [10]], [$teacher->institutionIds, $teacher->groupIds]);
+        // INF-11: the teacher sees whom to ask — the curator of the group's institution.
+        self::assertSame(['Мария Иванова'], array_map(static fn($item): ?string => $item->curatorName, $teacherPage->items));
     }
 
     public function testSameKeyReplaysOnlyTheSameBody(): void
