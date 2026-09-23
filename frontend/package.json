@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
+    "build": "npm run typecheck && npm run build-only",
+    "build-only": "vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
     "typecheck:e2e": "tsc --project tsconfig.e2e.json --noEmit",
