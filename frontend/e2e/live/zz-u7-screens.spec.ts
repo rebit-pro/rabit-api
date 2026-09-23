@@ -67,6 +67,8 @@ test('U7: учреждение и съёмка — счётчики, хлебн�
   await expect(page.getByTestId('upload-drop')).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });
+  // The shell switches to the mobile drawer on a fresh render; a resized desktop page is not what a phone shows.
+  await page.reload();
   await expect(crumbs.getByRole('link', { name: 'U7 Съёмка', exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

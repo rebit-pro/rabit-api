@@ -66,6 +66,8 @@ const groupStates = computed(() => {
   const counts = snapshot.value?.meta.summary?.byState;
   return counts ? groupStateSegments(counts) : null;
 });
+// An empty list offers the first record itself; the heading keeps the action only when there is something to add to.
+const emptyOffersCreate = computed(() => canManage.value && !!snapshot.value && !snapshot.value.items.length && !query.value.trim());
 const emptyTitle = computed(
   () => ({ institution: 'Учреждений пока нет', shoot: 'Съёмок пока нет', group: 'Групп пока нет' })[props.scope.kind]
 );
@@ -101,7 +103,7 @@ function editShoot(): void {
       {{ snapshot.shoot.date ? 'Дата съёмки: ' + snapshot.shoot.date.split('-').reverse().join('.') : 'Дата съёмки не назначена' }}
     </p>
     <div class="mf-actions mt-5">
-      <v-btn v-if="canManage" prepend-icon="mdi-plus" :disabled="disabled" @click="edit()">{{ createLabel }}</v-btn>
+      <v-btn v-if="canManage && !emptyOffersCreate" prepend-icon="mdi-plus" :disabled="disabled" @click="edit()">{{ createLabel }}</v-btn>
       <v-btn v-if="canManage && scope.kind === 'group'" variant="outlined" :disabled="disabled" @click="editShoot"
         >Редактировать съёмку</v-btn
       >

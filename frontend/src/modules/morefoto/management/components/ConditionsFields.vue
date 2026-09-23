@@ -119,6 +119,7 @@ const kinds = { physical: 'Печатный товар', digital: 'Один эл
   background: var(--mf-color-surface-2);
 }
 .conditions-mode__segment {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -132,8 +133,12 @@ const kinds = { physical: 'Печатный товар', digital: 'Один эл
 }
 .conditions-mode__segment input {
   position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   opacity: 0;
-  pointer-events: none;
+  cursor: pointer;
 }
 .conditions-mode__segment--on {
   background: var(--mf-color-surface);

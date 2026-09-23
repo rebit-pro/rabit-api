@@ -737,6 +737,8 @@ test('#55: превью прежней сессии отменяются при 
   });
   await page.goto('/cabinet/institutions/' + institution.id + '/shoots/' + shoot.id + '/photos?group=' + group.id);
   await expect(page.getByTestId('photo-card')).toHaveCount(1);
+  // Protected frames load only near the viewport (#55); U7 put the readiness panel and the drop zone above the grid.
+  await page.getByTestId('photo-card').scrollIntoViewIfNeeded();
   await expect.poll(() => held.length).toBe(1);
   const loggedOut = page.waitForResponse((response) => response.url().endsWith('/auth/logout'));
   await logout(page);

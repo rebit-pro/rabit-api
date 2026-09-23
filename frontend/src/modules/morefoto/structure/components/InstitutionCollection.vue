@@ -30,7 +30,7 @@ const emptyText = computed(() =>
         <h2>{{ title }}</h2>
         <p class="mf-muted mt-2">Всего: {{ meta.total }}</p>
       </div>
-      <v-btn v-if="kind === 'shoot' && canManage" prepend-icon="mdi-plus" :disabled="disabled" @click="emit('create')">
+      <v-btn v-if="kind === 'shoot' && canManage && items.length" prepend-icon="mdi-plus" :disabled="disabled" @click="emit('create')">
         Новая съёмка
       </v-btn>
     </div>
