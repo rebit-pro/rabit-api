@@ -10,7 +10,7 @@
 - PR [#58](https://github.com/rebit-pro/rabit-api/pull/58) OPEN, MERGEABLE/CLEAN. Пользователь разрешил merge сразу после PR («после PR можно мержить main»), чтобы параллельные ветки получили новый runner. Попытка `gh pr merge 58 --merge --match-head-commit 7576859…` отклонена правилами разрешений режима auto (Merge Without Review): merge выполняет пользователь или разрешает его отдельно. Deployment не нужен: меняется только локальный гейт.
 - Следующий шаг после merge: параллельным веткам влить `main`. Новый live spec в ветке нужно добавить ровно в одну группу `frontend/e2e/live/groups.json`, иначе конфиг Playwright и runner откажутся запускаться.
 - Блокеров нет.
-- Открыто по решению пользователя:
+- Все находки собраны в issue [#61](https://github.com/rebit-pro/rabit-api/issues/61) по просьбе пользователя. Открыто по решению пользователя:
   - третья группа или стенд (−50…70 с браузера, +1,7 ГиБ RAM);
   - перестройка ожидания смены минуты в `zzzz-links`;
   - удаление старых контейнеров и томов `rabit-e2e-053a6380f4ef-*`, `rabit-e2e-df39f10033d5-*` от прерванных прогонов 12–13 сентября;
@@ -127,6 +127,15 @@ make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rab
 - Временные probe-тома удалены (`docker volume rm rabit-ops-probe-*`).
 - `git commit` `7103ebf`, `git push -u origin codex/ops-e2e-optimization`, `gh pr create` — PR #58. Перед merge `main` сдвинулся с `aee6808` на `5f658e5`: один docs-коммит в `docs/plans/issues-31-33-34-photo-upload/progress.md`. Файлы гейта (runner, live spec, конфиги, `package.json`, `api/tools/e2e`) не менялись, повторять проверки не требуется. `gh pr view 58`: MERGEABLE, CLEAN.
 - `7576859` — журнал с PR #58 и сдвигом base, push. `gh pr merge 58 --merge --match-head-commit 7576859…` отклонён правилами разрешений режима auto. PR остаётся открытым и готовым к merge; ждём действия пользователя.
+- По просьбе пользователя («пометь все находки одним issues») создан issue #61 (`gh issue create --label bug --label enhancement`). В нём:
+  1. брошенные стенды 12–13.09 и безопасная очистка;
+  2. Xdebug в development-образах: двойная загрузка, отладка на каждый запрос;
+  3. ожидание минуты в `zzzz-links`, с оговоркой про #51;
+  4. root-файлы от контейнеров;
+  5. таймаут 900 с против 45 мин у bench;
+  6. `__pycache__` без `.gitignore`;
+  7. резервы ускорения: третий стенд, баланс групп, память MySQL, конкуренция CPU, готовый `node_modules`.
+  Ссылки на код — `main` `5f658e5` и commit `dbba991` ветки #58. Дубликатов нет: инвариант подарка уже описан в #51, в #61 на него только ссылка.
 
 ## Тест-кейсы
 
