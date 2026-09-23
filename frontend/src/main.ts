@@ -5,7 +5,7 @@ import App from './App.vue';
 import { router } from './router';
 import { useAuthStore } from '@/stores/auth';
 import vuetify from './plugins/vuetify';
-import '@/scss/style.scss';
+import '@/styles/vuetify.scss';
 import { initializeMoreFotoMocks } from '@/modules/morefoto/mocks/runtime';
 import '@/styles/morefoto.scss';
 

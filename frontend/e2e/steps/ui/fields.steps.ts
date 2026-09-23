@@ -37,7 +37,7 @@ Then('обычные поля образцов имеют высоту {int}', a
         const end = getComputedStyle(el.querySelector('.v-field__outline__end')!);
         return [start.borderTopLeftRadius, start.borderBottomLeftRadius, end.borderTopRightRadius, end.borderBottomRightRadius];
       });
-    expect(corners, 'Видимая рамка ' + id).toEqual(['4px', '4px', '4px', '4px']);
+    expect(corners, 'Видимая рамка ' + id).toEqual(['8px', '8px', '8px', '8px']);
   }
 });
 Then('заполнение очистка и состояния полей работают', async function (this: CustomWorld) {

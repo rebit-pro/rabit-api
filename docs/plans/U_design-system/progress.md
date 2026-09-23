@@ -6,9 +6,9 @@
 - Ветка: `codex/u-design-system` от `main` `bb35665` (merge PR #50); worktree `/home/user/rabit-api-worktrees/u-design-system`.
 - PR: [#53](https://github.com/rebit-pro/rabit-api/pull/53) draft, base `main`; head — коммиты U1a `a144f1e`, U1b `de5a5f0` и этот журнал.
 - Документация: [план](plan.md), мастер-план [design-ux-plan](../design-ux-plan/plan.md), отчёт пакета [docs/waves/design-ux](../../waves/design-ux/README.md).
-- Завершено: U1a (очистка frontend) и U1b (граф, пакет design-ux, D3 merged, канонический патч MoreFoto); проверки DX-U1-01/03/04/05/06 — PASS; draft PR #53.
-- Сейчас: U1 завершена.
-- Следующий шаг: U2 — детализировать план волны (токены, шрифты, замена глобальных стилей Berry), затем код.
+- Завершено: U1 (`a144f1e`, `de5a5f0`), draft PR #53; U2 — токены, шрифты, тема, замена стилей Berry, playground, live-спека.
+- Сейчас: коммит U2.
+- Следующий шаг: U3 — логотип, каркас, навигация, `MfAvatar` на инициалах; сначала детали волны в плане.
 - Блокеры: нет.
 - Рабочее дерево: чистое после коммита журнала; node_modules — volume `rabit-u-node` (после `npm uninstall`) и чистый `rabit-u-node-ci` (`npm ci` на новом lockfile).
 - Команды следующей проверки: быстрые frontend-проверки из раздела 11 плана; `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
@@ -18,10 +18,15 @@
 | ID | Статус | Дата | Команда | Доказательство |
 | --- | --- | --- | --- | --- |
 | DX-U1-01 | PASS | 2026-09-23 | `npx vite build` до/после, `du -cb dist/assets/*.js` | главный чанк 3 878 500 → 284 160 байт (−3,59 МБ, gzip 431 → 105 КБ); JS всего 4 717 272 → 1 122 927; `dist` 15,1 → 11,5 МБ |
+| DX-U1-02 | PASS | 2026-09-23 | стенд скриншотов без backend (demo-режим, Vite + Playwright, 10 экранов × 1440/390), `main` против U1, пиксельное сравнение PIL | 19 из 20 снимков идентичны; `overview-1440` — 7 пикселей с разницей ±1 в RGB (сглаживание) |
 | DX-U1-03 | PASS | 2026-09-23 | `python3 tools/verify-wave-graph.py docs/waves/graph.json` | 50 волн, 99 ID, ready U1/U5; 13 негативных fixtures, включая 3 новых для пакета; канонический MoreFoto — 51 волна, `build.py`, `validate.py`, `validate-postman.cjs` зелёные |
 | DX-U1-04 | PASS | 2026-09-23 | скрипт сравнения правил CSS `dist/assets/*.css` до/после | 13 804 → 13 690 правил: удалено 114 (темы Dark 16, horizontal 23, sidebar 37, topbar 11, perfect-scrollbar 13, VAlert 9, VShadow 3, VTabs 2), добавлено 0, прочих изменений 0 |
 | DX-U1-05 | PASS | 2026-09-23 | `npm run check && npm run test:commerce` (docker, `rabit-u-node`) | lint, vue-tsc, tsc e2e — 0 ошибок; commerce 172/172 |
 | DX-U1-06 | PASS | 2026-09-23 | `npm ci` в чистый volume `rabit-u-node-ci` | 20 с, 299 пакетов верхнего уровня; lockfile: −176 пакетов, 0 добавлено, 0 смен версий; удалённых пакетов нет |
+| DX-U2-01 | PASS | 2026-09-23 | `npm run check` (lint, vue-tsc, tsc e2e, `test:tokens`) и `npm run test:commerce` | 0 ошибок; tokens 5/5 (актуальность `_tokens.scss`, ссылки семантики, контрасты 7.6); commerce 172/172 |
+| DX-U2-02 | PENDING | 2026-09-23 | `e2e/live/design-tokens.spec.ts` против `vite preview` live-сборки | спека проверена на статической сборке — 1 passed; зачёт — в финальном gate на стенде |
+| DX-U2-03 | PASS | 2026-09-23 | стенд скриншотов U1 → U2, просмотр login, institutions, orders-390, links, playground | изменились шрифт (Golos Text/Manrope), радиус 8, рамка поля #738596 opacity 1, трекинг normal, отступы `.v-main` на ≤1279px; поломок нет; зонд computed-стилей подтвердил значения |
+| DX-U2-04 | PASS | 2026-09-23 | `npx vite build`, `dist/index.html`, CSS | `GolosText-wght-*.woff2` 48,8 КБ и `Manrope-wght-*.woff2` 30,8 КБ в `dist/assets/`; оба preload указывают на те же хэшированные URL, что и `@font-face` |
 | DX-FIN-01 | PENDING | — | — | финальный gate |
 | DX-FIN-02 | PENDING | — | — | финальный gate |
 | DX-FIN-03 | PENDING | — | — | финальный gate |
@@ -52,4 +57,20 @@
 - Отклонения зависимостей от таблицы мастер-плана: U1 зависит от A8 (frontend, который очищается); B4 — от U3/U4 (экраны доступа на новых компонентах); U8 — от B4 (действия приглашения в списке сотрудников).
 - `tools/verify-wave-graph.py` и канонический `wave_graph.py` (до изменения были идентичны): ID `[A-NU]`, правила пакета и три негативных fixtures.
 - Канонический MoreFoto: `render-waves.py` выводит раздел «Пакеты доставки» и пакет у волны; `build.py` и `validate.py` принимают ID U; пересобраны `backend-waves.md`, `endpoints.json`, обе Postman-коллекции, `verification.json`; добавлены ссылка на v2 в `frontend/design-plan.md` и запись о D01/D08 в `frontend/business-review/decisions.md`. Патч — `docs/waves/design-ux/morefoto-contract.patch` (12 файлов, 1 866 строк, `patch -p1 --dry-run` на копии до изменений — без ошибок).
+
+### 2026-09-23 — стенд скриншотов и DX-U1-02
+
+- Для самоконтроля вёрстки собран стенд без backend в scratchpad сессии: Vite dev в demo-режиме в контейнере Playwright без сети, вход demo-ролями, 10 экранов × 1440/390 за ~40 с. Demo-моки считают `navigator.onLine=false` сетевой ошибкой — стенд подменяет его через `addInitScript`.
+- `main` (экспорт `bb35665`) против U1: 19 из 20 снимков совпали попиксельно, в `overview-1440` 7 пикселей отличаются на ±1 в RGB (сглаживание). DX-U1-02 выполнен дополнительно к DX-U1-04.
+
+### 2026-09-23 — U2: токены, шрифты, тема
+
+- Факты и решения — раздел 4.1 плана. `src/theme/tokens.ts` → `scripts/tokens-build.mjs` → `src/styles/_tokens.scss`; `tests/tokens/tokens.test.mjs` в `npm run check`; расчёт контраста вынесен в `src/theme/contrast.ts` (тест и playground).
+- Шрифты: Golos Text и Manrope из google/fonts (OFL), subset `pyftsubset` (латиница, кириллица, ₽, №, пунктуация, `layout-features=*`), вариативность сохранена (fvar/gvar/HVAR проверены), woff2 48,8/30,8 КБ в `src/assets/fonts/` с лицензиями. Запасные лица с метриками: Golos `size-adjust` 111,34 %, ascent 88,02 %, descent 19,76 %; Manrope 106 %.
+- Каталог `src/scss/` удалён: ядро Vuetify настраивается в `src/styles/vuetify.scss`, глобальная база — `src/styles/_base.scss`. CSS компонентов Vuetify грузится лениво с чанками маршрутов после основных стилей, поэтому базовые переопределения подняты через `:root`. Трекинг Material (`letter-spacing` у 13 селекторов Vuetify) обнулён: с Golos Text он выглядел разреженным. Контур поля в покое — `border-strong`, в фокусе наследует primary (раньше Berry держал его серым), ошибки — цвет Vuetify.
+- `MoreFotoTheme` из токенов; `_morefoto-ui.scss`: радиусы через `--mf-radius-sm`, рамка поля opacity 1, подпись поля `text-secondary`, фокус и шрифт оверлеев на токенах; `morefoto.scss`: шрифт кабинета, Manrope у `.mf-brand`, заголовков страниц и панелей.
+- Demo Cucumber: `e2e/steps/ui/fields.steps.ts:40` ожидает радиус контура `8px`. Live-спека `e2e/live/design-tokens.spec.ts` (DX-U2-02) проверена на `vite preview` live-сборки: первая версия упала на XPath-предке (нашёлся `v-field__input`), локатор исправлен на `.v-input` с полем Email — 1 passed.
+- Playground `/demo/ui`: разделы «Токены» (семантические цвета с контрастом, статусы, пастель, радиусы, тени) и «Типографика».
+- Бандл: главный чанк 286 940 байт (+2,8 КБ токены и тема), CSS всего 743 301 байт.
+- Наблюдение для U4: у экрана «Ссылки и сроки» собственный заголовок (Golos Bold из `handoff.css`), заголовки страниц унифицируются компонентами U4. Manrope 600 визуально легче Golos 600 — оставлено по плану, оценка на финальной визуальной проверке.
 

@@ -14,8 +14,8 @@
   --mf-space-4: 16px;
   --mf-space-6: 24px;
   --mf-space-8: 32px;
-  --mf-radius-field: 4px;
-  --mf-radius-button: 4px;
+  --mf-radius-field: var(--mf-radius-sm);
+  --mf-radius-button: var(--mf-radius-sm);
   --mf-focus-width: 2px;
   --mf-focus-offset: 3px;
 
@@ -39,7 +39,7 @@
     opacity: 1;
   }
   .v-field:not(.v-field--disabled):not(.v-field--focused):not(.v-field--error) .v-label.v-field-label {
-    color: rgb(var(--v-theme-lightText));
+    color: var(--mf-color-text-secondary);
   }
   .v-field--variant-outlined {
     --v-field-padding-start: var(--mf-space-3);
@@ -66,7 +66,7 @@
     min-height: var(--v-input-control-height);
   }
   .v-field__outline {
-    --v-field-border-opacity: 0.65;
+    --v-field-border-opacity: 1;
   }
   .v-input__details {
     padding-inline: var(--mf-space-3);
@@ -145,12 +145,12 @@
   button:focus-visible,
   summary:focus-visible,
   [role="button"]:focus-visible {
-    outline: var(--mf-focus-width) solid rgb(var(--v-theme-primary));
+    outline: var(--mf-focus-width) solid var(--mf-color-focus);
     outline-offset: var(--mf-focus-offset);
   }
 }
 .mf-ui-overlay {
-  font-family: Arial, sans-serif;
+  font-family: var(--mf-font-sans);
   .v-list-item-title {
     white-space: normal;
     line-height: 1.5;

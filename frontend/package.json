@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
     "typecheck:e2e": "tsc --project tsconfig.e2e.json --noEmit",
-    "check": "npm run lint && npm run typecheck && npm run typecheck:e2e",
+    "check": "npm run lint && npm run typecheck && npm run typecheck:e2e && npm run test:tokens",
     "lint": "eslint . --ignore-pattern .gitignore",
     "lint:fix": "npm run lint -- --fix",
     "e2e:server": "cross-env VITE_API_URL=/api VITE_API_MOCKS_ENABLED=true vite --host 127.0.0.1 --port 4173 --strictPort",
@@ -18,6 +18,8 @@
     "test:e2e:headed": "cross-env PLAYWRIGHT_HEADLESS=false start-server-and-test e2e:server http://127.0.0.1:4173 test:e2e",
     "test:e2e:install": "playwright install --with-deps chromium",
     "test:commerce": "node --experimental-strip-types --test tests/commerce/*.test.mjs",
+    "test:tokens": "node --experimental-strip-types --test tests/tokens/*.test.mjs",
+    "tokens:build": "node --experimental-strip-types scripts/tokens-build.mjs",
     "test:e2e:live": "playwright test --config playwright.live.config.ts",
     "test:e2e:live:headed": "playwright test --config playwright.live.config.ts --headed"
   },

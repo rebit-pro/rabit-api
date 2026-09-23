@@ -37,10 +37,36 @@
 ## 4. Отклонения от мастер-плана
 
 - Граница U1/U2 (2026-09-23). Глобальные переопределения Berry, которые действуют на живые экраны, переходят из U1 в U2 и заменяются стилями на токенах: `scss/_override.scss` (`.v-row + .v-row`, `.v-divider`, `.bg-success`, `.v-selection-control`), `scss/layout/_container.scss` (`html { overflow-y: auto }`, поля `.v-main` на ≤1279px), `scss/components/_VButtons`, `_VCard`, `_VField`, `_VInput`, `_VTextField`, `_VTextarea`, `_VNavigationDrawer`. U1 удаляет только стили, селекторы которых не встречаются в живом DOM. Причина: U1 остаётся без визуальных изменений по построению, а сравнение «до/после» заменяется сравнением собранного CSS.
-- DX-U1-02 (скриншоты «до/после») заменяется DX-U1-04 (diff собранного CSS): из бандла уходят только правила с мёртвыми селекторами.
+- DX-U1-02 (скриншоты «до/после») выполнен на стенде без backend в demo-режиме и дополнен DX-U1-04 (diff собранного CSS): из бандла уходят только правила с мёртвыми селекторами.
 - В U1 дополнительно удаляются зависимости без импортов: `vee-validate` (только мёртвый `AuthRegister`), `date-fns`, `vite-plugin-vue-devtools`, `sass-loader`, `vue-cli-plugin-vuetify` — меньше `npm ci` и lockfile.
 - Граф (DS-13): волны U1–U8, B3, B4 регистрируются в U1 с общим пакетом доставки `design-ux`; валидатор допускает зависимость внутри пакета для inProgress/review. Endpoint ID B3 (ACC-07…ACC-10) и B4 (AUTH-05…AUTH-09, ACC-11) назначаются коммитами B3/B4 вместе с контрактами в каноническом `endpoints.json`. Внешние изменения соседнего MoreFoto (без git) сохраняются патчем `docs/waves/design-ux/morefoto-contract.patch`.
 - Слияние D3 (PR #46 `533c06b`, PR #49, PR #52) записывается в граф коммитом U1b по правилу «следующая волна фиксирует merge».
+
+## 4.1. Детали U2
+
+Факты из кода (2026-09-23):
+
+- `scss/_variables.scss` настраивает только ядро Vuetify (`@use 'vuetify/styles' with (...)`: `$rounded`, `$typography`, `$body-font-family: Roboto`); стили компонентов Vuetify подключаются уже собранными (`vite-plugin-vuetify`, `styles: true`), их SASS-переменные не настраиваются, и мастер-план отверг `styles.configFile`. Классы `rounded-*`, `text-h*`, `text-*-emphasis` и `<v-row>`/`<v-divider>` в живом коде не используются.
+- Vuetify 3.10 по умолчанию делает кнопки `text-transform: uppercase; letter-spacing: .089em`, `.v-card { overflow: hidden }`, `.v-card-text { padding: 1rem }`, контур поля `currentColor`; радиус контура поля наследуется от `.v-field`. Эти значения скрывали глобальные файлы Berry; в оверлеях вне `.morefoto-app` они действуют до сих пор.
+- Размеры UI01–UI04 заданы на `.morefoto-app` в `styles/_morefoto-ui.scss`; радиус поля и кнопки 4px, рамка поля `opacity: .65` (2,21:1), шрифт Arial в `styles/morefoto.scss:4` и `.mf-ui-overlay`.
+- Demo Cucumber проверяет радиус контура `4px` (`e2e/steps/ui/fields.steps.ts:40`).
+
+Решения:
+
+- Источник — `src/theme/tokens.ts`; генератор `scripts/tokens-build.mjs` (`npm run tokens:build`) пишет `src/styles/_tokens.scss`; `tests/tokens/tokens.test.mjs` (`npm run test:tokens`, входит в `npm run check`) проверяет актуальность файла, ссылки семантики на примитивы и контрасты раздела 7.6 мастер-плана.
+- Каталог `src/scss/` удаляется целиком: настройка ядра Vuetify переезжает в `src/styles/vuetify.scss` (шрифт через `var(--mf-font-sans)`, `$rounded` xs 4 / sm 8 / md 12 / lg 16 / xl 24, без uppercase), глобальные переопределения Berry с живым эффектом заменяются `src/styles/_base.scss` на токенах: `html { overflow-y: auto }`, `.v-btn` без капса, `.v-card` с `overflow: visible` и отступами `--mf-panel-pad`, контур поля `border-strong`, `.v-divider` цвета `border`, трекинг Material обнулён, скрытие scrim при закрытии drawer. Правила Berry без живого эффекта (`.v-row + .v-row`, `.bg-success`, `.v-selection-control`, высоты 51/56, иконки кнопок +6px, `.v-label` 0.975rem) не переносятся. Поля `.v-main` 10px на ≤1279px не переносятся: отступы задаёт `.mf-main`.
+- Шрифты: Golos Text (UI) и Manrope (заголовки, wordmark), variable, subset латиница + кириллица + ₽ + № + типографская пунктуация, woff2 48,8 и 30,8 КБ. Отклонение от мастер-плана: файлы в `src/assets/fonts/`, а не `public/fonts/` — Vite выдаёт хэшированные имена под `location /assets/` с `Cache-Control: public, immutable`, preload в `index.html` получает тот же URL. Запасные `Golos Text Fallback` (Arial, `size-adjust` 111,34 %) и `Manrope Fallback` против сдвига вёрстки. Лицензии OFL рядом со шрифтами.
+- `MoreFotoTheme` из токенов; `variables`: `border-color` ink-150, `border-opacity` 1, `high-emphasis-opacity` 1, `hover-opacity` .06, `focus-opacity` .1. Отклонение: `medium-emphasis-opacity` остаётся по умолчанию до U4, где вторичный текст переводится на `text-secondary`; `info` темы остаётся sea-600 до `MfStatus`/`MfNotice` в U4.
+- `_morefoto-ui.scss`: радиусы поля и кнопки — alias `--mf-radius-sm`, рамка поля `opacity: 1` (.65 только у disabled), подпись поля `text-secondary`, фокус `--mf-color-focus`, шрифт оверлеев `--mf-font-sans`. Строки размеров UI01–UI04 не меняются.
+- Dark theme: только комментарий-дверь в сгенерированном файле; Vuetify-тема не регистрируется (без мёртвого кода). Stylelint переносится в U4, где hex-гейт включается как error вместе с миграцией hex.
+- Playground `/demo/ui`: разделы «Токены» (цвета с контрастом, радиусы, тени) и «Типографика».
+
+Тест-кейсы U2:
+
+- DX-U2-01. `npm run check` (включая `test:tokens`) — актуальность `_tokens.scss`, контрасты AA/AAA по разделу 7.6.
+- DX-U2-02 (финальный gate). Live-спека `e2e/live/design-tokens.spec.ts` на странице входа: `--mf-control-height` 48px, `--mf-control-compact` 40px, `--mf-touch-size` 44px, `--mf-focus-width` 2px, радиус контура поля 8px, `--v-field-border-opacity` 1, шрифт Golos Text загружен из `/assets/`.
+- DX-U2-03. Скриншоты без backend до/после (10 экранов × 1440/390): видимые изменения — только шрифт, радиус 8, рамка поля, отступы карточек на mobile; проверка глазами и пиксельный diff.
+- DX-U2-04. `npm run build`: шрифты в `dist/assets/` с хэшем, в `index.html` два preload с теми же URL.
 
 ## 5. Не входит
 
@@ -67,7 +93,7 @@
 - [x] U1a — очистка наследия frontend.
 - [x] U1b — граф: направление U, пакет `design-ux`, запись D3, валидатор, канонический патч.
 - [x] Открыть PR (draft) после U1 — [#53](https://github.com/rebit-pro/rabit-api/pull/53).
-- [ ] U2 — токены, шрифты, тема, замена глобальных стилей Berry.
+- [x] U2 — токены, шрифты, тема, замена глобальных стилей Berry.
 - [ ] U3 — бренд, каркас, аватар-инициалы.
 - [ ] U4 — поверхности, статусы, состояния, миграция hex.
 - [ ] B4 — приглашения и пароли.

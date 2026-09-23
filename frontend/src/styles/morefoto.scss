@@ -1,11 +1,16 @@
+@use "./tokens";
+@use "./fonts";
+@use "./base";
 @use "./morefoto-ui";
 
 .morefoto-app {
-  font-family: Arial, sans-serif;
+  font-family: var(--mf-font-sans);
   color: rgb(var(--v-theme-on-surface));
 }
 .mf-brand {
-  font-weight: 700;
+  font-family: var(--mf-font-display);
+  font-weight: 600;
+  letter-spacing: var(--mf-tracking-tight);
   color: #1e1e1e;
   text-decoration: none;
   font-size: 23px;
@@ -13,7 +18,7 @@
 }
 .mf-brand span {
   color: #24658a;
-  font-weight: 400;
+  font-weight: 500;
   margin-left: 4px;
 }
 .mf-role-label {
@@ -39,6 +44,8 @@
 }
 .mf-page-heading h1,
 .mf-access h1 {
+  font-family: var(--mf-font-display);
+  letter-spacing: var(--mf-tracking-tight);
   font-size: 2rem;
   overflow-wrap: anywhere;
   line-height: 1.25;
@@ -66,6 +73,7 @@
   border-radius: 12px;
 }
 .mf-panel h2 {
+  font-family: var(--mf-font-display);
   font-size: 1.3125rem;
   overflow-wrap: anywhere;
   line-height: 1.4;
