@@ -3,6 +3,7 @@ import { expect, type Page } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import { CustomWorld } from '../../support/world.js';
 import type { PhotoState } from '../../../src/modules/morefoto/photos/types.js';
+import { signOut } from '../../support/shell.js';
 const route = '/cabinet/institutions/sun/shoots/sun-autumn-2026/photos';
 const shootRoute = '/cabinet/institutions/sun/shoots/sun-autumn-2026';
 function page(w: CustomWorld) {
@@ -338,7 +339,7 @@ Then('истёкшая сессия R08 не сохраняет фотограф
 });
 Then('сотрудник R08 {string} не получает редактор', async function (this: CustomWorld, email: string) {
   const p = page(this);
-  await p.getByRole('button', { name: 'Выйти', exact: true }).click();
+  await signOut(p);
   await login(p, this.baseUrl, email);
   await p.goto(this.baseUrl + route, { waitUntil: 'networkidle' });
   await expect(p.locator('input[type=file]')).toHaveCount(0);

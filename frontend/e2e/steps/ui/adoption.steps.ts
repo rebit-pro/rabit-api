@@ -96,7 +96,7 @@ Then('выпущенные экраны на ширине {int} соблюдаю
   await checkBothSizes(p);
   const menu = p.getByRole('button', { name: 'Открыть меню', exact: true });
   if (await menu.isVisible()) await menu.click();
-  await p.getByRole('link', { name: 'Профиль', exact: true }).click();
+  await p.getByRole('link', { name: /^Профиль: / }).click();
   await expect(p.getByRole('heading', { name: 'Профиль', exact: true })).toBeVisible();
   await checkBothSizes(p);
   await p.getByRole('button', { name: 'Выйти из кабинета', exact: true }).click();

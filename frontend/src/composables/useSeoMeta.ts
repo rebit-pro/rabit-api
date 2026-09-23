@@ -2,8 +2,8 @@ import { useHead } from '@unhead/vue';
 import { computed, type ComputedRef } from 'vue';
 import { useRoute } from 'vue-router';
 
-const SITE_NAME = 'MoreFoto';
-const DEFAULT_DESCRIPTION = 'MoreFoto — выбор фотографий, заказы и личные кабинеты участников съёмки.';
+const SITE_NAME = 'Море фото';
+const DEFAULT_DESCRIPTION = '«Море фото» — выбор фотографий, заказы и личные кабинеты участников съёмки.';
 
 export function useRouteSeo(): void {
   const route = useRoute();

@@ -113,7 +113,7 @@ test('F1: воспитатель подаёт список, куратор ут�
   try {
     const teacher = await teacherContext.newPage();
     await login(teacher, 'teacher');
-    await teacher.getByLabel('Основная навигация').getByRole('link', { name: 'Заявки на списки сотрудников', exact: true }).click();
+    await teacher.getByLabel('Основная навигация').getByRole('link', { name: 'Списки сотрудников', exact: true }).click();
     await expect(teacher.getByRole('heading', { name: 'Заявки на списки сотрудников', exact: true })).toBeVisible();
     await teacher.getByRole('button', { name: 'Новый список', exact: true }).click();
     const dialog = teacher.getByTestId('admin-dialog');
@@ -338,7 +338,7 @@ for (const viewport of [
       if (viewport.name === 'mobile') await page.getByRole('button', { name: 'Открыть меню', exact: true }).click();
       const navigation = page.getByLabel('Основная навигация');
       await expect(navigation).toBeInViewport();
-      const link = navigation.getByRole('link', { name: 'Заявки на списки сотрудников', exact: true });
+      const link = navigation.getByRole('link', { name: 'Списки сотрудников', exact: true });
       if (account === 'head') {
         await expect(link).toHaveCount(0);
         await body(await page.request.get('/api/v1/staff-requests', { headers: await headers(page) }), 403);

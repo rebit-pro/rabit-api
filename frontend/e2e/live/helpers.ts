@@ -13,6 +13,11 @@ export async function login(page: Page, account = 'organizer'): Promise<void> {
   else if (account === 'unassigned') await expect(page.getByRole('heading', { name: 'Доступ к кабинету не назначен' })).toBeVisible();
   else await expect(page.getByRole('button', { name: 'Новая продукция', exact: true })).toBeEnabled();
 }
+/** Signs out through the user menu of the cabinet shell. */
+export async function logout(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Меню пользователя', exact: true }).click();
+  await page.getByRole('button', { name: 'Выйти', exact: true }).click();
+}
 export function productRow(page: Page, name: string) {
   return page.getByRole('article').filter({ has: page.getByRole('heading', { name, exact: true }) });
 }

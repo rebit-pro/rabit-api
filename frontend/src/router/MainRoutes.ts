@@ -63,7 +63,7 @@ const MainRoutes: RouteRecordRaw = {
       path: 'staff-requests',
       component: () => import('@/modules/morefoto/views/StaffRequestsPage.vue'),
       meta: {
-        title: 'Заявки на списки сотрудников',
+        title: 'Списки сотрудников',
         staffRoles: ['organizer', 'curator', 'teacher']
       }
     },
@@ -72,7 +72,7 @@ const MainRoutes: RouteRecordRaw = {
       path: 'staff-requests/:requestId',
       component: () => import('@/modules/morefoto/views/StaffRequestsPage.vue'),
       meta: {
-        title: 'Заявка на список сотрудников',
+        title: 'Список сотрудников',
         staffRoles: ['organizer', 'curator', 'teacher']
       }
     },
@@ -86,7 +86,7 @@ const MainRoutes: RouteRecordRaw = {
       name: 'Users',
       path: 'users',
       component: () => import('@/modules/morefoto/views/UsersPage.vue'),
-      meta: { title: 'Пользователи', staffRoles: ['organizer'] }
+      meta: { title: 'Сотрудники', staffRoles: ['organizer'] }
     },
     {
       name: 'GroupConditions',

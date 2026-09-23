@@ -6,6 +6,11 @@ import { useDisplay } from 'vuetify';
 import { useAuthStore } from '@/stores/auth';
 import { isMockApiEnabled } from '@/mocks/config';
 import { isStaffRole, roleLabels } from '../types';
+import { cabinetNavigation } from './navigation';
+import MfLogo from '@/components/brand/MfLogo.vue';
+import MfAvatar from '@/components/avatar/MfAvatar.vue';
+import { avatarSeed } from '@/components/avatar/avatar';
+import MfUserMenu from '@/components/shell/MfUserMenu.vue';
 
 const auth = useAuthStore();
 const route = useRoute();
@@ -29,140 +34,24 @@ onScopeDispose(() => {
 });
 const { mdAndUp } = useDisplay();
 const drawer = shallowRef(false);
+const scrolled = shallowRef(false);
 const roleLabel = computed(() => (isStaffRole(auth.user?.role) ? roleLabels[auth.user.role] : 'Участник'));
+const userName = computed(() => auth.user?.name?.trim() || auth.user?.email || 'Сотрудник');
+const userSeed = computed(() => avatarSeed(auth.user?.id, auth.user?.email));
+const sectionTitle = computed(() => String(route.meta.title ?? ''));
 const navigation = computed(() =>
-  !isMockApiEnabled
-    ? [
-        ...(['organizer', 'curator', 'head'].includes(auth.user?.role ?? '')
-          ? [
-              {
-                title: 'Учреждения',
-                to: '/cabinet/institutions',
-                icon: 'mdi-home-city-outline'
-              }
-            ]
-          : []),
-        ...(auth.user?.permissions?.includes('catalog.manage')
-          ? [
-              {
-                title: 'Каталог и цены',
-                to: '/cabinet/catalog',
-                icon: 'mdi-tag-outline'
-              }
-            ]
-          : []),
-        ...(auth.user?.permissions?.includes('staff.manage')
-          ? [
-              {
-                title: 'Сотрудники',
-                to: '/cabinet/users',
-                icon: 'mdi-account-group-outline'
-              }
-            ]
-          : []),
-        ...(auth.user?.permissions?.includes('order.read')
-          ? [
-              {
-                title: 'Заказы',
-                to: '/cabinet/orders',
-                icon: 'mdi-receipt-text-outline'
-              }
-            ]
-          : []),
-        ...(isStaffRole(auth.user?.role)
-          ? [
-              {
-                title: 'Ссылки и сроки',
-                to: '/cabinet/links',
-                icon: 'mdi-link-variant'
-              }
-            ]
-          : []),
-        ...(['organizer', 'curator', 'teacher'].includes(auth.user?.role ?? '')
-          ? [
-              {
-                title: 'Заявки на списки сотрудников',
-                to: '/cabinet/staff-requests',
-                icon: 'mdi-account-check-outline'
-              }
-            ]
-          : []),
-        {
-          title: 'Профиль',
-          to: '/cabinet/profile',
-          icon: 'mdi-account-outline'
-        }
-      ]
-    : [
-        {
-          title: auth.user?.role === 'teacher' ? 'Мои группы' : 'Обзор',
-          to: '/cabinet/overview',
-          icon: 'mdi-view-dashboard-outline'
-        },
-        ...(auth.user?.role === 'organizer'
-          ? [
-              {
-                title: 'Учреждения',
-                to: '/cabinet/institutions',
-                icon: 'mdi-home-city-outline'
-              },
-              {
-                title: 'Каталог и цены',
-                to: '/cabinet/catalog',
-                icon: 'mdi-tag-outline'
-              },
-              {
-                title: 'Пользователи',
-                to: '/cabinet/users',
-                icon: 'mdi-account-group-outline'
-              }
-            ]
-          : []),
-        ...(['organizer', 'curator'].includes(auth.user?.role ?? '')
-          ? [
-              {
-                title: 'Производство',
-                to: '/cabinet/production',
-                icon: 'mdi-printer-outline'
-              },
-              {
-                title: 'Заказы',
-                to: '/cabinet/orders',
-                icon: 'mdi-receipt-text-outline'
-              },
-              {
-                title: 'Обращения',
-                to: '/cabinet/support',
-                icon: 'mdi-message-text-outline'
-              }
-            ]
-          : []),
-        {
-          title: 'Доставка',
-          to: '/cabinet/delivery',
-          icon: 'mdi-truck-delivery-outline'
-        },
-        {
-          title: 'Ссылки и сроки',
-          to: '/cabinet/links',
-          icon: 'mdi-link-variant'
-        },
-        ...(auth.user?.role !== 'head'
-          ? [
-              {
-                title: 'Заявки на списки сотрудников',
-                to: '/cabinet/staff-requests',
-                icon: 'mdi-account-check-outline'
-              }
-            ]
-          : []),
-        {
-          title: 'Профиль',
-          to: '/cabinet/profile',
-          icon: 'mdi-account-outline'
-        }
-      ]
+  cabinetNavigation({
+    role: isStaffRole(auth.user?.role) ? auth.user.role : null,
+    permissions: auth.user?.permissions ?? [],
+    demo: isMockApiEnabled
+  })
 );
+// The app bar gets its shadow only after the page has scrolled (design plan 7.4).
+function trackScroll() {
+  scrolled.value = window.scrollY > 0;
+}
+onMounted(() => window.addEventListener('scroll', trackScroll, { passive: true }));
+onScopeDispose(() => window.removeEventListener('scroll', trackScroll));
 watch(
   mdAndUp,
   (value) => {
@@ -181,33 +70,47 @@ watch(
 <template>
   <v-app theme="MoreFotoTheme" class="morefoto-app">
     <a href="#cabinet-main" class="mf-skip">Перейти к содержимому</a>
-    <v-app-bar flat border="b" color="surface" height="72">
-      <v-app-bar-nav-icon v-if="!mdAndUp" aria-label="Открыть меню" @click="drawer = !drawer" />
-      <v-app-bar-title>
-        <RouterLink :to="auth.homePath" class="mf-brand">Море<span>фото</span></RouterLink>
-      </v-app-bar-title>
-      <span class="mf-role-label">{{ roleLabel }}</span>
-      <v-btn icon="mdi-logout" aria-label="Выйти" variant="text" color="secondary" class="mr-2" @click="auth.logout()" />
+    <v-app-bar flat color="surface" :height="mdAndUp ? 64 : 56" class="mf-appbar" :class="{ 'mf-appbar--scrolled': scrolled }">
+      <v-app-bar-nav-icon v-if="!mdAndUp" aria-label="Открыть меню" class="mf-appbar__menu" @click="drawer = !drawer" />
+      <RouterLink :to="auth.homePath" class="mf-appbar__brand">
+        <MfLogo :variant="mdAndUp ? 'horizontal' : 'compact'" :size="mdAndUp ? 28 : 24" />
+      </RouterLink>
+      <span v-if="!mdAndUp && sectionTitle" class="mf-appbar__title">{{ sectionTitle }}</span>
+      <v-spacer />
+      <span v-if="mdAndUp" class="mf-appbar__role">{{ roleLabel }}</span>
+      <MfUserMenu
+        :name="userName"
+        :email="auth.user?.email ?? ''"
+        :seed="userSeed"
+        :role-label="roleLabel"
+        profile-to="/cabinet/profile"
+        class="mf-appbar__user"
+        @logout="auth.logout()"
+      />
     </v-app-bar>
-    <v-navigation-drawer v-model="drawer" :permanent="mdAndUp" :temporary="!mdAndUp" width="248">
-      <div class="mf-sidebar-caption">ЛИЧНЫЙ КАБИНЕТ</div>
-      <v-list nav aria-label="Основная навигация">
-        <v-list-item
-          v-for="item in navigation"
-          :key="item.to"
-          :to="item.to"
-          :title="item.title"
-          :prepend-icon="item.icon"
-          class="mf-navigation-item"
-          color="primary"
-        />
-      </v-list>
-      <template #append>
-        <div class="mf-sidebar-user">
-          <strong>{{ auth.user?.name }}</strong>
-          <span>{{ auth.user?.email }}</span>
-        </div>
-      </template>
+    <v-navigation-drawer v-model="drawer" :permanent="mdAndUp" :temporary="!mdAndUp" width="248" class="mf-sidebar">
+      <RouterLink to="/cabinet/profile" class="mf-sidebar__user" :aria-label="'Профиль: ' + userName">
+        <MfAvatar :seed="userSeed" :name="userName" :email="auth.user?.email" :size="40" decorative />
+        <span class="mf-sidebar__who">
+          <strong>{{ userName }}</strong>
+          <span>{{ roleLabel }}</span>
+        </span>
+      </RouterLink>
+      <nav aria-label="Основная навигация" class="mf-sidebar__nav">
+        <section v-for="group in navigation" :key="group.title" class="mf-sidebar__group" :aria-label="group.title">
+          <p class="mf-sidebar__caption" aria-hidden="true">{{ group.title }}</p>
+          <v-list nav density="compact" class="mf-sidebar__list">
+            <v-list-item
+              v-for="item in group.items"
+              :key="item.to"
+              :to="item.to"
+              :title="item.title"
+              :prepend-icon="item.icon"
+              class="mf-navigation-item"
+            />
+          </v-list>
+        </section>
+      </nav>
     </v-navigation-drawer>
     <v-main>
       <main id="cabinet-main" class="mf-main" tabindex="-1">
@@ -222,8 +125,119 @@ watch(
 </template>
 
 <style scoped>
+.mf-appbar {
+  border-bottom: 1px solid var(--mf-color-border);
+  transition: box-shadow var(--mf-duration-fast) var(--mf-ease-standard);
+}
+.mf-appbar--scrolled {
+  box-shadow: var(--mf-shadow-sm) !important;
+}
+.mf-appbar :deep(.v-toolbar__content) {
+  gap: var(--mf-space-3);
+  padding-inline: var(--mf-space-4) var(--mf-space-3);
+}
+.mf-appbar__brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--mf-touch-size);
+  border-radius: var(--mf-radius-sm);
+  text-decoration: none;
+}
+.mf-appbar__title {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--mf-text-base);
+  font-weight: var(--mf-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mf-appbar__role {
+  color: var(--mf-color-text-secondary);
+  font-size: var(--mf-text-md);
+  font-weight: var(--mf-weight-medium);
+}
+.mf-sidebar :deep(.v-navigation-drawer__content) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mf-space-2);
+  padding: var(--mf-space-4) var(--mf-space-3);
+}
+.mf-sidebar__user {
+  display: flex;
+  gap: var(--mf-space-3);
+  align-items: center;
+  padding: var(--mf-space-2);
+  border-radius: var(--mf-radius-md);
+  color: var(--mf-color-text);
+  text-decoration: none;
+  transition: background-color var(--mf-duration-fast) var(--mf-ease-standard);
+}
+.mf-sidebar__user:hover {
+  background: var(--mf-color-nav-hover);
+}
+.mf-sidebar__who {
+  display: grid;
+  min-width: 0;
+  font-size: var(--mf-text-md);
+  line-height: var(--mf-leading-snug);
+}
+.mf-sidebar__who strong {
+  overflow: hidden;
+  font-weight: var(--mf-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mf-sidebar__who span {
+  color: var(--mf-color-text-secondary);
+  font-size: var(--mf-text-sm);
+}
+.mf-sidebar__caption {
+  padding: var(--mf-space-4) var(--mf-space-3) var(--mf-space-1);
+  color: var(--mf-color-text-tertiary);
+  font-size: var(--mf-text-xs);
+  font-weight: var(--mf-weight-semibold);
+  letter-spacing: var(--mf-tracking-caps);
+  text-transform: uppercase;
+}
+.mf-sidebar__list {
+  padding: 0;
+  background: transparent;
+}
+.mf-navigation-item {
+  position: relative;
+  min-height: var(--mf-touch-size);
+  margin-bottom: 2px;
+  border-radius: var(--mf-radius-sm);
+  color: var(--mf-color-nav-fg);
+}
 .mf-navigation-item :deep(.v-list-item-title) {
+  font-size: var(--mf-text-md);
+  font-weight: var(--mf-weight-medium);
+  line-height: var(--mf-leading-snug);
   white-space: normal;
-  line-height: 1.35;
+}
+.mf-navigation-item :deep(.v-list-item__prepend > .v-icon) {
+  margin-inline-end: var(--mf-space-3);
+  opacity: 1;
+  font-size: 20px;
+}
+.mf-navigation-item :deep(.v-list-item__spacer) {
+  display: none;
+}
+.mf-navigation-item.v-list-item--active {
+  background: var(--mf-color-nav-active-bg);
+  color: var(--mf-color-nav-active-fg);
+}
+.mf-navigation-item.v-list-item--active :deep(.v-list-item__overlay) {
+  opacity: 0;
+}
+.mf-navigation-item.v-list-item--active::before {
+  content: '';
+  position: absolute;
+  inset-block: 10px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 var(--mf-radius-xs) var(--mf-radius-xs) 0;
+  background: var(--mf-color-primary);
 }
 </style>

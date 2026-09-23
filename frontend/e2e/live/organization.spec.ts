@@ -57,9 +57,10 @@ async function openGroup(page: Page, name: string) {
   await page.getByLabel('Название группы', { exact: true }).fill(name);
 }
 async function loginRole(page: Page, account: 'curator' | 'head') {
-  const logout = page.getByRole('button', { name: 'Выйти', exact: true });
-  if (await logout.count()) {
-    await logout.click();
+  const userMenu = page.getByRole('button', { name: 'Меню пользователя', exact: true });
+  if (await userMenu.count()) {
+    await userMenu.click();
+    await page.getByRole('button', { name: 'Выйти', exact: true }).click();
     await expect(page).toHaveURL(/\/login$/);
   }
   await page.goto('/login');

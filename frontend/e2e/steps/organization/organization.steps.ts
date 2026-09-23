@@ -3,6 +3,7 @@ import { expect, type Page } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import { CustomWorld } from '../../support/world.js';
 import type { OrganizationState } from '../../../src/modules/morefoto/organization/types.js';
+import { signOut } from '../../support/shell.js';
 
 function page(world: CustomWorld) {
   if (!world.page) throw new Error('Страница не создана');
@@ -11,7 +12,7 @@ function page(world: CustomWorld) {
 async function login(p: Page, base: string, email = 'organizer@morefoto.test') {
   await p.goto(base + '/login', { waitUntil: 'networkidle' });
   if (!p.url().includes('/login')) {
-    await p.getByRole('button', { name: 'Выйти', exact: true }).click();
+    await signOut(p);
   }
   await p.getByLabel('Email', { exact: true }).fill(email);
   await p.getByLabel('Пароль', { exact: true }).fill('morefoto-demo');

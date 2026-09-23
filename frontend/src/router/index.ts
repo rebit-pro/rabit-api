@@ -1,13 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import MainRoutes from './MainRoutes';
-import PublicRoutes from './PublicRoutes';
+import PublicRoutes, { ServiceRoutes } from './PublicRoutes';
 import { useAuthStore } from '@/stores/auth';
 import { isMockApiEnabled } from '@/mocks/config';
 import { isStaffRole } from '@/modules/morefoto/types';
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [MainRoutes, PublicRoutes],
+  routes: [MainRoutes, PublicRoutes, ServiceRoutes],
   scrollBehavior: (to, from, savedPosition) => savedPosition ?? (to.path === from.path ? false : { top: 0 })
 });
 

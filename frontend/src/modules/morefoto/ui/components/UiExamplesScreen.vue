@@ -8,6 +8,7 @@ import UiButtonExamples from './UiButtonExamples.vue';
 import UiTableExample from './UiTableExample.vue';
 import UiTokenExamples from './UiTokenExamples.vue';
 import UiTypographyExamples from './UiTypographyExamples.vue';
+import UiBrandExamples from './UiBrandExamples.vue';
 const density = ref<UiDensity>('comfortable');
 const state = ref<UiFieldState>('empty');
 const longText = ref(false);
@@ -38,7 +39,8 @@ function reset() {
       </header>
       <nav class="ui-example-actions my-4" aria-label="Разделы образцов">
         <a href="#ui-forms" class="mf-back">Поля и кнопки</a><a href="#ui-tables" class="mf-back">Таблицы и списки</a
-        ><a href="#ui-tokens" class="mf-back">Токены</a><a href="#ui-typography" class="mf-back">Типографика</a>
+        ><a href="#ui-tokens" class="mf-back">Токены</a><a href="#ui-typography" class="mf-back">Типографика</a
+        ><a href="#ui-brand" class="mf-back">Бренд</a>
       </nav>
       <section id="ui-forms" class="mf-panel ui-example-controls" aria-label="Настройки образцов">
         <div class="ui-density" role="group" aria-label="Плотность">
@@ -71,6 +73,7 @@ function reset() {
         <UiTableExample kind="orders" :density="density" />
         <UiTokenExamples />
         <UiTypographyExamples />
+        <UiBrandExamples />
       </div>
     </div>
   </main>

@@ -45,9 +45,10 @@ async function detail(page: Page, id: string, query = '') {
   ).data;
 }
 async function role(page: Page, name: 'c4-curator' | 'c4-head') {
-  const logout = page.getByRole('button', { name: 'Выйти', exact: true });
-  if (await logout.count()) {
-    await logout.click();
+  const userMenu = page.getByRole('button', { name: 'Меню пользователя', exact: true });
+  if (await userMenu.count()) {
+    await userMenu.click();
+    await page.getByRole('button', { name: 'Выйти', exact: true }).click();
     await expect(page).toHaveURL(/\/login$/);
   }
   await page.goto('/login');
