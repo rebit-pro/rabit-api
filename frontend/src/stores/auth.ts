@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { isAxiosError } from 'axios';
 import { ref, computed } from 'vue';
 import { router } from '@/router';
-import { authApi, type AuthUser, type GeeTestCaptchaPayload, type RequestRegistrationCodeResponse } from '@/api/auth';
+import { authApi, type AuthUser, type GeeTestCaptchaPayload, type LoginResponse, type RequestRegistrationCodeResponse } from '@/api/auth';
 
 import { isMockApiEnabled } from '@/mocks/config';
 import { requireDemoAccount } from '@/modules/morefoto/mocks/service';
@@ -226,6 +226,14 @@ export const useAuthStore = defineStore('auth', () => {
     await router.push(allowed && candidate ? candidate : fallback);
   }
 
+  /** Session opened by an invitation or a password reset link: the server already checked the new password. */
+  async function startSession(response: LoginResponse): Promise<void> {
+    setSession(response.token, response.user, response.expiresAt);
+    returnUrl.value = null;
+    await ensureProfile();
+    await router.push(homePath.value);
+  }
+
   async function requestRegistrationCode(email: string, password: string): Promise<RequestRegistrationCodeResponse> {
     return authApi.requestRegistrationCode({ email, password });
   }
@@ -258,6 +266,7 @@ export const useAuthStore = defineStore('auth', () => {
     returnUrl,
     isAuthenticated,
     clearSession,
+    startSession,
     restoreSession,
     getAccessToken,
     login,

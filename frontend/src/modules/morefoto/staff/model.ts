@@ -1,5 +1,11 @@
 import type { StaffRole } from '../types';
 export type AccountStatus = 'pending' | 'active' | 'blocked';
+/** Personal invitation of a pending staff member; the link itself only travels in the letter. */
+export interface StaffInvitation {
+  sentAt: string;
+  expiresAt: string;
+  state: 'sent' | 'expired' | 'accepted';
+}
 export interface StaffSummary {
   id: number;
   name: string;
@@ -10,6 +16,7 @@ export interface StaffSummary {
   accessRevision: number;
   accountStatus: AccountStatus;
   assignmentCount: number;
+  invitation?: StaffInvitation | null;
 }
 export interface StaffDetail extends Omit<StaffSummary, 'assignmentCount'> {
   institutionIds: string[];

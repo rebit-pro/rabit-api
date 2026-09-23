@@ -52,6 +52,32 @@ export interface StaffProfile extends AuthUser {
   accessRevision: number;
 }
 
+export interface InvitationPreview {
+  maskedEmail: string;
+  name: string;
+  expiresAt: string;
+}
+
+const link = (token: string) => encodeURIComponent(token);
+
+export const accessApi = {
+  invitation(token: string): Promise<InvitationPreview> {
+    return api.get('/api/v1/auth/invitations/' + link(token)).then((r) => r.data);
+  },
+  acceptInvitation(token: string, password: string): Promise<LoginResponse> {
+    return api.post('/api/v1/auth/invitations/' + link(token) + '/accept', { password }).then((r) => r.data);
+  },
+  requestPasswordReset(email: string): Promise<void> {
+    return api.post('/api/v1/auth/password-resets', { email }).then(() => undefined);
+  },
+  confirmPasswordReset(token: string, password: string): Promise<LoginResponse> {
+    return api.post('/api/v1/auth/password-resets/' + link(token) + '/confirm', { password }).then((r) => r.data);
+  },
+  changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    return api.patch('/api/v1/me/password', { currentPassword, newPassword }).then(() => undefined);
+  }
+};
+
 export const authApi = {
   me(): Promise<StaffProfile> {
     return api.get('/api/v1/me').then((r) => r.data);

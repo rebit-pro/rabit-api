@@ -5,7 +5,9 @@ import { roleLabels } from '../../types';
 import StaffFields from './StaffFields.vue';
 import { useStaffEditor } from '../useStaffEditor';
 import { useStaffManagement } from '../useStaffManagement';
-import type { AccountStatus, StaffSummary } from '../model';
+import type { AccountStatus, StaffInvitation, StaffSummary } from '../model';
+import { staffApi, staffError } from '../api';
+import { formatMoment } from '../../handoff/display';
 import MfStatus from '@/components/status/MfStatus.vue';
 import { accountStatusTone } from '../../ui/statusTone';
 const { snapshot, loading, error, filters, reload, page, pages } = useStaffManagement();
@@ -26,8 +28,40 @@ const activeItems = [
 ];
 const roleItems = [{ title: 'Все роли', value: null }, ...Object.entries(roleLabels).map(([value, title]) => ({ value, title }))];
 const title = computed(() => (editor.draft.value?.id ? 'Редактирование сотрудника' : 'Новый сотрудник'));
+const selected = shallowRef<StaffSummary | null>(null);
+const resending = shallowRef(false);
+const invitationNotice = shallowRef('');
+const invitationError = shallowRef('');
+const shortDate = new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: '2-digit', timeZone: 'Europe/Moscow' });
+function invitationShort(invitation: StaffInvitation): string {
+  return invitation.state === 'expired' ? 'приглашение истекло' : 'приглашение отправлено ' + shortDate.format(new Date(invitation.sentAt));
+}
+function invitationText(invitation: StaffInvitation | null | undefined): string {
+  if (!invitation) return 'Приглашение ещё не отправлялось.';
+  if (invitation.state === 'expired') return 'Приглашение истекло ' + formatMoment(invitation.expiresAt) + '. Отправьте новое.';
+  return 'Приглашение отправлено ' + formatMoment(invitation.sentAt) + ', ссылка действует до ' + formatMoment(invitation.expiresAt) + '.';
+}
+async function resend(): Promise<void> {
+  const item = selected.value;
+  if (!item || resending.value) return;
+  resending.value = true;
+  invitationNotice.value = '';
+  invitationError.value = '';
+  try {
+    selected.value = { ...item, invitation: await staffApi.resendInvitation(item.id) };
+    invitationNotice.value = 'Приглашение отправлено повторно. Прежняя ссылка больше не работает.';
+    await reload();
+  } catch (cause) {
+    invitationError.value = staffError(cause);
+  } finally {
+    resending.value = false;
+  }
+}
 function edit(item?: StaffSummary): void {
   notice.value = '';
+  invitationNotice.value = '';
+  invitationError.value = '';
+  selected.value = item ?? null;
   void editor.open(item);
 }
 </script>
@@ -71,7 +105,10 @@ function edit(item?: StaffSummary): void {
         >
         <span><small>Роль</small>{{ roleLabels[item.role] }}</span>
         <span><small>Назначения</small>{{ item.assignmentCount }}</span>
-        <MfStatus :tone="accountStatusTone[item.accountStatus]">{{ statusLabels[item.accountStatus] }}</MfStatus>
+        <span class="staff-status"
+          ><MfStatus :tone="accountStatusTone[item.accountStatus]">{{ statusLabels[item.accountStatus] }}</MfStatus
+          ><small v-if="item.accountStatus === 'pending' && item.invitation">{{ invitationShort(item.invitation) }}</small></span
+        >
         <v-icon icon="mdi-chevron-right" aria-hidden="true" />
       </button>
     </v-card>
@@ -92,6 +129,14 @@ function edit(item?: StaffSummary): void {
     @save="editor.save"
     @reset="editor.refresh"
   >
+    <div v-if="selected?.accountStatus === 'pending'" class="staff-invitation" data-testid="staff-invitation">
+      <p>{{ invitationText(selected.invitation) }}</p>
+      <v-alert v-if="invitationNotice" type="success" variant="tonal" role="status">{{ invitationNotice }}</v-alert>
+      <v-alert v-if="invitationError" type="error" variant="tonal" role="alert">{{ invitationError }}</v-alert>
+      <v-btn variant="outlined" prepend-icon="mdi-email-fast-outline" :loading="resending" @click="resend"
+        >Отправить приглашение повторно</v-btn
+      >
+    </div>
     <StaffFields
       v-if="editor.draft.value && editor.options.value"
       v-model="editor.draft.value"
@@ -101,6 +146,25 @@ function edit(item?: StaffSummary): void {
   </AdminDialog>
 </template>
 <style scoped>
+.staff-status {
+  display: grid;
+  justify-items: start;
+  gap: var(--mf-space-1);
+}
+.staff-status small {
+  color: var(--mf-color-text-secondary);
+  font-size: var(--mf-text-sm);
+}
+.staff-invitation {
+  display: grid;
+  gap: var(--mf-space-3);
+  justify-items: start;
+  margin-bottom: var(--mf-space-5);
+  padding: var(--mf-space-4);
+  border: 1px solid var(--mf-tone-pending-border);
+  border-radius: var(--mf-radius-sm);
+  background: var(--mf-tone-pending-bg);
+}
 .staff-filters {
   display: grid;
   grid-template-columns: minmax(220px, 2fr) minmax(150px, 1fr) minmax(170px, 1fr) auto;

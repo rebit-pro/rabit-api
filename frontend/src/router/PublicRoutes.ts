@@ -60,6 +60,24 @@ const PublicRoutes: RouteRecordRaw = {
     { path: '/dashboard', redirect: '/cabinet/overview' },
     { path: '/main', redirect: '/cabinet/overview' },
     {
+      name: 'AccessInvite',
+      path: '/access/invite/:token',
+      component: () => import('@/views/authentication/InvitePage.vue'),
+      meta: { title: 'Приглашение в кабинет' }
+    },
+    {
+      name: 'AccessRecover',
+      path: '/access/recover',
+      component: () => import('@/views/authentication/RecoverPage.vue'),
+      meta: { title: 'Восстановление доступа' }
+    },
+    {
+      name: 'AccessReset',
+      path: '/access/reset/:token',
+      component: () => import('@/views/authentication/ResetPage.vue'),
+      meta: { title: 'Новый пароль' }
+    },
+    {
       name: 'Login',
       path: '/login',
       component: () => import('@/views/authentication/LoginPage.vue'),

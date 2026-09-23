@@ -4,6 +4,7 @@ import PublicRoutes, { ServiceRoutes } from './PublicRoutes';
 import { useAuthStore } from '@/stores/auth';
 import { isMockApiEnabled } from '@/mocks/config';
 import { isStaffRole } from '@/modules/morefoto/types';
+import { apiErrorCode } from '@/api/authErrors';
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -18,9 +19,10 @@ router.beforeEach(async (to) => {
   if (auth.isAuthenticated && (to.meta.requiresAuth || to.path === '/login')) {
     try {
       await auth.ensureProfile();
-    } catch {
+    } catch (cause) {
       auth.returnUrl = to.meta.requiresAuth ? to.fullPath : null;
-      return to.path === '/login' ? true : '/login?reason=session-expired';
+      const reason = apiErrorCode(cause) === 'SESSION_REVOKED' ? 'revoked' : 'session-expired';
+      return to.path === '/login' ? true : '/login?reason=' + reason;
     }
   }
   if (to.meta.requiresAuth && !auth.isAuthenticated) {

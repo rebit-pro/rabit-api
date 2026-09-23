@@ -105,6 +105,32 @@
 
 Тест-кейсы U4: DX-U4-01 (тоны статусов, unit), DX-U4-02 (финальный gate: `make test-e2e` и визуальная проверка), DX-U4-03 (`npm run check` со stylelint/ESLint без hex), DX-U4-04 (реестр иконок полон, `materialdesignicons` нет в сборке).
 
+## 4.4. Детали B4
+
+Факты из кода (2026-09-23):
+
+- Сессия одна на пользователя: токен и срок в `b_uts_user` (`UF_TOKEN`, `UF_TOKEN_EXPIRES_AT`), отзыв — `UserRepository::clearToken`; вход — `password_verify` по `b_user.PASSWORD`; пароль ставится через `CUser::Update`. `TokenResolver` отвечает 401 `Unauthorized` на неизвестный токен и `Token expired` на истёкший; фронтенд любое 401 показывает как «Сессия истекла». `LoginUseCase` отвечает `Invalid credentials` по-английски, pending-учётка — тем же 401.
+- `StaffIdentityGateway::createPending` создаёт неактивного пользователя со случайным паролем, письма нет. Машинные коды в проекте — строка `HttpException` (`STAFF_NOT_FOUND`, `EMAIL_OCCUPIED`), тексты — на фронтенде.
+- H1: `EmailNotificationInterface::queue()` пишет операцию в `b_rebit_notification_operation` и публикует в RabbitMQ; `BitrixEmailTransport` отправляет событие `REBIT_NOTIFICATION_OUTGOING_EMAIL` с `BODY = nl2br(htmlspecialchars(body))` — только текст.
+- `EmailNotificationInputDto` валидирует поля в конструкторе — существующий долг против правила «DTO без валидации»; новое поле `bodyHtml` добавляется без валидации в DTO.
+
+Решения:
+
+- Таблица `rebit_auth_access_link` (`ID`, `USER_ID`, `PURPOSE` invite|reset, `TOKEN_HASH` sha256 hex, `ISSUED_AT`, `EXPIRES_AT`, `RESEND_AVAILABLE_AT`, `USED_AT`, `ISSUED_BY`), уникальность (`USER_ID`, `PURPOSE`) — новая ссылка заменяет прежнюю, уникальность `TOKEN_HASH`. Токен — 32 случайных байта base64url, в БД только sha256. TTL: приглашение 7 дней, сброс 60 минут, повторная отправка через 60 секунд (env `REBIT_AUTH_INVITE_TTL_HOURS`, `REBIT_AUTH_RESET_TTL_MINUTES`, `REBIT_AUTH_LINK_COOLDOWN_SECONDS`).
+- `rebit.auth`, слой `Access`: доменная сущность ссылки и политика пароля (≥10 символов, не равен email); порты репозитория ссылок, писем и учётных данных; UseCase `IssueAccessInvitationUseCase`, `GetAccessInvitationUseCase`, `AcceptAccessInvitationUseCase`, `RequestPasswordResetUseCase`, `ConfirmPasswordResetUseCase`, `ChangePasswordUseCase` с русским phpDoc; инфраструктура — SQL-репозиторий, почтальон через H1 (текст + HTML с кнопкой, бренд и адрес кабинета из env `REBIT_AUTH_BRAND_NAME`, `REBIT_AUTH_APP_URL`).
+- Маршруты: AUTH-05 `GET /api/v1/auth/invitations/{token}`, AUTH-06 `POST /api/v1/auth/invitations/{token}/accept` (вход сразу после установки пароля), AUTH-07 `POST /api/v1/auth/password-resets` (всегда 202; для pending-учётки уходит приглашение, для неизвестного адреса — ничего), AUTH-08 `POST /api/v1/auth/password-resets/{token}/confirm` (отзыв сессий и новый вход), AUTH-09 `PATCH /api/v1/me/password` (сессия сохраняется).
+- Коды: `INVALID_CREDENTIALS`, `TOKEN_EXPIRED`, `SESSION_REVOKED`, `LINK_NOT_FOUND`, `LINK_EXPIRED`, `LINK_USED`, `PASSWORD_WEAK`, `CURRENT_PASSWORD_INVALID`, `RATE_LIMITED`, `INVITATION_NOT_AVAILABLE`; тексты — словарь `frontend/src/api/authErrors.ts`. Перехватчик 401 ведёт на `/login?reason=expired|revoked`.
+- H1: `EmailNotificationInputDto::bodyHtml`, колонка `BODY_HTML` в очереди, хэш полезной нагрузки учитывает HTML, транспорт отправляет HTML как есть, если он есть (HTML строит только наш код, данные экранируются).
+- `morefoto.access`: `StaffIdentityGatewayInterface::issueInvitation()` и `invitations()`; `SaveStaffUseCase` выпускает приглашение новому pending-сотруднику и перевыпускает при смене email до активации; ACC-11 `POST /api/v1/users/{user_id}/invitations` (повтор с cooldown); `StaffOutputDto::invitation` (`sentAt`, `expiresAt`, `state` sent|expired|accepted).
+- Frontend: `/access/invite/:token`, `/access/recover`, `/access/reset/:token` в стиле входа; ссылки под формой входа; смена пароля в профиле; статус и повтор приглашения у сотрудника; текст формы сотрудника про письмо. В demo-режиме письма не отправляются — экраны показывают пояснение.
+- Не входит: письма на старый и новый адрес при смене email активного сотрудника (сессии уже отзываются), капча (DS-16), несколько сессий (DS-15), перебрендирование письма кода регистрации (UI регистрации по коду скрыт; остаётся follow-up).
+
+Тест-кейсы B4:
+
+- DX-B4-U1 (PHPUnit). UseCase: выпуск (хэш вместо токена, cooldown → `RATE_LIMITED`, не pending → `INVITATION_NOT_AVAILABLE`), просмотр (маска email, `LINK_EXPIRED`, `LINK_USED`), принятие (слабый пароль, активация, одноразовость, выдача сессии), сброс (202 для неизвестного, приглашение для pending, отзыв сессий), смена пароля (неверный текущий пароль); политика пароля; письмо с экранированием имени.
+- DX-B4-U2 (PHPUnit). H1 с `bodyHtml`: хэш учитывает HTML, транспорт отправляет HTML без повторного экранирования. `SaveStaffUseCase` выпускает приглашение.
+- DX-B4-01…05 (финальный gate) — по разделу 17 мастер-плана, live-спека и MySQL-верификатор.
+
 ## 5. Не входит
 
 По разделу 4 мастер-плана: покупательские экраны (кроме автоматического наследования токенов и логотипа), чаты, тёмная тема (только «дверь»), платежи и финансовые дашборды N1, несколько сессий, капча.
