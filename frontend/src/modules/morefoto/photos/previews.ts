@@ -1,4 +1,4 @@
-import { shallowRef } from 'vue';
+import { shallowRef, watch } from 'vue';
 import { isAxiosError, isCancel } from 'axios';
 import api from '@/api/http';
 import { useAuthStore } from '@/stores/auth';
@@ -20,7 +20,7 @@ const loader = createPreviewLoader({
   createUrl: (blob) => URL.createObjectURL(blob),
   revokeUrl: (url) => URL.revokeObjectURL(url)
 });
-let owner: string | null = null;
+let followsSession = false;
 
 export { isPreviewAbort } from './preview-loader';
 export function isManagedPreview(source: string): boolean {
@@ -31,11 +31,16 @@ export function managedPreviewSource(photoId: string, variant: 'thumb' | 'previe
 }
 /** Resolves an object URL owned by the shared cache: callers must not revoke it. */
 export function loadManagedPreview(source: string, signal: AbortSignal, urgent: boolean): Promise<string> {
-  // Cached frames belong to the session that downloaded them.
-  const token = useAuthStore().getAccessToken();
-  if (token !== owner) {
-    loader.clear();
-    owner = token;
+  if (!followsSession) {
+    followsSession = true;
+    const auth = useAuthStore();
+    // A started request outlives its frame to fill the cache, so a new or ended session cancels it at once: its late
+    // 401 would clear the session that replaced it. Cached frames of the old session are dropped with it.
+    watch(
+      () => auth.token,
+      () => loader.clear(),
+      { flush: 'sync' }
+    );
   }
   return loader.load(source, signal, urgent);
 }

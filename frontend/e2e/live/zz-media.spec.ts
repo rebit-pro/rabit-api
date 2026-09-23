@@ -1,4 +1,4 @@
-import { test, expect, type APIResponse, type Page, type Request } from '@playwright/test';
+import { test, expect, type APIResponse, type Page, type Request, type Route } from '@playwright/test';
 import { login, token } from './helpers.js';
 
 const png = Buffer.from(
@@ -666,4 +666,84 @@ test('#54/#55: большая группа открывается страниц
   await expect(page.getByTestId('photo-pagination')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('q54-mobile-photos.png'), fullPage: true, animations: 'disabled' });
+});
+
+test('#55: превью прежней сессии отменяются при выходе и не сбрасывают новый вход', async ({ page }) => {
+  test.setTimeout(120000);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await login(page);
+  const suffix = crypto.randomUUID().slice(0, 8);
+  const institution = (
+    await result(
+      await page.request.post('/api/v1/institutions', {
+        headers: await headers(page),
+        data: { name: 'Q55 Детский сад ' + suffix, address: 'Москва' }
+      }),
+      201
+    )
+  ).data;
+  const shoot = (
+    await result(
+      await page.request.post('/api/v1/institutions/' + institution.id + '/shoots', {
+        headers: await headers(page),
+        data: { name: 'Q55 Съёмка', date: '2026-10-20' }
+      }),
+      201
+    )
+  ).data;
+  const group = (
+    await result(
+      await page.request.post('/api/v1/shoots/' + shoot.id + '/groups', {
+        headers: await headers(page),
+        data: { name: 'Q55 Ромашки', groupKind: 'regular' }
+      }),
+      201
+    )
+  ).data;
+  const listing = '/api/v1/shoots/' + shoot.id + '/photos';
+  const authorization = { Authorization: 'Bearer ' + (await token(page)) };
+  await result(
+    await page.request.post(listing, {
+      headers: authorization,
+      multipart: { groupId: group.id, file: { name: 'q55-session.png', mimeType: 'image/png', buffer: pngVariant(suffix + '-session') } }
+    }),
+    202
+  );
+  await expect
+    .poll(
+      async () =>
+        (await result(await page.request.get(listing + '?status=ready&pageSize=1&groupId=' + group.id, { headers: authorization }), 200))
+          .data.meta.total,
+      { timeout: 60000 }
+    )
+    .toBe(1);
+
+  // The preview of the first session stays in flight until that session ends and the next one begins.
+  const thumbPath = /^\/api\/v1\/photos\/[0-9a-f-]{36}\/thumb$/;
+  const held: Route[] = [];
+  const cancelled: string[] = [];
+  await page.route(
+    (url) => thumbPath.test(url.pathname),
+    (route) => {
+      held.push(route);
+    }
+  );
+  page.on('requestfailed', (request) => {
+    if (thumbPath.test(new URL(request.url()).pathname)) cancelled.push(request.failure()?.errorText ?? '');
+  });
+  await page.goto('/cabinet/institutions/' + institution.id + '/shoots/' + shoot.id + '/photos?group=' + group.id);
+  await expect(page.getByTestId('photo-card')).toHaveCount(1);
+  await expect.poll(() => held.length).toBe(1);
+  const loggedOut = page.waitForResponse((response) => response.url().endsWith('/auth/logout'));
+  await page.getByRole('button', { name: 'Выйти', exact: true }).click();
+  await loggedOut;
+  await expect.poll(() => cancelled).toEqual(['net::ERR_ABORTED']);
+
+  await login(page);
+  const current = await token(page);
+  // A late 401 of the ended session must not reach the shared interceptor that clears the session.
+  await held[0]!.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: { code: 'UNAUTHORIZED' } }) });
+  await expect(page.getByRole('button', { name: 'Новая продукция', exact: true })).toBeEnabled();
+  expect(await token(page)).toBe(current);
+  await expect(page).not.toHaveURL(/\/login/);
 });
