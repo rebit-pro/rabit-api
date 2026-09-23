@@ -2,7 +2,7 @@
   "version": 2,
   "planStatus": "active",
   "date": "2026-09-23",
-  "endpointCount": 105,
+  "endpointCount": 110,
   "backend": "RaBit API",
   "baseline": {
     "branch": "main",
@@ -2322,7 +2322,12 @@
         "AUTH-07",
         "AUTH-08",
         "AUTH-09",
-        "ACC-11"
+        "ACC-11",
+        "ACC-07",
+        "ACC-08",
+        "ACC-09",
+        "ACC-10",
+        "ACC-12"
       ],
       "outcome": "Подтверждена готовность функций и известны восстановление, включение и пределы гарантий.",
       "scope": [
@@ -2589,21 +2594,27 @@
         "D01",
         "D08"
       ],
-      "endpointIds": [],
+      "endpointIds": [
+        "ACC-07",
+        "ACC-08",
+        "ACC-09",
+        "ACC-10",
+        "ACC-12"
+      ],
       "verifiesEndpointIds": [],
       "outcome": "Сотрудник и организатор загружают фото аватара; приватное хранение, WebP 64/256, защищённая выдача с версией и private-кешем.",
       "scope": [
-        "mf_staff_avatar и приватные файлы; инспектор и GD-рендер с удалением EXIF; маршруты ACC-07…ACC-10 с контрактами в каноническом реестре.",
-        "RequestImageToDtoMapper и ImageResponse в rebit.share; поле avatar в ProfileOutputDto, StaffOutputDto, StaffDetailOutputDto.",
-        "useProtectedImage и загрузка аватара в профиле и карточке сотрудника."
+        "mf_staff_avatar и приватные WebP 256/64 рядом с оригиналами фото; инспектор по содержимому и GD-рендер с поворотом по EXIF и удалением метаданных; маршруты ACC-07…ACC-10 и ACC-12 (удаление чужого аватара — отдельная запись реестра) с контрактами в каноническом реестре.",
+        "RequestImageToDtoMapper (PUT multipart через request_parse_body), ImageResponse и EntityTag в rebit.share; поле avatar в ProfileOutputDto, StaffOutputDto, StaffDetailOutputDto.",
+        "useProtectedImage, фото в MfAvatar (каркас, меню, список сотрудников) и загрузка аватара в профиле и карточке сотрудника."
       ],
       "review": [
         "Публичный /upload/ не используется; 304 по ETag; teacher не меняет чужой аватар.",
         "Идемпотентность по содержимому."
       ],
       "acceptance": [
-        "PHPStan, PHPUnit рендера/инспектора/UseCase/границы контроллера, npm run check, build.",
-        "Финальный gate: avatar.spec.ts."
+        "PHPStan, PHPUnit инспектора/рендера/хранилища/UseCase/EntityTag/границы контроллера, npm run check, build.",
+        "Финальный gate: live-спека zz-avatar и верификатор MySQL + файлы verify-avatar.php."
       ],
       "activation": "Фото аватаров появляются в каркасе, профиле и списке сотрудников.",
       "legacyIds": [],

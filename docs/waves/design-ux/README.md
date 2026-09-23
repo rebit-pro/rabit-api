@@ -8,11 +8,11 @@
 
 - `docs/waves/graph.json`: направление U, `deliveryBundles.design-ux`, у каждой волны пакета `deliveryBundle`; D01 принят (`decisionEvidence.DESIGN-UX`); D3 записан слитым (PR #46, `533c06b`; follow-up PR #49 и #52).
 - `tools/verify-wave-graph.py`: ID `[A-NU]`, зависимость внутри пакета допустима для inProgress/review, пакет сливается целиком; негативные fixtures «зависимость вне пакета», «неизвестный пакет», «частичный merge пакета».
-- Endpoint ID назначаются коммитами волн вместе с контрактами: B4 — AUTH-05…AUTH-09 и ACC-11 (`endpointCount` 99 → 105, N2 перепроверяет и их), B3 — ACC-07…ACC-10.
+- Endpoint ID назначаются коммитами волн вместе с контрактами: B4 — AUTH-05…AUTH-09 и ACC-11 (`endpointCount` 99 → 105), B3 — ACC-07…ACC-10 и ACC-12 (105 → 110; удаление чужого аватара получило свой ID, ACC-11 уже занят приглашением); N2 перепроверяет все новые ID.
 
 ## Внешние изменения MoreFoto
 
-Соседний `../MoreFoto` без git; воспроизводимый diff — [morefoto-contract.patch](morefoto-contract.patch) (16 файлов) относительно состояния до пакета: канонический `backend-waves.json`/`.md`, `wave_graph.py`, `render-waves.py` (раздел «Пакеты доставки», счётчики из `endpointCount`), `build.py`/`validate.py` (ID `[A-NU]`; контракты B4 AUTH-05…AUTH-09, ACC-11 и фильтр `accountStatus` в ACC-02), пересобранные `endpoints.json`, README, Postman-коллекции и окружения (`invitation_token`, `reset_token`, `new_password` — секретные и пустые), `verification.json`, счётчик операций в `04-bitrix-modules/README.md`, ссылка на v2 в `frontend/design-plan.md`, запись о D01/D08 в `frontend/business-review/decisions.md`.
+Соседний `../MoreFoto` без git; воспроизводимый diff — [morefoto-contract.patch](morefoto-contract.patch) (17 файлов) относительно состояния до пакета: канонический `backend-waves.json`/`.md`, `wave_graph.py`, `render-waves.py` (раздел «Пакеты доставки», счётчики из `endpointCount`), `build.py`/`validate.py` (ID `[A-NU]`; контракты B4 AUTH-05…AUTH-09, ACC-11 и фильтр `accountStatus` в ACC-02, контракты B3 ACC-07…ACC-10, ACC-12; форматы `empty` и `image` в генераторе и офлайн-валидаторе Postman), пересобранные `endpoints.json`, README, Postman-коллекции и окружения (`invitation_token`, `reset_token`, `new_password` — секретные и пустые; `avatar_version`, `avatar_variant`), `verification.json`, счётчик операций в `04-bitrix-modules/README.md`, ссылка на v2 в `frontend/design-plan.md`, запись о D01/D08 в `frontend/business-review/decisions.md`.
 
 Проверка после применения: `python3 docs/04-bitrix-modules/wave_graph.py docs/04-bitrix-modules/backend-waves.json`, `python3 docs/05-rest-api/build.py`, `python3 docs/05-rest-api/validate.py`, `node docs/05-rest-api/validate-postman.cjs`.
 
@@ -24,7 +24,8 @@
 | U2 | `d7c3661` токены, шрифты, тема | готово, быстрые проверки |
 | U3 | `1a944fa` логотип, каркас, навигация, аватар на инициалах | готово, быстрые проверки |
 | U4 | `c001fc5`, `eedc437`, `6962cf9` поверхности, статусы, hex → токены, SVG-иконки | готово, быстрые проверки |
-| B4 | `3295ad1` backend, `92ae90d` экраны, `717136b` «Что дальше» и фильтр статуса, коммит реестра AUTH-05…09/ACC-11 | готово, быстрые проверки |
-| B3, U5–U8 | — | запланированы в пакете |
+| B4 | `3295ad1` backend, `92ae90d` экраны, `717136b` «Что дальше» и фильтр статуса, `74011c8` реестр, `f5f2f68` чистые контроллеры | готово, быстрые проверки |
+| B3 | `604d79c` backend, `42b7ec7` frontend и E2E, коммит реестра ACC-07…10/ACC-12 | готово, быстрые проверки |
+| U5–U8 | — | запланированы в пакете |
 
 Отчёт о финальном gate и визуальные артефакты добавляются сюда после всех волн.
