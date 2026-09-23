@@ -17,7 +17,7 @@ test('live roles keep the visibility of the router guards', () => {
     ['Работа', ['Обзор', 'Учреждения', 'Ссылки и сроки', 'Списки сотрудников', 'Заказы']]
   ]);
   assert.deepEqual(titles(cabinetNavigation({ role: 'head', permissions: [], demo: false })), [
-    ['Работа', ['Обзор', 'Учреждения', 'Ссылки и сроки']]
+    ['Работа', ['Обзор', 'Учреждения', 'Ссылки и сроки', 'Списки сотрудников']]
   ]);
   assert.deepEqual(titles(cabinetNavigation({ role: 'teacher', permissions: [], demo: false })), [
     ['Работа', ['Мои группы', 'Ссылки и сроки', 'Списки сотрудников']]

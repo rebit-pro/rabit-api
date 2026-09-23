@@ -15,6 +15,7 @@ import { isStaffRole } from '../../types';
 import type { LinkCommand, LinkEvent, LinkGroup } from '../types';
 import '../handoff.css';
 import MfStatus from '@/components/status/MfStatus.vue';
+import MfTimeline from '@/components/viz/MfTimeline.vue';
 import { linkStatus } from '../../ui/statusTone';
 const live = !isMockApiEnabled,
   authStore = useAuthStore(),
@@ -24,8 +25,22 @@ const live = !isMockApiEnabled,
   role = () => (isStaffRole(authStore.user?.role) ? authStore.user!.role : 'head'),
   { data, loading, error, reload } = useHandoff((token) => loadLinks(token, role())),
   notice = shallowRef(''),
+  failure = shallowRef(''),
   histories = shallowRef<Record<string, LinkEvent[]>>({});
+/** Where the organizer fixes what keeps a group from its link (INF-04): the tab of the shoot or the staff lists. */
+function problemFix(group: LinkGroup, problem: string): { to: string; label: string } | null {
+  if (!live || data.value?.role !== 'organizer') return null;
+  const shoot = '/cabinet/institutions/' + encodeURIComponent(group.institutionId) + '/shoots/' + encodeURIComponent(group.shootId);
+  const query = '?group=' + encodeURIComponent(group.id);
+  if (['noPhotos', 'photosProcessing', 'unassignedPhotos'].includes(problem))
+    return { to: shoot + '/photos' + query, label: 'К фотографиям' };
+  if (problem === 'noProducts') return { to: shoot + '/conditions' + query, label: 'К условиям' };
+  if (problem === 'staffRequestsPending')
+    return { to: '/cabinet/staff-requests?shoot=' + encodeURIComponent(group.shootId), label: 'К спискам' };
+  return null;
+}
 const editor = useHandoffEditor(() => {
+  failure.value = '';
   notice.value = 'Изменения сохранены.';
   void reload();
 });
@@ -77,16 +92,18 @@ async function token(group: LinkGroup): Promise<string> {
 }
 async function copy(group: LinkGroup) {
   let link = '';
+  notice.value = '';
+  failure.value = '';
   try {
     link = await token(group);
     if (!link) {
-      notice.value = 'Ссылка появится после проверки группы.';
+      failure.value = 'Ссылка появится после проверки группы.';
       return;
     }
     await navigator.clipboard.writeText(url(link));
     notice.value = 'Ссылка скопирована. Дата передачи не изменена.';
   } catch (cause) {
-    notice.value = link ? 'Скопируйте ссылку вручную: ' + url(link) : linkError(cause);
+    failure.value = link ? 'Скопируйте ссылку вручную: ' + url(link) : linkError(cause);
   }
 }
 async function openGallery(group: LinkGroup) {
@@ -100,7 +117,7 @@ async function openGallery(group: LinkGroup) {
     }
   } catch (cause) {
     tab?.close();
-    notice.value = linkError(cause);
+    failure.value = linkError(cause);
   }
 }
 async function history(group: LinkGroup, event: Event) {
@@ -109,7 +126,7 @@ async function history(group: LinkGroup, event: Event) {
     const detail = await linksApi.detail(group.id);
     histories.value = { ...histories.value, [group.id]: toLinkGroup(detail, detail).history };
   } catch (cause) {
-    notice.value = linkError(cause);
+    failure.value = linkError(cause);
   }
 }
 </script>
@@ -119,10 +136,12 @@ async function history(group: LinkGroup, event: Event) {
       <p class="mf-eyebrow">ПЕРЕДАЧА РОДИТЕЛЯМ</p>
       <h1>Ссылки и сроки</h1>
       <p class="mf-muted">Семь дней на заказ — с фактической передачи ссылки.</p>
+      <MfStatus v-if="data?.role === 'head'" tone="neutral" icon="mdi-eye-outline" class="mt-3">Только просмотр</MfStatus>
     </div>
     <v-btn variant="outlined" :loading="loading" @click="reload">Обновить</v-btn>
   </header>
-  <p v-if="notice" role="status" class="handoff-notice">{{ notice }}</p>
+  <v-alert v-if="notice" type="success" variant="tonal" role="status" class="mb-5">{{ notice }}</v-alert>
+  <v-alert v-if="failure" type="error" variant="tonal" role="alert" class="mb-5">{{ failure }}</v-alert>
   <v-alert v-if="error" type="error" variant="tonal">{{ error }}<v-btn variant="text" @click="reload">Повторить</v-btn></v-alert>
   <template v-if="data">
     <v-select
@@ -141,17 +160,13 @@ async function history(group: LinkGroup, event: Event) {
         </div>
         <MfStatus :tone="linkStatus(group).tone">{{ linkStatus(group).text }}</MfStatus>
       </header>
-      <div class="handoff-dates">
-        <div>
-          <span>Передана родителям</span><strong>{{ formatMoment(group.sentAt) }}</strong>
-        </div>
-        <div>
-          <span>Приём заказов до</span><strong>{{ formatMoment(group.closesAt) }}</strong>
-        </div>
-        <div>
-          <span>Доставка до</span><strong>{{ formatMoment(group.deliveryAt) }}</strong>
-        </div>
-      </div>
+      <MfTimeline
+        class="handoff-timeline"
+        :sent-at="group.sentAt"
+        :closes-at="group.closesAt"
+        :delivery-at="group.deliveryAt"
+        :now="data.now"
+      />
       <label v-if="!live" class="handoff-url"
         >Ссылка группы<input
           :value="url(group.galleryToken)"
@@ -159,10 +174,18 @@ async function history(group: LinkGroup, event: Event) {
           :aria-label="'Ссылка группы ' + group.name"
           @focus="($event.target as HTMLInputElement).select()"
       /></label>
-      <p v-if="!group.sentAt" class="mf-muted mb-4">
+      <p v-if="!group.sentAt" class="mf-muted mb-2">
         {{ live && !group.prepared ? 'Ссылка появится после проверки группы.' : 'Копирование не запускает срок.' }}
-        {{ group.problems.map(problemText).join(' ') }}
       </p>
+      <ul v-if="!group.sentAt && group.problems.length" class="handoff-problems" aria-label="Что мешает открыть галерею">
+        <li v-for="problem in group.problems" :key="problem">
+          <v-icon icon="mdi-alert-circle-outline" size="18" aria-hidden="true" />
+          <span>{{ problemText(problem) }}</span>
+          <RouterLink v-if="problemFix(group, problem)" :to="problemFix(group, problem)!.to">{{
+            problemFix(group, problem)!.label
+          }}</RouterLink>
+        </li>
+      </ul>
       <div class="mf-actions">
         <template v-if="!live || group.prepared">
           <v-btn variant="outlined" @click="copy(group)">Копировать ссылку</v-btn

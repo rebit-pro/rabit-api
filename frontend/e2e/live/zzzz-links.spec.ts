@@ -206,6 +206,7 @@ test('F2: организатор проверяет ссылку, воспита
     ).toBe('FORBIDDEN');
     await head.goto('/cabinet/links');
     await expect(head.getByTestId('link-' + group.id)).toBeVisible();
+    await expect(head.getByText('Только просмотр', { exact: true })).toBeVisible();
     await expect(head.getByRole('button', { name: 'Отметить передачу', exact: true })).toHaveCount(0);
 
     const teacher = await teacherContext.newPage();

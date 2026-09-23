@@ -65,6 +65,9 @@ test('U6: учитель видит карточки своих групп со 
   for (const card of await cards.all()) {
     await expect(card.getByTestId('countdown')).toHaveText(/Ссылка ещё не передана родителям|осталось|остался|просрочено|приём закрыт/);
   }
+  // INF-11: a card names the curator of the group's institution when one is assigned.
+  const curators = (links.data.items as { curatorName?: string | null }[]).filter((item) => item.curatorName).length;
+  await expect(page.getByTestId('overview-curator')).toHaveCount(curators);
 });
 
 test('U6: плитки над сотрудниками и заказами совпадают со сводками и фильтруют список', async ({ page }) => {

@@ -23,6 +23,19 @@ const editor = useHandoffEditor(() => {
   notice.value = 'Изменения сохранены.';
   void reload();
 });
+// «Передан → Проверка → Перенесён»: where the list is now and whose move it is.
+const steps = computed(() => {
+  const status = selected.value?.status;
+  return [
+    { key: 'submitted', label: 'Передан куратору', state: 'done' },
+    {
+      key: 'review',
+      label: status === 'clarification' ? 'Нужно уточнение' : 'Проверка куратором',
+      state: status === 'transferred' ? 'done' : status === 'clarification' ? 'attention' : 'current'
+    },
+    { key: 'transferred', label: 'Наборы перенесены', state: status === 'transferred' ? 'done' : 'todo' }
+  ];
+});
 const { command, busy, errors, restored, error: saveError } = editor;
 const selected = computed(() => data.value?.requests.find((r) => r.id === route.params.requestId));
 const reviewing = computed(() => ['curator', 'organizer'].includes(data.value?.role ?? ''));
@@ -91,10 +104,11 @@ function change(value: Partial<StaffCommand>) {
       <p class="mf-eyebrow">РАБОТА С УЧРЕЖДЕНИЕМ</p>
       <h1>{{ route.params.requestId ? 'Заявка на список сотрудников' : 'Заявки на списки сотрудников' }}</h1>
       <p class="mf-muted">Проверка детей сотрудников и перенос полных наборов.</p>
+      <MfStatus v-if="data?.role === 'head'" tone="neutral" icon="mdi-eye-outline" class="mt-3">Только просмотр</MfStatus>
     </div>
     <v-btn v-if="!route.params.requestId && createAllowed" @click="open('submit')">Новый список</v-btn>
   </header>
-  <p v-if="notice" role="status" class="handoff-notice">{{ notice }}</p>
+  <v-alert v-if="notice" type="success" variant="tonal" role="status" class="mb-5">{{ notice }}</v-alert>
   <v-alert v-if="error" type="error" variant="tonal">{{ error }}<v-btn variant="text" @click="reload">Повторить</v-btn></v-alert>
   <p v-if="loading && !data" role="status">Загружаем списки…</p>
   <template v-if="data">
@@ -112,6 +126,17 @@ function change(value: Partial<StaffCommand>) {
           </div>
           <MfStatus :tone="toneOf(staffRequestTone, selected.status)">{{ requestStatus[selected.status] }}</MfStatus>
         </header>
+        <ol class="request-steps" aria-label="Ход проверки списка">
+          <li v-for="step in steps" :key="step.key" :class="'request-steps__step--' + step.state">
+            <v-icon
+              :icon="step.state === 'done' ? 'mdi-check-circle' : step.state === 'attention' ? 'mdi-alert-circle-outline' : 'mdi-circle'"
+              size="18"
+              aria-hidden="true"
+            />
+            <span>{{ step.label }}</span>
+            <span class="mf-sr-only">{{ step.state === 'done' ? '— выполнено' : step.state === 'todo' ? '— впереди' : '— сейчас' }}</span>
+          </li>
+        </ol>
         <v-alert v-if="selected.staffEligibility?.eligible" type="success" variant="tonal" class="mb-5" data-testid="staff-eligibility">
           Право сотрудника подтверждено сервером · {{ formatMoment(selected.staffEligibility.verifiedAt) }}
         </v-alert>
@@ -134,8 +159,8 @@ function change(value: Partial<StaffCommand>) {
             >Проверить и перенести</v-btn
           >
         </div>
-        <details open class="handoff-history">
-          <summary>История списка</summary>
+        <details class="handoff-history">
+          <summary>История списка · {{ selected.history.length }}</summary>
           <ol>
             <li v-for="(event, index) in selected.history" :key="index">
               <strong>{{

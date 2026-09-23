@@ -339,11 +339,6 @@ for (const viewport of [
       const navigation = page.getByLabel('Основная навигация');
       await expect(navigation).toBeInViewport();
       const link = navigation.getByRole('link', { name: 'Списки сотрудников', exact: true });
-      if (account === 'head') {
-        await expect(link).toHaveCount(0);
-        await body(await page.request.get('/api/v1/staff-requests', { headers: await headers(page) }), 403);
-        return;
-      }
       await expect(link).toBeVisible();
       if (account === 'teacher') {
         await page.screenshot({
@@ -359,6 +354,14 @@ for (const viewport of [
       const createButton = page.getByRole('button', { name: 'Новый список', exact: true });
       if (account === 'curator') {
         await expect(createButton).toHaveCount(0);
+        return;
+      }
+      if (account === 'head') {
+        // DS-14: the head reads the lists of their institutions and changes nothing.
+        await expect(createButton).toHaveCount(0);
+        await expect(page.getByText('Только просмотр', { exact: true })).toBeVisible();
+        const lists = await body(await page.request.get('/api/v1/staff-requests', { headers: await headers(page) }), 200);
+        expect(lists.data.scope.role).toBe('head');
         return;
       }
       await createButton.click();

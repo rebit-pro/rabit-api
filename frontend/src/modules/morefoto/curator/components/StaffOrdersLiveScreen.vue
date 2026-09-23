@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth';
 import { money } from '../../commerce/money';
 import OrderComposition from '../../orders/components/OrderComposition.vue';
 import OrderLiveFacts from '../../orders/components/OrderLiveFacts.vue';
-import { formatMoment, paymentLabels, productionLabels } from '../../orders/formatters';
+import { formatMoment, livePaymentLabels as paymentLabels, productionLabels } from '../../orders/formatters';
 import { orderQuoteAsCart } from '../../orders/live/rules';
 import { useStaffOrders } from '../useStaffOrders';
 import MfStatus from '@/components/status/MfStatus.vue';
@@ -42,6 +42,15 @@ const productionSegments = computed(() =>
   }))
 );
 const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => photo.code).join(', ') ?? '');
+// Period presets end today by Moscow time, the day the filter dates are counted in.
+function moscowDate(offsetDays: number): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(new Date(Date.now() - offsetDays * 86400000));
+}
+function lastDays(days: number): void {
+  filters.dateFrom = moscowDate(days - 1);
+  filters.dateTo = moscowDate(0);
+  apply();
+}
 </script>
 <template>
   <header class="staff-orders__heading">
@@ -114,6 +123,10 @@ const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => ph
         <v-select v-model="filters.productionStatus" :items="productionOptions" label="Изготовление" density="compact" hide-details />
         <v-text-field v-model="filters.dateFrom" type="date" label="Создан с" aria-label="Создан с" density="compact" hide-details />
         <v-text-field v-model="filters.dateTo" type="date" label="Создан по" aria-label="Создан по" density="compact" hide-details />
+        <div class="mf-actions staff-orders__presets" aria-label="Быстрый период">
+          <v-btn variant="outlined" density="compact" @click="lastDays(7)">7 дней</v-btn>
+          <v-btn variant="outlined" density="compact" @click="lastDays(30)">30 дней</v-btn>
+        </div>
       </div>
     </form>
     <p v-if="loading && !page" role="status">Загружаем заказы…</p>
@@ -169,6 +182,10 @@ const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => ph
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+.staff-orders__presets {
+  grid-column: 1 / -1;
+  gap: var(--mf-space-2);
 }
 @media (min-width: 1280px) {
   .staff-orders__refine {

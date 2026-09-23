@@ -55,7 +55,8 @@ export function cabinetNavigation({ role, permissions, demo, counters = {} }: Na
   } else {
     if ('teacher' !== role) work.push(item('Учреждения', '/cabinet/institutions', 'mdi-home-city-outline'));
     work.push(item('Ссылки и сроки', '/cabinet/links', 'mdi-link-variant'));
-    if ('head' !== role) work.push(item('Списки сотрудников', '/cabinet/staff-requests', 'mdi-account-check-outline'));
+    // DS-14: the head reads the staff lists of their institutions without changing them.
+    work.push(item('Списки сотрудников', '/cabinet/staff-requests', 'mdi-account-check-outline'));
     if (can('order.read')) work.push(item('Заказы', '/cabinet/orders', 'mdi-receipt-text-outline'));
     if (can('catalog.manage')) settings.push(item('Каталог и цены', '/cabinet/catalog', 'mdi-tag-outline'));
     if (can('staff.manage')) settings.push(item('Сотрудники', '/cabinet/users', 'mdi-account-group-outline'));

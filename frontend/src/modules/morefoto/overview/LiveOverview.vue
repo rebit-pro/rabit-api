@@ -137,6 +137,9 @@ const finance = ['Оплачено', 'Подтверждённые возвра�
           :timezone="group.timezone"
         />
         <p class="mf-muted">Кадров {{ group.photoCount }} · Детей {{ group.childCount }}</p>
+        <p v-if="group.curatorName" class="overview-group__curator" data-testid="overview-curator">
+          Вопросы по группе — куратору: <strong>{{ group.curatorName }}</strong>
+        </p>
         <v-btn to="/cabinet/links" variant="outlined" class="overview-group__action">Ссылка и сроки</v-btn>
       </article>
     </section>
@@ -188,6 +191,9 @@ const finance = ['Оплачено', 'Подтверждённые возвра�
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--mf-space-3);
+}
+.overview-group__curator {
+  font-size: var(--mf-text-sm);
 }
 .overview-group__header h2 {
   font-family: var(--mf-font-display);

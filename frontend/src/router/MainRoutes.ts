@@ -64,7 +64,7 @@ const MainRoutes: RouteRecordRaw = {
       component: () => import('@/modules/morefoto/views/StaffRequestsPage.vue'),
       meta: {
         title: 'Списки сотрудников',
-        staffRoles: ['organizer', 'curator', 'teacher']
+        staffRoles: isMockApiEnabled ? ['organizer', 'curator', 'teacher'] : ['organizer', 'curator', 'head', 'teacher']
       }
     },
     {
@@ -73,7 +73,7 @@ const MainRoutes: RouteRecordRaw = {
       component: () => import('@/modules/morefoto/views/StaffRequestsPage.vue'),
       meta: {
         title: 'Список сотрудников',
-        staffRoles: ['organizer', 'curator', 'teacher']
+        staffRoles: isMockApiEnabled ? ['organizer', 'curator', 'teacher'] : ['organizer', 'curator', 'head', 'teacher']
       }
     },
     {

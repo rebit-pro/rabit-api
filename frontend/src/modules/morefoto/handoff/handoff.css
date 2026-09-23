@@ -205,3 +205,59 @@
   gap:var(--mf-space-2);
   margin-bottom:var(--mf-space-5)
 }
+
+.handoff-timeline {
+  max-width: 640px;
+  margin: 20px 0;
+}
+
+.handoff-problems {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.handoff-problems li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--mf-tone-warning-fg);
+}
+
+.handoff-problems a {
+  color: var(--mf-color-link);
+}
+
+.request-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  font-size: var(--mf-text-sm);
+}
+
+.request-steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--mf-color-text-secondary);
+}
+
+.request-steps__step--done {
+  color: var(--mf-tone-success-fg) !important;
+}
+
+.request-steps__step--current {
+  color: var(--mf-color-text) !important;
+  font-weight: var(--mf-weight-semibold);
+}
+
+.request-steps__step--attention {
+  color: var(--mf-tone-warning-fg) !important;
+  font-weight: var(--mf-weight-semibold);
+}

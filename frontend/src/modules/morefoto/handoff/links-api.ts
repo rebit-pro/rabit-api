@@ -22,6 +22,8 @@ export interface LiveLinkItem {
   deliveryAt: string | null;
   photoCount: number;
   childCount: number;
+  /** Curator of the group's institution, whom the teacher asks about the group (INF-11); only in the list. */
+  curatorName?: string | null;
 }
 interface LiveLinkEvent {
   kind: LinkEvent['kind'];

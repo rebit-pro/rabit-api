@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { money } from '../../commerce/money';
-import { formatMoment, paymentLabels, productionLabels } from '../formatters';
+import { formatMoment, livePaymentLabels as paymentLabels, productionLabels } from '../formatters';
 import { useLiveOrder } from '../composables/useLiveOrder';
 import { orderQuoteAsCart } from '../live/rules';
 import OrderComposition from './OrderComposition.vue';
