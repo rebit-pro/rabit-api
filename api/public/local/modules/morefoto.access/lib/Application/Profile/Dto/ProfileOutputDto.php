@@ -19,5 +19,6 @@ final readonly class ProfileOutputDto implements ResultDtoInterface
         public int $accessRevision,
         public array $permissions,
         public ?AvatarOutputDto $avatar = null,
+        public ?SupportContactOutputDto $support = null,
     ) {}
 }

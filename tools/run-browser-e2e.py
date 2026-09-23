@@ -44,6 +44,8 @@ VERIFIERS = [
 ]
 # Production images have no Xdebug; the development one would try to reach a debugger on every PHP request.
 PHP_ENV = ["--env", "XDEBUG_MODE=off"]
+# DS-12: a test-only organizer contact for the «Помощь» section of the profile.
+SUPPORT = ["--env", "MOREFOTO_SUPPORT_NAME=Организатор E2E", "--env", "MOREFOTO_SUPPORT_EMAIL=support@example.invalid", "--env", "MOREFOTO_SUPPORT_PHONE=+7 900 000-00-00"]
 LOCK = threading.RLock()
 FAILED = threading.Event()
 STARTED = time.monotonic()
@@ -287,7 +289,7 @@ def open_stand(state, args, stand, notification):
     def serve():
         service(state, name + "-fpm", *network, "--network-alias", "api-php-fpm", "--user", "0", *PHP_ENV, "--entrypoint", "php-fpm",
                 *php_mounts(state, stand), "--env", "APP_ENV=test", "--env", "APP_DEBUG=0", "--env", "REBIT_GEETEST_ENABLED=0",
-                "--env", "REBIT_GEETEST_BYPASS=1", *amqp, *media, "--env", "MOREFOTO_CHECKOUT_ENABLED=1", args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
+                "--env", "REBIT_GEETEST_BYPASS=1", *amqp, *media, "--env", "MOREFOTO_CHECKOUT_ENABLED=1", *SUPPORT, args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
         service(state, name + "-media", *network, *php, *amqp, *media, args.php_cli, "tools/e2e/consume-media.php")
         service(state, name + "-backend", *network, "--network-alias", "backend", *php_mounts(state, stand),
                 "--mount", f"type=bind,source={Path(state['report'], 'backend.conf')},target=/etc/nginx/conf.d/default.conf,readonly",

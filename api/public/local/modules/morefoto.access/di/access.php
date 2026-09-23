@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Morefoto\Access\Infrastructure\Profile\ConfiguredSupportContactProvider;
+use Morefoto\Access\Application\Profile\Contract\SupportContactProviderInterface;
 use Bitrix\Main\DI\ServiceLocator;
 use Morefoto\Access\Application\Authorization\Service\GroupLinkAccess;
 use Morefoto\Access\Application\Authorization\Service\StaffRequestAccess;
@@ -164,7 +166,15 @@ return [
             ServiceLocator::getInstance()->get(PermissionPolicy::class),
             ServiceLocator::getInstance()->get(StaffAvatarRepositoryInterface::class),
             ServiceLocator::getInstance()->get(AvatarOutputMapper::class),
+            ServiceLocator::getInstance()->get(SupportContactProviderInterface::class),
         ],
+    ],
+    SupportContactProviderInterface::class => [
+        'constructor' => static fn(): SupportContactProviderInterface => new ConfiguredSupportContactProvider(
+            (string)getenv('MOREFOTO_SUPPORT_NAME'),
+            (string)getenv('MOREFOTO_SUPPORT_EMAIL'),
+            (string)getenv('MOREFOTO_SUPPORT_PHONE'),
+        ),
     ],
     BootstrapOrganizerUseCase::class => [
         'className' => BootstrapOrganizerUseCase::class,

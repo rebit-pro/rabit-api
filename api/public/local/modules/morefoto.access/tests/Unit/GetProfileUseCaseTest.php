@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Access\Tests\Unit;
 
+use Morefoto\Access\Infrastructure\Profile\ConfiguredSupportContactProvider;
 use Bitrix\Main\ORM\Query\Result;
 use Morefoto\Access\Application\Authorization\Service\StaffAuthorization;
 use Morefoto\Access\Application\Avatar\Contract\StaffAvatarRepositoryInterface;
@@ -32,10 +33,10 @@ final class GetProfileUseCaseTest extends TestCase
         $profiles->expects(self::once())->method('findByUserId')->with(10)->willReturn($this->queryResult(new StaffProfile(10, RoleEnum::TEACHER, true, 3, 2)));
         $identities = $this->createMock(IdentityGatewayInterface::class);
         $identities->expects(self::once())->method('findActive')->with(10)->willReturn(new IdentityOutputDto(10, 'Teacher', 'teacher@example.invalid'));
-        $result = (new GetProfileUseCase(new StaffAuthorization($profiles, $identities, new PermissionPolicy(), $this->createStub(InstitutionAssignmentRepository::class), $this->createStub(GroupAssignmentRepository::class)), new PermissionPolicy(), $this->noAvatars(), new AvatarOutputMapper()))->execute(10);
+        $result = (new GetProfileUseCase(new StaffAuthorization($profiles, $identities, new PermissionPolicy(), $this->createStub(InstitutionAssignmentRepository::class), $this->createStub(GroupAssignmentRepository::class)), new PermissionPolicy(), $this->noAvatars(), new AvatarOutputMapper(), new ConfiguredSupportContactProvider('', '', '')))->execute(10);
         self::assertSame([
             'id' => 10, 'name' => 'Teacher', 'email' => 'teacher@example.invalid', 'role' => 'teacher',
-            'active' => true, 'accessRevision' => 2, 'permissions' => ['profile.read'], 'avatar' => null,
+            'active' => true, 'accessRevision' => 2, 'permissions' => ['profile.read'], 'avatar' => null, 'support' => null,
         ], get_object_vars($result));
     }
 
@@ -48,7 +49,7 @@ final class GetProfileUseCaseTest extends TestCase
         $identities->method('findActive')->willReturn(new IdentityOutputDto(10, 'Identity', 'identity@example.invalid'));
         $this->expectException(HttpException::class);
         $this->expectExceptionCode(403);
-        (new GetProfileUseCase(new StaffAuthorization($profiles, $identities, new PermissionPolicy(), $this->createStub(InstitutionAssignmentRepository::class), $this->createStub(GroupAssignmentRepository::class)), new PermissionPolicy(), $this->noAvatars(), new AvatarOutputMapper()))->execute(10);
+        (new GetProfileUseCase(new StaffAuthorization($profiles, $identities, new PermissionPolicy(), $this->createStub(InstitutionAssignmentRepository::class), $this->createStub(GroupAssignmentRepository::class)), new PermissionPolicy(), $this->noAvatars(), new AvatarOutputMapper(), new ConfiguredSupportContactProvider('', '', '')))->execute(10);
     }
 
     public static function deniedProfiles(): iterable
@@ -66,7 +67,7 @@ final class GetProfileUseCaseTest extends TestCase
         $identities->method('findActive')->willReturn(null);
         $this->expectException(HttpException::class);
         $this->expectExceptionCode(401);
-        (new GetProfileUseCase(new StaffAuthorization($profiles, $identities, new PermissionPolicy(), $this->createStub(InstitutionAssignmentRepository::class), $this->createStub(GroupAssignmentRepository::class)), new PermissionPolicy(), $this->noAvatars(), new AvatarOutputMapper()))->execute(10);
+        (new GetProfileUseCase(new StaffAuthorization($profiles, $identities, new PermissionPolicy(), $this->createStub(InstitutionAssignmentRepository::class), $this->createStub(GroupAssignmentRepository::class)), new PermissionPolicy(), $this->noAvatars(), new AvatarOutputMapper(), new ConfiguredSupportContactProvider('', '', '')))->execute(10);
     }
 
     private function noAvatars(): StaffAvatarRepositoryInterface
