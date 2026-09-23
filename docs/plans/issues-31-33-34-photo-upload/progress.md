@@ -5,13 +5,13 @@
 - Дата: 2026-09-22.
 - Ветка: `codex/issues-31-33-34-photo-upload`, upstream `origin/codex/issues-31-33-34-photo-upload`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-31-33-34-photo-upload`. Основной checkout `/home/user/rabit-api` остаётся на `main`.
-- Base: `5b750c0` (`origin/main`, включает PR #45 и запись его деплоя).
+- Base: `bb35665` (`origin/main` на 2026-09-23, включает D3 и записи её деплоя). Прежний base — `5b750c0`.
 - Issues: [#31](https://github.com/rebit-pro/rabit-api/issues/31), [#33](https://github.com/rebit-pro/rabit-api/issues/33), [#34](https://github.com/rebit-pro/rabit-api/issues/34) — OPEN, закроются merge PR (`Closes`).
 - PR: [#47](https://github.com/rebit-pro/rabit-api/pull/47), OPEN в `main`, не сливать до review и полного gate. Точный HEAD — `git rev-parse HEAD`, сверять с `gh pr view 47 --json headRefOid`.
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md).
 - Завершено: разведка пайплайна, чтение production-агрегатов, решения пользователя, план.
-- Сейчас: PR #47 ждёт review. Код не менять до замечаний.
-- Следующий шаг: review PR. После review без блокеров — полный `make test-e2e` (T06–T08, T14) и, с согласия пользователя, opt-in бенч T13.
+- Сейчас: пользователь поручил довести задачу до production. Base обновлён, идёт полный `make test-e2e`.
+- Следующий шаг: gate → merge PR #47 → релиз backend и frontend по процедуре F2 → smoke → замеры на production по логам `media`.
 - Блокеров нет. Открыто: согласие пользователя на opt-in замер 50 кадров (T13) и на чтение production-логов после деплоя (T15).
 - Рабочее дерево: закоммичено (`bdb7be8` #34, `0a273dd` #33/#31, `c536f85` docs и эта запись). Пустые `api/vendor` и `api/var` — точки монтирования для проверок, в git не попадают.
 
@@ -74,6 +74,15 @@
   - С сетью: 24 scenarios passed, 48 steps passed.
   - Позиционный путь к feature не заменяет `paths` из `cucumber.mjs`, поэтому фильтр — только через `--tags`.
 - Логирование: на стенде нет ошибок файлового обработчика Monolog (FPM и media). На production в канал `media` уже пишет `LoggerFilter`, новые записи не добавляют точек отказа.
+
+### 2026-09-23 — обновление base и путь к production
+
+- Пользователь: задачу довести до production.
+- Состояние production до выкатки (чтение): frontend `morefoto-frontend:d3-20260922191601-21311db`, backend-сервисы монтируют `/srv/morefoto/releases/d3-20260922191601-21311db/app`, логи и upload — из общего runtime `stage-20260919-b2-d788622`. Изменений #47 там нет.
+- `morefoto_stage_media_consumer` показывал 0/1: это не авария. Команда `app:media:consume` живёт до 300 с, штатно завершается и перезапускается Swarm, между циклами реплика на несколько секунд пустая.
+- `git merge origin/main` (`bb35665`) в ветку: один конфликт в `frontend/src/modules/morefoto/photos/api.ts` — D3 добавила интерфейсы переноса ребёнка там же, где мой `uploadTimeout`. Сохранено и то и другое, merge-коммит `f935ea1`.
+- php-cs-fixer по всем изменённым PHP (74 файла, включая пришедшие из D3): 0 требующих правок.
+- Запущен полный `make test-e2e` на обновлённом base.
 
 ## Результаты тест-кейсов
 
