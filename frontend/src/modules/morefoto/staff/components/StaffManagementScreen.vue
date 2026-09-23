@@ -131,8 +131,8 @@ function edit(item?: StaffSummary): void {
   </section>
   <form class="staff-filters mb-5" aria-label="Фильтры сотрудников" @submit.prevent="reload(1)">
     <v-text-field v-model="filters.q" label="Имя или email" clearable hide-details />
-    <v-select v-model="filters.role" :items="roleItems" label="Роль" hide-details />
-    <v-select v-model="filters.accountStatus" :items="statusItems" label="Статус" hide-details />
+    <v-select v-model="filters.role" :items="roleItems" label="Роль" aria-label="Роль" hide-details />
+    <v-select v-model="filters.accountStatus" :items="statusItems" label="Статус" aria-label="Статус" hide-details />
     <v-btn type="submit" variant="outlined" :disabled="loading">Найти</v-btn>
   </form>
   <v-progress-linear v-if="loading" indeterminate aria-label="Загрузка сотрудников" class="mb-5" />

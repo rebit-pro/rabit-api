@@ -138,12 +138,15 @@ watch(
 </template>
 
 <style scoped>
+/* The divider is drawn inside the bar, so the bar keeps its 64/56 px height (design plan 10.3). */
 .mf-appbar {
-  border-bottom: 1px solid var(--mf-color-border);
+  box-shadow: inset 0 -1px 0 var(--mf-color-border) !important;
   transition: box-shadow var(--mf-duration-fast) var(--mf-ease-standard);
 }
 .mf-appbar--scrolled {
-  box-shadow: var(--mf-shadow-sm) !important;
+  box-shadow:
+    inset 0 -1px 0 var(--mf-color-border),
+    var(--mf-shadow-sm) !important;
 }
 .mf-appbar :deep(.v-toolbar__content) {
   gap: var(--mf-space-3);

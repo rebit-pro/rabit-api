@@ -69,6 +69,9 @@ async function loginRole(page: Page, account: 'curator' | 'head') {
   const profile = page.waitForResponse((response) => new URL(response.url()).pathname === '/api/v1/me');
   await page.getByRole('button', { name: 'Войти', exact: true }).click();
   const data = (await body(await profile)).data;
+  // U6: every staff role lands on the overview; the scenario continues from the profile as before.
+  await expect(page).toHaveURL(/\/cabinet\/overview$/);
+  await page.goto('/cabinet/profile');
   await expect(page.getByRole('heading', { name: 'Профиль', exact: true })).toBeVisible();
   return data;
 }

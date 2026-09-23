@@ -1,5 +1,5 @@
 import { test, expect, type APIResponse, type Page, type Request, type Route } from '@playwright/test';
-import { login, token } from './helpers.js';
+import { login, logout, token } from './helpers.js';
 
 const png = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAUAAAADICAIAAAAWZq/8AAABvElEQVR42u3TQQ0AMAgAsTE1CEMiAhHBi6SVcMlFVj/gpi8BGBgwMGBgMDBgYMDAgIHBwICBAQODgQEDAwYGDAwGBgwMGBgwMBgYMDBgYDAwYGDAwICBwcCAgQEDAwYGAwMGBgwMBgYMDBgYMDAYGDAwYGAwMGBgwMCAgcHAgIEBAwMGBgMDBgYMDAYGDAwYGDAwGBgwMGBgwMBgYMDAgIHBwICBAQMDBgYDAwYGDAwYGAwMGBgwMBgYMDBgYMDAYGDAwICBwcCAgQEDAwYGAwMGBgwMGBgMDBgYMDAYGDAwYGDAwGBgwMCAgQEDg4EBAwMGBgMDBgYMDBgYDAwYGDAwYGAwMGBgwMBgYMDAgIEBA4OBAQMDBgYDAwYGDAwYGAwMGBgwMGBgMDBgYMDAYGDAwICBAQODgQEDAwYGDAwGBgwMGBgMDBgYMDBgYDAwYGDAwGBgwMCAgQEDg4EBAwMGBgwMBgYMDBgYDAwYGDAwYGAwMGBgwMCAgcHAgIEBA4OBAQMDBgYMDAYGDAwYGDAwGBgwMGBgMDBgYMDAgIHBwICBAQODgQEDAwYGDAwGBgwMGBgwMBgYMDCwMUuEAtA7HouzAAAAAElFTkSuQmCC',
@@ -739,7 +739,7 @@ test('#55: превью прежней сессии отменяются при 
   await expect(page.getByTestId('photo-card')).toHaveCount(1);
   await expect.poll(() => held.length).toBe(1);
   const loggedOut = page.waitForResponse((response) => response.url().endsWith('/auth/logout'));
-  await page.getByRole('button', { name: 'Выйти', exact: true }).click();
+  await logout(page);
   await loggedOut;
   await expect.poll(() => cancelled).toEqual(['net::ERR_ABORTED']);
 

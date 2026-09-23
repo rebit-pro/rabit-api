@@ -26,8 +26,9 @@ async function signIn(page: Page, email: string, secret: string) {
 }
 
 async function setNewPassword(page: Page, secret: string, submit: string) {
-  await page.getByLabel('Новый пароль', { exact: true }).fill(secret);
-  await page.getByLabel('Повторите пароль', { exact: true }).fill(secret);
+  // The reset card itself is titled «Новый пароль», so the field is found by its role.
+  await page.getByRole('textbox', { name: 'Новый пароль', exact: true }).fill(secret);
+  await page.getByRole('textbox', { name: 'Повторите пароль', exact: true }).fill(secret);
   await page.getByRole('button', { name: submit, exact: true }).click();
 }
 
