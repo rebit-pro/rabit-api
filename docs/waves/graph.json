@@ -2659,16 +2659,16 @@
       ],
       "outcome": "Существующие списки и карточки отдают серверные счётчики для инфографики с той же областью видимости, без клиентского пересчёта по страницам.",
       "scope": [
-        "meta.summary в HND-01 (с referenceNow), groupStatusCounts в ORG-04/ORG-08, stats в MED-02, meta.summary в COM-12, ACC-02 (с фильтром accountStatus), HND-06; счётчики в ORG-02.",
-        "Один COUNT GROUP BY на сводку в существующих репозиториях, без N+1.",
-        "Клиентский пересчёт в handoff/service.ts удаляется."
+        "meta.summary в HND-01 (byState, closingSoon, prepared, referenceNow), groups.meta.summary.byState в ORG-04/ORG-08, stats в MED-02, meta.summary в COM-12 (total, byProductionStatus), ACC-02 (byAccountStatus, byRole) и HND-06 (byStatus); shootCount/groupCount/openGroupCount в ORG-02.",
+        "Одно агрегирующее чтение на сводку с той же областью видимости и фильтрами, кроме раскладываемого; общее SQL-правило состояния группы GroupStateSql.",
+        "ACC-02 переносится в чистый StaffListController; клиентский пересчёт в handoff/service.ts удаляется в U8 вместе с экранами «Ссылки» и «Списки сотрудников»."
       ],
       "review": [
         "Curator не видит чужие учреждения в счётчиках; финансов нет."
       ],
       "acceptance": [
-        "PHPStan, PHPUnit области видимости каждой сводки.",
-        "Финальный gate: HTTP-контракты сводок через экраны U6."
+        "PHPStan, PHPUnit области видимости сводок (ссылки, заказы, сотрудники, фото), правила состояния группы и границы нового контроллера.",
+        "Финальный gate: live-спека zz-summaries — разбивки сходятся с total, фильтр не меняет свою сводку, у куратора счётчики не больше, чем у организатора."
       ],
       "activation": "Сводки доступны экранам U6.",
       "legacyIds": [],
