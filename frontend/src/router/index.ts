@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth';
 import { isMockApiEnabled } from '@/mocks/config';
 import { isStaffRole } from '@/modules/morefoto/types';
 import { apiErrorCode } from '@/api/authErrors';
+import { sessionEndReason } from '@/api/sessionEnd';
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -17,12 +18,13 @@ router.beforeEach(async (to) => {
   const auth = useAuthStore();
   auth.restoreSession();
   if (auth.isAuthenticated && (to.meta.requiresAuth || to.path === '/login')) {
+    // The 401 handler clears the session before the guard sees the error, so the lifetime is read first.
+    const expiresAt = auth.expiresAt;
     try {
       await auth.ensureProfile();
     } catch (cause) {
       auth.returnUrl = to.meta.requiresAuth ? to.fullPath : null;
-      const reason = apiErrorCode(cause) === 'SESSION_REVOKED' ? 'revoked' : 'session-expired';
-      return to.path === '/login' ? true : '/login?reason=' + reason;
+      return to.path === '/login' ? true : '/login?reason=' + sessionEndReason(apiErrorCode(cause), expiresAt);
     }
   }
   if (to.meta.requiresAuth && !auth.isAuthenticated) {

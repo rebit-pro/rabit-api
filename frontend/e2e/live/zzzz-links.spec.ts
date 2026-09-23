@@ -125,7 +125,9 @@ test('F2: организатор проверяет ссылку, воспита
     'preparing'
   ]);
   const list = await body(await page.request.get('/api/v1/group-links?shootId=' + shoot.id, { headers: await auth(page) }));
-  expect(list.meta).toEqual({ page: 1, pageSize: 25, total: 1, totalPages: 1 });
+  const { summary, ...paging } = list.meta;
+  expect(paging).toEqual({ page: 1, pageSize: 25, total: 1, totalPages: 1 });
+  expect(summary.byState).toEqual({ preparing: 1, open: 0, closed: 0 });
   expect(list.data.items[0].groupId).toBe(group.id);
   expect(list.data.items[0]).not.toHaveProperty('galleryToken');
   const review = { photosReviewed: true, conditionsReviewed: true, staffReviewed: true, confirmed: true };

@@ -31,7 +31,7 @@ test('неверный пароль отклонён сервером; роль 
   await expect(page.getByTestId('login-api-error')).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('morefoto:live:auth:token'))).toBeNull();
   await login(page);
-  await expect(page.getByText('Организатор', { exact: true })).toBeVisible();
+  await expect(page.getByRole('banner').getByText('Организатор', { exact: true })).toBeVisible();
   await expect(page.getByText('Ассортимент пуст. Добавьте первую продукцию.')).toBeVisible();
   const me = await page.request.get('/api/v1/me', {
     headers: { Authorization: 'Bearer ' + (await token(page)) }
