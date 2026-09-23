@@ -234,7 +234,7 @@
        ],
        "outcome": "Подтверждена готовность функций и известны восстановление, включение и пределы гарантий.",
        "scope": [
-@@ -2410,6 +2441,447 @@
+@@ -2410,6 +2441,448 @@
        "inputBoundary": "Установленные и принятые в main контракты/схема: N1, E6. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
        "outputBoundary": "Без новых публичных HTTP-операций; Подтверждена готовность функций и известны восстановление, включение и пределы гарантий.",
        "mergeCheck": "Отдельный PR к актуальному main; все dependsOn уже merged. Проверки на main + только этот diff, без файлов/коммитов незамерженных волн; установить миграции и DI своего сценария. Повторить проверку после обновления base."
@@ -584,15 +584,16 @@
 +      "verifiesEndpointIds": [],
 +      "outcome": "Стартовый «Обзор» для четырёх ролей и плитки над списками на серверных сводках; финансы в состоянии «недоступно».",
 +      "scope": [
-+        "components/viz: MfStatTile, MfProgress, MfRing, MfTimeline, MfDistribution, MfMiniBar, MfQueue; chartPalette.ts.",
-+        "Обзор INF-01, INF-11, финансы unavailable; плитки INF-06, INF-08, INF-09; homePath → обзор; счётчики в меню."
++        "components/viz: MfStatTile, MfDistribution, MfTimeline, MfQueue и measures (склонения, countdown по 9.3.5); modules/morefoto/ui/chartPalette.ts. MfProgress и MfRing — в U7 с экраном фото, MfMiniBar не строится: временных рядов в live нет.",
++        "Live «Обзор»: organizer/curator/head — плитки INF-01, очередь готовящихся групп, распределение по состоянию, финансы «недоступно»; teacher — карточки групп со сроками и статусы своих списков. homePath → обзор для всех ролей, пункт «Обзор» в меню.",
++        "Плитки над списками: сотрудники (статусы-фильтры, роли), заказы (итог и изготовление), списки сотрудников (статусы-фильтры, плашки у teacher); счётчики «ждут внимания» в меню organizer/curator."
 +      ],
 +      "review": [
 +        "Нет нулей вместо недоступных финансов; sr-only таблицы; reduced motion."
 +      ],
 +      "acceptance": [
-+        "Unit порогов countdown и палитры, npm run check, build.",
-+        "Финальный gate: обзор по ролям."
++        "npm run check (unit countdown, склонения, палитра), build, скриншоты live-режима с заглушками API.",
++        "Финальный gate: live-спека zz-overview — плитки равны сводкам U5, финансы без цифр, sr-only таблица, reduced motion, фильтр плитками; login-хелпер проверяет приземление на обзор."
 +      ],
 +      "activation": "Сотрудники после входа попадают на обзор своей области.",
 +      "legacyIds": [],
@@ -682,7 +683,7 @@
      }
    ],
    "paymentIntegration": {
-@@ -2473,5 +2945,27 @@
+@@ -2473,5 +2946,27 @@
        "Перед реальными продажами обязательны возвраты, чеки, восстановление unknown, HTTP/E2E и visual; этот PR только план."
      ],
      "taskPlan": "rabit-api/docs/plans/sberpay-start-plan/plan.md"
@@ -918,7 +919,7 @@
  
  **Состав:**
  
-@@ -1545,6 +1562,322 @@
+@@ -1545,6 +1562,323 @@
  
  **Подключение:** После приёмки можно согласовать production-выпуск. Сам запуск не входит в подготовку этого плана.
  
@@ -1163,8 +1164,9 @@
 +
 +**Состав:**
 +
-+- components/viz: MfStatTile, MfProgress, MfRing, MfTimeline, MfDistribution, MfMiniBar, MfQueue; chartPalette.ts.
-+- Обзор INF-01, INF-11, финансы unavailable; плитки INF-06, INF-08, INF-09; homePath → обзор; счётчики в меню.
++- components/viz: MfStatTile, MfDistribution, MfTimeline, MfQueue и measures (склонения, countdown по 9.3.5); modules/morefoto/ui/chartPalette.ts. MfProgress и MfRing — в U7 с экраном фото, MfMiniBar не строится: временных рядов в live нет.
++- Live «Обзор»: organizer/curator/head — плитки INF-01, очередь готовящихся групп, распределение по состоянию, финансы «недоступно»; teacher — карточки групп со сроками и статусы своих списков. homePath → обзор для всех ролей, пункт «Обзор» в меню.
++- Плитки над списками: сотрудники (статусы-фильтры, роли), заказы (итог и изготовление), списки сотрудников (статусы-фильтры, плашки у teacher); счётчики «ждут внимания» в меню organizer/curator.
 +
 +**Предмет ревью:**
 +
@@ -1172,8 +1174,8 @@
 +
 +**Проверка готовности:**
 +
-+- Unit порогов countdown и палитры, npm run check, build.
-+- Финальный gate: обзор по ролям.
++- npm run check (unit countdown, склонения, палитра), build, скриншоты live-режима с заглушками API.
++- Финальный gate: live-спека zz-overview — плитки равны сводкам U5, финансы без цифр, sr-only таблица, reduced motion, фильтр плитками; login-хелпер проверяет приземление на обзор.
 +
 +**Подключение:** Сотрудники после входа попадают на обзор своей области.
 +
@@ -1241,7 +1243,7 @@
  ## Поддержание графа
  
  Источник — [backend-waves.json](backend-waves.json), проверка — [wave_graph.py](wave_graph.py), генерация этой страницы — [render-waves.py](render-waves.py). Method/path/payload остаются в [build.py](../05-rest-api/build.py). После изменения пересобрать артефакты:
-@@ -1557,4 +1890,4 @@
+@@ -1557,4 +1891,4 @@
  node docs/05-rest-api/validate-postman.cjs
  ```
  
@@ -5037,8 +5039,8 @@
 +    "validate.py": "18a387833a1581f8445fe731787bbe5a0407d9fe95950c4138c881792a4ba939",
 +    "validate-postman.cjs": "879a609e16602ab971c3296eacb0b0d0c702d840d842d8942c3b410240543877",
 +    "../04-bitrix-modules/README.md": "786c34ef6c226a57e141c206f88eee75dc04e46226ce982d8ce5d0c9ec457023",
-+    "../04-bitrix-modules/backend-waves.json": "3eed7a62911d6b7c75d0dd2a6f57e0900ef7c8bb47e3f8dcb579a09382a37386",
-+    "../04-bitrix-modules/backend-waves.md": "010d6f2b741f3bfcabf084b7480ae58654e188fb64260b2b890511babfd67e99",
++    "../04-bitrix-modules/backend-waves.json": "1df76deb7848b3fd75c9d4b4588c2321a8348e56b7f6556b0a736d3655f06d2e",
++    "../04-bitrix-modules/backend-waves.md": "14c7e4794b13fc06dba385f8286bffee4fa853a9aa4c89e523e03affbafd0ca5",
 +    "../04-bitrix-modules/render-waves.py": "b502e757c9fd854c81d7f828a7a03bb58569f5f3cb0a582eed98b53c358327ec",
 +    "../04-bitrix-modules/wave_graph.py": "031e14b1312851cc491dabf3a48d7a8c9a61b16e634f93400284c0f3fe50b2db",
 +    "README.md": "19a0c521af5d64d405f2f963a2e341c5a16771d789845b99e33144be222eb229",

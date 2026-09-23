@@ -2700,15 +2700,16 @@
       "verifiesEndpointIds": [],
       "outcome": "Стартовый «Обзор» для четырёх ролей и плитки над списками на серверных сводках; финансы в состоянии «недоступно».",
       "scope": [
-        "components/viz: MfStatTile, MfProgress, MfRing, MfTimeline, MfDistribution, MfMiniBar, MfQueue; chartPalette.ts.",
-        "Обзор INF-01, INF-11, финансы unavailable; плитки INF-06, INF-08, INF-09; homePath → обзор; счётчики в меню."
+        "components/viz: MfStatTile, MfDistribution, MfTimeline, MfQueue и measures (склонения, countdown по 9.3.5); modules/morefoto/ui/chartPalette.ts. MfProgress и MfRing — в U7 с экраном фото, MfMiniBar не строится: временных рядов в live нет.",
+        "Live «Обзор»: organizer/curator/head — плитки INF-01, очередь готовящихся групп, распределение по состоянию, финансы «недоступно»; teacher — карточки групп со сроками и статусы своих списков. homePath → обзор для всех ролей, пункт «Обзор» в меню.",
+        "Плитки над списками: сотрудники (статусы-фильтры, роли), заказы (итог и изготовление), списки сотрудников (статусы-фильтры, плашки у teacher); счётчики «ждут внимания» в меню organizer/curator."
       ],
       "review": [
         "Нет нулей вместо недоступных финансов; sr-only таблицы; reduced motion."
       ],
       "acceptance": [
-        "Unit порогов countdown и палитры, npm run check, build.",
-        "Финальный gate: обзор по ролям."
+        "npm run check (unit countdown, склонения, палитра), build, скриншоты live-режима с заглушками API.",
+        "Финальный gate: live-спека zz-overview — плитки равны сводкам U5, финансы без цифр, sr-only таблица, reduced motion, фильтр плитками; login-хелпер проверяет приземление на обзор."
       ],
       "activation": "Сотрудники после входа попадают на обзор своей области.",
       "legacyIds": [],
