@@ -1,5 +1,6 @@
 import { isAxiosError } from 'axios';
 import api from '@/api/http';
+import { childTransferErrorText } from './rules';
 
 export type ServerPhotoStatus = 'processing' | 'ready' | 'failed' | 'duplicate';
 export interface ServerPhotoAssignment {
@@ -58,6 +59,21 @@ export interface CoverResult {
   photoId: string;
   revision: number;
 }
+export interface ChildTransfer {
+  fromGroupId: string;
+  toGroupId: string;
+  childCode: string;
+  targetCode: string;
+  expectedPhotoIds: string[];
+  revision: number;
+}
+export interface ChildTransferResult {
+  photoIds: string[];
+  fromGroupId: string;
+  toGroupId: string;
+  childCode: string;
+  revision: number;
+}
 // Matches PHP max_execution_time: the shared 15 s timeout cuts large originals on slow uplinks.
 const uploadTimeout = 300_000;
 function idempotencyKey(): string {
@@ -96,6 +112,13 @@ export const photosApi = {
       )
     ).data;
   },
+  async transferChild(shootId: string, transfer: ChildTransfer): Promise<ChildTransferResult> {
+    return (
+      await api.post<ChildTransferResult>('/api/v1/shoots/' + encodeURIComponent(shootId) + '/child-transfers', transfer, {
+        headers: { 'Idempotency-Key': idempotencyKey() }
+      })
+    ).data;
+  },
   async upload(
     shootId: string,
     groupId: string,
@@ -120,6 +143,13 @@ export const photosApi = {
 export function photoApiErrorCode(cause: unknown): string | undefined {
   if (!isAxiosError(cause)) return undefined;
   return (cause.response?.data as { error?: { code?: string } } | undefined)?.error?.code;
+}
+
+export function childTransferError(cause: unknown): string {
+  const details = isAxiosError(cause)
+    ? (cause.response?.data as { error?: { details?: { photoCodes?: string[] } } } | undefined)?.error?.details
+    : undefined;
+  return childTransferErrorText(photoApiErrorCode(cause), details?.photoCodes) ?? photoApiError(cause);
 }
 
 export function photoApiError(cause: unknown): string {

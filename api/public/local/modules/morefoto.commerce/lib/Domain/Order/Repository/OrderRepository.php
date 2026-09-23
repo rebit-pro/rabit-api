@@ -124,6 +124,24 @@ final readonly class OrderRepository
             FROM mf_order_line WHERE ORDER_ID IN (' . implode(',', $orderIds) . ') ORDER BY ORDER_ID,LINE_NO');
     }
 
+    /**
+     * Дети с хотя бы одной строкой заказа; строки заказов не удаляются, поэтому чтения без блокировки достаточно.
+     *
+     * @param non-empty-list<int> $childIds
+     *
+     * @return list<int>
+     */
+    public function childrenWithOrders(array $childIds): array
+    {
+        $result = $this->query('SELECT DISTINCT CHILD_ID FROM mf_order_line WHERE CHILD_ID IN (' . implode(',', $childIds) . ')');
+        $children = [];
+        while (false !== ($row = $result->fetch())) {
+            $children[] = (int)$row['CHILD_ID'];
+        }
+
+        return $children;
+    }
+
     public function page(OrderSearchCriteria $criteria, int $limit, int $offset): Result
     {
         return $this->query('SELECT ' . self::COLUMNS . ' FROM mf_order o WHERE ' . $this->where($criteria)

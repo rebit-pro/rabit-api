@@ -1,4 +1,6 @@
-# D3 — прогресс
+# OPS — восстановление загрузки фотографий на stage: прогресс
+
+> Оперативное исправление вне графа волн (PR #32). До 2026-09-22 материалы ошибочно лежали под ID волны D3 (`docs/plans/D3_stage-media-recovery/`, `docs/waves/d3/visual/`); перенесены по #42 п. 3, ID D3 принадлежит волне графа «Атомарные переносы ребёнка и служебной заявки». Внутренние ID проверок `D3-*` ниже — исторические.
 
 ## Точка продолжения
 
@@ -20,7 +22,7 @@
 - Форма теперь объясняет `A` → `A001`, подсвечивает `A01`, блокирует отправку и дополнительно проверяет код в composable. Для серверного `VALIDATION_FAILED` при назначении показывает ошибку данных назначения вместо ошибки формата файла. Обновлены mock/browser и real HTTP E2E: неверный код не делает POST, `A` создаёт `A001`.
 - `docker run --rm -v "$PWD/frontend:/app" -w /app node:24-alpine sh -lc 'npm run check'`: PASS (lint, vue-tsc, e2e tsc). Вспомогательный ранее созданный `frontend/var/d3-visual.mjs` перенесён в `/tmp/d3-visual.mjs`, поскольку общий ESLint ошибочно обрабатывал его как продуктовый файл; содержимое сохранено. `git diff --check`: PASS. Полный `make test-e2e ...` выполняется.
 - `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`: PASS, browser scenarios 60; frontend check/build, backend lint/static/PHPUnit, реальный MySQL и браузерная HTTP-интеграция выполнены в изолированном fixture. D3-ASSIGN-CODE PASS: `A01` без POST, `A` → `A001`. Добавлены скриншоты desktop/mobile в live spec; для них поднимается отдельный fixture и будет ручной просмотр.
-- `make e2e-up ...`, затем targeted real Playwright `D1/D2: приватное фото`: PASS 1/1; первый визуальный просмотр выявил наложение встроенных Vuetify hint/error на desktop/mobile. Ошибка перенесена под поле отдельным `<p role="alert">`, встроенный hint на ошибке скрыт. Frontend пересобран с real API, targeted Playwright повторён: PASS 1/1; screenshots `assignment-code-desktop.png` и `assignment-code-mobile.png` сохранены в `docs/waves/d3/visual/`. Ручной просмотр: текст читается, наложений нет, кнопка доступна после ввода `A`. `make e2e-down E2E_STATE=api/var/e2e/rabit-e2e-e9b9da4c2a27/state.json`: PASS.
+- `make e2e-up ...`, затем targeted real Playwright `D1/D2: приватное фото`: PASS 1/1; первый визуальный просмотр выявил наложение встроенных Vuetify hint/error на desktop/mobile. Ошибка перенесена под поле отдельным `<p role="alert">`, встроенный hint на ошибке скрыт. Frontend пересобран с real API, targeted Playwright повторён: PASS 1/1; screenshots `assignment-code-desktop.png` и `assignment-code-mobile.png` сохранены в `docs/plans/OPS-stage-media-recovery/visual/`. Ручной просмотр: текст читается, наложений нет, кнопка доступна после ввода `A`. `make e2e-down E2E_STATE=api/var/e2e/rabit-e2e-e9b9da4c2a27/state.json`: PASS.
 - Повтор `docker run --rm -v "$PWD/frontend:/app" -w /app node:24-alpine sh -lc 'npm run check'` после визуальной правки: PASS, lint/vue-tsc/e2e tsc. Vite build в targeted fixture: PASS.
 - `git commit -m 'fix(morefoto): clarify child codes before assigning photos'`: `211d985`; HTTPS `git push` PASS. `gh pr edit 32 --body-file /tmp/d3-pr-body-current.md`: PR дополнен контрактом кодов и тестами; merge/deploy D3 не выполнялись.
 - Авторизованный POST со скриншота подтвердил приём `IMG_0590.jpg` и `IMG_0591.jpg`: записи ID 1/2 и оригиналы в приватном хранилище есть. Прочие файлы пакета не завершили отправку. Ручной `app:media:dispatch-pending --limit=10` отправил две задачи; consumer исчерпал три попытки, статус обеих — `failed`/`PROCESSING_FAILED`.
@@ -43,7 +45,7 @@
 - D3-QUEUE: PASS, 2026-09-21, `docker service ls`, `app:media:dispatch-pending --limit=10`, SQL: 2 опубликованы и обработаны.
 - D3-LOG: PASS, 2026-09-21, проверка stage `runtime/logs/logstash/media-2026-09-21.log`.
 - D3-F1-INVALID: PASS, 2026-09-21, `make test-e2e ...`, код `A0001` отклонён в форме до POST.
-- D3-VISUAL: PASS, 2026-09-21, Playwright desktop/mobile screenshots и ручной просмотр `docs/waves/d3/visual/`.
+- D3-VISUAL: PASS, 2026-09-21, Playwright desktop/mobile screenshots и ручной просмотр `docs/plans/OPS-stage-media-recovery/visual/`.
 - D3-WEBP: PASS, 2026-09-21, `docker exec ... php -r 'function_exists("imagewebp")'` в stage FPM/consumer/dispatcher: yes.
 - D3-RECOVERY: PASS, 2026-09-21, SQL read-only по ID 1/2: `ready/done`, 4 WebP файла ненулевого размера.
 - D3-PREVIEW: PASS, 2026-09-21, `docker exec stage-fpm php -r 'is_file/filesize'`: 3/3 файла читаются; `docker service logs --since 2m morefoto_stage_fpm`: реальные защищённые GET завершились `media.INFO: RESPONSE` без 404.
@@ -68,5 +70,5 @@
 - `git diff --check`: PASS. Stage `curl` без Bearer подтверждает устранение 413 и разрешение MediaController, но не обработку файла от авторизованного пользователя. Пользователю направлен запрос повторить JPEG около 8 МБ.
 - `git commit -m 'fix(morefoto): restore stage photo uploads and clarify handoff validation'`: `c9c7fc4`. SSH `git push` истёк по timeout; `gh auth setup-git` и HTTPS `git push` опубликовали ветку без раскрытия токена.
 - Docs commit `a92910a` опубликован; `gh pr create --draft --base main --head codex/d3-stage-media-recovery --body-file /tmp/d3-pr-body.md`: PR #32 создан. Merge/deploy нового frontend image не выполнялись; live stage nginx исправлен bind-шаблоном.
-- `make e2e-up ...` создал изолированный fixture `rabit-e2e-726c1040e2e8`; Playwright из контейнера прошёл фото-ошибку и F1 `A0001` на 1440×1000 и 390×844. Четыре PNG сохранены в `docs/waves/d3/visual/`; ручной просмотр подтвердил читаемость, отсутствие наложений и видимость ошибки F1 на mobile после прокрутки внутреннего диалога. D3-VISUAL PASS. `make e2e-down E2E_STATE=.../state.json`: PASS.
+- `make e2e-up ...` создал изолированный fixture `rabit-e2e-726c1040e2e8`; Playwright из контейнера прошёл фото-ошибку и F1 `A0001` на 1440×1000 и 390×844. Четыре PNG сохранены в `docs/plans/OPS-stage-media-recovery/visual/`; ручной просмотр подтвердил читаемость, отсутствие наложений и видимость ошибки F1 на mobile после прокрутки внутреннего диалога. D3-VISUAL PASS. `make e2e-down E2E_STATE=.../state.json`: PASS.
 - Visual/docs commit `ec35ad8` опубликован в PR #32; `gh pr view 32 --json number,isDraft,state,headRefOid,baseRefOid,url`: draft OPEN, base `7e606e5`, head `ec35ad8`. `gh issue view 31`: OPEN. Все четыре stage-сервиса 2/2, 1/1, 1/1, 1/1; stage logstash содержит media, handoff, access, organization, cli файлы.

@@ -288,7 +288,9 @@ test('F1: воспитатель подаёт список, куратор ут�
     await curator.goto('/cabinet/staff-requests/' + created.id);
     await expect(curator.getByTestId('request-detail')).toBeVisible();
     await expect(curator.getByTestId('staff-eligibility')).toContainText('Право сотрудника подтверждено сервером');
-    await expect(curator.getByRole('button', { name: 'Проверить и перенести', exact: true })).toHaveCount(0);
+    // D3: the transfer is available, but this shoot has no staff folder yet.
+    await expect(curator.getByRole('button', { name: 'Проверить и перенести', exact: true })).toBeDisabled();
+    await expect(curator.getByRole('alert').filter({ hasText: 'В этой съёмке ещё нет папки сотрудников' })).toBeVisible();
     await curator.getByRole('button', { name: 'Запросить уточнение', exact: true }).click();
     const clarifyDialog = curator.getByTestId('admin-dialog');
     await clarifyDialog.getByLabel('Что нужно уточнить', { exact: true }).fill('Уточните номер фотографии ребёнка.');

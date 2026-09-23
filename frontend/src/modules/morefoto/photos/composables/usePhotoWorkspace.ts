@@ -7,7 +7,7 @@ import { structureApi, structureError } from '../../structure/api';
 import { photosChangedEvent, photoStateKey, readPhotos } from '../repository';
 import { assignPhotos, chooseCover, moveChild } from '../service';
 import { nextChildCode, validChildCode } from '../rules';
-import { photoApiError, photoApiErrorCode, photosApi, type ServerPhoto } from '../api';
+import { childTransferError, photoApiError, photoApiErrorCode, photosApi, type ServerPhoto } from '../api';
 import type { ManagedGroup, ManagedInstitution, OrganizationSnapshot, PhotoShoot } from '../../organization/types';
 import type { Group } from '../../structure/model';
 import type { ManagedPhoto, PhotoState } from '../types';
@@ -183,7 +183,7 @@ export function usePhotoWorkspace() {
   const suggestedCode = computed(() => (group.value ? nextChildCode(photos.value.photos, group.value.id) : 'A'));
   const cover = computed(() => groupPhotos.value.find((item) => item.id === photos.value.covers[group.value?.id ?? '']));
   const assignmentsEnabled = true;
-  const transferEnabled = isMockApiEnabled;
+  const transferEnabled = true;
   watch(
     groups,
     (value) => {
@@ -212,7 +212,12 @@ export function usePhotoWorkspace() {
     window.removeEventListener(photosChangedEvent, changed);
     window.removeEventListener('storage', storage);
   });
-  async function act(operation: (token: string) => Promise<void>, message: string, validationMessage = ''): Promise<boolean> {
+  async function act(
+    operation: (token: string) => Promise<void>,
+    message: string,
+    validationMessage = '',
+    describe: (cause: unknown) => string = photoApiError
+  ): Promise<boolean> {
     if (busy.value) return false;
     busy.value = true;
     error.value = '';
@@ -227,13 +232,15 @@ export function usePhotoWorkspace() {
       return true;
     } catch (cause) {
       if (alive) {
-        if (!isMockApiEnabled && photoApiErrorCode(cause) === 'REVISION_CONFLICT') {
+        const code = photoApiErrorCode(cause);
+        if (!isMockApiEnabled && (code === 'REVISION_CONFLICT' || code === 'SET_CHANGED')) {
           const refreshed = await refreshPhotos();
-          if (alive && refreshed) error.value = 'Разметка уже изменилась. Список обновлён — повторите действие.';
-        } else if (validationMessage && photoApiErrorCode(cause) === 'VALIDATION_FAILED') {
+          if (alive && refreshed)
+            error.value = code === 'SET_CHANGED' ? describe(cause) : 'Разметка уже изменилась. Список обновлён — повторите действие.';
+        } else if (validationMessage && code === 'VALIDATION_FAILED') {
           error.value = validationMessage;
         } else {
-          error.value = isMockApiEnabled && cause instanceof Error ? cause.message : photoApiError(cause);
+          error.value = isMockApiEnabled && cause instanceof Error ? cause.message : describe(cause);
         }
       }
       return false;
@@ -273,13 +280,33 @@ export function usePhotoWorkspace() {
       }
     }, 'Обложка группы сохранена.');
   }
-  function transfer(child: string, toId: string, code: string, ids: string[]) {
-    if (!transferEnabled) {
-      error.value = 'Перенос полного набора будет подключён в волне D3.';
+  function transfer(child: string, toId: string, value: string, ids: string[]) {
+    const groupId = group.value?.id ?? '';
+    const code = value.trim().toUpperCase();
+    if (!validChildCode(code)) {
+      error.value = 'Код в целевой группе — от 1 до 3 латинских букв.';
       return Promise.resolve(false);
     }
-    const groupId = group.value?.id ?? '';
-    return act((token) => moveChild(token, routeShootId, groupId, child, toId, code, ids), 'Полный набор ребёнка перенесён.');
+    return act(
+      async (token) => {
+        if (isMockApiEnabled) {
+          await moveChild(token, routeShootId, groupId, child, toId, code, ids);
+        } else {
+          const result = await photosApi.transferChild(routeShootId, {
+            fromGroupId: groupId,
+            toGroupId: toId,
+            childCode: child,
+            targetCode: code,
+            expectedPhotoIds: ids,
+            revision: mediaRevision.value
+          });
+          mediaRevision.value = result.revision;
+        }
+      },
+      'Полный набор ребёнка перенесён.',
+      'Не удалось перенести набор. Проверьте код в целевой группе.',
+      childTransferError
+    );
   }
   return {
     data,

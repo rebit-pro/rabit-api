@@ -13,7 +13,8 @@ use Rebit\Share\Contracts\Media\ChildPhotosInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /** Открывает служебную карточку заказа организатору или куратору его учреждения без ключей покупателя.
- * Добавляет сроки группы и готовые кадры тех же детей для будущей формы исправления; чужой заказ неотличим от отсутствующего.
+ * Добавляет сроки группы и готовые кадры тех же детей в их текущей группе (и после переноса D3) для будущей формы исправления;
+ * чужой заказ неотличим от отсутствующего.
  */
 final readonly class GetStaffOrderUseCase
 {
@@ -41,7 +42,7 @@ final readonly class GetStaffOrderUseCase
             $children[(int)$line['CHILD_ID']] = true;
         }
         $order = $this->mapper->order($row, $lines);
-        $photos = $this->photos->ready((int)$row['GROUP_ID'], (int)$row['SHOOT_ID'], array_keys($children));
+        $photos = $this->photos->ready((int)$row['SHOOT_ID'], array_keys($children));
         $period = $this->periods->period($order->groupId);
         $this->access->assertUnchanged($actorId, $scope);
 

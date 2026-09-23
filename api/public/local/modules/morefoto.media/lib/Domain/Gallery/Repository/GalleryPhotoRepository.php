@@ -27,11 +27,21 @@ final readonly class GalleryPhotoRepository
         }
     }
 
-    /** @param non-empty-list<int> $childIds */
-    public function children(int $groupId, int $shootId, array $childIds): Result
+    /**
+     * Ready photos of the children in their current group: after a transfer the set follows the child.
+     *
+     * @param non-empty-list<int> $childIds
+     */
+    public function children(int $shootId, array $childIds): Result
     {
         try {
-            return Application::getConnection()->query(sprintf(self::READY, $groupId, $shootId, ' AND c.ID IN (' . implode(',', $childIds) . ')'));
+            return Application::getConnection()->query("SELECT a.PUBLIC_ID AS ASSIGNMENT_ID,c.PUBLIC_ID AS CHILD_ID,c.ID AS NATIVE_CHILD_ID,c.CODE,a.SEQUENCE_NO,
+                p.UF_PUBLIC_ID AS PHOTO_ID,p.UF_WIDTH,p.UF_HEIGHT,p.UF_REVISION
+                FROM mf_photo_assignment a INNER JOIN mf_media_child c ON c.ID=a.CHILD_ID
+                INNER JOIN b_hlbd_mf_photo p ON p.ID=a.PHOTO_ID
+                WHERE c.SHOOT_ID={$shootId} AND c.ID IN (" . implode(',', $childIds) . ")
+                AND p.UF_GROUP_ID=c.GROUP_ID AND p.UF_SHOOT_ID={$shootId} AND p.UF_STATUS='ready'
+                ORDER BY c.ID,a.SEQUENCE_NO LIMIT 5001");
         } catch (\Throwable $error) {
             throw new GalleryStorageException('Cannot read child photos.', 0, $error);
         }

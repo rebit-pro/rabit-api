@@ -8,20 +8,20 @@ use Morefoto\Media\Application\Gallery\Mapper\GalleryAssignmentMapper;
 use Morefoto\Media\Domain\Gallery\Repository\GalleryPhotoRepository;
 use Rebit\Share\Contracts\Media\ChildPhotosInterface;
 
-/** Выдаёт служебным сценариям готовые кадры выбранных детей одной группы.
- * Нужен, чтобы карточка заказа предлагала кадры того же ребёнка без ссылок на изображения и без обхода Media.
+/** Выдаёт служебным сценариям готовые кадры выбранных детей съёмки в их текущей группе.
+ * Нужен, чтобы карточка заказа предлагала кадры того же ребёнка и после переноса, без ссылок на изображения и без обхода Media.
  */
 final readonly class ChildPhotos implements ChildPhotosInterface
 {
     public function __construct(private GalleryPhotoRepository $photos, private GalleryAssignmentMapper $mapper) {}
 
-    public function ready(int $groupId, int $shootId, array $childIds): array
+    public function ready(int $shootId, array $childIds): array
     {
         $ids = array_values(array_unique(array_filter($childIds, static fn(int $id): bool => 0 < $id)));
         if ([] === $ids) {
             return [];
         }
-        $result = $this->photos->children($groupId, $shootId, $ids);
+        $result = $this->photos->children($shootId, $ids);
         $photos = [];
         while (false !== ($row = $result->fetch())) {
             $photos[] = $this->mapper->fromRow($row);

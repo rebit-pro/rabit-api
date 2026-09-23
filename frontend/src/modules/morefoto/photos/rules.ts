@@ -77,3 +77,21 @@ export function completeChildSelection(photos: ManagedPhoto[], ids: string[]): b
       .every((item) => ids.includes(item.id))
   );
 }
+const childTransferErrors: Record<string, string> = {
+  SET_CHANGED: 'Набор ребёнка изменился. Список обновлён — проверьте кадры и повторите перенос.',
+  TARGET_CODE_TAKEN: 'Этот код уже занят в целевой группе. Выберите другой код: существующие наборы не объединяются.',
+  GROUP_KIND_MISMATCH: 'Перенос возможен только между группами одного типа.',
+  GROUP_LOCKED: 'Одна из групп уже передана. Перенос набора возможен только до передачи ссылки.',
+  CHILD_HAS_ORDERS: 'По этому набору уже есть заказы. Перенос недоступен.',
+  INVALID_PHOTO_IDS: 'Набор ребёнка не удалось передать на сервер. Обновите страницу и повторите перенос.'
+};
+/** Текст отказа MED-07; null — код не относится к переносу. */
+export function childTransferErrorText(code: string | undefined, photoCodes: string[] = []): string | null {
+  if (code === 'SHARED_PHOTO')
+    return (
+      'Кадры ' +
+      (photoCodes.length ? photoCodes.join(', ') : 'набора') +
+      ' назначены ещё и другому ребёнку этой группы. Такой набор нельзя перенести.'
+    );
+  return code ? (childTransferErrors[code] ?? null) : null;
+}

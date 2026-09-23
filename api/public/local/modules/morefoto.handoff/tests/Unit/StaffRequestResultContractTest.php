@@ -76,6 +76,7 @@ final class StaffRequestResultContractTest extends TestCase
             'rows' => [['id' => 'row-id', 'groupId' => 'group-id', 'code' => 'A001', 'childCode' => 'A', 'photoIds' => ['photo-id']]],
             'comment' => 'Уточнено',
             'history' => [['kind' => 'submitted', 'actorId' => 7, 'actorName' => 'Сотрудник', 'at' => '2026-09-21T06:00:00Z', 'comment' => '', 'confirmed' => false]],
+            'results' => [['rowId' => 'row-id', 'fromGroupId' => 'group-id', 'fromChildCode' => 'A', 'targetGroupId' => 'staff-group-id', 'targetChildCode' => 'B', 'photoIds' => ['photo-id']]],
             'staffEligibility' => ['eligible' => true, 'source' => 'verified_staff_assignment', 'verifiedAt' => '2026-09-21T06:00:00Z'],
         ];
     }

@@ -238,6 +238,11 @@ def test_live(state):
     output = docker("exec", state["id"] + "-fpm", "php", "/app/tools/e2e/verify-links.php", log=Path(state["report"], "links-integration.log"))
     if "F2 integration passed" not in output:
         raise RuntimeError("Link integration did not complete")
+    # D3: the browser leaves one untransferred staff request for the injected-failure check on MySQL.
+    docker("cp", str(ROOT / "frontend/var/d3-transfers.json"), state["id"] + "-fpm:/runtime/d3-transfers.json")
+    output = docker("exec", state["id"] + "-fpm", "php", "/app/tools/e2e/verify-transfers.php", log=Path(state["report"], "transfers-integration.log"))
+    if "D3 integration passed" not in output:
+        raise RuntimeError("Transfer integration did not complete")
     state["browser"] = stats
     save(state)
     print("Browser scenarios passed: " + str(stats["expected"]), flush=True)

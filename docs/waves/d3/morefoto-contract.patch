@@ -1,0 +1,977 @@
+--- a/docs/04-bitrix-modules/backend-waves.json
++++ b/docs/04-bitrix-modules/backend-waves.json
+@@ -6,7 +6,7 @@
+   "backend": "RaBit API",
+   "baseline": {
+     "branch": "main",
+-    "commit": "4b507b3b3c27719888e38f582b48e6a56c0c5946",
++    "commit": "57b2a816c7fc9a6e3145bd7fd6fc3b0b96aeb4a2",
+     "mergedWaves": [
+       "A1",
+       "A2",
+@@ -30,7 +30,8 @@
+       "F1",
+       "H1",
+       "E4",
+-      "E5"
++      "E5",
++      "F2"
+     ],
+     "review": {},
+     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
+@@ -51,7 +52,8 @@
+       "H1": "https://github.com/rebit-pro/rabit-api/pull/22",
+       "F1": "https://github.com/rebit-pro/rabit-api/pull/25",
+       "E4": "https://github.com/rebit-pro/rabit-api/pull/30",
+-      "E5": "https://github.com/rebit-pro/rabit-api/pull/37"
++      "E5": "https://github.com/rebit-pro/rabit-api/pull/37",
++      "F2": "https://github.com/rebit-pro/rabit-api/pull/40"
+     },
+     "mergeCommits": {
+       "C4": "cfc334e5890dd51dfd6ff6638eac2cc3e436322b",
+@@ -62,14 +64,17 @@
+       "H1": "28bcad9e575489deb1113d7ce2ac459a43dd7132",
+       "F1": "6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc",
+       "E4": "7e606e53cc6b347e5c7b70e217ab7f8eb8a45875",
+-      "E5": "4b507b3b3c27719888e38f582b48e6a56c0c5946"
++      "E5": "4b507b3b3c27719888e38f582b48e6a56c0c5946",
++      "F2": "44f2e36367351614fab66fdc58fa3dc7ee3899b3"
+     },
+     "decisionEvidence": {
+       "D02-D05": "docs/waves/e3/README.md in rabit-api: user accepted rules before PR #20",
+       "E4-DEC-01": "2026-09-21 user accepted assignmentId for child-photo relation",
+       "D09-provider-platform-ui": "2026-09-22: ЮKassa с встроенными чеками выбрана вместо обязательного прямого СберПэй; свои Commerce/Payments/Settlement и UI сохраняются. D09 частично открыта.",
+       "F2-D3-ORDER": "2026-09-22: пользователь принял порядок F2 → D3. F2 зависит от слитых E3/F1/E4 без D11; D3 зависит от E5 и F2 и проверяет инвалидацию подготовки переносом, заказ из переданной ссылки и запрет разметки после заказа.",
+-      "E6-PRICE-01": "2026-09-22: пользователь выбрал переключатель учёта расходов и округление вверх до 50 рублей."
++      "E6-PRICE-01": "2026-09-22: пользователь выбрал переключатель учёта расходов и округление вверх до 50 рублей.",
++      "D11": "2026-09-22: пользователь подтвердил D3-DEC-01…06 («Подтверждаю все восемь решений»): льготный перенос разрешён и при заказах ребёнка, заказы не меняются, скидки задним числом нет; MED-07 только до передачи ссылки и без заказов; совместный кадр с остающимся ребёнком блокирует перенос; единственная staff-группа съёмки; обложки и correctionPhotos по плану D3 (docs/plans/D3_child-transfers/plan.md в rabit-api).",
++      "D3-D12-SCOPE": "2026-09-22: пользователь принял D3-DEC-07. D3 не меняет оплату, возвраты, печать и файлы; перенос в закрытую staff-группу запрещён. D12 снят с decisionGates D3 и остаётся у I3 и последующих волн."
+     }
+   },
+   "acceptedImplementationDecisions": [
+@@ -79,7 +84,8 @@
+     "D05",
+     "D07",
+     "D08",
+-    "D10"
++    "D10",
++    "D11"
+   ],
+   "directions": {
+     "A": "Основа и правила",
+@@ -1244,8 +1250,7 @@
+       "decisionGates": [
+         "D03",
+         "D05",
+-        "D11",
+-        "D12"
++        "D11"
+       ],
+       "endpointIds": [
+         "MED-07",
+@@ -1269,7 +1274,7 @@
+       "scope": [
+         "Preview заявки и команды переноса с source/target/signature; участники Media/Handoff/Commerce/Organization.",
+         "Каждая запись через владельца; единая атомарная транзакция локальной БД либо явная восстанавливаемая операция.",
+-        "Купленные кадры защищены правилами D11/D12; история заказа сохраняется.",
++        "Купленные кадры защищены правилами D11 (заказы не меняются, скидки задним числом нет); денежные последствия D12 — I3; история заказа сохраняется.",
+         "Перенос инвалидирует подготовку ссылки F2 затронутых групп; открытие снова требует HND-03."
+       ],
+       "review": [
+@@ -1286,7 +1291,7 @@
+       "legacyIds": [
+         "W17"
+       ],
+-      "deliveryState": "planned",
++      "deliveryState": "inProgress",
+       "unlocks": [
+         "I3"
+       ],
+@@ -1351,7 +1356,7 @@
+       "legacyIds": [
+         "W18"
+       ],
+-      "deliveryState": "inProgress",
++      "deliveryState": "merged",
+       "unlocks": [
+         "D3",
+         "G1",
+--- a/docs/04-bitrix-modules/backend-waves.md
++++ b/docs/04-bitrix-modules/backend-waves.md
+@@ -18,7 +18,7 @@
+
+ ## Текущий независимый набор
+
+-В main `4b507b3b3c27719888e38f582b48e6a56c0c5946` приняты: A1, A2, A3, A4, A5, A6, A7, A8, B1, C1, E1, C2, C3, C4, B2, D1, D2, E2, E3, F1, H1, E4, E5. Готовы по графу: E6, F2. Это снимок; фактические зависимости и открытые решения проверяются перед стартом.
++В main `57b2a816c7fc9a6e3145bd7fd6fc3b0b96aeb4a2` приняты: A1, A2, A3, A4, A5, A6, A7, A8, B1, C1, E1, C2, C3, C4, B2, D1, D2, E2, E3, F1, H1, E4, E5, F2. Готовы по графу: E6, D3. Это снимок; фактические зависимости и открытые решения проверяются перед стартом.
+
+ Пользователь принял модель Access/Organization, одного продавца, связь фото с несколькими детьми и рекомендации D07/D08/D10. R17 и остальные открытые решения не объявлены закрытыми. D02 не мешает пустому редактируемому каталогу, но продолжает блокировать соответствующие коммерческие правила E3. Для H1 выбран EMAIL, MAX перенесён в отдельный последующий этап. 22.09.2026 первым провайдером выбрана ЮKassa с «Чеками от ЮKassa», СберПэй — необязательный резерв. Расходы в общей цене выделены в независимую E6 с округлением вверх до 50 ₽. Битрикс Старт и своё хранение сохраняются; настройки/параметры чека и оставшиеся вопросы D09/D12 не объявлены закрытыми. GitHub Actions отключён вручную; YAML сохранён, проверки выполняются локально.
+
+@@ -170,8 +170,8 @@
+ | [E4](#e4) | Приватная витрина и серверный расчёт корзины | D2, E3, F1 | E5, F2 | MED-01, COM-08, COM-09 | в main |
+ | [E5](#e5) | Заказ, снимок покупки и личный ключ | E4 | E6, D3, G1, I1, J1 | COM-10, COM-11, COM-12, COM-13 | в main |
+ | [E6](#e6) | Учёт расходов на оплату в общей цене продукции | E3, E5 | N2 | Без новых REST | запланирована |
+-| [D3](#d3) | Атомарные переносы ребёнка и служебной заявки | D2, F1, E5, F2 | I3 | MED-07, HND-10, HND-11 | запланирована |
+-| [F2](#f2) | Подготовка и факт передачи ссылки | E3, F1, E4 | D3, G1, L1, K2 | HND-01, HND-02, HND-03, HND-04, HND-05 | в работе |
++| [D3](#d3) | Атомарные переносы ребёнка и служебной заявки | D2, F1, E5, F2 | I3 | MED-07, HND-10, HND-11 | в работе |
++| [F2](#f2) | Подготовка и факт передачи ссылки | E3, F1, E4 | D3, G1, L1, K2 | HND-01, HND-02, HND-03, HND-04, HND-05 | в main |
+ | [G1](#g1) | Платёжные попытки и подтверждённые факты | E5, F2 | G2, I1, I2, I3 | PAY-01, PAY-02, PAY-03, PAY-07 | запланирована |
+ | [H1](#h1) | Общая надёжная доставка Notification | A2, A5 | G2, J2 | Без новых REST | в main |
+ | [G2](#g2) | Чеки и повтор доставки | G1, H1 | I1 | PAY-04, PAY-05, PAY-06, PAY-09 | запланирована |
+@@ -942,7 +942,7 @@
+
+ **Владельцы:** `morefoto.media`, `morefoto.handoff`, `morefoto.commerce`.
+ **Зависит от:** D2, F1, E5, F2. **Разблокирует:** I3.
+-**Решения:** D03, D05, D11, D12. **Статус:** запланирована.
++**Решения:** D03, D05, D11. **Статус:** в работе.
+ **Первичные REST:** MED-07, HND-10, HND-11.
+ **Вход:** Установленные и принятые в main контракты/схема: D2, F1, E5, F2. Открытые decisionGates проверяются отдельно до начала зависимого участка.
+ **Выход:** Завершённые операции MED-07, HND-10, HND-11; Перенос сохраняет ID/покупку и не создаёт дубли или накопление скидок.
+@@ -953,7 +953,7 @@
+
+ - Preview заявки и команды переноса с source/target/signature; участники Media/Handoff/Commerce/Organization.
+ - Каждая запись через владельца; единая атомарная транзакция локальной БД либо явная восстанавливаемая операция.
+-- Купленные кадры защищены правилами D11/D12; история заказа сохраняется.
++- Купленные кадры защищены правилами D11 (заказы не меняются, скидки задним числом нет); денежные последствия D12 — I3; история заказа сохраняется.
+ - Перенос инвалидирует подготовку ссылки F2 затронутых групп; открытие снова требует HND-03.
+
+ **Предмет ревью:**
+@@ -977,7 +977,7 @@
+
+ **Владельцы:** `morefoto.handoff`, `morefoto.organization`, `morefoto.media`.
+ **Зависит от:** E3, F1, E4. **Разблокирует:** D3, G1, L1, K2.
+-**Решения:** D05, D07, D10. **Статус:** в работе.
++**Решения:** D05, D07, D10. **Статус:** в main.
+ **Первичные REST:** HND-01, HND-02, HND-03, HND-04, HND-05.
+ **Вход:** Установленные и принятые в main контракты/схема: E3, F1, E4. Открытые decisionGates проверяются отдельно до начала зависимого участка.
+ **Выход:** Завершённые операции HND-01, HND-02, HND-03, HND-04, HND-05; Ссылка выдаётся после готовности, сроки считаются от записанного факта передачи.
+--- a/docs/05-rest-api/README.md
++++ b/docs/05-rest-api/README.md
+@@ -273,7 +273,7 @@
+ - **MED-04:** status=processing/ready/failed/duplicate; при duplicate возвращается existingPhotoId. Ждать ready перед назначением/публикацией.
+ - **MED-05:** Одна группа, preparing, без заказов; childCode 1–3 латинские буквы. Все выбранные ID должны существовать в этой группе.
+ - **MED-06:** Обложка только из кадров группы, назначенных ребёнку, до открытия и появления заказов.
+-- **MED-07:** Одна съёмка, одинаковый тип групп, свободный целевой код, полный актуальный набор. Исходные ID/originalGroupId сохраняются. Льготный перенос — HND-11.
++- **MED-07:** Одна съёмка, одинаковый тип групп, свободный целевой код, полный актуальный набор. Исходные ID/originalGroupId сохраняются. Льготный перенос — HND-11. D3: только организатор, Idempotency-Key 32 hex. Обе группы в подготовке (sentAt пуст) и у ребёнка нет заказов, иначе 409 GROUP_LOCKED/CHILD_HAS_ORDERS; разный тип — 409 GROUP_KIND_MISMATCH. childCode/targetCode — 1–3 латинские буквы, одна и та же группа или неверные поля — 422 VALIDATION_FAILED, неверный expectedPhotoIds — 422 INVALID_PHOTO_IDS. expectedPhotoIds совпадает со всем текущим набором ребёнка (409 SET_CHANGED), targetCode свободен (409 TARGET_CODE_TAKEN), revision — ревизия медиа съёмки (409 REVISION_CONFLICT). Кадр, назначенный и другому ребёнку исходной группы, блокирует перенос: 409 SHARED_PHOTO с error.details.photoCodes. ID кадров, ребёнка и assignmentId, originalGroupId и номера кадров сохраняются; меняются группа и буквенная часть кода. Перенесённая обложка исходной группы заменяется первым оставшимся назначенным кадром, группе без обложки назначается первый перенесённый. Ответ: childCode — код в целевой группе, revision — новая ревизия медиа. Повтор тем же ключом и телом — тот же ответ, другое тело — 409 IDEMPOTENCY_CONFLICT.
+
+ ### morefoto.commerce — Каталог, расчёт и заказы
+
+@@ -305,7 +305,7 @@
+ - **COM-10:** Новый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно. E5: Idempotency-Key (32 hex) обязателен, область повтора — capability галереи; тот же ключ и тело — 201 с теми же id/number/accessKey, пока ссылка галереи действует; другое тело — 409 IDEMPOTENCY_CONFLICT. lines совпадают с COM-09 для этого quoteToken; один заказ на расчёт (409 QUOTE_ALREADY_USED). Устаревший расчёт: 409 QUOTE_EXPIRED, QUOTE_STALE или PRICE_CHANGED с error.details{quote,quoteToken,expiresAt}; закрытая группа — 409 GALLERY_CLOSED. buyer: name 2–100, phone 10–15 цифр, email обязателен (до 254), comment до 1000, receiptChannel необязателен и только из capabilities.receiptChannels (до G2 — null); ошибки полей — 422 INVALID_BUYER_NAME/PHONE/EMAIL/COMMENT, RECEIPT_CHANNEL_UNAVAILABLE, REVIEW_REQUIRED. accessKey — 64 hex, действует 30 календарных дней по МСК; в БД только SHA-256. Location: /api/v1/public/orders/current. Строки quote содержат метаданные кадра без URL изображений. Оформление выключено по умолчанию: 403 PURCHASE_DISABLED.
+ - **COM-11:** X-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников. E5: отсутствующий, неверный, отозванный и истёкший ключ дают одинаковый 404 ORDER_NOT_FOUND; отзыв ссылки галереи ключ заказа не отключает. period — календарь группы {groupId, state, timezone, sentAt, closesAt, deliveryDueAt, now}; история продлений появится с K2. paidAt/latePayment появятся с G1. Кадры без URL изображений. Ответ no-store.
+ - **COM-12:** Только своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора. E5: organizer — все заказы, curator — заказы своих учреждений (пустая область — пустой список), head/teacher — 403 FORBIDDEN. StaffOrder: id, number, institutionId, institutionName, shootId, shootName, groupId, groupName, audience, createdAt, buyer{name,phone,email,comment,receiptChannel}, quote, paymentStatus, productionStatus, version; названия — на момент покупки. q — поиск без учёта регистра по номеру, имени, email и цифрам телефона внутри области, 2–100 символов. productionStatus: not-started/queued/printing/ready/delivered. dateFrom/dateTo — дата создания, полные дни МСК. late и settlement до поставщиков G1/I1–I3 отвечают 422 FILTER_UNAVAILABLE; неизвестный фильтр или значение — 422. Сортировка createdAt desc + id; область и фильтры применяются до LIMIT, total — по всей выборке. Изменение прав во время чтения — 409 ACCESS_CHANGED.
+-- **COM-13:** correctionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5: correctionPhotos — готовые кадры детей из строк заказа в его группе [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.
++- **COM-13:** correctionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5/D3: correctionPhotos — готовые кадры детей из строк заказа в их текущей группе, после переноса D3 — с новыми кодами [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; снимок строк заказа перенос не меняет; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.
+
+ ### morefoto.handoff — Ссылки и списки сотрудников
+
+@@ -324,19 +324,20 @@
+ | HND-07 · **П** | **POST** /staff-requests | Подать список сотрудников; О/В | institutionId, shootId, rows, comment | **201**; id, revision, status | F1; product |
+ | HND-08 · **П** | **GET** /staff-requests/{staff_request_id} | Карточка списка; О/К/В | — | **200**; id, rows, revision, status, history, results? | F1; product |
+ | HND-09 · **П** | **PUT** /staff-requests/{staff_request_id} | Исправить и повторно подать свой список; О/В | institutionId, shootId, rows, comment, revision | **200**; id, revision, status | F1; product |
+-| HND-10 · **П** | **GET** /staff-requests/{staff_request_id}/transfer-preview | Проверить полный набор перед переносом; О/К | — | **200**; targetGroupId, bundles, signature, hasOrders, revision | D3; product |
++| HND-10 · **П** | **GET** /staff-requests/{staff_request_id}/transfer-preview | Проверить полный набор перед переносом; О/К | — | **200**; targetGroupId, targetGroupName, bundles, signature, hasOrders, revision | D3; product |
+ | HND-11 · **П** | **POST** /staff-requests/{staff_request_id}/transfers | Подтвердить льготный перенос; О/К | reason, confirmed, revision, signature | **200**; id, revision, status, results | D3; product |
+ | HND-12 · **П** | **POST** /staff-requests/{staff_request_id}/clarifications | Запросить уточнение списка; О/К | revision, comment, confirmed | **200**; id, revision, status | F1; product |
+
+ - **HND-01:** F2: LinkGroup — groupId, name, kind, institutionId, institutionName, shootId, shootName, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, photoCount, childCount. galleryToken и history в списке не выдаются: ключ только HND-02 по запросу. Область: организатор — вся, куратор и руководитель — свои учреждения, воспитатель — свои группы; фильтры сужают область, а не расширяют. page 1..1000000, pageSize 1..100 (по умолчанию 1/25); state по серверному now (closed при now >= closesAt). Сортировка: съёмки createdAt desc, группы по названию и id. 422 INVALID_STATE/INVALID_PAGE/INVALID_FILTER.
+-- **HND-02:** F2: galleryToken — действующий ключ галереи, выдаётся первой HND-03 (до неё null); сырой ключ хранится для повторного копирования по решению 22.09.2026, покупатель разрешается по SHA-256. revision — версия ссылки Handoff (отсутствующая запись — 1), не UF_REVISION группы. signature — SHA-256 серверного состояния: кадры с revision/статусом, назначения, обложка, действующие условия и товары, название/тип группы, воспитатель, незавершённые заявки сотрудников. problems — noPhotos, photosProcessing, unassignedPhotos, noProducts, staffRequestsPending (незавершённые заявки блокируют до D3). prepared — передача записана либо подпись подготовки совпадает с текущей без проблем. history[]: kind prepared/transmitted/corrected, actorId, actorName, at, sentAt, closesAt, deliveryAt, previousSentAt, previousClosesAt, previousDeliveryAt, reason. Вне области — 404 GROUP_NOT_FOUND. Ответ no-store.
++- **HND-02:** F2: galleryToken — действующий ключ галереи, выдаётся первой HND-03 (до неё null); сырой ключ хранится для повторного копирования по решению 22.09.2026, покупатель разрешается по SHA-256. revision — версия ссылки Handoff (отсутствующая запись — 1), не UF_REVISION группы. signature — SHA-256 серверного состояния: кадры с revision/статусом, назначения, обложка, действующие условия и товары, название/тип группы, воспитатель, незавершённые заявки сотрудников. problems — noPhotos, photosProcessing, unassignedPhotos, noProducts, staffRequestsPending (заявки submitted/clarification со строками группы блокируют подготовку до их переноса HND-11; перенос меняет signature обеих групп и сбрасывает подготовку). prepared — передача записана либо подпись подготовки совпадает с текущей без проблем. history[]: kind prepared/transmitted/corrected, actorId, actorName, at, sentAt, closesAt, deliveryAt, previousSentAt, previousClosesAt, previousDeliveryAt, reason. Вне области — 404 GROUP_NOT_FOUND. Ответ no-store.
+ - **HND-03:** Актуальны все фотографии, условия и списки; проблемы блокируют проверку. F2: Idempotency-Key 32 hex. photosReviewed/conditionsReviewed/staffReviewed/confirmed = true, иначе 422 REVIEW_REQUIRED. Устаревшие revision/signature — 409 REVISION_CONFLICT/SIGNATURE_CONFLICT; проблемы — 409 LINK_NOT_READY; после передачи — 409 LINK_ALREADY_SENT; куратор, руководитель, воспитатель — 403 FORBIDDEN. Выдаёт ключ галереи, если действующего нет.
+ - **HND-04:** Фиксирует факт ручной отправки в чат. Не отправляет сообщение. Семь календарных дней от sentAt; повтор не сдвигает срок. F2: sentAt — ISO 8601 с offset и целыми секундами (422 INVALID_SENT_AT), не позже серверного now (422 SENT_AT_IN_FUTURE) и не раньше минуты выдачи ключа (422 SENT_AT_BEFORE_LINK); confirmed=true (422 CONFIRMATION_REQUIRED). Нужны актуальная подготовка (409 LINK_NOT_PREPARED) и signature (409 SIGNATURE_CONFLICT). closesAt = sentAt + 7, deliveryAt = closesAt + 7 календарных дней Europe/Moscow; пишет журнал Organization. Повтор после записанного факта — 200 с текущими сроками без истории, даже с другим ключом и устаревшей формой; тот же ключ с другим телом — 409 IDEMPOTENCY_CONFLICT. Руководитель — 403.
+ - **HND-05:** Сохраняются старые даты и причина; пересчитываются сроки, учитываются продления. F2: reason 5–500 символов после trim (422 INVALID_REASON), confirmed=true. До передачи — 409 LINK_NOT_SENT; та же дата — 422 SENT_AT_UNCHANGED; границы sentAt как в HND-04. closesAt = max(sentAt + 7, согласованное продление), deliveryAt = closesAt + 7 календарных дней Europe/Moscow; сдвиг назад может сразу закрыть приём. Воспитатель и руководитель — 403. Ограничения D12 после оплаты/производства добавляют G1 и волны L.
+ - **HND-06:** Воспитатель видит собственные списки в назначенной области.
+-- **HND-09:** Только автор и допустимое состояние; после transferred редактирование запрещено.
+-- **HND-10:** Сервер находит все фотографии по кодам строк, проверяет актуальность исходной группы и свободные целевые коды.
+-- **HND-11:** Атомарный перенос полного набора в staff-группу одной съёмки, без дублей; сохраняет photoId/originalGroupId. Повтор не переносит заново.
++- **HND-08:** D3: results[] — итог переноса HND-11 (rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds), до переноса пустой список. rows[].childCode после переноса — код на момент переноса.
++- **HND-09:** Только автор и допустимое состояние; после transferred редактирование запрещено (409 REQUEST_TRANSFERRED).
++- **HND-10:** Сервер находит все фотографии по кодам строк, проверяет актуальность исходной группы и свободные целевые коды. D3: организатор и куратор своей области; руководитель и воспитатель — 403 FORBIDDEN, чужая или отсутствующая заявка — 404 STAFF_REQUEST_NOT_FOUND. Только submitted: transferred — 409 REQUEST_TRANSFERRED, clarification — 409 REQUEST_NOT_SUBMITTED. Цель — единственная staff-группа съёмки (нет — 409 STAFF_GROUP_REQUIRED, несколько — 409 STAFF_GROUP_AMBIGUOUS), закрытая — 409 TARGET_GROUP_CLOSED. Каждая строка берёт весь текущий набор ребёнка; ребёнок вне исходной группы, пустой набор или потерянный кадр поданного списка — 409 SET_CHANGED; кадр, общий с ребёнком вне заявки, — 409 SHARED_PHOTO с error.details.photoCodes. targetCode — следующие свободные коды staff-группы (A…Z, AA…) в порядке строк. bundles[]: rowId, groupId, childCode, targetCode, hasOrders, photos[{id, code, revision}]. hasOrders — есть заказы детей заявки в любом статусе; заказы переносом не меняются. signature — SHA-256 проверяемого состояния, revision — версия заявки. Ответ no-store.
++- **HND-11:** Атомарный перенос полного набора в staff-группу одной съёмки, без дублей; сохраняет photoId/originalGroupId. Повтор не переносит заново. D3: Idempotency-Key 32 hex. reason — комментарий до 500 символов после trim (может быть пустым), confirmed=true (422 CONFIRMATION_REQUIRED), revision и signature из HND-10 (409 REVISION_CONFLICT/SIGNATURE_CONFLICT); права и остальные отказы как в HND-10. Одна транзакция переносит все наборы: ID кадров, детей, assignmentId и originalGroupId сохраняются, заказы не меняются, подготовка ссылки затронутых групп сбрасывается (снова нужна HND-03). results[]: rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds. Повтор тем же ключом — тот же ответ; подтверждение уже перенесённой заявки с другим ключом — 200 с сохранёнными results без повторного переноса; тот же ключ с другим телом — 409 IDEMPOTENCY_CONFLICT.
+
+ ### morefoto.payments — Оплата и чеки
+
+--- a/docs/05-rest-api/build.py
++++ b/docs/05-rest-api/build.py
+@@ -180,8 +180,9 @@
+ add("media","MED-07","POST","/shoots/{shoot_id}/child-transfers","Перенести полный набор ребёнка",O,
+     "photoIds, fromGroupId, toGroupId, childCode, revision",
+     {"fromGroupId":"{{group_id}}","toGroupId":"{{target_group_id}}","childCode":"A","targetCode":"B","expectedPhotoIds":["{{photo_id}}"],"revision":rev("photos_revision")},
+-    note="Одна съёмка, одинаковый тип групп, свободный целевой код, полный актуальный набор. Исходные ID/originalGroupId сохраняются. Льготный перенос — HND-11.",
+-    save={"photos_revision":"revision"})
++    note="Одна съёмка, одинаковый тип групп, свободный целевой код, полный актуальный набор. Исходные ID/originalGroupId сохраняются. Льготный перенос — HND-11. D3: только организатор, Idempotency-Key 32 hex. Обе группы в подготовке (sentAt пуст) и у ребёнка нет заказов, иначе 409 GROUP_LOCKED/CHILD_HAS_ORDERS; разный тип — 409 GROUP_KIND_MISMATCH. childCode/targetCode — 1–3 латинские буквы, одна и та же группа или неверные поля — 422 VALIDATION_FAILED, неверный expectedPhotoIds — 422 INVALID_PHOTO_IDS. expectedPhotoIds совпадает со всем текущим набором ребёнка (409 SET_CHANGED), targetCode свободен (409 TARGET_CODE_TAKEN), revision — ревизия медиа съёмки (409 REVISION_CONFLICT). Кадр, назначенный и другому ребёнку исходной группы, блокирует перенос: 409 SHARED_PHOTO с error.details.photoCodes. ID кадров, ребёнка и assignmentId, originalGroupId и номера кадров сохраняются; меняются группа и буквенная часть кода. Перенесённая обложка исходной группы заменяется первым оставшимся назначенным кадром, группе без обложки назначается первый перенесённый. Ответ: childCode — код в целевой группе, revision — новая ревизия медиа. Повтор тем же ключом и телом — тот же ответ, другое тело — 409 IDEMPOTENCY_CONFLICT.",
++    save={"photos_revision":"revision"},
++    sample={"photoIds":["photo-example"],"fromGroupId":"group-example","toGroupId":"target-group-example","childCode":"B","revision":2})
+ # Catalog and sales: local cart is not exposed as a shared public server resource.
+ add("commerce","COM-01","GET","/catalog/products","Каталог организатора",O,"items<Product>, revision, meta",
+     sample={"items":[],"revision":1},save={"catalog_revision":"revision"})
+@@ -238,7 +239,7 @@
+     sample=list_sample,source="frontend/src/modules/morefoto/curator/types.ts",note="Только своя область. Нельзя возвращать accessKey, galleryToken, requestId и журналы ключей повтора. E5: organizer — все заказы, curator — заказы своих учреждений (пустая область — пустой список), head/teacher — 403 FORBIDDEN. StaffOrder: id, number, institutionId, institutionName, shootId, shootName, groupId, groupName, audience, createdAt, buyer{name,phone,email,comment,receiptChannel}, quote, paymentStatus, productionStatus, version; названия — на момент покупки. q — поиск без учёта регистра по номеру, имени, email и цифрам телефона внутри области, 2–100 символов. productionStatus: not-started/queued/printing/ready/delivered. dateFrom/dateTo — дата создания, полные дни МСК. late и settlement до поставщиков G1/I1–I3 отвечают 422 FILTER_UNAVAILABLE; неизвестный фильтр или значение — 422. Сортировка createdAt desc + id; область и фильтры применяются до LIMIT, total — по всей выборке. Изменение прав во время чтения — 409 ACCESS_CHANGED.")
+ add("commerce","COM-13","GET","/orders/{order_id}","Служебная карточка заказа",OK,
+     "StaffOrder, period, version, correctionPhotos",sample=dict(order_sample,period=period_sample,correctionPhotos=[]),
+-    save={"order_version":"version"},note="correctionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5: correctionPhotos — готовые кадры детей из строк заказа в его группе [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.")
++    save={"order_version":"version"},note="correctionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5/D3: correctionPhotos — готовые кадры детей из строк заказа в их текущей группе, после переноса D3 — с новыми кодами [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; снимок строк заказа перенос не меняет; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.")
+ # Handoff.
+ add("handoff","HND-01","GET","/group-links","Ссылки и сроки по доступной области",ALL,"items<LinkGroup>, meta",sample=list_sample,
+     query=[("institutionId","","Учреждение"),("shootId","","Съёмка"),("state","","preparing/open/closed")],
+@@ -246,7 +247,7 @@
+ add("handoff","HND-02","GET","/groups/{group_id}/link","Подготовка, ссылка и история группы",ALL,
+     "groupId, name, kind, institutionId, institutionName, shootId, shootName, galleryToken, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, referenceNow, photoCount, childCount, history",
+     save={"gallery_token":"galleryToken","link_revision":"revision","link_signature":"signature"},
+-    note="F2: galleryToken — действующий ключ галереи, выдаётся первой HND-03 (до неё null); сырой ключ хранится для повторного копирования по решению 22.09.2026, покупатель разрешается по SHA-256. revision — версия ссылки Handoff (отсутствующая запись — 1), не UF_REVISION группы. signature — SHA-256 серверного состояния: кадры с revision/статусом, назначения, обложка, действующие условия и товары, название/тип группы, воспитатель, незавершённые заявки сотрудников. problems — noPhotos, photosProcessing, unassignedPhotos, noProducts, staffRequestsPending (незавершённые заявки блокируют до D3). prepared — передача записана либо подпись подготовки совпадает с текущей без проблем. history[]: kind prepared/transmitted/corrected, actorId, actorName, at, sentAt, closesAt, deliveryAt, previousSentAt, previousClosesAt, previousDeliveryAt, reason. Вне области — 404 GROUP_NOT_FOUND. Ответ no-store.")
++    note="F2: galleryToken — действующий ключ галереи, выдаётся первой HND-03 (до неё null); сырой ключ хранится для повторного копирования по решению 22.09.2026, покупатель разрешается по SHA-256. revision — версия ссылки Handoff (отсутствующая запись — 1), не UF_REVISION группы. signature — SHA-256 серверного состояния: кадры с revision/статусом, назначения, обложка, действующие условия и товары, название/тип группы, воспитатель, незавершённые заявки сотрудников. problems — noPhotos, photosProcessing, unassignedPhotos, noProducts, staffRequestsPending (заявки submitted/clarification со строками группы блокируют подготовку до их переноса HND-11; перенос меняет signature обеих групп и сбрасывает подготовку). prepared — передача записана либо подпись подготовки совпадает с текущей без проблем. history[]: kind prepared/transmitted/corrected, actorId, actorName, at, sentAt, closesAt, deliveryAt, previousSentAt, previousClosesAt, previousDeliveryAt, reason. Вне области — 404 GROUP_NOT_FOUND. Ответ no-store.")
+ add("handoff","HND-03","POST","/groups/{group_id}/link-preparations","Подтвердить проверку перед открытием",O,
+     "revision, signature, prepared",{"revision":rev("link_revision"),"signature":"{{link_signature}}",
+         "photosReviewed":True,"conditionsReviewed":True,"staffReviewed":True,"confirmed":True},
+@@ -267,16 +268,19 @@
+     code=201,save={"staff_request_id":"id","staff_request_revision":"revision"},
+     sample={"id":"staff-request-example","revision":1,"status":"submitted"})
+ add("handoff","HND-08","GET","/staff-requests/{staff_request_id}","Карточка списка","О/К/В",
+-    "id, rows, revision, status, history, results?",save={"staff_request_revision":"revision"})
++    "id, rows, revision, status, history, results?",save={"staff_request_revision":"revision"},
++    note="D3: results[] — итог переноса HND-11 (rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds), до переноса пустой список. rows[].childCode после переноса — код на момент переноса.")
+ add("handoff","HND-09","PUT","/staff-requests/{staff_request_id}","Исправить и повторно подать свой список","О/В",
+     "id, revision, status",dict(staff_request,revision=rev("staff_request_revision")),save={"staff_request_revision":"revision"},
+-    note="Только автор и допустимое состояние; после transferred редактирование запрещено.")
++    note="Только автор и допустимое состояние; после transferred редактирование запрещено (409 REQUEST_TRANSFERRED).")
+ add("handoff","HND-10","GET","/staff-requests/{staff_request_id}/transfer-preview","Проверить полный набор перед переносом",OK,
+-    "targetGroupId, bundles, signature, hasOrders, revision",save={"staff_transfer_signature":"signature","staff_request_revision":"revision"},
+-    note="Сервер находит все фотографии по кодам строк, проверяет актуальность исходной группы и свободные целевые коды.")
++    "targetGroupId, targetGroupName, bundles, signature, hasOrders, revision",save={"staff_transfer_signature":"signature","staff_request_revision":"revision"},
++    note="Сервер находит все фотографии по кодам строк, проверяет актуальность исходной группы и свободные целевые коды. D3: организатор и куратор своей области; руководитель и воспитатель — 403 FORBIDDEN, чужая или отсутствующая заявка — 404 STAFF_REQUEST_NOT_FOUND. Только submitted: transferred — 409 REQUEST_TRANSFERRED, clarification — 409 REQUEST_NOT_SUBMITTED. Цель — единственная staff-группа съёмки (нет — 409 STAFF_GROUP_REQUIRED, несколько — 409 STAFF_GROUP_AMBIGUOUS), закрытая — 409 TARGET_GROUP_CLOSED. Каждая строка берёт весь текущий набор ребёнка; ребёнок вне исходной группы, пустой набор или потерянный кадр поданного списка — 409 SET_CHANGED; кадр, общий с ребёнком вне заявки, — 409 SHARED_PHOTO с error.details.photoCodes. targetCode — следующие свободные коды staff-группы (A…Z, AA…) в порядке строк. bundles[]: rowId, groupId, childCode, targetCode, hasOrders, photos[{id, code, revision}]. hasOrders — есть заказы детей заявки в любом статусе; заказы переносом не меняются. signature — SHA-256 проверяемого состояния, revision — версия заявки. Ответ no-store.",
++    sample={"targetGroupId":"staff-group-example","targetGroupName":"Сотрудники","bundles":[{"rowId":"row-1","groupId":"group-example","childCode":"A","targetCode":"A","hasOrders":False,"photos":[{"id":"photo-example","code":"A001","revision":1}]}],"signature":"0"*64,"hasOrders":False,"revision":1})
+ add("handoff","HND-11","POST","/staff-requests/{staff_request_id}/transfers","Подтвердить льготный перенос",OK,
+     "id, revision, status, results",reason(revision=rev("staff_request_revision"),signature="{{staff_transfer_signature}}"),
+-    save={"staff_request_revision":"revision"},note="Атомарный перенос полного набора в staff-группу одной съёмки, без дублей; сохраняет photoId/originalGroupId. Повтор не переносит заново.")
++    save={"staff_request_revision":"revision"},note="Атомарный перенос полного набора в staff-группу одной съёмки, без дублей; сохраняет photoId/originalGroupId. Повтор не переносит заново. D3: Idempotency-Key 32 hex. reason — комментарий до 500 символов после trim (может быть пустым), confirmed=true (422 CONFIRMATION_REQUIRED), revision и signature из HND-10 (409 REVISION_CONFLICT/SIGNATURE_CONFLICT); права и остальные отказы как в HND-10. Одна транзакция переносит все наборы: ID кадров, детей, assignmentId и originalGroupId сохраняются, заказы не меняются, подготовка ссылки затронутых групп сбрасывается (снова нужна HND-03). results[]: rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds. Повтор тем же ключом — тот же ответ; подтверждение уже перенесённой заявки с другим ключом — 200 с сохранёнными results без повторного переноса; тот же ключ с другим телом — 409 IDEMPOTENCY_CONFLICT.",
++    sample={"id":"staff-request-example","revision":2,"status":"transferred","results":[{"rowId":"row-1","fromGroupId":"group-example","fromChildCode":"A","targetGroupId":"staff-group-example","targetChildCode":"A","photoIds":["photo-example"]}]})
+ add("handoff","HND-12","POST","/staff-requests/{staff_request_id}/clarifications","Запросить уточнение списка",OK,
+     "id, revision, status",{"revision":rev("staff_request_revision"),"comment":"Уточните исходную группу и номер фотографии.","confirmed":True},
+     save={"staff_request_revision":"revision"})
+--- a/docs/05-rest-api/endpoints.json
++++ b/docs/05-rest-api/endpoints.json
+@@ -1206,12 +1206,20 @@
+       },
+       "code": 200,
+       "query": [],
+-      "note": "Одна съёмка, одинаковый тип групп, свободный целевой код, полный актуальный набор. Исходные ID/originalGroupId сохраняются. Льготный перенос — HND-11.",
++      "note": "Одна съёмка, одинаковый тип групп, свободный целевой код, полный актуальный набор. Исходные ID/originalGroupId сохраняются. Льготный перенос — HND-11. D3: только организатор, Idempotency-Key 32 hex. Обе группы в подготовке (sentAt пуст) и у ребёнка нет заказов, иначе 409 GROUP_LOCKED/CHILD_HAS_ORDERS; разный тип — 409 GROUP_KIND_MISMATCH. childCode/targetCode — 1–3 латинские буквы, одна и та же группа или неверные поля — 422 VALIDATION_FAILED, неверный expectedPhotoIds — 422 INVALID_PHOTO_IDS. expectedPhotoIds совпадает со всем текущим набором ребёнка (409 SET_CHANGED), targetCode свободен (409 TARGET_CODE_TAKEN), revision — ревизия медиа съёмки (409 REVISION_CONFLICT). Кадр, назначенный и другому ребёнку исходной группы, блокирует перенос: 409 SHARED_PHOTO с error.details.photoCodes. ID кадров, ребёнка и assignmentId, originalGroupId и номера кадров сохраняются; меняются группа и буквенная часть кода. Перенесённая обложка исходной группы заменяется первым оставшимся назначенным кадром, группе без обложки назначается первый перенесённый. Ответ: childCode — код в целевой группе, revision — новая ревизия медиа. Повтор тем же ключом и телом — тот же ответ, другое тело — 409 IDEMPOTENCY_CONFLICT.",
+       "status": "П",
+       "save": {
+         "photos_revision": "revision"
+       },
+-      "sample": {},
++      "sample": {
++        "photoIds": [
++          "photo-example"
++        ],
++        "fromGroupId": "group-example",
++        "toGroupId": "target-group-example",
++        "childCode": "B",
++        "revision": 2
++      },
+       "source": "frontend/src/modules/morefoto/photos/service.ts",
+       "format": "json",
+       "idem": true,
+@@ -1815,7 +1823,7 @@
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "correctionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5: correctionPhotos — готовые кадры детей из строк заказа в его группе [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.",
++      "note": "correctionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5/D3: correctionPhotos — готовые кадры детей из строк заказа в их текущей группе, после переноса D3 — с новыми кодами [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; снимок строк заказа перенос не меняет; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.",
+       "status": "П",
+       "save": {
+         "order_version": "version"
+@@ -1914,7 +1922,7 @@
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "F2: galleryToken — действующий ключ галереи, выдаётся первой HND-03 (до неё null); сырой ключ хранится для повторного копирования по решению 22.09.2026, покупатель разрешается по SHA-256. revision — версия ссылки Handoff (отсутствующая запись — 1), не UF_REVISION группы. signature — SHA-256 серверного состояния: кадры с revision/статусом, назначения, обложка, действующие условия и товары, название/тип группы, воспитатель, незавершённые заявки сотрудников. problems — noPhotos, photosProcessing, unassignedPhotos, noProducts, staffRequestsPending (незавершённые заявки блокируют до D3). prepared — передача записана либо подпись подготовки совпадает с текущей без проблем. history[]: kind prepared/transmitted/corrected, actorId, actorName, at, sentAt, closesAt, deliveryAt, previousSentAt, previousClosesAt, previousDeliveryAt, reason. Вне области — 404 GROUP_NOT_FOUND. Ответ no-store.",
++      "note": "F2: galleryToken — действующий ключ галереи, выдаётся первой HND-03 (до неё null); сырой ключ хранится для повторного копирования по решению 22.09.2026, покупатель разрешается по SHA-256. revision — версия ссылки Handoff (отсутствующая запись — 1), не UF_REVISION группы. signature — SHA-256 серверного состояния: кадры с revision/статусом, назначения, обложка, действующие условия и товары, название/тип группы, воспитатель, незавершённые заявки сотрудников. problems — noPhotos, photosProcessing, unassignedPhotos, noProducts, staffRequestsPending (заявки submitted/clarification со строками группы блокируют подготовку до их переноса HND-11; перенос меняет signature обеих групп и сбрасывает подготовку). prepared — передача записана либо подпись подготовки совпадает с текущей без проблем. history[]: kind prepared/transmitted/corrected, actorId, actorName, at, sentAt, closesAt, deliveryAt, previousSentAt, previousClosesAt, previousDeliveryAt, reason. Вне области — 404 GROUP_NOT_FOUND. Ответ no-store.",
+       "status": "П",
+       "save": {
+         "gallery_token": "galleryToken",
+@@ -2136,7 +2144,7 @@
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "",
++      "note": "D3: results[] — итог переноса HND-11 (rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds), до переноса пустой список. rows[].childCode после переноса — код на момент переноса.",
+       "status": "П",
+       "save": {
+         "staff_request_revision": "revision"
+@@ -2177,7 +2185,7 @@
+       },
+       "code": 200,
+       "query": [],
+-      "note": "Только автор и допустимое состояние; после transferred редактирование запрещено.",
++      "note": "Только автор и допустимое состояние; после transferred редактирование запрещено (409 REQUEST_TRANSFERRED).",
+       "status": "П",
+       "save": {
+         "staff_request_revision": "revision"
+@@ -2201,17 +2209,39 @@
+       "path": "/staff-requests/{staff_request_id}/transfer-preview",
+       "title": "Проверить полный набор перед переносом",
+       "roles": "О/К",
+-      "output": "targetGroupId, bundles, signature, hasOrders, revision",
++      "output": "targetGroupId, targetGroupName, bundles, signature, hasOrders, revision",
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "Сервер находит все фотографии по кодам строк, проверяет актуальность исходной группы и свободные целевые коды.",
++      "note": "Сервер находит все фотографии по кодам строк, проверяет актуальность исходной группы и свободные целевые коды. D3: организатор и куратор своей области; руководитель и воспитатель — 403 FORBIDDEN, чужая или отсутствующая заявка — 404 STAFF_REQUEST_NOT_FOUND. Только submitted: transferred — 409 REQUEST_TRANSFERRED, clarification — 409 REQUEST_NOT_SUBMITTED. Цель — единственная staff-группа съёмки (нет — 409 STAFF_GROUP_REQUIRED, несколько — 409 STAFF_GROUP_AMBIGUOUS), закрытая — 409 TARGET_GROUP_CLOSED. Каждая строка берёт весь текущий набор ребёнка; ребёнок вне исходной группы, пустой набор или потерянный кадр поданного списка — 409 SET_CHANGED; кадр, общий с ребёнком вне заявки, — 409 SHARED_PHOTO с error.details.photoCodes. targetCode — следующие свободные коды staff-группы (A…Z, AA…) в порядке строк. bundles[]: rowId, groupId, childCode, targetCode, hasOrders, photos[{id, code, revision}]. hasOrders — есть заказы детей заявки в любом статусе; заказы переносом не меняются. signature — SHA-256 проверяемого состояния, revision — версия заявки. Ответ no-store.",
+       "status": "П",
+       "save": {
+         "staff_transfer_signature": "signature",
+         "staff_request_revision": "revision"
+       },
+-      "sample": {},
++      "sample": {
++        "targetGroupId": "staff-group-example",
++        "targetGroupName": "Сотрудники",
++        "bundles": [
++          {
++            "rowId": "row-1",
++            "groupId": "group-example",
++            "childCode": "A",
++            "targetCode": "A",
++            "hasOrders": false,
++            "photos": [
++              {
++                "id": "photo-example",
++                "code": "A001",
++                "revision": 1
++              }
++            ]
++          }
++        ],
++        "signature": "0000000000000000000000000000000000000000000000000000000000000000",
++        "hasOrders": false,
++        "revision": 1
++      },
+       "source": "frontend/src/modules/morefoto/handoff/types.ts",
+       "format": "json",
+       "idem": false,
+@@ -2239,12 +2269,28 @@
+       },
+       "code": 200,
+       "query": [],
+-      "note": "Атомарный перенос полного набора в staff-группу одной съёмки, без дублей; сохраняет photoId/originalGroupId. Повтор не переносит заново.",
++      "note": "Атомарный перенос полного набора в staff-группу одной съёмки, без дублей; сохраняет photoId/originalGroupId. Повтор не переносит заново. D3: Idempotency-Key 32 hex. reason — комментарий до 500 символов после trim (может быть пустым), confirmed=true (422 CONFIRMATION_REQUIRED), revision и signature из HND-10 (409 REVISION_CONFLICT/SIGNATURE_CONFLICT); права и остальные отказы как в HND-10. Одна транзакция переносит все наборы: ID кадров, детей, assignmentId и originalGroupId сохраняются, заказы не меняются, подготовка ссылки затронутых групп сбрасывается (снова нужна HND-03). results[]: rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds. Повтор тем же ключом — тот же ответ; подтверждение уже перенесённой заявки с другим ключом — 200 с сохранёнными results без повторного переноса; тот же ключ с другим телом — 409 IDEMPOTENCY_CONFLICT.",
+       "status": "П",
+       "save": {
+         "staff_request_revision": "revision"
+       },
+-      "sample": {},
++      "sample": {
++        "id": "staff-request-example",
++        "revision": 2,
++        "status": "transferred",
++        "results": [
++          {
++            "rowId": "row-1",
++            "fromGroupId": "group-example",
++            "fromChildCode": "A",
++            "targetGroupId": "staff-group-example",
++            "targetChildCode": "A",
++            "photoIds": [
++              "photo-example"
++            ]
++          }
++        ]
++      },
+       "source": "frontend/src/modules/morefoto/handoff/types.ts",
+       "format": "json",
+       "idem": true,
+--- a/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json
++++ b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json
+@@ -4893,7 +4893,7 @@
+                 "{{staff_request_id}}"
+               ]
+             },
+-            "description": "**HND-08 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/В.\n\nОтвет: id, rows, revision, status, history, results?.\n\n\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: D3, N1, N2."
++            "description": "**HND-08 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/В.\n\nОтвет: id, rows, revision, status, history, results?.\n\nD3: results[] — итог переноса HND-11 (rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds), до переноса пустой список. rows[].childCode после переноса — код на момент переноса.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: D3, N1, N2."
+           },
+           "event": [
+             {
+@@ -4968,7 +4968,7 @@
+                 "{{staff_request_id}}"
+               ]
+             },
+-            "description": "**HND-09 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/В.\n\nОтвет: id, revision, status.\n\nТолько автор и допустимое состояние; после transferred редактирование запрещено.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: D3, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_hnd_09. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**HND-09 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/В.\n\nОтвет: id, revision, status.\n\nТолько автор и допустимое состояние; после transferred редактирование запрещено (409 REQUEST_TRANSFERRED).\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: D3, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_hnd_09. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"institutionId\": \"{{institution_id}}\",\n  \"shootId\": \"{{shoot_id}}\",\n  \"rows\": [\n    {\n      \"id\": \"row-1\",\n      \"groupId\": \"{{group_id}}\",\n      \"code\": \"A001\"\n    }\n  ],\n  \"comment\": \"Тестовый список\",\n  \"revision\": {{staff_request_revision}}\n}",
+@@ -5986,7 +5986,7 @@
+                 "{{order_id}}"
+               ]
+             },
+-            "description": "**COM-13 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: StaffOrder, period, version, correctionPhotos.\n\ncorrectionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5: correctionPhotos — готовые кадры детей из строк заказа в его группе [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: E6, D3, G1, I1, I3, L1, L2, K2, M1, N1, N2."
++            "description": "**COM-13 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: StaffOrder, period, version, correctionPhotos.\n\ncorrectionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5/D3: correctionPhotos — готовые кадры детей из строк заказа в их текущей группе, после переноса D3 — с новыми кодами [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; снимок строк заказа перенос не меняет; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: E6, D3, G1, I1, I3, L1, L2, K2, M1, N1, N2."
+           },
+           "event": [
+             {
+@@ -6057,7 +6057,7 @@
+                     "{{order_id}}"
+                   ]
+                 },
+-                "description": "**COM-13 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: StaffOrder, period, version, correctionPhotos.\n\ncorrectionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5: correctionPhotos — готовые кадры детей из строк заказа в его группе [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: E6, D3, G1, I1, I3, L1, L2, K2, M1, N1, N2."
++                "description": "**COM-13 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: StaffOrder, period, version, correctionPhotos.\n\ncorrectionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5/D3: correctionPhotos — готовые кадры детей из строк заказа в их текущей группе, после переноса D3 — с новыми кодами [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; снимок строк заказа перенос не меняет; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: E6, D3, G1, I1, I3, L1, L2, K2, M1, N1, N2."
+               },
+               "status": "OK",
+               "code": 200,
+@@ -6124,7 +6124,7 @@
+                 "child-transfers"
+               ]
+             },
+-            "description": "**MED-07 — morefoto.media**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: photoIds, fromGroupId, toGroupId, childCode, revision.\n\nОдна съёмка, одинаковый тип групп, свободный целевой код, полный актуальный набор. Исходные ID/originalGroupId сохраняются. Льготный перенос — HND-11.\n\nИсточник: frontend/src/modules/morefoto/photos/service.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_med_07. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**MED-07 — morefoto.media**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: photoIds, fromGroupId, toGroupId, childCode, revision.\n\nОдна съёмка, одинаковый тип групп, свободный целевой код, полный актуальный набор. Исходные ID/originalGroupId сохраняются. Льготный перенос — HND-11. D3: только организатор, Idempotency-Key 32 hex. Обе группы в подготовке (sentAt пуст) и у ребёнка нет заказов, иначе 409 GROUP_LOCKED/CHILD_HAS_ORDERS; разный тип — 409 GROUP_KIND_MISMATCH. childCode/targetCode — 1–3 латинские буквы, одна и та же группа или неверные поля — 422 VALIDATION_FAILED, неверный expectedPhotoIds — 422 INVALID_PHOTO_IDS. expectedPhotoIds совпадает со всем текущим набором ребёнка (409 SET_CHANGED), targetCode свободен (409 TARGET_CODE_TAKEN), revision — ревизия медиа съёмки (409 REVISION_CONFLICT). Кадр, назначенный и другому ребёнку исходной группы, блокирует перенос: 409 SHARED_PHOTO с error.details.photoCodes. ID кадров, ребёнка и assignmentId, originalGroupId и номера кадров сохраняются; меняются группа и буквенная часть кода. Перенесённая обложка исходной группы заменяется первым оставшимся назначенным кадром, группе без обложки назначается первый перенесённый. Ответ: childCode — код в целевой группе, revision — новая ревизия медиа. Повтор тем же ключом и телом — тот же ответ, другое тело — 409 IDEMPOTENCY_CONFLICT.\n\nИсточник: frontend/src/modules/morefoto/photos/service.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_med_07. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"fromGroupId\": \"{{group_id}}\",\n  \"toGroupId\": \"{{target_group_id}}\",\n  \"childCode\": \"A\",\n  \"targetCode\": \"B\",\n  \"expectedPhotoIds\": [\n    \"{{photo_id}}\"\n  ],\n  \"revision\": {{photos_revision}}\n}",
+@@ -6180,7 +6180,70 @@
+               }
+             }
+           ],
+-          "response": []
++          "response": [
++            {
++              "name": "Пример контракта (не ответ сервера)",
++              "originalRequest": {
++                "method": "POST",
++                "auth": {
++                  "type": "bearer",
++                  "bearer": [
++                    {
++                      "key": "token",
++                      "value": "{{staff_token}}",
++                      "type": "string"
++                    }
++                  ]
++                },
++                "header": [
++                  {
++                    "key": "Accept",
++                    "value": "application/json"
++                  },
++                  {
++                    "key": "Idempotency-Key",
++                    "value": "{{idem_med_07}}"
++                  },
++                  {
++                    "key": "Content-Type",
++                    "value": "application/json"
++                  }
++                ],
++                "url": {
++                  "raw": "{{base_url}}/{{api_prefix}}/shoots/{{shoot_id}}/child-transfers",
++                  "host": [
++                    "{{base_url}}"
++                  ],
++                  "path": [
++                    "{{api_prefix}}",
++                    "shoots",
++                    "{{shoot_id}}",
++                    "child-transfers"
++                  ]
++                },
++                "description": "**MED-07 — morefoto.media**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: photoIds, fromGroupId, toGroupId, childCode, revision.\n\nОдна съёмка, одинаковый тип групп, свободный целевой код, полный актуальный набор. Исходные ID/originalGroupId сохраняются. Льготный перенос — HND-11. D3: только организатор, Idempotency-Key 32 hex. Обе группы в подготовке (sentAt пуст) и у ребёнка нет заказов, иначе 409 GROUP_LOCKED/CHILD_HAS_ORDERS; разный тип — 409 GROUP_KIND_MISMATCH. childCode/targetCode — 1–3 латинские буквы, одна и та же группа или неверные поля — 422 VALIDATION_FAILED, неверный expectedPhotoIds — 422 INVALID_PHOTO_IDS. expectedPhotoIds совпадает со всем текущим набором ребёнка (409 SET_CHANGED), targetCode свободен (409 TARGET_CODE_TAKEN), revision — ревизия медиа съёмки (409 REVISION_CONFLICT). Кадр, назначенный и другому ребёнку исходной группы, блокирует перенос: 409 SHARED_PHOTO с error.details.photoCodes. ID кадров, ребёнка и assignmentId, originalGroupId и номера кадров сохраняются; меняются группа и буквенная часть кода. Перенесённая обложка исходной группы заменяется первым оставшимся назначенным кадром, группе без обложки назначается первый перенесённый. Ответ: childCode — код в целевой группе, revision — новая ревизия медиа. Повтор тем же ключом и телом — тот же ответ, другое тело — 409 IDEMPOTENCY_CONFLICT.\n\nИсточник: frontend/src/modules/morefoto/photos/service.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_med_07. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++                "body": {
++                  "mode": "raw",
++                  "raw": "{\n  \"fromGroupId\": \"{{group_id}}\",\n  \"toGroupId\": \"{{target_group_id}}\",\n  \"childCode\": \"A\",\n  \"targetCode\": \"B\",\n  \"expectedPhotoIds\": [\n    \"{{photo_id}}\"\n  ],\n  \"revision\": {{photos_revision}}\n}",
++                  "options": {
++                    "raw": {
++                      "language": "json"
++                    }
++                  }
++                }
++              },
++              "status": "OK",
++              "code": 200,
++              "_postman_previewlanguage": "json",
++              "header": [
++                {
++                  "key": "Content-Type",
++                  "value": "application/json"
++                }
++              ],
++              "body": "{\n  \"data\": {\n    \"photoIds\": [\n      \"photo-example\"\n    ],\n    \"fromGroupId\": \"group-example\",\n    \"toGroupId\": \"target-group-example\",\n    \"childCode\": \"B\",\n    \"revision\": 2\n  }\n}"
++            }
++          ]
+         },
+         {
+           "id": "d6bef414-b7af-5b27-bcb8-c3b9a38c90b0",
+@@ -6215,7 +6278,7 @@
+                 "transfer-preview"
+               ]
+             },
+-            "description": "**HND-10 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: targetGroupId, bundles, signature, hasOrders, revision.\n\nСервер находит все фотографии по кодам строк, проверяет актуальность исходной группы и свободные целевые коды.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2."
++            "description": "**HND-10 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: targetGroupId, targetGroupName, bundles, signature, hasOrders, revision.\n\nСервер находит все фотографии по кодам строк, проверяет актуальность исходной группы и свободные целевые коды. D3: организатор и куратор своей области; руководитель и воспитатель — 403 FORBIDDEN, чужая или отсутствующая заявка — 404 STAFF_REQUEST_NOT_FOUND. Только submitted: transferred — 409 REQUEST_TRANSFERRED, clarification — 409 REQUEST_NOT_SUBMITTED. Цель — единственная staff-группа съёмки (нет — 409 STAFF_GROUP_REQUIRED, несколько — 409 STAFF_GROUP_AMBIGUOUS), закрытая — 409 TARGET_GROUP_CLOSED. Каждая строка берёт весь текущий набор ребёнка; ребёнок вне исходной группы, пустой набор или потерянный кадр поданного списка — 409 SET_CHANGED; кадр, общий с ребёнком вне заявки, — 409 SHARED_PHOTO с error.details.photoCodes. targetCode — следующие свободные коды staff-группы (A…Z, AA…) в порядке строк. bundles[]: rowId, groupId, childCode, targetCode, hasOrders, photos[{id, code, revision}]. hasOrders — есть заказы детей заявки в любом статусе; заказы переносом не меняются. signature — SHA-256 проверяемого состояния, revision — версия заявки. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2."
+           },
+           "event": [
+             {
+@@ -6253,7 +6316,53 @@
+               }
+             }
+           ],
+-          "response": []
++          "response": [
++            {
++              "name": "Пример контракта (не ответ сервера)",
++              "originalRequest": {
++                "method": "GET",
++                "auth": {
++                  "type": "bearer",
++                  "bearer": [
++                    {
++                      "key": "token",
++                      "value": "{{staff_token}}",
++                      "type": "string"
++                    }
++                  ]
++                },
++                "header": [
++                  {
++                    "key": "Accept",
++                    "value": "application/json"
++                  }
++                ],
++                "url": {
++                  "raw": "{{base_url}}/{{api_prefix}}/staff-requests/{{staff_request_id}}/transfer-preview",
++                  "host": [
++                    "{{base_url}}"
++                  ],
++                  "path": [
++                    "{{api_prefix}}",
++                    "staff-requests",
++                    "{{staff_request_id}}",
++                    "transfer-preview"
++                  ]
++                },
++                "description": "**HND-10 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: targetGroupId, targetGroupName, bundles, signature, hasOrders, revision.\n\nСервер находит все фотографии по кодам строк, проверяет актуальность исходной группы и свободные целевые коды. D3: организатор и куратор своей области; руководитель и воспитатель — 403 FORBIDDEN, чужая или отсутствующая заявка — 404 STAFF_REQUEST_NOT_FOUND. Только submitted: transferred — 409 REQUEST_TRANSFERRED, clarification — 409 REQUEST_NOT_SUBMITTED. Цель — единственная staff-группа съёмки (нет — 409 STAFF_GROUP_REQUIRED, несколько — 409 STAFF_GROUP_AMBIGUOUS), закрытая — 409 TARGET_GROUP_CLOSED. Каждая строка берёт весь текущий набор ребёнка; ребёнок вне исходной группы, пустой набор или потерянный кадр поданного списка — 409 SET_CHANGED; кадр, общий с ребёнком вне заявки, — 409 SHARED_PHOTO с error.details.photoCodes. targetCode — следующие свободные коды staff-группы (A…Z, AA…) в порядке строк. bundles[]: rowId, groupId, childCode, targetCode, hasOrders, photos[{id, code, revision}]. hasOrders — есть заказы детей заявки в любом статусе; заказы переносом не меняются. signature — SHA-256 проверяемого состояния, revision — версия заявки. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2."
++              },
++              "status": "OK",
++              "code": 200,
++              "_postman_previewlanguage": "json",
++              "header": [
++                {
++                  "key": "Content-Type",
++                  "value": "application/json"
++                }
++              ],
++              "body": "{\n  \"data\": {\n    \"targetGroupId\": \"staff-group-example\",\n    \"targetGroupName\": \"Сотрудники\",\n    \"bundles\": [\n      {\n        \"rowId\": \"row-1\",\n        \"groupId\": \"group-example\",\n        \"childCode\": \"A\",\n        \"targetCode\": \"A\",\n        \"hasOrders\": false,\n        \"photos\": [\n          {\n            \"id\": \"photo-example\",\n            \"code\": \"A001\",\n            \"revision\": 1\n          }\n        ]\n      }\n    ],\n    \"signature\": \"0000000000000000000000000000000000000000000000000000000000000000\",\n    \"hasOrders\": false,\n    \"revision\": 1\n  }\n}"
++            }
++          ]
+         },
+         {
+           "id": "00a24e60-bcdc-52a6-bcc7-eef4828c95f7",
+@@ -6296,7 +6405,7 @@
+                 "transfers"
+               ]
+             },
+-            "description": "**HND-11 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: id, revision, status, results.\n\nАтомарный перенос полного набора в staff-группу одной съёмки, без дублей; сохраняет photoId/originalGroupId. Повтор не переносит заново.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_hnd_11. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**HND-11 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: id, revision, status, results.\n\nАтомарный перенос полного набора в staff-группу одной съёмки, без дублей; сохраняет photoId/originalGroupId. Повтор не переносит заново. D3: Idempotency-Key 32 hex. reason — комментарий до 500 символов после trim (может быть пустым), confirmed=true (422 CONFIRMATION_REQUIRED), revision и signature из HND-10 (409 REVISION_CONFLICT/SIGNATURE_CONFLICT); права и остальные отказы как в HND-10. Одна транзакция переносит все наборы: ID кадров, детей, assignmentId и originalGroupId сохраняются, заказы не меняются, подготовка ссылки затронутых групп сбрасывается (снова нужна HND-03). results[]: rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds. Повтор тем же ключом — тот же ответ; подтверждение уже перенесённой заявки с другим ключом — 200 с сохранёнными results без повторного переноса; тот же ключ с другим телом — 409 IDEMPOTENCY_CONFLICT.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_hnd_11. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"reason\": \"Проверка сценария на тестовом окружении\",\n  \"confirmed\": true,\n  \"revision\": {{staff_request_revision}},\n  \"signature\": \"{{staff_transfer_signature}}\"\n}",
+@@ -6352,7 +6461,70 @@
+               }
+             }
+           ],
+-          "response": []
++          "response": [
++            {
++              "name": "Пример контракта (не ответ сервера)",
++              "originalRequest": {
++                "method": "POST",
++                "auth": {
++                  "type": "bearer",
++                  "bearer": [
++                    {
++                      "key": "token",
++                      "value": "{{staff_token}}",
++                      "type": "string"
++                    }
++                  ]
++                },
++                "header": [
++                  {
++                    "key": "Accept",
++                    "value": "application/json"
++                  },
++                  {
++                    "key": "Idempotency-Key",
++                    "value": "{{idem_hnd_11}}"
++                  },
++                  {
++                    "key": "Content-Type",
++                    "value": "application/json"
++                  }
++                ],
++                "url": {
++                  "raw": "{{base_url}}/{{api_prefix}}/staff-requests/{{staff_request_id}}/transfers",
++                  "host": [
++                    "{{base_url}}"
++                  ],
++                  "path": [
++                    "{{api_prefix}}",
++                    "staff-requests",
++                    "{{staff_request_id}}",
++                    "transfers"
++                  ]
++                },
++                "description": "**HND-11 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: id, revision, status, results.\n\nАтомарный перенос полного набора в staff-группу одной съёмки, без дублей; сохраняет photoId/originalGroupId. Повтор не переносит заново. D3: Idempotency-Key 32 hex. reason — комментарий до 500 символов после trim (может быть пустым), confirmed=true (422 CONFIRMATION_REQUIRED), revision и signature из HND-10 (409 REVISION_CONFLICT/SIGNATURE_CONFLICT); права и остальные отказы как в HND-10. Одна транзакция переносит все наборы: ID кадров, детей, assignmentId и originalGroupId сохраняются, заказы не меняются, подготовка ссылки затронутых групп сбрасывается (снова нужна HND-03). results[]: rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds. Повтор тем же ключом — тот же ответ; подтверждение уже перенесённой заявки с другим ключом — 200 с сохранёнными results без повторного переноса; тот же ключ с другим телом — 409 IDEMPOTENCY_CONFLICT.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_hnd_11. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++                "body": {
++                  "mode": "raw",
++                  "raw": "{\n  \"reason\": \"Проверка сценария на тестовом окружении\",\n  \"confirmed\": true,\n  \"revision\": {{staff_request_revision}},\n  \"signature\": \"{{staff_transfer_signature}}\"\n}",
++                  "options": {
++                    "raw": {
++                      "language": "json"
++                    }
++                  }
++                }
++              },
++              "status": "OK",
++              "code": 200,
++              "_postman_previewlanguage": "json",
++              "header": [
++                {
++                  "key": "Content-Type",
++                  "value": "application/json"
++                }
++              ],
++              "body": "{\n  \"data\": {\n    \"id\": \"staff-request-example\",\n    \"revision\": 2,\n    \"status\": \"transferred\",\n    \"results\": [\n      {\n        \"rowId\": \"row-1\",\n        \"fromGroupId\": \"group-example\",\n        \"fromChildCode\": \"A\",\n        \"targetGroupId\": \"staff-group-example\",\n        \"targetChildCode\": \"A\",\n        \"photoIds\": [\n          \"photo-example\"\n        ]\n      }\n    ]\n  }\n}"
++            }
++          ]
+         }
+       ]
+     },
+@@ -6564,7 +6736,7 @@
+                 "link"
+               ]
+             },
+-            "description": "**HND-02 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: groupId, name, kind, institutionId, institutionName, shootId, shootName, galleryToken, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, referenceNow, photoCount, childCount, history.\n\nF2: galleryToken — действующий ключ галереи, выдаётся первой HND-03 (до неё null); сырой ключ хранится для повторного копирования по решению 22.09.2026, покупатель разрешается по SHA-256. revision — версия ссылки Handoff (отсутствующая запись — 1), не UF_REVISION группы. signature — SHA-256 серверного состояния: кадры с revision/статусом, назначения, обложка, действующие условия и товары, название/тип группы, воспитатель, незавершённые заявки сотрудников. problems — noPhotos, photosProcessing, unassignedPhotos, noProducts, staffRequestsPending (незавершённые заявки блокируют до D3). prepared — передача записана либо подпись подготовки совпадает с текущей без проблем. history[]: kind prepared/transmitted/corrected, actorId, actorName, at, sentAt, closesAt, deliveryAt, previousSentAt, previousClosesAt, previousDeliveryAt, reason. Вне области — 404 GROUP_NOT_FOUND. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F2. Проверки: D3, K2, N1, N2."
++            "description": "**HND-02 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: groupId, name, kind, institutionId, institutionName, shootId, shootName, galleryToken, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, referenceNow, photoCount, childCount, history.\n\nF2: galleryToken — действующий ключ галереи, выдаётся первой HND-03 (до неё null); сырой ключ хранится для повторного копирования по решению 22.09.2026, покупатель разрешается по SHA-256. revision — версия ссылки Handoff (отсутствующая запись — 1), не UF_REVISION группы. signature — SHA-256 серверного состояния: кадры с revision/статусом, назначения, обложка, действующие условия и товары, название/тип группы, воспитатель, незавершённые заявки сотрудников. problems — noPhotos, photosProcessing, unassignedPhotos, noProducts, staffRequestsPending (заявки submitted/clarification со строками группы блокируют подготовку до их переноса HND-11; перенос меняет signature обеих групп и сбрасывает подготовку). prepared — передача записана либо подпись подготовки совпадает с текущей без проблем. history[]: kind prepared/transmitted/corrected, actorId, actorName, at, sentAt, closesAt, deliveryAt, previousSentAt, previousClosesAt, previousDeliveryAt, reason. Вне области — 404 GROUP_NOT_FOUND. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F2. Проверки: D3, K2, N1, N2."
+           },
+           "event": [
+             {
+--- a/docs/05-rest-api/postman/MoreFoto.postman_collection.json
++++ b/docs/05-rest-api/postman/MoreFoto.postman_collection.json
+@@ -3485,7 +3485,7 @@
+                 "child-transfers"
+               ]
+             },
+-            "description": "**MED-07 — morefoto.media**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: photoIds, fromGroupId, toGroupId, childCode, revision.\n\nОдна съёмка, одинаковый тип групп, свободный целевой код, полный актуальный набор. Исходные ID/originalGroupId сохраняются. Льготный перенос — HND-11.\n\nИсточник: frontend/src/modules/morefoto/photos/service.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_med_07. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**MED-07 — morefoto.media**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: photoIds, fromGroupId, toGroupId, childCode, revision.\n\nОдна съёмка, одинаковый тип групп, свободный целевой код, полный актуальный набор. Исходные ID/originalGroupId сохраняются. Льготный перенос — HND-11. D3: только организатор, Idempotency-Key 32 hex. Обе группы в подготовке (sentAt пуст) и у ребёнка нет заказов, иначе 409 GROUP_LOCKED/CHILD_HAS_ORDERS; разный тип — 409 GROUP_KIND_MISMATCH. childCode/targetCode — 1–3 латинские буквы, одна и та же группа или неверные поля — 422 VALIDATION_FAILED, неверный expectedPhotoIds — 422 INVALID_PHOTO_IDS. expectedPhotoIds совпадает со всем текущим набором ребёнка (409 SET_CHANGED), targetCode свободен (409 TARGET_CODE_TAKEN), revision — ревизия медиа съёмки (409 REVISION_CONFLICT). Кадр, назначенный и другому ребёнку исходной группы, блокирует перенос: 409 SHARED_PHOTO с error.details.photoCodes. ID кадров, ребёнка и assignmentId, originalGroupId и номера кадров сохраняются; меняются группа и буквенная часть кода. Перенесённая обложка исходной группы заменяется первым оставшимся назначенным кадром, группе без обложки назначается первый перенесённый. Ответ: childCode — код в целевой группе, revision — новая ревизия медиа. Повтор тем же ключом и телом — тот же ответ, другое тело — 409 IDEMPOTENCY_CONFLICT.\n\nИсточник: frontend/src/modules/morefoto/photos/service.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_med_07. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"fromGroupId\": \"{{group_id}}\",\n  \"toGroupId\": \"{{target_group_id}}\",\n  \"childCode\": \"A\",\n  \"targetCode\": \"B\",\n  \"expectedPhotoIds\": [\n    \"{{photo_id}}\"\n  ],\n  \"revision\": {{photos_revision}}\n}",
+@@ -3541,7 +3541,70 @@
+               }
+             }
+           ],
+-          "response": []
++          "response": [
++            {
++              "name": "Пример контракта (не ответ сервера)",
++              "originalRequest": {
++                "method": "POST",
++                "auth": {
++                  "type": "bearer",
++                  "bearer": [
++                    {
++                      "key": "token",
++                      "value": "{{staff_token}}",
++                      "type": "string"
++                    }
++                  ]
++                },
++                "header": [
++                  {
++                    "key": "Accept",
++                    "value": "application/json"
++                  },
++                  {
++                    "key": "Idempotency-Key",
++                    "value": "{{idem_med_07}}"
++                  },
++                  {
++                    "key": "Content-Type",
++                    "value": "application/json"
++                  }
++                ],
++                "url": {
++                  "raw": "{{base_url}}/{{api_prefix}}/shoots/{{shoot_id}}/child-transfers",
++                  "host": [
++                    "{{base_url}}"
++                  ],
++                  "path": [
++                    "{{api_prefix}}",
++                    "shoots",
++                    "{{shoot_id}}",
++                    "child-transfers"
++                  ]
++                },
++                "description": "**MED-07 — morefoto.media**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: photoIds, fromGroupId, toGroupId, childCode, revision.\n\nОдна съёмка, одинаковый тип групп, свободный целевой код, полный актуальный набор. Исходные ID/originalGroupId сохраняются. Льготный перенос — HND-11. D3: только организатор, Idempotency-Key 32 hex. Обе группы в подготовке (sentAt пуст) и у ребёнка нет заказов, иначе 409 GROUP_LOCKED/CHILD_HAS_ORDERS; разный тип — 409 GROUP_KIND_MISMATCH. childCode/targetCode — 1–3 латинские буквы, одна и та же группа или неверные поля — 422 VALIDATION_FAILED, неверный expectedPhotoIds — 422 INVALID_PHOTO_IDS. expectedPhotoIds совпадает со всем текущим набором ребёнка (409 SET_CHANGED), targetCode свободен (409 TARGET_CODE_TAKEN), revision — ревизия медиа съёмки (409 REVISION_CONFLICT). Кадр, назначенный и другому ребёнку исходной группы, блокирует перенос: 409 SHARED_PHOTO с error.details.photoCodes. ID кадров, ребёнка и assignmentId, originalGroupId и номера кадров сохраняются; меняются группа и буквенная часть кода. Перенесённая обложка исходной группы заменяется первым оставшимся назначенным кадром, группе без обложки назначается первый перенесённый. Ответ: childCode — код в целевой группе, revision — новая ревизия медиа. Повтор тем же ключом и телом — тот же ответ, другое тело — 409 IDEMPOTENCY_CONFLICT.\n\nИсточник: frontend/src/modules/morefoto/photos/service.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_med_07. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++                "body": {
++                  "mode": "raw",
++                  "raw": "{\n  \"fromGroupId\": \"{{group_id}}\",\n  \"toGroupId\": \"{{target_group_id}}\",\n  \"childCode\": \"A\",\n  \"targetCode\": \"B\",\n  \"expectedPhotoIds\": [\n    \"{{photo_id}}\"\n  ],\n  \"revision\": {{photos_revision}}\n}",
++                  "options": {
++                    "raw": {
++                      "language": "json"
++                    }
++                  }
++                }
++              },
++              "status": "OK",
++              "code": 200,
++              "_postman_previewlanguage": "json",
++              "header": [
++                {
++                  "key": "Content-Type",
++                  "value": "application/json"
++                }
++              ],
++              "body": "{\n  \"data\": {\n    \"photoIds\": [\n      \"photo-example\"\n    ],\n    \"fromGroupId\": \"group-example\",\n    \"toGroupId\": \"target-group-example\",\n    \"childCode\": \"B\",\n    \"revision\": 2\n  }\n}"
++            }
++          ]
+         }
+       ]
+     },
+@@ -5132,7 +5195,7 @@
+                 "{{order_id}}"
+               ]
+             },
+-            "description": "**COM-13 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: StaffOrder, period, version, correctionPhotos.\n\ncorrectionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5: correctionPhotos — готовые кадры детей из строк заказа в его группе [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: E6, D3, G1, I1, I3, L1, L2, K2, M1, N1, N2."
++            "description": "**COM-13 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: StaffOrder, period, version, correctionPhotos.\n\ncorrectionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5/D3: correctionPhotos — готовые кадры детей из строк заказа в их текущей группе, после переноса D3 — с новыми кодами [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; снимок строк заказа перенос не меняет; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: E6, D3, G1, I1, I3, L1, L2, K2, M1, N1, N2."
+           },
+           "event": [
+             {
+@@ -5203,7 +5266,7 @@
+                     "{{order_id}}"
+                   ]
+                 },
+-                "description": "**COM-13 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: StaffOrder, period, version, correctionPhotos.\n\ncorrectionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5: correctionPhotos — готовые кадры детей из строк заказа в его группе [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: E6, D3, G1, I1, I3, L1, L2, K2, M1, N1, N2."
++                "description": "**COM-13 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: StaffOrder, period, version, correctionPhotos.\n\ncorrectionPhotos — разрешённые кадры того же ребёнка для формы исправления. Ключ доступа покупателя не возвращается. E5/D3: correctionPhotos — готовые кадры детей из строк заказа в их текущей группе, после переноса D3 — с новыми кодами [{childId, childCode, assignmentId, photoId, code, width, height}] без URL изображений; снимок строк заказа перенос не меняет; строки quote.lines[].id — постоянные order_line_id. period как в COM-11. Чужой или отсутствующий заказ — 404 ORDER_NOT_FOUND, head/teacher — 403 FORBIDDEN, изменение прав во время чтения — 409 ACCESS_CHANGED.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E5. Проверки: E6, D3, G1, I1, I3, L1, L2, K2, M1, N1, N2."
+               },
+               "status": "OK",
+               "code": 200,
+@@ -5428,7 +5491,7 @@
+                 "link"
+               ]
+             },
+-            "description": "**HND-02 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: groupId, name, kind, institutionId, institutionName, shootId, shootName, galleryToken, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, referenceNow, photoCount, childCount, history.\n\nF2: galleryToken — действующий ключ галереи, выдаётся первой HND-03 (до неё null); сырой ключ хранится для повторного копирования по решению 22.09.2026, покупатель разрешается по SHA-256. revision — версия ссылки Handoff (отсутствующая запись — 1), не UF_REVISION группы. signature — SHA-256 серверного состояния: кадры с revision/статусом, назначения, обложка, действующие условия и товары, название/тип группы, воспитатель, незавершённые заявки сотрудников. problems — noPhotos, photosProcessing, unassignedPhotos, noProducts, staffRequestsPending (незавершённые заявки блокируют до D3). prepared — передача записана либо подпись подготовки совпадает с текущей без проблем. history[]: kind prepared/transmitted/corrected, actorId, actorName, at, sentAt, closesAt, deliveryAt, previousSentAt, previousClosesAt, previousDeliveryAt, reason. Вне области — 404 GROUP_NOT_FOUND. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F2. Проверки: D3, K2, N1, N2."
++            "description": "**HND-02 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/Р/В.\n\nОтвет: groupId, name, kind, institutionId, institutionName, shootId, shootName, galleryToken, revision, signature, prepared, problems, state, timezone, sentAt, closesAt, deliveryAt, referenceNow, photoCount, childCount, history.\n\nF2: galleryToken — действующий ключ галереи, выдаётся первой HND-03 (до неё null); сырой ключ хранится для повторного копирования по решению 22.09.2026, покупатель разрешается по SHA-256. revision — версия ссылки Handoff (отсутствующая запись — 1), не UF_REVISION группы. signature — SHA-256 серверного состояния: кадры с revision/статусом, назначения, обложка, действующие условия и товары, название/тип группы, воспитатель, незавершённые заявки сотрудников. problems — noPhotos, photosProcessing, unassignedPhotos, noProducts, staffRequestsPending (заявки submitted/clarification со строками группы блокируют подготовку до их переноса HND-11; перенос меняет signature обеих групп и сбрасывает подготовку). prepared — передача записана либо подпись подготовки совпадает с текущей без проблем. history[]: kind prepared/transmitted/corrected, actorId, actorName, at, sentAt, closesAt, deliveryAt, previousSentAt, previousClosesAt, previousDeliveryAt, reason. Вне области — 404 GROUP_NOT_FOUND. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F2. Проверки: D3, K2, N1, N2."
+           },
+           "event": [
+             {
+@@ -6141,7 +6204,7 @@
+                 "{{staff_request_id}}"
+               ]
+             },
+-            "description": "**HND-08 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/В.\n\nОтвет: id, rows, revision, status, history, results?.\n\n\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: D3, N1, N2."
++            "description": "**HND-08 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К/В.\n\nОтвет: id, rows, revision, status, history, results?.\n\nD3: results[] — итог переноса HND-11 (rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds), до переноса пустой список. rows[].childCode после переноса — код на момент переноса.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: D3, N1, N2."
+           },
+           "event": [
+             {
+@@ -6216,7 +6279,7 @@
+                 "{{staff_request_id}}"
+               ]
+             },
+-            "description": "**HND-09 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/В.\n\nОтвет: id, revision, status.\n\nТолько автор и допустимое состояние; после transferred редактирование запрещено.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: D3, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_hnd_09. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**HND-09 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/В.\n\nОтвет: id, revision, status.\n\nТолько автор и допустимое состояние; после transferred редактирование запрещено (409 REQUEST_TRANSFERRED).\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: F1. Проверки: D3, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_hnd_09. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"institutionId\": \"{{institution_id}}\",\n  \"shootId\": \"{{shoot_id}}\",\n  \"rows\": [\n    {\n      \"id\": \"row-1\",\n      \"groupId\": \"{{group_id}}\",\n      \"code\": \"A001\"\n    }\n  ],\n  \"comment\": \"Тестовый список\",\n  \"revision\": {{staff_request_revision}}\n}",
+@@ -6307,7 +6370,7 @@
+                 "transfer-preview"
+               ]
+             },
+-            "description": "**HND-10 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: targetGroupId, bundles, signature, hasOrders, revision.\n\nСервер находит все фотографии по кодам строк, проверяет актуальность исходной группы и свободные целевые коды.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2."
++            "description": "**HND-10 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: targetGroupId, targetGroupName, bundles, signature, hasOrders, revision.\n\nСервер находит все фотографии по кодам строк, проверяет актуальность исходной группы и свободные целевые коды. D3: организатор и куратор своей области; руководитель и воспитатель — 403 FORBIDDEN, чужая или отсутствующая заявка — 404 STAFF_REQUEST_NOT_FOUND. Только submitted: transferred — 409 REQUEST_TRANSFERRED, clarification — 409 REQUEST_NOT_SUBMITTED. Цель — единственная staff-группа съёмки (нет — 409 STAFF_GROUP_REQUIRED, несколько — 409 STAFF_GROUP_AMBIGUOUS), закрытая — 409 TARGET_GROUP_CLOSED. Каждая строка берёт весь текущий набор ребёнка; ребёнок вне исходной группы, пустой набор или потерянный кадр поданного списка — 409 SET_CHANGED; кадр, общий с ребёнком вне заявки, — 409 SHARED_PHOTO с error.details.photoCodes. targetCode — следующие свободные коды staff-группы (A…Z, AA…) в порядке строк. bundles[]: rowId, groupId, childCode, targetCode, hasOrders, photos[{id, code, revision}]. hasOrders — есть заказы детей заявки в любом статусе; заказы переносом не меняются. signature — SHA-256 проверяемого состояния, revision — версия заявки. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2."
+           },
+           "event": [
+             {
+@@ -6345,7 +6408,53 @@
+               }
+             }
+           ],
+-          "response": []
++          "response": [
++            {
++              "name": "Пример контракта (не ответ сервера)",
++              "originalRequest": {
++                "method": "GET",
++                "auth": {
++                  "type": "bearer",
++                  "bearer": [
++                    {
++                      "key": "token",
++                      "value": "{{staff_token}}",
++                      "type": "string"
++                    }
++                  ]
++                },
++                "header": [
++                  {
++                    "key": "Accept",
++                    "value": "application/json"
++                  }
++                ],
++                "url": {
++                  "raw": "{{base_url}}/{{api_prefix}}/staff-requests/{{staff_request_id}}/transfer-preview",
++                  "host": [
++                    "{{base_url}}"
++                  ],
++                  "path": [
++                    "{{api_prefix}}",
++                    "staff-requests",
++                    "{{staff_request_id}}",
++                    "transfer-preview"
++                  ]
++                },
++                "description": "**HND-10 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: targetGroupId, targetGroupName, bundles, signature, hasOrders, revision.\n\nСервер находит все фотографии по кодам строк, проверяет актуальность исходной группы и свободные целевые коды. D3: организатор и куратор своей области; руководитель и воспитатель — 403 FORBIDDEN, чужая или отсутствующая заявка — 404 STAFF_REQUEST_NOT_FOUND. Только submitted: transferred — 409 REQUEST_TRANSFERRED, clarification — 409 REQUEST_NOT_SUBMITTED. Цель — единственная staff-группа съёмки (нет — 409 STAFF_GROUP_REQUIRED, несколько — 409 STAFF_GROUP_AMBIGUOUS), закрытая — 409 TARGET_GROUP_CLOSED. Каждая строка берёт весь текущий набор ребёнка; ребёнок вне исходной группы, пустой набор или потерянный кадр поданного списка — 409 SET_CHANGED; кадр, общий с ребёнком вне заявки, — 409 SHARED_PHOTO с error.details.photoCodes. targetCode — следующие свободные коды staff-группы (A…Z, AA…) в порядке строк. bundles[]: rowId, groupId, childCode, targetCode, hasOrders, photos[{id, code, revision}]. hasOrders — есть заказы детей заявки в любом статусе; заказы переносом не меняются. signature — SHA-256 проверяемого состояния, revision — версия заявки. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2."
++              },
++              "status": "OK",
++              "code": 200,
++              "_postman_previewlanguage": "json",
++              "header": [
++                {
++                  "key": "Content-Type",
++                  "value": "application/json"
++                }
++              ],
++              "body": "{\n  \"data\": {\n    \"targetGroupId\": \"staff-group-example\",\n    \"targetGroupName\": \"Сотрудники\",\n    \"bundles\": [\n      {\n        \"rowId\": \"row-1\",\n        \"groupId\": \"group-example\",\n        \"childCode\": \"A\",\n        \"targetCode\": \"A\",\n        \"hasOrders\": false,\n        \"photos\": [\n          {\n            \"id\": \"photo-example\",\n            \"code\": \"A001\",\n            \"revision\": 1\n          }\n        ]\n      }\n    ],\n    \"signature\": \"0000000000000000000000000000000000000000000000000000000000000000\",\n    \"hasOrders\": false,\n    \"revision\": 1\n  }\n}"
++            }
++          ]
+         },
+         {
+           "id": "00a24e60-bcdc-52a6-bcc7-eef4828c95f7",
+@@ -6388,7 +6497,7 @@
+                 "transfers"
+               ]
+             },
+-            "description": "**HND-11 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: id, revision, status, results.\n\nАтомарный перенос полного набора в staff-группу одной съёмки, без дублей; сохраняет photoId/originalGroupId. Повтор не переносит заново.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_hnd_11. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**HND-11 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: id, revision, status, results.\n\nАтомарный перенос полного набора в staff-группу одной съёмки, без дублей; сохраняет photoId/originalGroupId. Повтор не переносит заново. D3: Idempotency-Key 32 hex. reason — комментарий до 500 символов после trim (может быть пустым), confirmed=true (422 CONFIRMATION_REQUIRED), revision и signature из HND-10 (409 REVISION_CONFLICT/SIGNATURE_CONFLICT); права и остальные отказы как в HND-10. Одна транзакция переносит все наборы: ID кадров, детей, assignmentId и originalGroupId сохраняются, заказы не меняются, подготовка ссылки затронутых групп сбрасывается (снова нужна HND-03). results[]: rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds. Повтор тем же ключом — тот же ответ; подтверждение уже перенесённой заявки с другим ключом — 200 с сохранёнными results без повторного переноса; тот же ключ с другим телом — 409 IDEMPOTENCY_CONFLICT.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_hnd_11. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"reason\": \"Проверка сценария на тестовом окружении\",\n  \"confirmed\": true,\n  \"revision\": {{staff_request_revision}},\n  \"signature\": \"{{staff_transfer_signature}}\"\n}",
+@@ -6444,7 +6553,70 @@
+               }
+             }
+           ],
+-          "response": []
++          "response": [
++            {
++              "name": "Пример контракта (не ответ сервера)",
++              "originalRequest": {
++                "method": "POST",
++                "auth": {
++                  "type": "bearer",
++                  "bearer": [
++                    {
++                      "key": "token",
++                      "value": "{{staff_token}}",
++                      "type": "string"
++                    }
++                  ]
++                },
++                "header": [
++                  {
++                    "key": "Accept",
++                    "value": "application/json"
++                  },
++                  {
++                    "key": "Idempotency-Key",
++                    "value": "{{idem_hnd_11}}"
++                  },
++                  {
++                    "key": "Content-Type",
++                    "value": "application/json"
++                  }
++                ],
++                "url": {
++                  "raw": "{{base_url}}/{{api_prefix}}/staff-requests/{{staff_request_id}}/transfers",
++                  "host": [
++                    "{{base_url}}"
++                  ],
++                  "path": [
++                    "{{api_prefix}}",
++                    "staff-requests",
++                    "{{staff_request_id}}",
++                    "transfers"
++                  ]
++                },
++                "description": "**HND-11 — morefoto.handoff**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: id, revision, status, results.\n\nАтомарный перенос полного набора в staff-группу одной съёмки, без дублей; сохраняет photoId/originalGroupId. Повтор не переносит заново. D3: Idempotency-Key 32 hex. reason — комментарий до 500 символов после trim (может быть пустым), confirmed=true (422 CONFIRMATION_REQUIRED), revision и signature из HND-10 (409 REVISION_CONFLICT/SIGNATURE_CONFLICT); права и остальные отказы как в HND-10. Одна транзакция переносит все наборы: ID кадров, детей, assignmentId и originalGroupId сохраняются, заказы не меняются, подготовка ссылки затронутых групп сбрасывается (снова нужна HND-03). results[]: rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds. Повтор тем же ключом — тот же ответ; подтверждение уже перенесённой заявки с другим ключом — 200 с сохранёнными results без повторного переноса; тот же ключ с другим телом — 409 IDEMPOTENCY_CONFLICT.\n\nИсточник: frontend/src/modules/morefoto/handoff/types.ts.\n\nОбласть: product. Основная волна: D3. Проверки: I3, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_hnd_11. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++                "body": {
++                  "mode": "raw",
++                  "raw": "{\n  \"reason\": \"Проверка сценария на тестовом окружении\",\n  \"confirmed\": true,\n  \"revision\": {{staff_request_revision}},\n  \"signature\": \"{{staff_transfer_signature}}\"\n}",
++                  "options": {
++                    "raw": {
++                      "language": "json"
++                    }
++                  }
++                }
++              },
++              "status": "OK",
++              "code": 200,
++              "_postman_previewlanguage": "json",
++              "header": [
++                {
++                  "key": "Content-Type",
++                  "value": "application/json"
++                }
++              ],
++              "body": "{\n  \"data\": {\n    \"id\": \"staff-request-example\",\n    \"revision\": 2,\n    \"status\": \"transferred\",\n    \"results\": [\n      {\n        \"rowId\": \"row-1\",\n        \"fromGroupId\": \"group-example\",\n        \"fromChildCode\": \"A\",\n        \"targetGroupId\": \"staff-group-example\",\n        \"targetChildCode\": \"A\",\n        \"photoIds\": [\n          \"photo-example\"\n        ]\n      }\n    ]\n  }\n}"
++            }
++          ]
+         },
+         {
+           "id": "0f6ab6dc-66c2-559f-aa81-275db0922c4b",
+--- a/docs/05-rest-api/verification.json
++++ b/docs/05-rest-api/verification.json
+@@ -28,18 +28,18 @@
+   ],
+   "liveApiRequestsExecuted": false,
+   "sha256": {
+-    "build.py": "4885d16d85f00599504b406fe4e7f168786920ea7636202162a7938de879bc9d",
++    "build.py": "f67837843f75b24bd3d7b435207749a4b4d8e4ebca953090486e056c9c6c07bc",
+     "validate.py": "3fc1c1fdcd9f7fe16b33e9d61ff611c707eea67878f94fc8fc82136acf7d77ed",
+     "validate-postman.cjs": "1a55325f9338e83a13831b89e00bb29f54f9ce340728fd9b53e318d0e14cf510",
+     "../04-bitrix-modules/README.md": "02a4f3b66767f7f68a7eb28d2021967f34b4d35780c3dee986eb06d848602ba5",
+-    "../04-bitrix-modules/backend-waves.json": "8bf274d8a3c220eb96d144d01f80583757b9f6cd5ee93bd57bcda81ac7d71464",
+-    "../04-bitrix-modules/backend-waves.md": "3158837e14644faf1fa7595e91e16fde1ff690a9d5b8b4b5683ceb98d5af15ed",
++    "../04-bitrix-modules/backend-waves.json": "73e3dae4b2dde5037b9bf3c2422fa17e2c7fb89910d7bc9536ef6032e07d6a92",
++    "../04-bitrix-modules/backend-waves.md": "5232543a1b9d4932aed4fce5b939d28e18bf9e33e574fe3f909ea635d2dcff9a",
+     "../04-bitrix-modules/render-waves.py": "7aa7b9bc539de4aff3ade7b318792d08c570bb26b64bede0b142ecdbb74b9d36",
+     "../04-bitrix-modules/wave_graph.py": "222e990258bfddd8b9f649ab1779fb64c10cae4ea18c70ff802d80a1ed0187af",
+-    "README.md": "f87acf4fe03afb8b90ce45f463f4199405dd7e0e09bcf5be2bad63f5865253b4",
+-    "endpoints.json": "33142703c11000a1ace80263f8925706fed71d6eb0bb13b1156ab29496e0b6bd",
+-    "postman/MoreFoto.postman_collection.json": "cd4b13f7bef40c3529b2347485e8e80d5085b572c6a9347b3614395d1b03beec",
+-    "postman/MoreFoto.backend-waves.postman_collection.json": "ffd52bc60e245396990062f0bafe321fd9caa42c5673ca95fd90c012fdc9e7b7",
++    "README.md": "b0860587741f10f958e221f36446fb41b4f96f86b730136f8f788cdfc09c994e",
++    "endpoints.json": "9f8a6f11330ccbd8ecf5df145d8c241a7d703afc02b550d25aa04d4fe12eaee9",
++    "postman/MoreFoto.postman_collection.json": "6c966d82905a3e60f50bbdfdf46e3be3db55456d158ff577b4898daac7dd260f",
++    "postman/MoreFoto.backend-waves.postman_collection.json": "4260cdd74a40b4a1106275fc00259d831ef7b8cd74adc844b9d9b4132d3d546b",
+     "postman/MoreFoto.local.postman_environment.json": "d4bba2bd1430f2c6e10d7fc916faa677504c539f8fedac2b777e057bce2e74b3",
+     "postman/MoreFoto.stage.postman_environment.json": "3bc2686c533d440d968867d02740039fee2236b864e5e66699604312c4781813"
+   },
+--- a/docs/frontend/business-review/decisions.md
++++ b/docs/frontend/business-review/decisions.md
+@@ -58,3 +58,15 @@
+ Управляемая опция E6 включает расходы в единую цену фото/товарной продукции до заказа; пользователь выбрал округление цены единицы каталога вверх до 50 ₽. Базовые цены сохраняются, 3,8% — редактируемый ориентир до проверки договора и применимого НДС. Компенсация: base / (1 - rate), затем округление; существующие скидки/подарки E3 применяются после каталожной цены, без повторного округления. Способ оплаты не меняет цену, готовые заказы неизменяемы. E6 зависит только от слитых E3/E5.
+
+ Выбор провайдера и фискализации закрыт, весь D09 не закрыт: нужны параметры магазина/чеков и служебный API. D12 не изменена. G1 зависит от merge F2/E5; G2/I2 сохраняют свои зависимости. План: [PR #35](https://github.com/rebit-pro/rabit-api/pull/35), `paymentIntegration` в графе.
++
++## Дополнение 2026-09-22 — D11 и граница D12 для D3
++
++Пользователь подтвердил решения D3-DEC-01…08 («Подтверждаю все восемь решений, начинай»). D11 принят как рабочее правило переносов:
++
++- Льготный перенос HND-11 разрешён и при заказах ребёнка. Заказы не меняются, скидки задним числом нет; исправления и возвраты идут через I1/I3.
++- MED-07 разрешён только до передачи ссылки обеих групп и без заказов.
++- Кадр, общий с ребёнком, который остаётся в группе, блокирует перенос (409 `SHARED_PHOTO`).
++- Цель льготного переноса — единственная staff-группа съёмки, закрытая группа целью быть не может.
++- Сохраняются ID кадров, детей, связей и `originalGroupId`.
++
++D12 не закрыт. D3 не меняет оплату, возвраты, печать и файлы, поэтому D12 снят только с decisionGates D3 и остаётся у I3 и последующих волн (`decisionEvidence.D3-D12-SCOPE`). План и полные формулировки: `docs/plans/D3_child-transfers/plan.md` в rabit-api.

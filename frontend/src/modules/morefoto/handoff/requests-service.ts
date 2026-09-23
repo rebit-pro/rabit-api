@@ -21,13 +21,15 @@ export async function saveStaffRequest(token: string, command: StaffCommand): Pr
       }
       if (Object.keys(errors).length > 0) throw new HandoffValidationError(errors);
     }
+    if (command.action === 'confirm' && !command.confirmed)
+      throw new HandoffValidationError({ confirmed: 'Подтвердите полный набор и перенос.' });
     try {
       if (command.action === 'submit') await staffRequestsApi.save(command);
       else if (command.action === 'clarify') await staffRequestsApi.clarify(command);
-      else throw new Error('Перенос полного набора будет подключён в волне D3.');
+      else await staffRequestsApi.transfer(command);
       return;
     } catch (cause) {
-      throw new Error(staffRequestError(cause));
+      throw new Error(staffRequestError(cause, command.action));
     }
   }
   handoffAccess(token);
