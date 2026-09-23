@@ -101,7 +101,10 @@ test('B4: сброс пароля по ссылке завершает преж�
   await oldContext.close();
 
   await page.goto('/access/reset/' + resetToken);
+  const spent = page.waitForResponse((r) => r.url().endsWith('/confirm'));
   await setNewPassword(page, resetPassword + '-2', 'Сохранить пароль и войти');
+  // The contract status, not a masked 503: a spent link answers 410 LINK_USED.
+  expect((await spent).status()).toBe(410);
   await expect(page.getByTestId('access-link-problem')).toContainText('Ссылка уже использована');
 });
 
