@@ -42,6 +42,11 @@ export interface ServerPhotoGroupSummary {
   unassigned: number;
   children: string[];
 }
+/** Processing split of the selected group without the page filters (U5). */
+export interface ServerPhotoStats {
+  byStatus: { processing: number; ready: number; failed: number; duplicate: number };
+  unassigned: number;
+}
 export interface ServerPhotoPage {
   items: ServerPhoto[];
   groups: ServerMediaGroup[];
@@ -49,6 +54,7 @@ export interface ServerPhotoPage {
   revision: number;
   meta: { page: number; pageSize: number; total: number };
   summary: ServerPhotoGroupSummary | null;
+  stats?: ServerPhotoStats;
 }
 export interface PhotoListQuery {
   groupId?: string;

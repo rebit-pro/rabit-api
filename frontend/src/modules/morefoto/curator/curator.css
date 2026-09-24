@@ -36,21 +36,21 @@
 }
 .work-total {
   font-size:30px;
-  color:#24658a
+  color:var(--mf-color-link)
 }
 .work-case-link {
   display:flex;
   justify-content:space-between;
   gap:20px;
-  border-top:1px solid #dce3e8;
+  border-top:1px solid var(--mf-color-border);
   margin-top:20px;
   padding-top:20px;
   align-items:center
 }
 .work-notice {
-  border-left:3px solid #278579;
+  border-left:3px solid var(--mf-color-primary);
   padding:16px;
-  background:#eef8f5;
+  background:var(--mf-color-primary-soft);
   margin-bottom:20px
 }
 .case-original {
@@ -58,7 +58,7 @@
   line-height:1.6;
   margin:24px 0;
   padding:20px;
-  background:#f5f8fa;
+  background:var(--mf-color-bg);
   border-radius:8px
 }
 .work-periods {

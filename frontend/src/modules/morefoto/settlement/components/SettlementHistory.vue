@@ -114,7 +114,7 @@ const refundLabels = { pending: 'Обрабатывается', confirmed: 'По
   min-width: 0;
 }
 .sale-event {
-  border-top: 1px solid #dce3e8;
+  border-top: 1px solid var(--mf-color-border);
   padding: 22px 0;
   overflow-wrap: anywhere;
 }
@@ -143,18 +143,18 @@ const refundLabels = { pending: 'Обрабатывается', confirmed: 'По
 }
 .sale-comparison div {
   padding: 16px;
-  background: #f3f7fa;
+  background: var(--mf-color-bg);
   border-radius: 4px;
 }
 .sale-warning {
   padding: 16px;
-  background: #fff6e7;
+  background: var(--mf-tone-warning-bg);
   line-height: 1.6;
   margin-bottom: 16px;
 }
 .sale-current {
   padding: 20px;
-  background: #f3f7fa;
+  background: var(--mf-color-bg);
   margin-bottom: 20px;
   border-radius: 4px;
 }

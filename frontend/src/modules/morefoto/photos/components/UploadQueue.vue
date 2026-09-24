@@ -74,7 +74,7 @@ const labels: Record<QueueStatus, string> = {
   gap: 16px;
   align-items: center;
   padding: 16px 0;
-  border-top: 1px solid #dce4ea;
+  border-top: 1px solid var(--mf-color-border);
   overflow-wrap: anywhere;
 }
 .upload-result {

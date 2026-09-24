@@ -5,7 +5,7 @@ export function useStaffManagement() {
   const snapshot = shallowRef<StaffPage | null>(null);
   const loading = shallowRef(false);
   const error = shallowRef('');
-  const filters = reactive<StaffFilters>({ q: '', role: null, active: null });
+  const filters = reactive<StaffFilters>({ q: '', role: null, accountStatus: null });
   let generation = 0;
   let alive = true;
   async function reload(page = snapshot.value?.meta.page ?? 1): Promise<boolean> {

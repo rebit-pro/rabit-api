@@ -52,7 +52,7 @@ const buyer = computed(() => currentBuyer(props.order));
   gap: 14px;
 }
 .order-contacts__row dt {
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 .order-contacts__row dd {
   margin: 0;

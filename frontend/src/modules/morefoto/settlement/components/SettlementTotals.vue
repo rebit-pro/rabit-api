@@ -40,7 +40,7 @@ defineProps<{ totals: FinancialTotals; compact?: boolean; single?: boolean }>();
   min-width: 0;
 }
 .sale-totals span {
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   font-size: 14px;
 }
 .sale-totals strong {

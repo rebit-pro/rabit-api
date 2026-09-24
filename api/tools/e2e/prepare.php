@@ -26,7 +26,7 @@ if (!ModuleManager::isModuleInstalled('rebit.notification')) {
 }
 ob_start();
 try {
-    foreach (['20260323120001', '20260326120008', '20260911120001', '20260911200001', '20260911210001', '20260911220001', '20260912210001', '20260912220001', '20260913010001', '20260913010002', '20260919090001', '20260919100001', '20260919130001', '20260920100001', '20260920110001', '20260920120001', '20260921130001', '20260921140001', '20260922120001', '20260922150001', '20260922180001'] as $id) {
+    foreach (['20260323120001', '20260326120008', '20260911120001', '20260911200001', '20260911210001', '20260911220001', '20260912210001', '20260912220001', '20260913010001', '20260913010002', '20260919090001', '20260919100001', '20260919130001', '20260920100001', '20260920110001', '20260920120001', '20260921130001', '20260921140001', '20260922120001', '20260922150001', '20260922180001', '20260923120001', '20260923120002', '20260923120003'] as $id) {
         require_once '/app/public/local/php_interface/migrations.foundation/Version' . $id . '.php';
         $class = 'Sprint\Migration\Version' . $id;
         (new $class())->up();
@@ -66,6 +66,31 @@ foreach (['organizer', 'another-organizer', 'teacher', 'unassigned', 'curator', 
         };
         $statement = $sql->prepare('INSERT INTO b_hlbd_mf_staff_profile (UF_USER_ID, UF_ROLE, UF_ACTIVE, UF_REVISION, UF_ACCESS_REVISION, UF_CREATED_AT, UF_UPDATED_AT) VALUES (?, ?, 1, 1, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP())');
         $statement->bind_param('is', $id, $role);
+        $statement->execute();
+    }
+}
+// B4: invitation and password reset links with test-only tokens; only their SHA-256 is stored, as in production.
+foreach ([
+    ['b4-invited', 'N', 1, 'invite', 'b4InviteFixtureToken' . str_repeat('A', 23)],
+    ['b4-pending', 'N', 1, null, null],
+    ['b4-reset', 'Y', 0, 'reset', 'b4ResetFixtureToken' . str_repeat('B', 24)],
+] as [$name, $active, $pending, $purpose, $token]) {
+    $writer = new CUser();
+    $id = $writer->Add([
+        'LOGIN' => $name . '@example.invalid', 'EMAIL' => $name . '@example.invalid',
+        'NAME' => $name, 'PASSWORD' => 'A8-test-only-password!42',
+        'CONFIRM_PASSWORD' => 'A8-test-only-password!42', 'ACTIVE' => $active,
+        'UF_AUTH_REGISTRATION_PENDING' => $pending,
+    ]);
+    if (false === $id || 0 >= (int)$id) {
+        throw new RuntimeException('Cannot seed B4 fixture identity.');
+    }
+    $statement = $sql->prepare("INSERT INTO b_hlbd_mf_staff_profile (UF_USER_ID, UF_ROLE, UF_ACTIVE, UF_REVISION, UF_ACCESS_REVISION, UF_CREATED_AT, UF_UPDATED_AT) VALUES (?, 'teacher', 1, 1, 1, UTC_TIMESTAMP(), UTC_TIMESTAMP())");
+    $statement->bind_param('i', $id);
+    $statement->execute();
+    if (null !== $token) {
+        $statement = $sql->prepare('INSERT INTO rebit_auth_access_link (USER_ID, PURPOSE, TOKEN_HASH, ISSUED_AT, EXPIRES_AT, RESEND_AVAILABLE_AT) VALUES (?, ?, SHA2(?, 256), UTC_TIMESTAMP(), UTC_TIMESTAMP() + INTERVAL 1 DAY, UTC_TIMESTAMP())');
+        $statement->bind_param('iss', $id, $purpose, $token);
         $statement->execute();
     }
 }

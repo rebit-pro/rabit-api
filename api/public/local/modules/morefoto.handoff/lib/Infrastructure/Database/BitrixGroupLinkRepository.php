@@ -31,6 +31,17 @@ final readonly class BitrixGroupLinkRepository implements GroupLinkRepositoryInt
         return $states;
     }
 
+    public function preparedCount(array $groupIds): int
+    {
+        $ids = $this->ids($groupIds);
+        if ('' === $ids) {
+            return 0;
+        }
+        $row = $this->query('SELECT COUNT(*) AS PREPARED FROM mf_group_link WHERE PREPARED_SIGNATURE IS NOT NULL AND GROUP_ID IN (' . $ids . ')')->fetch();
+
+        return false === $row ? 0 : (int)$row['PREPARED'];
+    }
+
     public function lock(int $groupId): LinkState
     {
         $row = $this->query('SELECT REVISION,PREPARED_SIGNATURE FROM mf_group_link WHERE GROUP_ID=' . $this->id($groupId) . ' FOR UPDATE')->fetch();

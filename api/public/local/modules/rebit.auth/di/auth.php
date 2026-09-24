@@ -32,11 +32,16 @@ use Rebit\Auth\Infrastructure\Adapter\IdentityGateway;
 use Rebit\Share\Application\Contract\Auth\IdentityGatewayInterface;
 use Rebit\Auth\Infrastructure\Adapter\StaffIdentityGateway;
 use Rebit\Share\Application\Contract\Auth\StaffIdentityGatewayInterface;
+use Rebit\Auth\Application\Access\Contract\AccessLinkRepositoryInterface;
+use Rebit\Auth\Application\Access\UseCase\IssueAccessInvitationUseCase;
 
 return [
     StaffIdentityGatewayInterface::class => [
         'constructor' => static fn(): StaffIdentityGatewayInterface => new StaffIdentityGateway(
             ServiceLocator::getInstance()->get(UserRepository::class),
+            ServiceLocator::getInstance()->get(IssueAccessInvitationUseCase::class),
+            ServiceLocator::getInstance()->get(AccessLinkRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(ClockInterface::class),
         ),
     ],
     IdentityGatewayInterface::class => [

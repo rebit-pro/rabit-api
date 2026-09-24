@@ -13,6 +13,7 @@ use Morefoto\Organization\Domain\Institution\Exception\InstitutionVersionConflic
 use Morefoto\Organization\Domain\Institution\Orm\InstitutionTable;
 use Morefoto\Organization\Domain\Institution\ValueObject\InstitutionDetails;
 use Morefoto\Organization\Domain\Institution\ValueObject\InstitutionId;
+use Morefoto\Organization\Domain\Calendar\Repository\GroupStateSql;
 
 final readonly class InstitutionRepository
 {
@@ -57,7 +58,11 @@ final readonly class InstitutionRepository
      *                                       One statement keeps items and total in the same MySQL read snapshot, including an empty last page.
      *                                       A bounded literal prefix can use ix_mf_institution_name; no claim of indexed substring search.
      */
-    public function page(string $query, int $limit, int $offset, ?array $institutionIds = null): DatabaseResult
+    /**
+     * @param null|list<int> $institutionIds visible institutions; null means all
+     * @param null|string    $countsAtUtc    when set, every row also counts its shoots, groups and groups open at this UTC moment
+     */
+    public function page(string $query, int $limit, int $offset, ?array $institutionIds = null, ?string $countsAtUtc = null): DatabaseResult
     {
         if (1 > $limit || 100 < $limit || 0 > $offset || 100 < mb_strlen($query)) {
             throw new \InvalidArgumentException('Invalid page bounds.');
@@ -76,12 +81,19 @@ final readonly class InstitutionRepository
                 $condition .= ' AND ID IN (' . ([] === $institutionIds ? '0' : implode(',', $institutionIds)) . ')';
             }
 
+            $counts = null === $countsAtUtc ? 'NULL AS SHOOT_COUNT, NULL AS GROUP_COUNT, NULL AS OPEN_GROUP_COUNT' : sprintf(
+                '(SELECT COUNT(*) FROM b_hlbd_mf_shoot cs WHERE cs.UF_INSTITUTION_ID=i.ID) AS SHOOT_COUNT, '
+                . '(SELECT COUNT(*) FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot gs ON gs.ID=g.UF_SHOOT_ID WHERE gs.UF_INSTITUTION_ID=i.ID) AS GROUP_COUNT, '
+                . '(SELECT COUNT(*) FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot gs ON gs.ID=g.UF_SHOOT_ID WHERE gs.UF_INSTITUTION_ID=i.ID AND %s) AS OPEN_GROUP_COUNT',
+                GroupStateSql::condition('open', $countsAtUtc),
+            );
+
             return $connection->query(<<<SQL
-SELECT page.ID, page.UF_PUBLIC_ID, page.UF_NAME, page.UF_ADDRESS, page.UF_REVISION, totals.TOTAL
+SELECT page.ID, page.UF_PUBLIC_ID, page.UF_NAME, page.UF_ADDRESS, page.UF_REVISION, totals.TOTAL, page.SHOOT_COUNT, page.GROUP_COUNT, page.OPEN_GROUP_COUNT
 FROM (SELECT COUNT(*) AS TOTAL FROM b_hlbd_mf_institution WHERE {$condition}) AS totals
 LEFT JOIN (
-    SELECT ID, UF_PUBLIC_ID, UF_NAME, UF_ADDRESS, UF_REVISION, UF_CREATED_AT
-    FROM b_hlbd_mf_institution WHERE {$condition}
+    SELECT i.ID, i.UF_PUBLIC_ID, i.UF_NAME, i.UF_ADDRESS, i.UF_REVISION, i.UF_CREATED_AT, {$counts}
+    FROM b_hlbd_mf_institution i WHERE {$condition}
     ORDER BY UF_CREATED_AT DESC, ID DESC LIMIT {$limit} OFFSET {$offset}
 ) AS page ON 1=1
 ORDER BY page.UF_CREATED_AT DESC, page.ID DESC

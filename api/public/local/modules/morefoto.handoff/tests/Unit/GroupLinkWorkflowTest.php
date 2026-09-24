@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Morefoto\Handoff\Tests\Unit;
 
+use Rebit\Share\Contracts\Access\Dto\InstitutionAssignmentOutputDto;
+use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
+use Morefoto\Handoff\Application\Link\Dto\GroupLinkListInputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkCorrectionInputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkPreparationInputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkTransmissionInputDto;
@@ -12,6 +15,7 @@ use Morefoto\Handoff\Application\Link\Service\GroupLinkCommandSession;
 use Morefoto\Handoff\Application\Link\Service\GroupLinkReadiness;
 use Morefoto\Handoff\Application\Link\UseCase\CorrectGroupLinkDateUseCase;
 use Morefoto\Handoff\Application\Link\UseCase\GetGroupLinkUseCase;
+use Morefoto\Handoff\Application\Link\UseCase\ListGroupLinksUseCase;
 use Morefoto\Handoff\Application\Link\UseCase\PrepareGroupLinkUseCase;
 use Morefoto\Handoff\Application\Link\UseCase\TransmitGroupLinkUseCase;
 use Morefoto\Handoff\Application\Request\Contract\HandoffTransactionInterface;
@@ -41,6 +45,7 @@ use Rebit\Share\Contracts\Organization\Dto\GroupCalendarOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryItemOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryPageOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryQueryInputDto;
+use Rebit\Share\Contracts\Organization\Dto\GroupDirectorySummaryOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\LinkSentInputDto;
 use Rebit\Share\Contracts\Organization\GroupCalendarInterface;
 use Rebit\Share\Contracts\Organization\GroupDirectoryInterface;
@@ -71,6 +76,7 @@ final class GroupLinkWorkflowTest extends TestCase
     private PrepareGroupLinkUseCase $prepare;
     private TransmitGroupLinkUseCase $transmit;
     private CorrectGroupLinkDateUseCase $correct;
+    private ListGroupLinksUseCase $list;
 
     protected function setUp(): void
     {
@@ -98,6 +104,9 @@ final class GroupLinkWorkflowTest extends TestCase
         $this->read = new GetGroupLinkUseCase($access, $this->directory, $readiness, $this->links, $this->gallery, new LinkPermissionPolicy(), new LinkReadinessPolicy(), $mapper, $clock);
         $this->prepare = new PrepareGroupLinkUseCase($transaction, $session, $this->links, $this->gallery, $mapper);
         $this->transmit = new TransmitGroupLinkUseCase($transaction, $session, $this->links, $this->gallery, $this->calendar, new LinkReadinessPolicy(), new LinkDeliveryPolicy(), $mapper);
+        $institutions = $this->createStub(InstitutionAccessInterface::class);
+        $institutions->method('assignments')->willReturn([3 => new InstitutionAssignmentOutputDto(curatorId: self::CURATOR, headId: self::HEAD, curatorName: 'Мария Иванова')]);
+        $this->list = new ListGroupLinksUseCase($access, $this->directory, $readiness, $this->links, new LinkPermissionPolicy(), new LinkReadinessPolicy(), $mapper, $institutions);
         $this->correct = new CorrectGroupLinkDateUseCase($transaction, $session, $this->links, $this->gallery, $this->calendar, new LinkDeliveryPolicy(), $mapper);
     }
 
@@ -122,6 +131,31 @@ final class GroupLinkWorkflowTest extends TestCase
         self::assertCount(1, $this->calendar->delivered);
         self::assertSame([LinkEventKindEnum::PREPARED, LinkEventKindEnum::TRANSMITTED], array_map(static fn(LinkHistoryEntry $entry): LinkEventKindEnum => $entry->kind, $this->links->history));
         $this->assertCode('LINK_ALREADY_SENT', 409, fn(): object => $this->prepare->execute(self::ORGANIZER, self::GROUP, $this->key('d'), new LinkPreparationInputDto(3, $card->signature)));
+    }
+
+    public function testListCountsTheWholeScopeOfTheActor(): void
+    {
+        $before = $this->read->execute(self::ORGANIZER, self::GROUP);
+        $this->prepare->execute(self::ORGANIZER, self::GROUP, $this->key('a'), new LinkPreparationInputDto(1, $before->signature));
+        $seen = count($this->directory->queries);
+
+        $page = $this->list->execute(self::CURATOR, new GroupLinkListInputDto(null, null, 'open', 1, 25));
+
+        self::assertSame(
+            ['2026-09-22T08:00:00+00:00', 1, 0, 0, 0, 1],
+            [$page->summary->referenceNow, $page->summary->preparing, $page->summary->open, $page->summary->closed, $page->summary->closingSoon, $page->summary->prepared],
+        );
+        // Counters keep the curator's institutions and drop the state filter; prepared counts only preparing groups.
+        [$counters, $preparing] = array_slice($this->directory->queries, $seen);
+        self::assertSame([[3], null, null], [$counters->institutionIds, $counters->groupIds, $counters->state]);
+        self::assertSame([[3], null, 'preparing'], [$preparing->institutionIds, $preparing->groupIds, $preparing->state]);
+
+        $seen = count($this->directory->queries);
+        $teacherPage = $this->list->execute(self::TEACHER, new GroupLinkListInputDto(null, null, null, 1, 25));
+        $teacher = array_slice($this->directory->queries, $seen)[0];
+        self::assertSame([null, [10]], [$teacher->institutionIds, $teacher->groupIds]);
+        // INF-11: the teacher sees whom to ask — the curator of the group's institution.
+        self::assertSame(['Мария Иванова'], array_map(static fn($item): ?string => $item->curatorName, $teacherPage->items));
     }
 
     public function testSameKeyReplaysOnlyTheSameBody(): void
@@ -226,9 +260,26 @@ final class GroupLinkWorkflowTest extends TestCase
         return new class extends \stdClass implements GroupDirectoryInterface {
             public GroupCalendarOutputDto $calendar;
 
+            /** @var list<GroupDirectoryQueryInputDto> */
+            public array $queries = [];
+
             public function __construct()
             {
                 $this->calendar = new GroupCalendarOutputDto('Europe/Moscow', null, null, null, 'preparing');
+            }
+
+            public function summary(GroupDirectoryQueryInputDto $query, int $closingWithinHours): GroupDirectorySummaryOutputDto
+            {
+                $this->queries[] = $query;
+
+                return new GroupDirectorySummaryOutputDto(1, 0, 0, 0, '2026-09-22T08:00:00+00:00');
+            }
+
+            public function nativeIds(GroupDirectoryQueryInputDto $query): array
+            {
+                $this->queries[] = $query;
+
+                return [10];
             }
 
             public function page(GroupDirectoryQueryInputDto $query): GroupDirectoryPageOutputDto
@@ -352,6 +403,14 @@ final class GroupLinkWorkflowTest extends TestCase
             public function states(array $groupIds): array
             {
                 return array_intersect_key($this->states, array_flip($groupIds));
+            }
+
+            public function preparedCount(array $groupIds): int
+            {
+                return count(array_filter(
+                    array_intersect_key($this->states, array_flip($groupIds)),
+                    static fn(LinkState $state): bool => null !== $state->preparedSignature,
+                ));
             }
 
             public function lock(int $groupId): LinkState

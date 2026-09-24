@@ -23,7 +23,8 @@ final readonly class BitrixEmailTransport implements EmailTransportInterface
                 [
                     'EMAIL_TO' => $operation->recipient,
                     'SUBJECT' => htmlspecialchars($operation->subject, ENT_QUOTES, 'UTF-8'),
-                    'BODY' => nl2br(htmlspecialchars($operation->body, ENT_QUOTES, 'UTF-8')),
+                    // HTML is built by the sender from escaped data; plain text is escaped here.
+                    'BODY' => $operation->bodyHtml ?? nl2br(htmlspecialchars($operation->body, ENT_QUOTES, 'UTF-8')),
                 ],
             );
         } catch (\Throwable $error) {

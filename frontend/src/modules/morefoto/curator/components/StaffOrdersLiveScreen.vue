@@ -5,9 +5,16 @@ import { useAuthStore } from '@/stores/auth';
 import { money } from '../../commerce/money';
 import OrderComposition from '../../orders/components/OrderComposition.vue';
 import OrderLiveFacts from '../../orders/components/OrderLiveFacts.vue';
-import { formatMoment, paymentLabels, productionLabels } from '../../orders/formatters';
+import { formatMoment, livePaymentLabels as paymentLabels, productionLabels } from '../../orders/formatters';
 import { orderQuoteAsCart } from '../../orders/live/rules';
 import { useStaffOrders } from '../useStaffOrders';
+import MfStatus from '@/components/status/MfStatus.vue';
+import { toneOf } from '@/components/status/tones';
+import { paymentTone, productionTone } from '../../ui/statusTone';
+import MfStatTile from '@/components/viz/MfStatTile.vue';
+import MfDistribution from '@/components/viz/MfDistribution.vue';
+import { plural } from '@/components/viz/measures';
+import { CHART_CATEGORY } from '../../ui/chartPalette';
 const route = useRoute();
 const auth = useAuthStore();
 const { orderId, filters, page, card, loading, error, reload, apply, reset } = useStaffOrders();
@@ -24,7 +31,26 @@ const productionOptions = [
 const hasFilters = computed(() =>
   (['q', 'paymentStatus', 'productionStatus', 'dateFrom', 'dateTo'] as const).some((key) => filters[key] !== '')
 );
+// U5: the split ignores the production filter, so it keeps showing where the found orders are in production.
+const summary = computed(() => page.value?.meta.summary ?? null);
+const productionSegments = computed(() =>
+  Object.entries(productionLabels).map(([status, label]) => ({
+    key: status,
+    label,
+    value: summary.value?.byProductionStatus[status] ?? 0,
+    tone: toneOf(productionTone, status)
+  }))
+);
 const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => photo.code).join(', ') ?? '');
+// Period presets end today by Moscow time, the day the filter dates are counted in.
+function moscowDate(offsetDays: number): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(new Date(Date.now() - offsetDays * 86400000));
+}
+function lastDays(days: number): void {
+  filters.dateFrom = moscowDate(days - 1);
+  filters.dateTo = moscowDate(0);
+  apply();
+}
 </script>
 <template>
   <header class="staff-orders__heading">
@@ -47,8 +73,8 @@ const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => ph
         </div>
         <div class="staff-order__state">
           <strong>{{ money(card.quote.total) }}</strong>
-          <v-chip size="small">{{ paymentLabels[card.paymentStatus] }}</v-chip>
-          <v-chip size="small" variant="outlined">{{ productionLabels[card.productionStatus] }}</v-chip>
+          <MfStatus :tone="toneOf(paymentTone, card.paymentStatus)">{{ paymentLabels[card.paymentStatus] }}</MfStatus>
+          <MfStatus :tone="toneOf(productionTone, card.productionStatus)">{{ productionLabels[card.productionStatus] }}</MfStatus>
         </div>
       </header>
       <OrderComposition :quote="orderQuoteAsCart(card.quote, thumb)" />
@@ -62,6 +88,19 @@ const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => ph
     </article>
   </template>
   <template v-else>
+    <section v-if="summary" class="staff-orders__summary" aria-label="Заказы по изготовлению" data-testid="order-summary">
+      <MfStatTile
+        label="Заказов найдено"
+        :value="summary.total"
+        :unit="plural(summary.total, ['заказ', 'заказа', 'заказов'])"
+        :pastel="CHART_CATEGORY.orders"
+        icon="mdi-receipt-text-outline"
+        hint="Оплата появится после подключения платёжного провайдера"
+      />
+      <div class="mf-panel">
+        <MfDistribution title="Изготовление" :segments="productionSegments" :unit-forms="['заказа', 'заказов', 'заказов']" />
+      </div>
+    </section>
     <form class="mf-panel staff-orders__filters" role="search" @submit.prevent="apply()">
       <!-- Vuetify sets null on clear; keep the filter a string for apply() and the URL. -->
       <v-text-field
@@ -84,6 +123,10 @@ const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => ph
         <v-select v-model="filters.productionStatus" :items="productionOptions" label="Изготовление" density="compact" hide-details />
         <v-text-field v-model="filters.dateFrom" type="date" label="Создан с" aria-label="Создан с" density="compact" hide-details />
         <v-text-field v-model="filters.dateTo" type="date" label="Создан по" aria-label="Создан по" density="compact" hide-details />
+        <div class="mf-actions staff-orders__presets" aria-label="Быстрый период">
+          <v-btn variant="outlined" density="compact" @click="lastDays(7)">7 дней</v-btn>
+          <v-btn variant="outlined" density="compact" @click="lastDays(30)">30 дней</v-btn>
+        </div>
       </div>
     </form>
     <p v-if="loading && !page" role="status">Загружаем заказы…</p>
@@ -102,7 +145,7 @@ const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => ph
           <div class="staff-orders__side">
             <strong>{{ money(order.quote.total) }}</strong>
             <span class="mf-muted">{{ formatMoment(order.createdAt) }}</span>
-            <v-chip size="small">{{ paymentLabels[order.paymentStatus] }}</v-chip>
+            <MfStatus :tone="toneOf(paymentTone, order.paymentStatus)">{{ paymentLabels[order.paymentStatus] }}</MfStatus>
           </div>
         </li>
       </ul>
@@ -120,6 +163,12 @@ const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => ph
 .staff-orders__heading {
   margin-bottom: 24px;
 }
+.staff-orders__summary {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(0, 3fr);
+  gap: var(--mf-space-4);
+  margin-bottom: var(--mf-space-5);
+}
 .staff-orders__filters {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -134,12 +183,19 @@ const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => ph
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
+.staff-orders__presets {
+  grid-column: 1 / -1;
+  gap: var(--mf-space-2);
+}
 @media (min-width: 1280px) {
   .staff-orders__refine {
     grid-template-columns: repeat(2, minmax(0, 4fr)) repeat(2, minmax(0, 3fr));
   }
 }
 @media (max-width: 600px) {
+  .staff-orders__summary {
+    grid-template-columns: 1fr;
+  }
   .staff-orders__filters {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -152,7 +208,7 @@ const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => ph
 }
 .staff-orders__total {
   margin-bottom: 12px;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 .staff-orders__list {
   list-style: none;

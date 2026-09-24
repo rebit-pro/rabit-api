@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { catalogPath, createViaApi, fillProduct, login, password, productRow, saveProduct, token } from './helpers.js';
+import { catalogPath, createViaApi, fillProduct, login, logout, password, productRow, saveProduct, token } from './helpers.js';
 
 const pageErrors = new WeakMap<object, string[]>();
 test.beforeEach(async ({ page, request }) => {
@@ -31,7 +31,7 @@ test('неверный пароль отклонён сервером; роль 
   await expect(page.getByTestId('login-api-error')).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('morefoto:live:auth:token'))).toBeNull();
   await login(page);
-  await expect(page.getByText('Организатор', { exact: true })).toBeVisible();
+  await expect(page.getByRole('banner').getByText('Организатор', { exact: true })).toBeVisible();
   await expect(page.getByText('Ассортимент пуст. Добавьте первую продукцию.')).toBeVisible();
   const me = await page.request.get('/api/v1/me', {
     headers: { Authorization: 'Bearer ' + (await token(page)) }
@@ -54,7 +54,7 @@ test('неподключённая оплата недоступна в наст
   ).toBeVisible();
   expect(apiRequests).toEqual([]);
   await page.getByRole('link', { name: 'На главную', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Вход в MoreFoto', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Вход в кабинет', exact: true })).toBeVisible();
 });
 
 test('оформление и заказ по ссылке честно сообщают о недействительном ключе', async ({ page }) => {
@@ -171,6 +171,7 @@ test('изменённая роль в localStorage заменяется нас�
 
 test('учётная запись без профиля сотрудника получает понятный отказ', async ({ page }) => {
   await login(page, 'unassigned');
+  // Accounts without a staff role see the standalone access page with its own sign-out button.
   await page.getByRole('button', { name: 'Выйти', exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
 });
@@ -178,9 +179,9 @@ test('учётная запись без профиля сотрудника п�
 test('выход отзывает серверный токен', async ({ page }) => {
   await login(page);
   const bearer = await token(page);
-  const logout = page.waitForResponse((r) => r.url().endsWith('/auth/logout'));
-  await page.getByRole('button', { name: 'Выйти', exact: true }).click();
-  expect((await logout).status()).toBe(200);
+  const logoutResponse = page.waitForResponse((r) => r.url().endsWith('/auth/logout'));
+  await logout(page);
+  expect((await logoutResponse).status()).toBe(200);
   await expect(page).toHaveURL(/\/login$/);
   expect(
     (
@@ -190,7 +191,7 @@ test('выход отзывает серверный токен', async ({ page 
     ).status()
   ).toBe(401);
   await page.goto('/cabinet/catalog');
-  await expect(page.getByRole('heading', { name: 'Вход в MoreFoto' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Вход в кабинет' })).toBeVisible();
 });
 
 test('отзыв сессии возвращает ко входу и затем в каталог', async ({ page, browser, baseURL }) => {
@@ -199,7 +200,7 @@ test('отзыв сессии возвращает ко входу и затем
   try {
     await login(await other.newPage());
     await page.getByRole('button', { name: 'Обновить каталог', exact: true }).click();
-    await expect(page).toHaveURL(/\/login\?reason=session-expired$/);
+    await expect(page).toHaveURL(/\/login\?reason=revoked$/);
     await page.getByRole('textbox', { name: 'Email', exact: true }).fill('organizer@example.invalid');
     await page.getByLabel('Пароль', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Войти', exact: true }).click();
@@ -294,5 +295,5 @@ test('мобильный редактор доступен, текст това�
     fullPage: true
   });
   await page.getByRole('button', { name: 'Открыть меню' }).click();
-  await expect(page.getByRole('link', { name: 'Профиль', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: /^Профиль: / })).toBeVisible();
 });

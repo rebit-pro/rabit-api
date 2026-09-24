@@ -46,10 +46,24 @@ final readonly class StaffRequestResultMapper
         return new StaffRequestListResultDto(items: $items, scope: $output->scope);
     }
 
-    /** @return array{page: int, pageSize: int, total: int, totalPages: int} */
+    /**
+     * @return array{
+     *     page: int,
+     *     pageSize: int,
+     *     total: int,
+     *     totalPages: int,
+     *     summary: array{byStatus: array{submitted: int, clarification: int, transferred: int}},
+     * }
+     */
     public function meta(StaffRequestListOutputDto $output): array
     {
-        return ['page' => $output->page, 'pageSize' => $output->pageSize, 'total' => $output->total, 'totalPages' => $output->totalPages];
+        return [
+            'page' => $output->page,
+            'pageSize' => $output->pageSize,
+            'total' => $output->total,
+            'totalPages' => $output->totalPages,
+            'summary' => ['byStatus' => $output->byStatus],
+        ];
     }
 
     public function mutation(StaffRequestMutationOutputDto $output): StaffRequestMutationResultDto

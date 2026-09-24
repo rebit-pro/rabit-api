@@ -13,7 +13,14 @@ interface StaffRequestScope {
 export interface StaffRequestPage {
   items: StaffRequest[];
   scope: StaffRequestScope;
-  meta: { page: number; pageSize: number; total: number; totalPages: number };
+  meta: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    /** U5: every visible request without the status filter. */
+    summary?: { byStatus: Record<'submitted' | 'clarification' | 'transferred', number> };
+  };
 }
 interface MutationResult {
   id: string;
@@ -26,10 +33,10 @@ interface TransferResult extends MutationResult {
 const key = (value: string) => value.replace(/-/g, '');
 
 export const staffRequestsApi = {
-  async list(page = 1): Promise<StaffRequestPage> {
+  async list(page = 1, pageSize = 100): Promise<StaffRequestPage> {
     const response = await api.get<{ data: { items: StaffRequest[]; scope: StaffRequestScope }; meta: StaffRequestPage['meta'] }>(
       '/api/v1/staff-requests',
-      { params: { page, pageSize: 100 }, unwrapEnvelope: false }
+      { params: { page, pageSize }, unwrapEnvelope: false }
     );
     return { items: response.data.data.items, scope: response.data.data.scope, meta: response.data.meta };
   },

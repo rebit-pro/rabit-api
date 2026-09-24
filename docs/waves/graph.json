@@ -1,12 +1,12 @@
 {
   "version": 2,
   "planStatus": "active",
-  "date": "2026-09-22",
-  "endpointCount": 99,
+  "date": "2026-09-23",
+  "endpointCount": 110,
   "backend": "RaBit API",
   "baseline": {
     "branch": "main",
-    "commit": "57b2a816c7fc9a6e3145bd7fd6fc3b0b96aeb4a2",
+    "commit": "bb356653fc1098cf5d56dc949ae374244bf5e313",
     "mergedWaves": [
       "A1",
       "A2",
@@ -31,7 +31,8 @@
       "H1",
       "E4",
       "E5",
-      "F2"
+      "F2",
+      "D3"
     ],
     "review": {},
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
@@ -53,7 +54,8 @@
       "F1": "https://github.com/rebit-pro/rabit-api/pull/25",
       "E4": "https://github.com/rebit-pro/rabit-api/pull/30",
       "E5": "https://github.com/rebit-pro/rabit-api/pull/37",
-      "F2": "https://github.com/rebit-pro/rabit-api/pull/40"
+      "F2": "https://github.com/rebit-pro/rabit-api/pull/40",
+      "D3": "https://github.com/rebit-pro/rabit-api/pull/46"
     },
     "mergeCommits": {
       "C4": "cfc334e5890dd51dfd6ff6638eac2cc3e436322b",
@@ -65,17 +67,21 @@
       "F1": "6b8164747e3ed3f6f73a7a91efc0d28b2eb365bc",
       "E4": "7e606e53cc6b347e5c7b70e217ab7f8eb8a45875",
       "E5": "4b507b3b3c27719888e38f582b48e6a56c0c5946",
-      "F2": "44f2e36367351614fab66fdc58fa3dc7ee3899b3"
+      "F2": "44f2e36367351614fab66fdc58fa3dc7ee3899b3",
+      "D3": "533c06b926dc63521017c549b6092104f6291dd5"
     },
     "decisionEvidence": {
       "D02-D05": "docs/waves/e3/README.md in rabit-api: user accepted rules before PR #20",
       "E4-DEC-01": "2026-09-21 user accepted assignmentId for child-photo relation",
       "F2-D3-ORDER": "2026-09-22: пользователь принял порядок F2 → D3. F2 зависит от слитых E3/F1/E4 без D11; D3 зависит от E5 и F2 и проверяет инвалидацию подготовки переносом, заказ из переданной ссылки и запрет разметки после заказа.",
       "D11": "2026-09-22: пользователь подтвердил D3-DEC-01…06 («Подтверждаю все восемь решений»): льготный перенос разрешён и при заказах ребёнка, заказы не меняются, скидки задним числом нет; MED-07 только до передачи ссылки и без заказов; совместный кадр с остающимся ребёнком блокирует перенос; единственная staff-группа съёмки; обложки и correctionPhotos по плану D3 (docs/plans/D3_child-transfers/plan.md в rabit-api).",
-      "D3-D12-SCOPE": "2026-09-22: пользователь принял D3-DEC-07. D3 не меняет оплату, возвраты, печать и файлы; перенос в закрытую staff-группу запрещён. D12 снят с decisionGates D3 и остаётся у I3 и последующих волн."
+      "D3-D12-SCOPE": "2026-09-22: пользователь принял D3-DEC-07. D3 не меняет оплату, возвраты, печать и файлы; перенос в закрытую staff-группу запрещён. D12 снят с decisionGates D3 и остаётся у I3 и последующих волн.",
+      "D3-FOLLOW-UP": "2026-09-22: после merge D3 слиты PR #49 (21311db, текст диалога переноса и стабилизация gate) и PR #52 (93becd8, запись развёртывания stage).",
+      "DESIGN-UX": "2026-09-23: пользователь утвердил план docs/plans/design-ux-plan/plan.md в rabit-api (PR #50, merge bb35665) и решения DS-01…DS-20 по рекомендациям. Раздел 7 плана закрывает D01 (визуал, логотип, шрифты, палитра), раздел 10.1 — механизм выдачи и восстановления паролей в D08 (персональное приглашение по ссылке, сброс и смена пароля). Волны U1–U8, B3, B4 сдаются одним PR пакета design-ux."
     }
   },
   "acceptedImplementationDecisions": [
+    "D01",
     "D02",
     "D03",
     "D04",
@@ -99,7 +105,8 @@
     "K": "Support",
     "L": "Production",
     "M": "Shipping",
-    "N": "Итоговые проекции и приёмка"
+    "N": "Итоговые проекции и приёмка",
+    "U": "UI/UX кабинета"
   },
   "mergePolicy": {
     "baseBranch": "main",
@@ -109,7 +116,8 @@
     "decisionGatesMustBeResolved": true,
     "readinessNote": "unlocks — прямые потребители. Merge одной волны разблокирует потребителя только после merge остальных dependsOn и решения его открытых decisionGates. inProgress/review не равны merged; A7 не runtime gate.",
     "browserE2ERequired": true,
-    "userFacingVisualCheckRequired": true
+    "userFacingVisualCheckRequired": true,
+    "deliveryBundleNote": "Пакет доставки — исключение, принятое пользователем для конкретной программы: волны пакета выполняются одной веткой и сдаются одним PR, зависимость внутри пакета допустима для inProgress/review, внешние зависимости и decisionGates должны быть приняты до старта. Каждая волна пакета — отдельный зелёный коммит; браузерная и визуальная проверка — один раз для всего пакета до merge."
   },
   "waves": [
     {
@@ -243,7 +251,8 @@
       "unlocks": [
         "A4",
         "B1",
-        "B2"
+        "B2",
+        "B4"
       ],
       "inputBoundary": "Установленные и принятые в main контракты/схема: A2. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
       "outputBoundary": "Завершённые операции AUTH-01, AUTH-02; Истёкший/повреждённый токен не даёт доступ; регистрация не оживляет заблокированного сотрудника.",
@@ -289,7 +298,8 @@
       "deliveryState": "merged",
       "unlocks": [
         "A5",
-        "D1"
+        "D1",
+        "B3"
       ],
       "inputBoundary": "Установленные и принятые в main контракты/схема: A3. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
       "outputBoundary": "Завершённые операции SHR-01; Технический upload имеет проверенный вход и устойчивого владельца; приватные оригиналы проектируются отдельно.",
@@ -467,7 +477,9 @@
       "activation": "Live-кабинет включает каталог и профиль. Остальные продуктовые экраны остаются в отдельно включаемом demo-режиме до их собственных волн.",
       "legacyIds": [],
       "deliveryState": "merged",
-      "unlocks": [],
+      "unlocks": [
+        "U1"
+      ],
       "inputBoundary": "B1 и E2 уже слиты в main. Существующий frontend импортируется из локального MoreFoto без runtime-данных и секретов.",
       "outputBoundary": "Работающий браузерный путь AUTH-01/02, ACC-01 и COM-01/02/03 без новых API ID. Правило браузерной приёмки — merge gate, а не runtime-зависимость следующих волн.",
       "mergeCheck": "Проверить main плюс только diff A8 на новой изолированной базе; реальный E2E и визуальная проверка desktop/mobile обязательны вместе с backend/frontend проверками."
@@ -737,7 +749,8 @@
       ],
       "deliveryState": "merged",
       "unlocks": [
-        "N1"
+        "N1",
+        "U5"
       ],
       "inputBoundary": "C3 и его зависимости уже в main: реальные учреждения, institution/group assignments, съёмки и группы. Финансовый provider допускает только согласованное unavailable до подключения.",
       "outputBoundary": "Завершённые операции ORG-04; Карточка учреждения имеет полный структурный ответ; отсутствие ещё не подключённого финансового поставщика явно отражено согласованным union.",
@@ -801,7 +814,9 @@
       "deliveryState": "merged",
       "unlocks": [
         "F1",
-        "N1"
+        "N1",
+        "B4",
+        "B3"
       ],
       "inputBoundary": "Установленные и принятые в main контракты/схема: A3, B1, C3. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
       "outputBoundary": "Завершённые операции ACC-02, ACC-03, ACC-04, ACC-05, ACC-06; Управление учётками/областями влияет на действующие сессии.",
@@ -902,7 +917,8 @@
       "unlocks": [
         "F1",
         "E4",
-        "D3"
+        "D3",
+        "U5"
       ],
       "inputBoundary": "Установленные и принятые в main контракты/схема: D1. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
       "outputBoundary": "Завершённые операции MED-05, MED-06; Назначение кадров группе/ребёнку и обложка меняются согласованно.",
@@ -1054,7 +1070,8 @@
       "unlocks": [
         "E4",
         "D3",
-        "F2"
+        "F2",
+        "U5"
       ],
       "inputBoundary": "Установленные и принятые в main контракты/схема: B2, D2, E3. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
       "outputBoundary": "Завершённые операции HND-06, HND-07, HND-08, HND-09, HND-12; Служебная заявка и уточнение имеют статус и проверяемое право на скидку.",
@@ -1162,7 +1179,8 @@
         "D3",
         "G1",
         "I1",
-        "J1"
+        "J1",
+        "U5"
       ],
       "inputBoundary": "Установленные и принятые в main контракты/схема: E4. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
       "outputBoundary": "Завершённые операции COM-10, COM-11, COM-12, COM-13; Оформление фиксирует quote и неизменяемый заказ; личный ключ отделён от галереи.",
@@ -1227,7 +1245,7 @@
       "legacyIds": [
         "W17"
       ],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "unlocks": [
         "I3"
       ],
@@ -1297,7 +1315,8 @@
         "D3",
         "G1",
         "L1",
-        "K2"
+        "K2",
+        "U5"
       ],
       "inputBoundary": "Установленные и принятые в main контракты/схема: E3, F1, E4. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
       "outputBoundary": "Завершённые операции HND-01, HND-02, HND-03, HND-04, HND-05; Ссылка выдаётся после готовности, сроки считаются от записанного факта передачи.",
@@ -1403,7 +1422,8 @@
       "deliveryState": "merged",
       "unlocks": [
         "G2",
-        "J2"
+        "J2",
+        "B4"
       ],
       "inputBoundary": "Установленные и принятые в main контракты/схема: A2, A5. Для H1 пользователь выбрал EMAIL; MAX и остальные вопросы D09 остаются отдельными последующими решениями.",
       "outputBoundary": "Без новых публичных HTTP-операций; Канал первого потребителя имеет внутренний контракт, сохраняемые попытки и управляемые повторы.",
@@ -2296,7 +2316,18 @@
         "SHP-04",
         "SHP-05",
         "ORG-01",
-        "ORG-11"
+        "ORG-11",
+        "AUTH-05",
+        "AUTH-06",
+        "AUTH-07",
+        "AUTH-08",
+        "AUTH-09",
+        "ACC-11",
+        "ACC-07",
+        "ACC-08",
+        "ACC-09",
+        "ACC-10",
+        "ACC-12"
       ],
       "outcome": "Подтверждена готовность функций и известны восстановление, включение и пределы гарантий.",
       "scope": [
@@ -2323,6 +2354,483 @@
       "inputBoundary": "Установленные и принятые в main контракты/схема: N1. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
       "outputBoundary": "Без новых публичных HTTP-операций; Подтверждена готовность функций и известны восстановление, включение и пределы гарантий.",
       "mergeCheck": "Отдельный PR к актуальному main; все dependsOn уже merged. Проверки на main + только этот diff, без файлов/коммитов незамерженных волн; установить миграции и DI своего сценария. Повторить проверку после обновления base."
+    },
+    {
+      "id": "U1",
+      "title": "Очистка наследия frontend и направление U",
+      "kind": "implementation",
+      "owners": [
+        "frontend",
+        "project.workflow"
+      ],
+      "dependsOn": [
+        "A8"
+      ],
+      "decisionGates": [],
+      "endpointIds": [],
+      "verifiesEndpointIds": [],
+      "outcome": "Frontend без наследия Berry/P2P: мёртвый код, неиспользуемые зависимости, чужие темы и стили удалены без визуальных изменений; направление U и пакет design-ux в графе.",
+      "scope": [
+        "Удалить 75 недостижимых файлов шаблона Berry/P2P, темы Light/Dark, P2P-моки, словарь vue-i18n и статику P2P.",
+        "Убрать vue-tabler-icons, vue3-perfect-scrollbar, vue-i18n (встроенная локаль Vuetify ru) и зависимости без импортов; удалить стили Berry с мёртвыми селекторами.",
+        "Зарегистрировать направление U, пакет design-ux, записать merge D3; расширить валидатор графа пакетом доставки."
+      ],
+      "review": [
+        "Живые экраны не меняются: из собранного CSS уходят только правила с мёртвыми селекторами.",
+        "Демо-режим и mocks/config сохранены."
+      ],
+      "acceptance": [
+        "npm run check, test:commerce, build; главный чанк меньше не менее чем на 3 МБ.",
+        "Diff собранного CSS без изменений правил Vuetify/MoreFoto; чистый npm ci на новом lockfile.",
+        "Валидатор графа с негативными fixtures пакета."
+      ],
+      "activation": "Внутренняя очистка; пользователям не видна.",
+      "legacyIds": [],
+      "deliveryState": "inProgress",
+      "deliveryBundle": "design-ux",
+      "unlocks": [
+        "U2"
+      ],
+      "inputBoundary": "Слитые в main: A8. Внутри пакета design-ux — предыдущие коммиты: нет. Решения: не требуются.",
+      "outputBoundary": "Frontend без наследия Berry/P2P: мёртвый код, неиспользуемые зависимости, чужие темы и стили удалены без визуальных изменений; направление U и пакет design-ux в графе.",
+      "mergeCheck": "Коммит волны в ветке codex/u-design-system: быстрые проверки на main + diff пакета до этой волны включительно. Merge только вместе с пакетом после финального make test-e2e, demo-регресса и визуальной проверки desktop/mobile."
+    },
+    {
+      "id": "U2",
+      "title": "Токен-система, шрифты и тема",
+      "kind": "implementation",
+      "owners": [
+        "frontend"
+      ],
+      "dependsOn": [
+        "U1"
+      ],
+      "decisionGates": [
+        "D01"
+      ],
+      "endpointIds": [],
+      "verifiesEndpointIds": [],
+      "outcome": "Единый источник токенов (цвет, типографика, радиусы, тени, motion), шрифты Golos Text и Manrope, тема Vuetify из токенов, глобальные стили Berry заменены стилями на токенах.",
+      "scope": [
+        "tokens.ts и сгенерированный _tokens.scss с тестом актуальности; MoreFotoTheme из токенов; $rounded и типографика Vuetify.",
+        "Self-hosted шрифты с subset и preload; замена глобальных переопределений Berry (_override, _container, VButtons, VCard, VField, VInput, VTextField, VTextarea) на стили токенов.",
+        "Stylelint color-no-hex как warning; playground «Токены» и «Типографика»."
+      ],
+      "review": [
+        "Размеры контролов UI01–UI04 сохранены; видимые изменения — шрифт, радиус 4 → 8, рамка поля opacity 1.",
+        "Контрасты раздела 7.6 мастер-плана."
+      ],
+      "acceptance": [
+        "tokens.test.mjs, npm run check, build.",
+        "Финальный gate: computed-токены размеров, шрифты из public/fonts, визуальная проверка."
+      ],
+      "activation": "Кабинет и покупательские экраны получают новую типографику и радиусы.",
+      "legacyIds": [],
+      "deliveryState": "inProgress",
+      "deliveryBundle": "design-ux",
+      "unlocks": [
+        "U3",
+        "U4"
+      ],
+      "inputBoundary": "Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U1. Решения: D01.",
+      "outputBoundary": "Единый источник токенов (цвет, типографика, радиусы, тени, motion), шрифты Golos Text и Manrope, тема Vuetify из токенов, глобальные стили Berry заменены стилями на токенах.",
+      "mergeCheck": "Коммит волны в ветке codex/u-design-system: быстрые проверки на main + diff пакета до этой волны включительно. Merge только вместе с пакетом после финального make test-e2e, demo-регресса и визуальной проверки desktop/mobile."
+    },
+    {
+      "id": "U3",
+      "title": "Бренд, каркас и навигация",
+      "kind": "implementation",
+      "owners": [
+        "frontend"
+      ],
+      "dependsOn": [
+        "U2"
+      ],
+      "decisionGates": [
+        "D01"
+      ],
+      "endpointIds": [],
+      "verifiesEndpointIds": [],
+      "outcome": "Логотип «Кадр и мазок», app-bar и sidebar с группировкой, user-menu с аватаром на инициалах, хлебные крошки, вкладки съёмки, заголовок вкладки, вспомогательные страницы в каркасе.",
+      "scope": [
+        "MfLogo с лок-апами, favicon и app-icon из знака; MfAppBar, MfSidebar, user-menu, MfBreadcrumbs, вкладки контекста съёмки.",
+        "MfAvatar/MfAvatarStack на инициалах с детерминированным тоном; document.title; AccessPage/NotFound/FeatureUnavailable в каркасе; LoginPage с логотипом.",
+        "Промежуточный homePath до U6."
+      ],
+      "review": [
+        "Навигация и права ролей не меняются; выход — в user-menu.",
+        "Инициалы и тон по правилам раздела 8.2 мастер-плана."
+      ],
+      "acceptance": [
+        "Unit initials/avatarTone, npm run check, build.",
+        "Финальный gate: навигация 4 ролей на 390/768/1280/1440."
+      ],
+      "activation": "Новый каркас виден всем сотрудникам.",
+      "legacyIds": [],
+      "deliveryState": "inProgress",
+      "deliveryBundle": "design-ux",
+      "unlocks": [
+        "B4",
+        "B3",
+        "U6"
+      ],
+      "inputBoundary": "Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U2. Решения: D01.",
+      "outputBoundary": "Логотип «Кадр и мазок», app-bar и sidebar с группировкой, user-menu с аватаром на инициалах, хлебные крошки, вкладки съёмки, заголовок вкладки, вспомогательные страницы в каркасе.",
+      "mergeCheck": "Коммит волны в ветке codex/u-design-system: быстрые проверки на main + diff пакета до этой волны включительно. Merge только вместе с пакетом после финального make test-e2e, demo-регресса и визуальной проверки desktop/mobile."
+    },
+    {
+      "id": "U4",
+      "title": "Поверхности, статусы и состояния",
+      "kind": "implementation",
+      "owners": [
+        "frontend"
+      ],
+      "dependsOn": [
+        "U2"
+      ],
+      "decisionGates": [
+        "D01"
+      ],
+      "endpointIds": [],
+      "verifiesEndpointIds": [],
+      "outcome": "MfPanel, MfStatus со словарём tone, MfNotice, MfSkeleton, MfEmptyState, MfPagination, MfDateField, единый формат дат; hex в модулях заменены токенами; @mdi/js вместо @mdi/font.",
+      "scope": [
+        "Компоненты состояний и statusTone.ts для всех доменных статусов; рестайл UiDataTable и AdminDialog (размеры, confirm, bottom sheet).",
+        "Миграция hex по модулям staff, orders, photos, handoff, curator, gallery, commerce; stylelint error по завершённым модулям.",
+        "Иконки через @mdi/js и aliases."
+      ],
+      "review": [
+        "Каждый доменный статус имеет tone и текст; «заблокирован» — danger.",
+        "Опасные действия с подтверждением."
+      ],
+      "acceptance": [
+        "Unit statusTone, npm run check, stylelint, build.",
+        "Финальный gate: экраны модулей и визуальная проверка."
+      ],
+      "activation": "Единые состояния во всех модулях кабинета.",
+      "legacyIds": [],
+      "deliveryState": "inProgress",
+      "deliveryBundle": "design-ux",
+      "unlocks": [
+        "B4",
+        "U6",
+        "U7",
+        "U8"
+      ],
+      "inputBoundary": "Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U2. Решения: D01.",
+      "outputBoundary": "MfPanel, MfStatus со словарём tone, MfNotice, MfSkeleton, MfEmptyState, MfPagination, MfDateField, единый формат дат; hex в модулях заменены токенами; @mdi/js вместо @mdi/font.",
+      "mergeCheck": "Коммит волны в ветке codex/u-design-system: быстрые проверки на main + diff пакета до этой волны включительно. Merge только вместе с пакетом после финального make test-e2e, demo-регресса и визуальной проверки desktop/mobile."
+    },
+    {
+      "id": "B4",
+      "title": "Приглашения, первый вход и пароли",
+      "kind": "implementation",
+      "owners": [
+        "rebit.auth",
+        "morefoto.access",
+        "rebit.share",
+        "rebit.notification",
+        "frontend"
+      ],
+      "dependsOn": [
+        "A3",
+        "B2",
+        "H1",
+        "U3",
+        "U4"
+      ],
+      "decisionGates": [
+        "D08"
+      ],
+      "endpointIds": [
+        "AUTH-05",
+        "AUTH-06",
+        "AUTH-07",
+        "AUTH-08",
+        "AUTH-09",
+        "ACC-11"
+      ],
+      "verifiesEndpointIds": [],
+      "outcome": "Сотрудник получает персональное приглашение по ссылке, задаёт пароль и входит; работают восстановление и смена пароля, машинные коды ошибок и различение отозванной и истёкшей сессии.",
+      "scope": [
+        "rebit_auth_access_link (приглашение и сброс, в БД только SHA-256 токена), UseCase выпуска, просмотра и принятия приглашения, сброса и смены пароля; маршруты AUTH-05…AUTH-09 и ACC-11, фильтр accountStatus в ACC-02; контракты в каноническом реестре.",
+        "HTML-письма через H1 (bodyHtml) для приглашения и сброса; письмо кода регистрации не перебрендируется (UI регистрации по коду скрыт, follow-up).",
+        "Экраны /access/invite, /access/recover, /access/reset, «Что дальше» после принятия приглашения, смена пароля в профиле, статус, фильтр и повтор приглашения у сотрудника, словарь кодов ошибок, reason=session-expired|revoked."
+      ],
+      "review": [
+        "Токены только в виде SHA-256, одноразовые, с TTL и cooldown; существование адреса не раскрывается.",
+        "Сброс пароля отзывает сессии."
+      ],
+      "acceptance": [
+        "PHPStan, PHPUnit (включая RegistrationSafetyTest), npm run check, build.",
+        "Финальный gate: приглашение → письмо → пароль → вход; сброс и смена пароля."
+      ],
+      "activation": "Организатор создаёт сотрудника — сотрудник получает письмо со ссылкой.",
+      "legacyIds": [],
+      "deliveryState": "inProgress",
+      "deliveryBundle": "design-ux",
+      "unlocks": [
+        "U8"
+      ],
+      "inputBoundary": "Слитые в main: A3, B2, H1. Внутри пакета design-ux — предыдущие коммиты: U3, U4. Решения: D08.",
+      "outputBoundary": "Сотрудник получает персональное приглашение по ссылке, задаёт пароль и входит; работают восстановление и смена пароля, машинные коды ошибок и различение отозванной и истёкшей сессии.",
+      "mergeCheck": "Коммит волны в ветке codex/u-design-system: быстрые проверки на main + diff пакета до этой волны включительно. Merge только вместе с пакетом после финального make test-e2e, demo-регресса и визуальной проверки desktop/mobile."
+    },
+    {
+      "id": "B3",
+      "title": "Аватары сотрудников с фото",
+      "kind": "implementation",
+      "owners": [
+        "morefoto.access",
+        "rebit.share",
+        "frontend"
+      ],
+      "dependsOn": [
+        "A4",
+        "B2",
+        "U3"
+      ],
+      "decisionGates": [
+        "D01",
+        "D08"
+      ],
+      "endpointIds": [
+        "ACC-07",
+        "ACC-08",
+        "ACC-09",
+        "ACC-10",
+        "ACC-12"
+      ],
+      "verifiesEndpointIds": [],
+      "outcome": "Сотрудник и организатор загружают фото аватара; приватное хранение, WebP 64/256, защищённая выдача с версией и private-кешем.",
+      "scope": [
+        "mf_staff_avatar и приватные WebP 256/64 рядом с оригиналами фото; инспектор по содержимому и GD-рендер с поворотом по EXIF и удалением метаданных; маршруты ACC-07…ACC-10 и ACC-12 (удаление чужого аватара — отдельная запись реестра) с контрактами в каноническом реестре.",
+        "RequestImageToDtoMapper (PUT multipart через request_parse_body), ImageResponse и EntityTag в rebit.share; поле avatar в ProfileOutputDto, StaffOutputDto, StaffDetailOutputDto.",
+        "useProtectedImage, фото в MfAvatar (каркас, меню, список сотрудников) и загрузка аватара в профиле и карточке сотрудника."
+      ],
+      "review": [
+        "Публичный /upload/ не используется; 304 по ETag; teacher не меняет чужой аватар.",
+        "Идемпотентность по содержимому."
+      ],
+      "acceptance": [
+        "PHPStan, PHPUnit инспектора/рендера/хранилища/UseCase/EntityTag/границы контроллера, npm run check, build.",
+        "Финальный gate: live-спека zz-avatar и верификатор MySQL + файлы verify-avatar.php."
+      ],
+      "activation": "Фото аватаров появляются в каркасе, профиле и списке сотрудников.",
+      "legacyIds": [],
+      "deliveryState": "inProgress",
+      "deliveryBundle": "design-ux",
+      "unlocks": [],
+      "inputBoundary": "Слитые в main: A4, B2. Внутри пакета design-ux — предыдущие коммиты: U3. Решения: D01, D08.",
+      "outputBoundary": "Сотрудник и организатор загружают фото аватара; приватное хранение, WebP 64/256, защищённая выдача с версией и private-кешем.",
+      "mergeCheck": "Коммит волны в ветке codex/u-design-system: быстрые проверки на main + diff пакета до этой волны включительно. Merge только вместе с пакетом после финального make test-e2e, demo-регресса и визуальной проверки desktop/mobile."
+    },
+    {
+      "id": "U5",
+      "title": "Серверные сводки для инфографики",
+      "kind": "implementation",
+      "owners": [
+        "morefoto.handoff",
+        "morefoto.organization",
+        "morefoto.media",
+        "morefoto.commerce",
+        "morefoto.access"
+      ],
+      "dependsOn": [
+        "C4",
+        "D2",
+        "E5",
+        "F1",
+        "F2"
+      ],
+      "decisionGates": [
+        "D08"
+      ],
+      "endpointIds": [],
+      "verifiesEndpointIds": [
+        "HND-01",
+        "ORG-02",
+        "ORG-04",
+        "ORG-08",
+        "MED-02",
+        "COM-12",
+        "ACC-02",
+        "HND-06"
+      ],
+      "outcome": "Существующие списки и карточки отдают серверные счётчики для инфографики с той же областью видимости, без клиентского пересчёта по страницам.",
+      "scope": [
+        "meta.summary в HND-01 (byState, closingSoon, prepared, referenceNow), groups.meta.summary.byState в ORG-04/ORG-08, stats в MED-02, meta.summary в COM-12 (total, byProductionStatus), ACC-02 (byAccountStatus, byRole) и HND-06 (byStatus); shootCount/groupCount/openGroupCount в ORG-02.",
+        "Одно агрегирующее чтение на сводку с той же областью видимости и фильтрами, кроме раскладываемого; общее SQL-правило состояния группы GroupStateSql.",
+        "ACC-02 переносится в чистый StaffListController; клиентский пересчёт в handoff/service.ts удаляется в U8 вместе с экранами «Ссылки» и «Списки сотрудников»."
+      ],
+      "review": [
+        "Curator не видит чужие учреждения в счётчиках; финансов нет."
+      ],
+      "acceptance": [
+        "PHPStan, PHPUnit области видимости сводок (ссылки, заказы, сотрудники, фото), правила состояния группы и границы нового контроллера.",
+        "Финальный gate: live-спека zzzzzzz-summaries — разбивки сходятся с total, фильтр не меняет свою сводку, у куратора счётчики не больше, чем у организатора."
+      ],
+      "activation": "Сводки доступны экранам U6.",
+      "legacyIds": [],
+      "deliveryState": "inProgress",
+      "deliveryBundle": "design-ux",
+      "unlocks": [
+        "U6"
+      ],
+      "inputBoundary": "Слитые в main: C4, D2, E5, F1, F2. Внутри пакета design-ux — предыдущие коммиты: нет. Решения: D08.",
+      "outputBoundary": "Существующие списки и карточки отдают серверные счётчики для инфографики с той же областью видимости, без клиентского пересчёта по страницам.",
+      "mergeCheck": "Коммит волны в ветке codex/u-design-system: быстрые проверки на main + diff пакета до этой волны включительно. Merge только вместе с пакетом после финального make test-e2e, demo-регресса и визуальной проверки desktop/mobile."
+    },
+    {
+      "id": "U6",
+      "title": "Обзор по ролям и виджеты инфографики",
+      "kind": "implementation",
+      "owners": [
+        "frontend"
+      ],
+      "dependsOn": [
+        "U3",
+        "U4",
+        "U5"
+      ],
+      "decisionGates": [
+        "D01"
+      ],
+      "endpointIds": [],
+      "verifiesEndpointIds": [],
+      "outcome": "Стартовый «Обзор» для четырёх ролей и плитки над списками на серверных сводках; финансы в состоянии «недоступно».",
+      "scope": [
+        "components/viz: MfStatTile, MfDistribution, MfTimeline, MfQueue и measures (склонения, countdown по 9.3.5); modules/morefoto/ui/chartPalette.ts. MfProgress и MfRing — в U7 с экраном фото, MfMiniBar не строится: временных рядов в live нет.",
+        "Live «Обзор»: organizer/curator/head — плитки INF-01, очередь готовящихся групп, распределение по состоянию, финансы «недоступно»; teacher — карточки групп со сроками и статусы своих списков. homePath → обзор для всех ролей, пункт «Обзор» в меню.",
+        "Плитки над списками: сотрудники (статусы-фильтры, роли), заказы (итог и изготовление), списки сотрудников (статусы-фильтры, плашки у teacher); счётчики «ждут внимания» в меню organizer/curator."
+      ],
+      "review": [
+        "Нет нулей вместо недоступных финансов; sr-only таблицы; reduced motion."
+      ],
+      "acceptance": [
+        "npm run check (unit countdown, склонения, палитра), build, скриншоты live-режима с заглушками API.",
+        "Финальный gate: live-спека zzzzzzz-overview — плитки равны сводкам U5, финансы без цифр, sr-only таблица, reduced motion, фильтр плитками; login-хелпер проверяет приземление на обзор."
+      ],
+      "activation": "Сотрудники после входа попадают на обзор своей области.",
+      "legacyIds": [],
+      "deliveryState": "inProgress",
+      "deliveryBundle": "design-ux",
+      "unlocks": [],
+      "inputBoundary": "Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U3, U4, U5. Решения: D01.",
+      "outputBoundary": "Стартовый «Обзор» для четырёх ролей и плитки над списками на серверных сводках; финансы в состоянии «недоступно».",
+      "mergeCheck": "Коммит волны в ветке codex/u-design-system: быстрые проверки на main + diff пакета до этой волны включительно. Merge только вместе с пакетом после финального make test-e2e, demo-регресса и визуальной проверки desktop/mobile."
+    },
+    {
+      "id": "U7",
+      "title": "Рабочие экраны: учреждения, съёмки, фото, каталог, условия",
+      "kind": "implementation",
+      "owners": [
+        "frontend",
+        "morefoto.organization",
+        "morefoto.access",
+        "rebit.share"
+      ],
+      "dependsOn": [
+        "U4"
+      ],
+      "decisionGates": [
+        "D01"
+      ],
+      "endpointIds": [],
+      "verifiesEndpointIds": [
+        "ACC-01",
+        "ORG-02",
+        "ORG-04"
+      ],
+      "outcome": "Экраны учреждений, съёмок, фотографий, каталога и условий на компонентах U4 с именами ответственных и понятными пустыми состояниями.",
+      "scope": [
+        "DS-11: curatorName/headName в контракте назначений (одно чтение b_user в запросе назначений), в ORG-02 и ORG-04; ORG-04 — чистый InstitutionDetailController. DS-12: support {name, email, phone} в ACC-01 из конфигурации morefoto.access.",
+        "Структура: MfBreadcrumbs, вкладки съёмки «Группы · Фотографии · Условия», имена и инициалы ответственных, INF-02 (распределение групп) на карточке учреждения и съёмки, INF-12 в списке учреждений, сроки групп на MfTimeline, пустые состояния с действием, поиск с debounce.",
+        "Фотографии: INF-05 — MfProgress и плитки по stats MED-02, зона перетаскивания, общий прогресс очереди, сворачиваемый список файлов, объяснение выключенного предпросмотра. Каталог: вкладки «Продукция | Общие условия», MfStatus продукции; условия группы — сегмент «Общие / Собственные». Профиль: раздел «Помощь».",
+        "Не входит: автостарт загрузки и переделка раскладки фото #60, поиск и фильтр каталога (нужен фильтр COM-01), chip условий в списке групп, фото ответственных в ORG-04, контакт куратора в обзоре учителя (U8)."
+      ],
+      "review": [
+        "Права и области видимости не меняются; новые поля ORG-02/ORG-04/ACC-01 только добавляются."
+      ],
+      "acceptance": [
+        "PHPUnit: граница InstitutionDetailController, разбор страниц, имена в результате, контакт поддержки; npm run check (доля обработанных кадров), build, скриншоты live-режима с заглушками API.",
+        "Финальный gate: z-institution-detail — имена вместо номеров; zz-u7-screens — счётчики списка, хлебные крошки, вкладки съёмки, распределение групп, готовность фото, «Помощь»; conditions — вкладки каталога и сегмент условий."
+      ],
+      "activation": "Обновлённые рабочие экраны организатора и куратора.",
+      "legacyIds": [],
+      "deliveryState": "inProgress",
+      "deliveryBundle": "design-ux",
+      "unlocks": [],
+      "inputBoundary": "Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U4. Решения: D01.",
+      "outputBoundary": "Экраны учреждений, съёмок, фотографий, каталога и условий на компонентах U4 с именами ответственных и понятными пустыми состояниями.",
+      "mergeCheck": "Коммит волны в ветке codex/u-design-system: быстрые проверки на main + diff пакета до этой волны включительно. Merge только вместе с пакетом после финального make test-e2e, demo-регресса и визуальной проверки desktop/mobile."
+    },
+    {
+      "id": "U8",
+      "title": "Ссылки, списки сотрудников, заказы, сотрудники",
+      "kind": "implementation",
+      "owners": [
+        "frontend",
+        "morefoto.handoff"
+      ],
+      "dependsOn": [
+        "U4",
+        "B4"
+      ],
+      "decisionGates": [
+        "D01",
+        "D08"
+      ],
+      "endpointIds": [],
+      "verifiesEndpointIds": [
+        "HND-01",
+        "HND-06",
+        "HND-08"
+      ],
+      "outcome": "Экраны ссылок и сроков, списков сотрудников, заказов и сотрудников на компонентах U4 с таймлайном сроков, статусами и действиями приглашения.",
+      "scope": [
+        "«Ссылки и сроки»: сроки на MfTimeline, чек-лист проблем со ссылками на вкладки съёмки и списки (организатор), раздельные сообщения успеха и ошибки, «Только просмотр» для руководителя.",
+        "«Списки сотрудников»: DS-14 — руководитель учреждения читает списки своих учреждений (HND-06/08, меню и маршруты), шаги «Передан → Проверка → Перенесён», свёрнутая история.",
+        "Обзор учителя: куратор учреждения в карточке группы (INF-11, curatorName в HND-01 одним чтением назначений на страницу). Заказы: «Оплачено» без пометки демонстрации в live, быстрый период 7/30 дней.",
+        "Не входит: серверная постраничная загрузка экранов ссылок и списков (счётчики уже серверные с U6), автодополнение кодов из галереи, аватары участников истории, подтверждение отключения доступа и смены роли — follow-up."
+      ],
+      "review": [
+        "Чтение руководителем — только своя область; мутации списков по-прежнему 403 для руководителя."
+      ],
+      "acceptance": [
+        "PHPUnit: область и запрет изменений для руководителя, куратор в HND-01; npm run check, build.",
+        "Финальный gate: zzz-handoff — руководитель входит в списки через меню и видит «Только просмотр»; zzzz-links — «Только просмотр»; zzzzzzz-overview — куратор в карточке учителя; shell — меню руководителя."
+      ],
+      "activation": "Обновлённые экраны ссылок, списков, заказов и сотрудников.",
+      "legacyIds": [],
+      "deliveryState": "inProgress",
+      "deliveryBundle": "design-ux",
+      "unlocks": [],
+      "inputBoundary": "Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U4, B4. Решения: D01, D08.",
+      "outputBoundary": "Экраны ссылок и сроков, списков сотрудников, заказов и сотрудников на компонентах U4 с таймлайном сроков, статусами и действиями приглашения.",
+      "mergeCheck": "Коммит волны в ветке codex/u-design-system: быстрые проверки на main + diff пакета до этой волны включительно. Merge только вместе с пакетом после финального make test-e2e, demo-регресса и визуальной проверки desktop/mobile."
     }
-  ]
+  ],
+  "deliveryBundles": {
+    "design-ux": {
+      "title": "Дизайн-система и UX кабинета MoreFoto",
+      "branch": "codex/u-design-system",
+      "plan": "docs/plans/design-ux-plan/plan.md",
+      "journal": "docs/plans/U_design-system/progress.md",
+      "decidedAt": "2026-09-23",
+      "waves": [
+        "U1",
+        "U2",
+        "U3",
+        "U4",
+        "B4",
+        "B3",
+        "U5",
+        "U6",
+        "U7",
+        "U8"
+      ],
+      "rule": "Одна ветка и один PR; волна — коммит в порядке waves; быстрые проверки на каждом коммите; E2E, demo-регресс и визуальная проверка desktop/mobile — один раз до merge пакета."
+    }
+  }
 }

@@ -8,10 +8,24 @@ export async function login(page: Page, account = 'organizer'): Promise<void> {
   const response = page.waitForResponse((r) => r.url().endsWith('/api/v1/me'));
   await page.getByRole('button', { name: 'Войти', exact: true }).click();
   await response;
-  if (account === 'teacher' || account === 'curator' || account === 'head')
+  if (account === 'unassigned') {
+    await expect(page.getByRole('heading', { name: 'Доступ к кабинету не назначен' })).toBeVisible();
+    return;
+  }
+  // U6: every staff role lands on the overview. Specs written before it start from the old home pages.
+  await expect(page).toHaveURL(/\/cabinet\/overview$/);
+  if (account === 'teacher' || account === 'curator' || account === 'head') {
+    await page.goto('/cabinet/profile');
     await expect(page.getByRole('heading', { name: 'Профиль', exact: true })).toBeVisible();
-  else if (account === 'unassigned') await expect(page.getByRole('heading', { name: 'Доступ к кабинету не назначен' })).toBeVisible();
-  else await expect(page.getByRole('button', { name: 'Новая продукция', exact: true })).toBeEnabled();
+  } else {
+    await page.goto('/cabinet/catalog');
+    await expect(page.getByRole('button', { name: 'Новая продукция', exact: true })).toBeEnabled();
+  }
+}
+/** Signs out through the user menu of the cabinet shell. */
+export async function logout(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Меню пользователя', exact: true }).click();
+  await page.getByRole('button', { name: 'Выйти', exact: true }).click();
 }
 export function productRow(page: Page, name: string) {
   return page.getByRole('article').filter({ has: page.getByRole('heading', { name, exact: true }) });

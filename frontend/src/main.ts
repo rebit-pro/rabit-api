@@ -4,10 +4,8 @@ import { createHead } from '@unhead/vue/client';
 import App from './App.vue';
 import { router } from './router';
 import { useAuthStore } from '@/stores/auth';
-import vuetify, { i18n } from './plugins/vuetify';
-import '@/scss/style.scss';
-import { PerfectScrollbarPlugin } from 'vue3-perfect-scrollbar';
-import VueTablerIcons from 'vue-tabler-icons';
+import vuetify from './plugins/vuetify';
+import '@/styles/vuetify.scss';
 import { initializeMoreFotoMocks } from '@/modules/morefoto/mocks/runtime';
 import '@/styles/morefoto.scss';
 
@@ -23,7 +21,4 @@ app.use(pinia);
 useAuthStore(pinia).restoreSession();
 
 app.use(router);
-app.use(PerfectScrollbarPlugin);
-app.use(VueTablerIcons);
-app.use(i18n);
 app.use(vuetify).mount('#app');

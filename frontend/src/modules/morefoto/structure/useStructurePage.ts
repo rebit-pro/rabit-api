@@ -1,14 +1,20 @@
-import { computed, onMounted, onScopeDispose, shallowRef } from 'vue';
+import { computed, onMounted, onScopeDispose, shallowRef, watch } from 'vue';
 import { structureApi, structureError } from './api';
 import type { StructurePage, StructureScope } from './model';
+import { useInstitutionName } from './useInstitutionName';
+/** The institution search starts by itself once the typing pauses. */
+const SEARCH_DELAY = 300;
 export function useStructurePage(scope: StructureScope) {
   const snapshot = shallowRef<StructurePage | null>(null),
     loading = shallowRef(false),
     error = shallowRef(''),
-    query = shallowRef('');
+    query = shallowRef(''),
+    institutionName = useInstitutionName(scope.kind === 'group' ? scope.institutionId : undefined);
   let generation = 0,
-    alive = true;
+    alive = true,
+    searchTimer = 0;
   async function reload(page = snapshot.value?.meta.page ?? 1): Promise<boolean> {
+    window.clearTimeout(searchTimer);
     const request = ++generation;
     loading.value = true;
     error.value = '';
@@ -24,18 +30,24 @@ export function useStructurePage(scope: StructureScope) {
       if (alive && request === generation) loading.value = false;
     }
   }
+  watch(query, () => {
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(() => void reload(1), SEARCH_DELAY);
+  });
   onMounted(() => {
     void reload();
   });
   onScopeDispose(() => {
     alive = false;
     generation++;
+    window.clearTimeout(searchTimer);
   });
   return {
     snapshot,
     loading,
     error,
     query,
+    institutionName,
     reload,
     page: computed(() => snapshot.value?.meta.page ?? 1),
     pages: computed(() => Math.max(1, snapshot.value?.meta.totalPages ?? 1))

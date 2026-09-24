@@ -13,6 +13,10 @@ final readonly class PhotoPageOutputDto
      * @param list<MediaGroupOutputDto>              $groups
      * @param array<string,string>                   $covers
      * @param array{page:int,pageSize:int,total:int} $meta
+     * @param array{
+     *     byStatus: array{processing: int, ready: int, failed: int, duplicate: int},
+     *     unassigned: int,
+     * } $stats the whole shoot or selected group, not only this page
      */
     public function __construct(
         public array $items,
@@ -21,5 +25,6 @@ final readonly class PhotoPageOutputDto
         public int $revision,
         public array $meta,
         public ?PhotoGroupSummaryOutputDto $summary,
+        public array $stats,
     ) {}
 }

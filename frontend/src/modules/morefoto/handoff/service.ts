@@ -81,6 +81,7 @@ async function loadLiveHandoff(requestId?: string): Promise<HandoffWorkspace> {
   return {
     role: first.scope.role,
     now: new Date().toISOString(),
+    requestSummary: first.meta.summary?.byStatus,
     requests: items,
     photos: [],
     groups,

@@ -78,7 +78,7 @@ const titles = {
   overflow-wrap: anywhere;
 }
 .sale-preview {
-  background: #f3f7fa;
+  background: var(--mf-color-bg);
   padding: 20px;
   border-radius: 4px;
   display: grid;

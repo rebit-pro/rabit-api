@@ -65,7 +65,7 @@ function retry() {
   position: relative;
   width: 100%;
   height: 100%;
-  background: #e9eef2;
+  background: var(--mf-color-surface-2);
   min-height: 100px;
 }
 .gallery-image img {
@@ -87,7 +87,7 @@ function retry() {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   text-align: center;
   font-size: 13px;
   padding: 12px;

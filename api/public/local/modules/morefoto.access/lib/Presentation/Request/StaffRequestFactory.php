@@ -5,45 +5,12 @@ declare(strict_types=1);
 namespace Morefoto\Access\Presentation\Request;
 
 use Bitrix\Main\HttpRequest;
-use Morefoto\Access\Application\Staff\Dto\ListStaffInputDto;
 use Morefoto\Access\Application\Staff\Dto\StaffMutationInputDto;
 use Morefoto\Access\Domain\Staff\Enum\RoleEnum;
 use Rebit\Share\Shared\Exception\HttpException;
 
 final readonly class StaffRequestFactory
 {
-    public function listing(HttpRequest $request): ListStaffInputDto
-    {
-        $data = $this->query($request);
-        if ([] !== array_diff(array_keys($data), ['q', 'role', 'active', 'page', 'pageSize'])) {
-            throw new HttpException('UNKNOWN_FIELD', 422);
-        }
-        foreach (['page', 'pageSize'] as $field) {
-            if (isset($data[$field]) && (!is_scalar($data[$field]) || 1 !== preg_match('/^[1-9][0-9]{0,6}$/D', (string)$data[$field]))) {
-                throw new HttpException('INVALID_PAGE', 422);
-            }
-        }
-        if (isset($data['q']) && !is_string($data['q'])) {
-            throw new HttpException('INVALID_QUERY', 422);
-        }
-        $role = null;
-        if (isset($data['role'])) {
-            $role = is_string($data['role']) ? RoleEnum::tryFrom($data['role']) : null;
-            if (null === $role) {
-                throw new HttpException('INVALID_ROLE', 422);
-            }
-        }
-        $active = null;
-        if (array_key_exists('active', $data)) {
-            $active = filter_var($data['active'], FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
-            if (null === $active) {
-                throw new HttpException('INVALID_ACTIVE', 422);
-            }
-        }
-
-        return new ListStaffInputDto(trim($data['q'] ?? ''), $role, $active, (int)($data['page'] ?? 1), (int)($data['pageSize'] ?? 25));
-    }
-
     public function mutation(HttpRequest $request, bool $create): StaffMutationInputDto
     {
         if (1 !== preg_match('/^application\/json(?:\s*;|$)/i', (string)$request->getHeader('Content-Type'))) {

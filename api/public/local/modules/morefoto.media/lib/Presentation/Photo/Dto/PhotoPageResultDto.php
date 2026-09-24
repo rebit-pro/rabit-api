@@ -15,6 +15,10 @@ final readonly class PhotoPageResultDto implements ResultDtoInterface
      * @param list<MediaGroupOutputDto>              $groups
      * @param array<string,string>                   $covers
      * @param array{page:int,pageSize:int,total:int} $meta
+     * @param array{
+     *     byStatus: array{processing: int, ready: int, failed: int, duplicate: int},
+     *     unassigned: int,
+     * } $stats
      */
     public function __construct(
         public array $items,
@@ -23,5 +27,6 @@ final readonly class PhotoPageResultDto implements ResultDtoInterface
         public int $revision,
         public array $meta,
         public ?PhotoGroupSummaryResultDto $summary,
+        public array $stats,
     ) {}
 }

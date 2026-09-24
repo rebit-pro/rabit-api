@@ -1,5 +1,12 @@
+import type { AvatarRef } from '@/api/auth';
 import type { StaffRole } from '../types';
 export type AccountStatus = 'pending' | 'active' | 'blocked';
+/** Personal invitation of a pending staff member; the link itself only travels in the letter. */
+export interface StaffInvitation {
+  sentAt: string;
+  expiresAt: string;
+  state: 'sent' | 'expired' | 'accepted';
+}
 export interface StaffSummary {
   id: number;
   name: string;
@@ -10,6 +17,8 @@ export interface StaffSummary {
   accessRevision: number;
   accountStatus: AccountStatus;
   assignmentCount: number;
+  invitation?: StaffInvitation | null;
+  avatar?: AvatarRef | null;
 }
 export interface StaffDetail extends Omit<StaffSummary, 'assignmentCount'> {
   institutionIds: string[];
@@ -40,7 +49,14 @@ export interface AssignmentOptions {
 }
 export interface StaffPage {
   items: StaffSummary[];
-  meta: { page: number; pageSize: number; total: number; totalPages: number };
+  meta: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    /** U5: each split ignores its own filter, so a tile shows what the list will hold after a click. */
+    summary?: { byAccountStatus: Record<AccountStatus, number>; byRole: Record<string, number> };
+  };
 }
 export interface StaffDraft {
   id: number | null;
@@ -59,7 +75,7 @@ export interface StaffDraft {
 export interface StaffFilters {
   q: string;
   role: StaffRole | null;
-  active: boolean | null;
+  accountStatus: AccountStatus | null;
 }
 export interface StaffMutationResult {
   id: number;

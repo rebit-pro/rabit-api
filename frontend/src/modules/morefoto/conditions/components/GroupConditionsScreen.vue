@@ -11,6 +11,10 @@ import { conditionsApi } from '../api';
 import { useConditions } from '../useConditions';
 import { useConditionsEditor, type ConditionsEditorSource } from '../useConditionsEditor';
 import ConditionsSummary from './ConditionsSummary.vue';
+import MfBreadcrumbs from '@/components/navigation/MfBreadcrumbs.vue';
+import MfEmptyState from '@/components/states/MfEmptyState.vue';
+import ShootTabs from '../../structure/components/ShootTabs.vue';
+import { useInstitutionName } from '../../structure/useInstitutionName';
 
 const route = useRoute();
 const router = useRouter();
@@ -19,6 +23,20 @@ const scope = computed<StructureScope>(() => ({
   institutionId: String(route.params.institutionId),
   shootId: String(route.params.shootId)
 }));
+const institutionName = useInstitutionName(String(route.params.institutionId));
+const shootPath = computed(
+  () =>
+    '/cabinet/institutions/' +
+    encodeURIComponent(scope.value.institutionId ?? '') +
+    '/shoots/' +
+    encodeURIComponent(scope.value.shootId ?? '')
+);
+const crumbs = computed(() => [
+  { title: 'Учреждения', to: '/cabinet/institutions' },
+  { title: institutionName.value || 'Учреждение', to: '/cabinet/institutions/' + encodeURIComponent(scope.value.institutionId ?? '') },
+  { title: shoot.value?.name ?? 'Съёмка', to: shootPath.value },
+  { title: 'Условия' }
+]);
 const groups = shallowRef<Group[]>([]);
 const shoot = shallowRef<ShootDetail | null>(null);
 const groupsLoading = shallowRef(false);
@@ -108,22 +126,27 @@ onScopeDispose(() => {
 });
 </script>
 <template>
-  <RouterLink
-    :to="'/cabinet/institutions/' + encodeURIComponent(scope.institutionId ?? '') + '/shoots/' + encodeURIComponent(scope.shootId ?? '')"
-    class="mf-back"
-    >← {{ shoot?.name ?? 'Съёмка' }}</RouterLink
-  >
+  <MfBreadcrumbs :items="crumbs" />
   <header class="mf-page-heading">
     <p class="mf-eyebrow">ПРАВИЛА ПРОДАЖ</p>
     <h1>Условия групп</h1>
     <p class="mf-muted">Собственный прайс или наследование общих условий для каждой группы съёмки</p>
   </header>
+  <ShootTabs :institution-id="scope.institutionId ?? ''" :shoot-id="scope.shootId ?? ''" current="conditions" />
   <v-progress-linear v-if="groupsLoading" indeterminate aria-label="Загрузка групп" class="mb-5" />
   <v-alert v-if="groupsError" type="error" variant="tonal" role="alert" class="mb-5"
     >{{ groupsError }}<v-btn variant="text" @click="loadGroups">Повторить</v-btn></v-alert
   >
   <template v-if="!groupsError && !groupsLoading">
-    <p v-if="!groups.length" class="mf-muted">Сначала создайте группу в этой съёмке.</p>
+    <MfEmptyState
+      v-if="!groups.length"
+      class="mf-panel"
+      title="В съёмке пока нет групп"
+      text="Условия настраиваются для групп: сначала добавьте группу на странице съёмки."
+      icon="mdi-tag-outline"
+    >
+      <v-btn :to="shootPath" variant="outlined">Открыть съёмку</v-btn>
+    </MfEmptyState>
     <template v-else>
       <v-select
         v-model="groupId"

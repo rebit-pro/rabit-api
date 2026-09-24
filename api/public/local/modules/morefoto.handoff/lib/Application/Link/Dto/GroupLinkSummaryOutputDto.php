@@ -26,5 +26,6 @@ final readonly class GroupLinkSummaryOutputDto
         public ?string $deliveryAt,
         public int $photoCount,
         public int $childCount,
+        public ?string $curatorName = null,
     ) {}
 }

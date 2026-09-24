@@ -13,5 +13,6 @@ final readonly class GroupLinkPageOutputDto
         public int $pageSize,
         public int $total,
         public int $totalPages,
+        public GroupLinkCountersOutputDto $summary,
     ) {}
 }

@@ -1,5 +1,5 @@
 import { test, expect, type APIResponse, type Page, type Request, type Route } from '@playwright/test';
-import { login, token } from './helpers.js';
+import { login, logout, token } from './helpers.js';
 
 const png = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAUAAAADICAIAAAAWZq/8AAABvElEQVR42u3TQQ0AMAgAsTE1CEMiAhHBi6SVcMlFVj/gpi8BGBgwMGBgMDBgYMDAgIHBwICBAQODgQEDAwYGDAwGBgwMGBgwMBgYMDBgYDAwYGDAwICBwcCAgQEDAwYGAwMGBgwMBgYMDBgYMDAYGDAwYGAwMGBgwMCAgcHAgIEBAwMGBgMDBgYMDAYGDAwYGDAwGBgwMGBgwMBgYMDAgIHBwICBAQMDBgYDAwYGDAwYGAwMGBgwMBgYMDBgYMDAYGDAwICBwcCAgQEDAwYGAwMGBgwMGBgMDBgYMDAYGDAwYGDAwGBgwMCAgQEDg4EBAwMGBgMDBgYMDBgYDAwYGDAwYGAwMGBgwMBgYMDAgIEBA4OBAQMDBgYDAwYGDAwYGAwMGBgwMGBgMDBgYMDAYGDAwICBAQODgQEDAwYGDAwGBgwMGBgMDBgYMDBgYDAwYGDAwGBgwMCAgQEDg4EBAwMGBgwMBgYMDBgYDAwYGDAwYGAwMGBgwMCAgcHAgIEBA4OBAQMDBgYMDAYGDAwYGDAwGBgwMGBgMDBgYMDAgIHBwICBAQODgQEDAwYGDAwGBgwMGBgwMBgYMDCwMUuEAtA7HouzAAAAAElFTkSuQmCC',
@@ -658,7 +658,7 @@ test('#54/#55: большая группа открывается страниц
   expect(lists).toHaveLength(beforeAssignment + 1);
   expect(lists[lists.length - 1]!.searchParams.get('page')).toBe('2');
 
-  await page.getByRole('link', { name: '← Q54 Съёмка', exact: true }).click();
+  await page.getByLabel('Хлебные крошки').getByRole('link', { name: 'Q54 Съёмка', exact: true }).click();
   await expect(page).toHaveURL(new RegExp('/shoots/' + shoot.id + '$'));
   await page.goBack();
   await expect(page).toHaveURL(/[?&]page=2(&|$)/);
@@ -739,9 +739,11 @@ test('#55: превью прежней сессии отменяются при 
   });
   await page.goto('/cabinet/institutions/' + institution.id + '/shoots/' + shoot.id + '/photos?group=' + group.id);
   await expect(page.getByTestId('photo-card')).toHaveCount(1);
+  // Protected frames load only near the viewport (#55); U7 put the readiness panel and the drop zone above the grid.
+  await page.getByTestId('photo-card').scrollIntoViewIfNeeded();
   await expect.poll(() => held.length).toBe(1);
   const loggedOut = page.waitForResponse((response) => response.url().endsWith('/auth/logout'));
-  await page.getByRole('button', { name: 'Выйти', exact: true }).click();
+  await logout(page);
   await loggedOut;
   await expect.poll(() => cancelled).toEqual(['net::ERR_ABORTED']);
 

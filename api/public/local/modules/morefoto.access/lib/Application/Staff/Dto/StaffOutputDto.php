@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Morefoto\Access\Application\Staff\Dto;
 
+use Morefoto\Access\Application\Avatar\Dto\AvatarOutputDto;
+
 final readonly class StaffOutputDto
 {
     public function __construct(
@@ -16,5 +18,7 @@ final readonly class StaffOutputDto
         public int $accessRevision,
         public string $accountStatus,
         public int $assignmentCount,
+        public ?StaffInvitationStateOutputDto $invitation = null,
+        public ?AvatarOutputDto $avatar = null,
     ) {}
 }

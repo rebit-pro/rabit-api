@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Morefoto\Access\Infrastructure\Profile\ConfiguredSupportContactProvider;
+use Morefoto\Access\Application\Profile\Contract\SupportContactProviderInterface;
 use Bitrix\Main\DI\ServiceLocator;
 use Morefoto\Access\Application\Authorization\Service\GroupLinkAccess;
 use Morefoto\Access\Application\Authorization\Service\StaffRequestAccess;
@@ -18,9 +20,12 @@ use Morefoto\Access\Infrastructure\Adapter\AccessGuard;
 use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Morefoto\Access\Application\Bootstrap\UseCase\BootstrapOrganizerUseCase;
 use Morefoto\Access\Application\Profile\UseCase\GetProfileUseCase;
+use Morefoto\Access\Application\Avatar\Contract\StaffAvatarRepositoryInterface;
+use Morefoto\Access\Application\Avatar\Mapper\AvatarOutputMapper;
 use Morefoto\Access\Domain\Staff\Repository\AccessStateRepository;
 use Morefoto\Access\Domain\Staff\Repository\StaffProfileRepository;
 use Morefoto\Access\Domain\Staff\Service\PermissionPolicy;
+use Morefoto\Access\Domain\Staff\Service\StaffCountFacets;
 use Morefoto\Access\Presentation\Console\BootstrapOrganizerCommand;
 use Morefoto\Access\Presentation\Controller\ProfileController;
 use Rebit\Share\Application\Contract\Auth\IdentityGatewayInterface;
@@ -33,6 +38,12 @@ use Morefoto\Access\Application\Assignment\Service\GroupAccess;
 use Rebit\Share\Contracts\Access\GroupAccessInterface;
 use Rebit\Share\Contracts\Access\GroupLinkAccessInterface;
 use Rebit\Share\Contracts\Access\StaffRequestAccessInterface;
+use Morefoto\Access\Presentation\Staff\StaffInvitationInputMapper;
+use Morefoto\Access\Presentation\Controller\StaffInvitationController;
+use Morefoto\Access\Presentation\Controller\StaffListController;
+use Morefoto\Access\Presentation\Staff\Result\StaffListResultMapper;
+use Morefoto\Access\Presentation\Staff\StaffListInputMapper;
+use Morefoto\Access\Application\Staff\UseCase\ResendStaffInvitationUseCase;
 
 return [
     StaffRequestAccessInterface::class => ['constructor' => static fn(): StaffRequestAccessInterface => new StaffRequestAccess(ServiceLocator::getInstance()->get(StaffAuthorization::class))],
@@ -57,6 +68,9 @@ return [
             ServiceLocator::getInstance()->get(InstitutionAssignmentRepository::class),
             ServiceLocator::getInstance()->get(GroupAssignmentRepository::class),
             ServiceLocator::getInstance()->get(InstitutionAccessInterface::class),
+            ServiceLocator::getInstance()->get(StaffIdentityGatewayInterface::class),
+            ServiceLocator::getInstance()->get(AvatarOutputMapper::class),
+            ServiceLocator::getInstance()->get(StaffCountFacets::class),
         ],
     ],
     SaveStaffUseCase::class => [
@@ -70,6 +84,33 @@ return [
             ServiceLocator::getInstance()->get(InstitutionAssignmentRepository::class),
             ServiceLocator::getInstance()->get(GroupAssignmentRepository::class),
             ServiceLocator::getInstance()->get(InstitutionAccessInterface::class),
+        ],
+    ],
+    ResendStaffInvitationUseCase::class => [
+        'className' => ResendStaffInvitationUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(StaffAuthorization::class),
+            ServiceLocator::getInstance()->get(AccessStateRepository::class),
+            ServiceLocator::getInstance()->get(StaffManagementRepository::class),
+            ServiceLocator::getInstance()->get(StaffIdentityGatewayInterface::class),
+        ],
+    ],
+    StaffInvitationInputMapper::class => ['className' => StaffInvitationInputMapper::class],
+    StaffInvitationController::class => [
+        'className' => StaffInvitationController::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(ResendStaffInvitationUseCase::class),
+            ServiceLocator::getInstance()->get(StaffInvitationInputMapper::class),
+        ],
+    ],
+    StaffListInputMapper::class => ['className' => StaffListInputMapper::class],
+    StaffListResultMapper::class => ['className' => StaffListResultMapper::class],
+    StaffListController::class => [
+        'className' => StaffListController::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(StaffDirectoryUseCase::class),
+            ServiceLocator::getInstance()->get(StaffListInputMapper::class),
+            ServiceLocator::getInstance()->get(StaffListResultMapper::class),
         ],
     ],
     StaffController::class => [
@@ -104,6 +145,7 @@ return [
     StaffProfileRepository::class => ['className' => StaffProfileRepository::class],
     AccessStateRepository::class => ['className' => AccessStateRepository::class],
     PermissionPolicy::class => ['className' => PermissionPolicy::class],
+    StaffCountFacets::class => ['className' => StaffCountFacets::class],
     StaffAuthorization::class => [
         'className' => StaffAuthorization::class,
         'constructorParams' => static fn(): array => [
@@ -122,7 +164,17 @@ return [
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(StaffAuthorization::class),
             ServiceLocator::getInstance()->get(PermissionPolicy::class),
+            ServiceLocator::getInstance()->get(StaffAvatarRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(AvatarOutputMapper::class),
+            ServiceLocator::getInstance()->get(SupportContactProviderInterface::class),
         ],
+    ],
+    SupportContactProviderInterface::class => [
+        'constructor' => static fn(): SupportContactProviderInterface => new ConfiguredSupportContactProvider(
+            (string)getenv('MOREFOTO_SUPPORT_NAME'),
+            (string)getenv('MOREFOTO_SUPPORT_EMAIL'),
+            (string)getenv('MOREFOTO_SUPPORT_PHONE'),
+        ),
     ],
     BootstrapOrganizerUseCase::class => [
         'className' => BootstrapOrganizerUseCase::class,

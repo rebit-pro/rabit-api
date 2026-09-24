@@ -35,8 +35,8 @@ defineEmits<{ respond: [result: PaymentResult]; time: [value: 'before' | 'after'
 </template>
 <style scoped>
 .payment-demo {
-  border-color: #c3dff3;
-  background: #f9fcfe;
+  border-color: var(--mf-color-accent);
+  background: var(--mf-color-bg);
 }
 .payment-demo__title {
   font-size: 20px;
@@ -44,7 +44,7 @@ defineEmits<{ respond: [result: PaymentResult]; time: [value: 'before' | 'after'
 }
 .payment-demo__note {
   font-size: 13px;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   line-height: 1.7;
 }
 .payment-demo__buttons {
@@ -54,14 +54,14 @@ defineEmits<{ respond: [result: PaymentResult]; time: [value: 'before' | 'after'
   margin-top: 18px;
 }
 .payment-demo__time {
-  border-top: 1px solid #dce4ea;
+  border-top: 1px solid var(--mf-color-border);
   padding-top: 18px;
   margin-top: 18px;
   font-size: 14px;
 }
 .payment-demo__time summary {
   cursor: pointer;
-  color: #24658a;
+  color: var(--mf-color-link);
 }
 .payment-demo__buttons :deep(.v-btn) {
   max-width: 100%;

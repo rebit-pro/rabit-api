@@ -63,8 +63,8 @@ const MainRoutes: RouteRecordRaw = {
       path: 'staff-requests',
       component: () => import('@/modules/morefoto/views/StaffRequestsPage.vue'),
       meta: {
-        title: 'Заявки на списки сотрудников',
-        staffRoles: ['organizer', 'curator', 'teacher']
+        title: 'Списки сотрудников',
+        staffRoles: isMockApiEnabled ? ['organizer', 'curator', 'teacher'] : ['organizer', 'curator', 'head', 'teacher']
       }
     },
     {
@@ -72,8 +72,8 @@ const MainRoutes: RouteRecordRaw = {
       path: 'staff-requests/:requestId',
       component: () => import('@/modules/morefoto/views/StaffRequestsPage.vue'),
       meta: {
-        title: 'Заявка на список сотрудников',
-        staffRoles: ['organizer', 'curator', 'teacher']
+        title: 'Список сотрудников',
+        staffRoles: isMockApiEnabled ? ['organizer', 'curator', 'teacher'] : ['organizer', 'curator', 'head', 'teacher']
       }
     },
     {
@@ -86,7 +86,7 @@ const MainRoutes: RouteRecordRaw = {
       name: 'Users',
       path: 'users',
       component: () => import('@/modules/morefoto/views/UsersPage.vue'),
-      meta: { title: 'Пользователи', staffRoles: ['organizer'] }
+      meta: { title: 'Сотрудники', staffRoles: ['organizer'] }
     },
     {
       name: 'GroupConditions',
@@ -98,7 +98,7 @@ const MainRoutes: RouteRecordRaw = {
       name: 'CabinetOverview',
       path: 'overview',
       component: () => import('@/modules/morefoto/views/OverviewPage.vue'),
-      meta: { title: 'Личный кабинет' }
+      meta: { title: 'Обзор' }
     },
     {
       name: 'OrganizationList',
@@ -129,6 +129,12 @@ const MainRoutes: RouteRecordRaw = {
         title: 'Учреждение',
         staffRoles: ['organizer', 'curator', 'head']
       }
+    },
+    {
+      name: 'CabinetWelcome',
+      path: 'welcome',
+      component: () => import('@/modules/morefoto/views/WelcomePage.vue'),
+      meta: { title: 'Добро пожаловать' }
     },
     {
       name: 'CabinetProfile',

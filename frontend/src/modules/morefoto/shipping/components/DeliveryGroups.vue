@@ -2,6 +2,7 @@
 import { packCount, printCountLabel } from '../display';
 import type { DeliveryGroup } from '../types';
 import { formatMoment } from '../../handoff/display';
+import MfStatus from '@/components/status/MfStatus.vue';
 defineProps<{ groups: DeliveryGroup[]; staff: boolean }>();
 const emit = defineEmits<{ action: [kind: 'ready' | 'unready', item: DeliveryGroup] }>();
 </script>
@@ -17,9 +18,9 @@ const emit = defineEmits<{ action: [kind: 'ready' | 'unready', item: DeliveryGro
         <p class="delivery-muted">
           {{ g.shootName }}<span v-if="g.kind === 'staff' && g.name !== 'Сотрудники'"> · Группа сотрудников</span>
         </p>
-        <v-chip class="mt-4" :color="g.overdue ? 'warning' : g.status === 'Передано в учреждение' ? 'success' : 'primary'">{{
+        <MfStatus class="mt-4" :tone="g.overdue ? 'warning' : g.status === 'Передано в учреждение' ? 'success' : 'info'">{{
           g.status
-        }}</v-chip>
+        }}</MfStatus>
         <p :class="g.overdue ? 'delivery-late' : ''">
           {{ g.overdue ? 'Срок доставки прошёл · ' : ''
           }}{{ g.deadline ? 'Доставить до ' + formatMoment(g.deadline) : 'Срок появится после передачи ссылки группе.' }}

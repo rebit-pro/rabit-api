@@ -15,8 +15,9 @@ namespace Morefoto\Handoff\Application\Request\Dto;
 final readonly class StaffRequestListOutputDto
 {
     /**
-     * @param list<StaffRequestOutputDto> $items
-     * @param StaffRequestScope           $scope
+     * @param list<StaffRequestOutputDto>                                 $items
+     * @param StaffRequestScope                                           $scope
+     * @param array{submitted: int, clarification: int, transferred: int} $byStatus all visible requests, not only this page
      */
     public function __construct(
         public array $items,
@@ -25,5 +26,6 @@ final readonly class StaffRequestListOutputDto
         public int $pageSize,
         public int $total,
         public int $totalPages,
+        public array $byStatus,
     ) {}
 }

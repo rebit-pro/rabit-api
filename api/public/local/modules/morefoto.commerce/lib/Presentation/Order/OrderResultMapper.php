@@ -79,10 +79,25 @@ final readonly class OrderResultMapper
         return new StaffOrderListResultDto($items);
     }
 
-    /** @return array{page: int, pageSize: int, total: int, totalPages: int} */
+    /**
+     * @return array{
+     *     page: int,
+     *     pageSize: int,
+     *     total: int,
+     *     totalPages: int,
+     *     summary: array{total: int, byProductionStatus: array<string, int>},
+     * }
+     */
     public function meta(StaffOrderPageOutputDto $output): array
     {
-        return ['page' => $output->page, 'pageSize' => $output->pageSize, 'total' => $output->total, 'totalPages' => (int)ceil($output->total / $output->pageSize)];
+        return [
+            'page' => $output->page,
+            'pageSize' => $output->pageSize,
+            'total' => $output->total,
+            'totalPages' => (int)ceil($output->total / $output->pageSize),
+            // Payment split waits for the payment provider (G1): until then it would show every order as unpaid.
+            'summary' => ['total' => array_sum($output->byProductionStatus), 'byProductionStatus' => $output->byProductionStatus],
+        ];
     }
 
     public function staffDetail(StaffOrderDetailOutputDto $output): StaffOrderDetailResultDto

@@ -1,13 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import MainRoutes from './MainRoutes';
-import PublicRoutes from './PublicRoutes';
+import PublicRoutes, { ServiceRoutes } from './PublicRoutes';
 import { useAuthStore } from '@/stores/auth';
 import { isMockApiEnabled } from '@/mocks/config';
 import { isStaffRole } from '@/modules/morefoto/types';
+import { apiErrorCode } from '@/api/authErrors';
+import { sessionEndReason } from '@/api/sessionEnd';
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [MainRoutes, PublicRoutes],
+  routes: [MainRoutes, PublicRoutes, ServiceRoutes],
   scrollBehavior: (to, from, savedPosition) => savedPosition ?? (to.path === from.path ? false : { top: 0 })
 });
 
@@ -16,11 +18,13 @@ router.beforeEach(async (to) => {
   const auth = useAuthStore();
   auth.restoreSession();
   if (auth.isAuthenticated && (to.meta.requiresAuth || to.path === '/login')) {
+    // The 401 handler clears the session before the guard sees the error, so the lifetime is read first.
+    const expiresAt = auth.expiresAt;
     try {
       await auth.ensureProfile();
-    } catch {
+    } catch (cause) {
       auth.returnUrl = to.meta.requiresAuth ? to.fullPath : null;
-      return to.path === '/login' ? true : '/login?reason=session-expired';
+      return to.path === '/login' ? true : '/login?reason=' + sessionEndReason(apiErrorCode(cause), expiresAt);
     }
   }
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
@@ -42,7 +46,9 @@ router.beforeEach(async (to) => {
         'Catalog',
         'Users',
         'GroupConditions',
+        'CabinetOverview',
         'CabinetProfile',
+        'CabinetWelcome',
         'OrganizationList',
         'CabinetInstitution',
         'OrganizationShoot',

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { isAxiosError } from 'axios';
 import { ref, computed } from 'vue';
 import { router } from '@/router';
-import { authApi, type AuthUser, type GeeTestCaptchaPayload, type RequestRegistrationCodeResponse } from '@/api/auth';
+import { authApi, type AuthUser, type GeeTestCaptchaPayload, type LoginResponse, type RequestRegistrationCodeResponse } from '@/api/auth';
 
 import { isMockApiEnabled } from '@/mocks/config';
 import { requireDemoAccount } from '@/modules/morefoto/mocks/service';
@@ -178,9 +178,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const homePath = computed(() => {
-    if (!isStaffRole(user.value?.role)) return '/access-unavailable';
-    if (isMockApiEnabled) return '/cabinet/overview';
-    return user.value?.permissions?.includes('catalog.manage') ? '/cabinet/catalog' : '/cabinet/profile';
+    // U6: every staff role starts on the overview built from server summaries.
+    return isStaffRole(user.value?.role) ? '/cabinet/overview' : '/access-unavailable';
   });
 
   async function ensureProfile(): Promise<void> {
@@ -196,7 +195,9 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(profile));
         verifiedToken = currentToken;
       } catch (cause) {
-        if (token.value !== currentToken) return;
+        // A newer sign-in replaced the token while /me was on its way. A token cleared by the 401 handler is not a
+        // replacement: the guard must see the error to name the reason of the sign-in page.
+        if (token.value !== currentToken && token.value !== null) return;
         if (isAxiosError(cause) && cause.response?.status === 403 && user.value) {
           user.value = { id: user.value.id, name: user.value.name, email: user.value.email };
           localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user.value));
@@ -224,6 +225,23 @@ export const useAuthStore = defineStore('auth', () => {
     const allowed =
       resolved?.meta.requiresAuth && isStaffRole(role) && (!resolved.meta.staffRoles || resolved.meta.staffRoles.includes(role));
     await router.push(allowed && candidate ? candidate : fallback);
+  }
+
+  /** Re-reads the profile after the employee changed it (a new avatar), keeping the session. */
+  async function reloadProfile(): Promise<void> {
+    verifiedToken = null;
+    await ensureProfile();
+  }
+
+  /**
+   * Session opened by an invitation or a password reset link: the server already checked the new password.
+   * `target` is honoured only for a staff role; without one the home path explains the missing access.
+   */
+  async function startSession(response: LoginResponse, target?: string): Promise<void> {
+    setSession(response.token, response.user, response.expiresAt);
+    returnUrl.value = null;
+    await ensureProfile();
+    await router.push(target && isStaffRole(user.value?.role) ? target : homePath.value);
   }
 
   async function requestRegistrationCode(email: string, password: string): Promise<RequestRegistrationCodeResponse> {
@@ -258,6 +276,8 @@ export const useAuthStore = defineStore('auth', () => {
     returnUrl,
     isAuthenticated,
     clearSession,
+    startSession,
+    reloadProfile,
     restoreSession,
     getAccessToken,
     login,

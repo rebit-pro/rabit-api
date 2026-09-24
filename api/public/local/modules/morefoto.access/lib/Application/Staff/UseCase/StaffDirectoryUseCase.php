@@ -17,7 +17,17 @@ use Morefoto\Access\Domain\Staff\Enum\PermissionEnum;
 use Morefoto\Access\Domain\Staff\Repository\StaffManagementRepository;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Shared\Exception\HttpException;
+use Morefoto\Access\Application\Staff\Dto\StaffInvitationStateOutputDto;
+use Morefoto\Access\Application\Avatar\Dto\AvatarOutputDto;
+use Morefoto\Access\Application\Avatar\Mapper\AvatarOutputMapper;
+use Morefoto\Access\Domain\Staff\Service\StaffCountFacets;
+use Rebit\Share\Application\Contract\Auth\Dto\StaffInvitationOutputDto;
+use Rebit\Share\Application\Contract\Auth\StaffIdentityGatewayInterface;
 
+/**
+ * Отдаёт организатору справочник сотрудников: страницу списка с фильтрами и плитками по статусу и роли, карточку с
+ * назначениями и данные формы назначений с подписью состояния. Приглашение и аватар — без ссылок и токенов доступа.
+ */
 final readonly class StaffDirectoryUseCase
 {
     public function __construct(
@@ -27,18 +37,34 @@ final readonly class StaffDirectoryUseCase
         private InstitutionAssignmentRepository $institutions,
         private GroupAssignmentRepository $groups,
         private InstitutionAccessInterface $access,
+        private StaffIdentityGatewayInterface $identities,
+        private AvatarOutputMapper $avatars,
+        private StaffCountFacets $facets,
     ) {}
 
     public function list(int $actorUserId, ListStaffInputDto $input): StaffPageOutputDto
     {
         $this->authorization->assertCan($actorUserId, PermissionEnum::STAFF_MANAGE);
         [$result, $total] = $this->staff->list($input);
-        $items = [];
+        $rows = [];
         while (false !== ($row = $result->fetch())) {
-            $items[] = $this->summary($row);
+            $rows[] = $row;
+        }
+        $pending = [];
+        foreach ($rows as $row) {
+            if (1 === (int)$row['AUTH_PENDING']) {
+                $pending[] = (int)$row['UF_USER_ID'];
+            }
+        }
+        $invitations = [] === $pending ? [] : $this->identities->invitations($pending);
+        $items = [];
+        foreach ($rows as $row) {
+            $items[] = $this->summary($row, $invitations[(int)$row['UF_USER_ID']] ?? null);
         }
 
-        return new StaffPageOutputDto($items, $input->page, $input->pageSize, $total);
+        $facets = $this->facets->split($this->staff->counts($input), $input->role, $input->accountStatus);
+
+        return new StaffPageOutputDto($items, $input->page, $input->pageSize, $total, $facets['byAccountStatus'], $facets['byRole']);
     }
 
     public function get(int $actorUserId, int $userId): StaffDetailOutputDto
@@ -83,6 +109,8 @@ final readonly class StaffDirectoryUseCase
             institutionIds: $institutionIds,
             groupIds: $groupIds,
             assignmentSignature: $this->access->signature(),
+            invitation: 1 === (int)$row['AUTH_PENDING'] ? $this->invitation($this->identities->invitations([$profile->userId])[$profile->userId] ?? null) : null,
+            avatar: $this->avatar($profile->userId, $row),
         );
     }
 
@@ -132,7 +160,7 @@ final readonly class StaffDirectoryUseCase
         $staff = [];
         $result = $this->staff->all();
         while (false !== ($row = $result->fetch())) {
-            $staff[] = $this->summary($row);
+            $staff[] = $this->summary($row, null);
         }
         if ($signature !== $this->access->signature()) {
             throw new HttpException('ASSIGNMENTS_CHANGED', 409);
@@ -142,7 +170,7 @@ final readonly class StaffDirectoryUseCase
     }
 
     /** @param array<string,mixed> $row */
-    private function summary(array $row): StaffOutputDto
+    private function summary(array $row, ?StaffInvitationOutputDto $invitation): StaffOutputDto
     {
         $profile = $this->staff->profile($row);
 
@@ -156,7 +184,20 @@ final readonly class StaffDirectoryUseCase
             accessRevision: $profile->accessRevision,
             accountStatus: $this->status($row, $profile->active),
             assignmentCount: (int)$row['ASSIGNMENT_COUNT'],
+            invitation: $this->invitation($invitation),
+            avatar: $this->avatar($profile->userId, $row),
         );
+    }
+
+    /** @param array<string,mixed> $row */
+    private function avatar(int $userId, array $row): ?AvatarOutputDto
+    {
+        return $this->avatars->map($userId, null === ($row['AVATAR_VERSION'] ?? null) ? null : (int)$row['AVATAR_VERSION']);
+    }
+
+    private function invitation(?StaffInvitationOutputDto $invitation): ?StaffInvitationStateOutputDto
+    {
+        return null === $invitation ? null : new StaffInvitationStateOutputDto($invitation->sentAt, $invitation->expiresAt, $invitation->state);
     }
 
     /** @param array<string,mixed> $row */

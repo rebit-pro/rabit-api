@@ -53,7 +53,7 @@ defineProps<{ quote: CartQuote }>();
   align-items: center;
   gap: 14px;
   padding: 18px 0;
-  border-bottom: 1px solid #e5ecf0;
+  border-bottom: 1px solid var(--mf-color-border);
 }
 .order-composition li:last-child {
   border-bottom: 0;
@@ -73,7 +73,7 @@ defineProps<{ quote: CartQuote }>();
   line-height: 1.6;
 }
 .order-composition__description p {
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   font-size: 12px;
 }
 .order-composition__price {
@@ -82,12 +82,12 @@ defineProps<{ quote: CartQuote }>();
 }
 .order-composition__description .order-composition__benefit,
 .order-composition__gift {
-  color: #24658a;
+  color: var(--mf-color-link);
 }
 .order-composition__gift {
   font-size: 13px;
   line-height: 1.6;
-  background: #eaf3f9;
+  background: var(--mf-color-selected);
   border-radius: 6px;
   padding: 12px;
   margin-top: 12px;

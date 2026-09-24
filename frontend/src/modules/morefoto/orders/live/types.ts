@@ -122,7 +122,14 @@ export interface StaffOrderFilters {
 }
 export interface StaffOrderPage {
   items: StaffOrder[];
-  meta: { page: number; pageSize: number; total: number; totalPages: number };
+  meta: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    /** U5: the search without its production filter; payment split comes with the payment provider (G1). */
+    summary?: { total: number; byProductionStatus: Record<string, number> };
+  };
 }
 export interface CheckoutBody {
   lines: { assignmentId: string; productId: string; quantity: number }[];

@@ -56,10 +56,10 @@ defineProps<{ gallery: GallerySnapshot }>();
 }
 .checkout-terms dd {
   margin: 0;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 .checkout-terms details {
-  border-top: 1px solid #dce4ea;
+  border-top: 1px solid var(--mf-color-border);
   margin-top: 24px;
   padding-top: 18px;
   font-size: 13px;
@@ -67,10 +67,10 @@ defineProps<{ gallery: GallerySnapshot }>();
 }
 .checkout-terms summary {
   cursor: pointer;
-  color: #24658a;
+  color: var(--mf-color-link);
 }
 .checkout-terms details p {
   margin-top: 12px;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 </style>

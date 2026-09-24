@@ -1,6 +1,6 @@
 import { isAxiosError } from 'axios';
 import api from '@/api/http';
-import type { AssignmentOptions, StaffDetail, StaffDraft, StaffFilters, StaffMutationResult, StaffPage } from './model';
+import type { AssignmentOptions, StaffDetail, StaffDraft, StaffFilters, StaffInvitation, StaffMutationResult, StaffPage } from './model';
 
 export const staffApi = {
   async list(filters: StaffFilters, page = 1): Promise<StaffPage> {
@@ -10,7 +10,7 @@ export const staffApi = {
         pageSize: 25,
         ...(filters.q ? { q: filters.q } : {}),
         ...(filters.role ? { role: filters.role } : {}),
-        ...(filters.active === null ? {} : { active: filters.active })
+        ...(filters.accountStatus ? { accountStatus: filters.accountStatus } : {})
       },
       unwrapEnvelope: false
     });
@@ -21,6 +21,9 @@ export const staffApi = {
   },
   async options(): Promise<AssignmentOptions> {
     return (await api.get<AssignmentOptions>('/api/v1/users/assignment-options')).data;
+  },
+  async resendInvitation(id: number): Promise<StaffInvitation> {
+    return (await api.post<StaffInvitation>('/api/v1/users/' + id + '/invitations')).data;
   },
   async save(draft: StaffDraft): Promise<StaffMutationResult> {
     const body = {
@@ -48,6 +51,8 @@ export function staffError(cause: unknown): string {
   if (code === 'ASSIGNMENTS_CHANGED' || code === 'STAFF_VERSION_CONFLICT')
     return 'Данные изменились. Загрузите актуальную версию и повторите действие.';
   if (code === 'EMAIL_OCCUPIED') return 'Этот email уже связан с другим сотрудником.';
+  if (code === 'RATE_LIMITED') return 'Приглашение только что отправлено. Повторить можно через минуту.';
+  if (code === 'INVITATION_NOT_AVAILABLE') return 'Приглашение не нужно: сотрудник уже задал пароль или его доступ отключён.';
   switch (cause.response?.status) {
     case 401:
       return 'Сессия завершена. Войдите снова.';

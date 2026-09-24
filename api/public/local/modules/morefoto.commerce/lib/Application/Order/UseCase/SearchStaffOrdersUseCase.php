@@ -12,8 +12,9 @@ use Morefoto\Commerce\Domain\Order\Repository\OrderRepository;
 use Morefoto\Commerce\Domain\Order\Service\OrderCalendarPolicy;
 use Morefoto\Commerce\Domain\Order\ValueObject\OrderSearchCriteria;
 
-/** Ищет заказы для организатора и куратора строго в их области с фильтрами и пагинацией на стороне БД.
- * Страница собирается тремя запросами без N+1, а перед выдачей права сотрудника сверяются повторно.
+/** Ищет заказы для организатора и куратора строго в их области с фильтрами и пагинацией на стороне БД и считает,
+ * сколько найденных заказов на каждом этапе изготовления. Всё собирается четырьмя запросами без N+1, а перед выдачей
+ * права сотрудника сверяются повторно.
  */
 final readonly class SearchStaffOrdersUseCase
 {
@@ -39,6 +40,17 @@ final readonly class SearchStaffOrdersUseCase
             createdBefore: null === $input->dateTo ? null : $this->calendar->dayStart($input->dateTo, true),
         );
         $total = $this->orders->count($criteria);
+        // Production tiles filter the list themselves, so their counts ignore the production filter of the search.
+        $byProductionStatus = $this->orders->productionCounts(new OrderSearchCriteria(
+            institutionScope: $criteria->institutionScope,
+            query: $criteria->query,
+            institutionId: $criteria->institutionId,
+            shootId: $criteria->shootId,
+            groupId: $criteria->groupId,
+            paymentStatus: $criteria->paymentStatus,
+            createdFrom: $criteria->createdFrom,
+            createdBefore: $criteria->createdBefore,
+        ));
         /** @var array<int, array<string, mixed>> $rows */
         $rows = [];
         $result = $this->orders->page($criteria, $input->pageSize, ($input->page - 1) * $input->pageSize);
@@ -59,6 +71,6 @@ final readonly class SearchStaffOrdersUseCase
         }
         $this->access->assertUnchanged($actorId, $scope);
 
-        return new StaffOrderPageOutputDto($items, $input->page, $input->pageSize, $total);
+        return new StaffOrderPageOutputDto($items, $input->page, $input->pageSize, $total, $byProductionStatus);
     }
 }

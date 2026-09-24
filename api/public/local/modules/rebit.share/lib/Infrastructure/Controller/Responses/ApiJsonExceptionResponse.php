@@ -13,7 +13,8 @@ use Rebit\Share\Shared\Exception\ValidationHttpException;
 /** @extends AbstractResponse<ControllerJson> */
 final class ApiJsonExceptionResponse extends AbstractResponse
 {
-    private const array ALLOWED_STATUSES = [400, 401, 403, 404, 409, 413, 422, 503];
+    /** 410 — the access link is spent or expired, 429 — a repeated letter before its cooldown (B4 contracts). */
+    private const array ALLOWED_STATUSES = [400, 401, 403, 404, 409, 410, 413, 422, 429, 503];
 
     public function __construct(
         private readonly \Throwable $exception,

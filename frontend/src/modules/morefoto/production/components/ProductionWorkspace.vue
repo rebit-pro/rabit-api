@@ -103,8 +103,8 @@ function action(kind: ProductionCommand['kind'], orderId?: string, packed?: bool
 }
 .production-demo {
   font-size: 13px;
-  color: #62737e;
-  border-left: 3px solid #1c7b78;
+  color: var(--mf-color-text-secondary);
+  border-left: 3px solid var(--mf-color-primary);
   padding: 4px 12px;
 }
 .production-filters {
@@ -133,7 +133,7 @@ function action(kind: ProductionCommand['kind'], orderId?: string, packed?: bool
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   padding: 20px;
-  background: #f3f7f6;
+  background: var(--mf-color-bg);
   border-radius: 12px;
 }
 .production-metrics div {
@@ -144,11 +144,11 @@ function action(kind: ProductionCommand['kind'], orderId?: string, packed?: bool
 .production-metrics strong {
   font-size: 32px;
   line-height: 1.2;
-  color: #166864;
+  color: var(--mf-color-link);
 }
 .production-metrics span {
   font-size: 14px;
-  color: #435863;
+  color: var(--mf-color-text-secondary);
 }
 .production-version {
   max-width: 240px;
@@ -160,7 +160,7 @@ function action(kind: ProductionCommand['kind'], orderId?: string, packed?: bool
   gap: 20px;
   align-items: center;
   padding: 20px 0;
-  border-top: 1px solid #dce3e8;
+  border-top: 1px solid var(--mf-color-border);
   margin-top: 16px;
 }
 .production-package > div {

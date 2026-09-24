@@ -23,7 +23,7 @@ final readonly class InstitutionAssignmentRepository
     /** @param list<int> $ids */
     public function assignments(array $ids): Result
     {
-        return $this->query('SELECT UF_INSTITUTION_ID, UF_ROLE, UF_USER_ID FROM b_hlbd_mf_institution_assignment WHERE UF_INSTITUTION_ID IN (' . $this->ids($ids) . ') ORDER BY UF_INSTITUTION_ID, UF_ROLE');
+        return $this->query('SELECT a.UF_INSTITUTION_ID, a.UF_ROLE, a.UF_USER_ID, u.NAME AS USER_NAME FROM b_hlbd_mf_institution_assignment a LEFT JOIN b_user u ON u.ID=a.UF_USER_ID WHERE a.UF_INSTITUTION_ID IN (' . $this->ids($ids) . ') ORDER BY a.UF_INSTITUTION_ID, a.UF_ROLE');
     }
 
     /** @return list<int> */

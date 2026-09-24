@@ -37,9 +37,15 @@ VERIFIERS = [
     ("verify-links.php", None, "F2 integration passed", ["zzzz-links"]),
     # D3: the browser leaves one untransferred staff request for the injected-failure check on MySQL.
     ("verify-transfers.php", "d3-transfers.json", "D3 integration passed", ["zzzzzz-transfers"]),
+    # B4: only SHA-256 of the links is stored, and the letter to the staff member created by the B2 spec holds the live one.
+    ("verify-access.php", None, "B4 access integration passed", ["staff", "zz-access"]),
+    # B3: avatar rows and files match the browser steps.
+    ("verify-avatar.php", None, "B3 avatar integration passed", ["zz-avatar"]),
 ]
 # Production images have no Xdebug; the development one would try to reach a debugger on every PHP request.
 PHP_ENV = ["--env", "XDEBUG_MODE=off"]
+# DS-12: a test-only organizer contact for the «Помощь» section of the profile.
+SUPPORT = ["--env", "MOREFOTO_SUPPORT_NAME=Организатор E2E", "--env", "MOREFOTO_SUPPORT_EMAIL=support@example.invalid", "--env", "MOREFOTO_SUPPORT_PHONE=+7 900 000-00-00"]
 LOCK = threading.RLock()
 FAILED = threading.Event()
 STARTED = time.monotonic()
@@ -283,7 +289,7 @@ def open_stand(state, args, stand, notification):
     def serve():
         service(state, name + "-fpm", *network, "--network-alias", "api-php-fpm", "--user", "0", *PHP_ENV, "--entrypoint", "php-fpm",
                 *php_mounts(state, stand), "--env", "APP_ENV=test", "--env", "APP_DEBUG=0", "--env", "REBIT_GEETEST_ENABLED=0",
-                "--env", "REBIT_GEETEST_BYPASS=1", *amqp, *media, "--env", "MOREFOTO_CHECKOUT_ENABLED=1", args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
+                "--env", "REBIT_GEETEST_BYPASS=1", *amqp, *media, "--env", "MOREFOTO_CHECKOUT_ENABLED=1", *SUPPORT, args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
         service(state, name + "-media", *network, *php, *amqp, *media, args.php_cli, "tools/e2e/consume-media.php")
         service(state, name + "-backend", *network, "--network-alias", "backend", *php_mounts(state, stand),
                 "--mount", f"type=bind,source={Path(state['report'], 'backend.conf')},target=/etc/nginx/conf.d/default.conf,readonly",

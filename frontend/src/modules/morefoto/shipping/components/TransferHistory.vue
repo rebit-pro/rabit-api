@@ -2,6 +2,7 @@
 import { packCount, printCountLabel } from '../display';
 import type { TransferSummary } from '../types';
 import { formatMoment } from '../../handoff/display';
+import MfStatus from '@/components/status/MfStatus.vue';
 defineProps<{ transfers: TransferSummary[] }>();
 </script>
 <template>
@@ -15,7 +16,7 @@ defineProps<{ transfers: TransferSummary[] }>();
             <h3>{{ t.number }} · {{ t.institutionName }}</h3>
             <p class="delivery-muted">{{ t.shootName }}</p>
           </div>
-          <v-chip color="success">Получено учреждением</v-chip>
+          <MfStatus tone="success">Получено учреждением</MfStatus>
         </div>
         <p>
           <strong>{{ formatMoment(t.at) }}</strong>

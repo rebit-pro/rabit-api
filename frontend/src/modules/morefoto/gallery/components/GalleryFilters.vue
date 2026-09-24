@@ -50,7 +50,7 @@ defineEmits<{ select: [code: string] }>();
 
 <style scoped>
 .gallery-filters {
-  border-top: 1px solid #dce4ea;
+  border-top: 1px solid var(--mf-color-border);
   padding: var(--mf-space-6) 0;
 }
 .gallery-filters__top,
@@ -88,7 +88,7 @@ defineEmits<{ select: [code: string] }>();
 }
 .gallery-count {
   flex-shrink: 0;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   font-size: 14px;
 }
 @media (max-width: 767px) {

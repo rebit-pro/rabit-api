@@ -142,17 +142,19 @@ final class PhotoListContractTest extends TestCase
             revision: 5,
             meta: ['page' => 1, 'pageSize' => 48, 'total' => 1],
             summary: new PhotoGroupSummaryOutputDto(photos: 1, unassigned: 0, children: ['A']),
+            stats: ['byStatus' => ['processing' => 2, 'ready' => 1, 'failed' => 0, 'duplicate' => 0], 'unassigned' => 0],
         );
 
         $json = $this->json($mapper->page($output));
 
-        self::assertSame(['items', 'groups', 'covers', 'revision', 'meta', 'summary'], array_keys($json));
+        self::assertSame(['items', 'groups', 'covers', 'revision', 'meta', 'summary', 'stats'], array_keys($json));
         self::assertSame(['photos' => 1, 'unassigned' => 0, 'children' => ['A']], $json['summary']);
+        self::assertSame($output->stats, $json['stats']);
         self::assertSame(['page' => 1, 'pageSize' => 48, 'total' => 1], $json['meta']);
         self::assertSame([self::GROUP => self::PHOTO], $json['covers']);
         self::assertSame(self::PHOTO, $json['items'][0]['id']);
         self::assertSame('A001', $json['items'][0]['assignments'][0]['code']);
-        self::assertNull($this->json($mapper->page(new PhotoPageOutputDto([], [], [], 5, $output->meta, null)))['summary']);
+        self::assertNull($this->json($mapper->page(new PhotoPageOutputDto([], [], [], 5, $output->meta, null, $output->stats)))['summary']);
     }
 
     public function testControllerHasNoTechnicalAssembly(): void

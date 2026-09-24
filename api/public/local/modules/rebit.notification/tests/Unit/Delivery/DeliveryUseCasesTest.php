@@ -64,6 +64,34 @@ final class DeliveryUseCasesTest extends TestCase
         ));
     }
 
+    public function testPlainTextHashIsUnchangedAndHtmlJoinsTheHash(): void
+    {
+        $plain = new InMemoryDeliveryRepository();
+        (new QueueEmailUseCase($plain, new RecordingPublisher(), new FixedNotificationClock(), new NullLogger()))->queue($this->input());
+        $input = $this->input();
+        self::assertSame(
+            hash('sha256', implode("\0", ['email', 'buyer@example.test', $input->subject, $input->body, '3'])),
+            $plain->payloadHash,
+        );
+
+        $html = new InMemoryDeliveryRepository();
+        $useCase = new QueueEmailUseCase($html, new RecordingPublisher(), new FixedNotificationClock(), new NullLogger());
+        $operation = $useCase->queue(new EmailNotificationInputDto(
+            consumer: $input->consumer,
+            deduplicationKey: $input->deduplicationKey,
+            recipient: $input->recipient,
+            subject: $input->subject,
+            body: $input->body,
+            bodyHtml: '<p>Чек</p>',
+        ));
+        self::assertNotSame($plain->payloadHash, $html->payloadHash);
+        self::assertSame('<p>Чек</p>', $html->operation?->bodyHtml);
+        self::assertSame('pending', $operation->status);
+
+        $this->expectException(NotificationDeduplicationConflictException::class);
+        $useCase->queue($input);
+    }
+
     public function testAcceptedMeansTransportAcceptedNotRecipientDelivered(): void
     {
         $repository = $this->pendingRepository();
@@ -237,7 +265,7 @@ final class RecordingEmailTransport implements EmailTransportInterface
 final class InMemoryDeliveryRepository implements DeliveryOperationRepositoryInterface
 {
     public ?DeliveryOperationDto $operation = null;
-    private ?string $payloadHash = null;
+    public ?string $payloadHash = null;
 
     public function createOrGet(
         string $id,
@@ -262,6 +290,7 @@ final class InMemoryDeliveryRepository implements DeliveryOperationRepositoryInt
             status: 'pending',
             attempts: 0,
             maxAttempts: $input->maxAttempts,
+            bodyHtml: $input->bodyHtml,
         );
 
         return $this->operation;

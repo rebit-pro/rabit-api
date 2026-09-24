@@ -31,7 +31,7 @@ defineProps<{ attempts: PaymentAttempt[] }>();
 }
 .payment-history__item {
   padding: 18px 0;
-  border-bottom: 1px solid #dce4ea;
+  border-bottom: 1px solid var(--mf-color-border);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -45,11 +45,11 @@ defineProps<{ attempts: PaymentAttempt[] }>();
   gap: 16px;
 }
 .payment-history__status {
-  color: #24658a;
+  color: var(--mf-color-link);
   margin: 8px 0;
 }
 .payment-history__date {
   font-size: 12px;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 </style>

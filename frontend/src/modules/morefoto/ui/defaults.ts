@@ -1,3 +1,4 @@
+import { MF_SEA } from '@/theme/tokens';
 /** Shared geometry and native Vuetify behavior; business rules belong to feature modules. */
 const field = {
   variant: 'outlined',
@@ -26,5 +27,7 @@ export const morefotoUiDefaults = {
     hideDetails: 'auto',
     inset: true
   },
-  VTooltip: { location: 'top' }
+  VTooltip: { location: 'top' },
+  // Cold scrim on the base of sea-900 (design plan 7.3).
+  VDialog: { scrim: MF_SEA[900], opacity: 0.48 }
 };

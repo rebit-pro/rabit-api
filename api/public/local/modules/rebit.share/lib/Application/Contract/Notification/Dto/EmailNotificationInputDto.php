@@ -13,6 +13,8 @@ final readonly class EmailNotificationInputDto
         public string $subject,
         public string $body,
         public int $maxAttempts = 3,
+        /** Optional HTML variant built by the sender; the plain-text body stays the fallback. */
+        public ?string $bodyHtml = null,
     ) {
         if (1 !== preg_match('/^[a-z0-9][a-z0-9._-]{1,63}$/D', $this->consumer)) {
             throw new \InvalidArgumentException('Invalid notification consumer.');

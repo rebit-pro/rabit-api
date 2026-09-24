@@ -9,7 +9,15 @@ import { assignPhotos, chooseCover, moveChild } from '../service';
 import { freeChildCode, validChildCode } from '../rules';
 import { localPhotoPage, photoFilter, photoPage, photoPages, photoPageSize, type PhotoGroupSummary } from '../paging';
 import { managedPreviewSource } from '../previews';
-import { childTransferError, photoApiError, photoApiErrorCode, photosApi, type PhotoListQuery, type ServerPhoto } from '../api';
+import {
+  childTransferError,
+  photoApiError,
+  photoApiErrorCode,
+  photosApi,
+  type PhotoListQuery,
+  type ServerPhoto,
+  type ServerPhotoStats
+} from '../api';
 import type { ManagedGroup, ManagedInstitution, OrganizationSnapshot, PhotoShoot } from '../../organization/types';
 import type { Group } from '../../structure/model';
 import type { ManagedPhoto } from '../types';
@@ -20,6 +28,7 @@ interface PageData {
   total: number;
   summary: PhotoGroupSummary;
   covers: Record<string, string>;
+  stats?: ServerPhotoStats | null;
 }
 const emptySummary: PhotoGroupSummary = { photos: 0, unassigned: 0, children: [] };
 function isReady(item: ServerPhoto): item is ReadyPhoto {
@@ -66,6 +75,8 @@ export function usePhotoWorkspace() {
   const items = shallowRef<ManagedPhoto[]>([]);
   const total = shallowRef(0);
   const summary = shallowRef<PhotoGroupSummary>(emptySummary);
+  // Live only: the demo keeps ready frames in the browser and has nothing in processing.
+  const stats = shallowRef<ServerPhotoStats | null>(null);
   const cover = shallowRef<{ id: string; thumbSrc: string }>();
   const mediaRevision = shallowRef(1);
   const mediaLoading = shallowRef(false);
@@ -123,6 +134,7 @@ export function usePhotoWorkspace() {
     items.value = next.items;
     total.value = next.total;
     summary.value = next.summary;
+    stats.value = next.stats ?? null;
     cover.value = coverId ? { id: coverId, thumbSrc: coverSource(coverId, next.items) } : undefined;
     selected.value = selected.value.filter((id) => next.items.some((item) => item.id === id));
     // A page emptied by labelling or a child moved to another group must not leave the screen on an empty view.
@@ -157,7 +169,8 @@ export function usePhotoWorkspace() {
         items: result.items.filter(isReady).map(managedPhoto),
         total: result.meta.total,
         summary: result.summary ?? emptySummary,
-        covers: result.covers
+        covers: result.covers,
+        stats: result.stats ?? null
       });
       return true;
     } catch (cause) {
@@ -396,6 +409,7 @@ export function usePhotoWorkspace() {
     pages,
     setPage,
     summary,
+    stats,
     childCodes,
     childPhotos,
     cover,

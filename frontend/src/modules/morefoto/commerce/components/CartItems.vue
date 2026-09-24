@@ -48,8 +48,8 @@ const groups = computed(() =>
   gap: var(--mf-space-3);
   padding: var(--mf-space-4);
   margin-top: var(--mf-space-6);
-  background: #eaf3f9;
-  color: #24658a;
+  background: var(--mf-color-selected);
+  color: var(--mf-color-link);
   border-radius: var(--mf-radius-field);
   font-size: var(--mf-text-small);
 }

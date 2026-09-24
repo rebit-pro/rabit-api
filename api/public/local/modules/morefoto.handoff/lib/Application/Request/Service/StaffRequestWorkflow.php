@@ -38,7 +38,8 @@ final readonly class StaffRequestWorkflow
 
     public function list(int $actorId, StaffRequestListInputDto $input): StaffRequestListOutputDto
     {
-        $actor = $this->actor($actorId, ['organizer', 'curator', 'teacher']);
+        // DS-14: the head of an institution reads its lists; changing them stays with the teacher, curator and organizer.
+        $actor = $this->actor($actorId, ['organizer', 'curator', 'head', 'teacher']);
         $page = $this->requests->page($actor, $input->institutionId, $input->shootId, $input->status, $input->pageSize, ($input->page - 1) * $input->pageSize);
         $items = [];
         foreach ($page['items'] as $item) {
@@ -52,12 +53,13 @@ final readonly class StaffRequestWorkflow
             pageSize: $input->pageSize,
             total: $page['total'],
             totalPages: (int)ceil($page['total'] / $input->pageSize),
+            byStatus: $page['byStatus'],
         );
     }
 
     public function detail(int $actorId, string $requestId): StaffRequestOutputDto
     {
-        $actor = $this->actor($actorId, ['organizer', 'curator', 'teacher']);
+        $actor = $this->actor($actorId, ['organizer', 'curator', 'head', 'teacher']);
         $request = $this->required($requestId);
         $this->assertVisible($actor, $request);
 
@@ -209,7 +211,7 @@ final readonly class StaffRequestWorkflow
     {
         $visible = match ($actor->role) {
             'organizer' => true,
-            'curator' => in_array((int)$request['INSTITUTION_ID'], $actor->institutionIds, true),
+            'curator', 'head' => in_array((int)$request['INSTITUTION_ID'], $actor->institutionIds, true),
             'teacher' => (int)$request['CREATED_BY'] === $actor->id
                 && [] === array_diff($this->requests->groupIds((int)$request['ID']), $actor->groupIds),
             default => false,

@@ -25,6 +25,7 @@ final readonly class PhotoListResultMapper
                 unassigned: $summary->unassigned,
                 children: $summary->children,
             ),
+            stats: $output->stats,
         );
     }
 }

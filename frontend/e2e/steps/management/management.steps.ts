@@ -68,7 +68,7 @@ async function groupConditions(p: Page, base: string, group = 'sun-stars') {
 }
 async function ownPrice(p: Page, base: string, value = '420') {
   await groupConditions(p, base);
-  await p.getByLabel('Наследовать общий прайс и предложения', { exact: true }).uncheck();
+  await p.getByLabel('Собственные условия группы', { exact: true }).check();
   await p.getByLabel('Цена: ' + productName, { exact: true }).fill(value);
   await save(p);
 }
@@ -187,7 +187,7 @@ Then('R09 возвращает наследование условий', async f
   const p = page(this);
   await ownPrice(p, this.baseUrl);
   await groupConditions(p, this.baseUrl);
-  await p.getByLabel('Наследовать общий прайс и предложения', { exact: true }).check();
+  await p.getByLabel('Общие условия каталога', { exact: true }).check();
   await save(p);
   await changePrice(p, this.baseUrl, '320');
   await addPhoto(p, this.baseUrl);
@@ -238,7 +238,7 @@ Then('R09 применяет подарок после скидки сотруд
     );
   });
   await groupConditions(p, this.baseUrl, 'sun-staff');
-  await p.getByLabel('Наследовать общий прайс и предложения', { exact: true }).uncheck();
+  await p.getByLabel('Собственные условия группы', { exact: true }).check();
   await p.getByLabel('Порог подарка, ₽', { exact: true }).fill('180');
   await p.getByLabel('Подарок также действует для сотрудников', { exact: true }).check();
   await save(p);

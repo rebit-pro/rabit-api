@@ -16,9 +16,9 @@ use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 /**
  * Формирует защищённую страницу фотографий для рабочего пространства разметки.
  *
- * Применяет серверные фильтры группы, ребёнка, разметки и статуса, а для выбранной группы добавляет сводку
- * по её готовым кадрам: сколько их, сколько без ребёнка и какие коды детей заняты. Так экран работает
- * с одной страницей и не выкачивает съёмку целиком.
+ * Применяет серверные фильтры группы, ребёнка, разметки и статуса, считает разбивку обработки всей съёмки или
+ * выбранной группы, а для выбранной группы добавляет сводку по её готовым кадрам: сколько их, сколько без ребёнка
+ * и какие коды детей заняты. Так экран работает с одной страницей и не выкачивает съёмку целиком.
  */
 final readonly class ListPhotosUseCase
 {
@@ -58,6 +58,7 @@ final readonly class ListPhotosUseCase
             revision: $this->media->revision($scope->shootId),
             meta: ['page' => $input->page, 'pageSize' => $input->pageSize, 'total' => $total],
             summary: null === $scope->groupId ? null : $this->summary($scope->shootId, $scope->groupId),
+            stats: $this->photos->stats($scope->shootId, $scope->groupId),
         );
     }
 

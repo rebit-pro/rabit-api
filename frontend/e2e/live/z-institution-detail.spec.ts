@@ -45,9 +45,10 @@ async function detail(page: Page, id: string, query = '') {
   ).data;
 }
 async function role(page: Page, name: 'c4-curator' | 'c4-head') {
-  const logout = page.getByRole('button', { name: 'Выйти', exact: true });
-  if (await logout.count()) {
-    await logout.click();
+  const userMenu = page.getByRole('button', { name: 'Меню пользователя', exact: true });
+  if (await userMenu.count()) {
+    await userMenu.click();
+    await page.getByRole('button', { name: 'Выйти', exact: true }).click();
     await expect(page).toHaveURL(/\/login$/);
   }
   await page.goto('/login');
@@ -56,6 +57,9 @@ async function role(page: Page, name: 'c4-curator' | 'c4-head') {
   const profile = page.waitForResponse((r) => new URL(r.url()).pathname === '/api/v1/me');
   await page.getByRole('button', { name: 'Войти', exact: true }).click();
   const data = (await (await profile).json()).data;
+  // U6: every staff role lands on the overview; the scenario continues from the profile as before.
+  await expect(page).toHaveURL(/\/cabinet\/overview$/);
+  await page.goto('/cabinet/profile');
   await expect(page.getByRole('heading', { name: 'Профиль', exact: true })).toBeVisible();
   return data;
 }
@@ -204,6 +208,8 @@ test('C4: куратор и руководитель читают только �
       expect(data).not.toHaveProperty('assignmentSignature');
       expect(data.curatorId).toBe(curator.id);
       expect(data.headId).toBe(head.id);
+      // DS-11: the card names the responsible staff instead of their numbers.
+      expect([data.curatorName, data.headName]).toEqual([curator.name, head.name]);
       expect(
         (
           await viewer.request.get(`${api}/${foreign.id}`, {
@@ -212,6 +218,9 @@ test('C4: куратор и руководитель читают только �
         ).status()
       ).toBe(404);
       await viewer.goto(`${cabinet}/${own.id}`);
+      await expect(viewer.getByTestId('institution-curator')).toContainText(curator.name);
+      await expect(viewer.getByTestId('institution-head')).toContainText(head.name);
+      await expect(viewer.getByTestId('institution-overview')).not.toContainText('Сотрудник №');
       await expect(shoots(viewer).getByTestId('structure-row')).toHaveCount(1);
       await expect(groups(viewer).getByTestId('structure-row')).toHaveCount(1);
       await expect(viewer.getByRole('button', { name: 'Новая съёмка', exact: true })).toHaveCount(0);
@@ -366,7 +375,7 @@ test('C4: отзыв сессии при обновлении карточки �
   try {
     await login(await context.newPage());
     await page.getByRole('button', { name: 'Обновить список', exact: true }).click();
-    await expect(page).toHaveURL(/\/login\?reason=session-expired$/);
+    await expect(page).toHaveURL(/\/login\?reason=revoked$/);
     await page.getByRole('textbox', { name: 'Email', exact: true }).fill('organizer@example.invalid');
     await page.getByLabel('Пароль', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Войти', exact: true }).click();

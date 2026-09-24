@@ -53,7 +53,15 @@ final readonly class InstitutionAccess implements InstitutionAccessInterface
         while (false !== ($row = $result->fetch())) {
             $id = (int)$row['UF_INSTITUTION_ID'];
             $old = $map[$id] ?? new InstitutionAssignmentOutputDto();
-            $map[$id] = new InstitutionAssignmentOutputDto('curator' === $row['UF_ROLE'] ? (int)$row['UF_USER_ID'] : $old->curatorId, 'head' === $row['UF_ROLE'] ? (int)$row['UF_USER_ID'] : $old->headId);
+            $curator = 'curator' === $row['UF_ROLE'];
+            $head = 'head' === $row['UF_ROLE'];
+            $name = null === ($row['USER_NAME'] ?? null) || '' === trim((string)$row['USER_NAME']) ? null : trim((string)$row['USER_NAME']);
+            $map[$id] = new InstitutionAssignmentOutputDto(
+                curatorId: $curator ? (int)$row['UF_USER_ID'] : $old->curatorId,
+                headId: $head ? (int)$row['UF_USER_ID'] : $old->headId,
+                curatorName: $curator ? $name : $old->curatorName,
+                headName: $head ? $name : $old->headName,
+            );
         }
 
         return $map;

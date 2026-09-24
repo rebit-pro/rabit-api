@@ -63,7 +63,7 @@ watch(
     notice.value = '';
   }
 );
-const title = computed(() => (props.mode === 'users' ? 'Пользователи' : props.mode === 'conditions' ? 'Условия группы' : 'Каталог и цены'));
+const title = computed(() => (props.mode === 'users' ? 'Сотрудники' : props.mode === 'conditions' ? 'Условия группы' : 'Каталог и цены'));
 const dialogTitle = computed(() =>
   command.value?.kind === 'product'
     ? 'Продукция'
@@ -269,8 +269,8 @@ function edit(id: string) {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
-  background: #dce3e8;
-  border: 1px solid #dce3e8;
+  background: var(--mf-color-border);
+  border: 1px solid var(--mf-color-border);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -279,7 +279,7 @@ function edit(id: string) {
   flex-direction: column;
   gap: 8px;
   padding: 20px;
-  background: white;
+  background: var(--mf-color-surface);
   min-width: 0;
 }
 .management-summary strong {

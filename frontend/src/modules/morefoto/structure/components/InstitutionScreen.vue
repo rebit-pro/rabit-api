@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, shallowRef } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import MfBreadcrumbs from '@/components/navigation/MfBreadcrumbs.vue';
 import AdminDialog from '../../management/components/AdminDialog.vue';
 import InstitutionOverview from './InstitutionOverview.vue';
 import InstitutionCollection from './InstitutionCollection.vue';
@@ -42,9 +43,7 @@ function editInstitution(): void {
 }
 </script>
 <template>
-  <nav class="mf-actions mb-5" aria-label="Навигация по структуре">
-    <RouterLink to="/cabinet/institutions">Учреждения</RouterLink>
-  </nav>
+  <MfBreadcrumbs :items="[{ title: 'Учреждения', to: '/cabinet/institutions' }, { title: snapshot?.name ?? 'Учреждение' }]" />
   <header class="mf-page-heading">
     <p class="mf-eyebrow">ОРГАНИЗАЦИЯ СЪЁМОК</p>
     <h1 class="institution-title">{{ snapshot?.name ?? 'Учреждение' }}</h1>

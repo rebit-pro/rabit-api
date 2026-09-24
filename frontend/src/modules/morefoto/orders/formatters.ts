@@ -7,6 +7,8 @@ export const paymentLabels = {
   declined: 'Оплата отклонена',
   paid: 'Оплачено · демонстрация'
 };
+/** Live screens show a real payment without the demo mark (design plan 10.5). */
+export const livePaymentLabels: Record<keyof typeof paymentLabels, string> = { ...paymentLabels, paid: 'Оплачено' };
 export const productionLabels = {
   'not-started': 'Не начато',
   queued: 'В очереди',

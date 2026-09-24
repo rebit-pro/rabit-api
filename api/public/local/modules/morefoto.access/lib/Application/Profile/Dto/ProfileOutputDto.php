@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Access\Application\Profile\Dto;
 
+use Morefoto\Access\Application\Avatar\Dto\AvatarOutputDto;
 use Rebit\Share\Application\Interface\ResultDtoInterface;
 
 final readonly class ProfileOutputDto implements ResultDtoInterface
@@ -17,5 +18,7 @@ final readonly class ProfileOutputDto implements ResultDtoInterface
         public bool $active,
         public int $accessRevision,
         public array $permissions,
+        public ?AvatarOutputDto $avatar = null,
+        public ?SupportContactOutputDto $support = null,
     ) {}
 }
