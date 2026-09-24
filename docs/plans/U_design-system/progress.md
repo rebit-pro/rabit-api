@@ -2,16 +2,14 @@
 
 ## Точка продолжения
 
-- Дата: 2026-09-23.
-- Ветка: `codex/u-design-system` от `main` `bb35665` (merge PR #50), влит `main` `3987390`; worktree `/home/user/rabit-api-worktrees/u-design-system`.
-- PR: [#53](https://github.com/rebit-pro/rabit-api/pull/53) draft, base `main`; head — коммиты U1–U4, серия B4 и этот журнал.
-- Документация: [план](plan.md), мастер-план [design-ux-plan](../design-ux-plan/plan.md), отчёт пакета [docs/waves/design-ux](../../waves/design-ux/README.md).
-- Завершено: U1, U2 (`d7c3661`), U3 (`1a944fa`), U4 (`c001fc5`, `eedc437`, `6962cf9`, `b869a00`), B4 (`3295ad1`, `92ae90d`, `717136b`, `74011c8`, `f5f2f68`, `faa8d6d`, `72f27e7`), B3 (`604d79c`, `42b7ec7`, `b196a78`), U5 (`b3c887f`, `a6953f2`), U6 (`585f8e3`, `e36213d`), DS-11 (`4825a8d`), слияние `main` (`7a2c978`), исправления по гейту (`35cc188`, `026f6e3`, `a3d4fe9`, `4229282`) — полный гейт на `4229282` зелёный; draft PR #53.
-- Сейчас: merge PR #53 в `main` и выкатка на app.morefoto36.ru (поручение пользователя 2026-09-23 ~15:15: «мерж в main и деплой, ошибки потом исправлю»).
-- Следующий шаг: после выкатки — demo Cucumber (DX-FIN-02) и визуальная проверка desktop/mobile (DX-FIN-03) на `main`, запись результата.
-- Блокеры: нет. Открытые решения: нет; follow-up B4 записаны в плане (письмо кода регистрации, отзыв ссылки при отключении pending-сотрудника, письма при смене email активного сотрудника).
-- Рабочее дерево: чистое после коммита журнала; node_modules — volume `rabit-u-node`, vendor — `rabit-u-vendor`; канонический `../MoreFoto` изменён на месте, копия до пакета — в scratchpad сессии (`morefoto-before`), патч пересоздаётся diff'ом.
-- Команды следующей проверки: быстрые frontend-проверки из раздела 11 плана; backend `vendor/bin/phpunit`, `phpstan analyse`, php-cs-fixer по изменённым файлам (образ `rabit-api-php-cli:d3-webp`, volume `rabit-u-vendor`); `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
+- Дата: 2026-09-25.
+- PR [#53](https://github.com/rebit-pro/rabit-api/pull/53) слит в `main` — merge `b20423f` (дерево равно проверенному `6cb9a73`, финальный gate на `30abfb8` — full gate PASS).
+- Выкачено на app.morefoto36.ru 2026-09-25 (ночь МСК): релиз `design-ux-20260924214616-b20423f` — backend (FPM, nginx, media consumer и dispatcher) и frontend `morefoto-frontend:design-ux-20260924214616-b20423f`; миграции `Version20260923120001…120003`; модуль `rebit.notification` зарегистрирован в `b_module`.
+- Открыто:
+  - доставка писем H1 для кабинета: нет воркера `app:notification:consume` / cron `dispatch-pending` в стеке `morefoto_stage_*` и нет настроек почты — письма приглашений и сброса пароля ставятся в очередь, но не уходят; нужны решение пользователя и данные SMTP;
+  - DX-FIN-02 (demo Cucumber) и DX-FIN-03 (визуальная проверка desktop/mobile) на `main`;
+  - контакт поддержки `MOREFOTO_SUPPORT_*` на проде не задан — раздел «Помощь» пишет «Контакт организатора пока не указан».
+- Откат: `docker service rollback` для `morefoto_stage_fpm`, `morefoto_stage_backend`, `morefoto_stage_media_consumer`, `morefoto_stage_media_dispatcher` (прежний `/app` — релиз `issues60-20260923102153-5e2df6a`) и `morefoto_frontend` (прежний образ в `frontend-before.txt` — `morefoto-frontend:issues64-20260923104946-d1a4c07`); спецификации — `services-before.json` релиза. Миграции только добавляют — старый код с ними работает; регистрация `rebit.notification` старому коду не мешает.
 
 ## Тест-кейсы
 
@@ -215,4 +213,20 @@
 - Перед гейтом в ветку влит `main` `b9a9a82` (PR #65: 60 кадров на странице) — `30abfb8`, без конфликтов; быстрые проверки (typecheck:e2e, ESLint, commerce 183/183).
 - DX-FIN-01 PASS на `30abfb8`: full gate, 102 браузерных сценария (a 64, b 38) и все верификаторы.
 - ~15:15 пользователь: «делаю деплой — мерж в main и деплой, ошибки потом исправлю». Demo Cucumber (278 сценариев) и визуальная проверка desktop/mobile переносятся на после выкатки; live-гейт, покрывающий production-режим, зелёный.
+
+### 2026-09-25 — merge и выкатка на app.morefoto36.ru
+
+- Пользователь вернулся и разрешил продолжить. Состояние не менялось: `main` на `b9a9a82`, PR #53 ready и CLEAN, прод — backend `issues60`, frontend `issues64`.
+- **Merge.** `gh pr merge 53 --merge --match-head-commit 6cb9a73…` → `b20423f`; `git diff --quiet b20423f 6cb9a73` — деревья равны, артефакты из `6cb9a73` годятся.
+- **Артефакты.** `git archive … api` (1890 файлов) и образ `morefoto-frontend:design-ux-20260924214616-b20423f` (`VITE_API_MOCKS_ENABLED=false`; в чанках есть «Хлебные крошки», «Только просмотр», «Вопросы по группе»). SHA256: `api.tar.gz` 0dd9f9b8…ae73, `frontend-image.tar.gz` b1d4fe0f…1668. Скрипты по образцу D3 (генератор в scratchpad сессии), `bash -n` и `sha256sum --check` на сервере — PASS.
+- **Подготовка.** `prepare-release.sh`: маркеры B3/B4 и миграции, `composer.lock` совпал с `issues60`, vendor оттуда; `services-before.json` для пяти сервисов; `app` 412 МБ.
+- **Резервная копия.** `backup.sh` — 59 452 байта, SHA256 2000d53e…; `restore-check.sh` — одноразовая MySQL, 159 таблиц — PASS.
+- **Миграции.** Образ `rabit-api-php-fpm:20260911-074507`, которым D3 запускал миграции, с сервера удалён — `migrate.sh` переведён на образ FPM `rabit-api-php-fpm:d3-webp`. `migrate.sh ls`: три новые версии не установлены; `migrate.sh up Version20260923120001 Version20260923120002 Version20260923120003` — success; в схеме есть `rebit_auth_access_link`, `mf_staff_avatar`, `b_rebit_notification_operation.BODY_HTML mediumtext NULL`.
+- **Backend.** `switch-backend.sh`: сначала FPM (`/health` 200, `/me` 401 JSON), затем nginx, media consumer и dispatcher — все 1/1, код релиза виден в контейнерах.
+- **Инцидент.** DI-smoke в FPM и HTTP-проверки: не собирались `AccessLinkController`, `StaffInvitationController`, `StaffListController` и `StaffController` — `EmailNotificationInterface` не найден. Причина: модуль `rebit.notification` на проде подключён ссылкой, но не зарегистрирован в `b_module`, поэтому `Loader::includeModule()` из `init.php` его не грузил, а B4 зависит от почты H1. E2E-стенд регистрирует модуль в `prepare.php`, поэтому гейт этого не видел. Затронуто около 20 минут ночью: список, создание и изменение сотрудников, приглашения и сброс пароля; вход и остальные экраны работали. Откат был отклонён классификатором авто-режима; пользователь выбрал исправление вперёд («установи все модули, которые необходимы»).
+- **Исправление.** `RegisterModule('rebit.notification')` из FPM — как в E2E-фикстуре: модуль и его DI, без публичных маршрутов модуля (`installModuleRouting` не вызывался). Других неустановленных модулей, нужных кабинету, нет (`rebit.leadhunter` кабинету не нужен). После регистрации DI-smoke 13/13; `/users` и `POST /users` — 401 JSON, `GET /auth/invitations/<неизвестный>` — 404 `LINK_NOT_FOUND`.
+- **Frontend.** `switch-frontend.sh`: 2/2 на `morefoto-frontend:design-ux-20260924214616-b20423f`, прежний образ `issues64-…` в `frontend-before.txt`.
+- **Smoke frontend.** `/health`, `/login`, `/cabinet/{overview,institutions,users,links,staff-requests,orders,catalog}`, `/access/recover` — 200; SHA-256 отдаваемого `index.html` равен файлу образа; отдаваемые `MfBreadcrumbs-C4mO4KgB.js`, `LinksPage-CgRPrjVA.js`, `OverviewPage-Dm46BMgS.js` содержат новый код.
+- **Не проверено на проде:** авторизованные сценарии (нужны учётные записи прода) — пользовательская проверка; фактическая отправка писем B4 — доставки H1 для кабинета нет (см. «Точку продолжения»).
+- Вывод для следующих выкаток: список модулей в `b_module` прода сверять с `prepare.php` E2E до переключения backend; DI-smoke в FPM подключать через `init.php` (он грузит модули так же, как HTTP).
 
