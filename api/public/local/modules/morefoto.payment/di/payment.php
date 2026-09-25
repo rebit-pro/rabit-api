@@ -67,7 +67,7 @@ return [
                 }
             }
 
-            return new PaymentSettings('' !== $connection->shopId && '' !== $connection->secretKey && str_starts_with($returnBaseUrl, 'https://'), $methods, $returnBaseUrl);
+            return new PaymentSettings('' !== $connection->shopId && '' !== $connection->secretKey && 1 === preg_match('#^https?://#', $returnBaseUrl), $methods, $returnBaseUrl);
         },
     ],
     PaymentClientFactory::class => [

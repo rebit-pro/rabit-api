@@ -41,11 +41,15 @@ VERIFIERS = [
     ("verify-access.php", None, "B4 access integration passed", ["staff", "zz-access"]),
     # B3: avatar rows and files match the browser steps.
     ("verify-avatar.php", None, "B3 avatar integration passed", ["zz-avatar"]),
+    # G1: attempts, money facts and order statuses agree; no buyer secret reaches the payment tables.
+    ("verify-payments.php", "g1-payments.json", "G1 payment integration passed", ["zzzzzzzzz-payments"]),
 ]
 # Production images have no Xdebug; the development one would try to reach a debugger on every PHP request.
 PHP_ENV = ["--env", "XDEBUG_MODE=off"]
 # DS-12: a test-only organizer contact for the «Помощь» section of the profile.
 SUPPORT = ["--env", "MOREFOTO_SUPPORT_NAME=Организатор E2E", "--env", "MOREFOTO_SUPPORT_EMAIL=support@example.invalid", "--env", "MOREFOTO_SUPPORT_PHONE=+7 900 000-00-00"]
+# G1: the YooKassa test shop keys stay outside the repository; without them payment runs in its disabled mode.
+YOOKASSA_ENV = Path(os.environ.get("E2E_YOOKASSA_ENV", Path.home() / ".config/morefoto/yookassa-test.env"))
 LOCK = threading.RLock()
 FAILED = threading.Event()
 STARTED = time.monotonic()
@@ -207,6 +211,14 @@ def php_mounts(state, stand=None):
     return mounts + (["--mount", f"type=volume,source={stand['runtime']},target=/runtime"] if stand else [])
 
 
+def payment_env():
+    """Test shop keys come as an env file, so no secret appears in a command line or a log; the stand pays only by card."""
+    if not YOOKASSA_ENV.is_file():
+        return []
+    # The test shop refuses SBP: the buyer scenario uses that refusal as a real canceled attempt before paying by card.
+    return ["--env-file", str(YOOKASSA_ENV), "--env", "MOREFOTO_PAYMENT_METHODS=bank_card,sbp", "--env", "MOREFOTO_PAYMENT_RETURN_BASE_URL=http://127.0.0.1"]
+
+
 def check_scripts():
     """`npm run check` split into the scripts it chains, so they run concurrently; any other form runs whole."""
     parts = [part.split() for part in json.loads((ROOT / "frontend/package.json").read_text())["scripts"]["check"].split("&&")]
@@ -289,7 +301,10 @@ def open_stand(state, args, stand, notification):
     def serve():
         service(state, name + "-fpm", *network, "--network-alias", "api-php-fpm", "--user", "0", *PHP_ENV, "--entrypoint", "php-fpm",
                 *php_mounts(state, stand), "--env", "APP_ENV=test", "--env", "APP_DEBUG=0", "--env", "REBIT_GEETEST_ENABLED=0",
-                "--env", "REBIT_GEETEST_BYPASS=1", *amqp, *media, "--env", "MOREFOTO_CHECKOUT_ENABLED=1", *SUPPORT, args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
+                "--env", "REBIT_GEETEST_BYPASS=1", *amqp, *media, "--env", "MOREFOTO_CHECKOUT_ENABLED=1", *SUPPORT, *payment_env(), args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
+        if YOOKASSA_ENV.is_file():
+            # Only php-fpm and the browser reach the provider; MySQL and RabbitMQ stay on the internal network.
+            docker("network", "connect", state["browserNetwork"], name + "-fpm")
         service(state, name + "-media", *network, *php, *amqp, *media, args.php_cli, "tools/e2e/consume-media.php")
         service(state, name + "-backend", *network, "--network-alias", "backend", *php_mounts(state, stand),
                 "--mount", f"type=bind,source={Path(state['report'], 'backend.conf')},target=/etc/nginx/conf.d/default.conf,readonly",
@@ -445,7 +460,7 @@ def test_stand(state, stand):
             # Fixture files and reports belong to the stand and group: concurrent groups never share mutable paths.
             job(state, f"{stand['name']}-browser-{group}", "--network", "container:" + stand["prefix"] + "-frontend", "--shm-size=1g", *state["nodeArgs"],
                 "--mount", f"type=bind,source={var},target=/app/var", "--mount", f"type=bind,source={output},target=/app/reports/e2e-live",
-                "--env", "E2E_BASE_URL=http://127.0.0.1", *bench, IMAGE, "npm", "run", "test:e2e:live", "--", "--project", group, log=output / "browser.log")
+                "--env", "E2E_BASE_URL=http://127.0.0.1", *(["--env", "E2E_YOOKASSA=1"] if YOOKASSA_ENV.is_file() else []), *bench, IMAGE, "npm", "run", "test:e2e:live", "--", "--project", group, log=output / "browser.log")
             return check_results(group, output / "results.json")
         result = stage(state, f"{stand['name']}: real browser group {group}", browser)
         with LOCK:
@@ -468,6 +483,7 @@ def test_live(state):
         state["scope"] = "full gate" if sorted(passed) == sorted(GROUPS) else "PARTIAL run, not a full gate"
         save(state)
     print(f"Browser scenarios passed: {sum(passed.values())} {passed} ({state['scope']})", flush=True)
+    print("YooKassa test shop: " + ("on" if YOOKASSA_ENV.is_file() else "OFF — payment scenarios ran in the disabled mode, sandbox part BLOCKED"), flush=True)
 
 
 def summary(state):

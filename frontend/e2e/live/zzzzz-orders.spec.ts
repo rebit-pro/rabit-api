@@ -248,7 +248,7 @@ test('E5: staff see orders only in their scope', async ({ page, browser, baseURL
   expect(all.meta.total).toBeGreaterThanOrEqual(secrets.orderIds.length);
   expect(all.data.items).toHaveLength(2);
   for (const [query, code] of [
-    ['late=true', 'FILTER_UNAVAILABLE'],
+    ['late=maybe', 'INVALID_FILTER'],
     ['settlement=refund', 'FILTER_UNAVAILABLE'],
     ['pageSize=101', 'INVALID_PAGE'],
     ['paymentStatus=refunded', 'INVALID_FILTER'],
