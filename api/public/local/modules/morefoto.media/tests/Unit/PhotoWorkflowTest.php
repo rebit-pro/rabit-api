@@ -9,6 +9,7 @@ use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
 use Morefoto\Media\Application\Photo\Dto\PhotoAssignmentOutputDto;
 use Morefoto\Media\Application\Photo\Message\ProcessPhotoMessage;
 use Morefoto\Media\Application\Photo\Service\PhotoRowMapper;
+use Morefoto\Media\Application\Photo\Dto\UploadPhotoInputDto;
 use Morefoto\Media\Application\Photo\UseCase\UploadPhotoUseCase;
 use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
@@ -99,14 +100,13 @@ final class PhotoWorkflowTest extends TestCase
 
         $this->expectException(HttpException::class);
         $this->expectExceptionMessage('GROUP_MEDIA_LOCKED');
-        $useCase->execute(
-            userId: 4,
+        $useCase->execute(4, new UploadPhotoInputDto(
             shootId: '12345678-abcd-4abc-8abc-123456789abc',
             groupId: '22345678-abcd-4abc-8abc-123456789abc',
             tmpName: '/file-must-not-be-read',
             filename: 'photo.png',
             bytes: 100,
             clientFingerprint: null,
-        );
+        ));
     }
 }
