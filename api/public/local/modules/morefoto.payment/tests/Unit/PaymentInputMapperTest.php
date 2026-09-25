@@ -11,6 +11,7 @@ use Morefoto\Payment\Presentation\Payment\Request\Dto\PaymentNotificationRequest
 use Morefoto\Payment\Presentation\Payment\Request\Dto\StartPaymentRequestDto;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Rebit\Share\Infrastructure\Helpers\RequestHelper;
 use Rebit\Share\Shared\Exception\HttpException;
 use Rebit\Share\Shared\Helper\ArrayToDtoMapper;
 
@@ -59,15 +60,12 @@ final class PaymentInputMapperTest extends TestCase
     public function testProviderBodyHydratesThroughTheSharedRequestMapper(): void
     {
         // Review #80 gate: the real request mapper must accept the full provider body and keep only the payment ID.
-        $dto = ArrayToDtoMapper::map([
-            'provider' => 'yookassa',
-            'type' => 'notification',
-            'event' => 'payment.succeeded',
-            'object' => ['id' => '2d7f1f6c-000f-5000-9000-1a1b2c3d4e5f', 'status' => 'succeeded', 'amount' => ['value' => '1.00', 'currency' => 'RUB'], 'paid' => true],
-        ], PaymentNotificationRequestDto::class);
+        // The HTTP path decodes the non-strict body with the shared helper: nested objects must arrive as arrays.
+        $body = RequestHelper::decodeJsonObject('{"type":"notification","event":"payment.succeeded","object":{"id":"2d7f1f6c-000f-5000-9000-1a1b2c3d4e5f","status":"succeeded","amount":{"value":"1.00","currency":"RUB"},"paid":true}}', true);
+        $dto = ArrayToDtoMapper::map($body + ['provider' => 'yookassa'], PaymentNotificationRequestDto::class);
 
         self::assertSame('2d7f1f6c-000f-5000-9000-1a1b2c3d4e5f', new PaymentInputMapper()->notification($dto)->objectId);
-        $empty = ArrayToDtoMapper::map(['provider' => 'yookassa', 'event' => 'payment.succeeded', 'object' => []], PaymentNotificationRequestDto::class);
+        $empty = ArrayToDtoMapper::map(RequestHelper::decodeJsonObject('{"event":"payment.succeeded","object":{}}', true) + ['provider' => 'yookassa'], PaymentNotificationRequestDto::class);
         $this->expectExceptionMessage('INVALID_NOTIFICATION');
         new PaymentInputMapper()->notification($empty);
     }
