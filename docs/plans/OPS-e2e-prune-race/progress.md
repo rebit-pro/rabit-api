@@ -2,12 +2,12 @@
 
 ## Точка продолжения
 
-- Ветка `codex/ops-e2e-prune-race`, base `main` `94502a1`. Worktree `/home/user/rabit-api-worktrees/ops-e2e-prune-race`. Issue [#88](https://github.com/rebit-pro/rabit-api/issues/88). PR — ещё нет.
-- Завершено: план.
-- Следующий шаг: реализация `inspect()` в `tools/run-browser-e2e.py`.
+- Ветка `codex/ops-e2e-prune-race`, base `main` `94502a1`, head — коммит этого журнала после `d1a957f`. Worktree `/home/user/rabit-api-worktrees/ops-e2e-prune-race`. Issue [#88](https://github.com/rebit-pro/rabit-api/issues/88). PR [#99](https://github.com/rebit-pro/rabit-api/pull/99), `Closes #88`, не слит.
+- Завершено: `inspect()`/`inventory()`/`verdict()`, unit-тесты, строка в `docs/waves/a8/README.md`; T01–T06 PASS.
+- Следующий шаг: ревью PR #99 пользователем; merge — отдельным действием после ревью.
 - Блокеры: нет.
-- Ограничения сессии: на машине работают E2E-стенды других сессий; ресурсы Docker не удаляются и не останавливаются, `make test-e2e`/`make e2e-up` не запускаются, `make e2e-prune` — только dry-run.
-- Рабочее дерево: `docs/plans/OPS-e2e-prune-race/` не закоммичен.
+- Ограничения сессии: на машине работают E2E-стенды других сессий; ресурсы Docker не удалялись и не останавливались, `make test-e2e`/`make e2e-up` не запускались, `make e2e-prune` — только dry-run.
+- Рабочее дерево: чисто после коммита журнала.
 - Команды следующей проверки: `python3 -m unittest discover -s tools/tests -v`, `make e2e-prune`.
 
 ## Хронология
@@ -39,3 +39,4 @@
 | T06 | PASS | `make e2e-prune` (без `E2E_PRUNE_APPLY`) | exit 0; `rabit-e2e-053a6380f4ef`, `rabit-e2e-df39f10033d5` — would remove; работающий `rabit-e2e-c7ce157498f4` — keep (running containers); `Dry run: nothing removed` |
 
 - Дополнительно на реальном демоне (только чтение): `inspect(kind, [<существующий ID с меткой>, "rabit-nope-000"])` для container/network/volume — 1 запись и `{'rabit-nope-000'}` в `gone`, без исключения.
+- Коммиты `ef79e8d` (план), `d1a957f` (исправление, тесты, a8); push; PR [#99](https://github.com/rebit-pro/rabit-api/pull/99).
