@@ -161,8 +161,29 @@ test('F2: организатор проверяет ссылку, воспита
     'Списки сотрудников и ответственные проверены'
   ])
     await dialog.getByLabel(label, { exact: true }).check();
-  const prepared = page.waitForResponse((r) => r.url().endsWith('/link-preparations') && r.request().method() === 'POST');
+  // #81: the server applies the preparation but the answer is lost; the form reports an unknown outcome and the
+  // unchanged repeat carries the same key, so the server replays it instead of preparing twice.
+  const isPreparation = (request: { url(): string; method(): string }) =>
+    request.url().endsWith('/link-preparations') && request.method() === 'POST';
+  let answerLost = false;
+  await page.route(
+    (url) => url.pathname.endsWith('/link-preparations'),
+    async (route) => {
+      if (answerLost || route.request().method() !== 'POST') return route.fallback();
+      answerLost = true;
+      await route.fetch();
+      await route.abort('failed');
+    }
+  );
+  const lostPreparation = page.waitForRequest(isPreparation);
   await dialog.getByRole('button', { name: 'Проверить ссылку', exact: true }).click();
+  const lostKey = (await lostPreparation).headers()['idempotency-key'];
+  await expect(dialog.getByText(/Ответ сервера не получен — изменение могло сохраниться/)).toBeVisible();
+  await expect(dialog.getByText(/Сервер не сохранил/)).toHaveCount(0);
+  const repeatedPreparation = page.waitForRequest(isPreparation);
+  const prepared = page.waitForResponse((r) => isPreparation(r.request()));
+  await dialog.getByRole('button', { name: 'Проверить ссылку', exact: true }).click();
+  expect((await repeatedPreparation).headers()['idempotency-key']).toBe(lostKey);
   expect((await prepared).status()).toBe(200);
   await expect(card.getByText('Готова к передаче', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('f2-desktop-prepared.png'), fullPage: true, animations: 'disabled' });
