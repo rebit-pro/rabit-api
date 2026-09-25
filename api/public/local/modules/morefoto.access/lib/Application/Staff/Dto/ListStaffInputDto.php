@@ -6,6 +6,7 @@ namespace Morefoto\Access\Application\Staff\Dto;
 
 use Morefoto\Access\Domain\Staff\Enum\AccountStatusEnum;
 use Morefoto\Access\Domain\Staff\Enum\RoleEnum;
+use Morefoto\Access\Domain\Staff\Enum\StaffSortEnum;
 
 final readonly class ListStaffInputDto
 {
@@ -16,6 +17,8 @@ final readonly class ListStaffInputDto
         public ?AccountStatusEnum $accountStatus,
         public int $page,
         public int $pageSize,
+        public StaffSortEnum $sort = StaffSortEnum::NAME,
+        public bool $descending = false,
     ) {
         if (100 < mb_strlen($query) || 1 > $page || 1000000 < $page || 1 > $pageSize || 100 < $pageSize) {
             throw new \InvalidArgumentException('Invalid staff list filters.');
