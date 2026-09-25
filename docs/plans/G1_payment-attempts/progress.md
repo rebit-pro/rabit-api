@@ -2,15 +2,14 @@
 
 ## Точка продолжения
 
-- Ветка `codex/g1-payment-attempts`, base `main` `49f40f9`, head — последний коммит ветки (после `22dbf4f`). PR https://github.com/rebit-pro/rabit-api/pull/80.
-- Рабочая копия: `/home/user/rabit-api-worktrees/g1-payment-attempts`. Отчёт волны: `docs/waves/g1/README.md`, канонический patch: `docs/waves/g1/morefoto-contract.patch`.
-- Завершено: S1–S12 — план, графы, backend, frontend, быстрые проверки, E2E-спецификация и verifier (не запускались).
-- Сейчас: исправлены 5 блокирующих замечаний ревью PR #80 (R1–R5), база обновлена на `main` `c8a69a7`.
-- Следующий шаг: полный `make test-e2e` на обновлённой ветке, затем второй круг ревью.
+- Ветка `codex/g1-payment-attempts`, base `main` `4ca7e9c` (слит в `1aced62`), head — последний коммит ветки. PR https://github.com/rebit-pro/rabit-api/pull/80.
+- Рабочая копия: `/home/user/rabit-api-worktrees/g1-payment-attempts`. Отчёт волны: `docs/waves/g1/README.md`, `verification.json`, `visual.json`, `screenshots/`; канонический patch: `docs/waves/g1/morefoto-contract.patch`.
+- Завершено: S1–S12, 5 блокирующих замечаний первого круга ревью (R1–R5) и находки gate; полный `make test-e2e` — PASS (стенд `rabit-e2e-47da504c16c6`, 109 сценариев, 9 verifier, тестовый магазин ЮKassa включён).
+- Сейчас: второй круг ревью PR #80.
+- Следующий шаг: ответы ревьюера; после одобрения — merge и выкладка по решению пользователя (условия stage — `docs/waves/g1/README.md`).
 - Блокеры: нет. Ограничение: реальная проверка СБП — `BLOCKED` до боевого магазина.
-- Объём: ~6,5 тыс. рукописных строк (из них ~1,8 тыс. тестов), немного выше ориентира 6 тыс.
 - Рабочее дерево: чистое. `api/vendor`, `api/var/*` принадлежат root (контейнер), игнорируются git.
-- Команда gate: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` (runner сам берёт `~/.config/morefoto/yookassa-test.env`; итоговая строка `YooKassa test shop: on`).
+- Команда gate: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` (runner берёт `~/.config/morefoto/yookassa-test.env`; итоговая строка `YooKassa test shop: on`).
 
 ## Тест-кейсы
 
@@ -28,7 +27,7 @@
 | G1-T16 | PASS | 2026-09-25 | Backend: phplint 1047 файлов OK; PHPStan (tools/e2e/phpstan.neon) — No errors; PHPUnit — OK 718 тестов / 3644 проверки; php-cs-fixer — исправлено 8 из 112, повтор чист. Frontend: `npm run check` (lint, stylelint, typecheck, typecheck:e2e, test:ui) — exit 0; `test:commerce` — 188/188; `build-only` — OK |
 | G1-T19, T21 | PASS (unit) | 2026-09-25 | `PaymentReconcilerTest::testRefusedRetryAfterATimeoutNeverClosesTheUnknownAttempt`, `testLateRefusalDoesNotEraseAPaymentStoredByAConcurrentCheck`; `StartPaymentAttemptTest` zero total, `PaymentAttemptPolicyTest` NOTHING_TO_PAY |
 | G1-T20, T22 | PASS (unit) | 2026-09-25 | `payment-live.test.mjs`: `returnState`, `startKey`, `isUncertain` |
-| G1-T09, T10, T14, T15 | PENDING | — | `make test-e2e`, спецификация `zzzzzzzzz-payments` и `verify-payments.php` — после ревью |
+| G1-T09, T10, T14, T15, T20 | PASS | 2026-09-25 | `make test-e2e` на `0825de7`, стенд `rabit-e2e-47da504c16c6`, 355,6 с: 109 сценариев (a 64, b 45), `YooKassa test shop: on`; G1-T14 — отказ СБП, уход со страницы ЮKassa и «Продолжить оплату», оплата картой, возврат, «Заказ оплачен»; G1-T09/T10 — отказы повтора, 404 без ключа/чужой попытки, реестр organizer и 403 head/teacher, 401 без токена, повтор уведомления, `late`; `verify-payments.php` и остальные 8 verifier — PASS; скриншоты `docs/waves/g1/screenshots`, `visual.json` |
 
 ## Журнал
 
@@ -73,3 +72,4 @@
 - Воспроизведено на заглушках (Vite live + Playwright `page.route`): до правки `/cabinet/payments` → `/cabinet/overview`; после — 2 строки, карточка «Оплачено», desktop и mobile. В спецификации mobile-снимок карточки делается после `reload()` на мобильной ширине (layout выбирает навигацию при загрузке).
 - Исправление: маршруты реестра добавлены в белый список live-охранника с проверкой `order.read`, как у заказов. `npm run check` — exit 0, `test:commerce` — 205/205.
 - Gate 5 (`a4d94c7`, `rabit-e2e-646e48ebd490`, 272 с) — FAIL на verifier: **группа b прошла полностью** (включая G1-T14 и G1-T09/T10), `verify-storefront.php` и `verify-handoff.php` — PASS. `verify-orders.php` (E5): сравнивал число заказов с фильтром `paymentStatus=unpaid` со всеми заказами БД — до G1 все заказы были неоплаченными, теперь сценарий G1 оплачивает свой заказ. Исправлено: сравнение с числом `unpaid`. Группа a отменена после падения.
+- Gate 6 (`0825de7`, `rabit-e2e-47da504c16c6`, 355,6 с) — **PASS**: быстрые стадии, группы a 64 и b 45 (full gate), 9 verifier (`verify-storefront`, `verify-handoff`, `verify-orders`, `verify-links`, `verify-transfers`, `verify-avatar`, `verify-payment-costs`, `verify-payments`, `verify-access`), `YooKassa test shop: on`. Скриншоты G1 просмотрены: панель оплаты, «Оплата не завершена» с «Продолжить оплату», оплаченный заказ на mobile, реестр и карточка платежа на mobile. Сохранены в `docs/waves/g1/screenshots` с sha256 в `visual.json`; сводка — `verification.json`.
