@@ -82,6 +82,9 @@ $check(['staff'] === $column("SELECT AUTHOR FROM mf_support_message WHERE QUESTI
 // A first question whose response the browser lost is replayed after reload with the same key: one conversation.
 $check(['1'] === $column("SELECT COUNT(*) FROM mf_support_question WHERE AUTHOR='parent' AND AUTHOR_NAME='K3 Потерянный ответ'"), 'lost response created a second conversation');
 $check(['1'] === $column("SELECT COUNT(*) FROM mf_support_message m JOIN mf_support_question q ON q.ID=m.QUESTION_ID WHERE q.AUTHOR_NAME='K3 Потерянный ответ'"), 'lost response duplicated the reply');
+// An edited text typed after the lost answer is recovered into the first conversation as its next reply.
+$check(['1'] === $column("SELECT COUNT(*) FROM mf_support_question WHERE AUTHOR='parent' AND AUTHOR_NAME='K3 Изменённый текст'"), 'edited text created a second conversation');
+$check(['Исходный вопрос до потери ответа.', 'Исправленный текст после сбоя.'] === $column("SELECT m.BODY FROM mf_support_message m JOIN mf_support_question q ON q.ID=m.QUESTION_ID WHERE q.AUTHOR_NAME='K3 Изменённый текст' ORDER BY m.ID"), 'edited text replies');
 foreach (['mf_support_question' => 'CONCAT(AUTHOR_NAME,CONTEXT,COALESCE(KEY_HASH,\'\'))', 'mf_support_message' => 'BODY', 'mf_support_idempotency' => 'COALESCE(SEALED_KEY,\'\')'] as $table => $text) {
     $check([] === $column("SELECT 1 FROM {$table} WHERE INSTR({$text}," . "'{$questionKey}')>0"), 'raw question key is stored in ' . $table);
 }

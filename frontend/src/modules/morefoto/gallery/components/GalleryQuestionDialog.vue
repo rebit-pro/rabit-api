@@ -11,6 +11,7 @@ defineProps<{
   sending: boolean;
   sendError: string;
   needsName: boolean;
+  pending: boolean;
   submit: (text: string) => Promise<boolean>;
 }>();
 const emit = defineEmits<{ reload: [] }>();
@@ -29,6 +30,9 @@ const name = defineModel<string>('name', { default: '' });
         Ответит куратор{{ gallery.curator ? ' ' + gallery.curator : ' группы' }} — ответ появится здесь. Переписка сохраняется в этом
         браузере: откройте галерею по той же ссылке, чтобы увидеть ответ.
       </p>
+      <v-alert v-if="pending" type="info" variant="tonal" density="compact" class="mb-4" data-testid="question-pending">
+        Первый вопрос ещё не подтверждён. При отправке мы сначала повторим его, а новый текст добавим следующим сообщением.
+      </v-alert>
       <QuestionThread
         v-model:name="name"
         :messages="messages"

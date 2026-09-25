@@ -90,6 +90,38 @@ test('a first question whose response was lost is recovered after reload without
   await expect(recovered.getByTestId('question-thread').locator('[data-author="parent"]')).toHaveCount(1);
 });
 
+test('an edited text after a lost first answer joins the recovered conversation instead of starting another', async ({ page }) => {
+  await page.goto(gallery);
+  const dialog = await openQuestion(page);
+  await dialog.getByLabel('Как к вам обращаться', { exact: true }).fill('K3 Изменённый текст');
+  await dialog.getByLabel('Ваш вопрос', { exact: true }).fill('Исходный вопрос до потери ответа.');
+  let lost = true;
+  await page.route('**/api/v1/public/galleries/*/questions', async (route) => {
+    const response = await route.fetch();
+    if (lost) {
+      lost = false;
+      await route.abort('connectionreset');
+    } else {
+      await route.fulfill({ response });
+    }
+  });
+  await dialog.getByTestId('question-send').click();
+  await expect(dialog.getByTestId('question-problem')).toContainText('Нет связи с сервером');
+  await expect(dialog.getByTestId('question-pending')).toBeVisible();
+  await expect(dialog.getByLabel('Как к вам обращаться', { exact: true })).toHaveCount(0);
+
+  await dialog.getByLabel('Ваш вопрос', { exact: true }).fill('Исправленный текст после сбоя.');
+  const added = page.waitForResponse((r) => r.url().endsWith('/questions/current/messages') && r.request().method() === 'POST');
+  await dialog.getByTestId('question-send').click();
+  expect((await added).status()).toBe(200);
+  const thread = dialog.getByTestId('question-thread');
+  await expect(thread.locator('[data-author="parent"]')).toHaveCount(2);
+  await expect(thread).toContainText('Исходный вопрос до потери ответа.');
+  await expect(thread).toContainText('Исправленный текст после сбоя.');
+  await expect(dialog.getByTestId('question-pending')).toHaveCount(0);
+  await page.unroute('**/api/v1/public/galleries/*/questions');
+});
+
 test('a new curator answer is marked on the gallery until the parent opens it', async ({ page }) => {
   await page.goto(gallery);
   await page.evaluate(({ key, value }) => localStorage.setItem(key, value), { key: storageKey, value: 'b'.repeat(64) });

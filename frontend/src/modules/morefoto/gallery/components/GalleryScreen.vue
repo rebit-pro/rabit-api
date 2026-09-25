@@ -151,6 +151,7 @@ function askCurator(): void {
           :sending="questions.sending.value"
           :send-error="questions.sendError.value"
           :needs-name="questions.needsName.value"
+          :pending="questions.pending.value"
           :submit="questions.send"
           @reload="questions.reload()"
         />
