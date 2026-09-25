@@ -34,6 +34,15 @@
 - **G1-DEC-07. Реестр и права.** (а) Новые ID `PAY-10 GET /api/v1/payments` и `PAY-11 GET /api/v1/payments/{payment_attempt_id}`; область как у COM-12: organizer — все, curator — свои учреждения, head/teacher — 403. Старые 110 ID не меняются. (б) Только organizer.
 - **G1-DEC-08. Фоновая сверка.** (а) Команда `app:payment:reconcile --limit=100` в `api-cron` раз в минуту: pending/unknown попытки с наступившим `NEXT_CHECK_AT`, растущий интервал (1, 2, 5, 15 минут, далее раз в час) до конечного статуса. (б) Только по webhook и PAY-02.
 
+### Уточнения по ходу реализации (25.09.2026)
+
+- G1-DEC-04: ключ заказа для страницы возврата хранится в `localStorage` по ID попытки, а не в `sessionStorage`. Банковское приложение при СБП может открыть возврат в новой вкладке. После конечного статуса ключ удаляется. Провайдеру ключ по-прежнему не передаётся.
+- Оплата встроена в страницу заказа `/orders/access/:orderKey` (панель в итоге заказа). Демо-маршрут `/orders/access/:orderKey/payment` остаётся только для демо-режима.
+- PAY-07: тело без `object.id` получает 422 `INVALID_NOTIFICATION` (общий контракт ошибок), а не 400.
+- PAY-11: вместо журнала проверок отдаются `checkCount`, `lastCheckAt`, `nextCheckAt` и `cancelReason` попытки. Отдельной таблицы журнала сверки нет.
+- Секрет ЮKassa в production: `runtime-env.php` читает `/run/secrets/morefoto_yookassa_secret_key`. Подключение Swarm-секрета в `docker-compose-production.yml`, Makefile и `deploy/swarm-publish-runtime.sh` делается на шаге выкладки (S13). Для тестового магазина на stage допустим `backend.env`.
+- Проверка на тестовом магазине 25.09.2026: тело `bank_card` принято (`pending`, страница на `yoomoney.ru`, `recipient.account_id` = магазин, `metadata` возвращается); повтор с тем же `Idempotence-Key` возвращает тот же платёж. `sbp` отвечает 400 `invalid_request` «Payment method is not available» и классифицируется как отказ. `GET` неизвестного платежа — 404.
+
 ## Scope
 
 1. **Модуль `morefoto.payment`**: `install/index.php`, `.settings.php`, `di/`, `include.php`, `routes.php`, `LogChannelEnum` (осмысленный канал `payment`), регистрация в bootstrap/E2E `prepare.php` и проверке `b_module`.
@@ -69,17 +78,18 @@
 ## Checklist
 
 - [x] S1. План и журнал; согласование G1-DEC-01…08 с пользователем.
-- [ ] S2. Графы: G1 `inProgress`, решения, владелец, PAY-10/11 в каноническом генераторе; проверки DAG/ID.
-- [ ] S3. Модуль `morefoto.payment`: установка, DI, лог-канал, регистрация.
-- [ ] S4. Миграция foundation и репозитории.
-- [ ] S5. Контракт `OrderPaymentInterface` и реализация в Commerce; COM-11/12/13.
-- [ ] S6. Domain и Application: попытка, сверка, webhook, реестр.
-- [ ] S7. Клиент ЮKassa и конфигурация; ручная проверка sandbox.
-- [ ] S8. HTTP: контроллеры, DTO, маршруты, архитектурные тесты границы.
-- [ ] S9. Cron-сверка.
-- [ ] S10. Frontend покупателя и сотрудника.
-- [ ] S11. Быстрые проверки: php-cs-fixer, unit, arch, frontend lint/type/build.
-- [ ] S12. PR, ревью пользователя, затем `make test-e2e` с sandbox-спецификацией и визуальной проверкой desktop/mobile.
+- [x] S2. Графы: G1 `inProgress`, решения, владелец, PAY-10/11 в каноническом генераторе; проверки DAG/ID.
+- [x] S3. Модуль `morefoto.payment`: установка, DI, лог-канал, регистрация.
+- [x] S4. Миграция foundation и репозитории.
+- [x] S5. Контракт `OrderPaymentInterface` и реализация в Commerce; COM-11/12/13.
+- [x] S6. Domain и Application: попытка, сверка, webhook, реестр.
+- [x] S7. Клиент ЮKassa и конфигурация; ручная проверка sandbox.
+- [x] S8. HTTP: контроллеры, DTO, маршруты, архитектурные тесты границы.
+- [x] S9. Cron-сверка.
+- [x] S10. Frontend покупателя и сотрудника.
+- [x] S11. Быстрые проверки: php-cs-fixer, unit, arch, frontend lint/type/build.
+- [ ] S12. E2E: регистрация модуля в стенде, sandbox-спецификация, verifier.
+- [ ] S13. PR, ревью пользователя, затем `make test-e2e` и визуальная проверка desktop/mobile; подключение Swarm-секрета при выкладке на stage.
 
 ## Критерии приёмки
 
