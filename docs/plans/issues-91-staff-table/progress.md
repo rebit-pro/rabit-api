@@ -8,8 +8,13 @@
   быстрые проверки зелёные, визуальная проверка на заглушках.
 - Review 1: два блокера (P1 перепроверка актора под блокировкой, P2 pending-организатор) исправлены в `0a0d169`,
   ответы в тредах; второго круга review нет (решение пользователя). Слит `origin/main` `94502a1` (`dbdfa60`).
-- Полный `make test-e2e` на `18824d3` — PASS (111 сценариев).
-- Следующий шаг: merge PR #96 в `main`, затем выкатка на app.morefoto36.ru (решение пользователя).
+- PR #96 влит в `main` как `d8caca4` (gate PASS, 111 сценариев); issue #91 закрыт.
+- Выкачено на https://app.morefoto36.ru 2026-09-25, релиз `/srv/morefoto/releases/issues91-20260925165859-d8caca4`:
+  шесть backend-сервисов и frontend `morefoto-frontend:issues91-20260925165859-d8caca4`; вместе ушёл слитый #86. Миграций нет.
+- Откат: `docker service rollback` для шести backend-сервисов (прежний `/app` — релиз `g1-20260925182710-fc0cdb9`)
+  и `morefoto_frontend` (прежний образ в `frontend-before.txt` — `morefoto-frontend:g1-20260925182710-fc0cdb9`);
+  спецификации — `services-before.json`, резервная копия БД — `database-before.sql.gz` релиза.
+- Открыто: пользовательская проверка удаления в своём кабинете; остальные таблицы — #92.
 - Блокеров нет. Открытых решений нет.
 - Рабочее дерево чистое после коммита; `api/vendor` и `frontend/node_modules` — пустые точки монтирования (в `.gitignore`).
 - Следующая проверка: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
@@ -50,6 +55,25 @@
 - Прогон 2 на `18824d3` (`rabit-e2e-242656c88cda`, ~324 с) — PASS: 111 браузерных сценариев (a 65, b 46),
   verifier storefront, handoff, orders, links, transfers, avatar, payment-costs, payments, access. Скриншоты
   `i91-desktop-remove-dialog.png`, `i91-desktop-removed.png`, `b2-mobile-staff.png` просмотрены.
+
+### 2026-09-25 — merge и выкатка
+
+- Пользователь: второго круга review нет; после gate — merge и деплой, нужен кабинет с удалением.
+- Merge: `gh pr merge 96 --merge --match-head-commit d913aa0…` → `d8caca4`.
+- На проде до выкатки: релиз G1 `fc0cdb9` (PR #80, выкачен другой сессией). После него в `main` не выкачены
+  #86 и #87 (#87 — инструменты). Миграций и изменений `composer.lock` после `fc0cdb9` нет.
+- Артефакты: `git archive d8caca4 api` (2084 файла), образ frontend `VITE_API_MOCKS_ENABLED=false`, чанк
+  `StaffManagementScreen-B1mvZv0T.js` содержит «Удалить выбранных». Скрипты — по образцу G1, маркер
+  `StaffArchiveController.php`; `sha256sum --check` и `bash -n` на сервере — PASS.
+- Сверка: все шесть backend-сервисов монтировали `/app` релиза G1, реплики 1/1, свободно 25 ГБ.
+- `prepare-release.sh` (vendor из G1, `composer.lock` и список миграций совпадают), `backup.sh` — 64 981 байт.
+- FPM первым: DI-smoke через `prolog_before.php` 10/10 (`StaffArchiveController`, `ArchiveStaffUseCase`, список,
+  сохранение, `StaffIdentityGatewayInterface`, три контроллера media из #86, платежи); `DELETE /api/v1/users/{id}` без
+  токена — 401 `UNAUTHORIZED`. Затем nginx, media consumer/dispatcher, notification consumer/dispatcher — код виден.
+- Frontend 2/2 на новом образе; `index.html` на проде совпадает с образом по SHA-256.
+- Smoke: `/health`, `/login`, `/cabinet/{users,overview,institutions,orders}` — 200; `GET /api/v1/users?sort=…`
+  без токена — 401; логи FPM, nginx и воркеров за 5 минут — без фатальных ошибок.
+- Не проверено на проде: авторизованное удаление в кабинете организатора — пользовательская проверка.
 
 ## Тест-кейсы
 
