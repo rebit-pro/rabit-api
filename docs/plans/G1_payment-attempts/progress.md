@@ -2,14 +2,11 @@
 
 ## Точка продолжения
 
-- Ветка `codex/g1-payment-attempts`, base `main` `4ca7e9c` (слит в `1aced62`), head — последний коммит ветки. PR https://github.com/rebit-pro/rabit-api/pull/80.
-- Рабочая копия: `/home/user/rabit-api-worktrees/g1-payment-attempts`. Отчёт волны: `docs/waves/g1/README.md`, `verification.json`, `visual.json`, `screenshots/`; канонический patch: `docs/waves/g1/morefoto-contract.patch`.
-- Завершено: S1–S12, 5 блокирующих замечаний первого круга ревью (R1–R5) и находки gate; полный `make test-e2e` — PASS (стенд `rabit-e2e-47da504c16c6`, 109 сценариев, 9 verifier, тестовый магазин ЮKassa включён).
-- Сейчас: второй круг ревью PR #80.
-- Следующий шаг: ответы ревьюера; после одобрения — merge и выкладка по решению пользователя (условия stage — `docs/waves/g1/README.md`).
-- Блокеры: нет. Ограничение: реальная проверка СБП — `BLOCKED` до боевого магазина.
-- Рабочее дерево: чистое. `api/vendor`, `api/var/*` принадлежат root (контейнер), игнорируются git.
-- Команда gate: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` (runner берёт `~/.config/morefoto/yookassa-test.env`; итоговая строка `YooKassa test shop: on`).
+- PR https://github.com/rebit-pro/rabit-api/pull/80 влит в `main` как `fc0cdb9` (2026-09-25) и выкачен на https://app.morefoto36.ru, релиз `/srv/morefoto/releases/g1-20260925182710-fc0cdb9`.
+- Оплата на stage **выключена**: ключи тестового магазина, `MOREFOTO_PAYMENT_*` и `MOREFOTO_CHECKOUT_ENABLED` не заданы; DI-smoke — `Payment enabled: no`.
+- Следующий шаг (по решению пользователя): включение тестовой оплаты на stage — ключи тестового магазина и `MOREFOTO_PAYMENT_METHODS=bank_card`, `MOREFOTO_PAYMENT_RETURN_BASE_URL=https://app.morefoto36.ru` в `backend.env`, `MOREFOTO_CHECKOUT_ENABLED=1`, сервис cron-сверки `app:payment:reconcile`, адрес уведомлений `https://app.morefoto36.ru/api/v1/webhooks/yookassa/payments` в кабинете ЮKassa.
+- Графы: G1 отмечается `merged` следующей волной (правило учёта слияний).
+- Ограничение: реальная проверка СБП — `BLOCKED` до боевого магазина.
 
 ## Тест-кейсы
 
@@ -74,3 +71,19 @@
 - Gate 5 (`a4d94c7`, `rabit-e2e-646e48ebd490`, 272 с) — FAIL на verifier: **группа b прошла полностью** (включая G1-T14 и G1-T09/T10), `verify-storefront.php` и `verify-handoff.php` — PASS. `verify-orders.php` (E5): сравнивал число заказов с фильтром `paymentStatus=unpaid` со всеми заказами БД — до G1 все заказы были неоплаченными, теперь сценарий G1 оплачивает свой заказ. Исправлено: сравнение с числом `unpaid`. Группа a отменена после падения.
 - Gate 6 (`0825de7`, `rabit-e2e-47da504c16c6`, 355,6 с) — **PASS**: быстрые стадии, группы a 64 и b 45 (full gate), 9 verifier (`verify-storefront`, `verify-handoff`, `verify-orders`, `verify-links`, `verify-transfers`, `verify-avatar`, `verify-payment-costs`, `verify-payments`, `verify-access`), `YooKassa test shop: on`. Скриншоты G1 просмотрены: панель оплаты, «Оплата не завершена» с «Продолжить оплату», оплаченный заказ на mobile, реестр и карточка платежа на mobile. Сохранены в `docs/waves/g1/screenshots` с sha256 в `visual.json`; сводка — `verification.json`.
 - Ответы на 5 inline-замечаний и общий комментарий «Готово ко второму кругу ревью» опубликованы в PR #80.
+
+### 2026-09-25 — merge и выкладка
+
+- Второй круг ревью PR #80 на `11421d0`: блокирующих замечаний нет, R1–R5 закрыты. Пользователь: «можно приступать к мержу в main и дальнейшему деплою», «полный гейт нужен перед вливанием», «выкатываем вместе с #78».
+- Gate 7 на точном head `11421d0` (`main` `4ca7e9c` не менялся; после gate 6 изменились только документы), стенд `rabit-e2e-bc5a6a9feef3`, 435,8 с — **PASS**: 109 сценариев (a 64, b 45), 9 verifier, `YooKassa test shop: on`.
+- **Merge.** `gh pr merge 80 --merge --match-head-commit 11421d0…` → `fc0cdb9`; `git diff --quiet fc0cdb9 11421d0` — деревья равны.
+- **Артефакты.** `git archive fc0cdb9 api` и образ `morefoto-frontend:g1-20260925182710-fc0cdb9` (`VITE_API_MOCKS_ENABLED=false`; в чанках `PaymentsPage` — «Попытки оплаты заказов», `PaymentReturnPage` — «Продолжить оплату»). SHA256: `api.tar.gz` bbfd57e3…6cc7, `frontend-image.tar.gz` a965a339…749b. Скрипты — по образцу E6 (генератор в scratchpad сессии); отличия: маркер кода `PublicPaymentController.php`, миграция `Version20260925190001`, новый `install-module.sh` (символическая ссылка `runtime/public/local/modules/morefoto.payment` → `/app/public/local/modules/morefoto.payment` и `DoInstall()`), DI-smoke оплаты, Commerce и Handoff. `sha256sum --check` и `bash -n` на сервере — PASS.
+- **Сверка перед выкладкой.** Шесть backend-сервисов на релизе E6, frontend `guide-20260925125036-7ec736a`; `b_module` без `morefoto.payment`; заказов на stage 0 (новый CHECK `PAID_AT` безопасен); `composer.lock` не менялся — vendor из E6.
+- **Подготовка и резервная копия.** `prepare-release.sh` — `app` 412 МБ, `services-before.json`; `backup.sh` — 63 346 байт, SHA256 7d48323f…; `restore-check.sh` — одноразовая MySQL, 161 таблица — PASS.
+- **Миграция и модуль.** `migrate.sh ls` — Created 18, Installed 15, новая только `Version20260925190001`; `migrate.sh up Version20260925190001` — success; `install-module.sh` — `morefoto.payment installed`. В БД: `mf_payment_attempt`, `mf_payment_fact`, `mf_payment_notification`, в `mf_order` — `PAID_AT`, `LATE_PAYMENT`; `b_module` содержит `morefoto.payment`.
+- **Backend.** Сначала FPM: код виден, DI-smoke через `prolog_before.php` — 18/18 (контроллеры, UseCase, сверка и провайдер оплаты, `OrderPaymentInterface`, контроллеры заказов, условий, заявок сотрудников и ссылок), `Payment enabled: no`. Затем nginx, media consumer/dispatcher, notification consumer/dispatcher — 1/1, код виден.
+- **Frontend.** `switch-frontend.sh`: 2/2 на `morefoto-frontend:g1-20260925182710-fc0cdb9`, прежний образ `guide-20260925125036-7ec736a` в `frontend-before.txt`.
+- **Smoke.** `/health`, `/login`, `/cabinet/{overview,payments,orders,staff-requests}`, `/orders/payment/<id>`, `/guide/` — 200; SHA-256 отдаваемого `index.html` равен файлу образа; отдаваемые `PaymentsPage` и `PaymentReturnPage` содержат новый код. API без ключа/токена: PAY-03 и PAY-02 — 404 `ORDER_NOT_FOUND`, PAY-10 и `staff-requests` (#78) — 401 `UNAUTHORIZED`; webhook без `object.id` — 422 `INVALID_NOTIFICATION`, неизвестный провайдер — 404 `PROVIDER_NOT_FOUND` (без записи в БД). Логи семи сервисов за 15 минут — без фатальных ошибок.
+- **Откат.** `docker service rollback` для шести backend-сервисов (прежний `/app` — релиз `e6-20260925101815-54bd4ab`) и `morefoto_frontend` (образ `guide-20260925125036-7ec736a`); спецификации — `services-before.json` релиза. Миграция только добавляет таблицы и столбцы; модуль в старом коде не подключается.
+- Вместе с G1 выкачены слитые ранее PR #78 (#26–#28, заявки сотрудников), #84 и #85.
+- **Не проверено на stage:** авторизованные сценарии (реестр платежей организатора, заявки сотрудников #78) и тестовая оплата — после включения по решению пользователя.
