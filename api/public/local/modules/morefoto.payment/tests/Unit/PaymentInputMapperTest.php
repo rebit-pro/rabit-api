@@ -6,11 +6,13 @@ namespace Morefoto\Payment\Tests\Unit;
 
 use Morefoto\Payment\Presentation\Payment\PaymentInputMapper;
 use Morefoto\Payment\Presentation\Payment\Request\Dto\PaymentListRequestDto;
+use Morefoto\Payment\Presentation\Payment\Request\Dto\PaymentNotificationObjectRequestDto;
 use Morefoto\Payment\Presentation\Payment\Request\Dto\PaymentNotificationRequestDto;
 use Morefoto\Payment\Presentation\Payment\Request\Dto\StartPaymentRequestDto;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Rebit\Share\Shared\Exception\HttpException;
+use Rebit\Share\Shared\Helper\ArrayToDtoMapper;
 
 require_once dirname(__DIR__) . '/bootstrap.php';
 
@@ -49,15 +51,31 @@ final class PaymentInputMapperTest extends TestCase
 
     public function testNotificationKeepsOnlyEventAndPaymentId(): void
     {
-        $input = new PaymentInputMapper()->notification(new PaymentNotificationRequestDto('yookassa', 'payment.succeeded', ['id' => '2d7f1f6c-000f-5000-9000-1a1b2c3d4e5f', 'status' => 'succeeded', 'amount' => ['value' => '1.00']]));
+        $input = new PaymentInputMapper()->notification(new PaymentNotificationRequestDto('yookassa', 'payment.succeeded', new PaymentNotificationObjectRequestDto('2d7f1f6c-000f-5000-9000-1a1b2c3d4e5f')));
 
         self::assertSame(['yookassa', 'payment.succeeded', '2d7f1f6c-000f-5000-9000-1a1b2c3d4e5f'], [$input->provider, $input->event, $input->objectId]);
+    }
+
+    public function testProviderBodyHydratesThroughTheSharedRequestMapper(): void
+    {
+        // Review #80 gate: the real request mapper must accept the full provider body and keep only the payment ID.
+        $dto = ArrayToDtoMapper::map([
+            'provider' => 'yookassa',
+            'type' => 'notification',
+            'event' => 'payment.succeeded',
+            'object' => ['id' => '2d7f1f6c-000f-5000-9000-1a1b2c3d4e5f', 'status' => 'succeeded', 'amount' => ['value' => '1.00', 'currency' => 'RUB'], 'paid' => true],
+        ], PaymentNotificationRequestDto::class);
+
+        self::assertSame('2d7f1f6c-000f-5000-9000-1a1b2c3d4e5f', new PaymentInputMapper()->notification($dto)->objectId);
+        $empty = ArrayToDtoMapper::map(['provider' => 'yookassa', 'event' => 'payment.succeeded', 'object' => []], PaymentNotificationRequestDto::class);
+        $this->expectExceptionMessage('INVALID_NOTIFICATION');
+        new PaymentInputMapper()->notification($empty);
     }
 
     public function testNotificationWithoutPaymentIdIsRejected(): void
     {
         $this->expectExceptionMessage('INVALID_NOTIFICATION');
-        new PaymentInputMapper()->notification(new PaymentNotificationRequestDto('yookassa', 'payment.succeeded', ['id' => ['nested']]));
+        new PaymentInputMapper()->notification(new PaymentNotificationRequestDto('yookassa', 'payment.succeeded', new PaymentNotificationObjectRequestDto()));
     }
 
     public function testStartValidatesTokenShapesBeforeTheUseCase(): void

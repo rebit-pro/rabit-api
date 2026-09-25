@@ -12,11 +12,10 @@ use Rebit\Share\Infrastructure\Controller\Request\Attribute\RouteParameter;
 #[JsonBody(maxBytes: 65536)]
 final readonly class PaymentNotificationRequestDto implements RequestDtoInterface
 {
-    /** @param array<string, mixed> $object */
     public function __construct(
         #[RouteParameter(name: 'provider', pattern: '/^[a-z]{2,32}$/D', errorCode: 'PROVIDER_NOT_FOUND', errorStatus: 404)]
         public string $provider,
         public string $event,
-        public array $object,
+        public PaymentNotificationObjectRequestDto $object,
     ) {}
 }

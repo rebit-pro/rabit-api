@@ -37,8 +37,8 @@ final readonly class PaymentInputMapper
 
     public function notification(PaymentNotificationRequestDto $request): PaymentNotificationInputDto
     {
-        $objectId = $request->object['id'] ?? null;
-        if (!is_string($objectId) || 1 !== preg_match('/^[A-Za-z0-9-]{1,64}$/D', $objectId) || 1 !== preg_match('/^[a-z_.]{1,64}$/D', $request->event)) {
+        $objectId = $request->object->id;
+        if (1 !== preg_match('/^[A-Za-z0-9-]{1,64}$/D', $objectId) || 1 !== preg_match('/^[a-z_.]{1,64}$/D', $request->event)) {
             throw new HttpException('INVALID_NOTIFICATION', 422);
         }
 
