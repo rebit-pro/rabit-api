@@ -264,6 +264,17 @@ test('E6: организатор включает учёт расходов в �
   await dialog.getByLabel('Ставка расходов на оплату, %', { exact: true }).fill('10,5');
   await dialog.getByRole('button', { name: 'Сохранить', exact: true }).click();
   await expect(dialog.getByText('Ставка: от 0 до 10 %, до двух знаков после запятой.')).toBeVisible();
+  // #68: switching the policy off is saved despite the invalid draft rate, and the saved rate is kept.
+  await dialog.getByLabel('Учитывать расходы на оплату в цене', { exact: true }).uncheck();
+  const off = page.waitForResponse((response) => new URL(response.url()).pathname === globalPath && response.request().method() === 'PUT');
+  await dialog.getByRole('button', { name: 'Сохранить', exact: true }).click();
+  const offResponse = await off;
+  expect(offResponse.status()).toBe(200);
+  expect(offResponse.request().postDataJSON().paymentCosts).toEqual({ enabled: false, rateBps: 380 });
+  await expect(dialog).not.toBeVisible();
+  await expect(page.getByTestId('payment-costs-summary')).toContainText('Не учитываются');
+  await page.getByRole('button', { name: 'Изменить условия', exact: true }).click();
+  await dialog.getByLabel('Учитывать расходы на оплату в цене', { exact: true }).check();
   await dialog.getByLabel('Ставка расходов на оплату, %', { exact: true }).fill('3,8');
   const save = page.waitForResponse((response) => new URL(response.url()).pathname === globalPath && response.request().method() === 'PUT');
   await dialog.getByRole('button', { name: 'Сохранить', exact: true }).click();

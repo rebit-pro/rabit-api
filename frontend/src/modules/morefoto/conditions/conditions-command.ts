@@ -34,7 +34,12 @@ export function createConditionsCommand(source: ConditionsEditorSource): Conditi
     giftForStaff: value.giftForStaff,
     paymentCosts: source.groupId
       ? undefined
-      : { enabled: value.paymentCosts.enabled, rate: rateText(value.paymentCosts.rateBps), maxRateBps: value.paymentCosts.maxRateBps }
+      : {
+          enabled: value.paymentCosts.enabled,
+          rate: rateText(value.paymentCosts.rateBps),
+          maxRateBps: value.paymentCosts.maxRateBps,
+          savedRateBps: value.paymentCosts.rateBps
+        }
   };
 }
 /** Предел цены товара в копейках (1 000 000 ₽), как на сервере. */
@@ -47,7 +52,8 @@ export function conditionsCommandErrors(command: ConditionsCommand): ManagementE
     if (price === null || price > MAX_PRICE) errors['price:' + product.id] = 'Цена: от 0 до 1 000 000 ₽, до двух знаков после запятой.';
   }
   const costs = command.paymentCosts;
-  if (!command.groupId && costs && rateInputValue(costs.rate, costs.maxRateBps) === null)
+  // #68: the rate matters only while the policy is on; switching it off must stay possible with any draft.
+  if (!command.groupId && costs?.enabled && rateInputValue(costs.rate, costs.maxRateBps) === null)
     errors.paymentCostRate = 'Ставка: от 0 до ' + String(costs.maxRateBps / 100).replace('.', ',') + ' %, до двух знаков после запятой.';
   const threshold = moneyInputValue(command.giftThreshold);
   if (command.giftEnabled && (threshold === null || threshold < 1 || threshold > 2147483647))
@@ -77,10 +83,9 @@ export function conditionsAttempt(command: ConditionsCommand): ConditionsAttempt
     body.conditionsRevision = command.conditionsRevision;
     body.inherit = command.inherit;
   } else if (command.paymentCosts) {
-    body.paymentCosts = {
-      enabled: command.paymentCosts.enabled,
-      rateBps: rateInputValue(command.paymentCosts.rate, command.paymentCosts.maxRateBps)!
-    };
+    const costs = command.paymentCosts;
+    // A switched-off policy keeps the saved rate when the draft rate is not valid.
+    body.paymentCosts = { enabled: costs.enabled, rateBps: rateInputValue(costs.rate, costs.maxRateBps) ?? costs.savedRateBps };
   }
   return { groupId: command.groupId, key: command.requestId, body };
 }
