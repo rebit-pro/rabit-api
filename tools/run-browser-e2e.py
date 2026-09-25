@@ -55,6 +55,9 @@ VERIFIERS = [
     # E6: schema, CHECK limits and migration replay after the browser switched the payment cost policy back off.
     ("verify-payment-costs.php", None, "E6 payment cost integration passed", ["zzzzzzzz-payment-costs"]),
 ]
+# The browser stage of a group; the opt-in media bench sets itself 45 minutes on top of the other files of its group.
+BROWSER_TIMEOUT = 900
+BENCH_TIMEOUT = 45 * 60
 # Production images have no Xdebug; the development one would try to reach a debugger on every PHP request.
 PHP_ENV = ["--env", "XDEBUG_MODE=off"]
 # DS-12: a test-only organizer contact for the «Помощь» section of the profile.
@@ -486,6 +489,11 @@ def check_results(group, path):
     return {"passed": stats["expected"], "seconds": round(stats["duration"] / 1000, 1), "files": files}
 
 
+def browser_timeout(group):
+    """The runner must not cut the opt-in bench short of its own Playwright timeout."""
+    return BROWSER_TIMEOUT + (BENCH_TIMEOUT if os.environ.get("E2E_MEDIA_BENCH") and BENCH in GROUPS[group] else 0)
+
+
 def test_stand(state, stand):
     if state["stopped"]:
         raise RuntimeError("The E2E fixture has been stopped")
@@ -508,7 +516,8 @@ def test_stand(state, stand):
             # Fixture files and reports belong to the stand and group: concurrent groups never share mutable paths.
             job(state, f"{stand['name']}-browser-{group}", "--network", "container:" + stand["prefix"] + "-frontend", "--shm-size=1g", *state["nodeArgs"],
                 "--mount", f"type=bind,source={var},target=/app/var", "--mount", f"type=bind,source={output},target=/app/reports/e2e-live",
-                "--env", "E2E_BASE_URL=http://127.0.0.1", *bench, IMAGE, "npm", "run", "test:e2e:live", "--", "--project", group, log=output / "browser.log")
+                "--env", "E2E_BASE_URL=http://127.0.0.1", *bench, IMAGE, "npm", "run", "test:e2e:live", "--", "--project", group, log=output / "browser.log",
+                timeout=browser_timeout(group))
             return check_results(group, output / "results.json")
         result = stage(state, f"{stand['name']}: real browser group {group}", browser)
         with LOCK:

@@ -115,6 +115,18 @@ class Prune(unittest.TestCase):
         docker.assert_not_called()
 
 
+class BrowserTimeout(unittest.TestCase):
+    def test_bench_group_waits_for_the_bench_timeout(self):
+        bench = next(group for group, names in runner.GROUPS.items() if runner.BENCH in names)
+        other = next(group for group in runner.GROUPS if group != bench)
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("E2E_MEDIA_BENCH", None)
+            self.assertEqual(900, runner.browser_timeout(bench))
+        with mock.patch.dict(os.environ, {"E2E_MEDIA_BENCH": "1"}):
+            self.assertEqual(3600, runner.browser_timeout(bench))
+            self.assertEqual(900, runner.browser_timeout(other))
+
+
 class Groups(unittest.TestCase):
     def test_groups_and_verifiers_are_consistent(self):
         runner.validate(list(runner.GROUPS))
