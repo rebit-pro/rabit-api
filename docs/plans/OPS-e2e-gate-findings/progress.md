@@ -2,7 +2,7 @@
 
 ## Точка продолжения
 
-- Ветка `codex/ops-e2e-gate-findings`, base `main` `5dcb0e0` (после rebase; исходный base `d92b4c4`). Worktree `/home/user/rabit-api-worktrees/ops-e2e-gate-findings`. Issue [#61](https://github.com/rebit-pro/rabit-api/issues/61). PR — см. хронологию (создаётся с `Refs #61`: часть пунктов ждёт решения).
+- Ветка `codex/ops-e2e-gate-findings`, base `main` `5dcb0e0` (после rebase; исходный base `d92b4c4`). Worktree `/home/user/rabit-api-worktrees/ops-e2e-gate-findings`. Issue [#61](https://github.com/rebit-pro/rabit-api/issues/61). PR [#87](https://github.com/rebit-pro/rabit-api/pull/87) OPEN, `Refs #61`: часть пунктов ждёт решения. Не сливать до ревью и полного gate.
 - Завершено: пункты 1, 3, 4, 5, 6; в пункте 2 — двойная загрузка и лог. Быстрые проверки T01–T09 — PASS.
 - Следующий шаг: ревью PR, затем полный gate `make test-e2e` (T10, T11) и проверка `prune` против живого стенда (T12).
 - Открытые решения пользователя:
