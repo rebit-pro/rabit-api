@@ -3,8 +3,8 @@
 ## Точка продолжения
 
 - Ветка `codex/issues-68-69-payment-costs` (локальная, upstream снят) от головы PR #66 `01f024b`. Checkout: `/home/user/rabit-api-worktrees/issues-68-69-payment-costs`.
-- Сейчас: I6 — полный gate на ветке (E6 + исправления).
-- Следующий шаг: после gate — ждать merge #66, затем влить main и открыть PR.
+- Завершено: I1–I6, полный gate на `2ca64a3` — PASS.
+- Следующий шаг: после merge #66 — влить main, повторить быстрые проверки и открыть PR в main с «Closes #68, #69».
 - Блокер для PR: #66 не слит; PR в main — после его merge (без stacked PR).
 
 ## Хронология
@@ -21,4 +21,4 @@
 | I-T01…I-T03 | PASS | 2026-09-25 | `npm run test:commerce` — 189/189, тест «#68: switching the policy off…» |
 | I-T05 | PASS | 2026-09-25 | `grep -n 9999` по плану и отчёту E6 — пусто |
 | I-T06 | PASS | 2026-09-25 | `npm run check` (lint, stylelint, vue-tsc, tsc e2e, UI 27), `npm run build-only` — в образе Playwright с томом `rabit-e6-node` |
-| I-T04, I-T07 | PENDING | 2026-09-25 | Полный gate запускается |
+| I-T04, I-T07 | PASS | 2026-09-25 | `make test-e2e …` на `2ca64a3` (E6 + исправления): 104 браузерных сценария (a 64, b 40), в том числе новый шаг #68 в `zzzzzzzz-payment-costs`; verifier storefront, orders, links, transfers, avatar, payment-costs, access — PASS; 297,2 с |
