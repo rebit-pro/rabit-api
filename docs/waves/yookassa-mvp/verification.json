@@ -240,5 +240,163 @@
     "docs/05-rest-api/postman/MoreFoto.local.postman_environment.json": "d4bba2bd1430f2c6e10d7fc916faa677504c539f8fedac2b777e057bce2e74b3",
     "docs/05-rest-api/postman/MoreFoto.stage.postman_environment.json": "3bc2686c533d440d968867d02740039fee2236b864e5e66699604312c4781813",
     "docs/05-rest-api/postman/MoreFoto.postman_collection.json": "604d702c945d2a046500761541a228fe7139c827050e9f67bc5d69455af297c2"
+  },
+  "resync20260925": {
+    "date": "2026-09-25",
+    "baseCommit": "fdb6302f78ade1a827509fd356eb2dc8ad9be608",
+    "previousBaseCommit": "4b507b3b3c27719888e38f582b48e6a56c0c5946",
+    "mergeCommit": "18d3d8312dc922ad850ec9e1d033586a7e926761",
+    "conflicts": [
+      "docs/waves/graph.json"
+    ],
+    "resolution": "graph = main + own PR #35 delta; built twice (field-wise delta on main; canonical backend-waves.json with N1 from main), results equal",
+    "prGraph": {
+      "command": [
+        "python3",
+        "tools/verify-wave-graph.py",
+        "docs/waves/graph.json"
+      ],
+      "exitCode": 0,
+      "result": {
+        "waves": 51,
+        "endpoints": 110,
+        "legacyWaves": 35,
+        "readyFromMain": [
+          "E6",
+          "U1",
+          "U5"
+        ],
+        "blocked": [
+          "G1",
+          "G2",
+          "I1",
+          "I2",
+          "I3",
+          "J1",
+          "J2",
+          "J3",
+          "K1",
+          "L1",
+          "L2",
+          "K2",
+          "M1",
+          "N1",
+          "N2",
+          "U2",
+          "U3",
+          "U4",
+          "B4",
+          "B3",
+          "U6",
+          "U7",
+          "U8"
+        ],
+        "negativeFixtures": [
+          "cycle",
+          "unknown dependency",
+          "unmerged dependency started",
+          "open decision started",
+          "stale unlocks",
+          "duplicate endpoint owner",
+          "missing legacy mapping",
+          "stacked PR permitted",
+          "browser gate disabled",
+          "visual gate disabled",
+          "bundle depends on unmerged wave outside the bundle",
+          "unknown bundle",
+          "bundle partially merged"
+        ]
+      }
+    },
+    "canonicalGraph": {
+      "command": [
+        "python3",
+        "docs/04-bitrix-modules/wave_graph.py",
+        "docs/04-bitrix-modules/backend-waves.json"
+      ],
+      "cwd": "/home/user/MoreFoto",
+      "exitCode": 0,
+      "result": {
+        "waves": 51,
+        "endpoints": 110,
+        "legacyWaves": 35,
+        "readyFromMain": [
+          "E6",
+          "U1",
+          "U5"
+        ],
+        "blocked": [
+          "G1",
+          "G2",
+          "I1",
+          "I2",
+          "I3",
+          "J1",
+          "J2",
+          "J3",
+          "K1",
+          "L1",
+          "L2",
+          "K2",
+          "M1",
+          "N1",
+          "N2",
+          "U2",
+          "U3",
+          "U4",
+          "B4",
+          "B3",
+          "U6",
+          "U7",
+          "U8"
+        ],
+        "negativeFixtures": [
+          "cycle",
+          "unknown dependency",
+          "unmerged dependency started",
+          "open decision started",
+          "stale unlocks",
+          "duplicate endpoint owner",
+          "missing legacy mapping",
+          "stacked PR permitted",
+          "browser gate disabled",
+          "visual gate disabled",
+          "bundle depends on unmerged wave outside the bundle",
+          "unknown bundle",
+          "bundle partially merged"
+        ]
+      }
+    },
+    "canonicalDifferences": [
+      "N1 role dashboard scope from PR #36"
+    ],
+    "canonicalChanged": false,
+    "canonicalSha256": {
+      "docs/04-bitrix-modules/backend-waves.json": "bdd4aa625cf99f912cb3258314ae2a6a238db6fd6157a7a9d24fb34f516a154c",
+      "docs/04-bitrix-modules/backend-waves.md": "1a54c57c981f40360faae36186fdd0c7f8f75111cd702f0d10d826ca2a7fd36a"
+    },
+    "prGraphSha256": "d15e8082a8f6168e52192e6aa172c4f1b982c5a39b732cd2e1d575223e43ba57",
+    "historicalPatchReverseCheck": "FAIL (expected: design-ux changed the same MoreFoto files after 2026-09-22)",
+    "rounding": {
+      "examples": 8,
+      "rangeCases": 14610,
+      "rates": [
+        0,
+        1,
+        100,
+        280,
+        350,
+        380,
+        500,
+        999,
+        2500,
+        9999
+      ],
+      "result": "PASS"
+    },
+    "designUxBundleRecordedMerged": false,
+    "designUxNote": "PR #53 merged as b20423f on 2026-09-24; recording it in the graph is left to the next wave. Simulation shows the validator's negative fixtures must be rebuilt for a fully merged bundle.",
+    "runtimeExecuted": false,
+    "e2eExecuted": false
   }
 }
