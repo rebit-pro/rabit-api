@@ -6,15 +6,14 @@
 - Ветка: `codex/issues-39-41-staff-orders`. Worktree: `/home/user/rabit-api-worktrees/issues-39-41-staff-orders`.
   Общий checkout `/home/user/rabit-api` не трогается: там чужая ветка с незакоммиченными правками.
 - Base: `origin/main` `49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771`. Код: `3396b05` (#41), `1f7d1da` (#39).
-- Issues: [#39](https://github.com/rebit-pro/rabit-api/issues/39), [#41](https://github.com/rebit-pro/rabit-api/issues/41). PR: [#71](https://github.com/rebit-pro/rabit-api/pull/71) (open, не сливать до review и gate).
+- Issues: [#39](https://github.com/rebit-pro/rabit-api/issues/39), [#41](https://github.com/rebit-pro/rabit-api/issues/41). PR: [#71](https://github.com/rebit-pro/rabit-api/pull/71): review без блокеров (пользователь, 2026-09-25), gate PASS, сливается в `main`.
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md).
 - Завершено:
   - реализация #41 и #39, unit-тесты правил;
   - live E2E-сценарии в `zzzzz-orders.spec.ts`: написаны, не запускались;
   - быстрые проверки и стаб-прогон в Chromium зелёные.
-- Сейчас: PR #71 ждёт review.
-- Следующий шаг: review PR. После review без блокеров — полный `make test-e2e` (T02, T04, T08–T13, T17) и визуальная
-  проверка desktop/mobile по скриншотам gate.
+- Сейчас: gate PASS, PR #71 сливается. Base обновлён до `6b9449d` (после merge PR #67 и #70) merge-коммитом `064567f`.
+- Следующий шаг: деплой — отдельно, после результатов E2E волны E6 (решение пользователя 2026-09-25).
 - Блокеров нет. Открытых решений нет.
 - Рабочее дерево: чистое после коммита журнала. Скриншоты стаб-прогона вне репозитория (scratchpad сессии).
 - Следующая проверка после изменения base: команда из раздела «Команды» плана (том `rabit-issues6263-node`).
@@ -84,24 +83,43 @@
 - `git push -u origin codex/issues-39-41-staff-orders`, `gh pr create --base main`:
   [#71](https://github.com/rebit-pro/rabit-api/pull/71). Merge не выполнялся.
 
+### 2026-09-25 — review и полный gate
+
+- Пользователь провёл review, блокирующих замечаний нет. Разрешил полный E2E и merge. Деплой — позже, после E2E волны E6.
+- Base обновлён: `git merge origin/main` (`6b9449d`) → `064567f`, конфликтов нет.
+- Gate 1 (`rabit-e2e-5866714e411d`) — FAIL:
+  - группа `a` 64/64;
+  - группа `b` 39 passed, 1 failed: «E5: staff narrow orders by institution, shoot and group», таймаут 45 с.
+  - Причина — ошибка в тесте. У `c4-curator` нет `order.read` в интерфейсе: экран заказов показывает «Недостаточно прав», запрос `GET /api/v1/institutions` не уходит, `waitForResponse` ждёт до таймаута. Остальные шаги прошли, в том числе куратор `curator`.
+- Исправление теста `981e3ef`:
+  - случай `c4-curator` убран;
+  - для `curator` число вариантов «Учреждение» = 1 + число учреждений из ответа `GET /api/v1/institutions` его сессии, E4 среди них.
+  - `eslint`, `typecheck:e2e` — PASS.
+- Gate 2 (`rabit-e2e-27b71e0e73d4`, 261.8 с) — PASS, exit 0:
+  - группа `a` 64/64, группа `b` 40/40;
+  - «staff narrow orders…» ✓ 6.6 с, «lost response…» ✓ 2.8 с;
+  - desktop/mobile E5 ✓;
+  - `verify-storefront/orders/links/transfers/avatar/access` PASS.
+- Команда: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда | Доказательство |
 |---|---|---|---|---|
 | T01 | PASS | 2026-09-25 | `npm run test:commerce` | тест «an unconfirmed attempt keeps its recovery screen…», 190/190 |
-| T02 | PASS (стаб) / PENDING (live) | 2026-09-25 | `checkout-recovery.mjs`; live E2E после review | экран восстановления и загрузка во время повтора, формы и пустой корзины нет |
-| T03 | PASS (стаб) / PENDING (live) | 2026-09-25 | `checkout-recovery.mjs` | первая отправка остаётся на форме, «Создать тестовый заказ» в загрузке |
-| T04 | PASS (стаб) / PENDING (live) | 2026-09-25 | `checkout-recovery.mjs`; live «refusals while recovering» | причина `PURCHASE_DISABLED` на экране восстановления |
+| T02 | PASS (стаб + live gate `27b71e0e73d4`) | 2026-09-25 | `checkout-recovery.mjs`; live E2E после review | экран восстановления и загрузка во время повтора, формы и пустой корзины нет |
+| T03 | PASS (стаб + live gate `27b71e0e73d4`) | 2026-09-25 | `checkout-recovery.mjs` | первая отправка остаётся на форме, «Создать тестовый заказ» в загрузке |
+| T04 | PASS (стаб + live gate `27b71e0e73d4`) | 2026-09-25 | `checkout-recovery.mjs`; live «refusals while recovering» | причина `PURCHASE_DISABLED` на экране восстановления |
 | T05 | PASS | 2026-09-25 | `npm run test:commerce` | тесты URL/API mapper, ручной `groupId`, пустые значения |
 | T06 | PASS | 2026-09-25 | `npm run test:commerce` | тест «picking a parent level drops the levels below it» |
 | T07 | PASS | 2026-09-25 | `npm run test:commerce` | тесты вариантов списков и «Выбрано по ссылке» |
-| T08 | PASS (стаб) / PENDING (live) | 2026-09-25 | `orders-scope.mjs`; live E2E после review | `groupId` в запросе, итог 1 из 1 |
-| T09 | PASS (стаб) / PENDING (live) | 2026-09-25 | то же | три уровня в URL и запросе |
-| T10 | PASS (стаб) / PENDING (live) | 2026-09-25 | то же | значения списков после карточки |
-| T11 | PASS (стаб) / PENDING (live) | 2026-09-25 | то же | сброс зависимых, общий сброс, «Сбросить» неактивна |
-| T12 | PASS (стаб, куратор одного учреждения) / PENDING (live) | 2026-09-25 | то же | чужое учреждение не предлагается |
-| T13 | PASS (стаб) / PENDING (live) | 2026-09-25 | то же, 1280 и 390 px | `scrollWidth <= innerWidth`, скриншоты |
+| T08 | PASS (стаб + live gate `27b71e0e73d4`) | 2026-09-25 | `orders-scope.mjs`; live E2E после review | `groupId` в запросе, итог 1 из 1 |
+| T09 | PASS (стаб + live gate `27b71e0e73d4`) | 2026-09-25 | то же | три уровня в URL и запросе |
+| T10 | PASS (стаб + live gate `27b71e0e73d4`) | 2026-09-25 | то же | значения списков после карточки |
+| T11 | PASS (стаб + live gate `27b71e0e73d4`) | 2026-09-25 | то же | сброс зависимых, общий сброс, «Сбросить» неактивна |
+| T12 | PASS (стаб + live gate `27b71e0e73d4`) | 2026-09-25 | то же | чужое учреждение не предлагается |
+| T13 | PASS (стаб + live gate `27b71e0e73d4`) | 2026-09-25 | то же, 1280 и 390 px | `scrollWidth <= innerWidth`, скриншоты |
 | T14 | PASS | 2026-09-25 | `npm run check` | exit 0 |
 | T15 | PASS | 2026-09-25 | `npm run test:commerce` | 190/190 |
 | T16 | PASS | 2026-09-25 | `git diff --stat origin/main...HEAD` | только `frontend/` и план; backend и demo-экраны не затронуты |
-| T17 | PENDING | — | `make test-e2e` | после review без блокеров |
+| T17 | PASS | 2026-09-25 | `make test-e2e` `rabit-e2e-27b71e0e73d4` | exit 0, a 64/64, b 40/40; gate 1 падал на ошибке теста (`c4-curator`), исправлено `981e3ef` |

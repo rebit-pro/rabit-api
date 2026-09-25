@@ -101,7 +101,7 @@
 - [x] Стаб-прогон в Chromium: каскад, URL, сброс, карточка и возврат; экран восстановления во время повтора;
       скриншоты desktop/mobile.
 - [x] Commit, push, PR в `main` без merge ([#71](https://github.com/rebit-pro/rabit-api/pull/71)).
-- [ ] После review без блокеров: полный `make test-e2e`, визуальная проверка desktop/mobile.
+- [x] После review без блокеров: полный `make test-e2e`, визуальная проверка desktop/mobile (PASS 2026-09-25).
 
 ## Критерии приёмки
 
