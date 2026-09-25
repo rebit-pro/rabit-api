@@ -7,8 +7,8 @@
 - Связанное: [план K3](plan.md), [план PR #48](../max-support-chat-plan/plan.md), `docs/waves/graph.json`,
   канон `../MoreFoto/docs/04-bitrix-modules/backend-waves.json` (не git, изменения — патчем в `docs/waves/k3/`).
 - Завершено: merge PR #48; граф синхронизирован (E6 merged, K3 inProgress).
-- Сейчас: частичный E2E группы a на новой базе (браузер + `verify-support.php`).
-- Следующий шаг: при PASS — push и PR на ревью; полный `make test-e2e` — после ревью без блокеров.
+- Сейчас: PR на ревью.
+- Следующий шаг: ревью; после ревью без блокеров — полный `make test-e2e`, затем деплой на stage и живая проверка MAX-12.
 - Пользователь: бот прошёл модерацию; группа создана; токен кладёт в `~/.config/morefoto/max-bot.env`, бот
   добавляется в группу администратором.
 - Блокеры: нет. Открыто MAX-D06 (срок хранения) — только для production.
@@ -65,6 +65,12 @@
 - Неблокирующее (вне K3): `DtoMetadataService:445` вызывает устаревший `SerializedName::getSerializedName()` (Symfony 7.4) — deprecation при любом `SerializedName`; оформить issue.
 - После rebase на `4ca7e9c`: `verify-wave-graph.py` — PASS (52/116, ready K3); `vendor/bin/phpunit` — PASS 779 тестов / 44928 assertions (1 deprecation — выше); `phpstan` — PASS; `npm run check` — PASS (test:ui 32/32); `npm run test:commerce` — PASS 200/200.
 
+### 25.09.2026 — E2E группы a на новой базе
+
+- `E2E_GROUPS=a make test-e2e …` (прогон `rabit-e2e-c57cfc81d4f4`, база `4ca7e9c`) — PASS: браузер 68/68 (3.9 мин), `verify-access.php` PASS, `verify-support.php` PASS «K3 support integration passed». Это частичный прогон (только группа a), не полный gate.
+- MAX-11: логи стенда прогона `rabit-e2e-7bd431fabcd6` (fpm, nginx, media, mysql, rabbitmq, notification, prepare) проверены `grep` на ключ беседы из `var/k3-questions.json`, тексты и имена вопросов и секрет webhook — 0 совпадений.
+- Визуально: снимки `k3-gallery-question-{desktop,mobile}.png` — вёрстка корректна, но сняты во время анимации открытия диалога. Спек дополнен ожиданием окончания анимаций; `eslint` и `typecheck:e2e` — PASS; чистые снимки — в полном gate после ревью.
+
 ## Результаты проверок
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -78,11 +84,11 @@
 | MAX-03 | PASS (E2E) | 25.09.2026 | `zz-questions`: история после reload; отметка «новый ответ» (прогон 2) |
 | MAX-04 | PASS (E2E) | 25.09.2026 | `zz-questions`: воспитатель пишет из кабинета, reload; куратору 403 (прогон 2) |
 | MAX-05 | PASS (unit+E2E verifier) | 25.09.2026 | `MaxDeliveryAndWebhookTest`; `verify-support.php` раздел 2 (прогон 2) |
-| MAX-06 | PASS (unit) | 25.09.2026 | `testCuratorReplyToBotMessageIsStoredOnce`; HTTP — ждёт прогон 4 |
-| MAX-07 | PASS (unit) / PENDING (HTTP) | 25.09.2026 | `testOtherGroupMessagesDoNotReachTheSite`; 401 по HTTP PASS (прогон 2); 200 без изменений — ждёт прогон 4 |
-| MAX-08 | PASS (unit) / PENDING (HTTP) | 25.09.2026 | Повтор webhook — unit; HTTP-повтор — ждёт прогон 4 |
+| MAX-06 | PASS | 25.09.2026 | unit `testCuratorReplyToBotMessageIsStoredOnce`; HTTP — `verify-support.php` раздел 3 (прогон `c57cfc81d4f4`) |
+| MAX-07 | PASS | 25.09.2026 | unit `testOtherGroupMessagesDoNotReachTheSite`; HTTP: 401 без/с неверным секретом, чужой чат — 200 без записи (`verify-support.php`, `c57cfc81d4f4`) |
+| MAX-08 | PASS | 25.09.2026 | Повтор webhook: unit и HTTP (ровно одна реплика куратора, `c57cfc81d4f4`); сбой БД — не моделировался |
 | MAX-09 | PASS (unit) | 25.09.2026 | Retry/unknown/stale/без группы — `MaxDeliveryAndWebhookTest`; RabbitMQ-сбой — не моделировался |
 | MAX-10 | PASS (unit+E2E) | 25.09.2026 | `TextPolicyAndSealTest`; сетевой сбой с повтором тем же ключом — `zz-questions` |
-| MAX-11 | PENDING | 25.09.2026 | Логи стенда не проверены на тексты/ключи |
+| MAX-11 | PASS | 25.09.2026 | `grep` логов стенда `7bd431fabcd6`: ключ, тексты, имена, секрет — 0 совпадений |
 | MAX-12 | PENDING | 25.09.2026 | Живая проверка на stage после деплоя |
-| MAX-13 | PENDING | 25.09.2026 | Снимки desktop/mobile — артефакты `zz-questions`, визуальный просмотр пользователем |
+| MAX-13 | PENDING | 25.09.2026 | Вёрстка на снимках 1440 и 390 корректна, горизонтального скролла нет (проверка в спеке); снимки сняты во время анимации — повторить в полном gate |

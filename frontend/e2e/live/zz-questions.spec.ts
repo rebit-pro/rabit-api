@@ -136,6 +136,8 @@ test('the question screens fit desktop and mobile', async ({ page }) => {
     await expect(dialog.getByTestId('question-thread').locator('[data-author="parent"]')).toHaveCount(2);
     const width = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(width).toBeLessThanOrEqual(size.width);
+    // The dialog fades in: capture the settled screen, not the transition.
+    await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== 'running'));
     await page.screenshot({ path: test.info().outputPath('k3-gallery-question-' + name + '.png') });
   }
 });
