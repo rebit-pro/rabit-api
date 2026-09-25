@@ -7,8 +7,10 @@
   на `7ec736a`. Скрипт съёмки `shots.mjs` и исходные PNG — в scratchpad сессии (`guide-shots/v2/`).
 - Документация: [план](plan.md), предыдущая итерация [OPS-stage-run-guide](../OPS-stage-run-guide/progress.md).
 - Завершено: главная с плитками, 7 статей, 44 скриншота WebP (1,8 МБ), проверки KB-T01…T05.
-- Сейчас: PR в `main`.
-- Следующий шаг: review, merge и выкладка образа `7ec736a` + `guide/` этой ветки (OPS-KB-DEC-03), затем KB-T06.
+- Сейчас: [PR #95](https://github.com/rebit-pro/rabit-api/pull/95) ждёт merge пользователем (merge агентом отклонён
+  автоматическим режимом как «без ревью»).
+- Следующий шаг: после merge — загрузить готовый пакет `guide-kb-20260925151854-7ec736a-b314d77` (scratchpad сессии, sha256 `d469eda1…6d00`)
+  в `/srv/morefoto/releases/` и запустить `switch-frontend.sh`, затем KB-T06.
 - Блокеров нет.
 - Рабочее дерево: новые/изменённые файлы `frontend/public/guide/**`, `docs/plans/OPS-guide-knowledge-base/**`.
 
@@ -45,3 +47,5 @@
   на демо-фото два водяных знака (свой и серверный).
 - Статьи: путь заказа, организатор (9 шагов), куратор (5), родитель (5), ответственный и руководитель, частые вопросы,
   тестовый прогон (14 отметок, поля в localStorage).
+- Релизный образ `morefoto-frontend:guide-kb-20260925151854-7ec736a-b314d77` собран из `7ec736a` + `frontend/public/guide` из `b314d77`; smoke
+  контейнера: `/guide/**`, изображения, `/login`, `/health` — 200. Пакет с `SHA256SUMS` и `switch-frontend.sh` не загружен.
