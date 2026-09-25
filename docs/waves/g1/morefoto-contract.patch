@@ -1,0 +1,1697 @@
+diff --git a/docs/04-bitrix-modules/README.md b/docs/04-bitrix-modules/README.md
+index c4e77fa..b45a8e1 100644
+--- a/docs/04-bitrix-modules/README.md
++++ b/docs/04-bitrix-modules/README.md
+@@ -28,7 +28,7 @@
+ | morefoto.media | MED-01–MED-07 | 7 |
+ | morefoto.commerce | COM-01–COM-13 | 13 |
+ | morefoto.handoff | HND-01–HND-12 | 12 |
+-| morefoto.payments | PAY-01–PAY-09 | 9 |
++| morefoto.payment | PAY-01–PAY-11 | 11 |
+ | morefoto.files | FIL-01–FIL-08 | 8 |
+ | morefoto.support | SUP-01–SUP-06 | 6 |
+ | morefoto.settlement | SET-01–SET-07 | 7 |
+diff --git a/docs/04-bitrix-modules/backend-waves.json b/docs/04-bitrix-modules/backend-waves.json
+index 9974add..4d75cfb 100644
+--- a/docs/04-bitrix-modules/backend-waves.json
++++ b/docs/04-bitrix-modules/backend-waves.json
+@@ -2,7 +2,7 @@
+   "version": 2,
+   "planStatus": "active",
+   "date": "2026-09-25",
+-  "endpointCount": 110,
++  "endpointCount": 112,
+   "backend": "RaBit API",
+   "baseline": {
+     "branch": "main",
+@@ -110,7 +110,10 @@
+       "D3-D12-SCOPE": "2026-09-22: пользователь принял D3-DEC-07. D3 не меняет оплату, возвраты, печать и файлы; перенос в закрытую staff-группу запрещён. D12 снят с decisionGates D3 и остаётся у I3 и последующих волн.",
+       "D3-FOLLOW-UP": "2026-09-22: после merge D3 слиты PR #49 (21311db, текст диалога переноса и стабилизация gate) и PR #52 (93becd8, запись развёртывания stage).",
+       "DESIGN-UX": "2026-09-23: пользователь утвердил план docs/plans/design-ux-plan/plan.md в rabit-api (PR #50, merge bb35665) и решения DS-01…DS-20 по рекомендациям. Раздел 7 плана закрывает D01 (визуал, логотип, шрифты, палитра), раздел 10.1 — механизм выдачи и восстановления паролей в D08 (персональное приглашение по ссылке, сброс и смена пароля). Волны U1–U8, B3, B4 сдаются одним PR пакета design-ux.",
+-      "E6-DEC-01-03": "2026-09-25: пользователь принял E6-DEC-01 (ставка 0…10%, сначала выбран 99,99%, после разбора крайнего случая — 10%), E6-DEC-02 (предел цены 1 000 000 ₽) и E6-DEC-03 (чистый контроллер условий в E6). План: docs/plans/E6_payment-cost-pricing/plan.md в rabit-api."
++      "E6-DEC-01-03": "2026-09-25: пользователь принял E6-DEC-01 (ставка 0…10%, сначала выбран 99,99%, после разбора крайнего случая — 10%), E6-DEC-02 (предел цены 1 000 000 ₽) и E6-DEC-03 (чистый контроллер условий в E6). План: docs/plans/E6_payment-cost-pricing/plan.md в rabit-api.",
++      "G1-D12-SCOPE": "2026-09-25: пользователь принял узкое D12 для G1: поздний платёж записывается денежным фактом с latePayment и не открывает файлы и печать; решения исполнения, возвраты и перенос с оплатой — I2/I3. D12 снят с decisionGates G1 и остаётся у I1–I3 и последующих волн.",
++      "G1-D09-SANDBOX": "2026-09-25: D09 закрыт для G1 в части тестового режима: зарегистрирован тестовый магазин ЮKassa (ключи вне репозитория), служебный реестр PAY-10/11. Чеки, налогообложение, форма продавца (ИП/ООО или НПД) и боевой магазин остаются D09 для G2 и далее. D09 снят с decisionGates G1.",
++      "G1-DEC": "2026-09-25: пользователь принял план docs/plans/G1_payment-attempts/plan.md в rabit-api: модуль morefoto.payment (namespace Morefoto\\Payment); оплачивается неизменяемый снимок заказа E5 без пересчёта; новая попытка только до closesAt; способ оплаты выбирается на странице MoreFoto из конфигурации магазина (СБП, карта; в тестовом магазине только карта); личный ключ заказа не передаётся провайдеру; webhook — сигнал серверной сверки; клиент PaymentClient поверх RebitHttpClient по образцу orteka.payment; реестр PAY-10/11 с областью COM-12; фоновая сверка cron."
+     }
+   },
+   "acceptedImplementationDecisions": [
+@@ -1422,7 +1425,7 @@
+       "title": "Платёжные попытки и подтверждённые факты",
+       "kind": "implementation",
+       "owners": [
+-        "morefoto.payments",
++        "morefoto.payment",
+         "morefoto.commerce"
+       ],
+       "dependsOn": [
+@@ -1430,15 +1433,15 @@
+         "F2"
+       ],
+       "decisionGates": [
+-        "D09",
+-        "D10",
+-        "D12"
++        "D10"
+       ],
+       "endpointIds": [
+         "PAY-01",
+         "PAY-02",
+         "PAY-03",
+-        "PAY-07"
++        "PAY-07",
++        "PAY-10",
++        "PAY-11"
+       ],
+       "verifiesEndpointIds": [
+         "COM-06",
+@@ -1451,9 +1454,9 @@
+       "scope": [
+         "API ЮKassa, готовая внешняя платёжная страница, своё хранение попыток/фактов, серверная сверка и реестр.",
+         "Уникальные provider payment/event ID, сохранённый idempotency key, локальная операция и сверка unknown; HTTP вне SQL-транзакции.",
+-        "Денежный факт отделён от исполнения; поздний платёж не открывает файлы/печать до I3. PAY-07 уточнить для уведомлений ЮKassa.",
++        "Денежный факт отделён от исполнения; поздний платёж не открывает файлы/печать до I3. PAY-07 — /webhooks/yookassa/payments, тело уведомления только сигнал сверки.",
+         "Реестр платежей MoreFoto с серверными правами/фильтрами/пагинацией, без секретов. Сумма берётся из неизменяемого заказа, включая опубликованную политику цен E6, если она включена.",
+-        "До старта G1 закрепить дополнительные служебные API ID/DTO реестра и параметры магазина, не переименовывая исходные 99 ID."
++        "Служебный реестр — PAY-10/11 (область COM-12); параметры тестового магазина в защищённой конфигурации; исходные ID не переименованы."
+       ],
+       "review": [
+         "Дубликаты, чужая сумма/валюта/заказ/магазин, переставленные события и перезапуск.",
+@@ -1469,7 +1472,7 @@
+       "legacyIds": [
+         "W19"
+       ],
+-      "deliveryState": "planned",
++      "deliveryState": "inProgress",
+       "unlocks": [
+         "G2",
+         "I1",
+@@ -1477,7 +1480,7 @@
+         "I3"
+       ],
+       "inputBoundary": "Установленные и принятые в main контракты/схема: E5, F2. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
+-      "outputBoundary": "Завершённые операции PAY-01, PAY-02, PAY-03, PAY-07; Попытка, webhook и неизвестный исход обрабатываются без ложного успешного заказа.",
++      "outputBoundary": "Завершённые операции PAY-01, PAY-02, PAY-03, PAY-07, PAY-10, PAY-11; Попытка, webhook и неизвестный исход обрабатываются без ложного успешного заказа.",
+       "mergeCheck": "Отдельный PR к актуальному main; все dependsOn уже merged. Проверки на main + только этот diff, без файлов/коммитов незамерженных волн; установить миграции и DI своего сценария. Повторить проверку после обновления base."
+     },
+     {
+@@ -1533,7 +1536,7 @@
+       "title": "Чеки и повтор доставки",
+       "kind": "implementation",
+       "owners": [
+-        "morefoto.payments",
++        "morefoto.payment",
+         "rebit.notification"
+       ],
+       "dependsOn": [
+@@ -1642,7 +1645,7 @@
+       "kind": "implementation",
+       "owners": [
+         "morefoto.settlement",
+-        "morefoto.payments"
++        "morefoto.payment"
+       ],
+       "dependsOn": [
+         "G1",
+@@ -1701,7 +1704,7 @@
+       "owners": [
+         "morefoto.settlement",
+         "morefoto.commerce",
+-        "morefoto.payments"
++        "morefoto.payment"
+       ],
+       "dependsOn": [
+         "D3",
+@@ -2309,7 +2312,7 @@
+         "morefoto.media",
+         "morefoto.commerce",
+         "morefoto.handoff",
+-        "morefoto.payments",
++        "morefoto.payment",
+         "morefoto.files",
+         "morefoto.support",
+         "morefoto.settlement",
+@@ -2941,7 +2944,7 @@
+     "platform": "Битрикс Старт: Main/D7 и собственные модули; без sale/catalog, Bitrix Sale Order/Payment, PaySystem и таблиц b_sale_*.",
+     "storage": {
+       "orders": "morefoto.commerce",
+-      "paymentAttemptsAndFacts": "morefoto.payments",
++      "paymentAttemptsAndFacts": "morefoto.payment",
+       "refundReservationsAndAllocations": "morefoto.settlement"
+     },
+     "adminInterface": "Админ-панель MoreFoto: реестр платежей и чеков, карточка/история, полный и частичный возврат с причиной, подтверждением и серверными правами.",
+@@ -2951,7 +2954,7 @@
+       "G2": "Чеки от ЮKassa при покупке/возврате, отдельный статус чека и повтор выдачи существующего документа.",
+       "I2": "Полный/частичный refund ЮKassa, локальный резерв, сверка неизвестного исхода и возврат из админ-панели."
+     },
+-    "registryApiStatus": "Требует расширения до старта G1: отдельные служебные список/карточка платежа отсутствуют среди 99 API ID. Закрепить новые ID/DTO/права/фильтры в API-генераторе и Postman, сохранив все существующие ID. Плановые URL: GET /api/v1/payments и GET /api/v1/payments/{payment_attempt_id}.",
++    "registryApiStatus": "Закреплено в G1: PAY-10 GET /api/v1/payments и PAY-11 GET /api/v1/payments/{payment_attempt_id}, область доступа как COM-12; прежние ID не переименованы.",
+     "pricing": {
+       "owner": "morefoto.commerce",
+       "wave": "E6",
+diff --git a/docs/04-bitrix-modules/backend-waves.md b/docs/04-bitrix-modules/backend-waves.md
+index 065b3ff..dbcc363 100644
+--- a/docs/04-bitrix-modules/backend-waves.md
++++ b/docs/04-bitrix-modules/backend-waves.md
+@@ -18,7 +18,7 @@
+ 
+ ## Текущий независимый набор
+ 
+-В main `49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771` приняты: A1, A2, A3, A4, A5, A6, A7, A8, B1, C1, E1, C2, C3, C4, B2, D1, D2, E2, E3, F1, H1, E4, E5, F2, D3, U1, U2, U3, U4, B4, B3, U5, U6, U7, U8. Готовы по графу: E6. Это снимок; фактические зависимости и открытые решения проверяются перед стартом.
++В main `49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771` приняты: A1, A2, A3, A4, A5, A6, A7, A8, B1, C1, E1, C2, C3, C4, B2, D1, D2, E2, E3, F1, H1, E4, E5, F2, D3, U1, U2, U3, U4, B4, B3, U5, U6, U7, U8. Готовы по графу: E6, G1. Это снимок; фактические зависимости и открытые решения проверяются перед стартом.
+ 
+ Пользователь принял модель Access/Organization, одного продавца, связь фото с несколькими детьми и рекомендации D07/D08/D10. R17 и остальные открытые решения не объявлены закрытыми. D02 не мешает пустому редактируемому каталогу, но продолжает блокировать соответствующие коммерческие правила E3. Для H1 выбран EMAIL, MAX перенесён в отдельный последующий этап. 22.09.2026 первым провайдером выбрана ЮKassa с «Чеками от ЮKassa», СберПэй — необязательный резерв. Расходы в общей цене выделены в независимую E6 с округлением вверх до 50 ₽. Битрикс Старт и своё хранение сохраняются; настройки/параметры чека и оставшиеся вопросы D09/D12 не объявлены закрытыми. GitHub Actions отключён вручную; YAML сохранён, проверки выполняются локально.
+ 
+@@ -28,7 +28,7 @@
+ 
+ Админ-панель MoreFoto: реестр платежей и чеков, карточка/история, полный и частичный возврат с причиной, подтверждением и серверными правами.
+ 
+-Хранение: заказы — `morefoto.commerce`, платежи — `morefoto.payments`, резервы возврата — `morefoto.settlement`.
++Хранение: заказы — `morefoto.commerce`, платежи — `morefoto.payment`, резервы возврата — `morefoto.settlement`.
+ 
+ Документация провайдера: https://yookassa.ru/developers/payment-acceptance/getting-started/quick-start.
+ 
+@@ -41,7 +41,7 @@
+ - **G2:** Чеки от ЮKassa при покупке/возврате, отдельный статус чека и повтор выдачи существующего документа.
+ - **I2:** Полный/частичный refund ЮKassa, локальный резерв, сверка неизвестного исхода и возврат из админ-панели.
+ 
+-Требует расширения до старта G1: отдельные служебные список/карточка платежа отсутствуют среди 99 API ID. Закрепить новые ID/DTO/права/фильтры в API-генераторе и Postman, сохранив все существующие ID. Плановые URL: GET /api/v1/payments и GET /api/v1/payments/{payment_attempt_id}.
++Закреплено в G1: PAY-10 GET /api/v1/payments и PAY-11 GET /api/v1/payments/{payment_attempt_id}, область доступа как COM-12; прежние ID не переименованы.
+ 
+ **Открытые решения D09 и контрактов:**
+ 
+@@ -179,7 +179,7 @@ graph LR
+ | [E6](#e6) | Учёт расходов на оплату в общей цене продукции | E3, E5 | N2 | Без новых REST | на ревью |
+ | [D3](#d3) | Атомарные переносы ребёнка и служебной заявки | D2, F1, E5, F2 | I3 | MED-07, HND-10, HND-11 | в main |
+ | [F2](#f2) | Подготовка и факт передачи ссылки | E3, F1, E4 | D3, G1, L1, K2, U5 | HND-01, HND-02, HND-03, HND-04, HND-05 | в main |
+-| [G1](#g1) | Платёжные попытки и подтверждённые факты | E5, F2 | G2, I1, I2, I3 | PAY-01, PAY-02, PAY-03, PAY-07 | запланирована |
++| [G1](#g1) | Платёжные попытки и подтверждённые факты | E5, F2 | G2, I1, I2, I3 | PAY-01, PAY-02, PAY-03, PAY-07, PAY-10, PAY-11 | в работе |
+ | [H1](#h1) | Общая надёжная доставка Notification | A2, A5 | G2, J2, B4 | Без новых REST | в main |
+ | [G2](#g2) | Чеки и повтор доставки | G1, H1 | I1 | PAY-04, PAY-05, PAY-06, PAY-09 | запланирована |
+ | [I1](#i1) | История исправлений и сопровождение заказа | E5, G1, G2 | I2, I3, N1 | SET-01, SET-02, SET-03 | запланирована |
+@@ -1026,12 +1026,12 @@ graph LR
+ 
+ Попытка, webhook и неизвестный исход обрабатываются без ложного успешного заказа.
+ 
+-**Владельцы:** `morefoto.payments`, `morefoto.commerce`.
++**Владельцы:** `morefoto.payment`, `morefoto.commerce`.
+ **Зависит от:** E5, F2. **Разблокирует:** G2, I1, I2, I3.
+-**Решения:** D09, D10, D12. **Статус:** запланирована.
+-**Первичные REST:** PAY-01, PAY-02, PAY-03, PAY-07.
++**Решения:** D10. **Статус:** в работе.
++**Первичные REST:** PAY-01, PAY-02, PAY-03, PAY-07, PAY-10, PAY-11.
+ **Вход:** Установленные и принятые в main контракты/схема: E5, F2. Открытые decisionGates проверяются отдельно до начала зависимого участка.
+-**Выход:** Завершённые операции PAY-01, PAY-02, PAY-03, PAY-07; Попытка, webhook и неизвестный исход обрабатываются без ложного успешного заказа.
++**Выход:** Завершённые операции PAY-01, PAY-02, PAY-03, PAY-07, PAY-10, PAY-11; Попытка, webhook и неизвестный исход обрабатываются без ложного успешного заказа.
+ **Независимый merge:** Отдельный PR к актуальному main; все dependsOn уже merged. Проверки на main + только этот diff, без файлов/коммитов незамерженных волн; установить миграции и DI своего сценария. Повторить проверку после обновления base.
+ **Повторная проверка:** COM-06, COM-07, COM-11, COM-12, COM-13.
+ 
+@@ -1039,9 +1039,9 @@ graph LR
+ 
+ - API ЮKassa, готовая внешняя платёжная страница, своё хранение попыток/фактов, серверная сверка и реестр.
+ - Уникальные provider payment/event ID, сохранённый idempotency key, локальная операция и сверка unknown; HTTP вне SQL-транзакции.
+-- Денежный факт отделён от исполнения; поздний платёж не открывает файлы/печать до I3. PAY-07 уточнить для уведомлений ЮKassa.
++- Денежный факт отделён от исполнения; поздний платёж не открывает файлы/печать до I3. PAY-07 — /webhooks/yookassa/payments, тело уведомления только сигнал сверки.
+ - Реестр платежей MoreFoto с серверными правами/фильтрами/пагинацией, без секретов. Сумма берётся из неизменяемого заказа, включая опубликованную политику цен E6, если она включена.
+-- До старта G1 закрепить дополнительные служебные API ID/DTO реестра и параметры магазина, не переименовывая исходные 99 ID.
++- Служебный реестр — PAY-10/11 (область COM-12); параметры тестового магазина в защищённой конфигурации; исходные ID не переименованы.
+ 
+ **Предмет ревью:**
+ 
+@@ -1097,7 +1097,7 @@ graph LR
+ 
+ Payments владеет фискальным чеком, Notification — исполнением отправки.
+ 
+-**Владельцы:** `morefoto.payments`, `rebit.notification`.
++**Владельцы:** `morefoto.payment`, `rebit.notification`.
+ **Зависит от:** G1, H1. **Разблокирует:** I1.
+ **Решения:** D07, D09. **Статус:** запланирована.
+ **Первичные REST:** PAY-04, PAY-05, PAY-06, PAY-09.
+@@ -1162,7 +1162,7 @@ Payments владеет фискальным чеком, Notification — исп
+ 
+ Конкурентные запросы не возвращают больше остатка, unknown не вызывает второе списание.
+ 
+-**Владельцы:** `morefoto.settlement`, `morefoto.payments`.
++**Владельцы:** `morefoto.settlement`, `morefoto.payment`.
+ **Зависит от:** G1, I1. **Разблокирует:** I3, N1.
+ **Решения:** D09, D12. **Статус:** запланирована.
+ **Первичные REST:** SET-04, SET-05, SET-06, PAY-08.
+@@ -1200,7 +1200,7 @@ Payments владеет фискальным чеком, Notification — исп
+ 
+ Решение отдельно задаёт права на файлы и разрешение печати с учётом оплаты, исправлений и возврата.
+ 
+-**Владельцы:** `morefoto.settlement`, `morefoto.commerce`, `morefoto.payments`.
++**Владельцы:** `morefoto.settlement`, `morefoto.commerce`, `morefoto.payment`.
+ **Зависит от:** D3, G1, I1, I2. **Разблокирует:** J1, J3, K1, L1, M1, N1.
+ **Решения:** D10, D11, D12. **Статус:** запланирована.
+ **Первичные REST:** SET-07.
+@@ -1533,14 +1533,14 @@ Payments владеет фискальным чеком, Notification — исп
+ 
+ Подтверждена готовность функций и известны восстановление, включение и пределы гарантий.
+ 
+-**Владельцы:** `rebit.share`, `rebit.auth`, `rebit.notification`, `rebit.leadhunter`, `morefoto.access`, `morefoto.organization`, `morefoto.media`, `morefoto.commerce`, `morefoto.handoff`, `morefoto.payments`, `morefoto.files`, `morefoto.support`, `morefoto.settlement`, `morefoto.production`, `morefoto.shipping`.
++**Владельцы:** `rebit.share`, `rebit.auth`, `rebit.notification`, `rebit.leadhunter`, `morefoto.access`, `morefoto.organization`, `morefoto.media`, `morefoto.commerce`, `morefoto.handoff`, `morefoto.payment`, `morefoto.files`, `morefoto.support`, `morefoto.settlement`, `morefoto.production`, `morefoto.shipping`.
+ **Зависит от:** N1, E6. **Разблокирует:** нет.
+ **Решения:** D01, D02, D03, D04, D05, D06, D07, D08, D09, D10, D11, D12. **Статус:** запланирована.
+ **Первичные REST:** нет новых REST.
+ **Вход:** Установленные и принятые в main контракты/схема: N1, E6. Открытые decisionGates проверяются отдельно до начала зависимого участка.
+ **Выход:** Без новых публичных HTTP-операций; Подтверждена готовность функций и известны восстановление, включение и пределы гарантий.
+ **Независимый merge:** Отдельный PR к актуальному main; все dependsOn уже merged. Проверки на main + только этот diff, без файлов/коммитов незамерженных волн; установить миграции и DI своего сценария. Повторить проверку после обновления base.
+-**Повторная проверка:** все 110 операций реестра.
++**Повторная проверка:** все 112 операций реестра.
+ 
+ **Состав:**
+ 
+@@ -1896,4 +1896,4 @@ python3 docs/05-rest-api/validate.py
+ node docs/05-rest-api/validate-postman.cjs
+ ```
+ 
+-Валидатор проверяет DAG независимо от порядка строк JSON, точные обратные unlocks, готовность начатых волн относительно принятого main, 35 legacy ID и 110 первичных API ID. Отрицательные fixtures отвергают циклы, неизвестные зависимости, открытые решения и старт поверх незамерженной волны. Ни один из этих результатов не означает live-проверку API.
++Валидатор проверяет DAG независимо от порядка строк JSON, точные обратные unlocks, готовность начатых волн относительно принятого main, 35 legacy ID и 112 первичных API ID. Отрицательные fixtures отвергают циклы, неизвестные зависимости, открытые решения и старт поверх незамерженной волны. Ни один из этих результатов не означает live-проверку API.
+diff --git a/docs/05-rest-api/README.md b/docs/05-rest-api/README.md
+index 7edf1f4..d230a23 100644
+--- a/docs/05-rest-api/README.md
++++ b/docs/05-rest-api/README.md
+@@ -162,7 +162,7 @@ Webhook дедуплицируется по provider + providerEventId и свя
+ ## Полная карта запросов
+ 
+ В таблицах вход — тело JSON (если есть) и перечисленные query-параметры; path-параметры видны в URL. Полные примеры тел находятся в коллекции. Заголовки доступа/повтора задаются по общим правилам. Данные примеров вымышлены и не являются seed-набором.
+-**Всего: 110 записей = 97 прежних контрактов карты + SHR-01 и NTF-01 из платформы + 11 контрактов пакета design-ux; 15 папок по владельцам.**
++**Всего: 112 записей = 97 прежних контрактов карты + SHR-01 и NTF-01 из платформы + 13 контрактов пакета design-ux; 15 папок по владельцам.**
+ | Владелец | Ответственность | Запросов |
+ | --- | --- | --- |
+ | rebit.auth | Вход и сессия | 9 |
+@@ -171,7 +171,7 @@ Webhook дедуплицируется по provider + providerEventId и свя
+ | morefoto.media | Фотографии и галерея | 7 |
+ | morefoto.commerce | Каталог, расчёт и заказы | 13 |
+ | morefoto.handoff | Ссылки и списки сотрудников | 12 |
+-| morefoto.payments | Оплата и чеки | 9 |
++| morefoto.payment | Оплата и чеки | 11 |
+ | morefoto.files | Файлы и повторная выдача | 8 |
+ | morefoto.support | Обращения и продление | 6 |
+ | morefoto.settlement | Исправления, возвраты и исполнение | 7 |
+@@ -366,7 +366,7 @@ Webhook дедуплицируется по provider + providerEventId и свя
+ - **HND-10:** Сервер находит все фотографии по кодам строк, проверяет актуальность исходной группы и свободные целевые коды. D3: организатор и куратор своей области; руководитель и воспитатель — 403 FORBIDDEN, чужая или отсутствующая заявка — 404 STAFF_REQUEST_NOT_FOUND. Только submitted: transferred — 409 REQUEST_TRANSFERRED, clarification — 409 REQUEST_NOT_SUBMITTED. Цель — единственная staff-группа съёмки (нет — 409 STAFF_GROUP_REQUIRED, несколько — 409 STAFF_GROUP_AMBIGUOUS), закрытая — 409 TARGET_GROUP_CLOSED. Каждая строка берёт весь текущий набор ребёнка; ребёнок вне исходной группы, пустой набор или потерянный кадр поданного списка — 409 SET_CHANGED; кадр, общий с ребёнком вне заявки, — 409 SHARED_PHOTO с error.details.photoCodes. targetCode — следующие свободные коды staff-группы (A…Z, AA…) в порядке строк. bundles[]: rowId, groupId, childCode, targetCode, hasOrders, photos[{id, code, revision}]. hasOrders — есть заказы детей заявки в любом статусе; заказы переносом не меняются. signature — SHA-256 проверяемого состояния, revision — версия заявки. Ответ no-store.
+ - **HND-11:** Атомарный перенос полного набора в staff-группу одной съёмки, без дублей; сохраняет photoId/originalGroupId. Повтор не переносит заново. D3: Idempotency-Key 32 hex. reason — комментарий до 500 символов после trim (может быть пустым), confirmed=true (422 CONFIRMATION_REQUIRED), revision и signature из HND-10 (409 REVISION_CONFLICT/SIGNATURE_CONFLICT); права и остальные отказы как в HND-10. Одна транзакция переносит все наборы: ID кадров, детей, assignmentId и originalGroupId сохраняются, заказы не меняются, подготовка ссылки затронутых групп сбрасывается (снова нужна HND-03). results[]: rowId, fromGroupId, fromChildCode, targetGroupId, targetChildCode, photoIds. Повтор тем же ключом — тот же ответ; подтверждение уже перенесённой заявки с другим ключом — 200 с сохранёнными results без повторного переноса; тот же ключ с другим телом — 409 IDEMPOTENCY_CONFLICT.
+ 
+-### morefoto.payments — Оплата и чеки
++### morefoto.payment — Оплата и чеки
+ 
+ Попытки платежа, сверка провайдера, чеки и фискальная доставка. Результат возврата передаёт settlement через контракт.
+ 
+@@ -374,24 +374,28 @@ Webhook дедуплицируется по provider + providerEventId и свя
+ 
+ | ID / статус | Метод и путь | Сценарий / доступ | Вход | Успешный ответ | Волна / область |
+ | --- | --- | --- | --- | --- | --- |
+-| PAY-01 · **П** | **POST** /public/orders/current/payment-attempts | Начать или получить ожидающую попытку оплаты; Заказ | orderVersion, precedingAttemptId, quoteToken | **202**; id, status, amount, redirectUrl?, created, orderVersion | G1; product |
++| PAY-01 · **П** | **POST** /public/orders/current/payment-attempts | Начать или получить ожидающую попытку оплаты; Заказ | orderVersion, precedingAttemptId, quoteToken, paymentMethod | **202**; id, status, amount, redirectUrl?, created, orderVersion | G1; product |
+ | PAY-02 · **П** | **GET** /public/orders/current/payment-attempts/{payment_attempt_id} | Проверить результат оплаты; Заказ | — | **200**; id, status, amount, orderVersion, latePayment | G1; product |
+-| PAY-03 · **П** | **GET** /public/orders/current/payment-quote | Актуальные условия оплаты созданного заказа; Заказ | — | **200**; quote, quoteToken, orderVersion, canPay, precedingAttemptId | G1; product |
++| PAY-03 · **П** | **GET** /public/orders/current/payment-quote | Актуальные условия оплаты созданного заказа; Заказ | — | **200**; quote, quoteToken, orderVersion, canPay, precedingAttemptId, paymentMethods | G1; product |
+ | PAY-04 · **П** | **GET** /public/orders/current/receipt | Состояние чека и доступные каналы; Заказ | — | **200**; status, availableChannels, channel, sentAt?, lastError?, receiptUrl? | G2; product |
+ | PAY-05 · **П** | **POST** /public/orders/current/receipt-deliveries | Повторно отправить чек; Заказ | channel | **202**; id, status | G2; product |
+ | PAY-06 · **П** | **GET** /public/orders/current/receipt-deliveries/{receipt_delivery_id} | Результат отправки чека; Заказ | — | **200**; id, channel, status, sentAt?, error? | G2; product |
+-| PAY-07 · **И** | **POST** /webhooks/{provider}/payments | Входящий результат: payments; Провайдер | providerEventId, providerObjectId, status | **200**; acknowledged | G1; product |
++| PAY-07 · **И** | **POST** /webhooks/{provider}/payments | Входящий результат: payments; Провайдер | type, event, object | **200**; acknowledged | G1; product |
+ | PAY-08 · **И** | **POST** /webhooks/{provider}/refunds | Входящий результат: refunds; Провайдер | providerEventId, providerObjectId, status | **200**; acknowledged | I2; product |
+ | PAY-09 · **И** | **POST** /webhooks/{provider}/receipts | Входящий результат: receipts; Провайдер | providerEventId, providerObjectId, status | **200**; acknowledged | G2; product |
++| PAY-10 · **П** | **GET** /payments | Реестр платежей; О/К | —; query: status, orderNumber, dateFrom, dateTo, late, page, pageSize; page, pageSize | **200**; items&lt;PaymentAttempt&gt;, meta{summary: total} | G1; product |
++| PAY-11 · **П** | **GET** /payments/{payment_attempt_id} | Карточка платежа; О/К | — | **200**; PaymentAttempt, providerPaymentId, attempts, facts, checks | G1; product |
+ 
+-- **PAY-01:** При pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера.
+-- **PAY-02:** Чтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод.
+-- **PAY-03:** Чтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок.
++- **PAY-01:** При pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — провайдер не ответил, повтор выполняет сервер с тем же ключом провайдера. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.
++- **PAY-02:** Чтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод. G1: для pending/unknown сервер сверяет платёж с ЮKassa не чаще раза в 5 с; чужая или отсутствующая попытка — 404 PAYMENT_ATTEMPT_NOT_FOUND. Ответ no-store.
++- **PAY-03:** Чтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок. G1: quote — итог неизменяемого снимка заказа E5, пересчёта нет. canPay=false при оплаченном заказе, pending/unknown попытке или закрытом периоде. paymentMethods — способы из конфигурации магазина в порядке показа (боевой: sbp, bank_card; тестовый: bank_card).
+ - **PAY-04:** status=pending/sent/failed; receiptUrl только при готовом чеке. MAX доступен только при подтверждённой интеграции; email — базовый канал.
+ - **PAY-05:** Принятие в очередь не равно отправке; результат PAY-06.
+-- **PAY-07:** Эскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.
++- **PAY-07:** G1, provider=yookassa: тело уведомления ЮKassa — только сигнал. Сервер берёт event и object.id, запрашивает платёж у ЮKassa и сверяет магазин, сумму, валюту, metadata попытки и заказ. Ключ дедупликации — event:object.id (у ЮKassa нет ID события). Повтор, неизвестный платёж и неподдерживаемое событие — 200 без изменений; некорректный JSON — 400. Подписи у уведомлений ЮKassa нет, IP не проверяется.
+ - **PAY-08:** Эскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.
+ - **PAY-09:** Эскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.
++- **PAY-10:** G1. Область как COM-12: organizer — все, curator — заказы своих учреждений, head/teacher — 403 FORBIDDEN. PaymentAttempt: id, orderId, orderNumber, institutionName, groupName, createdAt, amount, currency, paymentMethod, status, paidAt?, latePayment, incomeAmount?, cancelReason?. Сортировка createdAt desc + id, фильтры и область до LIMIT. Без ключей, idempotency, confirmation URL и raw payload. Неизвестный фильтр — 422.
++- **PAY-11:** G1. Попытка, соседние попытки заказа, подтверждённые денежные факты и последние результаты сверки (время, результат). Права как PAY-10; чужая или отсутствующая — 404 PAYMENT_ATTEMPT_NOT_FOUND.
+ 
+ ### morefoto.files — Файлы и повторная выдача
+ 
+@@ -649,7 +653,7 @@ PRD-02: проверить закрытие, оплату, hold и исправ
+ - D02–D05: продукты, цены, совместные кадры, подарок и допустимые льготные товары.
+ - D06/D10: финансовые показатели и точные календарные границы; источник now и история пересчёта сроков.
+ - D07/D08: выдача/восстановление/отзыв ключей, проверка адресата, серверная выдача/сброс паролей и матрица замещения.
+-- D09: провайдер оплаты, серверная сверка, refunds, фискализация, MAX/email, поля/подпись/ответы webhook. До этого PAY-07–09 остаются эскизами.
++- D09: провайдер оплаты выбран (ЮKassa), G1 закрепляет PAY-07 для sandbox (G1-D09-SANDBOX); refunds, фискализация, MAX/email, PAY-08/09 остаются эскизами до G2/I2.
+ - D11/D12: перенос купленных кадров, поздний платёж, hold, перепечатка, отзыв файлов и изменения после печати.
+ - Политика изменения созданного unpaid-заказа, срок жизни quoteToken, длительность хранения idempotency-ключей, лимиты/очередь оригиналов, срок хранения материалов.
+ - Физический адрес RaBit API, настройка proxy, CORS для X-Order-Key/Idempotency-Key, регистрация routes.php и порядок DI. Новый API не разворачивается на общий upstream без отдельного подключения.
+diff --git a/docs/05-rest-api/build.py b/docs/05-rest-api/build.py
+index 2ecd5d5..fd420c7 100644
+--- a/docs/05-rest-api/build.py
++++ b/docs/05-rest-api/build.py
+@@ -26,7 +26,7 @@ MODULES = {
+ "media": ("morefoto.media", "Фотографии и галерея", "Материалы съёмки, защищённые превью, коды, обложки и перенос полного набора ребёнка. Оригиналы не публикуются в галерее.", "frontend/src/modules/morefoto/photos/service.ts"),
+ "commerce": ("morefoto.commerce", "Каталог, расчёт и заказы", "Товары, групповые условия, серверный расчёт и неизменяемый снимок покупки. Корзина и черновики до оформления остаются на клиенте.", "frontend/src/modules/morefoto/commerce/types.ts"),
+ "handoff": ("morefoto.handoff", "Ссылки и списки сотрудников", "Проверка и факт передачи ссылки, история сроков; заявки на перенос детей сотрудников. Изменяет группу/фото через контракты владельцев.", "frontend/src/modules/morefoto/handoff/types.ts"),
+-"payments": ("morefoto.payments", "Оплата и чеки", "Попытки платежа, сверка провайдера, чеки и фискальная доставка. Результат возврата передаёт settlement через контракт.", "frontend/src/modules/morefoto/orders/services/payment.ts"),
++"payments": ("morefoto.payment", "Оплата и чеки", "Попытки платежа, сверка провайдера, чеки и фискальная доставка. Результат возврата передаёт settlement через контракт.", "frontend/src/modules/morefoto/orders/services/payment.ts"),
+ "files": ("morefoto.files", "Файлы и повторная выдача", "Права на оригиналы, подготовка файла/ZIP, журнал выдачи и отправки писем. Срок и отзыв проверяются при каждом получении.", "frontend/src/modules/morefoto/orders/delivery/service.ts"),
+ "support": ("morefoto.support", "Обращения и продление", "Обращения покупателей, ответы и согласование продления через контракт handoff/organization. Не хранит копию финансового состояния.", "frontend/src/modules/morefoto/curator/types.ts"),
+ "settlement": ("morefoto.settlement", "Исправления, возвраты и исполнение", "История исправлений, резервы и распределение возвратов, hold/перепечатка, решения по позднему платежу, финансовые итоги.", "frontend/src/modules/morefoto/settlement/types.ts"),
+@@ -334,16 +334,16 @@ add("handoff","HND-12","POST","/staff-requests/{staff_request_id}/clarifications
+ # Payment attempts, receipts, provider callbacks.
+ add("payments","PAY-01","POST","/public/orders/current/payment-attempts","Начать или получить ожидающую попытку оплаты",B,
+     "id, status, amount, redirectUrl?, created, orderVersion",
+-    {"orderVersion":"{{order_version}}","precedingAttemptId":None,"quoteToken":"{{payment_quote_token}}"},code=202,
+-    save={"payment_attempt_id":"id","order_version":"orderVersion"},sample={"id":"attempt-example","status":"pending","amount":25000,"created":True,"orderVersion":"order-version-2"},
+-    note="При pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера.")
++    {"orderVersion":"{{order_version}}","precedingAttemptId":None,"quoteToken":"{{payment_quote_token}}","paymentMethod":"bank_card"},code=202,
++    save={"payment_attempt_id":"id","order_version":"orderVersion"},sample={"id":"attempt-example","status":"pending","amount":25000,"redirectUrl":"https://yoomoney.ru/checkout/payments/v2/contract?orderId=example","created":True,"orderVersion":"order-version-2"},
++    note="При pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — провайдер не ответил, повтор выполняет сервер с тем же ключом провайдера. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.")
+ add("payments","PAY-02","GET","/public/orders/current/payment-attempts/{payment_attempt_id}","Проверить результат оплаты",B,
+     "id, status, amount, orderVersion, latePayment",save={"order_version":"orderVersion"},
+     sample={"id":"attempt-example","status":"pending","amount":25000,"orderVersion":"order-version-2","latePayment":False},
+-    note="Чтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод.")
++    note="Чтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод. G1: для pending/unknown сервер сверяет платёж с ЮKassa не чаще раза в 5 с; чужая или отсутствующая попытка — 404 PAYMENT_ATTEMPT_NOT_FOUND. Ответ no-store.")
+ add("payments","PAY-03","GET","/public/orders/current/payment-quote","Актуальные условия оплаты созданного заказа",B,
+-    "quote, quoteToken, orderVersion, canPay, precedingAttemptId",save={"payment_quote_token":"quoteToken","order_version":"orderVersion"},
+-    note="Чтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок.")
++    "quote, quoteToken, orderVersion, canPay, precedingAttemptId, paymentMethods",save={"payment_quote_token":"quoteToken","order_version":"orderVersion"},
++    note="Чтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок. G1: quote — итог неизменяемого снимка заказа E5, пересчёта нет. canPay=false при оплаченном заказе, pending/unknown попытке или закрытом периоде. paymentMethods — способы из конфигурации магазина в порядке показа (боевой: sbp, bank_card; тестовый: bank_card).")
+ add("payments","PAY-04","GET","/public/orders/current/receipt","Состояние чека и доступные каналы",B,
+     "status, availableChannels, channel, sentAt?, lastError?, receiptUrl?",
+     note="status=pending/sent/failed; receiptUrl только при готовом чеке. MAX доступен только при подтверждённой интеграции; email — базовый канал.")
+@@ -352,11 +352,22 @@ add("payments","PAY-05","POST","/public/orders/current/receipt-deliveries","По
+     sample={"id":"receipt-delivery-example","status":"pending"},note="Принятие в очередь не равно отправке; результат PAY-06.")
+ add("payments","PAY-06","GET","/public/orders/current/receipt-deliveries/{receipt_delivery_id}","Результат отправки чека",B,
+     "id, channel, status, sentAt?, error?",sample={"id":"receipt-delivery-example","channel":"email","status":"pending"})
+-for eid,entity in [("PAY-07","payments"),("PAY-08","refunds"),("PAY-09","receipts")]:
++add("payments","PAY-07","POST","/webhooks/{provider}/payments","Входящий результат: payments",W,
++    "acknowledged",{"type":"notification","event":"payment.succeeded","object":{"id":"{{provider_object_id}}","status":"succeeded"}},
++    status="И",sample={"acknowledged":True},idem=False,
++    note="G1, provider=yookassa: тело уведомления ЮKassa — только сигнал. Сервер берёт event и object.id, запрашивает платёж у ЮKassa и сверяет магазин, сумму, валюту, metadata попытки и заказ. Ключ дедупликации — event:object.id (у ЮKassa нет ID события). Повтор, неизвестный платёж и неподдерживаемое событие — 200 без изменений; некорректный JSON — 400. Подписи у уведомлений ЮKassa нет, IP не проверяется.")
++for eid,entity in [("PAY-08","refunds"),("PAY-09","receipts")]:
+     add("payments",eid,"POST","/webhooks/{provider}/"+entity,"Входящий результат: "+entity,W,
+         "acknowledged",{"providerEventId":"{{provider_event_id}}","providerObjectId":"{{provider_object_id}}","status":"{{provider_status}}"},
+         status="И",sample={"acknowledged":True},
+         note="Эскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.")
++add("payments","PAY-10","GET","/payments","Реестр платежей",OK,"items<PaymentAttempt>, meta{summary: total}",
++    query=[("status","","pending/unknown/succeeded/canceled"),("orderNumber","","Номер заказа MF"),("dateFrom","","YYYY-MM-DD"),("dateTo","","YYYY-MM-DD, включительно по МСК"),
++        ("late","","true/false"),("page","1","Страница от 1"),("pageSize","50","Размер страницы 1–100")],
++    sample=list_sample,note="G1. Область как COM-12: organizer — все, curator — заказы своих учреждений, head/teacher — 403 FORBIDDEN. PaymentAttempt: id, orderId, orderNumber, institutionName, groupName, createdAt, amount, currency, paymentMethod, status, paidAt?, latePayment, incomeAmount?, cancelReason?. Сортировка createdAt desc + id, фильтры и область до LIMIT. Без ключей, idempotency, confirmation URL и raw payload. Неизвестный фильтр — 422.")
++add("payments","PAY-11","GET","/payments/{payment_attempt_id}","Карточка платежа",OK,
++    "PaymentAttempt, providerPaymentId, attempts, facts, checks",
++    note="G1. Попытка, соседние попытки заказа, подтверждённые денежные факты и последние результаты сверки (время, результат). Права как PAY-10; чужая или отсутствующая — 404 PAYMENT_ATTEMPT_NOT_FOUND.")
+ # Purchased files.
+ add("files","FIL-01","GET","/public/orders/current/files","Доступные электронные фотографии",B,
+     "state, expiresAt, items, canDownload",sample={"state":"available","expiresAt":"2026-11-01T12:00:00+03:00","items":[],"canDownload":True},
+@@ -1022,7 +1033,7 @@ PRD-02: проверить закрытие, оплату, hold и исправ
+ - D02–D05: продукты, цены, совместные кадры, подарок и допустимые льготные товары.
+ - D06/D10: финансовые показатели и точные календарные границы; источник now и история пересчёта сроков.
+ - D07/D08: выдача/восстановление/отзыв ключей, проверка адресата, серверная выдача/сброс паролей и матрица замещения.
+-- D09: провайдер оплаты, серверная сверка, refunds, фискализация, MAX/email, поля/подпись/ответы webhook. До этого PAY-07–09 остаются эскизами.
++- D09: провайдер оплаты выбран (ЮKassa), G1 закрепляет PAY-07 для sandbox (G1-D09-SANDBOX); refunds, фискализация, MAX/email, PAY-08/09 остаются эскизами до G2/I2.
+ - D11/D12: перенос купленных кадров, поздний платёж, hold, перепечатка, отзыв файлов и изменения после печати.
+ - Политика изменения созданного unpaid-заказа, срок жизни quoteToken, длительность хранения idempotency-ключей, лимиты/очередь оригиналов, срок хранения материалов.
+ - Физический адрес RaBit API, настройка proxy, CORS для X-Order-Key/Idempotency-Key, регистрация routes.php и порядок DI. Новый API не разворачивается на общий upstream без отдельного подключения.
+diff --git a/docs/05-rest-api/endpoints.json b/docs/05-rest-api/endpoints.json
+index 6917d6f..ab60d47 100644
+--- a/docs/05-rest-api/endpoints.json
++++ b/docs/05-rest-api/endpoints.json
+@@ -60,7 +60,7 @@
+       "frontend/src/modules/morefoto/handoff/types.ts"
+     ],
+     "payments": [
+-      "morefoto.payments",
++      "morefoto.payment",
+       "Оплата и чеки",
+       "Попытки платежа, сверка провайдера, чеки и фискальная доставка. Результат возврата передаёт settlement через контракт.",
+       "frontend/src/modules/morefoto/orders/services/payment.ts"
+@@ -2708,11 +2708,12 @@
+       "body": {
+         "orderVersion": "{{order_version}}",
+         "precedingAttemptId": null,
+-        "quoteToken": "{{payment_quote_token}}"
++        "quoteToken": "{{payment_quote_token}}",
++        "paymentMethod": "bank_card"
+       },
+       "code": 202,
+       "query": [],
+-      "note": "При pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера.",
++      "note": "При pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — провайдер не ответил, повтор выполняет сервер с тем же ключом провайдера. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.",
+       "status": "П",
+       "save": {
+         "payment_attempt_id": "id",
+@@ -2722,6 +2723,7 @@
+         "id": "attempt-example",
+         "status": "pending",
+         "amount": 25000,
++        "redirectUrl": "https://yoomoney.ru/checkout/payments/v2/contract?orderId=example",
+         "created": true,
+         "orderVersion": "order-version-2"
+       },
+@@ -2729,7 +2731,7 @@
+       "format": "json",
+       "idem": true,
+       "scope": "product",
+-      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
++      "routeFile": "api/public/local/modules/morefoto.payment/routes.php",
+       "implementationWave": "G1",
+       "verificationWaves": [
+         "N2"
+@@ -2746,7 +2748,7 @@
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "Чтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод.",
++      "note": "Чтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод. G1: для pending/unknown сервер сверяет платёж с ЮKassa не чаще раза в 5 с; чужая или отсутствующая попытка — 404 PAYMENT_ATTEMPT_NOT_FOUND. Ответ no-store.",
+       "status": "П",
+       "save": {
+         "order_version": "orderVersion"
+@@ -2762,7 +2764,7 @@
+       "format": "json",
+       "idem": false,
+       "scope": "product",
+-      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
++      "routeFile": "api/public/local/modules/morefoto.payment/routes.php",
+       "implementationWave": "G1",
+       "verificationWaves": [
+         "N2"
+@@ -2775,11 +2777,11 @@
+       "path": "/public/orders/current/payment-quote",
+       "title": "Актуальные условия оплаты созданного заказа",
+       "roles": "Заказ",
+-      "output": "quote, quoteToken, orderVersion, canPay, precedingAttemptId",
++      "output": "quote, quoteToken, orderVersion, canPay, precedingAttemptId, paymentMethods",
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "Чтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок.",
++      "note": "Чтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок. G1: quote — итог неизменяемого снимка заказа E5, пересчёта нет. canPay=false при оплаченном заказе, pending/unknown попытке или закрытом периоде. paymentMethods — способы из конфигурации магазина в порядке показа (боевой: sbp, bank_card; тестовый: bank_card).",
+       "status": "П",
+       "save": {
+         "payment_quote_token": "quoteToken",
+@@ -2790,7 +2792,7 @@
+       "format": "json",
+       "idem": false,
+       "scope": "product",
+-      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
++      "routeFile": "api/public/local/modules/morefoto.payment/routes.php",
+       "implementationWave": "G1",
+       "verificationWaves": [
+         "N2"
+@@ -2815,7 +2817,7 @@
+       "format": "json",
+       "idem": false,
+       "scope": "product",
+-      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
++      "routeFile": "api/public/local/modules/morefoto.payment/routes.php",
+       "implementationWave": "G2",
+       "verificationWaves": [
+         "N2"
+@@ -2847,7 +2849,7 @@
+       "format": "json",
+       "idem": true,
+       "scope": "product",
+-      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
++      "routeFile": "api/public/local/modules/morefoto.payment/routes.php",
+       "implementationWave": "G2",
+       "verificationWaves": [
+         "N2"
+@@ -2876,7 +2878,7 @@
+       "format": "json",
+       "idem": false,
+       "scope": "product",
+-      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
++      "routeFile": "api/public/local/modules/morefoto.payment/routes.php",
+       "implementationWave": "G2",
+       "verificationWaves": [
+         "N2"
+@@ -2891,13 +2893,16 @@
+       "roles": "Провайдер",
+       "output": "acknowledged",
+       "body": {
+-        "providerEventId": "{{provider_event_id}}",
+-        "providerObjectId": "{{provider_object_id}}",
+-        "status": "{{provider_status}}"
++        "type": "notification",
++        "event": "payment.succeeded",
++        "object": {
++          "id": "{{provider_object_id}}",
++          "status": "succeeded"
++        }
+       },
+       "code": 200,
+       "query": [],
+-      "note": "Эскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.",
++      "note": "G1, provider=yookassa: тело уведомления ЮKassa — только сигнал. Сервер берёт event и object.id, запрашивает платёж у ЮKassa и сверяет магазин, сумму, валюту, metadata попытки и заказ. Ключ дедупликации — event:object.id (у ЮKassa нет ID события). Повтор, неизвестный платёж и неподдерживаемое событие — 200 без изменений; некорректный JSON — 400. Подписи у уведомлений ЮKassa нет, IP не проверяется.",
+       "status": "И",
+       "save": {},
+       "sample": {
+@@ -2907,7 +2912,7 @@
+       "format": "json",
+       "idem": false,
+       "scope": "product",
+-      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
++      "routeFile": "api/public/local/modules/morefoto.payment/routes.php",
+       "implementationWave": "G1",
+       "verificationWaves": [
+         "N2"
+@@ -2938,7 +2943,7 @@
+       "format": "json",
+       "idem": false,
+       "scope": "product",
+-      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
++      "routeFile": "api/public/local/modules/morefoto.payment/routes.php",
+       "implementationWave": "I2",
+       "verificationWaves": [
+         "N2"
+@@ -2969,12 +2974,96 @@
+       "format": "json",
+       "idem": false,
+       "scope": "product",
+-      "routeFile": "api/public/local/modules/morefoto.payments/routes.php",
++      "routeFile": "api/public/local/modules/morefoto.payment/routes.php",
+       "implementationWave": "G2",
+       "verificationWaves": [
+         "N2"
+       ]
+     },
++    {
++      "module": "payments",
++      "id": "PAY-10",
++      "method": "GET",
++      "path": "/payments",
++      "title": "Реестр платежей",
++      "roles": "О/К",
++      "output": "items<PaymentAttempt>, meta{summary: total}",
++      "body": null,
++      "code": 200,
++      "query": [
++        [
++          "status",
++          "",
++          "pending/unknown/succeeded/canceled"
++        ],
++        [
++          "orderNumber",
++          "",
++          "Номер заказа MF"
++        ],
++        [
++          "dateFrom",
++          "",
++          "YYYY-MM-DD"
++        ],
++        [
++          "dateTo",
++          "",
++          "YYYY-MM-DD, включительно по МСК"
++        ],
++        [
++          "late",
++          "",
++          "true/false"
++        ],
++        [
++          "page",
++          "1",
++          "Страница от 1"
++        ],
++        [
++          "pageSize",
++          "50",
++          "Размер страницы 1–100"
++        ]
++      ],
++      "note": "G1. Область как COM-12: organizer — все, curator — заказы своих учреждений, head/teacher — 403 FORBIDDEN. PaymentAttempt: id, orderId, orderNumber, institutionName, groupName, createdAt, amount, currency, paymentMethod, status, paidAt?, latePayment, incomeAmount?, cancelReason?. Сортировка createdAt desc + id, фильтры и область до LIMIT. Без ключей, idempotency, confirmation URL и raw payload. Неизвестный фильтр — 422.",
++      "status": "П",
++      "save": {},
++      "sample": {
++        "items": []
++      },
++      "source": "frontend/src/modules/morefoto/orders/services/payment.ts",
++      "format": "json",
++      "idem": false,
++      "scope": "product",
++      "routeFile": "api/public/local/modules/morefoto.payment/routes.php",
++      "implementationWave": "G1",
++      "verificationWaves": []
++    },
++    {
++      "module": "payments",
++      "id": "PAY-11",
++      "method": "GET",
++      "path": "/payments/{payment_attempt_id}",
++      "title": "Карточка платежа",
++      "roles": "О/К",
++      "output": "PaymentAttempt, providerPaymentId, attempts, facts, checks",
++      "body": null,
++      "code": 200,
++      "query": [],
++      "note": "G1. Попытка, соседние попытки заказа, подтверждённые денежные факты и последние результаты сверки (время, результат). Права как PAY-10; чужая или отсутствующая — 404 PAYMENT_ATTEMPT_NOT_FOUND.",
++      "status": "П",
++      "save": {},
++      "sample": {},
++      "source": "frontend/src/modules/morefoto/orders/services/payment.ts",
++      "format": "json",
++      "idem": false,
++      "scope": "product",
++      "routeFile": "api/public/local/modules/morefoto.payment/routes.php",
++      "implementationWave": "G1",
++      "verificationWaves": []
++    },
+     {
+       "module": "files",
+       "id": "FIL-01",
+diff --git a/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json
+index 2195c03..b76b0c7 100644
+--- a/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json
++++ b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json
+@@ -7136,7 +7136,7 @@
+     },
+     {
+       "name": "G1 — Платёжные попытки и подтверждённые факты",
+-      "description": "Попытка, webhook и неизвестный исход обрабатываются без ложного успешного заказа.\n\nЗависит от: E5, F2. Разблокирует при выполнении остальных условий: G2, I1, I2, I3. Владельцы: morefoto.payments, morefoto.commerce.\n\nВключение: Только sandbox. Реестр подключать к реальным данным G1; денежный возврат в интерфейсе обязателен в I2. Боевые списания закрыты до возвратов, фискализации, исполнения, выдачи и N2.\n\nПроверяет дополнительно: COM-06, COM-07, COM-11, COM-12, COM-13. Папка содержит только основные операции волны; это план для отдельного ревью, не сценарий Run all.",
++      "description": "Попытка, webhook и неизвестный исход обрабатываются без ложного успешного заказа.\n\nЗависит от: E5, F2. Разблокирует при выполнении остальных условий: G2, I1, I2, I3. Владельцы: morefoto.payment, morefoto.commerce.\n\nВключение: Только sandbox. Реестр подключать к реальным данным G1; денежный возврат в интерфейсе обязателен в I2. Боевые списания закрыты до возвратов, фискализации, исполнения, выдачи и N2.\n\nПроверяет дополнительно: COM-06, COM-07, COM-11, COM-12, COM-13. Папка содержит только основные операции волны; это план для отдельного ревью, не сценарий Run all.",
+       "item": [
+         {
+           "id": "544d7b07-0598-523d-b208-eba66a23fb98",
+@@ -7178,10 +7178,10 @@
+                 "payment-attempts"
+               ]
+             },
+-            "description": "**PAY-01 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, redirectUrl?, created, orderVersion.\n\nПри pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_01. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**PAY-01 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, redirectUrl?, created, orderVersion.\n\nПри pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — провайдер не ответил, повтор выполняет сервер с тем же ключом провайдера. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_01. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+-              "raw": "{\n  \"orderVersion\": \"{{order_version}}\",\n  \"precedingAttemptId\": null,\n  \"quoteToken\": \"{{payment_quote_token}}\"\n}",
++              "raw": "{\n  \"orderVersion\": \"{{order_version}}\",\n  \"precedingAttemptId\": null,\n  \"quoteToken\": \"{{payment_quote_token}}\",\n  \"paymentMethod\": \"bank_card\"\n}",
+               "options": {
+                 "raw": {
+                   "language": "json"
+@@ -7280,10 +7280,10 @@
+                     "payment-attempts"
+                   ]
+                 },
+-                "description": "**PAY-01 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, redirectUrl?, created, orderVersion.\n\nПри pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_01. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++                "description": "**PAY-01 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, redirectUrl?, created, orderVersion.\n\nПри pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — провайдер не ответил, повтор выполняет сервер с тем же ключом провайдера. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_01. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+                 "body": {
+                   "mode": "raw",
+-                  "raw": "{\n  \"orderVersion\": \"{{order_version}}\",\n  \"precedingAttemptId\": null,\n  \"quoteToken\": \"{{payment_quote_token}}\"\n}",
++                  "raw": "{\n  \"orderVersion\": \"{{order_version}}\",\n  \"precedingAttemptId\": null,\n  \"quoteToken\": \"{{payment_quote_token}}\",\n  \"paymentMethod\": \"bank_card\"\n}",
+                   "options": {
+                     "raw": {
+                       "language": "json"
+@@ -7300,7 +7300,7 @@
+                   "value": "application/json"
+                 }
+               ],
+-              "body": "{\n  \"data\": {\n    \"id\": \"attempt-example\",\n    \"status\": \"pending\",\n    \"amount\": 25000,\n    \"created\": true,\n    \"orderVersion\": \"order-version-2\"\n  }\n}"
++              "body": "{\n  \"data\": {\n    \"id\": \"attempt-example\",\n    \"status\": \"pending\",\n    \"amount\": 25000,\n    \"redirectUrl\": \"https://yoomoney.ru/checkout/payments/v2/contract?orderId=example\",\n    \"created\": true,\n    \"orderVersion\": \"order-version-2\"\n  }\n}"
+             }
+           ]
+         },
+@@ -7337,7 +7337,7 @@
+                 "{{payment_attempt_id}}"
+               ]
+             },
+-            "description": "**PAY-02 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, orderVersion, latePayment.\n\nЧтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2."
++            "description": "**PAY-02 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, orderVersion, latePayment.\n\nЧтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод. G1: для pending/unknown сервер сверяет платёж с ЮKassa не чаще раза в 5 с; чужая или отсутствующая попытка — 404 PAYMENT_ATTEMPT_NOT_FOUND. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2."
+           },
+           "event": [
+             {
+@@ -7404,7 +7404,7 @@
+                     "{{payment_attempt_id}}"
+                   ]
+                 },
+-                "description": "**PAY-02 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, orderVersion, latePayment.\n\nЧтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2."
++                "description": "**PAY-02 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, orderVersion, latePayment.\n\nЧтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод. G1: для pending/unknown сервер сверяет платёж с ЮKassa не чаще раза в 5 с; чужая или отсутствующая попытка — 404 PAYMENT_ATTEMPT_NOT_FOUND. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2."
+               },
+               "status": "OK",
+               "code": 200,
+@@ -7451,7 +7451,7 @@
+                 "payment-quote"
+               ]
+             },
+-            "description": "**PAY-03 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: quote, quoteToken, orderVersion, canPay, precedingAttemptId.\n\nЧтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2."
++            "description": "**PAY-03 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: quote, quoteToken, orderVersion, canPay, precedingAttemptId, paymentMethods.\n\nЧтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок. G1: quote — итог неизменяемого снимка заказа E5, пересчёта нет. canPay=false при оплаченном заказе, pending/unknown попытке или закрытом периоде. paymentMethods — способы из конфигурации магазина в порядке показа (боевой: sbp, bank_card; тестовый: bank_card).\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2."
+           },
+           "event": [
+             {
+@@ -7526,10 +7526,10 @@
+                 "payments"
+               ]
+             },
+-            "description": "**PAY-07 — morefoto.payments**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.",
++            "description": "**PAY-07 — morefoto.payment**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nG1, provider=yookassa: тело уведомления ЮKassa — только сигнал. Сервер берёт event и object.id, запрашивает платёж у ЮKassa и сверяет магазин, сумму, валюту, metadata попытки и заказ. Ключ дедупликации — event:object.id (у ЮKassa нет ID события). Повтор, неизвестный платёж и неподдерживаемое событие — 200 без изменений; некорректный JSON — 400. Подписи у уведомлений ЮKassa нет, IP не проверяется.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.",
+             "body": {
+               "mode": "raw",
+-              "raw": "{\n  \"providerEventId\": \"{{provider_event_id}}\",\n  \"providerObjectId\": \"{{provider_object_id}}\",\n  \"status\": \"{{provider_status}}\"\n}",
++              "raw": "{\n  \"type\": \"notification\",\n  \"event\": \"payment.succeeded\",\n  \"object\": {\n    \"id\": \"{{provider_object_id}}\",\n    \"status\": \"succeeded\"\n  }\n}",
+               "options": {
+                 "raw": {
+                   "language": "json"
+@@ -7598,10 +7598,10 @@
+                     "payments"
+                   ]
+                 },
+-                "description": "**PAY-07 — morefoto.payments**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.",
++                "description": "**PAY-07 — morefoto.payment**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nG1, provider=yookassa: тело уведомления ЮKassa — только сигнал. Сервер берёт event и object.id, запрашивает платёж у ЮKassa и сверяет магазин, сумму, валюту, metadata попытки и заказ. Ключ дедупликации — event:object.id (у ЮKassa нет ID события). Повтор, неизвестный платёж и неподдерживаемое событие — 200 без изменений; некорректный JSON — 400. Подписи у уведомлений ЮKassa нет, IP не проверяется.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.",
+                 "body": {
+                   "mode": "raw",
+-                  "raw": "{\n  \"providerEventId\": \"{{provider_event_id}}\",\n  \"providerObjectId\": \"{{provider_object_id}}\",\n  \"status\": \"{{provider_status}}\"\n}",
++                  "raw": "{\n  \"type\": \"notification\",\n  \"event\": \"payment.succeeded\",\n  \"object\": {\n    \"id\": \"{{provider_object_id}}\",\n    \"status\": \"succeeded\"\n  }\n}",
+                   "options": {
+                     "raw": {
+                       "language": "json"
+@@ -7621,6 +7621,287 @@
+               "body": "{\n  \"data\": {\n    \"acknowledged\": true\n  }\n}"
+             }
+           ]
++        },
++        {
++          "id": "62e1718d-2d19-588d-a97a-a92fdfae4084",
++          "name": "PAY-10 · Реестр платежей",
++          "request": {
++            "method": "GET",
++            "auth": {
++              "type": "bearer",
++              "bearer": [
++                {
++                  "key": "token",
++                  "value": "{{staff_token}}",
++                  "type": "string"
++                }
++              ]
++            },
++            "header": [
++              {
++                "key": "Accept",
++                "value": "application/json"
++              }
++            ],
++            "url": {
++              "raw": "{{base_url}}/{{api_prefix}}/payments?page={{page}}&pageSize={{page_size}}",
++              "host": [
++                "{{base_url}}"
++              ],
++              "path": [
++                "{{api_prefix}}",
++                "payments"
++              ],
++              "query": [
++                {
++                  "key": "status",
++                  "value": "",
++                  "disabled": true,
++                  "description": "pending/unknown/succeeded/canceled"
++                },
++                {
++                  "key": "orderNumber",
++                  "value": "",
++                  "disabled": true,
++                  "description": "Номер заказа MF"
++                },
++                {
++                  "key": "dateFrom",
++                  "value": "",
++                  "disabled": true,
++                  "description": "YYYY-MM-DD"
++                },
++                {
++                  "key": "dateTo",
++                  "value": "",
++                  "disabled": true,
++                  "description": "YYYY-MM-DD, включительно по МСК"
++                },
++                {
++                  "key": "late",
++                  "value": "",
++                  "disabled": true,
++                  "description": "true/false"
++                },
++                {
++                  "key": "page",
++                  "value": "1",
++                  "disabled": true,
++                  "description": "Страница от 1"
++                },
++                {
++                  "key": "pageSize",
++                  "value": "50",
++                  "disabled": true,
++                  "description": "Размер страницы 1–100"
++                },
++                {
++                  "key": "page",
++                  "value": "{{page}}",
++                  "description": "Страница начиная с 1"
++                },
++                {
++                  "key": "pageSize",
++                  "value": "{{page_size}}",
++                  "description": "1–100, по умолчанию 50"
++                }
++              ]
++            },
++            "description": "**PAY-10 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<PaymentAttempt>, meta{summary: total}.\n\nG1. Область как COM-12: organizer — все, curator — заказы своих учреждений, head/teacher — 403 FORBIDDEN. PaymentAttempt: id, orderId, orderNumber, institutionName, groupName, createdAt, amount, currency, paymentMethod, status, paidAt?, latePayment, incomeAmount?, cancelReason?. Сортировка createdAt desc + id, фильтры и область до LIMIT. Без ключей, idempotency, confirmation URL и raw payload. Неизвестный фильтр — 422.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: в своей волне."
++          },
++          "event": [
++            {
++              "listen": "test",
++              "script": {
++                "type": "text/javascript",
++                "exec": [
++                  "const expected = 200;",
++                  "pm.test('PAY-10: HTTP '+expected, function () { pm.response.to.have.status(expected); });",
++                  "pm.test('JSON Content-Type', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/application\\/json/i); });",
++                  "let payload;",
++                  "try { payload = pm.response.json(); } catch (e) {",
++                  "  pm.test('Корректный JSON', function () { throw e; });",
++                  "}",
++                  "if (payload !== undefined) {",
++                  "  pm.test('Конверт data без error', function () {",
++                  "    pm.expect(payload).to.have.property('data');",
++                  "    pm.expect(payload).not.to.have.property('error');",
++                  "  });",
++                  "  const data = payload.data;",
++                  "  if (pm.response.code === expected && data !== undefined) {",
++                  "    pm.test('Список items', function () { pm.expect(data.items).to.be.an('array'); });",
++                  "    pm.test('Пагинация meta', function () {",
++                  "      pm.expect(payload.meta.page).to.be.a('number');",
++                  "      pm.expect(payload.meta.pageSize).to.be.a('number');",
++                  "      pm.expect(payload.meta.total).to.be.a('number');",
++                  "    });",
++                  "  }",
++                  "}"
++                ]
++              }
++            }
++          ],
++          "response": [
++            {
++              "name": "Пример контракта (не ответ сервера)",
++              "originalRequest": {
++                "method": "GET",
++                "auth": {
++                  "type": "bearer",
++                  "bearer": [
++                    {
++                      "key": "token",
++                      "value": "{{staff_token}}",
++                      "type": "string"
++                    }
++                  ]
++                },
++                "header": [
++                  {
++                    "key": "Accept",
++                    "value": "application/json"
++                  }
++                ],
++                "url": {
++                  "raw": "{{base_url}}/{{api_prefix}}/payments?page={{page}}&pageSize={{page_size}}",
++                  "host": [
++                    "{{base_url}}"
++                  ],
++                  "path": [
++                    "{{api_prefix}}",
++                    "payments"
++                  ],
++                  "query": [
++                    {
++                      "key": "status",
++                      "value": "",
++                      "disabled": true,
++                      "description": "pending/unknown/succeeded/canceled"
++                    },
++                    {
++                      "key": "orderNumber",
++                      "value": "",
++                      "disabled": true,
++                      "description": "Номер заказа MF"
++                    },
++                    {
++                      "key": "dateFrom",
++                      "value": "",
++                      "disabled": true,
++                      "description": "YYYY-MM-DD"
++                    },
++                    {
++                      "key": "dateTo",
++                      "value": "",
++                      "disabled": true,
++                      "description": "YYYY-MM-DD, включительно по МСК"
++                    },
++                    {
++                      "key": "late",
++                      "value": "",
++                      "disabled": true,
++                      "description": "true/false"
++                    },
++                    {
++                      "key": "page",
++                      "value": "1",
++                      "disabled": true,
++                      "description": "Страница от 1"
++                    },
++                    {
++                      "key": "pageSize",
++                      "value": "50",
++                      "disabled": true,
++                      "description": "Размер страницы 1–100"
++                    },
++                    {
++                      "key": "page",
++                      "value": "{{page}}",
++                      "description": "Страница начиная с 1"
++                    },
++                    {
++                      "key": "pageSize",
++                      "value": "{{page_size}}",
++                      "description": "1–100, по умолчанию 50"
++                    }
++                  ]
++                },
++                "description": "**PAY-10 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<PaymentAttempt>, meta{summary: total}.\n\nG1. Область как COM-12: organizer — все, curator — заказы своих учреждений, head/teacher — 403 FORBIDDEN. PaymentAttempt: id, orderId, orderNumber, institutionName, groupName, createdAt, amount, currency, paymentMethod, status, paidAt?, latePayment, incomeAmount?, cancelReason?. Сортировка createdAt desc + id, фильтры и область до LIMIT. Без ключей, idempotency, confirmation URL и raw payload. Неизвестный фильтр — 422.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: в своей волне."
++              },
++              "status": "OK",
++              "code": 200,
++              "_postman_previewlanguage": "json",
++              "header": [
++                {
++                  "key": "Content-Type",
++                  "value": "application/json"
++                }
++              ],
++              "body": "{\n  \"data\": {\n    \"items\": []\n  },\n  \"meta\": {\n    \"page\": 1,\n    \"pageSize\": 50,\n    \"total\": 0\n  }\n}"
++            }
++          ]
++        },
++        {
++          "id": "8a928e32-809e-52e0-a9fc-4929f41a2635",
++          "name": "PAY-11 · Карточка платежа",
++          "request": {
++            "method": "GET",
++            "auth": {
++              "type": "bearer",
++              "bearer": [
++                {
++                  "key": "token",
++                  "value": "{{staff_token}}",
++                  "type": "string"
++                }
++              ]
++            },
++            "header": [
++              {
++                "key": "Accept",
++                "value": "application/json"
++              }
++            ],
++            "url": {
++              "raw": "{{base_url}}/{{api_prefix}}/payments/{{payment_attempt_id}}",
++              "host": [
++                "{{base_url}}"
++              ],
++              "path": [
++                "{{api_prefix}}",
++                "payments",
++                "{{payment_attempt_id}}"
++              ]
++            },
++            "description": "**PAY-11 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: PaymentAttempt, providerPaymentId, attempts, facts, checks.\n\nG1. Попытка, соседние попытки заказа, подтверждённые денежные факты и последние результаты сверки (время, результат). Права как PAY-10; чужая или отсутствующая — 404 PAYMENT_ATTEMPT_NOT_FOUND.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: в своей волне."
++          },
++          "event": [
++            {
++              "listen": "test",
++              "script": {
++                "type": "text/javascript",
++                "exec": [
++                  "const expected = 200;",
++                  "pm.test('PAY-11: HTTP '+expected, function () { pm.response.to.have.status(expected); });",
++                  "pm.test('JSON Content-Type', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/application\\/json/i); });",
++                  "let payload;",
++                  "try { payload = pm.response.json(); } catch (e) {",
++                  "  pm.test('Корректный JSON', function () { throw e; });",
++                  "}",
++                  "if (payload !== undefined) {",
++                  "  pm.test('Конверт data без error', function () {",
++                  "    pm.expect(payload).to.have.property('data');",
++                  "    pm.expect(payload).not.to.have.property('error');",
++                  "  });",
++                  "  const data = payload.data;",
++                  "  if (pm.response.code === expected && data !== undefined) {",
++                  "  }",
++                  "}"
++                ]
++              }
++            }
++          ],
++          "response": []
+         }
+       ]
+     },
+@@ -7631,7 +7912,7 @@
+     },
+     {
+       "name": "G2 — Чеки и повтор доставки",
+-      "description": "Payments владеет фискальным чеком, Notification — исполнением отправки.\n\nЗависит от: G1, H1. Разблокирует при выполнении остальных условий: I1. Владельцы: morefoto.payments, rebit.notification.\n\nВключение: Чеки только на тестовых адресах/в sandbox до N2.\n\nПроверяет дополнительно: COM-08. Папка содержит только основные операции волны; это план для отдельного ревью, не сценарий Run all.",
++      "description": "Payments владеет фискальным чеком, Notification — исполнением отправки.\n\nЗависит от: G1, H1. Разблокирует при выполнении остальных условий: I1. Владельцы: morefoto.payment, rebit.notification.\n\nВключение: Чеки только на тестовых адресах/в sandbox до N2.\n\nПроверяет дополнительно: COM-08. Папка содержит только основные операции волны; это план для отдельного ревью, не сценарий Run all.",
+       "item": [
+         {
+           "id": "ccaacc66-e294-50e2-8a51-0c2ca953e673",
+@@ -7665,7 +7946,7 @@
+                 "receipt"
+               ]
+             },
+-            "description": "**PAY-04 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: status, availableChannels, channel, sentAt?, lastError?, receiptUrl?.\n\nstatus=pending/sent/failed; receiptUrl только при готовом чеке. MAX доступен только при подтверждённой интеграции; email — базовый канал.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2."
++            "description": "**PAY-04 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: status, availableChannels, channel, sentAt?, lastError?, receiptUrl?.\n\nstatus=pending/sent/failed; receiptUrl только при готовом чеке. MAX доступен только при подтверждённой интеграции; email — базовый канал.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2."
+           },
+           "event": [
+             {
+@@ -7736,7 +8017,7 @@
+                 "receipt-deliveries"
+               ]
+             },
+-            "description": "**PAY-05 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status.\n\nПринятие в очередь не равно отправке; результат PAY-06.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**PAY-05 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status.\n\nПринятие в очередь не равно отправке; результат PAY-06.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"channel\": \"email\"\n}",
+@@ -7833,7 +8114,7 @@
+                     "receipt-deliveries"
+                   ]
+                 },
+-                "description": "**PAY-05 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status.\n\nПринятие в очередь не равно отправке; результат PAY-06.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++                "description": "**PAY-05 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status.\n\nПринятие в очередь не равно отправке; результат PAY-06.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+                 "body": {
+                   "mode": "raw",
+                   "raw": "{\n  \"channel\": \"email\"\n}",
+@@ -7890,7 +8171,7 @@
+                 "{{receipt_delivery_id}}"
+               ]
+             },
+-            "description": "**PAY-06 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, channel, status, sentAt?, error?.\n\n\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2."
++            "description": "**PAY-06 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, channel, status, sentAt?, error?.\n\n\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2."
+           },
+           "event": [
+             {
+@@ -7952,7 +8233,7 @@
+                     "{{receipt_delivery_id}}"
+                   ]
+                 },
+-                "description": "**PAY-06 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, channel, status, sentAt?, error?.\n\n\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2."
++                "description": "**PAY-06 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, channel, status, sentAt?, error?.\n\n\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2."
+               },
+               "status": "OK",
+               "code": 200,
+@@ -8002,7 +8283,7 @@
+                 "receipts"
+               ]
+             },
+-            "description": "**PAY-09 — morefoto.payments**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2.",
++            "description": "**PAY-09 — morefoto.payment**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"providerEventId\": \"{{provider_event_id}}\",\n  \"providerObjectId\": \"{{provider_object_id}}\",\n  \"status\": \"{{provider_status}}\"\n}",
+@@ -8074,7 +8355,7 @@
+                     "receipts"
+                   ]
+                 },
+-                "description": "**PAY-09 — morefoto.payments**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2.",
++                "description": "**PAY-09 — morefoto.payment**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2.",
+                 "body": {
+                   "mode": "raw",
+                   "raw": "{\n  \"providerEventId\": \"{{provider_event_id}}\",\n  \"providerObjectId\": \"{{provider_object_id}}\",\n  \"status\": \"{{provider_status}}\"\n}",
+@@ -8438,7 +8719,7 @@
+     },
+     {
+       "name": "I2 — Резерв и подтверждение возврата",
+-      "description": "Конкурентные запросы не возвращают больше остатка, unknown не вызывает второе списание.\n\nЗависит от: G1, I1. Разблокирует при выполнении остальных условий: I3, N1. Владельцы: morefoto.settlement, morefoto.payments.\n\nВключение: Только sandbox. Приёмка I2 требует работающего денежного возврата из админ-панели MoreFoto; одна backend-команда не закрывает сценарий. Затем I3 и финальный N2.\n\nПроверяет дополнительно: SET-01. Папка содержит только основные операции волны; это план для отдельного ревью, не сценарий Run all.",
++      "description": "Конкурентные запросы не возвращают больше остатка, unknown не вызывает второе списание.\n\nЗависит от: G1, I1. Разблокирует при выполнении остальных условий: I3, N1. Владельцы: morefoto.settlement, morefoto.payment.\n\nВключение: Только sandbox. Приёмка I2 требует работающего денежного возврата из админ-панели MoreFoto; одна backend-команда не закрывает сценарий. Затем I3 и финальный N2.\n\nПроверяет дополнительно: SET-01. Папка содержит только основные операции волны; это план для отдельного ревью, не сценарий Run all.",
+       "item": [
+         {
+           "id": "cc80f3ae-fce4-585f-892b-f196bc14c313",
+@@ -8885,7 +9166,7 @@
+                 "refunds"
+               ]
+             },
+-            "description": "**PAY-08 — morefoto.payments**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: I2. Проверки: N2.",
++            "description": "**PAY-08 — morefoto.payment**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: I2. Проверки: N2.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"providerEventId\": \"{{provider_event_id}}\",\n  \"providerObjectId\": \"{{provider_object_id}}\",\n  \"status\": \"{{provider_status}}\"\n}",
+@@ -8957,7 +9238,7 @@
+                     "refunds"
+                   ]
+                 },
+-                "description": "**PAY-08 — morefoto.payments**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: I2. Проверки: N2.",
++                "description": "**PAY-08 — morefoto.payment**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: I2. Проверки: N2.",
+                 "body": {
+                   "mode": "raw",
+                   "raw": "{\n  \"providerEventId\": \"{{provider_event_id}}\",\n  \"providerObjectId\": \"{{provider_object_id}}\",\n  \"status\": \"{{provider_status}}\"\n}",
+@@ -8985,7 +9266,7 @@
+     },
+     {
+       "name": "I3 — Решения исполнения и поздний платёж",
+-      "description": "Решение отдельно задаёт права на файлы и разрешение печати с учётом оплаты, исправлений и возврата.\n\nЗависит от: D3, G1, I1, I2. Разблокирует при выполнении остальных условий: J1, J3, K1, L1, M1, N1. Владельцы: morefoto.settlement, morefoto.commerce, morefoto.payments.\n\nВключение: Подключить решения на стенде. Реальное исполнение ждёт проверки Files/Production.\n\nПроверяет дополнительно: MED-07, HND-10, HND-11, COM-11, COM-12, COM-13, SET-01, SET-03. Папка содержит только основные операции волны; это план для отдельного ревью, не сценарий Run all.",
++      "description": "Решение отдельно задаёт права на файлы и разрешение печати с учётом оплаты, исправлений и возврата.\n\nЗависит от: D3, G1, I1, I2. Разблокирует при выполнении остальных условий: J1, J3, K1, L1, M1, N1. Владельцы: morefoto.settlement, morefoto.commerce, morefoto.payment.\n\nВключение: Подключить решения на стенде. Реальное исполнение ждёт проверки Files/Production.\n\nПроверяет дополнительно: MED-07, HND-10, HND-11, COM-11, COM-12, COM-13, SET-01, SET-03. Папка содержит только основные операции волны; это план для отдельного ревью, не сценарий Run all.",
+       "item": [
+         {
+           "id": "5a7dcebf-b829-5cb9-b1f6-9c554e20d0b1",
+@@ -12310,7 +12591,7 @@
+     },
+     {
+       "name": "N2 — Сквозная приёмка и управляемое включение",
+-      "description": "Подтверждена готовность функций и известны восстановление, включение и пределы гарантий.\n\nЗависит от: N1, E6. Разблокирует при выполнении остальных условий: нет. Владельцы: rebit.share, rebit.auth, rebit.notification, rebit.leadhunter, morefoto.access, morefoto.organization, morefoto.media, morefoto.commerce, morefoto.handoff, morefoto.payments, morefoto.files, morefoto.support, morefoto.settlement, morefoto.production, morefoto.shipping.\n\nВключение: После приёмки можно согласовать production-выпуск. Сам запуск не входит в подготовку этого плана.\n\nПроверяет дополнительно: AUTH-03, AUTH-04, NTF-01, INF-01, AUTH-01, AUTH-02, SHR-01, ACC-01, ORG-02, ORG-03, ORG-04, ORG-05, ORG-06, ORG-07, ORG-08, ORG-09, ORG-10, ORG-12, ACC-02, ACC-03, ACC-04, ACC-05, ACC-06, MED-02, MED-03, MED-04, MED-05, MED-06, COM-01, COM-02, COM-03, COM-04, COM-05, COM-06, COM-07, HND-06, HND-07, HND-08, HND-09, HND-12, MED-01, COM-08, COM-09, COM-10, COM-11, COM-12, COM-13, MED-07, HND-10, HND-11, HND-01, HND-02, HND-03, HND-04, HND-05, PAY-01, PAY-02, PAY-03, PAY-07, PAY-04, PAY-05, PAY-06, PAY-09, SET-01, SET-02, SET-03, SET-04, SET-05, SET-06, PAY-08, SET-07, FIL-01, FIL-02, FIL-03, FIL-04, FIL-05, FIL-06, FIL-07, FIL-08, SUP-01, SUP-02, SUP-03, SUP-04, SUP-05, PRD-01, PRD-02, PRD-03, PRD-04, PRD-07, PRD-05, PRD-06, SUP-06, SHP-01, SHP-02, SHP-03, SHP-04, SHP-05, ORG-01, ORG-11, AUTH-05, AUTH-06, AUTH-07, AUTH-08, AUTH-09, ACC-11, ACC-07, ACC-08, ACC-09, ACC-10, ACC-12. Папка содержит только основные операции волны; это план для отдельного ревью, не сценарий Run all.",
++      "description": "Подтверждена готовность функций и известны восстановление, включение и пределы гарантий.\n\nЗависит от: N1, E6. Разблокирует при выполнении остальных условий: нет. Владельцы: rebit.share, rebit.auth, rebit.notification, rebit.leadhunter, morefoto.access, morefoto.organization, morefoto.media, morefoto.commerce, morefoto.handoff, morefoto.payment, morefoto.files, morefoto.support, morefoto.settlement, morefoto.production, morefoto.shipping.\n\nВключение: После приёмки можно согласовать production-выпуск. Сам запуск не входит в подготовку этого плана.\n\nПроверяет дополнительно: AUTH-03, AUTH-04, NTF-01, INF-01, AUTH-01, AUTH-02, SHR-01, ACC-01, ORG-02, ORG-03, ORG-04, ORG-05, ORG-06, ORG-07, ORG-08, ORG-09, ORG-10, ORG-12, ACC-02, ACC-03, ACC-04, ACC-05, ACC-06, MED-02, MED-03, MED-04, MED-05, MED-06, COM-01, COM-02, COM-03, COM-04, COM-05, COM-06, COM-07, HND-06, HND-07, HND-08, HND-09, HND-12, MED-01, COM-08, COM-09, COM-10, COM-11, COM-12, COM-13, MED-07, HND-10, HND-11, HND-01, HND-02, HND-03, HND-04, HND-05, PAY-01, PAY-02, PAY-03, PAY-07, PAY-04, PAY-05, PAY-06, PAY-09, SET-01, SET-02, SET-03, SET-04, SET-05, SET-06, PAY-08, SET-07, FIL-01, FIL-02, FIL-03, FIL-04, FIL-05, FIL-06, FIL-07, FIL-08, SUP-01, SUP-02, SUP-03, SUP-04, SUP-05, PRD-01, PRD-02, PRD-03, PRD-04, PRD-07, PRD-05, PRD-06, SUP-06, SHP-01, SHP-02, SHP-03, SHP-04, SHP-05, ORG-01, ORG-11, AUTH-05, AUTH-06, AUTH-07, AUTH-08, AUTH-09, ACC-11, ACC-07, ACC-08, ACC-09, ACC-10, ACC-12. Папка содержит только основные операции волны; это план для отдельного ревью, не сценарий Run all.",
+       "item": []
+     },
+     {
+diff --git a/docs/05-rest-api/postman/MoreFoto.postman_collection.json b/docs/05-rest-api/postman/MoreFoto.postman_collection.json
+index 69d065c..0849470 100644
+--- a/docs/05-rest-api/postman/MoreFoto.postman_collection.json
++++ b/docs/05-rest-api/postman/MoreFoto.postman_collection.json
+@@ -7768,7 +7768,7 @@
+       ]
+     },
+     {
+-      "name": "morefoto.payments — Оплата и чеки",
++      "name": "morefoto.payment — Оплата и чеки",
+       "description": "Попытки платежа, сверка провайдера, чеки и фискальная доставка. Результат возврата передаёт settlement через контракт.",
+       "item": [
+         {
+@@ -7811,10 +7811,10 @@
+                 "payment-attempts"
+               ]
+             },
+-            "description": "**PAY-01 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, redirectUrl?, created, orderVersion.\n\nПри pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_01. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**PAY-01 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, redirectUrl?, created, orderVersion.\n\nПри pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — провайдер не ответил, повтор выполняет сервер с тем же ключом провайдера. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_01. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+-              "raw": "{\n  \"orderVersion\": \"{{order_version}}\",\n  \"precedingAttemptId\": null,\n  \"quoteToken\": \"{{payment_quote_token}}\"\n}",
++              "raw": "{\n  \"orderVersion\": \"{{order_version}}\",\n  \"precedingAttemptId\": null,\n  \"quoteToken\": \"{{payment_quote_token}}\",\n  \"paymentMethod\": \"bank_card\"\n}",
+               "options": {
+                 "raw": {
+                   "language": "json"
+@@ -7913,10 +7913,10 @@
+                     "payment-attempts"
+                   ]
+                 },
+-                "description": "**PAY-01 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, redirectUrl?, created, orderVersion.\n\nПри pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_01. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++                "description": "**PAY-01 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, redirectUrl?, created, orderVersion.\n\nПри pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — провайдер не ответил, повтор выполняет сервер с тем же ключом провайдера. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_01. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+                 "body": {
+                   "mode": "raw",
+-                  "raw": "{\n  \"orderVersion\": \"{{order_version}}\",\n  \"precedingAttemptId\": null,\n  \"quoteToken\": \"{{payment_quote_token}}\"\n}",
++                  "raw": "{\n  \"orderVersion\": \"{{order_version}}\",\n  \"precedingAttemptId\": null,\n  \"quoteToken\": \"{{payment_quote_token}}\",\n  \"paymentMethod\": \"bank_card\"\n}",
+                   "options": {
+                     "raw": {
+                       "language": "json"
+@@ -7933,7 +7933,7 @@
+                   "value": "application/json"
+                 }
+               ],
+-              "body": "{\n  \"data\": {\n    \"id\": \"attempt-example\",\n    \"status\": \"pending\",\n    \"amount\": 25000,\n    \"created\": true,\n    \"orderVersion\": \"order-version-2\"\n  }\n}"
++              "body": "{\n  \"data\": {\n    \"id\": \"attempt-example\",\n    \"status\": \"pending\",\n    \"amount\": 25000,\n    \"redirectUrl\": \"https://yoomoney.ru/checkout/payments/v2/contract?orderId=example\",\n    \"created\": true,\n    \"orderVersion\": \"order-version-2\"\n  }\n}"
+             }
+           ]
+         },
+@@ -7970,7 +7970,7 @@
+                 "{{payment_attempt_id}}"
+               ]
+             },
+-            "description": "**PAY-02 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, orderVersion, latePayment.\n\nЧтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2."
++            "description": "**PAY-02 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, orderVersion, latePayment.\n\nЧтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод. G1: для pending/unknown сервер сверяет платёж с ЮKassa не чаще раза в 5 с; чужая или отсутствующая попытка — 404 PAYMENT_ATTEMPT_NOT_FOUND. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2."
+           },
+           "event": [
+             {
+@@ -8037,7 +8037,7 @@
+                     "{{payment_attempt_id}}"
+                   ]
+                 },
+-                "description": "**PAY-02 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, orderVersion, latePayment.\n\nЧтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2."
++                "description": "**PAY-02 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, orderVersion, latePayment.\n\nЧтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод. G1: для pending/unknown сервер сверяет платёж с ЮKassa не чаще раза в 5 с; чужая или отсутствующая попытка — 404 PAYMENT_ATTEMPT_NOT_FOUND. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2."
+               },
+               "status": "OK",
+               "code": 200,
+@@ -8084,7 +8084,7 @@
+                 "payment-quote"
+               ]
+             },
+-            "description": "**PAY-03 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: quote, quoteToken, orderVersion, canPay, precedingAttemptId.\n\nЧтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2."
++            "description": "**PAY-03 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: quote, quoteToken, orderVersion, canPay, precedingAttemptId, paymentMethods.\n\nЧтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок. G1: quote — итог неизменяемого снимка заказа E5, пересчёта нет. canPay=false при оплаченном заказе, pending/unknown попытке или закрытом периоде. paymentMethods — способы из конфигурации магазина в порядке показа (боевой: sbp, bank_card; тестовый: bank_card).\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2."
+           },
+           "event": [
+             {
+@@ -8156,7 +8156,7 @@
+                 "receipt"
+               ]
+             },
+-            "description": "**PAY-04 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: status, availableChannels, channel, sentAt?, lastError?, receiptUrl?.\n\nstatus=pending/sent/failed; receiptUrl только при готовом чеке. MAX доступен только при подтверждённой интеграции; email — базовый канал.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2."
++            "description": "**PAY-04 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: status, availableChannels, channel, sentAt?, lastError?, receiptUrl?.\n\nstatus=pending/sent/failed; receiptUrl только при готовом чеке. MAX доступен только при подтверждённой интеграции; email — базовый канал.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2."
+           },
+           "event": [
+             {
+@@ -8227,7 +8227,7 @@
+                 "receipt-deliveries"
+               ]
+             },
+-            "description": "**PAY-05 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status.\n\nПринятие в очередь не равно отправке; результат PAY-06.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**PAY-05 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status.\n\nПринятие в очередь не равно отправке; результат PAY-06.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"channel\": \"email\"\n}",
+@@ -8324,7 +8324,7 @@
+                     "receipt-deliveries"
+                   ]
+                 },
+-                "description": "**PAY-05 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status.\n\nПринятие в очередь не равно отправке; результат PAY-06.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++                "description": "**PAY-05 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status.\n\nПринятие в очередь не равно отправке; результат PAY-06.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+                 "body": {
+                   "mode": "raw",
+                   "raw": "{\n  \"channel\": \"email\"\n}",
+@@ -8381,7 +8381,7 @@
+                 "{{receipt_delivery_id}}"
+               ]
+             },
+-            "description": "**PAY-06 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, channel, status, sentAt?, error?.\n\n\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2."
++            "description": "**PAY-06 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, channel, status, sentAt?, error?.\n\n\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2."
+           },
+           "event": [
+             {
+@@ -8443,7 +8443,7 @@
+                     "{{receipt_delivery_id}}"
+                   ]
+                 },
+-                "description": "**PAY-06 — morefoto.payments**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, channel, status, sentAt?, error?.\n\n\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2."
++                "description": "**PAY-06 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, channel, status, sentAt?, error?.\n\n\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2."
+               },
+               "status": "OK",
+               "code": 200,
+@@ -8493,10 +8493,10 @@
+                 "payments"
+               ]
+             },
+-            "description": "**PAY-07 — morefoto.payments**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.",
++            "description": "**PAY-07 — morefoto.payment**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nG1, provider=yookassa: тело уведомления ЮKassa — только сигнал. Сервер берёт event и object.id, запрашивает платёж у ЮKassa и сверяет магазин, сумму, валюту, metadata попытки и заказ. Ключ дедупликации — event:object.id (у ЮKassa нет ID события). Повтор, неизвестный платёж и неподдерживаемое событие — 200 без изменений; некорректный JSON — 400. Подписи у уведомлений ЮKassa нет, IP не проверяется.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.",
+             "body": {
+               "mode": "raw",
+-              "raw": "{\n  \"providerEventId\": \"{{provider_event_id}}\",\n  \"providerObjectId\": \"{{provider_object_id}}\",\n  \"status\": \"{{provider_status}}\"\n}",
++              "raw": "{\n  \"type\": \"notification\",\n  \"event\": \"payment.succeeded\",\n  \"object\": {\n    \"id\": \"{{provider_object_id}}\",\n    \"status\": \"succeeded\"\n  }\n}",
+               "options": {
+                 "raw": {
+                   "language": "json"
+@@ -8565,10 +8565,10 @@
+                     "payments"
+                   ]
+                 },
+-                "description": "**PAY-07 — morefoto.payments**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.",
++                "description": "**PAY-07 — morefoto.payment**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nG1, provider=yookassa: тело уведомления ЮKassa — только сигнал. Сервер берёт event и object.id, запрашивает платёж у ЮKassa и сверяет магазин, сумму, валюту, metadata попытки и заказ. Ключ дедупликации — event:object.id (у ЮKassa нет ID события). Повтор, неизвестный платёж и неподдерживаемое событие — 200 без изменений; некорректный JSON — 400. Подписи у уведомлений ЮKassa нет, IP не проверяется.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.",
+                 "body": {
+                   "mode": "raw",
+-                  "raw": "{\n  \"providerEventId\": \"{{provider_event_id}}\",\n  \"providerObjectId\": \"{{provider_object_id}}\",\n  \"status\": \"{{provider_status}}\"\n}",
++                  "raw": "{\n  \"type\": \"notification\",\n  \"event\": \"payment.succeeded\",\n  \"object\": {\n    \"id\": \"{{provider_object_id}}\",\n    \"status\": \"succeeded\"\n  }\n}",
+                   "options": {
+                     "raw": {
+                       "language": "json"
+@@ -8624,7 +8624,7 @@
+                 "refunds"
+               ]
+             },
+-            "description": "**PAY-08 — morefoto.payments**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: I2. Проверки: N2.",
++            "description": "**PAY-08 — morefoto.payment**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: I2. Проверки: N2.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"providerEventId\": \"{{provider_event_id}}\",\n  \"providerObjectId\": \"{{provider_object_id}}\",\n  \"status\": \"{{provider_status}}\"\n}",
+@@ -8696,7 +8696,7 @@
+                     "refunds"
+                   ]
+                 },
+-                "description": "**PAY-08 — morefoto.payments**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: I2. Проверки: N2.",
++                "description": "**PAY-08 — morefoto.payment**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: I2. Проверки: N2.",
+                 "body": {
+                   "mode": "raw",
+                   "raw": "{\n  \"providerEventId\": \"{{provider_event_id}}\",\n  \"providerObjectId\": \"{{provider_object_id}}\",\n  \"status\": \"{{provider_status}}\"\n}",
+@@ -8755,7 +8755,7 @@
+                 "receipts"
+               ]
+             },
+-            "description": "**PAY-09 — morefoto.payments**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2.",
++            "description": "**PAY-09 — morefoto.payment**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"providerEventId\": \"{{provider_event_id}}\",\n  \"providerObjectId\": \"{{provider_object_id}}\",\n  \"status\": \"{{provider_status}}\"\n}",
+@@ -8827,7 +8827,7 @@
+                     "receipts"
+                   ]
+                 },
+-                "description": "**PAY-09 — morefoto.payments**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2.",
++                "description": "**PAY-09 — morefoto.payment**\n\nЭскиз интеграции; контракт провайдера не выбран\n\nДоступ: Провайдер.\n\nОтвет: acknowledged.\n\nЭскиз маршрута. Поля/заголовки — заглушки до выбора провайдера D09. Внешний провайдер задаёт точное тело и проверку подлинности; нельзя принимать этот пример как валидный платёж. Проверить подпись/raw body, повтор события, сумму/валюту и связанный объект. Подтверждение refunds применяет только актуальный pending-резерв settlement.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G2. Проверки: N2.",
+                 "body": {
+                   "mode": "raw",
+                   "raw": "{\n  \"providerEventId\": \"{{provider_event_id}}\",\n  \"providerObjectId\": \"{{provider_object_id}}\",\n  \"status\": \"{{provider_status}}\"\n}",
+@@ -8850,6 +8850,287 @@
+               "body": "{\n  \"data\": {\n    \"acknowledged\": true\n  }\n}"
+             }
+           ]
++        },
++        {
++          "id": "62e1718d-2d19-588d-a97a-a92fdfae4084",
++          "name": "PAY-10 · Реестр платежей",
++          "request": {
++            "method": "GET",
++            "auth": {
++              "type": "bearer",
++              "bearer": [
++                {
++                  "key": "token",
++                  "value": "{{staff_token}}",
++                  "type": "string"
++                }
++              ]
++            },
++            "header": [
++              {
++                "key": "Accept",
++                "value": "application/json"
++              }
++            ],
++            "url": {
++              "raw": "{{base_url}}/{{api_prefix}}/payments?page={{page}}&pageSize={{page_size}}",
++              "host": [
++                "{{base_url}}"
++              ],
++              "path": [
++                "{{api_prefix}}",
++                "payments"
++              ],
++              "query": [
++                {
++                  "key": "status",
++                  "value": "",
++                  "disabled": true,
++                  "description": "pending/unknown/succeeded/canceled"
++                },
++                {
++                  "key": "orderNumber",
++                  "value": "",
++                  "disabled": true,
++                  "description": "Номер заказа MF"
++                },
++                {
++                  "key": "dateFrom",
++                  "value": "",
++                  "disabled": true,
++                  "description": "YYYY-MM-DD"
++                },
++                {
++                  "key": "dateTo",
++                  "value": "",
++                  "disabled": true,
++                  "description": "YYYY-MM-DD, включительно по МСК"
++                },
++                {
++                  "key": "late",
++                  "value": "",
++                  "disabled": true,
++                  "description": "true/false"
++                },
++                {
++                  "key": "page",
++                  "value": "1",
++                  "disabled": true,
++                  "description": "Страница от 1"
++                },
++                {
++                  "key": "pageSize",
++                  "value": "50",
++                  "disabled": true,
++                  "description": "Размер страницы 1–100"
++                },
++                {
++                  "key": "page",
++                  "value": "{{page}}",
++                  "description": "Страница начиная с 1"
++                },
++                {
++                  "key": "pageSize",
++                  "value": "{{page_size}}",
++                  "description": "1–100, по умолчанию 50"
++                }
++              ]
++            },
++            "description": "**PAY-10 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<PaymentAttempt>, meta{summary: total}.\n\nG1. Область как COM-12: organizer — все, curator — заказы своих учреждений, head/teacher — 403 FORBIDDEN. PaymentAttempt: id, orderId, orderNumber, institutionName, groupName, createdAt, amount, currency, paymentMethod, status, paidAt?, latePayment, incomeAmount?, cancelReason?. Сортировка createdAt desc + id, фильтры и область до LIMIT. Без ключей, idempotency, confirmation URL и raw payload. Неизвестный фильтр — 422.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: в своей волне."
++          },
++          "event": [
++            {
++              "listen": "test",
++              "script": {
++                "type": "text/javascript",
++                "exec": [
++                  "const expected = 200;",
++                  "pm.test('PAY-10: HTTP '+expected, function () { pm.response.to.have.status(expected); });",
++                  "pm.test('JSON Content-Type', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/application\\/json/i); });",
++                  "let payload;",
++                  "try { payload = pm.response.json(); } catch (e) {",
++                  "  pm.test('Корректный JSON', function () { throw e; });",
++                  "}",
++                  "if (payload !== undefined) {",
++                  "  pm.test('Конверт data без error', function () {",
++                  "    pm.expect(payload).to.have.property('data');",
++                  "    pm.expect(payload).not.to.have.property('error');",
++                  "  });",
++                  "  const data = payload.data;",
++                  "  if (pm.response.code === expected && data !== undefined) {",
++                  "    pm.test('Список items', function () { pm.expect(data.items).to.be.an('array'); });",
++                  "    pm.test('Пагинация meta', function () {",
++                  "      pm.expect(payload.meta.page).to.be.a('number');",
++                  "      pm.expect(payload.meta.pageSize).to.be.a('number');",
++                  "      pm.expect(payload.meta.total).to.be.a('number');",
++                  "    });",
++                  "  }",
++                  "}"
++                ]
++              }
++            }
++          ],
++          "response": [
++            {
++              "name": "Пример контракта (не ответ сервера)",
++              "originalRequest": {
++                "method": "GET",
++                "auth": {
++                  "type": "bearer",
++                  "bearer": [
++                    {
++                      "key": "token",
++                      "value": "{{staff_token}}",
++                      "type": "string"
++                    }
++                  ]
++                },
++                "header": [
++                  {
++                    "key": "Accept",
++                    "value": "application/json"
++                  }
++                ],
++                "url": {
++                  "raw": "{{base_url}}/{{api_prefix}}/payments?page={{page}}&pageSize={{page_size}}",
++                  "host": [
++                    "{{base_url}}"
++                  ],
++                  "path": [
++                    "{{api_prefix}}",
++                    "payments"
++                  ],
++                  "query": [
++                    {
++                      "key": "status",
++                      "value": "",
++                      "disabled": true,
++                      "description": "pending/unknown/succeeded/canceled"
++                    },
++                    {
++                      "key": "orderNumber",
++                      "value": "",
++                      "disabled": true,
++                      "description": "Номер заказа MF"
++                    },
++                    {
++                      "key": "dateFrom",
++                      "value": "",
++                      "disabled": true,
++                      "description": "YYYY-MM-DD"
++                    },
++                    {
++                      "key": "dateTo",
++                      "value": "",
++                      "disabled": true,
++                      "description": "YYYY-MM-DD, включительно по МСК"
++                    },
++                    {
++                      "key": "late",
++                      "value": "",
++                      "disabled": true,
++                      "description": "true/false"
++                    },
++                    {
++                      "key": "page",
++                      "value": "1",
++                      "disabled": true,
++                      "description": "Страница от 1"
++                    },
++                    {
++                      "key": "pageSize",
++                      "value": "50",
++                      "disabled": true,
++                      "description": "Размер страницы 1–100"
++                    },
++                    {
++                      "key": "page",
++                      "value": "{{page}}",
++                      "description": "Страница начиная с 1"
++                    },
++                    {
++                      "key": "pageSize",
++                      "value": "{{page_size}}",
++                      "description": "1–100, по умолчанию 50"
++                    }
++                  ]
++                },
++                "description": "**PAY-10 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<PaymentAttempt>, meta{summary: total}.\n\nG1. Область как COM-12: organizer — все, curator — заказы своих учреждений, head/teacher — 403 FORBIDDEN. PaymentAttempt: id, orderId, orderNumber, institutionName, groupName, createdAt, amount, currency, paymentMethod, status, paidAt?, latePayment, incomeAmount?, cancelReason?. Сортировка createdAt desc + id, фильтры и область до LIMIT. Без ключей, idempotency, confirmation URL и raw payload. Неизвестный фильтр — 422.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: в своей волне."
++              },
++              "status": "OK",
++              "code": 200,
++              "_postman_previewlanguage": "json",
++              "header": [
++                {
++                  "key": "Content-Type",
++                  "value": "application/json"
++                }
++              ],
++              "body": "{\n  \"data\": {\n    \"items\": []\n  },\n  \"meta\": {\n    \"page\": 1,\n    \"pageSize\": 50,\n    \"total\": 0\n  }\n}"
++            }
++          ]
++        },
++        {
++          "id": "8a928e32-809e-52e0-a9fc-4929f41a2635",
++          "name": "PAY-11 · Карточка платежа",
++          "request": {
++            "method": "GET",
++            "auth": {
++              "type": "bearer",
++              "bearer": [
++                {
++                  "key": "token",
++                  "value": "{{staff_token}}",
++                  "type": "string"
++                }
++              ]
++            },
++            "header": [
++              {
++                "key": "Accept",
++                "value": "application/json"
++              }
++            ],
++            "url": {
++              "raw": "{{base_url}}/{{api_prefix}}/payments/{{payment_attempt_id}}",
++              "host": [
++                "{{base_url}}"
++              ],
++              "path": [
++                "{{api_prefix}}",
++                "payments",
++                "{{payment_attempt_id}}"
++              ]
++            },
++            "description": "**PAY-11 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: PaymentAttempt, providerPaymentId, attempts, facts, checks.\n\nG1. Попытка, соседние попытки заказа, подтверждённые денежные факты и последние результаты сверки (время, результат). Права как PAY-10; чужая или отсутствующая — 404 PAYMENT_ATTEMPT_NOT_FOUND.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: в своей волне."
++          },
++          "event": [
++            {
++              "listen": "test",
++              "script": {
++                "type": "text/javascript",
++                "exec": [
++                  "const expected = 200;",
++                  "pm.test('PAY-11: HTTP '+expected, function () { pm.response.to.have.status(expected); });",
++                  "pm.test('JSON Content-Type', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/application\\/json/i); });",
++                  "let payload;",
++                  "try { payload = pm.response.json(); } catch (e) {",
++                  "  pm.test('Корректный JSON', function () { throw e; });",
++                  "}",
++                  "if (payload !== undefined) {",
++                  "  pm.test('Конверт data без error', function () {",
++                  "    pm.expect(payload).to.have.property('data');",
++                  "    pm.expect(payload).not.to.have.property('error');",
++                  "  });",
++                  "  const data = payload.data;",
++                  "  if (pm.response.code === expected && data !== undefined) {",
++                  "  }",
++                  "}"
++                ]
++              }
++            }
++          ],
++          "response": []
+         }
+       ]
+     },
+diff --git a/docs/05-rest-api/verification.json b/docs/05-rest-api/verification.json
+index 81dae59..8820466 100644
+--- a/docs/05-rest-api/verification.json
++++ b/docs/05-rest-api/verification.json
+@@ -1,9 +1,9 @@
+ {
+   "date": "2026-09-11",
+   "result": "passed",
+-  "requests": 110,
++  "requests": 112,
+   "folders": 15,
+-  "scripts": 155,
++  "scripts": 157,
+   "waves": 51,
+   "schemaValidation": "not-run",
+   "schemaUrl": "https://schema.postman.com/json/collection/v2.1.0/collection.json",
+@@ -28,18 +28,18 @@
+   ],
+   "liveApiRequestsExecuted": false,
+   "sha256": {
+-    "build.py": "b33ba00e50937f21544681b7f36bade2b3525e675e666ca7d7b1ffff8d30d55f",
++    "build.py": "e287481f7721a4c14ba9524538daebb4b68148cb74c314b2fd987c2e06d3503b",
+     "validate.py": "18a387833a1581f8445fe731787bbe5a0407d9fe95950c4138c881792a4ba939",
+     "validate-postman.cjs": "879a609e16602ab971c3296eacb0b0d0c702d840d842d8942c3b410240543877",
+-    "../04-bitrix-modules/README.md": "786c34ef6c226a57e141c206f88eee75dc04e46226ce982d8ce5d0c9ec457023",
+-    "../04-bitrix-modules/backend-waves.json": "83a6a32ebce182d8d17be65f5d03e0bd17f88ff184ee66d6487522a8bda6454e",
+-    "../04-bitrix-modules/backend-waves.md": "814eb64421bc7db98744f7c8674a77944e04fc49ca2b0a20c3f8458d47743e9d",
++    "../04-bitrix-modules/README.md": "7297bb86fc1172af29573d6f29a07b0116d528d7974b938b001c71e426b2864a",
++    "../04-bitrix-modules/backend-waves.json": "2144dbc21ced7a18f0a8a70368feb0e5f9f47aa41f4d5eaaa3f71823ec49f823",
++    "../04-bitrix-modules/backend-waves.md": "7eb63f69dcd751a767cdae3070f28afc41df5583eca176e6f9274ddad760e7db",
+     "../04-bitrix-modules/render-waves.py": "b502e757c9fd854c81d7f828a7a03bb58569f5f3cb0a582eed98b53c358327ec",
+     "../04-bitrix-modules/wave_graph.py": "f1045c84f245114dd0eb44b321f754e57a0a91879fb7415f12041eca1337e53b",
+-    "README.md": "220ca100154f3eb2cee4208e336bd7a58c831f450ee9a9f3a2e31e822e3e3b08",
+-    "endpoints.json": "51971978e08c41356b14978945f171509051a551f1ceff9b69546059ebc6423d",
+-    "postman/MoreFoto.postman_collection.json": "5a776178de76bf4142f60c0bd348bad7cb057f9cf8f69c5149b7755fd04d9aa6",
+-    "postman/MoreFoto.backend-waves.postman_collection.json": "707392fe4a4e35606c13fafc24e5705cc9404f9a324dbca7eac67666c38cae4b",
++    "README.md": "645d2887cd4f0051767ec036d175b403d5e4fe90079f7b518d956547e1a590c6",
++    "endpoints.json": "8422fb7980b22d22d7223f998b2c4240afff4e15e4bd7676577c37c0e55bc5a2",
++    "postman/MoreFoto.postman_collection.json": "4218ef5d86c8859113faaaafa6c92473f765e944771046c020a98b28d1d90783",
++    "postman/MoreFoto.backend-waves.postman_collection.json": "d8bbc9132558e02aac762d12584f8bdf83fd809f0dba9d971712c55205fb4a54",
+     "postman/MoreFoto.local.postman_environment.json": "83b1156b34630e0d248c5079dcbbc0f1b039edb06d1c3029c47f0e312e5f3cbb",
+     "postman/MoreFoto.stage.postman_environment.json": "0298c5fa230d687240b2a1a264bebcc86368576c378af78f3573b584e7ed5f11"
+   },
+@@ -65,9 +65,9 @@
+     "frontend/src/modules/morefoto/shipping/types.ts": "c73785f3e0a4652680f09e37e26413231af94bed517d0376c1460e30c914980d"
+   },
+   "postmanScriptValidation": {
+-    "scriptsParsed": 155,
+-    "positiveFixtures": 110,
+-    "negativeFixtures": 220,
++    "scriptsParsed": 157,
++    "positiveFixtures": 112,
++    "negativeFixtures": 224,
+     "idempotencyRepeatChecks": 43,
+     "platformGuardChecks": 14,
+     "platformContractNegativeFixtures": 2,
