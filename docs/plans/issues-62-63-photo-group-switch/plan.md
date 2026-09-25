@@ -50,8 +50,8 @@
 - [x] S3. `PhotoWorkspace`/`PhotoCollection`: блокировка селектора, фиксированный контекст переноса, состояние загрузки.
 - [x] S4. Live E2E-сценарий #62/#63.
 - [x] S5. Быстрые проверки frontend и stub-проверка в Chromium.
-- [ ] S6. Commit, push, PR.
-- [ ] S7. После review без блокеров — полный `make test-e2e`.
+- [x] S6. Commit, push, PR.
+- [x] S7. После review без блокеров — полный `make test-e2e`.
 
 ## Критерии приёмки
 

@@ -6,13 +6,13 @@
 - Ветка: `codex/issues-62-63-photo-group-switch`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-62-63-photo-group-switch`. Основной checkout `/home/user/rabit-api` занят другой сессией (`codex/design-ux-plan`), в нём не работать.
 - Base: `origin/main` `49f40f9`.
-- Issues: [#62](https://github.com/rebit-pro/rabit-api/issues/62), [#63](https://github.com/rebit-pro/rabit-api/issues/63). PR: [#67](https://github.com/rebit-pro/rabit-api/pull/67), на review.
+- Issues: [#62](https://github.com/rebit-pro/rabit-api/issues/62), [#63](https://github.com/rebit-pro/rabit-api/issues/63). PR: [#67](https://github.com/rebit-pro/rabit-api/pull/67): review без блокеров (пользователь, 2026-09-25), gate PASS, слит в `main`.
 - Параллельно в работе, в отдельных ветках и PR: #42 (`codex/issues-42-access-error-codes`), #39/#41 (`codex/issues-39-41-staff-orders`).
 - Завершено:
   - исправление (S2, S3);
   - live E2E-сценарий (S4);
   - быстрые проверки и stub-проверка в Chromium (S5).
-- Следующий шаг: review PR. После review без блокеров — полный `make test-e2e` (T03–T05, T07).
+- Следующий шаг: деплой — отдельно, после результатов E2E волны E6 (решение пользователя 2026-09-25).
 - Блокеров нет.
 - Рабочее дерево: закоммичено. Пустые `frontend/.stub` и `frontend/test-results` — следы stub-прогона, в git не попадают.
 - Команды проверок:
@@ -53,14 +53,29 @@
     - отдельный прогон только #63: селектор группы не заблокирован во время подготовки переноса.
 - Скриншоты: `visual/before-main-g2-shows-g1.png` (main), `visual/after-failed-group-load.png`, `visual/after-move-dialog.png`, `visual/after-mobile-390.png`.
 
+### 2026-09-25 — review и полный gate
+
+- Пользователь провёл review, блокирующих замечаний нет. Разрешил полный E2E и merge в `main`. Деплой — позже, после E2E волны E6.
+- Перед стартом ждали окончания чужого прогона E6 (стенд `df93f04fc1f3`, worktree `e6-payment-cost-pricing`).
+- Gate 1 (`rabit-e2e-5aa4544a344f`, 309.6 с) — FAIL:
+  - всё, кроме группы `a`, PASS, в том числе группа `b` с новым сценарием #62/#63;
+  - в группе `a` 63 passed, 1 failed: `zz-media.spec.ts:431` «#33: партия отправляется по два файла…», `peakOverlap(spans)` = 3 при пороге 2.
+  - Причина не в ветке: тест меряет перекрытие POST через Playwright `request.timing()` с округлением начала до 1 мс, а очередь загрузки ветка не меняет. Соседний тест #54/#55 уже меряет через Resource Timing. Заводится отдельный issue.
+- Gate 2 (`rabit-e2e-c687c1b848e1`, 322.0 с) — PASS, exit 0:
+  - группа `a` 64/64, группа `b` 39/39;
+  - «#62/#63…» ✓ 5.6 с;
+  - `verify-storefront/orders/links/transfers/avatar/access` PASS.
+  - Во время прогона параллельно работал чужой стенд `0c2d85d9b8d6`.
+- Команда: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда / доказательство |
 |---|---|---|---|
 | T01 | PASS | 2026-09-25 | `npm run check` — exit 0 |
 | T02 | PASS | 2026-09-25 | `npm run test:commerce` — 183/183 |
-| T03 | PENDING | — | live E2E «#62/#63…», полный gate после review |
-| T04 | PENDING | — | live E2E «#62/#63…», полный gate после review |
-| T05 | PENDING | — | live E2E «#62/#63…», полный gate после review |
+| T03 | PASS | 2026-09-25 | live E2E «#62/#63…» ✓ в обоих gate (`5aa4544a344f`, `c687c1b848e1`) |
+| T04 | PASS | 2026-09-25 | live E2E «#62/#63…» ✓ в обоих gate (`5aa4544a344f`, `c687c1b848e1`) |
+| T05 | PASS | 2026-09-25 | live E2E «#62/#63…» ✓ в обоих gate (`5aa4544a344f`, `c687c1b848e1`) |
 | T06 | PASS | 2026-09-25 | stub Chromium: fix — PASS, main — FAIL (#62 и #63 воспроизводятся) |
-| T07 | PENDING | — | `make test-e2e` после review |
+| T07 | PASS | 2026-09-25 | `make test-e2e` gate 2 `c687c1b848e1`: exit 0, a 64/64, b 39/39. Gate 1 — flaky #33 вне ветки |
