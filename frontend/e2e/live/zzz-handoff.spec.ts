@@ -502,21 +502,28 @@ test('F1: воспитатель подаёт список, куратор ут�
     expect((await body(await afterReset)).data).toMatchObject({ revision: 8, status: 'submitted' });
     await expect(form).not.toBeVisible();
 
-    // #28: after a reload a draft of an older revision is not restored; the form follows the server.
+    // #28: after a reload the draft of the lost save is restored with its key although the server revision moved on;
+    // the unchanged repeat is a replay, not a second mutation.
     await teacher.getByRole('button', { name: 'Изменить список', exact: true }).click();
     await comment.fill('Потерянный ответ 3');
     await loseNextPut(teacher, detailPath);
+    const lostAgain = teacher.waitForRequest(isPut);
     await submitForm.click();
+    const lostAgainKey = (await lostAgain).headers()['idempotency-key'];
     await expect(form.getByText(/Ответ сервера не получен/)).toBeVisible();
+    expect(await server()).toMatchObject({ revision: 9, comment: 'Потерянный ответ 3' });
     await teacher.reload();
     await teacher.getByRole('button', { name: 'Изменить список', exact: true }).click();
     await expect(form.getByText(/Черновик устарел/)).toBeVisible();
-    await expect(form.getByText('Восстановлен несохранённый черновик.', { exact: true })).toHaveCount(0);
+    await expect(form.getByText('Восстановлен несохранённый черновик.', { exact: true })).toBeVisible();
     await expect(comment).toHaveValue('Потерянный ответ 3');
+    const replayPut = teacher.waitForRequest(isPut);
     const afterStale = teacher.waitForResponse((response) => isPut(response.request()));
     await submitForm.click();
-    expect((await body(await afterStale)).data).toMatchObject({ revision: 10, status: 'submitted' });
+    expect((await replayPut).headers()['idempotency-key']).toBe(lostAgainKey);
+    expect((await body(await afterStale)).data).toEqual({ id: created.id, revision: 9, status: 'submitted' });
     await expect(form).not.toBeVisible();
+    expect(await server()).toMatchObject({ revision: 9 });
 
     // #28: a command that never reached the server survives a reload with its key and applies once.
     await teacher.getByRole('button', { name: 'Изменить список', exact: true }).click();
@@ -526,7 +533,7 @@ test('F1: воспитатель подаёт список, куратор ут�
     await submitForm.click();
     const undeliveredKey = (await undelivered).headers()['idempotency-key'];
     await expect(form.getByText(/Ответ сервера не получен/)).toBeVisible();
-    expect(await server()).toMatchObject({ revision: 10 });
+    expect(await server()).toMatchObject({ revision: 9 });
     await teacher.reload();
     await teacher.getByRole('button', { name: 'Изменить список', exact: true }).click();
     await expect(form.getByText('Восстановлен несохранённый черновик.', { exact: true })).toBeVisible();
@@ -535,16 +542,17 @@ test('F1: воспитатель подаёт список, куратор ут�
     const delivered = teacher.waitForResponse((response) => isPut(response.request()));
     await submitForm.click();
     expect((await deliveredPut).headers()['idempotency-key']).toBe(undeliveredKey);
-    expect((await body(await delivered)).data).toMatchObject({ revision: 11 });
+    expect((await body(await delivered)).data).toMatchObject({ revision: 10 });
     await expect(form).not.toBeVisible();
 
-    // #28: an outside change gives REVISION_CONFLICT; closing reads the server, reopening shows its data.
+    // #28: an outside change gives REVISION_CONFLICT; the user's draft survives closing and reopening and is replaced
+    // only by «Загрузить актуальные данные».
     await teacher.getByRole('button', { name: 'Изменить список', exact: true }).click();
     await comment.fill('Мой черновик');
     await body(
       await teacher.request.put(detailPath, {
         headers: await headers(teacher),
-        data: { institutionId: institution.id, shootId: shoot.id, rows: createBody.rows, comment: 'Внешнее изменение', revision: 11 }
+        data: { institutionId: institution.id, shootId: shoot.id, rows: createBody.rows, comment: 'Внешнее изменение', revision: 10 }
       })
     );
     const conflict = teacher.waitForResponse((response) => isPut(response.request()));
@@ -553,13 +561,21 @@ test('F1: воспитатель подаёт список, куратор ут�
     await expect(form.getByText(/Список уже изменён/)).toBeVisible();
     const closed = teacher.waitForResponse(isDetail);
     await form.getByRole('button', { name: 'Отмена', exact: true }).click();
-    expect((await body(await closed)).data).toMatchObject({ revision: 12, comment: 'Внешнее изменение' });
+    expect((await body(await closed)).data).toMatchObject({ revision: 11, comment: 'Внешнее изменение' });
     await teacher.getByRole('button', { name: 'Изменить список', exact: true }).click();
     await expect(form.getByText(/Черновик устарел/)).toBeVisible();
+    await expect(comment).toHaveValue('Мой черновик');
+    const stillConflict = teacher.waitForResponse((response) => isPut(response.request()));
+    await submitForm.click();
+    expect((await body(await stillConflict, 409)).error.code).toBe('REVISION_CONFLICT');
+    const actual = teacher.waitForResponse(isDetail);
+    await form.getByRole('button', { name: 'Загрузить актуальные данные', exact: true }).click();
+    expect((await body(await actual)).data).toMatchObject({ revision: 11, comment: 'Внешнее изменение' });
     await expect(comment).toHaveValue('Внешнее изменение');
+    await expect(form.getByText(/Черновик устарел/)).toHaveCount(0);
     const resolved = teacher.waitForResponse((response) => isPut(response.request()));
     await submitForm.click();
-    expect((await body(await resolved)).data).toMatchObject({ revision: 13, status: 'submitted' });
+    expect((await body(await resolved)).data).toMatchObject({ revision: 12, status: 'submitted' });
     await expect(form).not.toBeVisible();
 
     await teacher.setViewportSize({ width: 390, height: 844 });

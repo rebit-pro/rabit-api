@@ -250,7 +250,8 @@ function change(value: Partial<StaffCommand>) {
     @save="editor.save"
   >
     <p v-if="stale" role="status" class="mf-muted mb-4">
-      Черновик устарел: список изменён на сервере. Форма заполнена актуальными данными.
+      Черновик устарел: список изменён на сервере после него. Отправьте форму без правок — если это ваша прошлая отправка, сервер вернёт её
+      результат. Чтобы начать с актуального списка, загрузите актуальные данные.
     </p>
     <RequestFields v-if="command?.kind === 'request' && data" :command="command" :data="data" :errors="errors" @change="change" />
     <RequestReview

@@ -228,7 +228,8 @@ async function history(group: LinkGroup, event: Event) {
     @reset="editor.reset"
     @save="editor.save"
     ><p v-if="stale" role="status" class="mf-muted mb-4">
-      Черновик устарел: группа изменена на сервере. Форма заполнена актуальными данными.
+      Черновик устарел: группа изменена на сервере после него. Отправьте форму без правок — если это ваша прошлая отправка, сервер вернёт её
+      результат. Чтобы начать с актуальных данных группы, загрузите актуальные данные.
     </p>
     <LinkFields
       v-if="command?.kind === 'link' && current && data"

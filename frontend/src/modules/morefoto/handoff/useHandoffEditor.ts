@@ -3,11 +3,13 @@ import { useAuthStore } from '@/stores/auth';
 import { isMockApiEnabled } from '@/mocks/config';
 import type { HandoffCommand, HandoffErrors } from './types';
 import { HandoffValidationError } from './scope';
+import { openDraft } from './draft';
 import { saveLink } from './links-service';
 import { saveStaffRequest } from './requests-service';
 /**
- * Draft, submit and errors of a handoff form. `refresh` reads the workspace from the server and reports success: the
- * reset button and a close after a failed save use it, so a form is never rebuilt from a stale local copy (#28).
+ * Draft, submit and errors of a handoff form. A stored draft survives until a successful save or an explicit reset;
+ * `refresh` reads the workspace from the server and reports success: the reset button and a close after a failed save
+ * use it, so a form is never rebuilt from a stale local copy (#28).
  */
 export function useHandoffEditor(saved: () => void, refresh?: () => Promise<boolean>) {
   const auth = useAuthStore(),
@@ -16,7 +18,7 @@ export function useHandoffEditor(saved: () => void, refresh?: () => Promise<bool
     error = shallowRef(''),
     errors = shallowRef<HandoffErrors>({}),
     restored = shallowRef(false),
-    /** The stored draft was written for another server revision and was replaced by the current data. */
+    /** The restored draft was written for another server revision: its repeat is a replay or a revision conflict. */
     stale = shallowRef(false);
   let factory: (() => HandoffCommand) | null = null,
     key = '',
@@ -36,11 +38,10 @@ export function useHandoffEditor(saved: () => void, refresh?: () => Promise<bool
     } catch {
       draft = null;
     }
-    // The draft keeps its Idempotency-Key and body for a safe repeat only while the server revision is unchanged.
-    const usable = draft?.kind === fresh.kind && draft.revision === fresh.revision;
-    stale.value = draft?.kind === fresh.kind && !usable;
-    command.value = usable ? draft : fresh;
-    restored.value = usable;
+    const opened = openDraft(draft, fresh);
+    stale.value = opened.stale;
+    command.value = opened.command;
+    restored.value = opened.restored;
     failed = false;
     error.value = '';
     errors.value = {};
