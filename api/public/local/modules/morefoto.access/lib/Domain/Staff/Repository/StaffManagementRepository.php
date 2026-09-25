@@ -9,6 +9,7 @@ use Bitrix\Main\DB\Result;
 use Morefoto\Access\Application\Staff\Dto\ListStaffInputDto;
 use Morefoto\Access\Domain\Staff\Entity\StaffProfile;
 use Morefoto\Access\Domain\Staff\Enum\RoleEnum;
+use Morefoto\Access\Domain\Staff\Enum\StaffSortEnum;
 use Morefoto\Access\Domain\Staff\Exception\AccessStorageException;
 
 final readonly class StaffManagementRepository
@@ -26,7 +27,7 @@ final readonly class StaffManagementRepository
         $offset = ($input->page - 1) * $input->pageSize;
 
         return [
-            $this->query($this->select() . $condition . " ORDER BY p.UF_USER_ID LIMIT {$input->pageSize} OFFSET {$offset}"),
+            $this->query($this->select() . $condition . $this->order($input) . " LIMIT {$input->pageSize} OFFSET {$offset}"),
             (int)($count['TOTAL'] ?? 0),
         ];
     }
@@ -63,12 +64,25 @@ final readonly class StaffManagementRepository
         return $this->query($this->select() . " WHERE p.UF_USER_ID={$userId}" . ($lock ? ' FOR UPDATE' : ''));
     }
 
-    public function createProfile(int $userId, RoleEnum $role, bool $active): void
+    public function createProfile(int $userId, RoleEnum $role, bool $active, int $revision): void
     {
         $this->execute(
             'INSERT INTO b_hlbd_mf_staff_profile (UF_USER_ID,UF_ROLE,UF_ACTIVE,UF_REVISION,UF_ACCESS_REVISION,UF_CREATED_AT,UF_UPDATED_AT)'
-            . " VALUES ({$userId},'{$role->value}'," . ($active ? '1' : '0') . ',1,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())',
+            . " VALUES ({$userId},'{$role->value}'," . ($active ? '1' : '0') . ",{$revision},1,UTC_TIMESTAMP(),UTC_TIMESTAMP())",
         );
+    }
+
+    /** Removed staff keep their change history; a re-added profile continues its revision instead of repeating it. */
+    public function lastRevision(int $userId): int
+    {
+        $row = $this->query("SELECT MAX(UF_TO_REVISION) AS REVISION FROM b_hlbd_mf_access_change WHERE UF_AGGREGATE_ID={$userId}")->fetch();
+
+        return (int)($row['REVISION'] ?? 0);
+    }
+
+    public function deleteProfile(int $userId): void
+    {
+        $this->execute("DELETE FROM b_hlbd_mf_staff_profile WHERE UF_USER_ID={$userId}");
     }
 
     public function updateProfile(int $userId, RoleEnum $role, bool $active, int $revision, int $accessRevision): void
@@ -163,6 +177,21 @@ final readonly class StaffManagementRepository
         }
 
         return [] === $where ? '' : ' WHERE ' . implode(' AND ', $where);
+    }
+
+    /** Roles and statuses sort by their meaning, not alphabetically; the user id keeps pages stable on ties. */
+    private function order(ListStaffInputDto $input): string
+    {
+        $direction = $input->descending ? 'DESC' : 'ASC';
+        $column = match ($input->sort) {
+            StaffSortEnum::NAME => 'u.NAME',
+            StaffSortEnum::EMAIL => 'u.EMAIL',
+            StaffSortEnum::ROLE => "FIELD(p.UF_ROLE,'organizer','curator','head','teacher')",
+            StaffSortEnum::ASSIGNMENTS => 'ASSIGNMENT_COUNT',
+            StaffSortEnum::STATUS => 'FIELD(' . self::STATUS_SQL . ",'active','pending','blocked')",
+        };
+
+        return " ORDER BY {$column} {$direction},p.UF_USER_ID {$direction}";
     }
 
     private function select(): string

@@ -87,6 +87,16 @@ final readonly class SqlAccessLinkRepository implements AccessLinkRepositoryInte
     }
 
     /**
+     * @throws RepositoryException
+     */
+    public function deleteForUser(int $userId): void
+    {
+        $this->query(static function() use ($userId): void {
+            Application::getConnection()->queryExecute(sprintf('DELETE FROM %s WHERE USER_ID = %d', self::TABLE, $userId));
+        });
+    }
+
+    /**
      * @param list<int> $userIds
      *
      * @return array<int, AccessLink>

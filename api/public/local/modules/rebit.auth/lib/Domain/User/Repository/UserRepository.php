@@ -331,6 +331,28 @@ final readonly class UserRepository implements LoginUserRepositoryInterface, Tok
         });
     }
 
+    /**
+     * Returns the identity to the pending state without a session: login needs an active user, and the next
+     * invitation sets a new password. Plain SQL keeps the change in the caller's transaction, as clearToken() does.
+     *
+     * @throws RepositoryException
+     */
+    public function resetToPending(int $userId): void
+    {
+        $this->query(static function() use ($userId): void {
+            $connection = Application::getConnection();
+            $connection->queryExecute(sprintf("UPDATE b_user SET ACTIVE='N',TIMESTAMP_X=UTC_TIMESTAMP() WHERE ID=%d", $userId));
+            if (1 !== $connection->getAffectedRowsCount()) {
+                throw new RepositoryException('Staff Auth identity was not reset.');
+            }
+            $connection->queryExecute(sprintf(
+                "INSERT INTO b_uts_user (VALUE_ID, UF_AUTH_REGISTRATION_PENDING, UF_TOKEN, UF_TOKEN_EXPIRES_AT) VALUES (%d, 1, '', NULL) "
+                . "ON DUPLICATE KEY UPDATE UF_AUTH_REGISTRATION_PENDING = 1, UF_TOKEN = '', UF_TOKEN_EXPIRES_AT = NULL",
+                $userId,
+            ));
+        });
+    }
+
     public function updateStaffContact(int $userId, string $email, string $name): void
     {
         $email = mb_strtolower(trim($email));

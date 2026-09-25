@@ -15,6 +15,7 @@ use Morefoto\Access\Domain\Assignment\Repository\GroupAssignmentRepository;
 use Morefoto\Access\Domain\Assignment\Repository\InstitutionAssignmentRepository;
 use Morefoto\Access\Domain\Staff\Enum\AccountStatusEnum;
 use Morefoto\Access\Domain\Staff\Enum\RoleEnum;
+use Morefoto\Access\Domain\Staff\Enum\StaffSortEnum;
 use Morefoto\Access\Domain\Staff\Repository\StaffManagementRepository;
 use Morefoto\Access\Domain\Staff\Repository\StaffProfileRepository;
 use Morefoto\Access\Domain\Staff\Service\PermissionPolicy;
@@ -78,6 +79,18 @@ final class StaffListSummaryTest extends TestCase
         self::assertSame(['Анна', RoleEnum::CURATOR, false, AccountStatusEnum::BLOCKED, 2, 50], [$input->query, $input->role, $input->active, $input->accountStatus, $input->page, $input->pageSize]);
     }
 
+    public function testSortDefaultsToNameAndReadsTheDirection(): void
+    {
+        $mapper = new StaffListInputMapper();
+        $default = $mapper->list(new StaffListRequestDto());
+        $explicit = $mapper->list(new StaffListRequestDto(sort: 'status', direction: 'desc'));
+
+        self::assertSame(
+            [StaffSortEnum::NAME, false, StaffSortEnum::STATUS, true],
+            [$default->sort, $default->descending, $explicit->sort, $explicit->descending],
+        );
+    }
+
     #[DataProvider('invalidRequests')]
     public function testInvalidFilterIsRejected(StaffListRequestDto $request, string $code): void
     {
@@ -97,6 +110,8 @@ final class StaffListSummaryTest extends TestCase
         yield 'active' => [new StaffListRequestDto(active: 'maybe'), 'INVALID_ACTIVE'];
         yield 'page' => [new StaffListRequestDto(page: '0'), 'INVALID_PAGE'];
         yield 'page size' => [new StaffListRequestDto(pageSize: '1e3'), 'INVALID_PAGE'];
+        yield 'sort' => [new StaffListRequestDto(sort: 'password'), 'INVALID_SORT'];
+        yield 'direction' => [new StaffListRequestDto(direction: 'up'), 'INVALID_SORT'];
     }
 
     private function directory(StaffManagementRepository $staff): StaffDirectoryUseCase

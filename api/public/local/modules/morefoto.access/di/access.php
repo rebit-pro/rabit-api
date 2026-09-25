@@ -44,6 +44,9 @@ use Morefoto\Access\Presentation\Controller\StaffListController;
 use Morefoto\Access\Presentation\Staff\Result\StaffListResultMapper;
 use Morefoto\Access\Presentation\Staff\StaffListInputMapper;
 use Morefoto\Access\Application\Staff\UseCase\ResendStaffInvitationUseCase;
+use Morefoto\Access\Application\Staff\UseCase\ArchiveStaffUseCase;
+use Morefoto\Access\Presentation\Controller\StaffArchiveController;
+use Morefoto\Access\Presentation\Staff\StaffArchiveInputMapper;
 
 return [
     StaffRequestAccessInterface::class => ['constructor' => static fn(): StaffRequestAccessInterface => new StaffRequestAccess(ServiceLocator::getInstance()->get(StaffAuthorization::class))],
@@ -101,6 +104,25 @@ return [
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(ResendStaffInvitationUseCase::class),
             ServiceLocator::getInstance()->get(StaffInvitationInputMapper::class),
+        ],
+    ],
+    ArchiveStaffUseCase::class => [
+        'className' => ArchiveStaffUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(StaffAuthorization::class),
+            ServiceLocator::getInstance()->get(AccessStateRepository::class),
+            ServiceLocator::getInstance()->get(StaffManagementRepository::class),
+            ServiceLocator::getInstance()->get(InstitutionAssignmentRepository::class),
+            ServiceLocator::getInstance()->get(GroupAssignmentRepository::class),
+            ServiceLocator::getInstance()->get(StaffIdentityGatewayInterface::class),
+        ],
+    ],
+    StaffArchiveInputMapper::class => ['className' => StaffArchiveInputMapper::class],
+    StaffArchiveController::class => [
+        'className' => StaffArchiveController::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(ArchiveStaffUseCase::class),
+            ServiceLocator::getInstance()->get(StaffArchiveInputMapper::class),
         ],
     ],
     StaffListInputMapper::class => ['className' => StaffListInputMapper::class],
