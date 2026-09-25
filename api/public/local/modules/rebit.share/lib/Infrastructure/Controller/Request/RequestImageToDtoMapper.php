@@ -13,7 +13,7 @@ use Rebit\Share\Shared\Interface\RequestImageDtoInterface;
 
 /**
  * Мапит multipart-запрос с ровно одним загруженным файлом `file` в DTO с интерфейсом RequestImageDtoInterface.
- * PHP разбирает multipart сам только для POST, поэтому тело PUT читается через request_parse_body().
+ * Тело POST и PUT читает MultipartRequestBody.
  * Содержимое файла здесь не проверяется: формат и размеры — дело предметного инспектора.
  */
 final readonly class RequestImageToDtoMapper implements RequestMapperInterface
@@ -37,10 +37,7 @@ final readonly class RequestImageToDtoMapper implements RequestMapperInterface
         if (!$this->support($className)) {
             throw new DtoInterfaceNotImplementException(sprintf('%s does not implement RequestImageDtoInterface', $className));
         }
-        if (1 !== preg_match('/^multipart\/form-data(?:\s*;|$)/i', (string)$this->request->getHeader('Content-Type'))) {
-            throw new HttpException('MULTIPART_REQUIRED', 400);
-        }
-        [$fields, $files] = $this->body();
+        [$fields, $files] = (new MultipartRequestBody($this->request))->read('IMAGE_UPLOAD_FAILED');
         if ([] !== $fields) {
             throw new HttpException('UNKNOWN_FIELD', 422);
         }
@@ -57,22 +54,5 @@ final readonly class RequestImageToDtoMapper implements RequestMapperInterface
         ]);
 
         return ArrayToDtoMapper::map($data, $className);
-    }
-
-    /**
-     * @return array{array<array-key, mixed>, array<array-key, mixed>}
-     *
-     * @throws HttpException
-     */
-    private function body(): array
-    {
-        if ('POST' === $this->request->getRequestMethod()) {
-            return [$this->request->getPostList()->getValues(), $this->request->getFileList()->getValues()];
-        }
-        try {
-            return request_parse_body();
-        } catch (\RequestParseBodyException) {
-            throw new HttpException('IMAGE_UPLOAD_FAILED', 422);
-        }
     }
 }
