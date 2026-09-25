@@ -43,6 +43,15 @@
 - E2E `zzz-handoff.spec.ts`: 4 одновременных PUT, 4 create и 4 clarify с одним ключом → одинаковый результат, одна мутация, история без дублей; иное тело → 409.
 - Проверки: PHPUnit OK (741 tests), PHPStan OK, php-cs-fixer (изменённые файлы) — исправлено форматирование теста, `npm run typecheck:e2e` OK.
 
+### 2026-09-25 — #28 восстановление формы
+
+- `api.ts`: нет HTTP-ответа → «Ответ сервера не получен — изменения могли сохраниться…»; тексты `REVISION_CONFLICT`/`IDEMPOTENCY_CONFLICT` ведут к «Загрузить актуальные данные». Предпросмотр переноса при потере ответа пишет о загрузке набора, а не о сохранении.
+- `useHandoffEditor`: второй аргумент `refresh()` (серверное чтение, возвращает успех). `reset()` сначала читает сервер, затем пересобирает форму с новым ключом; ошибка чтения оставляет форму. `open()` восстанавливает draft только при совпадении `revision` с серверной, иначе `stale` и форма по серверу. Закрытие после неудачного сохранения перечитывает workspace.
+- `StaffRequestsScreen`: `refreshWorkspace()` = `reload()` + ожидание свежего предпросмотра переноса (подпись confirm). `LinksScreen` передаёт `reload` (тот же общий reset). Уведомление «Черновик устарел…» в обоих диалогах.
+- `useTransferPreview.settled()` — ожидание последнего запроса HND-10.
+- E2E `zzz-handoff.spec.ts`: `loseNextPut()` (`route.fetch()` + `route.abort()`, либо только abort): неопределённый исход и replay тем же ключом; «Загрузить актуальные данные» выполняет GET HND-08; устаревший draft после reload не восстанавливается; недошедшая команда переживает reload с тем же ключом; внешний `REVISION_CONFLICT` → закрытие читает сервер → форма по серверу.
+- Проверки: `npm run check` exit 0, `npm run test:commerce` 195/195.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда | Доказательство |
@@ -55,6 +64,6 @@
 | T06 | PASS | 2026-09-25 | PHPUnit | `testSameKeyWithAnotherBodyIsAConflict` |
 | T07 | PASS | 2026-09-25 | PHPUnit | `testKeyIsReservedBeforeTheRequestIsLocked`, `testTeacherCreatesVerifiedRequestOnlyInsideAssignedGroup` |
 | T08 | PENDING | 2026-09-25 | `zzz-handoff.spec.ts` | написан, запуск — gate после review |
-| T09–T12 | PENDING | 2026-09-25 | — | #28 не начат |
+| T09–T12 | PENDING | 2026-09-25 | `zzz-handoff.spec.ts` | написан, `typecheck:e2e` OK, запуск — gate после review |
 | T13, T14 | PENDING | 2026-09-25 | `zzz-handoff.spec.ts` | написан, запуск — gate после review |
 | T15 | PENDING | 2026-09-25 | `verify-handoff.php` | написан, запуск — gate после review |

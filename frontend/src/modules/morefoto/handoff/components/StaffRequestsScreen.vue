@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, shallowRef, watch } from 'vue';
+import { computed, nextTick, shallowRef, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import AdminDialog from '../../management/components/AdminDialog.vue';
 import RequestFields from './RequestFields.vue';
@@ -35,7 +35,14 @@ watch(page, () => void reload());
 const editor = useHandoffEditor(() => {
   notice.value = 'Изменения сохранены.';
   void reload();
-});
+}, refreshWorkspace);
+/** Server state for «Загрузить актуальные данные»: the card and, for a confirmation, its fresh transfer preview. */
+async function refreshWorkspace(): Promise<boolean> {
+  if (!(await reload())) return false;
+  await nextTick();
+  await previewSettled();
+  return true;
+}
 // «Передан → Проверка → Перенесён»: where the list is now and whose move it is.
 const steps = computed(() => {
   const status = selected.value?.status;
@@ -49,7 +56,7 @@ const steps = computed(() => {
     { key: 'transferred', label: 'Наборы перенесены', state: status === 'transferred' ? 'done' : 'todo' }
   ];
 });
-const { command, busy, errors, restored, error: saveError } = editor;
+const { command, busy, errors, restored, stale, error: saveError } = editor;
 const selected = computed(() => data.value?.requests.find((r) => r.id === route.params.requestId));
 const reviewing = computed(() => ['curator', 'organizer'].includes(data.value?.role ?? ''));
 const createAllowed = computed(() => ['teacher', 'organizer'].includes(data.value?.role ?? ''));
@@ -78,7 +85,7 @@ const lists = ['список', 'списка', 'списков'] as const;
 function toggleStatus(status: RequestState): void {
   statusFilter.value = statusFilter.value === status ? null : status;
 }
-const { preview, error: previewError } = useTransferPreview(data, selected, reviewing);
+const { preview, error: previewError, settled: previewSettled } = useTransferPreview(data, selected, reviewing);
 function open(action: StaffCommand['action'], request?: StaffRequest) {
   editor.open(
     () => {
@@ -242,6 +249,9 @@ function change(value: Partial<StaffCommand>) {
     @reset="editor.reset"
     @save="editor.save"
   >
+    <p v-if="stale" role="status" class="mf-muted mb-4">
+      Черновик устарел: список изменён на сервере. Форма заполнена актуальными данными.
+    </p>
     <RequestFields v-if="command?.kind === 'request' && data" :command="command" :data="data" :errors="errors" @change="change" />
     <RequestReview
       v-if="command?.kind === 'request' && command.action === 'confirm' && preview && data"

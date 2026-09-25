@@ -55,7 +55,7 @@ final readonly class StaffRequestRepository
             $conditions[] = 'r.STATUS=' . $this->quote($status);
         }
         $connection = Application::getConnection();
-        $byStatus = ['submitted' => 0, 'clarification' => 0, 'transferred' => 0];
+        $byStatus = array_fill_keys(self::STATUSES, 0);
         $counts = $connection->query(
             'SELECT r.STATUS, COUNT(*) AS TOTAL FROM mf_staff_request r INNER JOIN b_hlbd_mf_institution i ON i.ID=r.INSTITUTION_ID '
             . 'INNER JOIN b_hlbd_mf_shoot s ON s.ID=r.SHOOT_ID WHERE ' . $summaryWhere . ' GROUP BY r.STATUS',

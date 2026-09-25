@@ -96,12 +96,15 @@ export const staffRequestsApi = {
 
 export function staffRequestError(cause: unknown, action: StaffCommand['action'] = 'submit'): string {
   if (!isAxiosError(cause)) return cause instanceof Error ? cause.message : 'Не удалось сохранить список.';
+  // No HTTP answer: the server may have applied the command. The unchanged form repeats with the same key safely.
+  if (!cause.response)
+    return 'Ответ сервера не получен — изменения могли сохраниться. Отправьте форму ещё раз без правок (повтор безопасен) или загрузите актуальные данные.';
   const error = (cause.response?.data as { error?: { code?: string; details?: { photoCodes?: string[] } } } | undefined)?.error;
   const code = error?.code;
   const transfer = action === 'confirm' ? staffTransferErrorText(code, error?.details?.photoCodes) : null;
   if (transfer) return transfer;
-  if (code === 'REVISION_CONFLICT') return 'Список уже изменён. Загрузите актуальную версию и повторите действие.';
-  if (code === 'IDEMPOTENCY_CONFLICT') return 'Эта попытка уже использована с другими данными. Закройте форму и откройте её снова.';
+  if (code === 'REVISION_CONFLICT') return 'Список уже изменён. Загрузите актуальные данные и повторите действие.';
+  if (code === 'IDEMPOTENCY_CONFLICT') return 'Эта попытка уже сохранена сервером с другими данными. Загрузите актуальные данные.';
   if (code === 'CHILD_ALREADY_PENDING') return 'Этот ребёнок уже есть в списке на проверке.';
   if (code === 'CHILD_NOT_FOUND') return 'Код ребёнка или снимка не найден в выбранной группе.';
   if (code === 'INVALID_ROW') return 'Проверьте код ребёнка или снимка: например, A или A001. У снимка ровно три цифры.';
