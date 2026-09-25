@@ -4,7 +4,7 @@
 
 - Ветка `codex/issues-103-table-toolbar`, worktree `/home/user/rabit-api-worktrees/issues-103-table-toolbar`,
   base `origin/main` `03f4e3b`. PR — нет.
-- Сейчас: PR и полный gate. Следующий шаг: merge и выкатка frontend — после решения пользователя.
+- Gate PASS на объединённом с `main` коде. Следующий шаг: merge PR #104 и выкатка frontend (решение пользователя).
 - Блокеров нет.
 
 ## Журнал
@@ -23,12 +23,16 @@
 - WSL перезапускался: scratchpad `/tmp` очищен, скрипт заглушек восстановлен.
 - `npm run check` (lint, stylelint, typecheck, typecheck:e2e, test:ui 27/27) — PASS. В live E2E #91 добавлена
   проверка, что таблица не сдвигается при выборе.
+- PR #104, самопроверка без замечаний. Gate на `164685b` (`rabit-e2e-…`, база 03f4e3b) — PASS, 111 сценариев.
+- `main` ушёл на `caa37b6` (K3, в т.ч. `icons.ts`): merge `af82939`, конфликт реестра иконок — оставлены обе
+  (`mdi-send-outline`, `mdi-swap-vertical`). `npm run check` 38/38. Повторный gate на `af82939`
+  (`rabit-e2e-953158a9bdbc`, ~283 с) — PASS: 117 сценариев (a 71, b 46), все verifier, включая `verify-support`.
 
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда | Доказательство |
 |---|---|---|---|---|
-| T01 | PASS (заглушки) / PENDING (live) | 2026-09-25 | стаб-замер; `make test-e2e` | 738/738/738, 1481/1481/1481 |
-| T02 | PENDING | — | `make test-e2e` | сценарий #91 |
-| T03 | PENDING | — | `make test-e2e` | все таблицы на `UiDataTable` |
+| T01 | PASS | 2026-09-25 | стаб-замер; `make test-e2e` | 738/738/738, 1481/1481/1481; live-проверка в сценарии #91 |
+| T02 | PASS | 2026-09-25 | `make test-e2e` | сценарий #91 |
+| T03 | PASS | 2026-09-25 | `make test-e2e` | 117 сценариев |
 | T04 | PASS | 2026-09-25 | `npm run check` | 27/27, lint/typecheck OK |
