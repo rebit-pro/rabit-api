@@ -7,14 +7,24 @@
 - Связанное: `plan.md`, `docs/waves/graph.json` (K1, F2, E4, B2, H1, B4), соседний MoreFoto `docs/05-rest-api/README.md`.
 - Завершено: план переписан под постановку 25.09.2026 (общий канал без заказа, родитель по ссылке и имени,
   воспитатель из кабинета, кураторы в группе MAX); сверены требования MAX; логотип бота 500×500 подготовлен вне репозитория.
-- Сейчас: план на согласовании у пользователя. Пользователь создаёт бота и отправляет на модерацию.
-- Следующий шаг: получить ответы по MAX-D07/MAX-D08, затем добавить K3 и SUP-07…12 в граф, канон и реестр API.
+- Сейчас: план согласован, K3 и SUP-07…12 внесены в граф и канон (патч `docs/waves/k3/morefoto-contract.patch`). Пользователь создаёт бота.
+- Следующий шаг: review и merge PR 48; затем ветка `codex/k3-max-curator-questions` от main и реализация K3.
 - Блокеры: для плана — нет. Для включения K3 — модерация бота, токен, группа MAX; MAX-D06 до production.
-- Рабочее дерево: изменены `plan.md`, `progress.md`; runtime-кода нет. Токен в Git не хранится.
+- Рабочее дерево: `plan.md`, `progress.md`, `docs/waves/graph.json`, `docs/waves/k3/morefoto-contract.patch`; runtime-кода нет. Канон MoreFoto изменён на месте (не git). Токен в Git не хранится.
+- Расхождения: канон уже содержит PAY-10/11 незамерженной G1 (118 против 116 в main); E6 слита (54bd4ab), но в графе main ещё `review` — синхронизирует следующая волна.
 - Команды: `git status --short`; `git diff --check origin/main...HEAD`;
   `python3 tools/verify-wave-graph.py docs/waves/graph.json`; `gh pr view 48 --json isDraft,headRefOid,files`.
 
 ## Журнал
+
+### 25.09.2026 — K3 в графе и каноне
+
+- Пользователь принял MAX-D07 (заведующая пишет наравне с воспитателем) и MAX-D08 (отвечает любой участник группы), попросил добавить K3 в граф.
+- Канон MoreFoto: `build.py` — SUP-07…12, доступ «Вопрос» (X-Question-Key) и «MAX» (X-Max-Bot-Api-Secret), роль `Р/В`; `validate.py` — проверки новых заголовков и секретных переменных; `backend-waves.json` — K3 (deps B2, B4, E4, F2, H1; без открытых gates), `K1.dependsOn += K3`, endpointCount 112 → 118.
+- `python3 docs/04-bitrix-modules/wave_graph.py docs/04-bitrix-modules/backend-waves.json` — PASS, readyFromMain E6, G1, K3, 118 endpoints.
+- `python3 docs/04-bitrix-modules/render-waves.py` — PASS, 52 волны; `python3 docs/05-rest-api/build.py` — PASS; `python3 docs/05-rest-api/validate.py` — PASS, 118 requests; `node docs/05-rest-api/validate-postman.cjs` — PASS.
+- `docs/waves/graph.json`: K3, `K1.dependsOn += K3`, endpointCount 110 → 116. `python3 tools/verify-wave-graph.py docs/waves/graph.json` — PASS: 52 волны, 116 endpoints, 35 legacy, readyFromMain E6, K3.
+- `diff -ruN` снимка канона до/после → `docs/waves/k3/morefoto-contract.patch` (12 файлов); `patch -p1 --dry-run` на исходном снимке — PASS. `git diff --check` — PASS.
 
 ### 25.09.2026 — новая постановка и переписанный план
 
@@ -106,9 +116,9 @@ CHAT-01…13 первой редакции заменены MAX-01…13 (plan.md
 
 | ID | Статус | Дата | Команда / доказательство |
 | --- | --- | --- | --- |
-| DOC-01 | PENDING | 25.09.2026 | Проверить после изменения графа |
+| DOC-01 | PASS | 25.09.2026 | `git diff --name-only origin/main...HEAD`: plan.md, progress.md, graph.json, k3/morefoto-contract.patch |
 | DOC-02 | PASS | 25.09.2026 | Открыты dev.max.ru: подключение к платформе и создание бота; требования внесены в plan.md, раздел 3–4 |
-| DOC-03 | PENDING | 25.09.2026 | K3 в граф ещё не добавлена |
-| DOC-04 | PENDING | 25.09.2026 | После изменения графа |
+| DOC-03 | PASS | 25.09.2026 | verify-wave-graph: 52/116/35, K3 ready; канон: wave_graph, render, build, validate (118), validate-postman — PASS; patch dry-run — PASS |
+| DOC-04 | PASS | 25.09.2026 | `git diff --check origin/main...HEAD` чист; DOC-01…05 и MAX-01…13 есть в progress |
 | DOC-05 | PENDING | 25.09.2026 | После push |
 | MAX-01…MAX-13 | PENDING | 25.09.2026 | Реализация K3 не начата |
