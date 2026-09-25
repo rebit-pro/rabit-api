@@ -5,7 +5,7 @@
 - Ветка `codex/e6-payment-cost-pricing` от main `49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771` (merge плана PR #35). Checkout: `/home/user/rabit-api-worktrees/e6-payment-cost-pricing`. Upstream снят, push только явным `git push -u origin HEAD:codex/e6-payment-cost-pricing`.
 - Завершено: S1–S9 — план, backend, frontend, E2E-спецификация и verifier, канон MoreFoto (patch `docs/waves/e6/morefoto-contract.patch`), отчёт `docs/waves/e6/`. E6 в обоих графах — `review`.
 - Сейчас: S10 завершён — PR https://github.com/rebit-pro/rabit-api/pull/66 в main, быстрые проверки PASS, ждёт ревью.
-- Следующий шаг: ревью PR. После ревью без блокеров — S11: `make test-e2e` (группа b содержит `zzzzzzzz-payment-costs`, verifier `verify-payment-costs.php`), `visual.json`, запись результатов.
+- Следующий шаг: ревью PR проводит пользователь; затем правки по ревью, затем полный gate (частичный прогон группы b до ревью пользователь отклонил 25.09). S11: `make test-e2e` (группа b содержит `zzzzzzzz-payment-costs`, verifier `verify-payment-costs.php`), `visual.json`, запись результатов.
 - Блокеров нет. Решения E6-DEC-01…03 приняты 25.09.2026.
 - Канонический MoreFoto изменён на месте; снимок до E6 — в scratchpad сессии (`morefoto-before-e6`), воспроизводимость patch проверена.
 - Проверки backend (том vendor `rabit-e6-vendor` — копия `rabit-u-vendor`; в worktree пустой `api/vendor` как точка монтирования):
@@ -60,3 +60,10 @@
 | E6-T16 | PASS | 2026-09-25 | `tools/verify-wave-graph.py` и канон: 51/110/35, 13 негативных фикстур, E6 `review`; `render-waves.py` дважды — одинаковый SHA; `build.py` + `validate.py` — passed, 110 запросов, 51 волна; `validate-postman.cjs` — 110/220 фикстур; patch на снимке до E6 воспроизводит канон |
 | E6-T17 (frontend) | PASS | 2026-09-25 | `npm run check` (lint, stylelint, vue-tsc, tsc e2e, UI 27) — PASS; `npm run build-only` — PASS; eslint и tsc e2e для новой спецификации — PASS |
 | E6-T04…T11, T14, T15, T18 | PENDING | 2026-09-25 | Живые сценарии, verifier и снимки — в `make test-e2e` после ревью |
+
+### 2026-09-25 — ревью и полный gate
+
+- Ревью PR #66 на head `509ce80` (относительно main `49f40f9`): блокирующих дефектов нет. Неблокирующие замечания оформлены отдельными issue: #68 — выключение политики блокируется некорректной ставкой в отключённом поле; #69 — в тест-кейсе E6-T04 плана осталось `maxRateBps=9999` вместо 1000. По порядку пользователя они не входят в этот PR.
+- Запущен полный gate на `509ce80`: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
+- Прогон 1 (`rabit-e2e-463bfddfee92`, 311,5 с) — FAIL. Быстрые стадии (lint, typecheck, test:ui, test:commerce, build, php-lint, PHPStan, PHPUnit) — PASS. Браузер группы b — 40/40 PASS, включая оба сценария E6. `verify-storefront.php` — PASS. `verify-orders.php` — FAIL: «Order, key and receipt invariants are broken». Verifier сверяет все заказы БД со списком `var/e5-orders.json`, а спецификация E6 создала заказ и не записала его. Группа a отменена после падения.
+- Исправление: `rememberOrder` в спецификации E6 (как `rememberOrder` в D3) дописывает ID заказа, ключ доступа и оба Idempotency-Key — отклонённой попытки `PRICE_CHANGED` и успешной — в общий файл. В `VERIFIERS` у `verify-orders.php` добавлена `zzzzzzzz-payment-costs`. Остальные инварианты verifier сравнивают «до/после» и от лишнего заказа не зависят.

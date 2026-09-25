@@ -33,7 +33,7 @@ BENCH = "zz-media-bench"
 VERIFIERS = [
     ("verify-storefront.php", None, "E4 integration passed", ["zzz-handoff", "zzzz-storefront"]),
     # The browser records the secrets it received so the verifier can prove none of them is stored in clear text.
-    ("verify-orders.php", "e5-orders.json", "E5 integration passed", ["zzzzz-orders", "zzzzzz-transfers"]),
+    ("verify-orders.php", "e5-orders.json", "E5 integration passed", ["zzzzz-orders", "zzzzzz-transfers", "zzzzzzzz-payment-costs"]),
     ("verify-links.php", None, "F2 integration passed", ["zzzz-links"]),
     # D3: the browser leaves one untransferred staff request for the injected-failure check on MySQL.
     ("verify-transfers.php", "d3-transfers.json", "D3 integration passed", ["zzzzzz-transfers"]),

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { test, expect, type APIResponse, type Browser, type Page } from '@playwright/test';
 import { login, password, token } from './helpers.js';
 
@@ -39,6 +39,18 @@ const sale = (base: number, rateBps: number) => Math.ceil((base * 10000) / ((100
 /** Сумма в рублях, как её показывает интерфейс: группы разрядов через любой пробел, знак рубля. */
 const rub = (minor: number) => new RegExp(String(minor / 100).replace(/\B(?=(\d{3})+(?!\d))/g, '\\s?') + '\\s?₽');
 
+/** The E5 verifier accounts for every order and checks its secrets, so E6 adds its order to the shared browser record. */
+function rememberOrder(created: { id: string; accessKey: string }, idempotencyKeys: string[]) {
+  const path = 'var/e5-orders.json';
+  const record = existsSync(path)
+    ? JSON.parse(readFileSync(path, 'utf8'))
+    : { accessKeys: [], idempotencyKeys: [], galleryToken: fixture.open.token, orderIds: [] };
+  record.orderIds.push(created.id);
+  record.accessKeys.push(created.accessKey);
+  record.idempotencyKeys.push(...idempotencyKeys);
+  mkdirSync('var', { recursive: true });
+  writeFileSync(path, JSON.stringify(record));
+}
 async function body(response: APIResponse, status = 200) {
   expect(response.status(), await response.text()).toBe(status);
   return response.json();
@@ -194,15 +206,17 @@ test('E6: расходы на оплату меняют цену витрины,
   expect(changed.error.code).toBe('PRICE_CHANGED');
   expect(changed.error.details.quote.lines[0].product.price).toBe(published);
   expect(changed.error.details.quote.total).toBe(published);
+  const createKey = key();
   const created = (
     await body(
       await page.request.post(gallery + '/orders', {
-        headers: { 'Idempotency-Key': key() },
+        headers: { 'Idempotency-Key': createKey },
         data: { lines, buyer, quoteToken: changed.error.details.quoteToken }
       }),
       201
     )
   ).data;
+  rememberOrder(created, [orderKey, createKey]);
   expect(created.quote.lines[0].unitPrice).toBe(published);
 
   // Switching the policy off restores the catalogue prices; the purchase snapshot keeps the confirmed price.
