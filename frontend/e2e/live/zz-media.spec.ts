@@ -40,12 +40,6 @@ function peakOverlap(spans: { start: number; end: number }[]): number {
   return edges.reduce((peak, edge) => Math.max(peak, (current += edge.delta)), 0);
 }
 
-function span(request: Request): { start: number; end: number } {
-  const timing = request.timing();
-
-  return { start: timing.startTime, end: timing.startTime + Math.max(timing.responseEnd, 0) };
-}
-
 async function result(response: APIResponse, status: number) {
   expect(response.status(), await response.text()).toBe(status);
   return response.json();
@@ -460,12 +454,13 @@ test('#33: партия отправляется по два файла без �
       201
     )
   ).data;
+  // Previews and status checks must not fill the Resource Timing buffer before the uploads are measured.
+  await page.addInitScript(() => performance.setResourceTimingBufferSize(1000));
   await page.goto('/cabinet/institutions/' + institution.id + '/shoots/' + shoot.id + '/photos?group=' + group.id);
   await expect(page.getByText('Q33 Ромашки', { exact: true })).toBeVisible();
 
   const uploads = '/api/v1/shoots/' + shoot.id + '/photos';
   const isUpload = (request: Request) => request.method() === 'POST' && new URL(request.url()).pathname === uploads;
-  const spans: { start: number; end: number }[] = [];
   const finished: number[] = [];
   const checks: number[] = [];
   page.on('request', (request) => {
@@ -473,9 +468,7 @@ test('#33: партия отправляется по два файла без �
       checks.push(Date.now());
   });
   const settle = (request: Request) => {
-    if (!isUpload(request)) return;
-    finished.push(Date.now());
-    spans.push(span(request));
+    if (isUpload(request)) finished.push(Date.now());
   };
   page.on('requestfinished', settle);
   page.on('requestfailed', settle);
@@ -497,7 +490,22 @@ test('#33: партия отправляется по два файла без �
   await expect(rows.filter({ hasText: 'batch-broken.png' })).toContainText('Ошибка');
   await expect(rows.filter({ hasText: 'batch-broken.png' })).toContainText('Сервер отклонил файл');
   expect(finished).toHaveLength(6);
-  expect(peakOverlap(spans)).toBeLessThanOrEqual(2);
+  // Resource Timing keeps start and end on one sub-millisecond clock of the page: the queue starts the next upload
+  // right after the previous one ends, and Playwright's millisecond start times would overlap them. The frame list
+  // GET of the same path always carries a query, so an upload is that path without one; the count proves that no
+  // upload is missed or mixed with the list. A reload clears the buffer, so the batch is measured before it.
+  const uploadSpans = await page.evaluate(
+    (path) =>
+      (performance.getEntriesByType('resource') as PerformanceResourceTiming[])
+        .filter((entry) => {
+          const url = new URL(entry.name);
+          return url.pathname === path && url.search === '' && entry.initiatorType === 'xmlhttprequest' && entry.responseEnd > 0;
+        })
+        .map((entry) => ({ start: entry.startTime, end: entry.responseEnd })),
+    uploads
+  );
+  expect(uploadSpans).toHaveLength(finished.length);
+  expect(peakOverlap(uploadSpans)).toBeLessThanOrEqual(2);
   // Statuses are checked from two seconds after acceptance, so more POSTs than the parallel limit end before the first check.
   expect(finished.filter((time) => time < Math.min(...checks)).length).toBeGreaterThanOrEqual(3);
   await expect(page.getByTestId('photo-card')).toHaveCount(5);

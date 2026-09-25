@@ -366,6 +366,56 @@ test('E5: staff narrow orders by institution, shoot and group', async ({ page, b
   });
 });
 
+test('#72: staff retry scope options after a failed institution list or institution card', async ({ page, browser, baseURL }) => {
+  const failure = 'Не удалось загрузить учреждения, съёмки и группы. Заказы можно искать без них.';
+  const isList = (url: URL) => url.pathname === '/api/v1/institutions';
+  const isCard = (url: URL) => url.pathname === '/api/v1/institutions/' + institutionId;
+  // A network failure, not a 5xx: the first request breaks, the retry reaches the real server.
+  const breakFirst = async (target: Page, matches: (url: URL) => boolean) => {
+    let calls = 0;
+    await target.route(matches, (route) => (++calls === 1 ? route.abort('failed') : route.continue()));
+  };
+
+  // The first institution list fails; the retry restores the options and keeps the group chosen by the link.
+  await login(page);
+  await breakFirst(page, isList);
+  await page.goto('/cabinet/orders?groupId=' + fixture.open.groupId);
+  await expect(page.getByText(/^Найдено заказов: \d+$/)).toBeVisible();
+  const scope = page.getByTestId('order-scope-filters');
+  await expect(scope.getByRole('alert')).toHaveText(failure);
+  const listed = page.waitForResponse((r) => isList(new URL(r.url())));
+  await scope.getByRole('button', { name: 'Повторить', exact: true }).click();
+  expect((await listed).status()).toBe(200);
+  await expect(scope.getByRole('alert')).toHaveCount(0);
+  await page.getByRole('combobox', { name: 'Учреждение', exact: true }).press('Enter');
+  await expect(page.getByRole('option', { name: 'E4 Тестовый детский сад', exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('combobox', { name: 'Группа', exact: true })).toHaveValue(fixture.open.groupId);
+  await expect(page).toHaveURL(new RegExp('groupId=' + fixture.open.groupId));
+
+  // A curator whose area is the E4 institution alone gets its shoots without a pick, so no other value could repeat
+  // the failed card. The server list is narrowed to E4 to pin that case; the card itself comes from the server.
+  await asStaff(browser, baseURL, 'curator', async (viewer) => {
+    await viewer.route(isList, async (route) => {
+      const response = await route.fetch();
+      const json = await response.json();
+      json.data.items = json.data.items.filter((item: { id: string }) => item.id === institutionId);
+      json.meta = { ...json.meta, total: 1, totalPages: 1 };
+      await route.fulfill({ response, json });
+    });
+    await breakFirst(viewer, isCard);
+    await viewer.goto('/cabinet/orders');
+    const area = viewer.getByTestId('order-scope-filters');
+    await expect(area.getByRole('alert')).toHaveText(failure);
+    const opened = viewer.waitForResponse((r) => isCard(new URL(r.url())));
+    await area.getByRole('button', { name: 'Повторить', exact: true }).click();
+    expect((await opened).status()).toBe(200);
+    await expect(area.getByRole('alert')).toHaveCount(0);
+    await viewer.getByRole('combobox', { name: 'Съёмка', exact: true }).press('Enter');
+    await expect(viewer.getByRole('option', { name: 'E4 Осенняя съёмка', exact: true })).toBeVisible();
+  });
+});
+
 for (const viewport of [
   { name: 'desktop', width: 1280, height: 900 },
   { name: 'mobile', width: 390, height: 844 }

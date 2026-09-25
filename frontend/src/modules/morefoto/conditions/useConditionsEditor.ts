@@ -39,7 +39,8 @@ export function useConditionsEditor(load: () => Promise<ConditionsEditorSource |
       draft.command.groupId === source.groupId &&
       typeof draft.command.catalogRevision === 'number' &&
       typeof draft.command.requestId === 'string' &&
-      (!!source.groupId || typeof draft.command.paymentCosts?.rate === 'string');
+      (!!source.groupId ||
+        (typeof draft.command.paymentCosts?.rate === 'string' && typeof draft.command.paymentCosts.savedRateBps === 'number'));
     command.value = valid && draft ? draft.command : createConditionsCommand(source);
     pending.value = valid && draft ? (draft.pending ?? null) : null;
     restored.value = !!valid;

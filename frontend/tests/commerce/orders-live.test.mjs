@@ -12,7 +12,8 @@ import {
   staffOrderError,
   staffOrderParams,
   staffScopeOptions,
-  staffScopePatch
+  staffScopePatch,
+  staffScopeRetry
 } from '../../src/modules/morefoto/orders/live/rules.ts';
 
 const problem = (code, status = 409) => ({ status, code, network: false });
@@ -153,6 +154,14 @@ test('a linked scope value outside the loaded options stays selectable without i
     { title: 'Выбрано по ссылке', value: group }
   ]);
   assert.deepEqual(options.institutionId, [{ title: 'Все учреждения', value: '' }]);
+});
+
+test('a scope retry repeats only failed sources and never starts a loading one again', () => {
+  const states = ['idle', 'loading', 'ready', 'failed'];
+  for (const list of states)
+    for (const card of states) assert.deepEqual(staffScopeRetry(list, card), { list: list === 'failed', card: card === 'failed' });
+  assert.deepEqual(staffScopeRetry('failed', 'loading'), { list: true, card: false });
+  assert.deepEqual(staffScopeRetry('loading', 'failed'), { list: false, card: true });
 });
 
 test('an unconfirmed attempt keeps its recovery screen while it is repeated, a first submission keeps the form', () => {

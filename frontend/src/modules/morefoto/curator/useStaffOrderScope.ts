@@ -1,5 +1,5 @@
 import { computed, shallowRef, watch } from 'vue';
-import { staffScopeOptions, type StaffScope } from '../orders/live/rules';
+import { staffScopeOptions, staffScopeRetry, type StaffScope, type StaffScopeLoad } from '../orders/live/rules';
 import { structureApi } from '../structure/api';
 import type { Group, Institution, Shoot } from '../structure/model';
 
@@ -9,15 +9,15 @@ const pageSize = 100;
 /**
  * Options of the order scope filters from the Organization API. The institution list and the institution card are
  * already limited to the staff member's area by the server, so a curator is offered only the assigned institutions.
+ * A failed source is loaded again on an explicit retry, a failed list also on the way back from an order card; the
+ * chosen filter values are never touched here.
  */
 export function useStaffOrderScope(scope: StaffScope, active: () => boolean) {
   const institutions = shallowRef<Institution[]>([]);
   const shoots = shallowRef<Shoot[]>([]);
   const groups = shallowRef<Group[]>([]);
-  const loading = shallowRef(false);
-  const listFailed = shallowRef(false);
-  const openFailed = shallowRef(false);
-  let listed = false;
+  const list = shallowRef<StaffScopeLoad>('idle');
+  const card = shallowRef<StaffScopeLoad>('idle');
   let opened = '';
   let request = 0;
   // A single institution in scope needs no pick: its shoots and groups are offered at once.
@@ -25,13 +25,16 @@ export function useStaffOrderScope(scope: StaffScope, active: () => boolean) {
   const options = computed(() =>
     staffScopeOptions({ institutions: institutions.value, shoots: shoots.value, groups: groups.value }, scope)
   );
+  const listing = computed(() => list.value === 'loading');
+  const loading = computed(() => card.value === 'loading');
   const error = computed(() =>
-    listFailed.value || openFailed.value ? 'Не удалось загрузить учреждения, съёмки и группы. Заказы можно искать без них.' : ''
+    list.value === 'failed' || card.value === 'failed'
+      ? 'Не удалось загрузить учреждения, съёмки и группы. Заказы можно искать без них.'
+      : ''
   );
 
   async function listInstitutions(): Promise<void> {
-    listed = true;
-    listFailed.value = false;
+    list.value = 'loading';
     try {
       const items: Institution[] = [];
       for (let page = 1, pages = 1; page <= pages; page++) {
@@ -40,9 +43,9 @@ export function useStaffOrderScope(scope: StaffScope, active: () => boolean) {
         pages = result.meta.totalPages;
       }
       institutions.value = items;
+      list.value = 'ready';
     } catch {
-      listed = false;
-      listFailed.value = true;
+      list.value = 'failed';
     }
   }
   async function openInstitution(id: string): Promise<void> {
@@ -50,8 +53,7 @@ export function useStaffOrderScope(scope: StaffScope, active: () => boolean) {
     opened = id;
     shoots.value = [];
     groups.value = [];
-    openFailed.value = false;
-    loading.value = id !== '';
+    card.value = id === '' ? 'idle' : 'loading';
     if (id === '') return;
     try {
       const nextShoots: Shoot[] = [];
@@ -66,16 +68,22 @@ export function useStaffOrderScope(scope: StaffScope, active: () => boolean) {
       if (current !== request) return;
       shoots.value = nextShoots;
       groups.value = nextGroups;
+      card.value = 'ready';
     } catch {
-      if (current === request) openFailed.value = true;
-    } finally {
-      if (current === request) loading.value = false;
+      if (current === request) card.value = 'failed';
     }
   }
+  /** Loads the failed sources again; a source still loading is left alone, so repeated clicks add no requests. */
+  function retry(): void {
+    const repeat = staffScopeRetry(list.value, card.value);
+    if (repeat.list) void listInstitutions();
+    if (repeat.card) void openInstitution(opened);
+  }
+  // Coming back from an order card also retries a failed list.
   watch(
     active,
     (visible) => {
-      if (visible && !listed) void listInstitutions();
+      if (visible && (list.value === 'idle' || list.value === 'failed')) void listInstitutions();
     },
     { immediate: true }
   );
@@ -87,5 +95,5 @@ export function useStaffOrderScope(scope: StaffScope, active: () => boolean) {
     },
     { immediate: true }
   );
-  return { institutionId, options, loading, error };
+  return { institutionId, options, listing, loading, error, retry };
 }

@@ -66,7 +66,7 @@ test('rate input accepts percents with two decimals up to the cap', () => {
 
 test('global command sends the payment cost policy, group command does not', () => {
   const global = createConditionsCommand({ snapshot, groupId: null });
-  assert.deepEqual(global.paymentCosts, { enabled: true, rate: '3,80', maxRateBps: 1000 });
+  assert.deepEqual(global.paymentCosts, { enabled: true, rate: '3,80', maxRateBps: 1000, savedRateBps: 380 });
   assert.deepEqual(conditionsAttempt(global).body.paymentCosts, { enabled: true, rateBps: 380 });
   const group = createConditionsCommand({ snapshot: { ...snapshot, conditionsRevision: 4, inherit: false }, groupId: 'g1' });
   assert.equal(group.paymentCosts, undefined);
@@ -83,4 +83,18 @@ test('editor rejects a rate above the cap and a price above 1 000 000 RUB', () =
   command.paymentCosts.rate = '10';
   command.products[0].price = '1000000';
   assert.deepEqual(conditionsCommandErrors(command), {});
+});
+
+test('#68: switching the policy off is saved with an invalid draft rate and keeps the saved rate', () => {
+  const command = createConditionsCommand({ snapshot, groupId: null });
+  command.paymentCosts.rate = '10,5';
+  assert.ok(conditionsCommandErrors(command).paymentCostRate);
+  command.paymentCosts.enabled = false;
+  assert.deepEqual(conditionsCommandErrors(command), {});
+  assert.deepEqual(conditionsAttempt(command).body.paymentCosts, { enabled: false, rateBps: 380 });
+  command.paymentCosts.rate = '5';
+  assert.deepEqual(conditionsAttempt(command).body.paymentCosts, { enabled: false, rateBps: 500 });
+  command.paymentCosts.enabled = true;
+  command.paymentCosts.rate = '10,5';
+  assert.ok(conditionsCommandErrors(command).paymentCostRate);
 });
