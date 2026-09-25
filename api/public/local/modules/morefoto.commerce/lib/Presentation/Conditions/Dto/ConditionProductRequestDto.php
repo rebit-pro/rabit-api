@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Morefoto\Commerce\Application\Conditions\Dto;
+namespace Morefoto\Commerce\Presentation\Conditions\Dto;
 
-final readonly class ProductConditionInputDto
+final readonly class ConditionProductRequestDto
 {
     public function __construct(
         public string $id,

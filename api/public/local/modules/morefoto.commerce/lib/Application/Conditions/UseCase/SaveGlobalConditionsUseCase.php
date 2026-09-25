@@ -7,16 +7,28 @@ namespace Morefoto\Commerce\Application\Conditions\UseCase;
 use Morefoto\Commerce\Application\Catalog\Contract\CatalogTransactionInterface;
 use Morefoto\Commerce\Application\Conditions\Dto\ConditionsMutationOutputDto;
 use Morefoto\Commerce\Application\Conditions\Dto\SaveConditionsInputDto;
+use Morefoto\Commerce\Application\Conditions\Service\ConditionsInputValidator;
 use Morefoto\Commerce\Application\Conditions\Service\ConditionsProducts;
 use Morefoto\Commerce\Domain\Catalog\Exception\CatalogRevisionConflictException;
 use Morefoto\Commerce\Domain\Catalog\Repository\CatalogRepository;
-use Morefoto\Commerce\Domain\Conditions\Exception\InvalidConditionsException;
 use Morefoto\Commerce\Domain\Conditions\Exception\ConditionsRevisionConflictException;
+use Morefoto\Commerce\Domain\Conditions\Exception\InvalidConditionsException;
 use Morefoto\Commerce\Domain\Conditions\Repository\SalesConditionsRepository;
+use Morefoto\Commerce\Domain\Conditions\ValueObject\PaymentCostPolicy;
 
+/**
+ * Сохраняет общие условия продажи целиком: цены и доступность каталога, подарок и политику учёта расходов
+ * на оплату. Сверяет обе ревизии под блокировкой и повышает их, чтобы прежние расчёты и подготовка ссылок устарели.
+ */
 final readonly class SaveGlobalConditionsUseCase
 {
-    public function __construct(private SalesConditionsRepository $conditions, private CatalogRepository $catalogue, private CatalogTransactionInterface $transaction, private ConditionsProducts $products) {}
+    public function __construct(
+        private SalesConditionsRepository $conditions,
+        private CatalogRepository $catalogue,
+        private CatalogTransactionInterface $transaction,
+        private ConditionsProducts $products,
+        private ConditionsInputValidator $validator,
+    ) {}
 
     public function execute(SaveConditionsInputDto $input): ConditionsMutationOutputDto
     {
@@ -25,6 +37,11 @@ final readonly class SaveGlobalConditionsUseCase
 
     public function executeWithinTransaction(SaveConditionsInputDto $input): ConditionsMutationOutputDto
     {
+        $this->validator->validate($input);
+        if (null === $input->paymentCosts) {
+            throw new InvalidConditionsException('Global sales conditions require the payment cost policy.');
+        }
+        $paymentCosts = new PaymentCostPolicy($input->paymentCosts->enabled, $input->paymentCosts->rateBps);
         $state = $this->conditions->global(true);
         if ($input->revision !== (int)$state['REVISION']) {
             throw new ConditionsRevisionConflictException('Global sales conditions changed; reload before saving.');
@@ -41,7 +58,7 @@ final readonly class SaveGlobalConditionsUseCase
             throw new InvalidConditionsException('Global changes conflict with active group sales conditions.');
         }
         $catalogRevision = $this->catalogue->advanceRevision($catalogRevision);
-        $revision = $this->conditions->advanceGlobal($input->revision, $input->effectiveGiftThreshold(), $input->giftForStaff);
+        $revision = $this->conditions->advanceGlobal($input->revision, $this->validator->giftThreshold($input), $input->giftForStaff, $paymentCosts);
 
         return new ConditionsMutationOutputDto($revision, $catalogRevision, $revision);
     }

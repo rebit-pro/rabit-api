@@ -6,17 +6,25 @@ namespace Morefoto\Commerce\Domain\Conditions\Repository;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\Result;
-use Morefoto\Commerce\Application\Conditions\Dto\ProductConditionInputDto;
 use Morefoto\Commerce\Domain\Conditions\Exception\ConditionsStorageException;
+use Morefoto\Commerce\Domain\Conditions\ValueObject\ConditionProduct;
+use Morefoto\Commerce\Domain\Conditions\ValueObject\PaymentCostPolicy;
 
 final readonly class SalesConditionsRepository
 {
     private const string PRODUCT_FIELDS = 'p.UF_UUID,p.UF_NAME,p.UF_DESCRIPTION,p.UF_KIND,p.UF_PRICE,p.UF_PRINT_COUNT,p.UF_FORMAT,p.UF_UNIT,p.UF_STAFF_DISCOUNT,p.UF_ACTIVE';
 
-    /** @return array{REVISION: int|string, GIFT_THRESHOLD: int|string, GIFT_FOR_STAFF: int|string} */
+    /** @return array{
+     *     REVISION: int|string,
+     *     GIFT_THRESHOLD: int|string,
+     *     GIFT_FOR_STAFF: int|string,
+     *     PAYMENT_COSTS_ENABLED: int|string,
+     *     PAYMENT_COST_RATE_BPS: int|string,
+     * } */
     public function global(bool $forUpdate): array
     {
-        $row = $this->query('SELECT REVISION,GIFT_THRESHOLD,GIFT_FOR_STAFF FROM mf_sales_conditions WHERE ID=1 ' . ($forUpdate ? 'FOR UPDATE' : 'LOCK IN SHARE MODE'))->fetch();
+        $row = $this->query('SELECT REVISION,GIFT_THRESHOLD,GIFT_FOR_STAFF,PAYMENT_COSTS_ENABLED,PAYMENT_COST_RATE_BPS FROM mf_sales_conditions WHERE ID=1 '
+            . ($forUpdate ? 'FOR UPDATE' : 'LOCK IN SHARE MODE'))->fetch();
         if (false === $row) {
             throw new ConditionsStorageException('Global sales conditions are not installed.');
         }
@@ -74,7 +82,7 @@ final readonly class SalesConditionsRepository
         )->fetch();
     }
 
-    public function updateGlobalProduct(ProductConditionInputDto $product): void
+    public function updateGlobalProduct(ConditionProduct $product): void
     {
         $this->execute('UPDATE b_hlbd_mf_product SET UF_PRICE=' . $product->price . ',UF_ACTIVE=' . (int)$product->active
             . ',UF_STAFF_DISCOUNT=' . (int)$product->staffDiscount . ",UF_UPDATED_AT=UTC_TIMESTAMP() WHERE UF_UUID='" . $product->id->value . "'");
@@ -86,10 +94,12 @@ final readonly class SalesConditionsRepository
         }
     }
 
-    public function advanceGlobal(int $current, int $threshold, bool $giftForStaff): int
+    public function advanceGlobal(int $current, int $threshold, bool $giftForStaff, PaymentCostPolicy $paymentCosts): int
     {
         $next = $this->next($current);
-        $this->execute('UPDATE mf_sales_conditions SET REVISION=' . $next . ',GIFT_THRESHOLD=' . $threshold . ',GIFT_FOR_STAFF=' . (int)$giftForStaff . ',UPDATED_AT=UTC_TIMESTAMP() WHERE ID=1 AND REVISION=' . $current);
+        $this->execute('UPDATE mf_sales_conditions SET REVISION=' . $next . ',GIFT_THRESHOLD=' . $threshold . ',GIFT_FOR_STAFF=' . (int)$giftForStaff
+            . ',PAYMENT_COSTS_ENABLED=' . (int)$paymentCosts->enabled . ',PAYMENT_COST_RATE_BPS=' . $paymentCosts->rateBps
+            . ',UPDATED_AT=UTC_TIMESTAMP() WHERE ID=1 AND REVISION=' . $current);
         if (1 !== Application::getConnection()->getAffectedRowsCount()) {
             throw new ConditionsStorageException('Cannot advance global sales condition revision.');
         }
@@ -97,7 +107,7 @@ final readonly class SalesConditionsRepository
         return $next;
     }
 
-    /** @param list<ProductConditionInputDto> $products */
+    /** @param list<ConditionProduct> $products */
     public function replaceGroupProducts(int $groupId, array $products): void
     {
         $groupId = $this->positive($groupId);
