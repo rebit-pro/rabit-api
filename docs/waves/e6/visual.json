@@ -1,0 +1,30 @@
+{
+  "wave": "E6",
+  "status": "passed",
+  "fixture": "rabit-e2e-0c2d85d9b8d6",
+  "head": "cfb0c067976da04b6a828b6e6f0967739e82960e",
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ],
+  "screenshots": [
+    {
+      "file": "docs/waves/e6/screenshots/e6-desktop-payment-costs-dialog.png",
+      "sha256": "b22d789aef8389a4d813b5991d070208104fda32c20b477c3e848646bba95122"
+    },
+    {
+      "file": "docs/waves/e6/screenshots/e6-desktop-conditions-summary.png",
+      "sha256": "13a905c7e3fe60e0be70f8ec7494ab406bb4abe0d7f7102100e8b8a8ba19ae13"
+    },
+    {
+      "file": "docs/waves/e6/screenshots/e6-mobile-payment-costs-dialog.png",
+      "sha256": "e13c38dd260bcf42ae0648efc387061462e46a75cdc7b13a0fe4182e55429bd8"
+    }
+  ],
+  "checks": [
+    "Диалог общих условий: переключатель и ставка «3,8 %»; «Для покупателя» 150 → 200 ₽, 100 → 150 ₽, 500 → 550 ₽",
+    "Сводка: «Расходы на оплату — Учитываются: 3,80 %» четвёртой ячейкой",
+    "Mobile 390×844: пояснение, переключатель и ставка «3,80» после сохранения; горизонтальной прокрутки нет",
+    "Одна разделительная линия между блоком расходов и товарами (двойная линия исправлена в cfb0c06)"
+  ]
+}

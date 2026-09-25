@@ -38,7 +38,9 @@ function edit(): void {
       <div>
         <p class="mf-eyebrow">ПРАВИЛА ПРОДАЖ</p>
         <h2 id="global-conditions-title">Общие условия</h2>
-        <p class="mf-muted mt-2">Цены, доступность, скидка сотрудникам и подарок для групп без собственных условий</p>
+        <p class="mf-muted mt-2">
+          Цены, доступность, скидка сотрудникам, подарок и учёт расходов на оплату для групп без собственных условий
+        </p>
       </div>
       <v-btn variant="outlined" :disabled="loading || !snapshot || !!error" @click="edit">Изменить условия</v-btn>
     </header>

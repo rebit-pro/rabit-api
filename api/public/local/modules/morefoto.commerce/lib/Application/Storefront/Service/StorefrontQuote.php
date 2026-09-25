@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Commerce\Application\Storefront\Service;
 
+use Morefoto\Commerce\Application\Conditions\Service\PublishedPrices;
 use Morefoto\Commerce\Application\Conditions\UseCase\GetGroupConditionsUseCase;
 use Morefoto\Commerce\Application\Catalog\Dto\ProductOutputDto;
 use Morefoto\Commerce\Application\Storefront\Dto\QuoteLineInputDto;
@@ -17,7 +18,7 @@ use Rebit\Share\Contracts\Media\GalleryAccessInterface;
 use Rebit\Share\Contracts\Handoff\StaffEligibilityInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
-/** Проверяет состав корзины по разрешённым назначениям и рассчитывает цены правилами E3.
+/** Проверяет состав корзины по разрешённым назначениям и рассчитывает цены правилами E3 от цены для покупателя (E6).
  * Связывает итог с версиями снимков, условиями группы и серверным подтверждением льготы.
  *
  * @phpstan-import-type CartQuote from QuoteOutputDto
@@ -29,6 +30,7 @@ final readonly class StorefrontQuote
         private GalleryAccessInterface $gallery,
         private GetGroupConditionsUseCase $conditions,
         private StaffEligibilityInterface $staff,
+        private PublishedPrices $prices,
     ) {}
 
     /** @param list<QuoteLineInputDto> $lines
@@ -52,7 +54,7 @@ final readonly class StorefrontQuote
         }
         $products = [];
         $pricing = [];
-        foreach ($conditions->products as $product) {
+        foreach ($this->prices->publish($conditions) as $product) {
             $products[$product->id] = $product;
             $pricing[] = new SalesProduct($product->id, $product->kind, $product->price, $product->active, $product->staffDiscount);
         }

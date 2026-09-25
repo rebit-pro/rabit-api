@@ -1,12 +1,12 @@
 {
   "version": 2,
   "planStatus": "active",
-  "date": "2026-09-23",
+  "date": "2026-09-25",
   "endpointCount": 110,
   "backend": "RaBit API",
   "baseline": {
     "branch": "main",
-    "commit": "bb356653fc1098cf5d56dc949ae374244bf5e313",
+    "commit": "49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771",
     "mergedWaves": [
       "A1",
       "A2",
@@ -32,7 +32,17 @@
       "E4",
       "E5",
       "F2",
-      "D3"
+      "D3",
+      "U1",
+      "U2",
+      "U3",
+      "U4",
+      "B4",
+      "B3",
+      "U5",
+      "U6",
+      "U7",
+      "U8"
     ],
     "review": {},
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
@@ -55,7 +65,17 @@
       "E4": "https://github.com/rebit-pro/rabit-api/pull/30",
       "E5": "https://github.com/rebit-pro/rabit-api/pull/37",
       "F2": "https://github.com/rebit-pro/rabit-api/pull/40",
-      "D3": "https://github.com/rebit-pro/rabit-api/pull/46"
+      "D3": "https://github.com/rebit-pro/rabit-api/pull/46",
+      "U1": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "U2": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "U3": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "U4": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "B4": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "B3": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "U5": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "U6": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "U7": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "U8": "https://github.com/rebit-pro/rabit-api/pull/53"
     },
     "mergeCommits": {
       "C4": "cfc334e5890dd51dfd6ff6638eac2cc3e436322b",
@@ -68,7 +88,17 @@
       "E4": "7e606e53cc6b347e5c7b70e217ab7f8eb8a45875",
       "E5": "4b507b3b3c27719888e38f582b48e6a56c0c5946",
       "F2": "44f2e36367351614fab66fdc58fa3dc7ee3899b3",
-      "D3": "533c06b926dc63521017c549b6092104f6291dd5"
+      "D3": "533c06b926dc63521017c549b6092104f6291dd5",
+      "U1": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "U2": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "U3": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "U4": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "B4": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "B3": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "U5": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "U6": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "U7": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "U8": "b20423f08c5794f66346a607c376bc89ffe3bb82"
     },
     "decisionEvidence": {
       "D02-D05": "docs/waves/e3/README.md in rabit-api: user accepted rules before PR #20",
@@ -79,7 +109,8 @@
       "D11": "2026-09-22: пользователь подтвердил D3-DEC-01…06 («Подтверждаю все восемь решений»): льготный перенос разрешён и при заказах ребёнка, заказы не меняются, скидки задним числом нет; MED-07 только до передачи ссылки и без заказов; совместный кадр с остающимся ребёнком блокирует перенос; единственная staff-группа съёмки; обложки и correctionPhotos по плану D3 (docs/plans/D3_child-transfers/plan.md в rabit-api).",
       "D3-D12-SCOPE": "2026-09-22: пользователь принял D3-DEC-07. D3 не меняет оплату, возвраты, печать и файлы; перенос в закрытую staff-группу запрещён. D12 снят с decisionGates D3 и остаётся у I3 и последующих волн.",
       "D3-FOLLOW-UP": "2026-09-22: после merge D3 слиты PR #49 (21311db, текст диалога переноса и стабилизация gate) и PR #52 (93becd8, запись развёртывания stage).",
-      "DESIGN-UX": "2026-09-23: пользователь утвердил план docs/plans/design-ux-plan/plan.md в rabit-api (PR #50, merge bb35665) и решения DS-01…DS-20 по рекомендациям. Раздел 7 плана закрывает D01 (визуал, логотип, шрифты, палитра), раздел 10.1 — механизм выдачи и восстановления паролей в D08 (персональное приглашение по ссылке, сброс и смена пароля). Волны U1–U8, B3, B4 сдаются одним PR пакета design-ux."
+      "DESIGN-UX": "2026-09-23: пользователь утвердил план docs/plans/design-ux-plan/plan.md в rabit-api (PR #50, merge bb35665) и решения DS-01…DS-20 по рекомендациям. Раздел 7 плана закрывает D01 (визуал, логотип, шрифты, палитра), раздел 10.1 — механизм выдачи и восстановления паролей в D08 (персональное приглашение по ссылке, сброс и смена пароля). Волны U1–U8, B3, B4 сдаются одним PR пакета design-ux.",
+      "E6-DEC-01-03": "2026-09-25: пользователь принял E6-DEC-01 (ставка 0…10%, сначала выбран 99,99%, после разбора крайнего случая — 10%), E6-DEC-02 (предел цены 1 000 000 ₽) и E6-DEC-03 (чистый контроллер условий в E6). План: docs/plans/E6_payment-cost-pricing/plan.md в rabit-api."
     }
   },
   "acceptedImplementationDecisions": [
@@ -1242,7 +1273,7 @@
       ],
       "activation": "Включение только организатором после проверки эффективной ставки и предварительного расчёта; E6 не подключает платёжного провайдера.",
       "legacyIds": [],
-      "deliveryState": "planned",
+      "deliveryState": "review",
       "unlocks": [
         "N2"
       ],
@@ -2462,7 +2493,7 @@
       ],
       "activation": "Внутренняя очистка; пользователям не видна.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [
         "U2"
@@ -2502,7 +2533,7 @@
       ],
       "activation": "Кабинет и покупательские экраны получают новую типографику и радиусы.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [
         "U3",
@@ -2543,7 +2574,7 @@
       ],
       "activation": "Новый каркас виден всем сотрудникам.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [
         "B4",
@@ -2585,7 +2616,7 @@
       ],
       "activation": "Единые состояния во всех модулях кабинета.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [
         "B4",
@@ -2643,7 +2674,7 @@
       ],
       "activation": "Организатор создаёт сотрудника — сотрудник получает письмо со ссылкой.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [
         "U8"
@@ -2694,7 +2725,7 @@
       ],
       "activation": "Фото аватаров появляются в каркасе, профиле и списке сотрудников.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [],
       "inputBoundary": "Слитые в main: A4, B2. Внутри пакета design-ux — предыдущие коммиты: U3. Решения: D01, D08.",
@@ -2748,7 +2779,7 @@
       ],
       "activation": "Сводки доступны экранам U6.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [
         "U6"
@@ -2789,7 +2820,7 @@
       ],
       "activation": "Сотрудники после входа попадают на обзор своей области.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [],
       "inputBoundary": "Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U3, U4, U5. Решения: D01.",
@@ -2834,7 +2865,7 @@
       ],
       "activation": "Обновлённые рабочие экраны организатора и куратора.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [],
       "inputBoundary": "Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U4. Решения: D01.",
@@ -2879,7 +2910,7 @@
       ],
       "activation": "Обновлённые экраны ссылок, списков, заказов и сотрудников.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [],
       "inputBoundary": "Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U4, B4. Решения: D01, D08.",

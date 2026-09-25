@@ -6,10 +6,12 @@ namespace Morefoto\Commerce\Tests\Unit;
 
 use Morefoto\Commerce\Application\Catalog\Dto\ProductOutputDto;
 use Morefoto\Commerce\Application\Conditions\Dto\ConditionsOutputDto;
+use Morefoto\Commerce\Application\Conditions\Service\PublishedPrices;
 use Morefoto\Commerce\Application\Conditions\UseCase\GetGroupConditionsUseCase;
 use Morefoto\Commerce\Application\Storefront\Dto\QuoteLineInputDto;
 use Morefoto\Commerce\Application\Storefront\Service\StorefrontQuote;
 use Morefoto\Commerce\Domain\Catalog\Enum\ProductKind;
+use Morefoto\Commerce\Domain\Conditions\ValueObject\PaymentCostPolicy;
 use PHPUnit\Framework\TestCase;
 use Rebit\Share\Contracts\Handoff\StaffEligibilityInterface;
 use Rebit\Share\Contracts\Media\Dto\GalleryAccessOutputDto;
@@ -90,6 +92,42 @@ final class StorefrontQuoteTest extends TestCase
         self::assertNotSame($base['fingerprint'], $this->calculator(price: 11000)->calculate(str_repeat('a', 64), $lines)['fingerprint']);
     }
 
+    public function testQuoteChargesPublishedPriceAndStaffHalfIsNotRoundedAgain(): void
+    {
+        $result = $this->calculator(staff: true, eligible: [1 => true], price: 50000, policy: new PaymentCostPolicy(true, 380))
+            ->calculate(str_repeat('a', 64), [new QuoteLineInputDto(self::A, self::PRINT, 1)])
+        ;
+        self::assertSame(55000, $result['quote']['lines'][0]['product']['price']);
+        self::assertSame(27500, $result['quote']['lines'][0]['unitPrice']);
+        self::assertSame(55000, $result['quote']['subtotal']);
+        self::assertSame(27500, $result['quote']['total']);
+    }
+
+    public function testGiftThresholdCountsPublishedPrintPrices(): void
+    {
+        $lines = [new QuoteLineInputDto(self::A, self::PRINT, 1), new QuoteLineInputDto(self::A, self::BUNDLE, 1)];
+        $plain = $this->calculator(price: 19000)->calculate(str_repeat('a', 64), $lines)['quote'];
+        $published = $this->calculator(price: 19000, policy: new PaymentCostPolicy(true, 380))->calculate(str_repeat('a', 64), $lines)['quote'];
+
+        self::assertSame([], $plain['gifts']);
+        self::assertSame(69000, $plain['total']);
+        self::assertSame(['A'], $published['gifts']);
+        self::assertSame(55000, $published['giftSaving']);
+        self::assertSame(20000, $published['total']);
+    }
+
+    public function testFingerprintChangesWithPaymentCostPolicyEvenWhenPricesMatch(): void
+    {
+        $lines = [new QuoteLineInputDto(self::A, self::PRINT, 1)];
+        $first = $this->calculator(policy: new PaymentCostPolicy(true, 380))->calculate(str_repeat('a', 64), $lines);
+        $second = $this->calculator(policy: new PaymentCostPolicy(true, 390))->calculate(str_repeat('a', 64), $lines);
+        $disabled = $this->calculator()->calculate(str_repeat('a', 64), $lines);
+
+        self::assertSame($first['quote']['total'], $second['quote']['total']);
+        self::assertNotSame($first['fingerprint'], $second['fingerprint']);
+        self::assertNotSame($first['fingerprint'], $disabled['fingerprint']);
+    }
+
     public function testDuplicateLineIsRejectedInsteadOfSilentlyMultiplyingPrice(): void
     {
         $this->expectException(HttpException::class);
@@ -123,7 +161,7 @@ final class StorefrontQuoteTest extends TestCase
     }
 
     /** @param array<int,bool> $eligible */
-    private function calculator(bool $staff = false, array $eligible = [], string $state = 'open', int $price = 10000, int $photoRevision = 1): StorefrontQuote
+    private function calculator(bool $staff = false, array $eligible = [], string $state = 'open', int $price = 10000, int $photoRevision = 1, ?PaymentCostPolicy $policy = null): StorefrontQuote
     {
         $access = $this->createStub(GalleryAccessInterface::class);
         $access->method('resolve')->willReturn(new GalleryAccessOutputDto(
@@ -136,15 +174,20 @@ final class StorefrontQuoteTest extends TestCase
                 new GalleryAssignmentOutputDto(self::B, 'photo-id', 'child-b', 2, 'B', 'B001', 100, 100, $photoRevision),
             ],
         ));
-        $conditions = $this->createStub(GetGroupConditionsUseCase::class);
-        $conditions->method('executeWithinTransaction')->willReturn(new ConditionsOutputDto(0, 1, 1, true, [
+        $products = [
             new ProductOutputDto(self::PRINT, 'Print', '', ProductKind::PHYSICAL, $price, 1, '', '', true, true),
             new ProductOutputDto('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'Digital', '', ProductKind::DIGITAL, 10000, 0, '', '', true, true),
             new ProductOutputDto(self::BUNDLE, 'Bundle', '', ProductKind::BUNDLE, 50000, 0, '', '', true, true),
-        ], 20000, false));
+        ];
+        $prices = new PublishedPrices();
+        $policy ??= new PaymentCostPolicy(false, 380);
+        $conditions = $this->createStub(GetGroupConditionsUseCase::class);
+        $conditions->method('executeWithinTransaction')->willReturn(
+            new ConditionsOutputDto(0, 1, 1, true, $products, 20000, false, $prices->output($policy), $prices->salePrices($products, $policy)),
+        );
         $eligibility = $this->createStub(StaffEligibilityInterface::class);
         $eligibility->method('confirmed')->willReturn($eligible);
 
-        return new StorefrontQuote($access, $conditions, $eligibility);
+        return new StorefrontQuote($access, $conditions, $eligibility, $prices);
     }
 }

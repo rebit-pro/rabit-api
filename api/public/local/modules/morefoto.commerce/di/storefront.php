@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Bitrix\Main\DI\ServiceLocator;
+use Morefoto\Commerce\Application\Conditions\Service\PublishedPrices;
 use Morefoto\Commerce\Application\Conditions\UseCase\GetGroupConditionsUseCase;
 use Morefoto\Commerce\Application\Order\Service\CheckoutAvailability;
 use Morefoto\Commerce\Application\Storefront\Contract\QuoteTransactionInterface;
@@ -34,6 +35,7 @@ return [
             ServiceLocator::getInstance()->get(GalleryAccessInterface::class),
             ServiceLocator::getInstance()->get(GetGroupConditionsUseCase::class),
             ServiceLocator::getInstance()->get(StaffEligibilityInterface::class),
+            ServiceLocator::getInstance()->get(PublishedPrices::class),
         ],
     ],
     GetStorefrontCatalogUseCase::class => [
@@ -42,6 +44,7 @@ return [
             ServiceLocator::getInstance()->get(GalleryAccessInterface::class),
             ServiceLocator::getInstance()->get(GetGroupConditionsUseCase::class),
             ServiceLocator::getInstance()->get(CheckoutAvailability::class),
+            ServiceLocator::getInstance()->get(PublishedPrices::class),
         ],
     ],
     CreateQuoteUseCase::class => [

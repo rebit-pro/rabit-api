@@ -2,14 +2,22 @@ import { isAxiosError } from 'axios';
 import api from '@/api/http';
 import type { CatalogProduct } from '../catalog/api';
 
+export interface PaymentCosts {
+  enabled: boolean;
+  rateBps: number;
+  roundingStep: number;
+  maxRateBps: number;
+}
+export type ConditionsProduct = CatalogProduct & { salePrice: number };
 export interface ConditionsSnapshot {
   revision: number;
   catalogRevision: number;
   conditionsRevision?: number;
   inherit?: boolean;
-  products: CatalogProduct[];
+  products: ConditionsProduct[];
   giftThreshold: number;
   giftForStaff: boolean;
+  paymentCosts: PaymentCosts;
 }
 export interface ConditionsBody {
   revision: number;
@@ -20,6 +28,7 @@ export interface ConditionsBody {
   giftEnabled: boolean;
   giftThreshold: number;
   giftForStaff: boolean;
+  paymentCosts?: { enabled: boolean; rateBps: number };
 }
 export interface ConditionsAttempt {
   groupId: string | null;
@@ -52,7 +61,7 @@ export function conditionsError(cause: unknown): string {
     case 409:
       return 'Условия или каталог изменены в другой вкладке. Черновик сохранён. Загрузите актуальные данные.';
     case 422:
-      return 'Сервер отклонил условия. Проверьте цены, доступность и подарочный комплект.';
+      return 'Сервер отклонил условия. Проверьте цены, ставку расходов на оплату, доступность и подарочный комплект.';
     default:
       return 'Не удалось получить ответ сервера. Проверьте соединение и повторите запрос.';
   }
