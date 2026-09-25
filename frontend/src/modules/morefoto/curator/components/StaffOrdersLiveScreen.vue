@@ -22,8 +22,10 @@ const { orderId, filters, page, card, loading, error, reload, apply, reset, sele
 const {
   institutionId: scopeInstitution,
   options: scopeOptions,
+  listing: scopeListing,
   loading: scopeLoading,
-  error: scopeError
+  error: scopeError,
+  retry: retryScope
 } = useStaffOrderScope(filters, () => !orderId.value);
 // A shoot or group list without an institution has nothing to offer, unless a link already chose a value there.
 const shootDisabled = computed(() => !scopeInstitution.value && !filters.shootId);
@@ -134,6 +136,7 @@ function lastDays(days: number): void {
           aria-label="Учреждение"
           density="compact"
           hide-details
+          :loading="scopeListing"
           @update:model-value="selectScope('institutionId', $event)"
         />
         <v-select
@@ -158,7 +161,10 @@ function lastDays(days: number): void {
           :disabled="groupDisabled"
           @update:model-value="selectScope('groupId', $event)"
         />
-        <p v-if="scopeError" class="mf-muted staff-orders__scope-error" role="alert">{{ scopeError }}</p>
+        <div v-if="scopeError" class="staff-orders__scope-error">
+          <p class="mf-muted" role="alert">{{ scopeError }}</p>
+          <v-btn variant="text" density="compact" @click="retryScope">Повторить</v-btn>
+        </div>
       </div>
       <div class="staff-orders__refine">
         <v-select v-model="filters.paymentStatus" :items="paymentOptions" label="Оплата" density="compact" hide-details />
@@ -227,6 +233,10 @@ function lastDays(days: number): void {
 }
 .staff-orders__scope-error {
   grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mf-space-2);
   font-size: 14px;
 }
 @media (min-width: 768px) {
