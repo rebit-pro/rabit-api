@@ -1,4 +1,5 @@
 import type { CartQuote } from '../../commerce/types.js';
+import type { Group, Institution, Shoot } from '../../structure/model.js';
 import type { BuyerErrors } from '../types.js';
 import type { ApiProblem, CreatedOrder, LiveOrderQuote, StaffOrderFilters } from './types.js';
 
@@ -103,13 +104,50 @@ export function orderQuoteAsCart(quote: LiveOrderQuote, thumb: (photoId: string)
   };
 }
 
+/** Text filters of the staff order list, kept in the URL so that a card link and the way back preserve them. */
+export const staffFilterKeys = [
+  'q',
+  'institutionId',
+  'shootId',
+  'groupId',
+  'paymentStatus',
+  'productionStatus',
+  'dateFrom',
+  'dateTo'
+] as const;
+export type StaffScopeLevel = 'institutionId' | 'shootId' | 'groupId';
+export type StaffScope = Pick<StaffOrderFilters, StaffScopeLevel>;
+export interface StaffScopeOption {
+  title: string;
+  value: string;
+}
+export interface StaffScopeSource {
+  institutions: Pick<Institution, 'id' | 'name'>[];
+  shoots: Pick<Shoot, 'id' | 'name'>[];
+  groups: Pick<Group, 'id' | 'name' | 'shootId'>[];
+}
+
 export function staffOrderParams(filters: StaffOrderFilters): Record<string, string | number> {
   const params: Record<string, string | number> = { page: filters.page, pageSize: filters.pageSize };
-  for (const key of ['q', 'paymentStatus', 'productionStatus', 'dateFrom', 'dateTo'] as const) {
+  for (const key of staffFilterKeys) {
     const value = filters[key].trim();
     if (value !== '') params[key] = value;
   }
   return params;
+}
+
+export function staffFilterQuery(filters: StaffOrderFilters, page = 1): Record<string, string> {
+  const query: Record<string, string> = {};
+  for (const key of staffFilterKeys) {
+    const value = filters[key].trim();
+    if (value !== '') query[key] = value;
+  }
+  if (page > 1) query.page = String(page);
+  return query;
+}
+
+export function hasStaffFilters(filters: StaffOrderFilters): boolean {
+  return staffFilterKeys.some((key) => filters[key] !== '');
 }
 
 export function staffFiltersFromQuery(query: Record<string, unknown>): StaffOrderFilters {
@@ -117,6 +155,9 @@ export function staffFiltersFromQuery(query: Record<string, unknown>): StaffOrde
   const page = Number.parseInt(text('page'), 10);
   return {
     q: text('q'),
+    institutionId: text('institutionId'),
+    shootId: text('shootId'),
+    groupId: text('groupId'),
     paymentStatus: text('paymentStatus'),
     productionStatus: text('productionStatus'),
     dateFrom: text('dateFrom'),
@@ -124,6 +165,48 @@ export function staffFiltersFromQuery(query: Record<string, unknown>): StaffOrde
     page: Number.isInteger(page) && page > 0 ? page : 1,
     pageSize: 25
   };
+}
+
+/** A new parent drops the levels below it: a shoot or group of another institution would narrow the list to nothing. */
+export function staffScopePatch(level: StaffScopeLevel, value: string): Partial<StaffScope> {
+  if (level === 'institutionId') return { institutionId: value, shootId: '', groupId: '' };
+  if (level === 'shootId') return { shootId: value, groupId: '' };
+  return { groupId: value };
+}
+
+/**
+ * Options of the three scope lists. Groups follow the chosen shoot; without one a group name carries its shoot, since
+ * shoots of one institution often repeat group names. A value from a link that is not among the loaded options stays
+ * selectable under a neutral title: the server still decides whether it is in the staff member's area.
+ */
+export function staffScopeOptions(source: StaffScopeSource, scope: StaffScope): Record<StaffScopeLevel, StaffScopeOption[]> {
+  const shootNames = new Map(source.shoots.map((shoot) => [shoot.id, shoot.name]));
+  const groups = scope.shootId === '' ? source.groups : source.groups.filter((group) => group.shootId === scope.shootId);
+  return {
+    institutionId: scopeList(
+      'Все учреждения',
+      source.institutions.map((institution) => ({ title: institution.name, value: institution.id })),
+      scope.institutionId
+    ),
+    shootId: scopeList(
+      'Все съёмки',
+      source.shoots.map((shoot) => ({ title: shoot.name, value: shoot.id })),
+      scope.shootId
+    ),
+    groupId: scopeList(
+      'Все группы',
+      groups.map((group) => {
+        const shoot = scope.shootId === '' ? shootNames.get(group.shootId) : undefined;
+        return { title: shoot === undefined ? group.name : group.name + ' · ' + shoot, value: group.id };
+      }),
+      scope.groupId
+    )
+  };
+}
+
+function scopeList(any: string, items: StaffScopeOption[], selected: string): StaffScopeOption[] {
+  const linked = selected !== '' && !items.some((item) => item.value === selected);
+  return [{ title: any, value: '' }, ...(linked ? [{ title: 'Выбрано по ссылке', value: selected }] : []), ...items];
 }
 
 export function staffOrderError(problem: ApiProblem): string {

@@ -1,7 +1,14 @@
 import { computed, reactive, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { apiProblem, liveOrdersApi } from '../orders/live/api';
-import { staffFiltersFromQuery, staffOrderError } from '../orders/live/rules';
+import {
+  staffFilterKeys,
+  staffFilterQuery,
+  staffFiltersFromQuery,
+  staffOrderError,
+  staffScopePatch,
+  type StaffScopeLevel
+} from '../orders/live/rules';
 import type { StaffOrderCard, StaffOrderPage } from '../orders/live/types';
 
 export function useStaffOrders() {
@@ -34,18 +41,18 @@ export function useStaffOrders() {
       if (id === request) loading.value = false;
     }
   }
+  // Applying always starts from the first page unless the pager asks for another one.
   function apply(pageNumber = 1) {
-    const query: Record<string, string> = {};
-    for (const key of ['q', 'paymentStatus', 'productionStatus', 'dateFrom', 'dateTo'] as const) {
-      if (filters[key].trim() !== '') query[key] = filters[key].trim();
-    }
-    if (pageNumber > 1) query.page = String(pageNumber);
-    void router.replace({ query });
+    void router.replace({ query: staffFilterQuery(filters, pageNumber) });
   }
   function reset() {
-    Object.assign(filters, { q: '', paymentStatus: '', productionStatus: '', dateFrom: '', dateTo: '' });
+    for (const key of staffFilterKeys) filters[key] = '';
     apply();
   }
+  // Only a user's pick drops the dependent levels; filters restored from the URL keep all three.
+  function selectScope(level: StaffScopeLevel, value: string | null) {
+    Object.assign(filters, staffScopePatch(level, value ?? ''));
+  }
   watch(() => [route.name, route.params.orderId, route.fullPath], reload, { immediate: true });
-  return { orderId, filters, page, card, loading, error, reload, apply, reset };
+  return { orderId, filters, page, card, loading, error, reload, apply, reset, selectScope };
 }

@@ -284,6 +284,88 @@ test('E5: staff see orders only in their scope', async ({ page, browser, baseURL
     });
 });
 
+/** Picks an option of a Vuetify select by its accessible name. */
+async function choose(page: Page, label: string, option: string) {
+  await page.getByRole('combobox', { name: label, exact: true }).press('Enter');
+  await page.getByRole('option', { name: option, exact: true }).click();
+}
+
+test('E5: staff narrow orders by institution, shoot and group', async ({ page, browser, baseURL }) => {
+  await login(page);
+  const organizer = await auth(page);
+  const detail = (await body(await page.request.get('/api/v1/institutions/' + institutionId + '?pageSize=100', { headers: organizer })))
+    .data;
+  const shoot = detail.shoots.items.find((item: { name: string }) => item.name === 'E4 Осенняя съёмка');
+  const group = detail.groups.items.find((item: { id: string }) => item.id === fixture.open.groupId);
+  expect(group.shootId).toBe(shoot.id);
+  const inGroup = (await body(await page.request.get('/api/v1/orders?groupId=' + group.id, { headers: organizer }))).meta.total;
+  expect(inGroup).toBeGreaterThan(0);
+  const searched = () => page.waitForResponse((r) => new URL(r.url()).pathname === '/api/v1/orders' && r.request().method() === 'GET');
+  const total = page.getByText(/^Найдено заказов: \d+$/);
+  const reset = page.getByRole('button', { name: 'Сбросить', exact: true });
+  const field = (label: string) => page.getByRole('combobox', { name: label, exact: true });
+
+  // A manual link with only a group narrows the request itself, not just the screen.
+  let listed = searched();
+  await page.goto('/cabinet/orders?groupId=' + group.id);
+  expect(new URL((await listed).url()).searchParams.get('groupId')).toBe(group.id);
+  await expect(total).toHaveText('Найдено заказов: ' + inGroup);
+  await reset.click();
+  await expect(page).not.toHaveURL(/groupId=/);
+
+  // The cascade offers the Organization API structure and sends all three levels.
+  await choose(page, 'Учреждение', 'E4 Тестовый детский сад');
+  await choose(page, 'Съёмка', 'E4 Осенняя съёмка');
+  await choose(page, 'Группа', group.name);
+  listed = searched();
+  await page.getByRole('button', { name: 'Найти', exact: true }).click();
+  expect(Object.fromEntries(new URL((await listed).url()).searchParams)).toMatchObject({
+    institutionId,
+    shootId: shoot.id,
+    groupId: group.id
+  });
+  await expect(total).toHaveText('Найдено заказов: ' + inGroup);
+  await expect(page.getByTestId('staff-order').first()).toContainText(group.name);
+
+  // List → card → list keeps the scope in the URL and in the form.
+  await page.getByTestId('staff-order').first().getByRole('link').click();
+  await expect(page.getByTestId('staff-order-number')).toBeVisible();
+  await page.getByRole('link', { name: 'Все заказы', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp('groupId=' + group.id));
+  await expect(field('Учреждение')).toHaveValue(institutionId);
+  await expect(field('Съёмка')).toHaveValue(shoot.id);
+  await expect(field('Группа')).toHaveValue(group.id);
+
+  // A new parent drops the levels below it; the general reset clears everything.
+  await choose(page, 'Съёмка', 'Все съёмки');
+  await expect(field('Учреждение')).toHaveValue(institutionId);
+  await expect(field('Группа')).toHaveValue('');
+  await choose(page, 'Съёмка', 'E4 Осенняя съёмка');
+  await choose(page, 'Учреждение', 'Все учреждения');
+  await expect(field('Съёмка')).toHaveValue('');
+  await expect(field('Группа')).toHaveValue('');
+  await choose(page, 'Учреждение', 'E4 Тестовый детский сад');
+  await choose(page, 'Съёмка', 'E4 Осенняя съёмка');
+  await reset.click();
+  await expect(page).not.toHaveURL(/institutionId=|shootId=|groupId=/);
+  for (const label of ['Учреждение', 'Съёмка', 'Группа']) await expect(field(label)).toHaveValue('');
+  await expect(reset).toBeDisabled();
+
+  // Curators are offered only institutions of their own area.
+  for (const [account, count] of [
+    ['curator', 1],
+    ['c4-curator', 0]
+  ] as const)
+    await asStaff(browser, baseURL, account, async (viewer) => {
+      const institutions = viewer.waitForResponse((r) => new URL(r.url()).pathname === '/api/v1/institutions');
+      await viewer.goto('/cabinet/orders');
+      expect((await institutions).status()).toBe(200);
+      await viewer.getByRole('combobox', { name: 'Учреждение', exact: true }).press('Enter');
+      await expect(viewer.getByRole('option', { name: 'Все учреждения', exact: true })).toBeVisible();
+      await expect(viewer.getByRole('option', { name: 'E4 Тестовый детский сад', exact: true })).toHaveCount(count);
+    });
+});
+
 for (const viewport of [
   { name: 'desktop', width: 1280, height: 900 },
   { name: 'mobile', width: 390, height: 844 }

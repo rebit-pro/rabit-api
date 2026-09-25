@@ -3,12 +3,16 @@ import assert from 'node:assert/strict';
 import {
   checkoutOutcome,
   isCreatedOrder,
+  hasStaffFilters,
   newRequestId,
   orderQuoteAsCart,
   showsCheckoutRecovery,
+  staffFilterQuery,
   staffFiltersFromQuery,
   staffOrderError,
-  staffOrderParams
+  staffOrderParams,
+  staffScopeOptions,
+  staffScopePatch
 } from '../../src/modules/morefoto/orders/live/rules.ts';
 
 const problem = (code, status = 409) => ({ status, code, network: false });
@@ -80,6 +84,75 @@ test('staff filters come from the URL and only non-empty values reach the API', 
   assert.equal(filters.page, 3);
   assert.deepEqual(staffOrderParams(filters), { page: 3, pageSize: 25, q: 'MF-000001', paymentStatus: 'unpaid' });
   assert.equal(staffFiltersFromQuery({ page: '-1' }).page, 1);
+});
+
+const institution = '11111111-1111-4111-8111-111111111111';
+const shoot = '22222222-2222-4222-8222-222222222222';
+const group = '33333333-3333-4333-8333-333333333333';
+
+test('scope filters travel from the URL to the order request and back to the URL', () => {
+  const filters = staffFiltersFromQuery({ institutionId: institution, shootId: shoot, groupId: group, page: '2', unknown: 'x' });
+  assert.deepEqual(staffOrderParams(filters), { page: 2, pageSize: 25, institutionId: institution, shootId: shoot, groupId: group });
+  assert.deepEqual(staffFilterQuery(filters, 2), { institutionId: institution, shootId: shoot, groupId: group, page: '2' });
+  assert.deepEqual(staffFilterQuery(filters), { institutionId: institution, shootId: shoot, groupId: group });
+  assert.equal(hasStaffFilters(filters), true);
+});
+
+test('a manual link with only a group still narrows the request', () => {
+  const filters = staffFiltersFromQuery({ groupId: group });
+  assert.deepEqual(staffOrderParams(filters), { page: 1, pageSize: 25, groupId: group });
+  assert.deepEqual(staffFilterQuery(filters), { groupId: group });
+});
+
+test('empty and non-string scope values reach neither the request nor the URL', () => {
+  const filters = staffFiltersFromQuery({ institutionId: ['a', 'b'], shootId: '  ', groupId: '' });
+  assert.deepEqual(staffOrderParams(filters), { page: 1, pageSize: 25 });
+  assert.deepEqual(staffFilterQuery(filters), {});
+  assert.equal(hasStaffFilters(staffFiltersFromQuery({})), false);
+});
+
+test('picking a parent level drops the levels below it', () => {
+  assert.deepEqual(staffScopePatch('institutionId', institution), { institutionId: institution, shootId: '', groupId: '' });
+  assert.deepEqual(staffScopePatch('institutionId', ''), { institutionId: '', shootId: '', groupId: '' });
+  assert.deepEqual(staffScopePatch('shootId', shoot), { shootId: shoot, groupId: '' });
+  assert.deepEqual(staffScopePatch('groupId', group), { groupId: group });
+});
+
+test('scope options follow the chosen shoot and name the shoot of a group otherwise', () => {
+  const source = {
+    institutions: [{ id: institution, name: 'Детский сад' }],
+    shoots: [
+      { id: shoot, name: 'Осень' },
+      { id: 's2', name: 'Весна' }
+    ],
+    groups: [
+      { id: group, name: 'Ромашки', shootId: shoot },
+      { id: 'g2', name: 'Ромашки', shootId: 's2' }
+    ]
+  };
+  const all = staffScopeOptions(source, { institutionId: institution, shootId: '', groupId: '' });
+  assert.deepEqual(all.institutionId, [
+    { title: 'Все учреждения', value: '' },
+    { title: 'Детский сад', value: institution }
+  ]);
+  assert.deepEqual(
+    all.groupId.map((option) => option.title),
+    ['Все группы', 'Ромашки · Осень', 'Ромашки · Весна']
+  );
+  const inShoot = staffScopeOptions(source, { institutionId: institution, shootId: shoot, groupId: '' });
+  assert.deepEqual(inShoot.groupId, [
+    { title: 'Все группы', value: '' },
+    { title: 'Ромашки', value: group }
+  ]);
+});
+
+test('a linked scope value outside the loaded options stays selectable without inventing its name', () => {
+  const options = staffScopeOptions({ institutions: [], shoots: [], groups: [] }, { institutionId: '', shootId: '', groupId: group });
+  assert.deepEqual(options.groupId, [
+    { title: 'Все группы', value: '' },
+    { title: 'Выбрано по ссылке', value: group }
+  ]);
+  assert.deepEqual(options.institutionId, [{ title: 'Все учреждения', value: '' }]);
 });
 
 test('an unconfirmed attempt keeps its recovery screen while it is repeated, a first submission keeps the form', () => {
