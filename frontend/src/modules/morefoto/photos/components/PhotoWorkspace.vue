@@ -29,6 +29,7 @@ const {
   selectedGroupId,
   changeGroup,
   editable,
+  pageReady,
   items,
   total,
   page,
@@ -75,7 +76,7 @@ const previewPhotos = shallowRef<ManagedPhoto[]>([]);
 const previewLoading = shallowRef(false);
 const previewError = shallowRef('');
 let previewRequest = 0;
-const move = shallowRef<{ child: string; ids: string[] } | null>(null);
+const move = shallowRef<{ groupId: string; child: string; ids: string[] } | null>(null);
 const moveLoading = shallowRef(false);
 const targets = computed(() =>
   groups.value.filter((item) => item.id !== group.value?.id && item.kind === group.value?.kind && item.state === 'preparing')
@@ -101,19 +102,22 @@ function showPreview(code = '') {
   preview.value = true;
   void loadPreview(code || childCodes.value[0] || '');
 }
+// The group selector is locked while the set loads; a group changed anyway (a structure reload) drops the loaded set.
 async function showMove(code: string) {
+  const groupId = group.value?.id ?? '';
   error.value = '';
   moveLoading.value = true;
   try {
-    move.value = { child: code, ids: (await childPhotos(code)).map((photo) => photo.id) };
+    const ids = (await childPhotos(code)).map((photo) => photo.id);
+    if (groupId === group.value?.id) move.value = { groupId, child: code, ids };
   } catch (cause) {
-    error.value = photoApiError(cause);
+    if (groupId === group.value?.id) error.value = photoApiError(cause);
   } finally {
     moveLoading.value = false;
   }
 }
 async function confirmMove(toId: string, code: string) {
-  if (move.value && (await transfer(move.value.child, toId, code, move.value.ids))) move.value = null;
+  if (move.value && (await transfer(move.value.groupId, move.value.child, toId, code, move.value.ids))) move.value = null;
 }
 </script>
 <template>
@@ -139,7 +143,7 @@ async function confirmMove(toId: string, code: string) {
         :items="groupItems"
         label="Группа съёмки"
         data-testid="photo-group"
-        :disabled="busy || !!move"
+        :disabled="busy || moveLoading || !!move"
         @update:model-value="changeGroup"
       />
       <div class="photo-preview-action">
@@ -161,10 +165,15 @@ async function confirmMove(toId: string, code: string) {
         <div class="photo-readiness__head">
           <div>
             <h2>{{ group.name }}</h2>
-            <p class="mt-2" data-testid="photo-readiness">
-              Кадров: {{ summary.photos }} · Детей: {{ childCodes.length }} · Без ребёнка: {{ summary.unassigned }}
+            <template v-if="pageReady">
+              <p class="mt-2" data-testid="photo-readiness">
+                Кадров: {{ summary.photos }} · Детей: {{ childCodes.length }} · Без ребёнка: {{ summary.unassigned }}
+              </p>
+              <p class="mf-muted mt-2">{{ cover ? 'Обложка группы выбрана' : 'Обложка группы ещё не выбрана' }}</p>
+            </template>
+            <p v-else class="mf-muted mt-2" data-testid="photo-readiness">
+              {{ mediaLoading ? 'Загружаем кадры группы…' : 'Кадры группы не загружены.' }}
             </p>
-            <p class="mf-muted mt-2">{{ cover ? 'Обложка группы выбрана' : 'Обложка группы ещё не выбрана' }}</p>
           </div>
           <GalleryImage v-if="cover" :src="cover.thumbSrc" alt="Обложка группы" class="group-cover" />
         </div>
