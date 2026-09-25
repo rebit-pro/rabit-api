@@ -2,7 +2,7 @@
 
 ## Точка продолжения
 
-- Ветка `codex/ops-e2e-gate-findings`, base `main` `d92b4c4`. Worktree `/home/user/rabit-api-worktrees/ops-e2e-gate-findings`. Issue [#61](https://github.com/rebit-pro/rabit-api/issues/61). PR — см. хронологию (создаётся с `Refs #61`: часть пунктов ждёт решения).
+- Ветка `codex/ops-e2e-gate-findings`, base `main` `5dcb0e0` (после rebase; исходный base `d92b4c4`). Worktree `/home/user/rabit-api-worktrees/ops-e2e-gate-findings`. Issue [#61](https://github.com/rebit-pro/rabit-api/issues/61). PR — см. хронологию (создаётся с `Refs #61`: часть пунктов ждёт решения).
 - Завершено: пункты 1, 3, 4, 5, 6; в пункте 2 — двойная загрузка и лог. Быстрые проверки T01–T09 — PASS.
 - Следующий шаг: ревью PR, затем полный gate `make test-e2e` (T10, T11) и проверка `prune` против живого стенда (T12).
 - Открытые решения пользователя:
@@ -28,13 +28,14 @@
 - Длительность файлов группы B по `results.json` четырёх последних прогонов других веток: `zz-avatar` 8–14 с, `zzz-handoff` 24–39 с, `zzzz-links` 16–69 с, `zzzz-storefront` 7–10 с, `zzzzz-orders` 31–51 с, `zzzzzz-transfers` 29–34 с.
 - Разбор F2: подпись готовности включает `salesFingerprint` активной продукции группы. `zzzz-storefront` создаёт глобальную продукцию и комплект, `zzzzz-orders` включает подарок — перенос второй части F2 в конец группы сбросил бы подготовку и упёрся в #51. `zz-avatar` и `zzz-handoff` каталог и условия не трогают — выбрано перенести подготовку в начало группы B.
 - Реализация, коммиты по пунктам:
-  - `f43af61` — план, `__pycache__/` в `.gitignore` (п. 6);
-  - `06426a2` — `xdebug.ini` без `zend_extension` и лога (п. 2, частично);
-  - `03735ee` — F2: `f2-links.ts` (общие хелперы), `z-links-preparation.spec.ts` первым в группе B, `zzzz-links.spec.ts` — передача и коррекция; `verify-links.php` требует оба файла (п. 3);
-  - `5a27385` — метки report/owner, `prune`, `make e2e-prune`, unit-тесты (п. 1);
-  - `9227b41` — `restore_owner()` в `stop()` (п. 4);
-  - `9b9b3b2` — `browser_timeout()` с bench (п. 5).
+  - `bcddfa1` — план, `__pycache__/` в `.gitignore` (п. 6);
+  - `e2bd39a` — `xdebug.ini` без `zend_extension` и лога (п. 2, частично);
+  - `17acb50` — F2: `f2-links.ts` (общие хелперы), `z-links-preparation.spec.ts` первым в группе B, `zzzz-links.spec.ts` — передача и коррекция; `verify-links.php` требует оба файла (п. 3);
+  - `a5266e1` — метки report/owner, `prune`, `make e2e-prune`, unit-тесты (п. 1);
+  - `a0ef66a` — `restore_owner()` в `stop()` (п. 4);
+  - `3fe1146` — `browser_timeout()` с bench (п. 5).
 - Попутно: рекомендованная команда `docker run … -v rabit-issues262728-node:/app/node_modules …` создаёт на хосте пустой `frontend/node_modules` от root (точка монтирования), а `playwright test --list` без отдельных `var`/`reports` — `frontend/var` и `frontend/reports` от root. В worktree владелец возвращён одноразовым контейнером; `restore_owner()` обрабатывает и сам каталог `frontend/node_modules` (без содержимого).
+- `main` ушёл на `5dcb0e0` (PR #84, #81): в `zzzz-links.spec.ts` добавлена проверка потерянного ответа подготовки с повтором по тому же ключу. Ветка перебазирована; конфликт решён переносом этого блока в `z-links-preparation.spec.ts` (там теперь подготовка через экран), `zzzz-links.spec.ts` — версия ветки. Повторены T01–T05, T09: PASS; группа B — 44 теста в 10 файлах.
 - Во время dry-run на машине работали стенды других сессий (`rabit-e2e-6ce0b7756853`, затем `rabit-e2e-8105711e98f8`): `prune` пометил их `keep: running containers`.
 
 ## Тест-кейсы
