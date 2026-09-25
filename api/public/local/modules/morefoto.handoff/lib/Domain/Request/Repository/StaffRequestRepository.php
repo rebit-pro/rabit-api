@@ -10,27 +10,30 @@ use Rebit\Share\Shared\Exception\HttpException;
 
 final readonly class StaffRequestRepository
 {
+    public const array STATUSES = ['submitted', 'clarification', 'transferred'];
+
+    private const string CARD = 'SELECT r.ID,r.PUBLIC_ID,r.INSTITUTION_ID,r.SHOOT_ID,r.CREATED_BY,r.CREATED_BY_NAME,r.STATUS,r.REVISION,r.COMMENT,'
+        . 'r.STAFF_ELIGIBLE,r.ELIGIBILITY_SOURCE,DATE_FORMAT(r.ELIGIBILITY_VERIFIED_AT,\'%Y-%m-%dT%H:%i:%sZ\') AS ELIGIBILITY_VERIFIED_AT,'
+        . 'DATE_FORMAT(r.CREATED_AT,\'%Y-%m-%dT%H:%i:%sZ\') AS CREATED_AT,i.UF_PUBLIC_ID AS INSTITUTION_PUBLIC_ID,'
+        . 's.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID FROM mf_staff_request r '
+        . 'INNER JOIN b_hlbd_mf_institution i ON i.ID=r.INSTITUTION_ID '
+        . 'INNER JOIN b_hlbd_mf_shoot s ON s.ID=r.SHOOT_ID ';
+
     /** @return null|array<string,mixed> */
     public function request(string $publicId, bool $lock = false): ?array
     {
         $row = Application::getConnection()->query(
-            'SELECT r.ID,r.PUBLIC_ID,r.INSTITUTION_ID,r.SHOOT_ID,r.CREATED_BY,r.CREATED_BY_NAME,r.STATUS,r.REVISION,r.COMMENT,'
-            . 'r.STAFF_ELIGIBLE,r.ELIGIBILITY_SOURCE,DATE_FORMAT(r.ELIGIBILITY_VERIFIED_AT,\'%Y-%m-%dT%H:%i:%sZ\') AS ELIGIBILITY_VERIFIED_AT,'
-            . 'DATE_FORMAT(r.CREATED_AT,\'%Y-%m-%dT%H:%i:%sZ\') AS CREATED_AT,i.UF_PUBLIC_ID AS INSTITUTION_PUBLIC_ID,'
-            . 's.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID FROM mf_staff_request r '
-            . 'INNER JOIN b_hlbd_mf_institution i ON i.ID=r.INSTITUTION_ID '
-            . 'INNER JOIN b_hlbd_mf_shoot s ON s.ID=r.SHOOT_ID '
-            . 'WHERE r.PUBLIC_ID=' . $this->quote($publicId) . ' LIMIT 1' . ($lock ? ' FOR UPDATE' : ''),
+            self::CARD . 'WHERE r.PUBLIC_ID=' . $this->quote($publicId) . ' LIMIT 1' . ($lock ? ' FOR UPDATE' : ''),
         )->fetch();
 
         return is_array($row) ? $row : null;
     }
 
-    public const array STATUSES = ['submitted', 'clarification', 'transferred'];
-
     /**
      * Page of visible requests plus their split by status. The split uses the same visibility and filters except the
      * status filter, so a client can switch between statuses without losing the other counters.
+     *
+     * The number of queries does not depend on the page size: counters, cards, rows and history are read in one query each.
      *
      * @return array{
      *     items: list<array<string, mixed>>,
@@ -51,9 +54,8 @@ final readonly class StaffRequestRepository
         if (null !== $status) {
             $conditions[] = 'r.STATUS=' . $this->quote($status);
         }
-        $where = implode(' AND ', $conditions);
         $connection = Application::getConnection();
-        $byStatus = array_fill_keys(self::STATUSES, 0);
+        $byStatus = ['submitted' => 0, 'clarification' => 0, 'transferred' => 0];
         $counts = $connection->query(
             'SELECT r.STATUS, COUNT(*) AS TOTAL FROM mf_staff_request r INNER JOIN b_hlbd_mf_institution i ON i.ID=r.INSTITUTION_ID '
             . 'INNER JOIN b_hlbd_mf_shoot s ON s.ID=r.SHOOT_ID WHERE ' . $summaryWhere . ' GROUP BY r.STATUS',
@@ -63,24 +65,17 @@ final readonly class StaffRequestRepository
                 $byStatus[(string)$count['STATUS']] = (int)$count['TOTAL'];
             }
         }
-        $totalRow = $connection->query(
-            'SELECT COUNT(*) AS TOTAL FROM mf_staff_request r INNER JOIN b_hlbd_mf_institution i ON i.ID=r.INSTITUTION_ID '
-            . 'INNER JOIN b_hlbd_mf_shoot s ON s.ID=r.SHOOT_ID WHERE ' . $where,
-        )->fetch();
+        // The CHECK constraint keeps STATUS within the three counted values, so the filtered total is one of them.
+        $total = null === $status ? array_sum($byStatus) : ($byStatus[$status] ?? 0);
         $result = $connection->query(
-            'SELECT r.PUBLIC_ID FROM mf_staff_request r INNER JOIN b_hlbd_mf_institution i ON i.ID=r.INSTITUTION_ID '
-            . 'INNER JOIN b_hlbd_mf_shoot s ON s.ID=r.SHOOT_ID WHERE ' . $where
-            . " ORDER BY r.UPDATED_AT DESC,r.ID DESC LIMIT {$limit} OFFSET {$offset}",
+            self::CARD . 'WHERE ' . implode(' AND ', $conditions) . " ORDER BY r.UPDATED_AT DESC,r.ID DESC LIMIT {$limit} OFFSET {$offset}",
         );
-        $items = [];
-        while (false !== ($id = $result->fetch())) {
-            $row = $this->request((string)$id['PUBLIC_ID']);
-            if (null !== $row) {
-                $items[] = $this->view($row);
-            }
+        $cards = [];
+        while (false !== ($row = $result->fetch())) {
+            $cards[] = $row;
         }
 
-        return ['items' => $items, 'total' => is_array($totalRow) ? (int)$totalRow['TOTAL'] : 0, 'byStatus' => $byStatus];
+        return ['items' => $this->views($cards), 'total' => $total, 'byStatus' => $byStatus];
     }
 
     /** @return array{institutions:list<array{id:string,name:string}>,shoots:list<array{id:string,institutionId:string,name:string}>,groups:list<array{id:string,institutionId:string,shootId:string,shootName:string,name:string,kind:string,state:string}>} */
@@ -124,73 +119,24 @@ final readonly class StaffRequestRepository
     /** @param array<string,mixed> $row @return array<string,mixed> */
     public function view(array $row): array
     {
-        return [
-            'id' => (string)$row['PUBLIC_ID'],
-            'institutionId' => (string)$row['INSTITUTION_PUBLIC_ID'],
-            'shootId' => (string)$row['SHOOT_PUBLIC_ID'],
-            'createdBy' => (int)$row['CREATED_BY'],
-            'createdByName' => (string)$row['CREATED_BY_NAME'],
-            'createdAt' => (string)$row['CREATED_AT'],
-            'revision' => (int)$row['REVISION'],
-            'status' => (string)$row['STATUS'],
-            'rows' => $this->rows((int)$row['ID']),
-            'comment' => (string)$row['COMMENT'],
-            'history' => $this->history((int)$row['ID']),
-            'results' => $this->results((int)$row['ID']),
-            'staffEligibility' => [
-                'eligible' => 1 === (int)$row['STAFF_ELIGIBLE'],
-                'source' => (string)$row['ELIGIBILITY_SOURCE'],
-                'verifiedAt' => (string)$row['ELIGIBILITY_VERIFIED_AT'],
-            ],
-        ];
+        return $this->views([$row])[0];
     }
 
-    /** @return list<array{id:string,groupId:string,code:string,childCode:string,photoIds:list<string>}> */
-    public function rows(int $requestId): array
+    /**
+     * Итог переноса по строкам; до переноса — пустой список.
+     *
+     * @return list<array{
+     *     rowId: string,
+     *     fromGroupId: string,
+     *     fromChildCode: string,
+     *     targetGroupId: string,
+     *     targetChildCode: string,
+     *     photoIds: list<string>,
+     * }>
+     */
+    public function results(int $requestId): array
     {
-        $result = Application::getConnection()->query(
-            'SELECT rr.PUBLIC_ID,g.UF_PUBLIC_ID AS GROUP_PUBLIC_ID,rr.INPUT_CODE,COALESCE(rr.TRANSFER_FROM_CODE,c.CODE) AS CODE,rr.PHOTO_IDS_JSON '
-            . 'FROM mf_staff_request_row rr INNER JOIN b_hlbd_mf_group g ON g.ID=rr.GROUP_ID '
-            . 'INNER JOIN mf_media_child c ON c.ID=rr.CHILD_ID WHERE rr.REQUEST_ID=' . $requestId . ' ORDER BY rr.SORT_NO,rr.ID',
-        );
-        $rows = [];
-        while (false !== ($row = $result->fetch())) {
-            $decoded = json_decode((string)$row['PHOTO_IDS_JSON'], true, 64, JSON_THROW_ON_ERROR);
-            if (!is_array($decoded)) {
-                throw new \UnexpectedValueException('Invalid staff request photo snapshot.');
-            }
-            $rows[] = [
-                'id' => (string)$row['PUBLIC_ID'],
-                'groupId' => (string)$row['GROUP_PUBLIC_ID'],
-                'code' => (string)$row['INPUT_CODE'],
-                'childCode' => (string)$row['CODE'],
-                'photoIds' => array_values(array_map('strval', $decoded)),
-            ];
-        }
-
-        return $rows;
-    }
-
-    /** @return list<array{kind:string,actorId:int,actorName:string,at:string,comment:string,confirmed:bool}> */
-    public function history(int $requestId): array
-    {
-        $result = Application::getConnection()->query(
-            'SELECT KIND,ACTOR_ID,ACTOR_NAME,DATE_FORMAT(CREATED_AT,\'%Y-%m-%dT%H:%i:%sZ\') AS CREATED_AT,COMMENT,CONFIRMED '
-            . 'FROM mf_staff_request_history WHERE REQUEST_ID=' . $requestId . ' ORDER BY ID',
-        );
-        $history = [];
-        while (false !== ($row = $result->fetch())) {
-            $history[] = [
-                'kind' => (string)$row['KIND'],
-                'actorId' => (int)$row['ACTOR_ID'],
-                'actorName' => (string)$row['ACTOR_NAME'],
-                'at' => (string)$row['CREATED_AT'],
-                'comment' => (string)$row['COMMENT'],
-                'confirmed' => 1 === (int)$row['CONFIRMED'],
-            ];
-        }
-
-        return $history;
+        return $this->related([$requestId])[$requestId]['results'] ?? [];
     }
 
     /** @return list<int> */
@@ -327,40 +273,6 @@ final readonly class StaffRequestRepository
         return $rows;
     }
 
-    /**
-     * Итог переноса по строкам; до переноса — пустой список.
-     *
-     * @return list<array{
-     *     rowId: string,
-     *     fromGroupId: string,
-     *     fromChildCode: string,
-     *     targetGroupId: string,
-     *     targetChildCode: string,
-     *     photoIds: list<string>,
-     * }>
-     */
-    public function results(int $requestId): array
-    {
-        $result = Application::getConnection()->query(
-            'SELECT rr.PUBLIC_ID,g.UF_PUBLIC_ID AS FROM_GROUP_ID,rr.TRANSFER_FROM_CODE,t.UF_PUBLIC_ID AS TARGET_GROUP_ID,rr.TRANSFER_CODE,rr.TRANSFER_PHOTO_IDS_JSON '
-            . 'FROM mf_staff_request_row rr INNER JOIN b_hlbd_mf_group g ON g.ID=rr.GROUP_ID INNER JOIN b_hlbd_mf_group t ON t.ID=rr.TRANSFER_GROUP_ID '
-            . 'WHERE rr.REQUEST_ID=' . $requestId . ' ORDER BY rr.SORT_NO,rr.ID',
-        );
-        $results = [];
-        while (false !== ($row = $result->fetch())) {
-            $results[] = [
-                'rowId' => (string)$row['PUBLIC_ID'],
-                'fromGroupId' => (string)$row['FROM_GROUP_ID'],
-                'fromChildCode' => (string)$row['TRANSFER_FROM_CODE'],
-                'targetGroupId' => (string)$row['TARGET_GROUP_ID'],
-                'targetChildCode' => (string)$row['TRANSFER_CODE'],
-                'photoIds' => $this->photoIds((string)$row['TRANSFER_PHOTO_IDS_JSON']),
-            ];
-        }
-
-        return $results;
-    }
-
     /** @param list<string> $photoIds */
     public function recordTransfer(int $rowId, string $fromCode, int $targetGroupId, string $targetCode, array $photoIds): void
     {
@@ -410,6 +322,121 @@ final readonly class StaffRequestRepository
             $this->quote($hash),
             $this->quote($result),
         ));
+    }
+
+    /**
+     * Собирает представления карточек, читая строки, итоги переноса и историю всех карточек двумя запросами.
+     *
+     * @param list<array<string,mixed>> $cards
+     *
+     * @return list<array<string,mixed>>
+     */
+    private function views(array $cards): array
+    {
+        if ([] === $cards) {
+            return [];
+        }
+        $ids = array_map(static fn(array $card): int => (int)$card['ID'], $cards);
+        $related = $this->related($ids);
+        $history = $this->history($ids);
+        $views = [];
+        foreach ($cards as $card) {
+            $id = (int)$card['ID'];
+            $views[] = [
+                'id' => (string)$card['PUBLIC_ID'],
+                'institutionId' => (string)$card['INSTITUTION_PUBLIC_ID'],
+                'shootId' => (string)$card['SHOOT_PUBLIC_ID'],
+                'createdBy' => (int)$card['CREATED_BY'],
+                'createdByName' => (string)$card['CREATED_BY_NAME'],
+                'createdAt' => (string)$card['CREATED_AT'],
+                'revision' => (int)$card['REVISION'],
+                'status' => (string)$card['STATUS'],
+                'rows' => $related[$id]['rows'] ?? [],
+                'comment' => (string)$card['COMMENT'],
+                'history' => $history[$id] ?? [],
+                'results' => $related[$id]['results'] ?? [],
+                'staffEligibility' => [
+                    'eligible' => 1 === (int)$card['STAFF_ELIGIBLE'],
+                    'source' => (string)$card['ELIGIBILITY_SOURCE'],
+                    'verifiedAt' => (string)$card['ELIGIBILITY_VERIFIED_AT'],
+                ],
+            ];
+        }
+
+        return $views;
+    }
+
+    /**
+     * Строки заявок и итог их переноса одним запросом, в порядке подачи.
+     *
+     * @param list<int> $requestIds
+     *
+     * @return array<int, array{
+     *     rows: list<array{id:string,groupId:string,code:string,childCode:string,photoIds:list<string>}>,
+     *     results: list<array{rowId:string,fromGroupId:string,fromChildCode:string,targetGroupId:string,targetChildCode:string,photoIds:list<string>}>,
+     * }>
+     */
+    private function related(array $requestIds): array
+    {
+        $result = Application::getConnection()->query(
+            'SELECT rr.REQUEST_ID,rr.PUBLIC_ID,g.UF_PUBLIC_ID AS GROUP_PUBLIC_ID,rr.INPUT_CODE,COALESCE(rr.TRANSFER_FROM_CODE,c.CODE) AS CODE,'
+            . 'rr.PHOTO_IDS_JSON,rr.TRANSFER_FROM_CODE,t.UF_PUBLIC_ID AS TARGET_GROUP_ID,rr.TRANSFER_CODE,rr.TRANSFER_PHOTO_IDS_JSON '
+            . 'FROM mf_staff_request_row rr INNER JOIN b_hlbd_mf_group g ON g.ID=rr.GROUP_ID '
+            . 'INNER JOIN mf_media_child c ON c.ID=rr.CHILD_ID LEFT JOIN b_hlbd_mf_group t ON t.ID=rr.TRANSFER_GROUP_ID '
+            . 'WHERE rr.REQUEST_ID IN (' . $this->ids($requestIds) . ') ORDER BY rr.REQUEST_ID,rr.SORT_NO,rr.ID',
+        );
+        $related = [];
+        while (false !== ($row = $result->fetch())) {
+            $requestId = (int)$row['REQUEST_ID'];
+            $related[$requestId] ??= ['rows' => [], 'results' => []];
+            $related[$requestId]['rows'][] = [
+                'id' => (string)$row['PUBLIC_ID'],
+                'groupId' => (string)$row['GROUP_PUBLIC_ID'],
+                'code' => (string)$row['INPUT_CODE'],
+                'childCode' => (string)$row['CODE'],
+                'photoIds' => $this->photoIds((string)$row['PHOTO_IDS_JSON']),
+            ];
+            if (null !== $row['TARGET_GROUP_ID']) {
+                $related[$requestId]['results'][] = [
+                    'rowId' => (string)$row['PUBLIC_ID'],
+                    'fromGroupId' => (string)$row['GROUP_PUBLIC_ID'],
+                    'fromChildCode' => (string)$row['TRANSFER_FROM_CODE'],
+                    'targetGroupId' => (string)$row['TARGET_GROUP_ID'],
+                    'targetChildCode' => (string)$row['TRANSFER_CODE'],
+                    'photoIds' => $this->photoIds((string)$row['TRANSFER_PHOTO_IDS_JSON']),
+                ];
+            }
+        }
+
+        return $related;
+    }
+
+    /**
+     * История заявок одним запросом, в порядке записи.
+     *
+     * @param list<int> $requestIds
+     *
+     * @return array<int, list<array{kind:string,actorId:int,actorName:string,at:string,comment:string,confirmed:bool}>>
+     */
+    private function history(array $requestIds): array
+    {
+        $result = Application::getConnection()->query(
+            'SELECT REQUEST_ID,KIND,ACTOR_ID,ACTOR_NAME,DATE_FORMAT(CREATED_AT,\'%Y-%m-%dT%H:%i:%sZ\') AS CREATED_AT,COMMENT,CONFIRMED '
+            . 'FROM mf_staff_request_history WHERE REQUEST_ID IN (' . $this->ids($requestIds) . ') ORDER BY REQUEST_ID,ID',
+        );
+        $history = [];
+        while (false !== ($row = $result->fetch())) {
+            $history[(int)$row['REQUEST_ID']][] = [
+                'kind' => (string)$row['KIND'],
+                'actorId' => (int)$row['ACTOR_ID'],
+                'actorName' => (string)$row['ACTOR_NAME'],
+                'at' => (string)$row['CREATED_AT'],
+                'comment' => (string)$row['COMMENT'],
+                'confirmed' => 1 === (int)$row['CONFIRMED'],
+            ];
+        }
+
+        return $history;
     }
 
     /** @return list<string> */

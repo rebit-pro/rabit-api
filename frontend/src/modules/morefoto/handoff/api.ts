@@ -22,6 +22,10 @@ export interface StaffRequestPage {
     summary?: { byStatus: Record<'submitted' | 'clarification' | 'transferred', number> };
   };
 }
+export interface StaffRequestFilters {
+  status?: StaffRequest['status'] | null;
+  shootId?: string | null;
+}
 interface MutationResult {
   id: string;
   revision: number;
@@ -33,10 +37,17 @@ interface TransferResult extends MutationResult {
 const key = (value: string) => value.replace(/-/g, '');
 
 export const staffRequestsApi = {
-  async list(page = 1, pageSize = 100): Promise<StaffRequestPage> {
+  /** HND-06 reads one page; the status and shoot filters are applied by the server. */
+  async list(page = 1, pageSize = 100, filters: StaffRequestFilters = {}): Promise<StaffRequestPage> {
+    const params = {
+      page,
+      pageSize,
+      ...(filters.status ? { status: filters.status } : {}),
+      ...(filters.shootId ? { shootId: filters.shootId } : {})
+    };
     const response = await api.get<{ data: { items: StaffRequest[]; scope: StaffRequestScope }; meta: StaffRequestPage['meta'] }>(
       '/api/v1/staff-requests',
-      { params: { page, pageSize }, unwrapEnvelope: false }
+      { params, unwrapEnvelope: false }
     );
     return { items: response.data.data.items, scope: response.data.data.scope, meta: response.data.meta };
   },

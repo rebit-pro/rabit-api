@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, shallowRef } from 'vue';
+import { computed, shallowRef, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import AdminDialog from '../../management/components/AdminDialog.vue';
 import RequestFields from './RequestFields.vue';
 import RequestReview from './RequestReview.vue';
 import { useHandoff } from '../useHandoff';
+import { loadHandoff } from '../service';
 import { useHandoffEditor } from '../useHandoffEditor';
 import { useTransferPreview } from '../useTransferPreview';
 import { formatMoment, requestStatus } from '../display';
@@ -16,9 +17,21 @@ import { plural } from '@/components/viz/measures';
 import { CHART_CATEGORY } from '../../ui/chartPalette';
 import { toneOf } from '@/components/status/tones';
 import { staffRequestTone } from '../../ui/statusTone';
+type RequestState = keyof typeof requestStatus;
 const route = useRoute(),
-  { auth, data, loading, error, reload } = useHandoff(),
+  statusFilter = shallowRef<RequestState | null>(null),
+  page = shallowRef(1),
+  shootFilter = computed(() => (typeof route.query.shoot === 'string' ? route.query.shoot : null)),
+  { auth, data, loading, error, reload } = useHandoff((token, requestId) =>
+    loadHandoff(token, requestId, { page: page.value, status: statusFilter.value, shootId: shootFilter.value })
+  ),
   notice = shallowRef('');
+// Live mode reads one filtered page (#26): a new card, filter or shoot starts again from the first page.
+watch([() => route.params.requestId, shootFilter, statusFilter], () => {
+  if (page.value === 1) void reload();
+  else page.value = 1;
+});
+watch(page, () => void reload());
 const editor = useHandoffEditor(() => {
   notice.value = 'Изменения сохранены.';
   void reload();
@@ -41,15 +54,12 @@ const selected = computed(() => data.value?.requests.find((r) => r.id === route.
 const reviewing = computed(() => ['curator', 'organizer'].includes(data.value?.role ?? ''));
 const createAllowed = computed(() => ['teacher', 'organizer'].includes(data.value?.role ?? ''));
 const titles = { submit: 'Передать список куратору', clarify: 'Запросить уточнение', confirm: 'Подтвердить перенос' };
-type RequestState = keyof typeof requestStatus;
-const statusFilter = shallowRef<RequestState | null>(null);
+// The demo keeps every list locally; live pages come filtered by the server and pass unchanged.
 const requests = computed(
   () =>
     data.value?.requests
-      .filter((r) => !route.query.shoot || r.shootId === route.query.shoot)
-      .filter((r) => null === statusFilter.value || r.status === statusFilter.value)
-      .slice()
-      .reverse() ?? []
+      .filter((r) => !shootFilter.value || r.shootId === shootFilter.value)
+      .filter((r) => null === statusFilter.value || r.status === statusFilter.value) ?? []
 );
 // Live counts come from the server summary (U5); the demo keeps every list locally and counts it.
 const statusCounts = computed(() => {
@@ -208,6 +218,16 @@ function change(value: Partial<StaffCommand>) {
         </header>
         <v-btn :to="'/cabinet/staff-requests/' + request.id" variant="outlined">Открыть список</v-btn>
       </article>
+      <v-pagination
+        v-if="data.requestPage && data.requestPage.totalPages > 1"
+        v-model="page"
+        class="mt-6"
+        :length="data.requestPage.totalPages"
+        total-visible="5"
+        density="comfortable"
+        :disabled="loading"
+        data-testid="request-pagination"
+      />
     </template>
   </template>
   <AdminDialog

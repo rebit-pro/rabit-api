@@ -87,6 +87,8 @@ export interface HandoffWorkspace {
   now: string;
   /** U5 server split of the visible staff requests; the demo counts its local list instead. */
   requestSummary?: Record<'submitted' | 'clarification' | 'transferred', number>;
+  /** Live list position: the server returns one filtered page at a time. */
+  requestPage?: { page: number; totalPages: number; total: number };
 }
 export interface LinkCommand {
   kind: 'link';
