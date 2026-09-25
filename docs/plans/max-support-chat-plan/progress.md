@@ -17,6 +17,15 @@
 
 ## Журнал
 
+### 25.09.2026 — самоконтроль PR 48
+
+- Пользователь создал группу MAX «МореФото — вопросы родителей.» (бот ещё не добавлен — ждёт модерации).
+- Ревью PR 48: блокер — контракт MAX был указан в `rebit.share/lib/Application/Contract/Messenger/`, где уже лежит шина RabbitMQ. Комментарий в PR: https://github.com/rebit-pro/rabit-api/pull/48#discussion_r4104329387. Исправлено на `Contract/Notification/` в plan.md, `graph.json` и каноне.
+- Канон пересобран: `wave_graph.py`, `render-waves.py`, `build.py`, `validate.py` (118 requests), `validate-postman.cjs` — PASS. Патч пересобран; наложение на исходный снимок воспроизводит канон — PASS.
+- `python3 tools/verify-wave-graph.py docs/waves/graph.json` — PASS: 52 волны, 116 API ID, ready E6, K3. `git diff --check` — PASS.
+- `origin/main` ушёл на 8 коммитов (frontend-заказы, #76), `docs/waves/graph.json` в них не менялся; `gh pr view 48 --json mergeable` — MERGEABLE/CLEAN.
+- Других замечаний не найдено: зависимости K3 слиты, unlocks пересчитаны, K1 ждёт K3, SUP-07…12 без коллизий method/path, секретные переменные Postman пустые.
+
 ### 25.09.2026 — бот создан
 
 - Пользователь создал бота типа «Добавление в чаты»: «Море Фото - вопросы куратору.», никнейм `@se14459249_bot`, статус «На модерации»; MAX обещает проверку до 1 дня. Токена ещё нет.

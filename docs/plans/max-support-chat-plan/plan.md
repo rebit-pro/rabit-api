@@ -136,7 +136,7 @@ webhook-обвязка, адаптеры. Контроллеры по прави
 секрет webhook и ключ беседы разбирает общая infrastructure-обвязка. `LogChannelEnum` — `support`; текст сообщений,
 ключи, токен и сырые payload не логируются.
 
-**MAX — транспортная граница.** Технический контракт `rebit.share/lib/Application/Contract/Messenger/`
+**MAX — транспортная граница.** Технический контракт `rebit.share/lib/Application/Contract/Notification/` (рядом с `EmailNotificationInterface`; `Contract/Messenger` — шина RabbitMQ)
 (отправить текст в чат → `mid` | отказ | неизвестно; разобрать update), HTTP-реализация в
 `rebit.notification/lib/Infrastructure/Max/` поверх общего HTTP-клиента. Маршрутизация ответа и состояние доставки
 принадлежат Support. H1 EMAIL не меняется; универсальная система каналов не вводится.

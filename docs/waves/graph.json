@@ -1952,7 +1952,7 @@
       "scope": [
         "Создать morefoto.support: беседа, реплика, номер, хеш ключа родителя; миграции foundation, DI, маршруты SUP-07…12, LogChannelEnum support. Беседа не связана с заказом.",
         "Родитель без аккаунта: имя и текст из галереи (контекст — группа, учреждение, куратор группы через публичный контракт Media), ключ беседы X-Question-Key только в браузере. head/teacher — одна беседа сотрудника по Bearer.",
-        "Технический контракт MAX в rebit.share/Application/Contract/Messenger, HTTP-реализация в rebit.notification; outbox в транзакции с репликой, RabbitMQ как сигнал, dispatcher pending, неизвестный результат без слепого повтора.",
+        "Технический контракт MAX в rebit.share/Application/Contract/Notification, HTTP-реализация в rebit.notification; outbox в транзакции с репликой, RabbitMQ как сигнал, dispatcher pending, неизвестный результат без слепого повтора.",
         "SUP-12: webhook MAX с секретом, inbox до 200, дедупликация по mid; reply из настроенной группы на сообщение бота добавляет реплику куратора; bot_added сохраняет ID группы; команда подписки webhook.",
         "Frontend: панель «Вопрос куратору» в галерее и раздел в кабинете head/teacher, опрос истории на видимой вкладке, отметка нового ответа."
       ],

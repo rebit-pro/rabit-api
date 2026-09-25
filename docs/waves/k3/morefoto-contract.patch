@@ -1,6 +1,6 @@
 diff -ruN -x __pycache__ a/docs/04-bitrix-modules/README.md b/docs/04-bitrix-modules/README.md
 --- a/docs/04-bitrix-modules/README.md	2026-09-25 14:20:02.658865441 +0300
-+++ b/docs/04-bitrix-modules/README.md	2026-09-25 14:44:55.706239008 +0300
++++ b/docs/04-bitrix-modules/README.md	2026-09-25 15:09:22.504334406 +0300
 @@ -30,7 +30,7 @@
  | morefoto.handoff | HND-01–HND-12 | 12 |
  | morefoto.payment | PAY-01–PAY-11 | 11 |
@@ -12,7 +12,7 @@ diff -ruN -x __pycache__ a/docs/04-bitrix-modules/README.md b/docs/04-bitrix-mod
  | morefoto.shipping | SHP-01–SHP-05 | 5 |
 diff -ruN -x __pycache__ a/docs/04-bitrix-modules/backend-waves.json b/docs/04-bitrix-modules/backend-waves.json
 --- a/docs/04-bitrix-modules/backend-waves.json	2026-09-25 14:19:16.153401855 +0300
-+++ b/docs/04-bitrix-modules/backend-waves.json	2026-09-25 14:44:49.256727906 +0300
++++ b/docs/04-bitrix-modules/backend-waves.json	2026-09-25 15:09:22.371778864 +0300
 @@ -2,7 +2,7 @@
    "version": 2,
    "planStatus": "active",
@@ -94,7 +94,7 @@ diff -ruN -x __pycache__ a/docs/04-bitrix-modules/backend-waves.json b/docs/04-b
 +      "scope": [
 +        "Создать morefoto.support: беседа, реплика, номер, хеш ключа родителя; миграции foundation, DI, маршруты SUP-07…12, LogChannelEnum support. Беседа не связана с заказом.",
 +        "Родитель без аккаунта: имя и текст из галереи (контекст — группа, учреждение, куратор группы через публичный контракт Media), ключ беседы X-Question-Key только в браузере. head/teacher — одна беседа сотрудника по Bearer.",
-+        "Технический контракт MAX в rebit.share/Application/Contract/Messenger, HTTP-реализация в rebit.notification; outbox в транзакции с репликой, RabbitMQ как сигнал, dispatcher pending, неизвестный результат без слепого повтора.",
++        "Технический контракт MAX в rebit.share/Application/Contract/Notification, HTTP-реализация в rebit.notification; outbox в транзакции с репликой, RabbitMQ как сигнал, dispatcher pending, неизвестный результат без слепого повтора.",
 +        "SUP-12: webhook MAX с секретом, inbox до 200, дедупликация по mid; reply из настроенной группы на сообщение бота добавляет реплику куратора; bot_added сохраняет ID группы; команда подписки webhook.",
 +        "Frontend: панель «Вопрос куратору» в галерее и раздел в кабинете head/teacher, опрос истории на видимой вкладке, отметка нового ответа."
 +      ],
@@ -151,7 +151,7 @@ diff -ruN -x __pycache__ a/docs/04-bitrix-modules/backend-waves.json b/docs/04-b
        "inputBoundary": "Слитые в main: A3, B2, H1. Внутри пакета design-ux — предыдущие коммиты: U3, U4. Решения: D08.",
 diff -ruN -x __pycache__ a/docs/04-bitrix-modules/backend-waves.md b/docs/04-bitrix-modules/backend-waves.md
 --- a/docs/04-bitrix-modules/backend-waves.md	2026-09-25 14:20:02.448294992 +0300
-+++ b/docs/04-bitrix-modules/backend-waves.md	2026-09-25 14:44:55.654275916 +0300
++++ b/docs/04-bitrix-modules/backend-waves.md	2026-09-25 15:09:22.452115556 +0300
 @@ -18,7 +18,7 @@
 
  ## Текущий независимый набор
@@ -262,7 +262,7 @@ diff -ruN -x __pycache__ a/docs/04-bitrix-modules/backend-waves.md b/docs/04-bit
 +
 +- Создать morefoto.support: беседа, реплика, номер, хеш ключа родителя; миграции foundation, DI, маршруты SUP-07…12, LogChannelEnum support. Беседа не связана с заказом.
 +- Родитель без аккаунта: имя и текст из галереи (контекст — группа, учреждение, куратор группы через публичный контракт Media), ключ беседы X-Question-Key только в браузере. head/teacher — одна беседа сотрудника по Bearer.
-+- Технический контракт MAX в rebit.share/Application/Contract/Messenger, HTTP-реализация в rebit.notification; outbox в транзакции с репликой, RabbitMQ как сигнал, dispatcher pending, неизвестный результат без слепого повтора.
++- Технический контракт MAX в rebit.share/Application/Contract/Notification, HTTP-реализация в rebit.notification; outbox в транзакции с репликой, RabbitMQ как сигнал, dispatcher pending, неизвестный результат без слепого повтора.
 +- SUP-12: webhook MAX с секретом, inbox до 200, дедупликация по mid; reply из настроенной группы на сообщение бота добавляет реплику куратора; bot_added сохраняет ID группы; команда подписки webhook.
 +- Frontend: панель «Вопрос куратору» в галерее и раздел в кабинете head/teacher, опрос истории на видимой вкладке, отметка нового ответа.
 +
@@ -321,7 +321,7 @@ diff -ruN -x __pycache__ a/docs/04-bitrix-modules/backend-waves.md b/docs/04-bit
 +Валидатор проверяет DAG независимо от порядка строк JSON, точные обратные unlocks, готовность начатых волн относительно принятого main, 35 legacy ID и 118 первичных API ID. Отрицательные fixtures отвергают циклы, неизвестные зависимости, открытые решения и старт поверх незамерженной волны. Ни один из этих результатов не означает live-проверку API.
 diff -ruN -x __pycache__ a/docs/05-rest-api/README.md b/docs/05-rest-api/README.md
 --- a/docs/05-rest-api/README.md	2026-09-25 14:20:02.658865441 +0300
-+++ b/docs/05-rest-api/README.md	2026-09-25 14:44:55.706239008 +0300
++++ b/docs/05-rest-api/README.md	2026-09-25 15:09:22.504334406 +0300
 @@ -92,7 +92,9 @@
  | Bearer | Существующая техническая идентификация SHR-01; без назначения роли MoreFoto |
  | Галерея | Непредсказуемый galleryToken в пути, только одна галерея |
@@ -485,7 +485,7 @@ diff -ruN -x __pycache__ a/docs/05-rest-api/build.py b/docs/05-rest-api/build.py
 
 diff -ruN -x __pycache__ a/docs/05-rest-api/endpoints.json b/docs/05-rest-api/endpoints.json
 --- a/docs/05-rest-api/endpoints.json	2026-09-25 14:20:02.662838468 +0300
-+++ b/docs/05-rest-api/endpoints.json	2026-09-25 14:44:55.710236169 +0300
++++ b/docs/05-rest-api/endpoints.json	2026-09-25 15:09:22.508351240 +0300
 @@ -73,8 +73,8 @@
      ],
      "support": [
@@ -736,7 +736,7 @@ diff -ruN -x __pycache__ a/docs/05-rest-api/endpoints.json b/docs/05-rest-api/en
        "method": "GET",
 diff -ruN -x __pycache__ a/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json
 --- a/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json	2026-09-25 14:20:02.706541769 +0300
-+++ b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json	2026-09-25 14:44:55.738216296 +0300
++++ b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json	2026-09-25 15:09:22.532452248 +0300
 @@ -2425,7 +2425,7 @@
      },
      {
@@ -1626,7 +1626,7 @@ diff -ruN -x __pycache__ a/docs/05-rest-api/postman/MoreFoto.backend-waves.postm
            "id": "09b03982-f30c-50d1-9f30-3cdd9fb49ee4",
 diff -ruN -x __pycache__ a/docs/05-rest-api/postman/MoreFoto.local.postman_environment.json b/docs/05-rest-api/postman/MoreFoto.local.postman_environment.json
 --- a/docs/05-rest-api/postman/MoreFoto.local.postman_environment.json	2026-09-25 14:20:02.706541769 +0300
-+++ b/docs/05-rest-api/postman/MoreFoto.local.postman_environment.json	2026-09-25 14:44:55.738216296 +0300
++++ b/docs/05-rest-api/postman/MoreFoto.local.postman_environment.json	2026-09-25 15:09:22.536469082 +0300
 @@ -177,6 +177,36 @@
        "type": "default"
      },
@@ -1691,7 +1691,7 @@ diff -ruN -x __pycache__ a/docs/05-rest-api/postman/MoreFoto.local.postman_envir
        "key": "idem_set_02",
 diff -ruN -x __pycache__ a/docs/05-rest-api/postman/MoreFoto.postman_collection.json b/docs/05-rest-api/postman/MoreFoto.postman_collection.json
 --- a/docs/05-rest-api/postman/MoreFoto.postman_collection.json	2026-09-25 14:20:02.682703605 +0300
-+++ b/docs/05-rest-api/postman/MoreFoto.postman_collection.json	2026-09-25 14:44:55.722227652 +0300
++++ b/docs/05-rest-api/postman/MoreFoto.postman_collection.json	2026-09-25 15:09:22.520401744 +0300
 @@ -3766,7 +3766,7 @@
                  "{{gallery_token}}"
                ]
@@ -2538,7 +2538,7 @@ diff -ruN -x __pycache__ a/docs/05-rest-api/postman/MoreFoto.postman_collection.
      },
 diff -ruN -x __pycache__ a/docs/05-rest-api/postman/MoreFoto.stage.postman_environment.json b/docs/05-rest-api/postman/MoreFoto.stage.postman_environment.json
 --- a/docs/05-rest-api/postman/MoreFoto.stage.postman_environment.json	2026-09-25 14:20:02.706541769 +0300
-+++ b/docs/05-rest-api/postman/MoreFoto.stage.postman_environment.json	2026-09-25 14:44:55.738216296 +0300
++++ b/docs/05-rest-api/postman/MoreFoto.stage.postman_environment.json	2026-09-25 15:09:22.536469082 +0300
 @@ -177,6 +177,36 @@
        "type": "default"
      },
@@ -2630,7 +2630,7 @@ diff -ruN -x __pycache__ a/docs/05-rest-api/validate.py b/docs/05-rest-api/valid
              pre=[event for event in item["event"] if event["listen"]=="prerequest"]
 diff -ruN -x __pycache__ a/docs/05-rest-api/verification.json b/docs/05-rest-api/verification.json
 --- a/docs/05-rest-api/verification.json	2026-09-25 14:19:56.043311788 +0300
-+++ b/docs/05-rest-api/verification.json	2026-09-25 14:44:56.393612928 +0300
++++ b/docs/05-rest-api/verification.json	2026-09-25 15:09:22.966270383 +0300
 @@ -1,10 +1,10 @@
  {
    "date": "2026-09-11",
@@ -2658,8 +2658,8 @@ diff -ruN -x __pycache__ a/docs/05-rest-api/verification.json b/docs/05-rest-api
 -    "../04-bitrix-modules/backend-waves.json": "2144dbc21ced7a18f0a8a70368feb0e5f9f47aa41f4d5eaaa3f71823ec49f823",
 -    "../04-bitrix-modules/backend-waves.md": "7eb63f69dcd751a767cdae3070f28afc41df5583eca176e6f9274ddad760e7db",
 +    "../04-bitrix-modules/README.md": "66429b92c44805de3a30634fc47c5074cca96c94fca1c3562af8fac99422f876",
-+    "../04-bitrix-modules/backend-waves.json": "c889f1dca8c174cd1c7d6d33c81f2ee17d0ad71803645cb70b4bf196089b8ffb",
-+    "../04-bitrix-modules/backend-waves.md": "fd221cf145f43d00c62cca7520d1a03284fa6afddf446fd49e75c0b4dd396dc3",
++    "../04-bitrix-modules/backend-waves.json": "f1eb7d0e5ea3a6718e88a9c5756fbc89a6a31addfc71f15f1e4d1e6eab313865",
++    "../04-bitrix-modules/backend-waves.md": "8c630564895f9d4ee6517d61a45144e01c1daf364a0ec55ab06baa0aac1d5c18",
      "../04-bitrix-modules/render-waves.py": "b502e757c9fd854c81d7f828a7a03bb58569f5f3cb0a582eed98b53c358327ec",
      "../04-bitrix-modules/wave_graph.py": "f1045c84f245114dd0eb44b321f754e57a0a91879fb7415f12041eca1337e53b",
 -    "README.md": "645d2887cd4f0051767ec036d175b403d5e4fe90079f7b518d956547e1a590c6",
