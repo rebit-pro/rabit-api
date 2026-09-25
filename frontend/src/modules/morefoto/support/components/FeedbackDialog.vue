@@ -93,7 +93,6 @@ function reset(): void {
             :model-value="draft.contact"
             label="Телефон или email"
             autocomplete="email"
-            inputmode="email"
             hint="По нему мы ответим"
             persistent-hint
             :maxlength="CONTACT_MAX"
