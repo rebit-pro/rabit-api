@@ -368,12 +368,27 @@ async function fillCheckout(page: Page, name: string, email: string, quantity: n
   await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
   await page.getByLabel('Состав и демонстрационные условия проверены').check();
 }
-/** Recovers an unconfirmed attempt on its own screen and proves the server replayed the one stored order. */
-async function recover(page: Page, key: string, email: string) {
+/**
+ * Recovers an unconfirmed attempt on its own screen and proves the server replayed the one stored order. `whilePending`
+ * runs while the replay is held back, before its answer reaches the page.
+ */
+async function recover(page: Page, key: string, email: string, whilePending?: () => Promise<void>) {
   await page.unroute('**/orders');
   await page.unroute(/\/api\/v1\/public\/galleries\/[a-f0-9]{64}$/);
+  let release = () => {};
+  if (whilePending) {
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/orders', async (route) => {
+      await held;
+      await route.continue();
+    });
+  }
   const replayed = page.waitForResponse((r) => r.url().endsWith('/orders') && r.request().method() === 'POST');
   await page.getByTestId('recover-order').click();
+  if (whilePending) {
+    await whilePending();
+    release();
+  }
   const response = await replayed;
   expect(response.status()).toBe(201);
   expect(response.request().headers()['idempotency-key']).toBe(key);
@@ -405,7 +420,13 @@ test('E5: lost response survives group closure and reload, then recovers the sam
   await page.reload();
   await expect(page.getByTestId('checkout-recovery')).toBeVisible();
   await expect(page.getByText('Сначала выберите фотографии')).toHaveCount(0);
-  await recover(page, keys[0]!, 'lost.e5@example.test');
+  // #41: while the replay runs, the recovery screen stays with a loading button; neither the form nor an empty cart flashes.
+  await recover(page, keys[0]!, 'lost.e5@example.test', async () => {
+    await expect(page.getByTestId('recover-order')).toHaveClass(/v-btn--loading/);
+    await expect(page.getByTestId('checkout-recovery')).toBeVisible();
+    await expect(page.getByTestId('create-order')).toHaveCount(0);
+    await expect(page.getByText('Сначала выберите фотографии')).toHaveCount(0);
+  });
 });
 
 test('E5: 502 after a committed order keeps the attempt and recovers the same key', async ({ page }) => {

@@ -81,6 +81,17 @@ export function checkoutOutcome(problem: ApiProblem, recovering: boolean): Check
   }
 }
 
+/** What the checkout is sending now: nothing, a fresh attempt from the form or the stored unconfirmed attempt. */
+export type CheckoutSubmission = 'idle' | 'first' | 'recovery';
+
+/**
+ * An unconfirmed attempt is recovered on its own screen, also while it is being repeated: the form or an empty cart
+ * must not flash in between. A first submission stores its attempt before the request and still stays on the form.
+ */
+export function showsCheckoutRecovery(pending: boolean, submission: CheckoutSubmission): boolean {
+  return pending && submission !== 'first';
+}
+
 /** Order lines have no image URL by contract; the composition shows frame codes unless a trusted source is given. */
 export function orderQuoteAsCart(quote: LiveOrderQuote, thumb: (photoId: string) => string = () => ''): CartQuote {
   return {

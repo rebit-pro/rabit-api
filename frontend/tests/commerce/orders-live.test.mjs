@@ -5,6 +5,7 @@ import {
   isCreatedOrder,
   newRequestId,
   orderQuoteAsCart,
+  showsCheckoutRecovery,
   staffFiltersFromQuery,
   staffOrderError,
   staffOrderParams
@@ -79,6 +80,14 @@ test('staff filters come from the URL and only non-empty values reach the API', 
   assert.equal(filters.page, 3);
   assert.deepEqual(staffOrderParams(filters), { page: 3, pageSize: 25, q: 'MF-000001', paymentStatus: 'unpaid' });
   assert.equal(staffFiltersFromQuery({ page: '-1' }).page, 1);
+});
+
+test('an unconfirmed attempt keeps its recovery screen while it is repeated, a first submission keeps the form', () => {
+  assert.equal(showsCheckoutRecovery(true, 'idle'), true);
+  assert.equal(showsCheckoutRecovery(true, 'recovery'), true);
+  // The first submission stores its attempt before the request: the form with its loading button stays.
+  assert.equal(showsCheckoutRecovery(true, 'first'), false);
+  for (const submission of ['idle', 'first', 'recovery']) assert.equal(showsCheckoutRecovery(false, submission), false);
 });
 
 test('staff errors explain scope without revealing other orders', () => {
