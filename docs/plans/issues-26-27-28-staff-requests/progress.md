@@ -9,8 +9,8 @@
 - Коммиты: #26 `92fbc7f`, #27 `82712b2`, #28 `02d4904` (+ журнал).
 - Документация: [план](plan.md), F1: [plan](../F1_staff_requests/plan.md), [README](../../waves/f1/README.md).
 - Завершено: код и тесты трёх issue, быстрые проверки backend/frontend, push.
-- Сейчас: блокер review исправлен; обновление base и полный gate.
-- Следующий шаг: влить свежий `main`, полный `make test-e2e` (T08–T15), фактические время/память из `verify-handoff.log` перенести в журнал и PR, затем merge (решение пользователя 2026-09-25). Деплой — позже, пользователь соберёт несколько веток.
+- Сейчас: блокер review исправлен, base обновлён до `1dd4a5f` (merge `e245dc0`), полный gate PASS; PR сливается.
+- Следующий шаг: деплой — позже, пользователь соберёт несколько веток (решение 2026-09-25).
 - Блокеров нет. Открыто: Q1 (убрать `history` из элементов HND-06 — изменение контракта).
 - Рабочее дерево: закоммичено. Пустые `api/vendor`, `api/var`, `frontend/node_modules` — точки монтирования docker, в git не попадают; `frontend/reports` игнорируется.
 - Команды проверок:
@@ -72,6 +72,25 @@
   - live `zzz-handoff.spec.ts`: после reload повтор идёт с тем же ключом и получает replay `{revision: 9}` без второй мутации; при внешнем конфликте draft «Мой черновик» переживает закрытие и открытие, повтор снова даёт `REVISION_CONFLICT`, замена — только кнопкой; последующие revision сдвинуты на единицу.
 - Проверки (том `rabit-issues262728-node`): `npx eslint --fix` по изменённым файлам, `npm run check` — exit 0, `npm run test:commerce` — 196/196.
 
+### 2026-09-25 — полный gate
+
+- Base: `git merge origin/main` (`1dd4a5f`) → `e245dc0`, конфликтов нет.
+- Gate `rabit-e2e-57947e282f57` (321.7 с) — PASS, exit 0:
+  - php-lint, phpstan, phpunit, frontend lint/typecheck/test/build — PASS;
+  - группа `a` 64/64, группа `b` 43/43; «F1: воспитатель подаёт список…» ✓ 24.7 с (сценарии #26–#28), навигация F1 ✓;
+  - верификаторы `storefront/handoff/orders/links/transfers/avatar/payment-costs/access` — PASS.
+- `verify-handoff.log` (1000 заявок в откатываемой транзакции):
+
+  | Замер | SQL | мс | КБ |
+  |---|---|---|---|
+  | страница 1 элемент | 4 | 6.6 | 153 |
+  | страница 25 | 4 | 6.3 | 73 |
+  | страница 100 | 4 | 7.5 | 297 |
+  | последняя страница 100 | 4 | 8.4 | 289 |
+  | 100 карточек по одной (прежний путь) | 300 | 94.4 | 890 |
+
+- Команда: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда | Доказательство |
@@ -83,9 +102,9 @@
 | T05 | PASS | 2026-09-25 | PHPUnit | `testConcurrentClarificationWithTheSameKeyReplays`, `testConcurrentCreateWithTheSameKeyDoesNotCreateASecondRequest` |
 | T06 | PASS | 2026-09-25 | PHPUnit | `testSameKeyWithAnotherBodyIsAConflict` |
 | T07 | PASS | 2026-09-25 | PHPUnit | `testKeyIsReservedBeforeTheRequestIsLocked`, `testTeacherCreatesVerifiedRequestOnlyInsideAssignedGroup` |
-| T08 | PENDING | 2026-09-25 | `zzz-handoff.spec.ts` | написан, запуск — gate после review |
-| T09–T12 | PENDING | 2026-09-25 | `zzz-handoff.spec.ts` | написан, `typecheck:e2e` OK, запуск — gate после review |
-| T13, T14 | PENDING | 2026-09-25 | `zzz-handoff.spec.ts` | написан, запуск — gate после review |
-| T15 | PENDING | 2026-09-25 | `verify-handoff.php` | написан, `php -l` OK, запуск — gate после review |
+| T08 | PASS | 2026-09-25 | `zzz-handoff.spec.ts` | gate `57947e282f57`, «F1: воспитатель подаёт список…» ✓ |
+| T09–T12 | PASS | 2026-09-25 | `zzz-handoff.spec.ts` | gate `57947e282f57`, «F1: воспитатель подаёт список…» ✓ |
+| T13, T14 | PASS | 2026-09-25 | `zzz-handoff.spec.ts` | gate `57947e282f57`, «F1: воспитатель подаёт список…» ✓ |
+| T15 | PASS | 2026-09-25 | `verify-handoff.php` | 4 SQL на страницу 1/25/100, 7.5 мс и 297 КБ на 100 из 1000; прежний путь — 300 SQL, 94.4 мс |
 | T16 | PASS | 2026-09-25 | PHPUnit/PHPStan/phplint/php-cs-fixer | 741 tests OK, No errors, 989 files OK |
 | T17 | PASS | 2026-09-25 | `npm run check && npm run test:commerce` | exit 0, 195/195 |
