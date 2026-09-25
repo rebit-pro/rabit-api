@@ -4,7 +4,11 @@
 
 - Ветка `codex/issues-103-table-toolbar`, worktree `/home/user/rabit-api-worktrees/issues-103-table-toolbar`,
   base `origin/main` `03f4e3b`. PR — нет.
-- Gate PASS на объединённом с `main` коде. Следующий шаг: merge PR #104 и выкатка frontend (решение пользователя).
+- PR #104 влит как `e69ee57`, issue #103 закрыт. Выкачено на https://app.morefoto36.ru 2026-09-25 (только frontend):
+  `morefoto-frontend:issues103-20260925200321-e69ee57`, релиз `/srv/morefoto/releases/issues103-20260925200321-e69ee57`.
+  Backend не менялся (K3 `caa37b6`). Откат: `docker service rollback morefoto_frontend` (прежний образ
+  `morefoto-frontend:k3-20260925204828-caa37b6` в `frontend-before.txt`).
+- Открыто: пользовательская проверка на своём кабинете.
 - Блокеров нет.
 
 ## Журнал
@@ -27,6 +31,15 @@
 - `main` ушёл на `caa37b6` (K3, в т.ч. `icons.ts`): merge `af82939`, конфликт реестра иконок — оставлены обе
   (`mdi-send-outline`, `mdi-swap-vertical`). `npm run check` 38/38. Повторный gate на `af82939`
   (`rabit-e2e-953158a9bdbc`, ~283 с) — PASS: 117 сценариев (a 71, b 46), все verifier, включая `verify-support`.
+
+### 2026-09-25 — merge и выкатка
+
+- Пользователь: «если тесты ок — мерж и деплой». Merge `gh pr merge 104 --merge --match-head-commit` → `e69ee57`.
+- Разница с выкаченным K3 `caa37b6` — только `frontend/` и `docs/`, поэтому выкатка только frontend.
+- Образ из `git archive e69ee57 frontend`, `VITE_API_MOCKS_ENABLED=false`; в чанке `UiDataTable-CJ5oYBWd.js` —
+  `ui-table-toolbar`. `switch-frontend.sh`: 2/2 на новом образе.
+- Smoke: `/health`, `/login`, `/cabinet/{users,institutions,overview}` — 200; SHA-256 отдаваемого `index.html` равен
+  файлу образа; отдаваемый `UiDataTable-CJ5oYBWd.js` содержит новую панель.
 
 ## Тест-кейсы
 
