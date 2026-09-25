@@ -4,9 +4,9 @@
 
 - Ветка `codex/ops-login-feedback` (worktree `.worktrees/ops-login-feedback`), base `caa37b6` (origin/main).
 - PR: https://github.com/rebit-pro/rabit-api/pull/108 (head cdb59f6 + docs). Связано: K3 `morefoto.support` (PR #89).
-- Завершено: backend (миграция, гостевой тип беседы, `POST /api/v1/public/feedback`), frontend (шапка, блок «Кабинет
-  «Море фото»», диалог «Написать нам»), unit-тесты, live E2E-спека и DB-верификатор, быстрые проверки.
-- Следующий шаг: ревью PR; если нет блокеров, запустить полный `make test-e2e` (T08–T11).
+- Завершено: backend, frontend, тесты, ревью без блокеров (неблокирующее — #111), полный gate PASS.
+- Следующий шаг: merge PR #108 и выкат на stage (backend + миграция `Version20260925210001`, затем frontend) —
+  по подтверждению пользователя.
 - Блокеры: нет. Открыто: после деплоя применить миграцию `Version20260925210001` на stage/prod.
 - Рабочее дерево: всё закоммичено.
 - Следующая проверка:
@@ -32,6 +32,20 @@
   - Stub-браузер (Vite + Playwright `page.route`), `/login` 1440×900 и 390×844: горизонтальный скролл 0,
     ошибки полей видны, отправка → «Обращение №17 отправлено». Скриншоты в scratchpad сессии, не в репозитории.
 
+### 2026-09-25 — ревью и полный gate
+
+- Пользователь подтвердил лимит 30 обращений в час и попросил довести задачу.
+- В ветку слит `origin/main` (`26fe05a`) без конфликтов.
+- Самостоятельное ревью: блокеров нет. Исправлено: у поля «Телефон или email» убран `inputmode="email"`.
+  Неблокирующее — issue #111 (лимит по IP, гонка подсчёта, индекс).
+- Полный `make test-e2e` (прогон `rabit-e2e-544ea69a98dd`) — FAIL: группа a 72/73, гостевое обращение получило 503.
+  Причина: стенд применяет миграции явным списком в `api/tools/e2e/prepare.php`, `20260925210001` туда не был добавлен,
+  CHECK отклонил `AUTHOR='guest'`. Исправлено добавлением в список. Группа b и её верификаторы — PASS.
+- Повторный полный `make test-e2e` (прогон `rabit-e2e-f21b110864a4`) — **full gate PASS** за 331 с: браузер a 73/73,
+  b 46/46; все верификаторы, включая `verify-support.php` (гостевое обращение, повтор/409/422, текст MAX, ответ
+  в MAX не сохраняется, CHECK) и `verify-payments.php`. Скриншоты `login-{desktop,mobile}.png`,
+  `login-feedback-{desktop,mobile}.png` в `api/var/e2e/rabit-e2e-f21b110864a4/a/a/artifacts/` — вёрстка корректна.
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда | Доказательство |
@@ -43,8 +57,8 @@
 | T05 | PASS | 2026-09-25 | phpunit | `testContactMustLeadBackToTheGuest` |
 | T06 | PASS | 2026-09-25 | phpunit | `testCuratorsSeeTheContactAndRepliesInMaxAreNotStored` |
 | T07 | PASS | 2026-09-25 | phpunit `SupportArchitectureTest` | 4 контроллера, 17 UseCase/Service с phpDoc |
-| T08 | PENDING | — | `make test-e2e` | после ревью |
-| T09 | PENDING | — | `make test-e2e` (zz-questions + verify-support.php) | после ревью |
-| T10 | PENDING | — | `make test-e2e` | после ревью; stub-прогон показал ошибки полей |
-| T11 | PENDING | — | `make test-e2e` скриншоты `login-*` | stub-скриншоты desktop/mobile без горизонтального скролла |
+| T08 | PASS | 2026-09-25 | `make test-e2e` (`rabit-e2e-f21b110864a4`) | a 73/73, b 46/46, `verify-support.php` PASS |
+| T09 | PASS | 2026-09-25 | `make test-e2e` (`rabit-e2e-f21b110864a4`) | a 73/73, b 46/46, `verify-support.php` PASS |
+| T10 | PASS | 2026-09-25 | `make test-e2e` (`rabit-e2e-f21b110864a4`) | a 73/73, b 46/46, `verify-support.php` PASS |
+| T11 | PASS | 2026-09-25 | `make test-e2e` (`rabit-e2e-f21b110864a4`) | a 73/73, b 46/46, `verify-support.php` PASS |
 | T12 | PASS | 2026-09-25 | `npm run check`, `npm run test:commerce` | pass 42 / 207 |
