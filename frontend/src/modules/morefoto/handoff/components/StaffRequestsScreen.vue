@@ -9,6 +9,7 @@ import { loadHandoff } from '../service';
 import { useHandoffEditor } from '../useHandoffEditor';
 import { useTransferPreview } from '../useTransferPreview';
 import { formatMoment, requestStatus } from '../display';
+import { handoffRefreshSucceeded } from '../rules';
 import type { StaffCommand, StaffRequest } from '../types';
 import '../handoff.css';
 import MfStatus from '@/components/status/MfStatus.vue';
@@ -36,12 +37,12 @@ const editor = useHandoffEditor(() => {
   notice.value = 'Изменения сохранены.';
   void reload();
 }, refreshWorkspace);
-/** Server state for «Загрузить актуальные данные»: the card and, for a confirmation, its fresh transfer preview. */
+/** Server state for «Загрузить актуальные данные»: the card and, for a confirmation, a successfully read transfer preview. */
 async function refreshWorkspace(): Promise<boolean> {
   if (!(await reload())) return false;
   await nextTick();
   await previewSettled();
-  return true;
+  return handoffRefreshSucceeded(command.value?.kind === 'request' ? command.value.action : undefined, previewError.value);
 }
 // «Передан → Проверка → Перенесён»: where the list is now and whose move it is.
 const steps = computed(() => {

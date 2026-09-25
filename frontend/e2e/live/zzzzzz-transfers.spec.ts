@@ -462,6 +462,34 @@ test('D3: куратор переносит детей сотрудника по
     await expect(dialog.locator('.handoff-previews img')).toHaveCount(0);
     await expect(dialog.getByTestId('transfer-bundle').first()).toContainText('A002');
     await curator.screenshot({ path: testInfo.outputPath('d3-desktop-staff-transfer.png'), fullPage: true, animations: 'disabled' });
+
+    // #79: a refresh whose transfer preview fails keeps the confirmation and says so inside the dialog.
+    await dialog.getByRole('button', { name: 'Отмена', exact: true }).click();
+    await curator.getByRole('button', { name: 'Проверить и перенести', exact: true }).click();
+    await expect(dialog.getByText('Восстановлен несохранённый черновик.', { exact: true })).toBeVisible();
+    const previewPath = '/api/v1/staff-requests/' + request.id + '/transfer-preview';
+    let previewBroken = false;
+    await curator.route(
+      (url) => url.pathname === previewPath,
+      (route) => {
+        if (previewBroken) return route.fallback();
+        previewBroken = true;
+        return route.abort('failed');
+      }
+    );
+    const refresh = dialog.getByRole('button', { name: 'Загрузить актуальные данные', exact: true });
+    await refresh.click();
+    await expect(
+      dialog.getByText('Не удалось загрузить актуальные данные. Проверьте соединение и повторите.', { exact: true })
+    ).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Подтвердить перенос', exact: true })).toBeVisible();
+    await expect(dialog.getByTestId('transfer-orders')).toHaveCount(0);
+    expect(previewBroken).toBe(true);
+    await refresh.click();
+    await expect(dialog.getByTestId('transfer-orders')).toBeVisible();
+    await expect(
+      dialog.getByText('Не удалось загрузить актуальные данные. Проверьте соединение и повторите.', { exact: true })
+    ).toHaveCount(0);
     await dialog.getByLabel('Проверены все кадры, подтверждаю перенос наборов', { exact: true }).check();
     const confirmed = curator.waitForResponse((r) => r.url().endsWith('/transfers') && r.request().method() === 'POST');
     await dialog.getByRole('button', { name: 'Подтвердить перенос', exact: true }).click();
