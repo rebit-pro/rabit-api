@@ -2,12 +2,11 @@
 
 ## Точка продолжения
 
-- Ветка `codex/e6-payment-cost-pricing` от main `49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771`, PR https://github.com/rebit-pro/rabit-api/pull/66. Checkout: `/home/user/rabit-api-worktrees/e6-payment-cost-pricing`.
-- Завершено: S1–S11. Ревью — без блокирующих дефектов (неблокирующие #68, #69 — отдельные issue). Финальный gate на `cfb0c06` — PASS (104 сценария, все verifier), визуальная проверка desktop/mobile — PASS.
-- Пользователь 25.09 поручил слить PR #66 и выкатить. Main ушёл на `8077de2` (#67, #70, #71) — влит в ветку (`b75e797`), полный gate повторён — PASS.
-- Следующий шаг: merge PR #66 и выкатка на app.morefoto36.ru по рецепту design-ux (журнал выкатки — ниже). После merge следующая волна отмечает E6 merged в обоих графах.
-- Канонический MoreFoto изменён на месте, воспроизводимый diff — `docs/waves/e6/morefoto-contract.patch`.
-- Команда gate: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
+- E6 слита в main: PR https://github.com/rebit-pro/rabit-api/pull/66, merge `54bd4abbb62fbda2dc030281e4b4893820d83e84` (2026-09-25T10:17:42Z); дерево равно проверенному `f5924d1`, полный gate на базе `8077de2` — PASS.
+- Выкачено на https://app.morefoto36.ru 2026-09-25 (сервер `rebit-pro`), релиз `/srv/morefoto/releases/e6-20260925101815-54bd4ab`: backend (FPM, nginx, media consumer/dispatcher, notification consumer/dispatcher) и frontend `morefoto-frontend:e6-20260925101815-54bd4ab`; миграция `Version20260925120001`. Вместе с E6 выкачены слитые ранее #67, #70, #71.
+- Политика учёта расходов на проде выключена (ставка 380) — цены после выкатки не изменились; включает организатор в «Общих условиях».
+- Откат: `docker service rollback` для шести backend-сервисов (прежний `/app` — релиз `design-ux-20260924214616-b20423f`) и `morefoto_frontend` (прежний образ в `frontend-before.txt` — `morefoto-frontend:design-ux-20260924214616-b20423f`); спецификации — `services-before.json` релиза. Миграция только добавляет столбцы и CHECK — старый код с ней работает.
+- Открыто: пользовательская проверка сценария на stage (включить политику, посмотреть витрину и корзину); PR #74 (#68/#69) — gate PASS, ждёт ревью и merge; после merge — выкатка только frontend. Учёт merge E6 в графах — веткой следующей волны.
 
 ## Хронология
 
@@ -81,3 +80,13 @@
 
 - Пользователь: «Сливай PR #66, можно делать деплой». Main ушёл вперёд на `8077de2` (PR #67 фото, #70 коды отказа доступа #42, #71 фильтры заказов #39/#41). `git merge origin/main` — без конфликтов, `b75e797`.
 - Прогон 5 на `b75e797` (`rabit-e2e-e0538bbb0c27`, 256,8 с) — PASS: 106 браузерных сценариев (a 64, b 42 — два новых из #71), verifier storefront, orders, links, transfers, avatar, payment-costs, access и контракт Notification.
+
+- **Merge.** `gh pr merge 66 --merge --match-head-commit f5924d1…` → `54bd4ab`; `git diff --quiet 54bd4ab f5924d1` — деревья равны.
+- **Артефакты.** `git archive 54bd4ab api` (1915 файлов) и образ `morefoto-frontend:e6-20260925101815-54bd4ab` (`VITE_API_MOCKS_ENABLED=false`, в чанке `ConditionsFields` — «Расходы на оплату»). SHA256: `api.tar.gz` ffb8cd77…f8350, `frontend-image.tar.gz` b5505481…c0dd. Скрипты — по образцу design-ux; отличия: в переключение backend и `services-before.json` добавлены `morefoto_stage_notification_consumer/dispatcher` (они тоже монтируют `/app` релиза), маркер кода — `ConditionsInputMapper.php`. Загрузка через ssh; `sha256sum --check` и `bash -n` на сервере — PASS.
+- **Сверка перед переключением.** Все шесть backend-сервисов монтировали `/app` из релиза design-ux. `b_module` прода: `highloadblock, main, morefoto.access, morefoto.commerce, morefoto.handoff, morefoto.media, morefoto.organization, rebit.auth, rebit.notification, rebit.share, sprint.migration` — совпадает с нужным кабинету по `prepare.php`; новых модулей и переменных окружения в релизе нет, `composer.lock` не менялся.
+- **Подготовка и резервная копия.** `prepare-release.sh` — vendor из design-ux, `app` 412 МБ, `services-before.json` для 7 сервисов. `backup.sh` — 63 010 байт, SHA256 88ea563a…; `restore-check.sh` — одноразовая MySQL, 161 таблица — PASS.
+- **Миграция.** `migrate.sh ls`: Created 18, Installed 14 (не отмечены новая E6 и три старые версии, уже присутствующие в схеме). `migrate.sh up Version20260925120001` — success. В БД: `mf_sales_conditions` — `PAYMENT_COSTS_ENABLED=0`, `PAYMENT_COST_RATE_BPS=380`; ограничения `ck_mf_sales_conditions_payment_costs`, `ck_mf_product_price_cap`, `ck_mf_group_product_condition_price_cap`.
+- **Backend.** Сначала FPM: код виден, DI-smoke через `prolog_before.php` (модули грузятся как в HTTP) — 14/14 (`ConditionsController`, `ManageConditionsUseCase`, условия, `PublishedPrices`, витрина, расчёт, контроллеры каталога и заказов, `GroupSalesReadinessInterface`); `/api/v1/catalog/conditions` без токена — 401 JSON `UNAUTHORIZED`. Затем nginx backend, media consumer/dispatcher, notification consumer/dispatcher — все 1/1, код виден.
+- **Frontend.** `switch-frontend.sh`: 2/2 на `morefoto-frontend:e6-20260925101815-54bd4ab`, прежний образ design-ux в `frontend-before.txt`.
+- **Smoke.** `/health`, `/login`, `/cabinet/{overview,catalog,orders,links,institutions}`, `/access/recover` — 200; SHA-256 отдаваемого `index.html` равен файлу образа; отдаваемый `ConditionsFields-CTVCIVdQ.js` содержит «Расходы на оплату»; API: условия общие и группы без токена — 401 `UNAUTHORIZED`, каталог неизвестной галереи — 404 `GALLERY_NOT_FOUND`, `/public/orders/current` — 404 `ORDER_NOT_FOUND`. Логи FPM, nginx и воркеров за 15 минут — без фатальных ошибок.
+- **Не проверено на проде:** авторизованный сценарий организатора (включение политики и цены на витрине) — пользовательская проверка.
