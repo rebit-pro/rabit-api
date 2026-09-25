@@ -2,7 +2,7 @@
 
 ## Точка продолжения
 
-- Ветка `codex/g1-payment-attempts`, base `main` `49f40f9`, head — последний коммит ветки (после `22dbf4f`). PR — см. ниже в журнале.
+- Ветка `codex/g1-payment-attempts`, base `main` `49f40f9`, head — последний коммит ветки (после `22dbf4f`). PR https://github.com/rebit-pro/rabit-api/pull/80.
 - Рабочая копия: `/home/user/rabit-api-worktrees/g1-payment-attempts`. Отчёт волны: `docs/waves/g1/README.md`, канонический patch: `docs/waves/g1/morefoto-contract.patch`.
 - Завершено: S1–S12 — план, графы, backend, frontend, быстрые проверки, E2E-спецификация и verifier (не запускались).
 - Сейчас: ревью PR пользователем.
@@ -50,3 +50,4 @@
 - S12 (коммит `22dbf4f`): runner передаёт ключи env-файлом (`E2E_YOOKASSA_ENV`, по умолчанию `~/.config/morefoto/yookassa-test.env`) и подключает fpm к браузерной сети с выходом в интернет. MySQL и RabbitMQ остаются во внутренней сети. На стенде способы `bank_card,sbp`: отказ СБП тестовым магазином даёт реальную отменённую попытку. Спецификация `zzzzzzzzz-payments` в группе b объявляет тесты по режиму, без пропусков. `verify-payments.php` добавлен в `VERIFIERS`. `zzzzz-orders.spec.ts`: `late=maybe` → `INVALID_FILTER` вместо `FILTER_UNAVAILABLE`.
 - Канонический план MoreFoto меняла параллельная сессия (K3, вопросы через MAX: +6 API ID, `validate.py`, окружения Postman). Первый patch захватил её правки. Patch пересобран как разница между «текущий план без правок G1» и текущим планом: 8 файлов, `git apply --check --reverse` — OK, строк K3 в изменениях нет. `wave_graph.py` на текущем плане: 52 волны, 118 ID, готовы E6, G1, K3.
 - Повтор быстрых проверок после E2E-правок: `php -l` verifier и `prepare.php` — OK; PHPStan — No errors; PHPUnit — OK 718/3644; `npm run check` — exit 0; `test:commerce` — 188/188; `py_compile` runner — OK.
+- PR https://github.com/rebit-pro/rabit-api/pull/80 создан на head `e0871fb`; ждёт ревью пользователя, gate после ревью.
