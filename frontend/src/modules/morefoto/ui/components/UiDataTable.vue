@@ -6,6 +6,7 @@ import { tableCellText, tablePageCount } from '../table-values';
 import UiTableCell from './UiTableCell.vue';
 import UiTableRowActions from './UiTableRowActions.vue';
 import MfEmptyState from '@/components/states/MfEmptyState.vue';
+import { plural } from '@/components/viz/measures';
 const props = withDefaults(
   defineProps<{
     title: string;
@@ -50,6 +51,11 @@ const sortable = computed(() =>
 const range = computed(() =>
   props.total ? (props.page - 1) * props.pageSize + 1 + '–' + Math.min(props.page * props.pageSize, props.total) : '0'
 );
+const summary = computed(() => props.title + ' · ' + props.total + ' ' + plural(props.total, ['запись', 'записи', 'записей']));
+function sortIcon(key: string): string {
+  if (props.sort.key !== key) return 'mdi-swap-vertical';
+  return props.sort.direction === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down';
+}
 function rowLabel(row: UiTableRow): string {
   return props.labelKey ? String(row[props.labelKey] ?? row.id) : row.id;
 }
@@ -89,6 +95,13 @@ defineExpose({ focusRow });
     </v-alert>
     <MfEmptyState v-else-if="!rows.length" :title="emptyTitle" :text="emptyDescription" icon="mdi-text-box-search-outline" />
     <template v-else>
+      <!-- One fixed-height bar for both states: selecting a row never pushes the table down. -->
+      <div class="ui-table-toolbar" :class="{ 'ui-table-toolbar--selected': selected.length }" data-testid="ui-table-toolbar">
+        <slot v-if="selected.length" name="selection" :selected="selected"
+          ><p>Выбрано: {{ selected.length }}</p></slot
+        >
+        <p v-else class="ui-table-summary">{{ summary }}</p>
+      </div>
       <div class="ui-table-mobile-tools">
         <v-select
           :model-value="sort.key"
@@ -115,15 +128,10 @@ defineExpose({ focusRow });
       </div>
       <div class="ui-table-desktop">
         <table>
-          <caption>
+          <caption class="ui-table-caption">
             {{
-              title
+              summary
             }}
-            ·
-            {{
-              total
-            }}
-            записей
           </caption>
           <thead>
             <tr>
@@ -148,12 +156,13 @@ defineExpose({ focusRow });
                 <button
                   v-if="column.sortable"
                   class="ui-table-sort"
+                  :class="{ 'ui-table-sort--active': sort.key === column.key }"
                   type="button"
                   :aria-label="'Сортировать: ' + column.label"
                   @click="sortBy(column.key)"
                 >
                   {{ column.label }}
-                  <span aria-hidden="true">{{ sort.key === column.key ? (sort.direction === 'asc' ? '↑' : '↓') : '↕' }}</span>
+                  <v-icon :icon="sortIcon(column.key)" size="16" class="ui-table-sort-icon" aria-hidden="true" />
                 </button>
                 <span v-else>{{ column.label }}</span>
               </th>
@@ -275,9 +284,32 @@ table {
   font-size: var(--mf-text-small);
   line-height: 1.5;
 }
-caption {
-  text-align: left;
-  padding-bottom: var(--mf-space-3);
+.ui-table-caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.ui-table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mf-space-2) var(--mf-space-3);
+  /* Touch compact buttons are 44px: the bar keeps one height with or without a selection. */
+  min-height: 56px;
+  margin-bottom: var(--mf-space-3);
+  padding: 6px var(--mf-space-3);
+  border-radius: var(--mf-radius-sm);
+  font-size: var(--mf-text-small);
+  line-height: 1.5;
+  transition: background-color 0.15s ease;
+}
+.ui-table-toolbar--selected {
+  background: var(--mf-color-selected);
+}
+.ui-table-summary {
   color: var(--mf-color-text-secondary);
 }
 th,
@@ -288,9 +320,12 @@ td {
   vertical-align: middle;
 }
 th {
-  background: var(--mf-color-bg);
-  min-height: var(--mf-table-header);
-  font-weight: 600;
+  height: var(--mf-table-header);
+  border-bottom: 2px solid var(--mf-color-border);
+  background: var(--mf-color-surface-2);
+  color: var(--mf-color-text);
+  font-size: var(--mf-text-md);
+  font-weight: var(--mf-weight-semibold);
 }
 td {
   height: var(--mf-table-row);
@@ -332,8 +367,22 @@ td:last-child {
   font: inherit;
   color: inherit;
 }
-.ui-table-sort span {
+.ui-table-sort-icon {
   flex-shrink: 0;
+  color: var(--mf-color-text-tertiary);
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+.ui-table-sort:hover .ui-table-sort-icon,
+.ui-table-sort:focus-visible .ui-table-sort-icon {
+  opacity: 1;
+}
+.ui-table-sort--active {
+  color: var(--mf-color-primary);
+}
+.ui-table-sort--active .ui-table-sort-icon {
+  color: var(--mf-color-primary);
+  opacity: 1;
 }
 .ui-table-state {
   display: grid;
