@@ -114,6 +114,7 @@ $services = [
             $get(QuestionDeliveryRepositoryInterface::class),
             $get(MaxChatMessengerInterface::class),
             $get(MaxQuestionTextBuilder::class),
+            $get(QuestionDeliveryPublisherInterface::class),
             $get(ClockInterface::class),
             $chatId(),
         ],
@@ -141,6 +142,7 @@ $services = [
         'constructorParams' => static fn(): array => [
             $get(MaxBotAdminInterface::class),
             $get(MaxChatRepositoryInterface::class),
+            $get(QuestionDeliveryRepositoryInterface::class),
             $chatId(),
         ],
     ],

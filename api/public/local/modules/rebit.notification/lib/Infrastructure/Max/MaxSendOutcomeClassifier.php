@@ -10,8 +10,9 @@ use Rebit\Share\Application\Contract\Notification\Enum\MaxSendStatusEnum;
 /**
  * Классифицирует ответ POST /messages MAX: принят, окончательный отказ, безопасный повтор или неизвестный исход.
  *
- * Повтор разрешён только когда запрос заведомо не обработан: соединение не установлено, 429 или ответ прокси 502–504.
- * Таймаут после отправки и 500 считаются неизвестным исходом, так как у MAX нет ключа идемпотентности.
+ * Повтор разрешён только когда запрос заведомо не обработан: соединение не установлено или MAX ответил 429.
+ * Таймаут после отправки, 5xx и ответы шлюза 502–504 — неизвестный исход: шлюз мог потерять ответ уже после
+ * создания сообщения, а у POST /messages нет ключа идемпотентности (RFC 9110, 9.2.2 и 15.6).
  */
 final readonly class MaxSendOutcomeClassifier
 {
@@ -32,8 +33,8 @@ final readonly class MaxSendOutcomeClassifier
                 ? new MaxChatSendOutputDto(MaxSendStatusEnum::UNKNOWN, errorCode: 'max_response_invalid')
                 : new MaxChatSendOutputDto(MaxSendStatusEnum::DELIVERED, $mid);
         }
-        if (429 === $httpStatus || (502 <= $httpStatus && 504 >= $httpStatus)) {
-            return new MaxChatSendOutputDto(MaxSendStatusEnum::RETRY, errorCode: 'max_http_' . $httpStatus);
+        if (429 === $httpStatus) {
+            return new MaxChatSendOutputDto(MaxSendStatusEnum::RETRY, errorCode: 'max_http_429');
         }
         if (400 <= $httpStatus && 500 > $httpStatus) {
             return new MaxChatSendOutputDto(MaxSendStatusEnum::REJECTED, errorCode: 'max_http_' . $httpStatus);

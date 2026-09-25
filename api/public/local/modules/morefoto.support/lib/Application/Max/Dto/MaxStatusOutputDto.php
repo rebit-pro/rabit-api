@@ -11,11 +11,13 @@ final readonly class MaxStatusOutputDto
     /**
      * @param list<string>                                                                  $subscriptions
      * @param list<array{chatId: int, lastEvent: string, botPresent: bool, seenAt: string}> $chats
+     * @param array<string, int>                                                            $deliveries    replies by delivery state: pending, processing, delivered, failed, unknown
      */
     public function __construct(
         public MaxBotOutputDto $bot,
         public array $subscriptions,
         public int $configuredChatId,
         public array $chats,
+        public array $deliveries,
     ) {}
 }

@@ -1,4 +1,4 @@
-import type { QuestionDelivery, QuestionMessage, QuestionProblem } from './types';
+import type { PendingAsk, QuestionDelivery, QuestionMessage, QuestionProblem } from './types';
 
 export const NAME_MAX = 60;
 export const MESSAGE_MAX = 2000;
@@ -10,6 +10,23 @@ const QUESTION_KEY = /^[a-f0-9]{64}$/;
 /** The parent's private conversation key lives next to the gallery link in this browser only. */
 export function questionStorageKey(galleryToken: string): string {
   return 'morefoto:live:question:v1:' + galleryToken;
+}
+
+export function pendingStorageKey(galleryToken: string): string {
+  return 'morefoto:live:question-pending:v1:' + galleryToken;
+}
+
+/** A stored unfinished first question is replayed only when it is intact; anything else is discarded. */
+export function parsePendingAsk(raw: string | null): PendingAsk | null {
+  if (!raw) return null;
+  try {
+    const value = JSON.parse(raw) as Partial<PendingAsk>;
+    if (typeof value.name !== 'string' || typeof value.text !== 'string' || typeof value.requestId !== 'string') return null;
+    if (!/^[a-f0-9]{32}$/.test(value.requestId) || textProblem(value.name, value.text) !== null) return null;
+    return { name: value.name, text: value.text, requestId: value.requestId };
+  } catch {
+    return null;
+  }
 }
 
 export function seenStorageKey(galleryToken: string): string {
@@ -53,6 +70,7 @@ export function deliveryLabel(delivery: QuestionDelivery | null): string {
   if (delivery === 'delivered') return 'Доставлено куратору';
   if (delivery === 'failed') return 'Не доставлено. Напишите ещё раз чуть позже';
   if (delivery === 'sending') return 'Отправляется куратору';
+  if (delivery === 'unknown') return 'Не удалось подтвердить доставку. Если куратор не ответит, напишите ещё раз';
   return '';
 }
 

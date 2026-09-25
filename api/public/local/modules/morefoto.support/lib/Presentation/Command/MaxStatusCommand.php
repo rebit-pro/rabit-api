@@ -26,7 +26,13 @@ final class MaxStatusCommand extends RebitCommand
             ['Бот' => '@' . $status->bot->username . ' (' . $status->bot->name . ', id ' . $status->bot->userId . ')'],
             ['Webhook' => [] === $status->subscriptions ? 'нет подписок' : implode(', ', $status->subscriptions)],
             ['Группа кураторов' => 0 === $status->configuredChatId ? 'MOREFOTO_SUPPORT_MAX_CHAT_ID не задан' : (string)$status->configuredChatId],
+            ['Реплики' => [] === $status->deliveries
+                ? 'нет'
+                : implode(', ', array_map(static fn(string $state, int $count): string => $state . ': ' . $count, array_keys($status->deliveries), $status->deliveries))],
         );
+        if (0 < ($status->deliveries['unknown'] ?? 0) + ($status->deliveries['failed'] ?? 0)) {
+            $io->warning('Есть реплики с неизвестным исходом или отказом: проверьте группу MAX и при необходимости попросите автора написать ещё раз.');
+        }
         $io->table(
             ['chat_id', 'Событие', 'Бот в чате', 'Время (UTC)'],
             array_map(static fn(array $chat): array => [$chat['chatId'], $chat['lastEvent'], $chat['botPresent'] ? 'да' : 'нет', $chat['seenAt']], $status->chats),

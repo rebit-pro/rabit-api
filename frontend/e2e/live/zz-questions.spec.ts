@@ -67,6 +67,29 @@ test('a parent asks the curator from the gallery and keeps the conversation in t
   await stranger.close();
 });
 
+test('a first question whose response was lost is recovered after reload without a second conversation', async ({ page }) => {
+  await page.goto(gallery);
+  const dialog = await openQuestion(page);
+  await dialog.getByLabel('Как к вам обращаться', { exact: true }).fill('K3 Потерянный ответ');
+  await dialog.getByLabel('Ваш вопрос', { exact: true }).fill('Ответ сервера потерялся после сохранения.');
+  // The server stores the question; the browser never sees the answer.
+  await page.route('**/api/v1/public/galleries/*/questions', async (route) => {
+    await route.fetch();
+    await route.abort('connectionreset');
+  });
+  await dialog.getByTestId('question-send').click();
+  await expect(dialog.getByTestId('question-problem')).toContainText('Нет связи с сервером');
+  await page.unroute('**/api/v1/public/galleries/*/questions');
+
+  const replay = page.waitForResponse((r) => r.url().endsWith('/questions') && r.request().method() === 'POST');
+  await page.reload();
+  expect((await replay).status()).toBe(201);
+  await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), storageKey)).toMatch(/^[a-f0-9]{64}$/);
+  const recovered = await openQuestion(page);
+  await expect(recovered.getByLabel('Как к вам обращаться', { exact: true })).toHaveCount(0);
+  await expect(recovered.getByTestId('question-thread').locator('[data-author="parent"]')).toHaveCount(1);
+});
+
 test('a new curator answer is marked on the gallery until the parent opens it', async ({ page }) => {
   await page.goto(gallery);
   await page.evaluate(({ key, value }) => localStorage.setItem(key, value), { key: storageKey, value: 'b'.repeat(64) });

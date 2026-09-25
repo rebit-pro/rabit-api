@@ -30,6 +30,11 @@ final readonly class MaxBotApiClient implements MaxChatMessengerInterface, MaxBo
         private string $caFile,
     ) {}
 
+    public function isConfigured(): bool
+    {
+        return '' !== $this->token;
+    }
+
     public function send(MaxChatMessageInputDto $message): MaxChatSendOutputDto
     {
         if ('' === $this->token) {

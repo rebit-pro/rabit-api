@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Support\Application\Question\UseCase;
 
+use Morefoto\Support\Application\Question\Contract\QuestionDeliveryPublisherInterface;
 use Morefoto\Support\Application\Question\Contract\SupportTransactionInterface;
 use Morefoto\Support\Application\Question\Service\MaxQuestionTextBuilder;
 use Morefoto\Support\Domain\Question\Repository\QuestionDeliveryRepositoryInterface;
@@ -13,8 +14,9 @@ use Rebit\Share\Application\Contract\Notification\Enum\MaxSendStatusEnum;
 use Rebit\Share\Application\Contract\Notification\MaxChatMessengerInterface;
 
 /**
- * Доставляет одну реплику родителя или сотрудника в группу кураторов MAX и запоминает mid для последующих ответов.
- * Сетевой вызов идёт вне транзакции; безопасные сбои повторяются с растущей паузой, неизвестный исход не повторяется.
+ * Доставляет реплики одной беседы в группу кураторов MAX строго по порядку и запоминает mid для ответов куратора.
+ * Сетевой вызов идёт вне транзакции; безопасные сбои повторяются с растущей паузой, неизвестный исход не повторяется,
+ * а без настроенных бота и группы реплики ждут, не расходуя попытки.
  */
 final readonly class DeliverQuestionMessageUseCase
 {
@@ -28,14 +30,15 @@ final readonly class DeliverQuestionMessageUseCase
         private QuestionDeliveryRepositoryInterface $deliveries,
         private MaxChatMessengerInterface $max,
         private MaxQuestionTextBuilder $texts,
+        private QuestionDeliveryPublisherInterface $publisher,
         private ClockInterface $clock,
         private int $chatId,
     ) {}
 
     public function execute(int $messageId): void
     {
-        if (0 === $this->chatId) {
-            // The group is not configured yet: the reply stays pending and the dispatcher offers it again later.
+        if (0 === $this->chatId || !$this->max->isConfigured()) {
+            // The bot or the group is not configured yet: the reply stays pending and the dispatcher offers it again later.
             return;
         }
         $now = $this->clock->now();
@@ -49,16 +52,21 @@ final readonly class DeliverQuestionMessageUseCase
         ));
         $attempt = $claim['attempt'];
         $code = $outcome->errorCode ?? 'max_error';
-        $this->transaction->execute(function() use ($outcome, $messageId, $attempt, $code): void {
-            match ($outcome->status) {
-                MaxSendStatusEnum::DELIVERED => $this->deliveries->delivered($messageId, $attempt, (string)$outcome->mid),
-                MaxSendStatusEnum::REJECTED => $this->deliveries->failed($messageId, $attempt, $code),
-                MaxSendStatusEnum::UNKNOWN => $this->deliveries->unknown($messageId, $attempt, $code),
-                MaxSendStatusEnum::RETRY => self::MAX_ATTEMPTS > $attempt
-                    ? $this->deliveries->retry($messageId, $attempt, $this->clock->now()->modify('+' . $this->delay($attempt) . ' seconds'), $code)
-                    : $this->deliveries->failed($messageId, $attempt, $code),
+        $retry = MaxSendStatusEnum::RETRY === $outcome->status && self::MAX_ATTEMPTS > $attempt;
+        $next = $this->transaction->execute(function() use ($outcome, $messageId, $attempt, $code, $retry, $claim): ?int {
+            match (true) {
+                $retry => $this->deliveries->retry($messageId, $attempt, $this->clock->now()->modify('+' . $this->delay($attempt) . ' seconds'), $code),
+                MaxSendStatusEnum::DELIVERED === $outcome->status => $this->deliveries->delivered($messageId, $attempt, (string)$outcome->mid),
+                MaxSendStatusEnum::UNKNOWN === $outcome->status => $this->deliveries->unknown($messageId, $attempt, $code),
+                default => $this->deliveries->failed($messageId, $attempt, $code),
             };
+
+            // A reply waiting for its retry keeps the later ones of this conversation behind it.
+            return $retry ? null : $this->deliveries->nextPending($claim['questionId']);
         });
+        if (null !== $next) {
+            $this->publisher->publish($next);
+        }
     }
 
     private function delay(int $attempt): int

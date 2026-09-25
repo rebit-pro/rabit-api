@@ -15,5 +15,8 @@ use Rebit\Share\Application\Contract\Notification\Dto\MaxChatSendOutputDto;
  */
 interface MaxChatMessengerInterface
 {
+    /** Без токена доставка не начинается: реплики ждут настройки, не расходуя попытки. */
+    public function isConfigured(): bool;
+
     public function send(MaxChatMessageInputDto $message): MaxChatSendOutputDto;
 }

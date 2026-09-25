@@ -39,9 +39,11 @@ export function useQuestionThread(source: QuestionThreadSource, active: Ref<bool
     }
   }
 
-  async function send(text: string): Promise<boolean> {
+  /** A known requestId continues an attempt whose outcome is unknown, for example after a reload. */
+  async function send(text: string, requestId?: string): Promise<boolean> {
     const clean = normalizeMessage(text);
-    if (!attempt || attempt.text !== clean) attempt = { text: clean, id: newRequestId() };
+    if (requestId) attempt = { text: clean, id: requestId };
+    else if (!attempt || attempt.text !== clean) attempt = { text: clean, id: newRequestId() };
     sending.value = true;
     sendError.value = '';
     try {

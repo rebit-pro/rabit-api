@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Bitrix\Main\Application;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
+use Morefoto\Support\Application\Question\Contract\QuestionDeliveryPublisherInterface;
 use Morefoto\Support\Application\Question\Contract\SupportTransactionInterface;
 use Morefoto\Support\Application\Question\Service\MaxQuestionTextBuilder;
 use Morefoto\Support\Application\Question\UseCase\DeliverQuestionMessageUseCase;
@@ -78,6 +79,9 @@ $staff = $connection->query("SELECT q.ID FROM mf_support_question q JOIN b_user 
 $check(false !== $staff, 'teacher conversation');
 $staffId = (int)$staff['ID'];
 $check(['staff'] === $column("SELECT AUTHOR FROM mf_support_message WHERE QUESTION_ID={$staffId}"), 'teacher reply');
+// A first question whose response the browser lost is replayed after reload with the same key: one conversation.
+$check(['1'] === $column("SELECT COUNT(*) FROM mf_support_question WHERE AUTHOR='parent' AND AUTHOR_NAME='K3 Потерянный ответ'"), 'lost response created a second conversation');
+$check(['1'] === $column("SELECT COUNT(*) FROM mf_support_message m JOIN mf_support_question q ON q.ID=m.QUESTION_ID WHERE q.AUTHOR_NAME='K3 Потерянный ответ'"), 'lost response duplicated the reply');
 foreach (['mf_support_question' => 'CONCAT(AUTHOR_NAME,CONTEXT,COALESCE(KEY_HASH,\'\'))', 'mf_support_message' => 'BODY', 'mf_support_idempotency' => 'COALESCE(SEALED_KEY,\'\')'] as $table => $text) {
     $check([] === $column("SELECT 1 FROM {$table} WHERE INSTR({$text}," . "'{$questionKey}')>0"), 'raw question key is stored in ' . $table);
 }
@@ -88,6 +92,11 @@ $max = new class implements MaxChatMessengerInterface {
     public array $outcomes = [];
     /** @var list<MaxChatMessageInputDto> */
     public array $sent = [];
+
+    public function isConfigured(): bool
+    {
+        return true;
+    }
 
     public function send(MaxChatMessageInputDto $message): MaxChatSendOutputDto
     {
@@ -101,6 +110,7 @@ $deliver = new DeliverQuestionMessageUseCase(
     $services->get(QuestionDeliveryRepositoryInterface::class),
     $max,
     $services->get(MaxQuestionTextBuilder::class),
+    $services->get(QuestionDeliveryPublisherInterface::class),
     $services->get(ClockInterface::class),
     $chatId,
 );

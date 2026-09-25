@@ -16,7 +16,13 @@ use Morefoto\Support\Tests\Unit\Double\ImmediateTransaction;
 use Morefoto\Support\Tests\Unit\Double\InMemoryQuestions;
 use Morefoto\Support\Tests\Unit\Double\RecordingPublisher;
 use Morefoto\Support\Tests\Unit\Double\ScriptedMaxMessenger;
+use Morefoto\Support\Application\Question\Dto\QuestionMessageOutputDto;
+use Morefoto\Support\Application\Question\Dto\QuestionOutputDto;
+use Morefoto\Support\Presentation\Question\QuestionResultMapper;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
+use Rebit\Notification\Infrastructure\Max\MaxBotApiClient;
+use Rebit\Notification\Infrastructure\Max\MaxSendOutcomeClassifier;
 use Rebit\Share\Application\Contract\Notification\Dto\MaxChatSendOutputDto;
 use Rebit\Share\Application\Contract\Notification\Enum\MaxSendStatusEnum;
 
@@ -31,11 +37,13 @@ final class MaxDeliveryAndWebhookTest extends TestCase
 
     private InMemoryQuestions $questions;
     private FixedClock $clock;
+    private RecordingPublisher $signals;
 
     protected function setUp(): void
     {
         $this->questions = new InMemoryQuestions();
         $this->clock = new FixedClock();
+        $this->signals = new RecordingPublisher();
         $question = $this->questions->createParent(str_repeat('a', 64), 42, 'Мария', 'Сад «Солнышко», группа «Пчёлки»', $this->clock->now);
         $this->questions->addMessage($question, AuthorEnum::PARENT, 'Мария', 'Когда будут фото?', $this->clock->now);
     }
@@ -88,6 +96,53 @@ final class MaxDeliveryAndWebhookTest extends TestCase
         $publisher = new RecordingPublisher();
         self::assertSame(1, (new DispatchPendingQuestionMessagesUseCase(new ImmediateTransaction(), $this->questions, $publisher, $this->clock))->execute(100));
         self::assertSame([1], $publisher->published);
+    }
+
+    public function testMissingBotTokenKeepsRepliesPendingWithoutSpendingAttempts(): void
+    {
+        $max = new MaxBotApiClient(new NullLogger(), new MaxSendOutcomeClassifier(), '', 'https://max.invalid', '');
+        $deliver = new DeliverQuestionMessageUseCase(new ImmediateTransaction(), $this->questions, $max, new MaxQuestionTextBuilder(), $this->signals, $this->clock, self::CHAT);
+        for ($pass = 0; $pass < DeliverQuestionMessageUseCase::MAX_ATTEMPTS + 2; ++$pass) {
+            $deliver->execute(1);
+            $this->clock->now = $this->clock->now->modify('+2 hours');
+        }
+
+        self::assertSame(['pending', 0], [$this->questions->messages[1]['status'], $this->questions->messages[1]['attempts']]);
+    }
+
+    public function testRepliesOfOneConversationReachCuratorsInOrder(): void
+    {
+        $this->questions->addMessage(100, AuthorEnum::PARENT, 'Мария', 'Уточнение', $this->clock->now);
+        $max = new ScriptedMaxMessenger([
+            new MaxChatSendOutputDto(MaxSendStatusEnum::RETRY, errorCode: 'max_http_429'),
+            new MaxChatSendOutputDto(MaxSendStatusEnum::DELIVERED, 'mid.a'),
+            new MaxChatSendOutputDto(MaxSendStatusEnum::DELIVERED, 'mid.b'),
+        ]);
+        $this->deliver($max)->execute(1);
+        $this->deliver($max)->execute(2);
+        self::assertCount(1, $max->sent, 'the later reply must wait for the retry of the earlier one');
+        $dispatcher = new RecordingPublisher();
+        (new DispatchPendingQuestionMessagesUseCase(new ImmediateTransaction(), $this->questions, $dispatcher, $this->clock))->execute(100);
+        self::assertSame([], $dispatcher->published, 'the dispatcher does not offer a reply behind a waiting one');
+
+        $this->clock->now = $this->clock->now->modify('+31 seconds');
+        $this->deliver($max)->execute(1);
+        self::assertSame([2], $this->signals->published, 'finishing a reply signals the next one');
+        $this->deliver($max)->execute(2);
+
+        self::assertSame(['Когда будут фото?', 'Уточнение'], array_map(static fn($message): string => explode("\n", $message->text)[3], array_slice($max->sent, 1)));
+        self::assertSame(['mid.a', 'mid.b'], [$this->questions->messages[1]['mid'], $this->questions->messages[2]['mid']]);
+    }
+
+    public function testUnknownOutcomeIsShownAsSuchNotAsSending(): void
+    {
+        $this->deliver(new ScriptedMaxMessenger([new MaxChatSendOutputDto(MaxSendStatusEnum::UNKNOWN, errorCode: 'max_http_504')]))->execute(1);
+        $row = $this->questions->messages(100)[0];
+        $result = (new QuestionResultMapper())->question(new QuestionOutputDto(100, [
+            new QuestionMessageOutputDto($row['id'], $row['author'], $row['authorName'], $row['body'], $row['createdAt'], $row['deliveryStatus']),
+        ]));
+
+        self::assertSame('unknown', $result->messages[0]->delivery);
     }
 
     public function testStaleAttemptBecomesUnknownInsteadOfBeingSentAgain(): void
@@ -143,7 +198,7 @@ final class MaxDeliveryAndWebhookTest extends TestCase
 
     private function deliver(ScriptedMaxMessenger $max, int $chatId = self::CHAT): DeliverQuestionMessageUseCase
     {
-        return new DeliverQuestionMessageUseCase(new ImmediateTransaction(), $this->questions, $max, new MaxQuestionTextBuilder(), $this->clock, $chatId);
+        return new DeliverQuestionMessageUseCase(new ImmediateTransaction(), $this->questions, $max, new MaxQuestionTextBuilder(), $this->signals, $this->clock, $chatId);
     }
 
     private function webhook(int $chatId = self::CHAT): HandleMaxUpdateUseCase

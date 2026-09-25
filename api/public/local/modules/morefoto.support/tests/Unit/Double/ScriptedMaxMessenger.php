@@ -14,7 +14,12 @@ final class ScriptedMaxMessenger implements MaxChatMessengerInterface
     public array $sent = [];
 
     /** @param list<MaxChatSendOutputDto> $outcomes */
-    public function __construct(private array $outcomes) {}
+    public function __construct(private array $outcomes, public bool $configured = true) {}
+
+    public function isConfigured(): bool
+    {
+        return $this->configured;
+    }
 
     public function send(MaxChatMessageInputDto $message): MaxChatSendOutputDto
     {

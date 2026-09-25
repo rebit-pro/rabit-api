@@ -9,6 +9,8 @@ import {
   mayHaveBeenStored,
   newRequestId,
   normalizeMessage,
+  parsePendingAsk,
+  pendingStorageKey,
   questionProblemMessage,
   questionStorageKey,
   textProblem
@@ -68,4 +70,25 @@ test('delivery states and moments are readable', () => {
     newRequestId(() => '0123-4567'),
     '01234567'
   );
+});
+
+test('an unfinished first question is replayed only when intact', () => {
+  const pending = { name: 'Мария', text: 'Вопрос', requestId: 'a'.repeat(32) };
+  assert.equal(pendingStorageKey('abc'), 'morefoto:live:question-pending:v1:abc');
+  assert.deepEqual(parsePendingAsk(JSON.stringify(pending)), pending);
+  for (const broken of [
+    null,
+    '',
+    '{',
+    JSON.stringify({ ...pending, requestId: 'x' }),
+    JSON.stringify({ ...pending, name: '' }),
+    JSON.stringify({ ...pending, text: 1 })
+  ]) {
+    assert.equal(parsePendingAsk(broken), null);
+  }
+});
+
+test('an unknown delivery is not shown as still sending', () => {
+  assert.match(deliveryLabel('unknown'), /Не удалось подтвердить доставку/);
+  assert.notEqual(deliveryLabel('unknown'), deliveryLabel('sending'));
 });

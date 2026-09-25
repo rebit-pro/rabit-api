@@ -144,7 +144,7 @@ final class InMemoryQuestions implements QuestionRepositoryInterface, QuestionDe
     public function claim(int $messageId, \DateTimeImmutable $now, \DateTimeImmutable $staleBefore): ?array
     {
         $message = $this->messages[$messageId] ?? null;
-        if (null === $message || 'pending' !== $message['status'] || (null !== $message['nextAt'] && $message['nextAt'] > $now)) {
+        if (null === $message || 'pending' !== $message['status'] || (null !== $message['nextAt'] && $message['nextAt'] > $now) || $this->blocked($messageId)) {
             return null;
         }
         $this->messages[$messageId]['status'] = 'processing';
@@ -193,12 +193,35 @@ final class InMemoryQuestions implements QuestionRepositoryInterface, QuestionDe
     {
         $ids = [];
         foreach ($this->messages as $id => $message) {
-            if ('pending' === $message['status'] && $message['nextAt'] <= $now) {
+            if ('pending' === $message['status'] && $message['nextAt'] <= $now && !$this->blocked($id)) {
                 $ids[] = $id;
             }
         }
 
         return array_slice($ids, 0, $limit);
+    }
+
+    public function nextPending(int $questionId): ?int
+    {
+        foreach ($this->messages as $id => $message) {
+            if ($questionId === $message['questionId'] && 'pending' === $message['status']) {
+                return $id;
+            }
+        }
+
+        return null;
+    }
+
+    public function countByStatus(): array
+    {
+        $counts = [];
+        foreach ($this->messages as $message) {
+            if (null !== $message['status']) {
+                $counts[$message['status']] = ($counts[$message['status']] ?? 0) + 1;
+            }
+        }
+
+        return $counts;
     }
 
     public function seen(int $chatId, string $event, bool $botPresent, \DateTimeImmutable $now): void
@@ -209,6 +232,17 @@ final class InMemoryQuestions implements QuestionRepositoryInterface, QuestionDe
     public function recent(int $limit): array
     {
         return array_values($this->chats);
+    }
+
+    private function blocked(int $messageId): bool
+    {
+        foreach ($this->messages as $id => $message) {
+            if ($id < $messageId && $message['questionId'] === $this->messages[$messageId]['questionId'] && in_array($message['status'], ['pending', 'processing'], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function finish(int $messageId, int $attempt, string $status, ?string $error, ?\DateTimeImmutable $nextAt, ?string $mid): void

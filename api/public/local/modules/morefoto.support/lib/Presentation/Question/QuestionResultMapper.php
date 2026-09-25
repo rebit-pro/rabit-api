@@ -10,7 +10,7 @@ use Morefoto\Support\Presentation\Question\Result\Dto\CreatedQuestionResultDto;
 use Morefoto\Support\Presentation\Question\Result\Dto\QuestionMessageResultDto;
 use Morefoto\Support\Presentation\Question\Result\Dto\QuestionResultDto;
 
-/** Maps question history into API results; internal delivery states collapse into sending/delivered/failed. */
+/** Maps question history into API results; internal delivery states become sending/delivered/failed/unknown. */
 final readonly class QuestionResultMapper
 {
     public function question(QuestionOutputDto $output): QuestionResultDto
@@ -40,9 +40,11 @@ final readonly class QuestionResultMapper
                 $message->createdAt,
                 match ($message->deliveryStatus) {
                     null => null,
+                    'pending', 'processing' => 'sending',
+                    // Terminal: MAX may or may not have the reply, and it is never sent again automatically.
+                    'unknown' => 'unknown',
                     'delivered' => 'delivered',
-                    'failed' => 'failed',
-                    default => 'sending',
+                    default => 'failed',
                 },
             ),
             $output->messages,

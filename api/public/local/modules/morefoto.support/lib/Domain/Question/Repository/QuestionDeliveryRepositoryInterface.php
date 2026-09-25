@@ -9,6 +9,7 @@ interface QuestionDeliveryRepositoryInterface
 {
     /**
      * Переводит pending-реплику в processing и увеличивает счётчик попыток; зависшую processing — в unknown.
+     * Реплика выдаётся, только если раньше неё в беседе нет незавершённых (pending/processing): куратор видит порядок автора.
      *
      * @return null|array{
      *     id: int,
@@ -33,6 +34,12 @@ interface QuestionDeliveryRepositoryInterface
     /** Processing дольше аренды — исход неизвестен; возвращает число таких реплик. */
     public function recoverStale(\DateTimeImmutable $staleBefore): int;
 
-    /** @return list<int> pending-реплики, чей срок повтора наступил */
+    /** @return list<int> первые в своей беседе pending-реплики, чей срок повтора наступил */
     public function due(\DateTimeImmutable $now, int $limit): array;
+
+    /** Самая ранняя pending-реплика беседы — следующая после завершённой. */
+    public function nextPending(int $questionId): ?int;
+
+    /** @return array<string, int> число реплик авторов по состоянию доставки */
+    public function countByStatus(): array;
 }

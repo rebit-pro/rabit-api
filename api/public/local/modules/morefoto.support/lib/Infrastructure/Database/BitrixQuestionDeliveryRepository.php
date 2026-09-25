@@ -12,10 +12,18 @@ final readonly class BitrixQuestionDeliveryRepository implements QuestionDeliver
 
     public function claim(int $messageId, \DateTimeImmutable $now, \DateTimeImmutable $staleBefore): ?array
     {
+        $question = $this->sql->query('SELECT QUESTION_ID FROM mf_support_message WHERE ID=' . $this->sql->id($messageId))->fetch();
+        if (false === $question) {
+            return null;
+        }
+        $questionId = (int)$question['QUESTION_ID'];
+        // The conversation row serializes claims: only the earliest unfinished reply of an author goes to MAX.
+        $this->sql->query('SELECT ID FROM mf_support_question WHERE ID=' . $this->sql->id($questionId) . ' FOR UPDATE')->fetch();
         // Moments are compared in SQL: Bitrix converts fetched DATETIME columns into its own objects.
         $row = $this->sql->query('SELECT m.AUTHOR_NAME,m.BODY,m.DELIVERY_STATUS,m.ATTEMPTS,'
             . '(m.NEXT_ATTEMPT_AT IS NULL OR m.NEXT_ATTEMPT_AT<=' . $this->sql->moment($now) . ') AS IS_DUE,'
             . '(m.PROCESSING_STARTED_AT<=' . $this->sql->moment($staleBefore) . ') AS IS_STALE,'
+            . "EXISTS(SELECT 1 FROM mf_support_message p WHERE p.QUESTION_ID=m.QUESTION_ID AND p.ID<m.ID AND p.DELIVERY_STATUS IN ('pending','processing')) AS IS_BLOCKED,"
             . 'q.ID AS QUESTION_ID,q.AUTHOR AS QUESTION_AUTHOR,q.CONTEXT FROM mf_support_message m'
             . ' JOIN mf_support_question q ON q.ID=m.QUESTION_ID WHERE m.ID=' . $this->sql->id($messageId) . ' FOR UPDATE')->fetch();
         if (false === $row) {
@@ -27,7 +35,7 @@ final readonly class BitrixQuestionDeliveryRepository implements QuestionDeliver
 
             return null;
         }
-        if ('pending' !== $row['DELIVERY_STATUS'] || 1 !== (int)$row['IS_DUE']) {
+        if ('pending' !== $row['DELIVERY_STATUS'] || 1 !== (int)$row['IS_DUE'] || 1 === (int)$row['IS_BLOCKED']) {
             return null;
         }
         $this->sql->execute("UPDATE mf_support_message SET DELIVERY_STATUS='processing',ATTEMPTS=ATTEMPTS+1,PROCESSING_STARTED_AT="
@@ -72,14 +80,34 @@ final readonly class BitrixQuestionDeliveryRepository implements QuestionDeliver
 
     public function due(\DateTimeImmutable $now, int $limit): array
     {
-        $result = $this->sql->query("SELECT ID FROM mf_support_message WHERE DELIVERY_STATUS='pending' AND NEXT_ATTEMPT_AT<=" . $this->sql->moment($now)
-            . ' ORDER BY NEXT_ATTEMPT_AT,ID LIMIT ' . max(1, min(500, $limit)));
+        $result = $this->sql->query("SELECT m.ID FROM mf_support_message m WHERE m.DELIVERY_STATUS='pending' AND m.NEXT_ATTEMPT_AT<=" . $this->sql->moment($now)
+            . " AND NOT EXISTS(SELECT 1 FROM mf_support_message p WHERE p.QUESTION_ID=m.QUESTION_ID AND p.ID<m.ID AND p.DELIVERY_STATUS IN ('pending','processing'))"
+            . ' ORDER BY m.ID LIMIT ' . max(1, min(500, $limit)));
         $ids = [];
         while (false !== ($row = $result->fetch())) {
             $ids[] = (int)$row['ID'];
         }
 
         return $ids;
+    }
+
+    public function nextPending(int $questionId): ?int
+    {
+        $row = $this->sql->query('SELECT ID FROM mf_support_message WHERE QUESTION_ID=' . $this->sql->id($questionId)
+            . " AND DELIVERY_STATUS='pending' ORDER BY ID LIMIT 1")->fetch();
+
+        return false === $row ? null : (int)$row['ID'];
+    }
+
+    public function countByStatus(): array
+    {
+        $result = $this->sql->query('SELECT DELIVERY_STATUS,COUNT(*) AS TOTAL FROM mf_support_message WHERE DELIVERY_STATUS IS NOT NULL GROUP BY DELIVERY_STATUS');
+        $counts = [];
+        while (false !== ($row = $result->fetch())) {
+            $counts[(string)$row['DELIVERY_STATUS']] = (int)$row['TOTAL'];
+        }
+
+        return $counts;
     }
 
     private function finish(int $messageId, int $attempt, string $assignments): void
