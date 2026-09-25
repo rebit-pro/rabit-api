@@ -342,9 +342,7 @@ final readonly class UserRepository implements LoginUserRepositoryInterface, Tok
         $this->query(static function() use ($userId): void {
             $connection = Application::getConnection();
             $connection->queryExecute(sprintf("UPDATE b_user SET ACTIVE='N',TIMESTAMP_X=UTC_TIMESTAMP() WHERE ID=%d", $userId));
-            if (1 !== $connection->getAffectedRowsCount()) {
-                throw new RepositoryException('Staff Auth identity was not reset.');
-            }
+            self::assertUpdated($userId, 'Staff Auth identity was not reset.');
             $connection->queryExecute(sprintf(
                 "INSERT INTO b_uts_user (VALUE_ID, UF_AUTH_REGISTRATION_PENDING, UF_TOKEN, UF_TOKEN_EXPIRES_AT) VALUES (%d, 1, '', NULL) "
                 . "ON DUPLICATE KEY UPDATE UF_AUTH_REGISTRATION_PENDING = 1, UF_TOKEN = '', UF_TOKEN_EXPIRES_AT = NULL",
@@ -370,10 +368,25 @@ final readonly class UserRepository implements LoginUserRepositoryInterface, Tok
                 $helper->forSql($name),
                 $userId,
             ));
-            if (1 !== $connection->getAffectedRowsCount()) {
-                throw new RepositoryException('Staff Auth identity was not updated.');
-            }
+            self::assertUpdated($userId, 'Staff Auth identity was not updated.');
         });
+    }
+
+    /**
+     * MySQL reports changed rows, not matched ones: a repeat within the same second (TIMESTAMP_X unchanged) changes
+     * nothing, so only a missing identity is an error.
+     *
+     * @throws RepositoryException
+     */
+    private static function assertUpdated(int $userId, string $message): void
+    {
+        $connection = Application::getConnection();
+        if (0 < $connection->getAffectedRowsCount()) {
+            return;
+        }
+        if (false === $connection->query(sprintf('SELECT ID FROM b_user WHERE ID=%d', $userId))->fetch()) {
+            throw new RepositoryException($message);
+        }
     }
 
     /**
