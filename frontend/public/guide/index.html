@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>База знаний «Море фото»</title>
+<link rel="icon" href="/favicon.ico?v=morefoto-1" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/icons/morefoto-v1.svg">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f4f7f8; --surface:#ffffff; --ink:#15212b; --muted:#566673; --line:#d6e0e5;
+  --sea:#17677f; --sea-soft:#e3f0f3;
+  --r-org:#17677f; --r-cur:#7a4fa3; --r-par:#b0572a;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme:dark;
+    --bg:#0f171c; --surface:#16222a; --ink:#e6eef1; --muted:#9db0ba; --line:#2c3d47;
+    --sea:#5fb7d0; --sea-soft:#15323c;
+    --r-org:#5fb7d0; --r-cur:#b999dc; --r-par:#e8966a;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 var(--body);padding-inline:16px;padding-block:48px 72px}
+.wrap{max-width:760px;margin:0 auto;display:grid;gap:32px}
+h1{font-size:clamp(28px,5vw,40px);line-height:1.15;font-weight:700;letter-spacing:-.01em;margin:0;text-wrap:balance}
+p{margin:0}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lead{color:var(--muted);max-width:62ch}
+header{display:grid;gap:12px}
+ul.articles{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.article{display:grid;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;color:inherit;text-decoration:none}
+.article:hover{border-color:var(--sea)}
+.article:focus-visible{outline:2px solid var(--sea);outline-offset:2px}
+.article h2{font-size:19px;line-height:1.3;margin:0;color:var(--sea)}
+.article p{color:var(--muted);font-size:15px}
+.roles{display:flex;flex-wrap:wrap;gap:6px 14px}
+.role{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600}
+.role::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+.meta{font-size:13px;color:var(--muted)}
+footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+footer a{color:var(--sea)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Море фото · для команды</p>
+    <h1>База знаний</h1>
+    <p class="lead">Инструкции для организаторов, кураторов и ответственных групп: как пройти рабочие сценарии в кабинете от начала до результата.</p>
+  </header>
+
+  <ul class="articles">
+    <li>
+      <a class="article" href="/guide/stage-run/">
+        <h2>Прогон: от пустого кабинета до заказа родителя</h2>
+        <p>Команда, каталог, учреждение и группа, фото с кодами детей, выпуск и передача ссылки на галерею, заказ родителя. С полями для записи результатов прогона.</p>
+        <div class="roles">
+          <span class="role" style="--c:var(--r-org)">Организатор</span>
+          <span class="role" style="--c:var(--r-cur)">Куратор</span>
+          <span class="role" style="--c:var(--r-par)">Родитель</span>
+        </div>
+        <span class="meta">Обновлено 25.09.2026</span>
+      </a>
+    </li>
+  </ul>
+
+  <footer><a href="/login">Войти в кабинет</a></footer>
+</div>
+</body>
+</html>
