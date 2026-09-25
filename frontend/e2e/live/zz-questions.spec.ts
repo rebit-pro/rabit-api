@@ -19,7 +19,7 @@ test('a parent asks the curator from the gallery and keeps the conversation in t
   let dialog = await openQuestion(page);
   await expect(dialog).toContainText('Имя и текст передаются кураторам МореФото через мессенджер MAX.');
   await dialog.getByTestId('question-send').click();
-  await expect(dialog.getByRole('alert')).toContainText('Укажите, как к вам обращаться.');
+  await expect(dialog.getByTestId('question-problem')).toContainText('Укажите, как к вам обращаться.');
 
   await dialog.getByLabel('Как к вам обращаться', { exact: true }).fill('K3 Мария');
   await dialog.getByLabel('Ваш вопрос', { exact: true }).fill('Когда будут готовы фотографии?');
@@ -47,7 +47,7 @@ test('a parent asks the curator from the gallery and keeps the conversation in t
   });
   await dialog.getByLabel('Сообщение', { exact: true }).fill('Код кадра A001-01, можно ли напечатать крупнее?');
   await dialog.getByTestId('question-send').click();
-  await expect(dialog.getByRole('alert')).toContainText('Нет связи с сервером. Текст сохранён');
+  await expect(dialog.getByTestId('question-problem')).toContainText('Нет связи с сервером. Текст сохранён');
   await expect(dialog.getByLabel('Сообщение', { exact: true })).toHaveValue('Код кадра A001-01, можно ли напечатать крупнее?');
   const added = page.waitForResponse((r) => r.url().endsWith('/questions/current/messages') && r.request().method() === 'POST');
   await dialog.getByTestId('question-send').click();

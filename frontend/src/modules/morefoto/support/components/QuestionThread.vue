@@ -84,7 +84,9 @@ watch(
         hide-details="auto"
         data-testid="question-message"
       />
-      <v-alert v-if="problem || sendError" type="error" variant="tonal" density="compact" role="alert">{{ problem || sendError }}</v-alert>
+      <v-alert v-if="problem || sendError" type="error" variant="tonal" density="compact" role="alert" data-testid="question-problem">{{
+        problem || sendError
+      }}</v-alert>
       <div class="mf-actions question-thread__actions">
         <v-btn
           type="submit"
