@@ -1,6 +1,6 @@
 # Загрузить переменные окружения; ENV_FILE=/dev/null отключает локальный .env.
 ENV_FILE ?= .env
-ifneq (,$(filter test-e2e e2e-up e2e-test e2e-down,$(MAKECMDGOALS)))
+ifneq (,$(filter test-e2e e2e-up e2e-test e2e-down e2e-prune,$(MAKECMDGOALS)))
     override ENV_FILE := /dev/null
 endif
 ifneq (,$(wildcard $(ENV_FILE)))
@@ -329,7 +329,7 @@ php-fpm:
 	docker compose exec api-php-fpm bash
 
 # Real frontend/API browser gate. Does not load application .env; use ENV_FILE=/dev/null.
-.PHONY: test-e2e e2e-up e2e-test e2e-down
+.PHONY: test-e2e e2e-up e2e-test e2e-down e2e-prune
 test-e2e:
 	python3 tools/run-browser-e2e.py run
 
@@ -341,3 +341,7 @@ e2e-test:
 
 e2e-down:
 	python3 tools/run-browser-e2e.py down --state "$(E2E_STATE)"
+
+# Abandoned runs of any checkout: dry run by default, E2E_PRUNE_APPLY=1 removes. Live stands are never touched.
+e2e-prune:
+	python3 tools/run-browser-e2e.py prune $(if $(filter 1,$(E2E_PRUNE_APPLY)),--apply) $(if $(E2E_PRUNE_MIN_AGE_HOURS),--min-age-hours "$(E2E_PRUNE_MIN_AGE_HOURS)")
