@@ -10,11 +10,11 @@
 - Завершено: контракт `Consent` в `rebit.share`, модуль `morefoto.legal` (реестр, черновики 4 документов, продавец из
   окружения, журнал `mf_legal_consent`, API), согласия в заказе и приглашении, страницы `/legal`, футер, плашка о cookie,
   диалог согласия в кабинете, TTL черновика контактов, E2E.
-- Выполняется: полный `make test-e2e`, затем PR.
+- Выполняется: PR на review (полный `make test-e2e` №3 PASS).
 - Следующий шаг: PR на review; после merge — переменные `MOREFOTO_SELLER_*` на stage, миграция и symlink модуля при
   выкладке (решение пользователя).
 - Открытые решения: LEG-DEC-03, 04, 06, 07, 08; проверка черновиков юристом; организационные шаги O1–O9.
-- Рабочее дерево: всё закоммичено, кроме правок этого журнала и плана.
+- Рабочее дерево: всё закоммичено.
 - Следующая проверка: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
 
 ## Тест-кейсы
@@ -26,7 +26,11 @@
 | LEG-T03 | PASS | 2026-09-25 | `phpunit --testsuite unit` в `rabit-api-php-cli:d1-local`: 734 теста OK; `morefoto.legal/tests/Unit` 17/17; `rebit.auth/tests` 86/86 |
 | LEG-T04 | PASS | 2026-09-25 | `phpstan analyse --configuration=phpstan.neon`: No errors; php-cs-fixer dry-run по изменённым путям — 2 файла исправлены, повтор чистый |
 | LEG-T05 | PASS | 2026-09-25 | `npm run check` в `mcr.microsoft.com/playwright:v1.52.0-jammy` (том `rabit-issues6263-node`): lint, stylelint, typecheck, typecheck:e2e, test:ui 43/43; `npm run test:commerce` 207/207 |
-| LEG-T10…T17, T20, T21 | PENDING | — | `make test-e2e`: `legal.spec.ts`, `zz-access`, `zzzzz-orders`, `verify-orders.php` |
+| LEG-T10, T11, T15, T20, T21 | PASS | 2026-09-25 | `make test-e2e` №3 (`rabit-e2e-1b96e250cb66`): `legal.spec.ts` — документы без входа, реквизиты подставлены, 390 px без прокрутки, футер, плашка без сторонних запросов, диалог `legal-pending` |
+| LEG-T12, T13, T14 | PASS | 2026-09-25 | `zzzzz-orders.spec.ts`: `CONSENT_REQUIRED` без документов и с устаревшей версией, UI-оформление с чекбоксами desktop/mobile; `verify-orders.php`: две записи на каждый заказ, нет записей у отклонённых |
+| LEG-T16 | PASS | 2026-09-25 | `useLiveCheckout` удаляет черновик после заказа (прежняя логика) + TTL 7 дней: `tests/legal/rules.test.mjs` |
+| LEG-T17 | PASS | 2026-09-25 | `zz-access.spec.ts`: без согласия запрос не уходит, с согласием — вход; `AccessUseCasesTest`: без согласия ссылка и учётка не меняются |
+| Полный gate | PASS | 2026-09-25 | `make test-e2e` №3: 403.6 с, группа a 74 passed, группа b 46 passed, 10 верификаторов MySQL passed; визуально: `e5-mobile-checkout.png`, `e5-desktop-checkout.png` |
 | LEG-T18, T19 | PENDING | — | Этап C (LEG-5, LEG-6), не в этом PR |
 
 ## Журнал
@@ -64,3 +68,10 @@
 - `make test-e2e` №1 (288.8 с): быстрые проверки и браузерная группа b PASS (214.6 с); `verify-orders.php` FAIL —
   скрипт сам создаёт заказ без `consents` (`ArgumentCountError` конструктора `CreateOrderInputDto`), группа a
   отменена. Исправлено: верификатор берёт действующие версии из `LegalDocumentCatalogInterface`. Прогон №2 запущен.
+- `make test-e2e` №2 (430.3 с): группа b PASS (254.7 с), все верификаторы PASS (включая согласия в `verify-orders.php`);
+  группа a — 73 passed, 1 failed: `LEG-T10/T21` нашёл «(будет указано до начала продаж)» в оферте — необязательный
+  телефон продавца. Строка телефона убрана из оферты; `LegalDocumentCatalogTest` теперь проверяет, что при
+  опубликованных обязательных реквизитах тексты не содержат незаполненных значений (17/17). Прогон №3 запущен.
+- `make test-e2e` №3 (403.6 с): PASS — группа a 74/74, группа b 46/46, верификаторы storefront, handoff, orders,
+  links, transfers, avatar, payment-costs, payments, access, support. Скриншот mobile-оформления просмотрен: полоса о
+  cookie сверху, продавец в условиях, три отдельных чекбокса, футер с реквизитами.
