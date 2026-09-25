@@ -25,10 +25,11 @@ unit/architecture/HTTP/E2E проверки, двойник MAX для E2E, си
 | --- | --- |
 | K3-T01 | Реплика сама служит outbox: `delivery_status` pending/delivered/failed/unknown, `attempts`, `lease_until`, `next_attempt_at`, `max_mid` (unique). Отдельная таблица outbox не нужна. |
 | K3-T02 | Webhook обрабатывается синхронно в одной транзакции: запись реплики куратора с уникальным входящим `mid` и есть inbox-фиксация; 200 только после commit, повтор — 200 без второй записи. Отдельный inbox и второй worker не нужны: работа — несколько запросов к БД, лимит MAX 30 с. |
-| K3-T03 | Исход HTTP-отправки: 2xx → delivered + `mid`; 4xx (кроме 429) → failed; 429/5xx/ошибка соединения до отправки → повтор с backoff; таймаут после отправки → unknown без автоповтора (у POST /messages нет ключа идемпотентности). |
+| K3-T03 | Исход HTTP-отправки: 2xx → delivered + `mid`; 4xx (кроме 429) → failed; 429 и ошибка соединения до отправки → повтор с backoff; таймаут, 5xx и ответы шлюза 502–504 → unknown без автоповтора (у POST /messages нет ключа идемпотентности; ревью #89). |
 | K3-T04 | Конфигурация: токен `/run/secrets/morefoto_support_max_bot_token` → `MOREFOTO_SUPPORT_MAX_BOT_TOKEN`, секрет webhook `/run/secrets/morefoto_support_max_webhook_secret`, `MOREFOTO_SUPPORT_MAX_CHAT_ID`, `MOREFOTO_SUPPORT_MAX_API_URL` (по умолчанию `https://platform-api2.max.ru`, в E2E — двойник). Без токена или ID группы реплики остаются pending, сайт работает. |
 | K3-T05 | Автор реплики: `parent`, `staff` (head/teacher), `curator`. Имя куратора — `first_name last_name` отправителя MAX. |
 | K3-T06 | `bot_added`/`bot_removed` пишутся в `morefoto_support_max_chat_event`; команда `support:max:chats` показывает ID групп для настройки. |
+| K3-T09 | Ревью #89: реплики одной беседы уходят в MAX строго по порядку (блокировка строки беседы, предшественник pending/processing блокирует выдачу); без токена бота доставка не начинается и попытки не расходуются; `unknown` — отдельное состояние API и сайта; первая отправка родителя хранится в localStorage до получения `questionKey` и повторяется тем же ключом. |
 | K3-T08 | Сертификат MAX выпущен УЦ Минцифры: Russian Trusted Root CA хранится в `rebit.notification/resources/max/`, клиент MAX использует его через `CURLOPT_CAINFO` (переопределение `REBIT_NOTIFICATION_MAX_CA_FILE`); системное доверие образов не меняется. |
 | K3-T07 | Номер вопроса — ID беседы; ключ родителя — 64 hex, в БД SHA-256; беседа родителя привязана к группе галереи. |
 

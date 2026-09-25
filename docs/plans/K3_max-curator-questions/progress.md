@@ -7,8 +7,8 @@
 - Связанное: [план K3](plan.md), [план PR #48](../max-support-chat-plan/plan.md), `docs/waves/graph.json`,
   канон `../MoreFoto/docs/04-bitrix-modules/backend-waves.json` (не git, изменения — патчем в `docs/waves/k3/`).
 - Завершено: merge PR #48; граф синхронизирован (E6 merged, K3 inProgress).
-- Сейчас: PR на ревью.
-- Следующий шаг: ревью; после ревью без блокеров — полный `make test-e2e`, затем деплой на stage и живая проверка MAX-12.
+- Сейчас: 5 блокирующих замечаний ревью #89 исправлены, E2E группы a PASS; PR на второй круг ревью.
+- Следующий шаг: второй круг ревью; после него без блокеров — полный `make test-e2e`, stage и MAX-12.
 - Пользователь: бот прошёл модерацию; группа создана; токен кладёт в `~/.config/morefoto/max-bot.env`, бот
   добавляется в группу администратором.
 - Блокеры: нет. Открыто MAX-D06 (срок хранения) — только для production.
@@ -70,6 +70,17 @@
 - `E2E_GROUPS=a make test-e2e …` (прогон `rabit-e2e-c57cfc81d4f4`, база `4ca7e9c`) — PASS: браузер 68/68 (3.9 мин), `verify-access.php` PASS, `verify-support.php` PASS «K3 support integration passed». Это частичный прогон (только группа a), не полный gate.
 - MAX-11: логи стенда прогона `rabit-e2e-7bd431fabcd6` (fpm, nginx, media, mysql, rabbitmq, notification, prepare) проверены `grep` на ключ беседы из `var/k3-questions.json`, тексты и имена вопросов и секрет webhook — 0 совпадений.
 - Визуально: снимки `k3-gallery-question-{desktop,mobile}.png` — вёрстка корректна, но сняты во время анимации открытия диалога. Спек дополнен ожиданием окончания анимаций; `eslint` и `typecheck:e2e` — PASS; чистые снимки — в полном gate после ревью.
+
+### 25.09.2026 — ревью PR #89: 5 блокирующих замечаний
+
+- [P1] `MaxSendOutcomeClassifier`: 502/504 превращались в RETRY — возможен дубль сообщения в MAX, ответ куратора на первую копию терялся. Теперь 5xx и ответы шлюза → UNKNOWN; RETRY только для несостоявшегося соединения и 429. Тесты классификатора дополнены 502/503/504.
+- [P1] Потеря ответа на первый вопрос: Idempotency-Key жил только в памяти. Теперь `{name,text,requestId}` пишется в `localStorage` (`morefoto:live:question-pending:v1:<token>`) до запроса, очищается после `questionKey` или окончательного отказа и повторяется при следующей загрузке галереи тем же ключом. Unit: `parsePendingAsk`; E2E: `route.fetch()` + `abort` после сохранения на сервере → reload → одна беседа; верификатор считает беседы «K3 Потерянный ответ» = 1.
+- [P2] Пустой токен расходовал попытки: `MaxChatMessengerInterface::isConfigured()`, проверка до `claim`. Unit с реальным `MaxBotApiClient('')`: 12 проходов — pending, 0 попыток.
+- [P2] `unknown` показывался как `sending`: API `delivery=unknown`, текст «Не удалось подтвердить доставку. Если куратор не ответит, напишите ещё раз»; `app:support:max-status` показывает счётчики и предупреждает о unknown/failed. Канон SUP-07/08 обновлён.
+- [P2] Порядок: `claim` блокирует строку беседы и отказывает, если есть более ранняя pending/processing реплика; `due` отдаёт только головы очередей; после завершения реплики публикуется `nextPending`. Unit: A=RETRY, B ждёт; после доставки A публикуется B; порядок отправки A, B.
+- Патч канона пересобран от базы «снимок K3 + правки сессии G1 (PAY-01/03)», чтобы не присваивать чужие изменения: 0 строк PAY, наложение воспроизводит канон.
+- `E2E_GROUPS=a make test-e2e …` (прогон `rabit-e2e-529dd3f76dd0`, head `120cd9d`) — PASS: браузер 69/69 (новый сценарий потерянного ответа), `verify-access.php`, `verify-support.php` «K3 support integration passed» (одна беседа после потери ответа, доставка по порядку). Частичный прогон, не полный gate.
+- Проверки: `vendor/bin/phpunit` — PASS 784 теста (1 deprecation #90); `phpstan` — PASS; `php-cs-fixer` (16 файлов) — исправлено 2, далее чисто; `npm run check` — PASS (test:ui 34/34); `test:commerce` 200/200; `build-only` — PASS; канон `validate.py`/`validate-postman.cjs` — PASS.
 
 ## Результаты проверок
 
