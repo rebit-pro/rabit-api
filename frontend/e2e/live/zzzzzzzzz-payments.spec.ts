@@ -282,7 +282,10 @@ if (sandbox) {
       await organizer.page.getByTestId('payment-row').first().getByRole('link').click();
       await expect(organizer.page.getByTestId('payment-card-status')).toHaveText('Оплачено');
       await expect(organizer.page.getByTestId('payment-facts')).toContainText('после возврата покупателя');
+      // The layout picks the mobile navigation on load: reload after resizing.
       await organizer.page.setViewportSize({ width: 390, height: 844 });
+      await organizer.page.reload();
+      await expect(organizer.page.getByTestId('payment-card-status')).toHaveText('Оплачено');
       await organizer.page.screenshot({ path: testInfo.outputPath('g1-mobile-payment-card.png'), fullPage: true, animations: 'disabled' });
     } finally {
       await organizer.close();
