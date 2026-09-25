@@ -3,7 +3,7 @@
 ## Точка продолжения
 
 - Ветка: `codex/max-support-chat-plan`, worktree `/home/user/rabit-api-worktrees/max-support-chat-plan`.
-- Base: `4621ad9` (`origin/main` на 25.09.2026, ветка перебазирована). PR: [#48](https://github.com/rebit-pro/rabit-api/pull/48), draft.
+- Base: `4621ad9` (`origin/main` на 25.09.2026, ветка перебазирована). PR: [#48](https://github.com/rebit-pro/rabit-api/pull/48), ready for review (head графа 5f99beb).
 - Связанное: `plan.md`, `docs/waves/graph.json` (K1, F2, E4, B2, H1, B4), соседний MoreFoto `docs/05-rest-api/README.md`.
 - Завершено: план переписан под постановку 25.09.2026 (общий канал без заказа, родитель по ссылке и имени,
   воспитатель из кабинета, кураторы в группе MAX); сверены требования MAX; логотип бота 500×500 подготовлен вне репозитория.
@@ -120,5 +120,5 @@ CHAT-01…13 первой редакции заменены MAX-01…13 (plan.md
 | DOC-02 | PASS | 25.09.2026 | Открыты dev.max.ru: подключение к платформе и создание бота; требования внесены в plan.md, раздел 3–4 |
 | DOC-03 | PASS | 25.09.2026 | verify-wave-graph: 52/116/35, K3 ready; канон: wave_graph, render, build, validate (118), validate-postman — PASS; patch dry-run — PASS |
 | DOC-04 | PASS | 25.09.2026 | `git diff --check origin/main...HEAD` чист; DOC-01…05 и MAX-01…13 есть в progress |
-| DOC-05 | PENDING | 25.09.2026 | После push |
+| DOC-05 | PASS | 25.09.2026 | `gh pr view 48 --json isDraft,files,headRefOid`: ready for review, head 5f99beb, 4 файла |
 | MAX-01…MAX-13 | PENDING | 25.09.2026 | Реализация K3 не начата |
