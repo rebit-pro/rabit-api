@@ -3,7 +3,7 @@
 ## Точка продолжения
 
 - Ветка `codex/ops-login-feedback` (worktree `.worktrees/ops-login-feedback`), base `caa37b6` (origin/main).
-- PR: открывается после этого коммита. Связано: K3 `morefoto.support` (PR #89).
+- PR: https://github.com/rebit-pro/rabit-api/pull/108 (head cdb59f6 + docs). Связано: K3 `morefoto.support` (PR #89).
 - Завершено: backend (миграция, гостевой тип беседы, `POST /api/v1/public/feedback`), frontend (шапка, блок «Кабинет
   «Море фото»», диалог «Написать нам»), unit-тесты, live E2E-спека и DB-верификатор, быстрые проверки.
 - Следующий шаг: ревью PR; если нет блокеров, запустить полный `make test-e2e` (T08–T11).
