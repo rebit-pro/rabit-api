@@ -22,6 +22,19 @@ async function headers(page: Page, idempotencyKey = key()) {
 async function create(page: Page, path: string, data: Record<string, unknown>) {
   return (await body(await page.request.post(path, { headers: await headers(page), data }), 201)).data;
 }
+/** #28: the server applies the next PUT of the request (or not, when `apply` is false), but the browser never sees the answer. */
+async function loseNextPut(page: Page, path: string, apply = true) {
+  let done = false;
+  await page.route(
+    (url) => url.pathname === path,
+    async (route) => {
+      if (done || route.request().method() !== 'PUT') return route.fallback();
+      done = true;
+      if (apply) await route.fetch();
+      await route.abort('failed');
+    }
+  );
+}
 async function assignStaff(page: Page, email: string, role: 'teacher' | 'curator', institutionId: string, groupId?: string) {
   const listing = await body(await page.request.get('/api/v1/users?q=' + encodeURIComponent(email), { headers: await headers(page) }));
   const staff = listing.data.items.find((item: { email: string }) => item.email === email);
@@ -113,8 +126,14 @@ test('F1: воспитатель подаёт список, куратор ут�
   try {
     const teacher = await teacherContext.newPage();
     await login(teacher, 'teacher');
+    // #26: the list reads one bounded page, not every page of the history.
+    const firstPage = teacher.waitForRequest((request) => {
+      const url = new URL(request.url());
+      return url.pathname === '/api/v1/staff-requests' && url.searchParams.get('pageSize') === '20';
+    });
     await teacher.getByLabel('Основная навигация').getByRole('link', { name: 'Списки сотрудников', exact: true }).click();
     await expect(teacher.getByRole('heading', { name: 'Заявки на списки сотрудников', exact: true })).toBeVisible();
+    expect(new URL((await firstPage).url()).searchParams.get('page')).toBe('1');
     await teacher.getByRole('button', { name: 'Новый список', exact: true }).click();
     const dialog = teacher.getByTestId('admin-dialog');
     await dialog.getByLabel('Учреждение списка', { exact: true }).press('Enter');
@@ -285,8 +304,18 @@ test('F1: воспитатель подаёт список, куратор ут�
       }),
       422
     );
+    const curatorReads: URL[] = [];
+    curator.on('request', (request) => {
+      const url = new URL(request.url());
+      if (request.method() === 'GET' && url.pathname.startsWith('/api/v1/staff-requests')) curatorReads.push(url);
+    });
     await curator.goto('/cabinet/staff-requests/' + created.id);
     await expect(curator.getByTestId('request-detail')).toBeVisible();
+    // #26: the card is HND-08 plus the scope from a one-item HND-06 page; other pages are not downloaded.
+    const listReads = curatorReads.filter((url) => url.pathname === '/api/v1/staff-requests');
+    expect(listReads.length).toBeGreaterThan(0);
+    expect(listReads.every((url) => url.searchParams.get('page') === '1' && url.searchParams.get('pageSize') === '1')).toBe(true);
+    expect(curatorReads.filter((url) => url.pathname === '/api/v1/staff-requests/' + created.id)).toHaveLength(1);
     await expect(curator.getByTestId('staff-eligibility')).toContainText('Право сотрудника подтверждено сервером');
     // D3: the transfer is available, but this shoot has no staff folder yet.
     await expect(curator.getByRole('button', { name: 'Проверить и перенести', exact: true })).toBeDisabled();
@@ -300,6 +329,23 @@ test('F1: воспитатель подаёт список, куратор ут�
     );
     await clarifyDialog.getByRole('button', { name: 'Запросить уточнение', exact: true }).click();
     expect((await body(await clarification)).data).toMatchObject({ id: created.id, revision: 2, status: 'clarification' });
+
+    // #26: the status tile asks the server for a filtered page; the pager appears only for several pages.
+    await curator.getByRole('link', { name: 'Все списки', exact: true }).click();
+    const filtered = curator.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return url.pathname === '/api/v1/staff-requests' && url.searchParams.get('status') === 'clarification';
+    });
+    await curator
+      .getByTestId('request-tiles')
+      .getByRole('button', { name: /^Нужно уточнение:/ })
+      .click();
+    const filteredPage = await body(await filtered);
+    expect(filteredPage.meta.pageSize).toBe(20);
+    expect(filteredPage.data.items.every((item: { status: string }) => item.status === 'clarification')).toBe(true);
+    expect(filteredPage.data.items.map((item: { id: string }) => item.id)).toContain(created.id);
+    await expect(curator.locator('a[href="/cabinet/staff-requests/' + created.id + '"]')).toHaveCount(1);
+    await expect(curator.getByTestId('request-pagination')).toHaveCount(filteredPage.meta.totalPages > 1 ? 1 : 0);
 
     await teacher.goto('/cabinet/staff-requests/' + created.id);
     await expect(teacher.getByTestId('request-detail')).toContainText('Нужно уточнение');
@@ -316,6 +362,221 @@ test('F1: воспитатель подаёт список, куратор ут�
     expect(detail.staffEligibility).toMatchObject({ eligible: true, source: 'verified_staff_assignment' });
     expect(detail.history.map((event: { kind: string }) => event.kind)).toEqual(['submitted', 'clarification', 'submitted']);
     expect(detail.rows[0]).toMatchObject({ groupId: group.id, childCode: 'A', photoIds: [photoId] });
+
+    // #27: simultaneous identical commands with one Idempotency-Key share one result; the request changes once.
+    const twinKey = key();
+    const twinBody = {
+      institutionId: institution.id,
+      shootId: shoot.id,
+      rows: createBody.rows,
+      comment: 'Параллельный повтор',
+      revision: 3
+    };
+    const twins = await Promise.all(
+      Array.from({ length: 4 }, async () =>
+        body(
+          await teacher.request.put('/api/v1/staff-requests/' + created.id, { headers: await headers(teacher, twinKey), data: twinBody })
+        )
+      )
+    );
+    expect(twins.map((twin) => twin.data)).toEqual(Array(4).fill({ id: created.id, revision: 4, status: 'submitted' }));
+    expect(
+      (
+        await body(
+          await teacher.request.put('/api/v1/staff-requests/' + created.id, { headers: await headers(teacher, twinKey), data: twinBody })
+        )
+      ).data
+    ).toEqual({ id: created.id, revision: 4, status: 'submitted' });
+    expect(
+      (
+        await body(
+          await teacher.request.put('/api/v1/staff-requests/' + created.id, {
+            headers: await headers(teacher, twinKey),
+            data: { ...twinBody, comment: 'Другое тело' }
+          }),
+          409
+        )
+      ).error.code
+    ).toBe('IDEMPOTENCY_CONFLICT');
+    const mediaForC = await body(await page.request.get('/api/v1/shoots/' + shoot.id + '/photos', { headers: await headers(page) }));
+    await body(
+      await page.request.post('/api/v1/groups/' + group.id + '/photo-assignments', {
+        headers: await headers(page),
+        data: { shootId: shoot.id, revision: mediaForC.data.revision, photoIds: [photoId], childCode: 'C' }
+      })
+    );
+    const createTwinKey = key();
+    const createTwinBody = {
+      institutionId: institution.id,
+      shootId: shoot.id,
+      rows: [{ id: crypto.randomUUID(), groupId: group.id, code: 'C' }],
+      comment: 'Параллельное создание'
+    };
+    const createdTwins = await Promise.all(
+      Array.from({ length: 4 }, async () =>
+        body(
+          await teacher.request.post('/api/v1/staff-requests', { headers: await headers(teacher, createTwinKey), data: createTwinBody }),
+          201
+        )
+      )
+    );
+    expect(new Set(createdTwins.map((twin) => JSON.stringify(twin.data))).size).toBe(1);
+    const twinList = await body(
+      await teacher.request.get('/api/v1/staff-requests?shootId=' + shoot.id + '&pageSize=100', { headers: await headers(teacher) })
+    );
+    expect(twinList.data.items.filter((item: { comment: string }) => item.comment === 'Параллельное создание')).toHaveLength(1);
+    const clarifyKey = key();
+    const clarifyBody = { revision: 4, comment: 'Параллельное уточнение', confirmed: true };
+    const clarifications = await Promise.all(
+      Array.from({ length: 4 }, async () =>
+        body(
+          await curator.request.post('/api/v1/staff-requests/' + created.id + '/clarifications', {
+            headers: await headers(curator, clarifyKey),
+            data: clarifyBody
+          })
+        )
+      )
+    );
+    expect(clarifications.map((item) => item.data)).toEqual(Array(4).fill({ id: created.id, revision: 5, status: 'clarification' }));
+    expect(
+      (
+        await body(
+          await curator.request.post('/api/v1/staff-requests/' + created.id + '/clarifications', {
+            headers: await headers(curator, clarifyKey),
+            data: { ...clarifyBody, comment: 'Другая причина' }
+          }),
+          409
+        )
+      ).error.code
+    ).toBe('IDEMPOTENCY_CONFLICT');
+    const afterTwins = (await body(await teacher.request.get('/api/v1/staff-requests/' + created.id, { headers: await headers(teacher) })))
+      .data;
+    expect(afterTwins).toMatchObject({ revision: 5, status: 'clarification', comment: 'Параллельный повтор' });
+    expect(afterTwins.history.map((event: { kind: string }) => event.kind)).toEqual([
+      'submitted',
+      'clarification',
+      'submitted',
+      'submitted',
+      'clarification'
+    ]);
+
+    // #28: a lost answer is an unknown outcome; the unchanged form repeats with the same key and gets the replay.
+    const detailPath = '/api/v1/staff-requests/' + created.id;
+    const isPut = (request: { method(): string; url(): string }) =>
+      request.method() === 'PUT' && new URL(request.url()).pathname === detailPath;
+    const isDetail = (response: Response) => response.request().method() === 'GET' && new URL(response.url()).pathname === detailPath;
+    const form = teacher.getByTestId('admin-dialog');
+    const comment = form.getByLabel('Комментарий к списку', { exact: true });
+    const submitForm = form.getByRole('button', { name: 'Передать список куратору', exact: true });
+    const server = async () => (await body(await teacher.request.get(detailPath, { headers: await headers(teacher) }))).data;
+    await teacher.goto('/cabinet/staff-requests/' + created.id);
+    await teacher.getByRole('button', { name: 'Уточнить список', exact: true }).click();
+    await comment.fill('Потерянный ответ');
+    await loseNextPut(teacher, detailPath);
+    const lostPut = teacher.waitForRequest(isPut);
+    await submitForm.click();
+    const lostKey = (await lostPut).headers()['idempotency-key'];
+    await expect(form.getByText(/Ответ сервера не получен/)).toBeVisible();
+    await expect(form.getByText(/Сервер не сохранил/)).toHaveCount(0);
+    expect(await server()).toMatchObject({ revision: 6, status: 'submitted', comment: 'Потерянный ответ' });
+    const repeatPut = teacher.waitForRequest(isPut);
+    const repeated = teacher.waitForResponse((response) => isPut(response.request()));
+    await submitForm.click();
+    expect((await repeatPut).headers()['idempotency-key']).toBe(lostKey);
+    expect((await body(await repeated)).data).toEqual({ id: created.id, revision: 6, status: 'submitted' });
+    await expect(form).not.toBeVisible();
+
+    // #28: «Загрузить актуальные данные» reads the card from the server and gives the form its revision.
+    await teacher.getByRole('button', { name: 'Изменить список', exact: true }).click();
+    await comment.fill('Потерянный ответ 2');
+    await loseNextPut(teacher, detailPath);
+    await submitForm.click();
+    await expect(form.getByText(/Ответ сервера не получен/)).toBeVisible();
+    const fresh = teacher.waitForResponse(isDetail);
+    await form.getByRole('button', { name: 'Загрузить актуальные данные', exact: true }).click();
+    expect((await body(await fresh)).data).toMatchObject({ revision: 7, comment: 'Потерянный ответ 2' });
+    await expect(comment).toHaveValue('Потерянный ответ 2');
+    await comment.fill('После актуальных данных');
+    const afterReset = teacher.waitForResponse((response) => isPut(response.request()));
+    await submitForm.click();
+    expect((await body(await afterReset)).data).toMatchObject({ revision: 8, status: 'submitted' });
+    await expect(form).not.toBeVisible();
+
+    // #28: after a reload the draft of the lost save is restored with its key although the server revision moved on;
+    // the unchanged repeat is a replay, not a second mutation.
+    await teacher.getByRole('button', { name: 'Изменить список', exact: true }).click();
+    await comment.fill('Потерянный ответ 3');
+    await loseNextPut(teacher, detailPath);
+    const lostAgain = teacher.waitForRequest(isPut);
+    await submitForm.click();
+    const lostAgainKey = (await lostAgain).headers()['idempotency-key'];
+    await expect(form.getByText(/Ответ сервера не получен/)).toBeVisible();
+    expect(await server()).toMatchObject({ revision: 9, comment: 'Потерянный ответ 3' });
+    await teacher.reload();
+    await teacher.getByRole('button', { name: 'Изменить список', exact: true }).click();
+    await expect(form.getByText(/Черновик устарел/)).toBeVisible();
+    await expect(form.getByText('Восстановлен несохранённый черновик.', { exact: true })).toBeVisible();
+    await expect(comment).toHaveValue('Потерянный ответ 3');
+    const replayPut = teacher.waitForRequest(isPut);
+    const afterStale = teacher.waitForResponse((response) => isPut(response.request()));
+    await submitForm.click();
+    expect((await replayPut).headers()['idempotency-key']).toBe(lostAgainKey);
+    expect((await body(await afterStale)).data).toEqual({ id: created.id, revision: 9, status: 'submitted' });
+    await expect(form).not.toBeVisible();
+    expect(await server()).toMatchObject({ revision: 9 });
+
+    // #28: a command that never reached the server survives a reload with its key and applies once.
+    await teacher.getByRole('button', { name: 'Изменить список', exact: true }).click();
+    await comment.fill('Не дошло до сервера');
+    await loseNextPut(teacher, detailPath, false);
+    const undelivered = teacher.waitForRequest(isPut);
+    await submitForm.click();
+    const undeliveredKey = (await undelivered).headers()['idempotency-key'];
+    await expect(form.getByText(/Ответ сервера не получен/)).toBeVisible();
+    expect(await server()).toMatchObject({ revision: 9 });
+    await teacher.reload();
+    await teacher.getByRole('button', { name: 'Изменить список', exact: true }).click();
+    await expect(form.getByText('Восстановлен несохранённый черновик.', { exact: true })).toBeVisible();
+    await expect(comment).toHaveValue('Не дошло до сервера');
+    const deliveredPut = teacher.waitForRequest(isPut);
+    const delivered = teacher.waitForResponse((response) => isPut(response.request()));
+    await submitForm.click();
+    expect((await deliveredPut).headers()['idempotency-key']).toBe(undeliveredKey);
+    expect((await body(await delivered)).data).toMatchObject({ revision: 10 });
+    await expect(form).not.toBeVisible();
+
+    // #28: an outside change gives REVISION_CONFLICT; the user's draft survives closing and reopening and is replaced
+    // only by «Загрузить актуальные данные».
+    await teacher.getByRole('button', { name: 'Изменить список', exact: true }).click();
+    await comment.fill('Мой черновик');
+    await body(
+      await teacher.request.put(detailPath, {
+        headers: await headers(teacher),
+        data: { institutionId: institution.id, shootId: shoot.id, rows: createBody.rows, comment: 'Внешнее изменение', revision: 10 }
+      })
+    );
+    const conflict = teacher.waitForResponse((response) => isPut(response.request()));
+    await submitForm.click();
+    expect((await body(await conflict, 409)).error.code).toBe('REVISION_CONFLICT');
+    await expect(form.getByText(/Список уже изменён/)).toBeVisible();
+    const closed = teacher.waitForResponse(isDetail);
+    await form.getByRole('button', { name: 'Отмена', exact: true }).click();
+    expect((await body(await closed)).data).toMatchObject({ revision: 11, comment: 'Внешнее изменение' });
+    await teacher.getByRole('button', { name: 'Изменить список', exact: true }).click();
+    await expect(form.getByText(/Черновик устарел/)).toBeVisible();
+    await expect(comment).toHaveValue('Мой черновик');
+    const stillConflict = teacher.waitForResponse((response) => isPut(response.request()));
+    await submitForm.click();
+    expect((await body(await stillConflict, 409)).error.code).toBe('REVISION_CONFLICT');
+    const actual = teacher.waitForResponse(isDetail);
+    await form.getByRole('button', { name: 'Загрузить актуальные данные', exact: true }).click();
+    expect((await body(await actual)).data).toMatchObject({ revision: 11, comment: 'Внешнее изменение' });
+    await expect(comment).toHaveValue('Внешнее изменение');
+    await expect(form.getByText(/Черновик устарел/)).toHaveCount(0);
+    const resolved = teacher.waitForResponse((response) => isPut(response.request()));
+    await submitForm.click();
+    expect((await body(await resolved)).data).toMatchObject({ revision: 12, status: 'submitted' });
+    await expect(form).not.toBeVisible();
 
     await teacher.setViewportSize({ width: 390, height: 844 });
     await teacher.reload();

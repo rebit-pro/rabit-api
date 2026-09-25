@@ -22,6 +22,10 @@ export interface StaffRequestPage {
     summary?: { byStatus: Record<'submitted' | 'clarification' | 'transferred', number> };
   };
 }
+export interface StaffRequestFilters {
+  status?: StaffRequest['status'] | null;
+  shootId?: string | null;
+}
 interface MutationResult {
   id: string;
   revision: number;
@@ -33,10 +37,17 @@ interface TransferResult extends MutationResult {
 const key = (value: string) => value.replace(/-/g, '');
 
 export const staffRequestsApi = {
-  async list(page = 1, pageSize = 100): Promise<StaffRequestPage> {
+  /** HND-06 reads one page; the status and shoot filters are applied by the server. */
+  async list(page = 1, pageSize = 100, filters: StaffRequestFilters = {}): Promise<StaffRequestPage> {
+    const params = {
+      page,
+      pageSize,
+      ...(filters.status ? { status: filters.status } : {}),
+      ...(filters.shootId ? { shootId: filters.shootId } : {})
+    };
     const response = await api.get<{ data: { items: StaffRequest[]; scope: StaffRequestScope }; meta: StaffRequestPage['meta'] }>(
       '/api/v1/staff-requests',
-      { params: { page, pageSize }, unwrapEnvelope: false }
+      { params, unwrapEnvelope: false }
     );
     return { items: response.data.data.items, scope: response.data.data.scope, meta: response.data.meta };
   },
@@ -85,12 +96,15 @@ export const staffRequestsApi = {
 
 export function staffRequestError(cause: unknown, action: StaffCommand['action'] = 'submit'): string {
   if (!isAxiosError(cause)) return cause instanceof Error ? cause.message : 'Не удалось сохранить список.';
+  // No HTTP answer: the server may have applied the command. The unchanged form repeats with the same key safely.
+  if (!cause.response)
+    return 'Ответ сервера не получен — изменения могли сохраниться. Отправьте форму ещё раз без правок (повтор безопасен) или загрузите актуальные данные.';
   const error = (cause.response?.data as { error?: { code?: string; details?: { photoCodes?: string[] } } } | undefined)?.error;
   const code = error?.code;
   const transfer = action === 'confirm' ? staffTransferErrorText(code, error?.details?.photoCodes) : null;
   if (transfer) return transfer;
-  if (code === 'REVISION_CONFLICT') return 'Список уже изменён. Загрузите актуальную версию и повторите действие.';
-  if (code === 'IDEMPOTENCY_CONFLICT') return 'Эта попытка уже использована с другими данными. Закройте форму и откройте её снова.';
+  if (code === 'REVISION_CONFLICT') return 'Список уже изменён. Загрузите актуальные данные и повторите действие.';
+  if (code === 'IDEMPOTENCY_CONFLICT') return 'Эта попытка уже сохранена сервером с другими данными. Загрузите актуальные данные.';
   if (code === 'CHILD_ALREADY_PENDING') return 'Этот ребёнок уже есть в списке на проверке.';
   if (code === 'CHILD_NOT_FOUND') return 'Код ребёнка или снимка не найден в выбранной группе.';
   if (code === 'INVALID_ROW') return 'Проверьте код ребёнка или снимка: например, A или A001. У снимка ровно три цифры.';

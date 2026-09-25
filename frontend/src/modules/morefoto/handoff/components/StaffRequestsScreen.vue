@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, shallowRef } from 'vue';
+import { computed, nextTick, shallowRef, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import AdminDialog from '../../management/components/AdminDialog.vue';
 import RequestFields from './RequestFields.vue';
 import RequestReview from './RequestReview.vue';
 import { useHandoff } from '../useHandoff';
+import { loadHandoff } from '../service';
 import { useHandoffEditor } from '../useHandoffEditor';
 import { useTransferPreview } from '../useTransferPreview';
 import { formatMoment, requestStatus } from '../display';
@@ -16,13 +17,32 @@ import { plural } from '@/components/viz/measures';
 import { CHART_CATEGORY } from '../../ui/chartPalette';
 import { toneOf } from '@/components/status/tones';
 import { staffRequestTone } from '../../ui/statusTone';
+type RequestState = keyof typeof requestStatus;
 const route = useRoute(),
-  { auth, data, loading, error, reload } = useHandoff(),
+  statusFilter = shallowRef<RequestState | null>(null),
+  page = shallowRef(1),
+  shootFilter = computed(() => (typeof route.query.shoot === 'string' ? route.query.shoot : null)),
+  { auth, data, loading, error, reload } = useHandoff((token, requestId) =>
+    loadHandoff(token, requestId, { page: page.value, status: statusFilter.value, shootId: shootFilter.value })
+  ),
   notice = shallowRef('');
+// Live mode reads one filtered page (#26): a new card, filter or shoot starts again from the first page.
+watch([() => route.params.requestId, shootFilter, statusFilter], () => {
+  if (page.value === 1) void reload();
+  else page.value = 1;
+});
+watch(page, () => void reload());
 const editor = useHandoffEditor(() => {
   notice.value = 'Изменения сохранены.';
   void reload();
-});
+}, refreshWorkspace);
+/** Server state for «Загрузить актуальные данные»: the card and, for a confirmation, its fresh transfer preview. */
+async function refreshWorkspace(): Promise<boolean> {
+  if (!(await reload())) return false;
+  await nextTick();
+  await previewSettled();
+  return true;
+}
 // «Передан → Проверка → Перенесён»: where the list is now and whose move it is.
 const steps = computed(() => {
   const status = selected.value?.status;
@@ -36,20 +56,17 @@ const steps = computed(() => {
     { key: 'transferred', label: 'Наборы перенесены', state: status === 'transferred' ? 'done' : 'todo' }
   ];
 });
-const { command, busy, errors, restored, error: saveError } = editor;
+const { command, busy, errors, restored, stale, error: saveError } = editor;
 const selected = computed(() => data.value?.requests.find((r) => r.id === route.params.requestId));
 const reviewing = computed(() => ['curator', 'organizer'].includes(data.value?.role ?? ''));
 const createAllowed = computed(() => ['teacher', 'organizer'].includes(data.value?.role ?? ''));
 const titles = { submit: 'Передать список куратору', clarify: 'Запросить уточнение', confirm: 'Подтвердить перенос' };
-type RequestState = keyof typeof requestStatus;
-const statusFilter = shallowRef<RequestState | null>(null);
+// The demo keeps every list locally; live pages come filtered by the server and pass unchanged.
 const requests = computed(
   () =>
     data.value?.requests
-      .filter((r) => !route.query.shoot || r.shootId === route.query.shoot)
-      .filter((r) => null === statusFilter.value || r.status === statusFilter.value)
-      .slice()
-      .reverse() ?? []
+      .filter((r) => !shootFilter.value || r.shootId === shootFilter.value)
+      .filter((r) => null === statusFilter.value || r.status === statusFilter.value) ?? []
 );
 // Live counts come from the server summary (U5); the demo keeps every list locally and counts it.
 const statusCounts = computed(() => {
@@ -68,7 +85,7 @@ const lists = ['список', 'списка', 'списков'] as const;
 function toggleStatus(status: RequestState): void {
   statusFilter.value = statusFilter.value === status ? null : status;
 }
-const { preview, error: previewError } = useTransferPreview(data, selected, reviewing);
+const { preview, error: previewError, settled: previewSettled } = useTransferPreview(data, selected, reviewing);
 function open(action: StaffCommand['action'], request?: StaffRequest) {
   editor.open(
     () => {
@@ -208,6 +225,16 @@ function change(value: Partial<StaffCommand>) {
         </header>
         <v-btn :to="'/cabinet/staff-requests/' + request.id" variant="outlined">Открыть список</v-btn>
       </article>
+      <v-pagination
+        v-if="data.requestPage && data.requestPage.totalPages > 1"
+        v-model="page"
+        class="mt-6"
+        :length="data.requestPage.totalPages"
+        total-visible="5"
+        density="comfortable"
+        :disabled="loading"
+        data-testid="request-pagination"
+      />
     </template>
   </template>
   <AdminDialog
@@ -222,6 +249,10 @@ function change(value: Partial<StaffCommand>) {
     @reset="editor.reset"
     @save="editor.save"
   >
+    <p v-if="stale" role="status" class="mf-muted mb-4">
+      Черновик устарел: список изменён на сервере после него. Отправьте форму без правок — если это ваша прошлая отправка, сервер вернёт её
+      результат. Чтобы начать с актуального списка, загрузите актуальные данные.
+    </p>
     <RequestFields v-if="command?.kind === 'request' && data" :command="command" :data="data" :errors="errors" @change="change" />
     <RequestReview
       v-if="command?.kind === 'request' && command.action === 'confirm' && preview && data"

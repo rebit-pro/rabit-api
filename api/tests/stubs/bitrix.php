@@ -121,9 +121,17 @@ if (!class_exists(Application::class)) {
     {
         private static ?self $instance = null;
 
+        /** Тесты SQL-репозиториев подменяют соединение через reflection; по умолчанию запросы ничего не возвращают. */
+        private static ?DB\Connection $connection = null;
+
         public static function getInstance(): self
         {
             return self::$instance ??= new self();
+        }
+
+        public static function getConnection(): DB\Connection
+        {
+            return self::$connection ??= new DB\Connection();
         }
 
         public static function getDocumentRoot(): string
@@ -243,6 +251,44 @@ if (!class_exists(Result::class)) {
         public function fetch(): array|false
         {
             return false;
+        }
+    }
+}
+
+if (!class_exists(SqlHelper::class)) {
+    class SqlHelper
+    {
+        public function forSql(string $value): string
+        {
+            return addslashes($value);
+        }
+    }
+}
+
+if (!class_exists(Connection::class)) {
+    /** Стаб соединения: тесты наследуют его, чтобы записывать SQL и подставлять строки результата. */
+    class Connection
+    {
+        public function query(string $sql): Result
+        {
+            return new Result();
+        }
+
+        public function queryExecute(string $sql): void {}
+
+        public function getSqlHelper(): SqlHelper
+        {
+            return new SqlHelper();
+        }
+
+        public function getAffectedRowsCount(): int
+        {
+            return 0;
+        }
+
+        public function getInsertedId(): int
+        {
+            return 0;
         }
     }
 }
