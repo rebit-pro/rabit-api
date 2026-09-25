@@ -39,7 +39,7 @@
 - [x] S3. Unit-тесты и live E2E.
 - [x] S4. #69: E6-T04.
 - [x] S5. Быстрые проверки.
-- [ ] S6. Commit, push, PR.
+- [x] S6. Commit, push, PR (#75).
 - [ ] S7. После review без блокеров — полный `make test-e2e`, merge.
 
 ## Критерии приёмки

@@ -5,7 +5,7 @@
 - Дата: 2026-09-25.
 - Ветка: `codex/issues-68-69-payment-cost-toggle`, worktree `/home/user/rabit-api-worktrees/issues-68-69-payment-cost-toggle`. Основной checkout `/home/user/rabit-api` занят другой сессией.
 - Base: `origin/main` `54bd4ab` (merge PR #66, E6).
-- Issues: [#68](https://github.com/rebit-pro/rabit-api/issues/68), [#69](https://github.com/rebit-pro/rabit-api/issues/69). PR — см. хронологию.
+- Issues: [#68](https://github.com/rebit-pro/rabit-api/issues/68), [#69](https://github.com/rebit-pro/rabit-api/issues/69). PR: [#75](https://github.com/rebit-pro/rabit-api/pull/75), на review.
 - Параллельно в работе: #72/#73 (`codex/issues-72-73-orders-scope-retry`), #26/#27/#28 (`codex/issues-26-27-28-staff-requests`).
 - Завершено: исправление, unit и live-тест, #69, быстрые проверки.
 - Следующий шаг: review PR. После review без блокеров — полный `make test-e2e` (T04, T05), затем merge.
