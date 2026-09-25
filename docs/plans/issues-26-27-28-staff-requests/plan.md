@@ -69,12 +69,12 @@
 
 ## Checklist
 
-- [ ] План и журнал.
-- [ ] #26 backend: пакетное чтение + PHPUnit.
-- [ ] #26 frontend: ограниченная страница, пагинация, карточка.
-- [ ] #26 верификатор 1000 заявок.
-- [ ] #27 backend: резерв ключа + PHPUnit.
-- [ ] #27 E2E конкурентных PUT/clarify.
+- [x] План и журнал.
+- [x] #26 backend: пакетное чтение + PHPUnit.
+- [x] #26 frontend: ограниченная страница, пагинация, карточка.
+- [x] #26 верификатор 1000 заявок (написан; запуск в gate).
+- [x] #27 backend: резерв ключа + PHPUnit.
+- [x] #27 E2E конкурентных create/PUT/clarify (написан; запуск в gate).
 - [ ] #28 frontend: неопределённый исход, серверный reset, устаревший draft.
 - [ ] #28 E2E потерянного ответа.
 - [ ] Быстрые проверки backend/frontend.
@@ -100,7 +100,7 @@
 | T05 | То же для clarify и create | `clarify()`/`save()` | Replay без мутации | PHPUnit |
 | T06 | Ключ занят иным hash | `save()` | 409 `IDEMPOTENCY_CONFLICT` | PHPUnit |
 | T07 | Ключ свободен | `save()` | Резерв → мутация → запись результата | PHPUnit |
-| T08 | Live стенд | 4 одинаковых PUT и 4 clarify одновременно | Все 200 с одним `{id,revision,status}`, revision +1, одна запись истории на мутацию; иное тело → 409 | `zzz-handoff.spec.ts` (gate) |
+| T08 | Live стенд | 4 одинаковых PUT, 4 create и 4 clarify одновременно | Все 200 с одним `{id,revision,status}`, revision +1, одна запись истории на мутацию; иное тело → 409 | `zzz-handoff.spec.ts` (gate) |
 | T09 | Live стенд | PUT: `route.fetch()`, затем `route.abort()` | Текст неопределённого исхода, без «не сохранил» | `zzz-handoff.spec.ts` (gate) |
 | T10 | После T09 | «Загрузить актуальные данные» | Выполнен GET, форма с новой revision, повтор сохраняет | `zzz-handoff.spec.ts` (gate) |
 | T11 | Потерянный ответ, reload страницы | Повтор неизменённого черновика | Тот же ключ → 200 replay | `zzz-handoff.spec.ts` (gate) |

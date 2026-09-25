@@ -301,15 +301,49 @@ final readonly class StaffRequestRepository
         return $revision + 1;
     }
 
-    /** @return null|array{PAYLOAD_HASH:string,RESULT_JSON:string} */
-    public function idempotency(int $actorId, string $resource, string $key): ?array
+    /**
+     * Сохранённый результат команды. Без блокировки читается последняя зафиксированная версия (READ COMMITTED):
+     * так читает ключ, который не удалось зарезервировать, и не встаёт в очередь X-блокировок с другими повторами.
+     *
+     * @return null|array{PAYLOAD_HASH:string,RESULT_JSON:string}
+     */
+    public function idempotency(int $actorId, string $resource, string $key, bool $lock = true): ?array
     {
         $row = Application::getConnection()->query(
             'SELECT PAYLOAD_HASH,RESULT_JSON FROM mf_staff_request_idempotency WHERE ACTOR_ID=' . $actorId
-            . ' AND RESOURCE_KEY=' . $this->quote($resource) . ' AND IDEMPOTENCY_KEY=' . $this->quote($key) . ' LIMIT 1 FOR UPDATE',
+            . ' AND RESOURCE_KEY=' . $this->quote($resource) . ' AND IDEMPOTENCY_KEY=' . $this->quote($key) . ' LIMIT 1' . ($lock ? ' FOR UPDATE' : ''),
         )->fetch();
 
         return is_array($row) ? ['PAYLOAD_HASH' => (string)$row['PAYLOAD_HASH'], 'RESULT_JSON' => (string)$row['RESULT_JSON']] : null;
+    }
+
+    /**
+     * Резервирует ключ до мутации. Конкурент с тем же ключом ждёт на PK до фиксации или отката этой транзакции,
+     * поэтому false означает, что ключ уже принадлежит зафиксированной команде; откат снимает резерв.
+     */
+    public function reserveIdempotency(int $actorId, string $resource, string $key, string $hash): bool
+    {
+        $connection = Application::getConnection();
+        $connection->queryExecute(sprintf(
+            "INSERT IGNORE INTO mf_staff_request_idempotency(ACTOR_ID,RESOURCE_KEY,IDEMPOTENCY_KEY,PAYLOAD_HASH,RESULT_JSON,CREATED_AT) VALUES(%d,%s,%s,%s,'',UTC_TIMESTAMP())",
+            $actorId,
+            $this->quote($resource),
+            $this->quote($key),
+            $this->quote($hash),
+        ));
+
+        return 1 === $connection->getAffectedRowsCount();
+    }
+
+    public function completeIdempotency(int $actorId, string $resource, string $key, string $result): void
+    {
+        Application::getConnection()->queryExecute(sprintf(
+            'UPDATE mf_staff_request_idempotency SET RESULT_JSON=%s WHERE ACTOR_ID=%d AND RESOURCE_KEY=%s AND IDEMPOTENCY_KEY=%s',
+            $this->quote($result),
+            $actorId,
+            $this->quote($resource),
+            $this->quote($key),
+        ));
     }
 
     public function saveIdempotency(int $actorId, string $resource, string $key, string $hash, string $result): void

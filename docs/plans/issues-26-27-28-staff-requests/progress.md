@@ -33,6 +33,16 @@
 - Frontend: HND-06 читается одной страницей (pageSize 20) с серверными `status`/`shootId`, `v-pagination`; карточка — HND-08 + HND-06 `pageSize=1` для scope, 404 карточки → «Список не найден». Смена маршрута/фильтра/страницы перечитывает workspace; `reload()` возвращает успех и при ошибке сохраняет прежние данные. Демо отдаёт новые списки первыми (разворот перенесён из экрана в демо-загрузку).
 - E2E `zzz-handoff.spec.ts`: первая страница с `pageSize=20`; карточка без чтения других страниц; плитка статуса → серверный фильтр.
 
+### 2026-09-25 — #27 резерв ключа идемпотентности
+
+- `StaffRequestRepository::reserveIdempotency()` (`INSERT IGNORE` с пустым `RESULT_JSON`) и `completeIdempotency()` (`UPDATE` результата); `idempotency()` получил `$lock` — повтор читает зафиксированную строку без `FOR UPDATE`, чтобы ожидающие дубли с S-блокировкой не взаимоблокировались на X.
+- `StaffRequestWorkflow::save()/clarify()`: `claim()` — резерв ключа до блокировки заявки; иначе replay или `IDEMPOTENCY_CONFLICT`. Порядок блокировок: ключ → заявка. Ошибка откатывает резерв.
+- `ConfirmStaffTransferUseCase` (D3) не менялся: до чтения ключа он блокирует группы заявки, поэтому одинаковые переносы уже сериализуются и второй видит зафиксированный ключ.
+- Миграция не нужна: PK `(ACTOR_ID, RESOURCE_KEY, IDEMPOTENCY_KEY)` уже есть.
+- PHPUnit: replay update/clarify/create после ожидания ключа без мутации; иной hash → `IDEMPOTENCY_CONFLICT`; резерв раньше блокировки заявки.
+- E2E `zzz-handoff.spec.ts`: 4 одновременных PUT, 4 create и 4 clarify с одним ключом → одинаковый результат, одна мутация, история без дублей; иное тело → 409.
+- Проверки: PHPUnit OK (741 tests), PHPStan OK, php-cs-fixer (изменённые файлы) — исправлено форматирование теста, `npm run typecheck:e2e` OK.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда | Доказательство |
@@ -40,6 +50,11 @@
 | T01 | PASS | 2026-09-25 | PHPUnit (backend-команда) | `testPageQueryCountDoesNotDependOnItems` 1/100/1000 → 4 SQL |
 | T02 | PASS | 2026-09-25 | PHPUnit | `testRelatedRowsAndHistoryStayWithTheirRequestsInPageOrder`, `testDetailCardUsesTheSameBatchReads` |
 | T03 | PASS | 2026-09-25 | PHPUnit | `testFiltersScopeAndPaginationReachTheCardQuery`, `testEmptyPageSkipsRelatedQueries` |
-| T04–T12 | PENDING | 2026-09-25 | — | #27/#28 не начаты |
+| T04 | PASS | 2026-09-25 | PHPUnit | `testConcurrentUpdateWithTheSameKeyReplaysAfterTheKeyWait` |
+| T05 | PASS | 2026-09-25 | PHPUnit | `testConcurrentClarificationWithTheSameKeyReplays`, `testConcurrentCreateWithTheSameKeyDoesNotCreateASecondRequest` |
+| T06 | PASS | 2026-09-25 | PHPUnit | `testSameKeyWithAnotherBodyIsAConflict` |
+| T07 | PASS | 2026-09-25 | PHPUnit | `testKeyIsReservedBeforeTheRequestIsLocked`, `testTeacherCreatesVerifiedRequestOnlyInsideAssignedGroup` |
+| T08 | PENDING | 2026-09-25 | `zzz-handoff.spec.ts` | написан, запуск — gate после review |
+| T09–T12 | PENDING | 2026-09-25 | — | #28 не начат |
 | T13, T14 | PENDING | 2026-09-25 | `zzz-handoff.spec.ts` | написан, запуск — gate после review |
 | T15 | PENDING | 2026-09-25 | `verify-handoff.php` | написан, запуск — gate после review |

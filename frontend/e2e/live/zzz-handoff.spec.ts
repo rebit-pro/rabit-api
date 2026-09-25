@@ -350,6 +350,103 @@ test('F1: воспитатель подаёт список, куратор ут�
     expect(detail.history.map((event: { kind: string }) => event.kind)).toEqual(['submitted', 'clarification', 'submitted']);
     expect(detail.rows[0]).toMatchObject({ groupId: group.id, childCode: 'A', photoIds: [photoId] });
 
+    // #27: simultaneous identical commands with one Idempotency-Key share one result; the request changes once.
+    const twinKey = key();
+    const twinBody = {
+      institutionId: institution.id,
+      shootId: shoot.id,
+      rows: createBody.rows,
+      comment: 'Параллельный повтор',
+      revision: 3
+    };
+    const twins = await Promise.all(
+      Array.from({ length: 4 }, async () =>
+        body(
+          await teacher.request.put('/api/v1/staff-requests/' + created.id, { headers: await headers(teacher, twinKey), data: twinBody })
+        )
+      )
+    );
+    expect(twins.map((twin) => twin.data)).toEqual(Array(4).fill({ id: created.id, revision: 4, status: 'submitted' }));
+    expect(
+      (
+        await body(
+          await teacher.request.put('/api/v1/staff-requests/' + created.id, { headers: await headers(teacher, twinKey), data: twinBody })
+        )
+      ).data
+    ).toEqual({ id: created.id, revision: 4, status: 'submitted' });
+    expect(
+      (
+        await body(
+          await teacher.request.put('/api/v1/staff-requests/' + created.id, {
+            headers: await headers(teacher, twinKey),
+            data: { ...twinBody, comment: 'Другое тело' }
+          }),
+          409
+        )
+      ).error.code
+    ).toBe('IDEMPOTENCY_CONFLICT');
+    const mediaForC = await body(await page.request.get('/api/v1/shoots/' + shoot.id + '/photos', { headers: await headers(page) }));
+    await body(
+      await page.request.post('/api/v1/groups/' + group.id + '/photo-assignments', {
+        headers: await headers(page),
+        data: { shootId: shoot.id, revision: mediaForC.data.revision, photoIds: [photoId], childCode: 'C' }
+      })
+    );
+    const createTwinKey = key();
+    const createTwinBody = {
+      institutionId: institution.id,
+      shootId: shoot.id,
+      rows: [{ id: crypto.randomUUID(), groupId: group.id, code: 'C' }],
+      comment: 'Параллельное создание'
+    };
+    const createdTwins = await Promise.all(
+      Array.from({ length: 4 }, async () =>
+        body(
+          await teacher.request.post('/api/v1/staff-requests', { headers: await headers(teacher, createTwinKey), data: createTwinBody }),
+          201
+        )
+      )
+    );
+    expect(new Set(createdTwins.map((twin) => JSON.stringify(twin.data))).size).toBe(1);
+    const twinList = await body(
+      await teacher.request.get('/api/v1/staff-requests?shootId=' + shoot.id + '&pageSize=100', { headers: await headers(teacher) })
+    );
+    expect(twinList.data.items.filter((item: { comment: string }) => item.comment === 'Параллельное создание')).toHaveLength(1);
+    const clarifyKey = key();
+    const clarifyBody = { revision: 4, comment: 'Параллельное уточнение', confirmed: true };
+    const clarifications = await Promise.all(
+      Array.from({ length: 4 }, async () =>
+        body(
+          await curator.request.post('/api/v1/staff-requests/' + created.id + '/clarifications', {
+            headers: await headers(curator, clarifyKey),
+            data: clarifyBody
+          })
+        )
+      )
+    );
+    expect(clarifications.map((item) => item.data)).toEqual(Array(4).fill({ id: created.id, revision: 5, status: 'clarification' }));
+    expect(
+      (
+        await body(
+          await curator.request.post('/api/v1/staff-requests/' + created.id + '/clarifications', {
+            headers: await headers(curator, clarifyKey),
+            data: { ...clarifyBody, comment: 'Другая причина' }
+          }),
+          409
+        )
+      ).error.code
+    ).toBe('IDEMPOTENCY_CONFLICT');
+    const afterTwins = (await body(await teacher.request.get('/api/v1/staff-requests/' + created.id, { headers: await headers(teacher) })))
+      .data;
+    expect(afterTwins).toMatchObject({ revision: 5, status: 'clarification', comment: 'Параллельный повтор' });
+    expect(afterTwins.history.map((event: { kind: string }) => event.kind)).toEqual([
+      'submitted',
+      'clarification',
+      'submitted',
+      'submitted',
+      'clarification'
+    ]);
+
     await teacher.setViewportSize({ width: 390, height: 844 });
     await teacher.reload();
     await expect(teacher.getByTestId('request-detail')).toBeVisible();
