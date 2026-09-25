@@ -3,18 +3,19 @@
 ## Точка продолжения
 
 - Дата: 2026-09-25.
-- Ветка: `codex/issues-26-27-28-staff-requests` от `origin/main` `54bd4ab`.
+- Ветка: `codex/issues-26-27-28-staff-requests` от `origin/main` `54bd4ab`, upstream `origin/codex/issues-26-27-28-staff-requests`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-26-27-28-staff-requests`. Основной checkout `/home/user/rabit-api` занят другой сессией — в нём не работать.
-- Issues: #26, #27, #28. PR: ещё не создан.
+- Issues: #26, #27, #28. PR: см. хронологию (создаётся этим этапом), не сливать.
+- Коммиты: #26 `92fbc7f`, #27 `82712b2`, #28 `02d4904` (+ журнал).
 - Документация: [план](plan.md), F1: [plan](../F1_staff_requests/plan.md), [README](../../waves/f1/README.md).
-- Завершено: разведка, план.
-- Сейчас: #26 backend.
-- Следующий шаг: пакетное чтение `StaffRequestRepository::page()` и PHPUnit на число SQL.
-- Блокеров нет. Открыто: Q1 (история в элементах HND-06).
-- Рабочее дерево: план и журнал не закоммичены.
+- Завершено: код и тесты трёх issue, быстрые проверки backend/frontend, push.
+- Сейчас: ожидание review пользователя.
+- Следующий шаг: после review без блокеров — полный `make test-e2e` (T08–T15), фактические время/память из `verify-handoff.log` перенести в журнал и PR.
+- Блокеров нет. Открыто: Q1 (убрать `history` из элементов HND-06 — изменение контракта).
+- Рабочее дерево: закоммичено. Пустые `api/vendor`, `api/var`, `frontend/node_modules` — точки монтирования docker, в git не попадают; `frontend/reports` игнорируется.
 - Команды проверок:
   - backend: `docker run --rm --network none --memory 1536m --cpus 2 --env XDEBUG_MODE=off --mount type=bind,source=<worktree>/api,target=/app,readonly --mount type=volume,source=rabit-issues42-vendor,target=/app/vendor --tmpfs /app/var:rw,size=256m --workdir /app --entrypoint php rabit-api-php-cli:d1-local vendor/bin/phpunit --colors=never` (так же `vendor/bin/phpstan analyse --no-progress --memory-limit=1G`, `vendor/bin/phplint`);
-  - frontend: том `rabit-issues262728-node` (`npm ci` выполнен), `docker run --rm --network none -v <worktree>/frontend:/app -v rabit-issues262728-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`.
+  - frontend: том `rabit-issues262728-node`, `docker run --rm --network none -v <worktree>/frontend:/app -v rabit-issues262728-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`.
 
 ## Хронология
 
@@ -52,6 +53,13 @@
 - E2E `zzz-handoff.spec.ts`: `loseNextPut()` (`route.fetch()` + `route.abort()`, либо только abort): неопределённый исход и replay тем же ключом; «Загрузить актуальные данные» выполняет GET HND-08; устаревший draft после reload не восстанавливается; недошедшая команда переживает reload с тем же ключом; внешний `REVISION_CONFLICT` → закрытие читает сервер → форма по серверу.
 - Проверки: `npm run check` exit 0, `npm run test:commerce` 195/195.
 
+### 2026-09-25 — финальные проверки и PR
+
+- Backend: PHPUnit OK (741 tests, 44531 assertions), PHPStan OK, phplint OK (989 files), `php -l tools/e2e/verify-handoff.php` OK, php-cs-fixer по изменённым файлам OK.
+- Frontend: `npm run check` exit 0, `npm run test:commerce` 195/195.
+- Дополнительно: демо-Cucumber `e2e/features/handoff.feature` + `dashboard.feature` (`start-server-and-test e2e:server … cucumber-js`). Сценарии R10 (handoff, включая «черновик и повтор после ошибки» и reset подтверждения переноса) — без падений. Падения только в `dashboard.feature` на входе демо-кабинета («Не удалось загрузить данные» на странице логина) — вне diff ветки (auth не менялся), демо-Cucumber открыт и на `main`. Прогон остановлен по таймауту 60 мин после прохождения handoff.
+- Push `codex/issues-26-27-28-staff-requests`.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда | Доказательство |
@@ -66,4 +74,6 @@
 | T08 | PENDING | 2026-09-25 | `zzz-handoff.spec.ts` | написан, запуск — gate после review |
 | T09–T12 | PENDING | 2026-09-25 | `zzz-handoff.spec.ts` | написан, `typecheck:e2e` OK, запуск — gate после review |
 | T13, T14 | PENDING | 2026-09-25 | `zzz-handoff.spec.ts` | написан, запуск — gate после review |
-| T15 | PENDING | 2026-09-25 | `verify-handoff.php` | написан, запуск — gate после review |
+| T15 | PENDING | 2026-09-25 | `verify-handoff.php` | написан, `php -l` OK, запуск — gate после review |
+| T16 | PASS | 2026-09-25 | PHPUnit/PHPStan/phplint/php-cs-fixer | 741 tests OK, No errors, 989 files OK |
+| T17 | PASS | 2026-09-25 | `npm run check && npm run test:commerce` | exit 0, 195/195 |

@@ -78,7 +78,7 @@
 - [x] #28 frontend: неопределённый исход, серверный reset, устаревший draft.
 - [x] #28 E2E потерянного ответа (написан; запуск в gate).
 - [x] Быстрые проверки backend/frontend.
-- [ ] Коммиты по issue, push, PR.
+- [x] Коммиты по issue, push, PR.
 - [ ] Gate `make test-e2e` — после review.
 
 ## Критерии приёмки
