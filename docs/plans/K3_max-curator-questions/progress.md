@@ -3,7 +3,7 @@
 ## Точка продолжения
 
 - Ветка `codex/k3-max-curator-questions`, worktree `/home/user/rabit-api-worktrees/k3-max-curator-questions`,
-  base `4ca7e9c` (origin/main после PR #78/#81/#82/#84/#85; ветка перебазирована 25.09.2026 без конфликтов). PR ещё не открыт.
+  base `4ca7e9c` (origin/main после PR #78/#81/#82/#84/#85; ветка перебазирована 25.09.2026 без конфликтов). PR [#89](https://github.com/rebit-pro/rabit-api/pull/89) на ревью; неблокирующий issue [#90](https://github.com/rebit-pro/rabit-api/issues/90).
 - Связанное: [план K3](plan.md), [план PR #48](../max-support-chat-plan/plan.md), `docs/waves/graph.json`,
   канон `../MoreFoto/docs/04-bitrix-modules/backend-waves.json` (не git, изменения — патчем в `docs/waves/k3/`).
 - Завершено: merge PR #48; граф синхронизирован (E6 merged, K3 inProgress).
@@ -62,7 +62,7 @@
 - Прогон 1 (`rabit-e2e-33e7f2531baa`): 66 passed, 2 failed — `zz-questions`: `getByRole('alert')` нашёл и подсказки полей Vuetify (strict mode); второй тест упал следом (нет `var/k3-questions.json`). Исправлено: `data-testid="question-problem"` (коммит «test(k3): отдельный test id…»).
 - Прогон 2 (`rabit-e2e-7bd431fabcd6`): браузер 68/68 PASS; `verify-support.php` FAIL «accepted update is acknowledged». По логам FPM webhook отвечал 422 (`DtoMetadataService:304`): `RequestHelper` декодирует JSON в `stdClass`, перевод в массивы делал только `StrictRequestValues`; webhook MAX не может быть строгим (MAX добавляет поля без версии). Исправлено в `rebit.share`: `RequestHelper::jsonObjectsToArrays` для нестрогих JSON-DTO + `MaxUpdateContractTest` на реальные Update MAX (без E2E ловит этот класс ошибок). До исправления в верификаторе прошли: след браузера в MySQL, отсутствие ключа беседы в БД, доставка через подменённый MAX (mid, повтор, отказ), 401 для неверного и пустого секрета.
 - Прогон 3 оборван завершением прошлой сессии; его стенд остановлен (`make e2e-down`), чужой стенд другой сессии не трогался.
-- Неблокирующее (вне K3): `DtoMetadataService:445` вызывает устаревший `SerializedName::getSerializedName()` (Symfony 7.4) — deprecation при любом `SerializedName`; оформить issue.
+- Неблокирующее (вне K3): `DtoMetadataService:445` вызывает устаревший `SerializedName::getSerializedName()` (Symfony 7.4) — deprecation при любом `SerializedName`; issue #90.
 - После rebase на `4ca7e9c`: `verify-wave-graph.py` — PASS (52/116, ready K3); `vendor/bin/phpunit` — PASS 779 тестов / 44928 assertions (1 deprecation — выше); `phpstan` — PASS; `npm run check` — PASS (test:ui 32/32); `npm run test:commerce` — PASS 200/200.
 
 ### 25.09.2026 — E2E группы a на новой базе
