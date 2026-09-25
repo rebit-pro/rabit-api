@@ -5,7 +5,7 @@
 - Ветка `codex/ops-stage-run-guide`, base `main` `1dd4a5f`. Worktree `/home/user/rabit-api-worktrees/ops-stage-run-guide`.
 - Документация: [план](plan.md). Черновик на claude.ai: пульт прогона (общее хранилище, для владельца).
 - Завершено: страницы `frontend/public/guide/`, проверки GUIDE-T01…T05.
-- Сейчас: PR в `main` на review.
+- Сейчас: [PR #82](https://github.com/rebit-pro/rabit-api/pull/82) в `main` на review.
 - Следующий шаг: после merge — frontend-only релиз по рецепту PR #45 (решение пользователя), затем GUIDE-T06.
 - Блокеры: выкладка и включение оформления на stage требуют действий на сервере, которые агенту запрещены
   автоматическим режимом; выполняет пользователь или даёт разрешение.
