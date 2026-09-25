@@ -13,11 +13,15 @@ final class RebitHttpClientFactory
     private const int DEFAULT_SOCKET_TIMEOUT = 30;
     private const int DEFAULT_STREAM_TIMEOUT = 60;
 
-    public static function create(LoggerInterface $logger): RebitHttpClient
-    {
+    /** Таймауты в секундах; внешний сервис на пути HTTP-запроса пользователя передаёт короткие значения. */
+    public static function create(
+        LoggerInterface $logger,
+        int $socketTimeout = self::DEFAULT_SOCKET_TIMEOUT,
+        int $streamTimeout = self::DEFAULT_STREAM_TIMEOUT,
+    ): RebitHttpClient {
         $httpClient = new HttpClient([
-            'socketTimeout' => self::DEFAULT_SOCKET_TIMEOUT,
-            'streamTimeout' => self::DEFAULT_STREAM_TIMEOUT,
+            'socketTimeout' => $socketTimeout,
+            'streamTimeout' => $streamTimeout,
             'disableSslVerification' => false,
         ]);
 
