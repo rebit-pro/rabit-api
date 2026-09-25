@@ -1,0 +1,124 @@
+{
+  "rabit": {
+    "command": [
+      "python3",
+      "tools/verify-wave-graph.py",
+      "docs/waves/graph.json"
+    ],
+    "exitCode": 0,
+    "result": {
+      "waves": 40,
+      "endpoints": 99,
+      "legacyWaves": 35,
+      "readyFromMain": [
+        "E5"
+      ],
+      "blocked": [
+        "D3",
+        "F2",
+        "G1",
+        "G2",
+        "I1",
+        "I2",
+        "I3",
+        "J1",
+        "J2",
+        "J3",
+        "K1",
+        "L1",
+        "L2",
+        "K2",
+        "M1",
+        "N1",
+        "N2"
+      ],
+      "negativeFixtures": [
+        "cycle",
+        "unknown dependency",
+        "unmerged dependency started",
+        "open decision started",
+        "stale unlocks",
+        "duplicate endpoint owner",
+        "missing legacy mapping",
+        "stacked PR permitted",
+        "browser gate disabled",
+        "visual gate disabled"
+      ]
+    }
+  },
+  "morefoto": {
+    "command": [
+      "python3",
+      "/home/user/MoreFoto/docs/04-bitrix-modules/wave_graph.py",
+      "/home/user/MoreFoto/docs/04-bitrix-modules/backend-waves.json"
+    ],
+    "exitCode": 0,
+    "result": {
+      "waves": 40,
+      "endpoints": 99,
+      "legacyWaves": 35,
+      "readyFromMain": [
+        "E5"
+      ],
+      "blocked": [
+        "D3",
+        "F2",
+        "G1",
+        "G2",
+        "I1",
+        "I2",
+        "I3",
+        "J1",
+        "J2",
+        "J3",
+        "K1",
+        "L1",
+        "L2",
+        "K2",
+        "M1",
+        "N1",
+        "N2"
+      ],
+      "negativeFixtures": [
+        "cycle",
+        "unknown dependency",
+        "unmerged dependency started",
+        "open decision started",
+        "stale unlocks",
+        "duplicate endpoint owner",
+        "missing legacy mapping",
+        "stacked PR permitted",
+        "browser gate disabled",
+        "visual gate disabled"
+      ]
+    }
+  },
+  "date": "2026-09-21",
+  "scope": "planning only",
+  "base": "8cba22c7655b5886d5fe663523214bcd059e674b",
+  "canonicalGraphsEqual": true,
+  "existing99EndpointOwnersPreserved": true,
+  "dependencyEdgesPreserved": true,
+  "rendererReproducible": true,
+  "morefotoPatchReverseCheck": "PASS",
+  "D09FullyAccepted": false,
+  "runtimeTests": "NOT RUN: E5/F2 and decisions block G1; no runtime changes",
+  "canonicalFiles": {
+    "docs/04-bitrix-modules/backend-waves.json": {
+      "beforeSha256": "9a98d3358d99a84823d285ffb4e09f459cab5f1d1bbe2eeb92146d8f494cc8e2",
+      "afterSha256": "34308d9828e7fed021dfa88defbaf41c449d9e9c6887d64e162a0f9cf07c7d10"
+    },
+    "docs/04-bitrix-modules/render-waves.py": {
+      "beforeSha256": "53a092e6da9e6afb992194c4f49bc3fe80bb44263ec748b64696f97c72f8d72b",
+      "afterSha256": "f89ee18786b17f19a867bfa7a8900958a87c4e89eaa9042d1666e32864095937"
+    },
+    "docs/04-bitrix-modules/backend-waves.md": {
+      "beforeSha256": "3fecf9e8e43d2c064fb23ea34caef7cf8eab6cddf0d15b3a6eb29d1d79c20e54",
+      "afterSha256": "393bdb9dcc3a1d639c3c9e88277ccb8ae2450dc02a85b45d8b08c0aecd39ff5c"
+    },
+    "docs/frontend/business-review/decisions.md": {
+      "beforeSha256": "0d7b02d0d2e2bee2a05a6029e60f36d2d5601c0106fa6c446727d9d45154eb99",
+      "afterSha256": "cbf4176c6f5ff587afe87c09e2f8a64c8f325095f538e12e1583ca3afe83963a"
+    }
+  }
+}
