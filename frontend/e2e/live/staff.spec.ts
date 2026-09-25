@@ -25,6 +25,12 @@ async function organization(page: Page, suffix = '') {
   const group = await create(page, '/api/v1/shoots/' + shoot.id + '/groups', { name: 'B2 Ромашки' + suffix, groupKind: 'regular' });
   return { institution, shoot, group };
 }
+/** A staff row of the visible table layout, found by the edit button of its name cell. */
+function staffRow(page: Page, name: string) {
+  return page
+    .locator('[data-row-id]:visible')
+    .filter({ has: page.getByRole('button', { name: 'Редактировать сотрудника ' + name, exact: true }) });
+}
 async function staffList(page: Page) {
   return (await body(await page.request.get(usersApi, { headers: await auth(page) }))).data.items as Array<{
     id: number;
@@ -87,7 +93,7 @@ test('B2: организатор приглашает учителя и назн
   expect(result.data).not.toHaveProperty('password');
   expect(result.data.accountStatus).toBe('pending');
   await expect(dialog).not.toBeVisible();
-  await expect(page.getByRole('button', { name: 'Редактировать сотрудника B2 Новый учитель' })).toContainText('Ожидает регистрации');
+  await expect(staffRow(page, 'B2 Новый учитель')).toContainText('Ожидает регистрации');
   const created = await detail(page, result.data.id);
   expect(created.groupIds).toHaveLength(1);
   expect(created.institutionIds).toEqual([]);
@@ -280,6 +286,128 @@ test('B2: мобильный список не создаёт горизонта
   await login(page);
   await page.goto('/cabinet/users');
   await expect(page.getByRole('heading', { name: 'Сотрудники', exact: true })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Сортировать по', exact: true })).toBeVisible();
+  await page.locator('.ui-table-mobile [data-row-id]').first().getByRole('checkbox').check();
+  await expect(page.getByTestId('staff-bulk')).toContainText('Выбрано: 1');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('b2-mobile-staff.png'), fullPage: true });
+});
+
+test('#91: организатор сортирует, выбирает и удаляет сотрудников; повторное добавление приглашает заново', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await login(page);
+  const suffix = ' ' + key().slice(0, 6);
+  const { group } = await organization(page, suffix);
+  const options = (
+    await body(
+      await page.request.get(usersApi + '/assignment-options', {
+        headers: await auth(page)
+      })
+    )
+  ).data;
+  const anna = 'I91 Анна' + suffix;
+  const boris = 'I91 Борис' + suffix;
+  const names = [anna, boris];
+  const borisEmail = 'i91-' + key().slice(0, 10) + '@example.invalid';
+  const first = await create(page, usersApi, {
+    name: anna,
+    email: 'i91-' + key().slice(0, 10) + '@example.invalid',
+    role: 'teacher',
+    active: true,
+    institutionIds: [],
+    groupIds: [group.id],
+    replaceAssignments: false,
+    assignmentSignature: options.assignmentSignature
+  });
+  const second = await create(page, usersApi, {
+    name: boris,
+    email: borisEmail,
+    role: 'teacher',
+    active: true,
+    institutionIds: [],
+    groupIds: [],
+    replaceAssignments: false,
+    assignmentSignature: first.assignmentSignature
+  });
+  const me = (await body(await page.request.get('/api/v1/me', { headers: await auth(page) }))).data.id as number;
+  expect(
+    (
+      await body(
+        await page.request.delete(usersApi + '/' + me, {
+          headers: await auth(page)
+        }),
+        409
+      )
+    ).error.code
+  ).toBe('CANNOT_ARCHIVE_SELF');
+
+  await page.goto('/cabinet/users');
+  await page.getByLabel('Имя или email', { exact: true }).fill(suffix.trim());
+  await page.getByRole('button', { name: 'Найти', exact: true }).click();
+  await expect(staffRow(page, anna)).toBeVisible();
+  const sorted = page.waitForResponse((r) => r.url().includes('/api/v1/users?') && r.url().includes('direction=desc'));
+  await page.getByRole('button', { name: 'Сортировать: Сотрудник', exact: true }).click();
+  expect(new URL((await sorted).url()).searchParams.get('sort')).toBe('name');
+  await expect(page.locator('[data-row-id]:visible').first()).toContainText(boris);
+  await expect(page.getByRole('columnheader', { name: /Сотрудник/ })).toHaveAttribute('aria-sort', 'descending');
+
+  const table = page.locator('.ui-table-desktop table');
+  const topBefore = (await table.boundingBox())?.y;
+  for (const name of names) await page.getByRole('checkbox', { name: 'Выбрать ' + name, exact: true }).check();
+  await expect(page.getByTestId('staff-bulk')).toContainText('Выбрано: 2');
+  // #103: the selection bar keeps the height of the summary bar, so the table does not jump.
+  expect((await table.boundingBox())?.y).toBe(topBefore);
+  await page.getByRole('button', { name: 'Удалить выбранных', exact: true }).click();
+  const dialog = page.getByTestId('staff-remove-dialog');
+  for (const name of names) await expect(dialog).toContainText(name);
+  await page.screenshot({
+    path: testInfo.outputPath('i91-desktop-remove-dialog.png'),
+    fullPage: true
+  });
+  const deletes = [first.id, second.id].map((id) =>
+    page.waitForResponse((r) => r.request().method() === 'DELETE' && r.url().endsWith(usersApi + '/' + id))
+  );
+  await dialog.getByRole('button', { name: 'Удалить', exact: true }).click();
+  for (const response of await Promise.all(deletes)) expect(response.status()).toBe(204);
+  await expect(page.getByTestId('staff-removal')).toContainText('Удалено: 2 из 2.');
+  await expect(page.getByText('Сотрудники не найдены', { exact: true })).toBeVisible();
+  await page.screenshot({
+    path: testInfo.outputPath('i91-desktop-removed.png'),
+    fullPage: true
+  });
+
+  expect(
+    (
+      await page.request.get(usersApi + '/' + first.id, {
+        headers: await auth(page)
+      })
+    ).status()
+  ).toBe(404);
+  const groupOptions = (
+    await body(
+      await page.request.get(usersApi + '/assignment-options', {
+        headers: await auth(page)
+      })
+    )
+  ).data;
+  expect(groupOptions.groups.find((item: { id: string }) => item.id === group.id).teacherId).toBeNull();
+  expect(
+    (
+      await page.request.delete(usersApi + '/' + first.id, {
+        headers: await auth(page)
+      })
+    ).status()
+  ).toBe(404);
+
+  const again = await create(page, usersApi, {
+    name: boris,
+    email: borisEmail,
+    role: 'teacher',
+    active: true,
+    institutionIds: [],
+    groupIds: [],
+    replaceAssignments: false,
+    assignmentSignature: groupOptions.assignmentSignature
+  });
+  expect([again.id, again.accountStatus, again.revision]).toEqual([second.id, 'pending', 3]);
 });

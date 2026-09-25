@@ -128,13 +128,6 @@ function returnFocus() {
       Найдено: {{ filtered.length }} · Выбрано: {{ selected.length }}<span v-if="selected.length"> · на всех страницах</span>
     </p>
     <p v-if="notice" class="ui-table-notice" role="status">{{ notice }}</p>
-    <div v-if="selected.length" class="ui-table-bulk">
-      <p>Выбрано записей: {{ selected.length }}. Действие применится ко всем выбранным страницам.</p>
-      <v-btn color="error" variant="outlined" density="compact" :disabled="mode !== 'ready'" @click="askRemove(selected)"
-        >Удалить выбранные</v-btn
-      >
-      <v-btn variant="text" density="compact" @click="selected = []">Снять выбор</v-btn>
-    </div>
     <UiDataTable
       ref="table"
       :title="title"
@@ -161,7 +154,17 @@ function returnFocus() {
       @open="open"
       @remove="askRemove([$event])"
       @retry="load"
-    />
+    >
+      <template #selection>
+        <div class="ui-table-bulk">
+          <p>Выбрано: {{ selected.length }} · на всех страницах</p>
+          <v-btn color="error" variant="outlined" density="compact" :disabled="mode !== 'ready'" @click="askRemove(selected)"
+            >Удалить выбранные</v-btn
+          >
+          <v-btn variant="text" density="compact" @click="selected = []">Снять выбор</v-btn>
+        </div>
+      </template>
+    </UiDataTable>
     <v-dialog v-model="showCard" max-width="620" :aria-labelledby="'ui-card-title-' + kind" @after-leave="returnFocus">
       <v-card class="morefoto-app mf-panel ui-table-dialog">
         <template v-if="opened">
@@ -236,9 +239,6 @@ function returnFocus() {
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  padding: 12px;
-  background: var(--mf-color-selected);
-  border-radius: 8px;
 }
 .ui-table-dialog {
   display: grid;

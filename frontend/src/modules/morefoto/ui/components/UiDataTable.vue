@@ -6,6 +6,7 @@ import { tableCellText, tablePageCount } from '../table-values';
 import UiTableCell from './UiTableCell.vue';
 import UiTableRowActions from './UiTableRowActions.vue';
 import MfEmptyState from '@/components/states/MfEmptyState.vue';
+import { plural } from '@/components/viz/measures';
 const props = withDefaults(
   defineProps<{
     title: string;
@@ -23,6 +24,8 @@ const props = withDefaults(
     density?: UiDensity;
     emptyTitle?: string;
     emptyDescription?: string;
+    /** Column whose value names a row for assistive labels; the row id by default. */
+    labelKey?: string;
   }>(),
   { selectable: true, removable: true, density: 'comfortable', emptyTitle: 'Список пока пуст', emptyDescription: 'Здесь появятся записи.' }
 );
@@ -48,6 +51,14 @@ const sortable = computed(() =>
 const range = computed(() =>
   props.total ? (props.page - 1) * props.pageSize + 1 + '–' + Math.min(props.page * props.pageSize, props.total) : '0'
 );
+const summary = computed(() => props.title + ' · ' + props.total + ' ' + plural(props.total, ['запись', 'записи', 'записей']));
+function sortIcon(key: string): string {
+  if (props.sort.key !== key) return 'mdi-swap-vertical';
+  return props.sort.direction === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down';
+}
+function rowLabel(row: UiTableRow): string {
+  return props.labelKey ? String(row[props.labelKey] ?? row.id) : row.id;
+}
 function toggle(id: string) {
   emit('select', props.selected.includes(id) ? props.selected.filter((selected) => selected !== id) : [...props.selected, id]);
 }
@@ -84,6 +95,13 @@ defineExpose({ focusRow });
     </v-alert>
     <MfEmptyState v-else-if="!rows.length" :title="emptyTitle" :text="emptyDescription" icon="mdi-text-box-search-outline" />
     <template v-else>
+      <!-- One fixed-height bar for both states: selecting a row never pushes the table down. -->
+      <div class="ui-table-toolbar" :class="{ 'ui-table-toolbar--selected': selected.length }" data-testid="ui-table-toolbar">
+        <slot v-if="selected.length" name="selection" :selected="selected"
+          ><p>Выбрано: {{ selected.length }}</p></slot
+        >
+        <p v-else class="ui-table-summary">{{ summary }}</p>
+      </div>
       <div class="ui-table-mobile-tools">
         <v-select
           :model-value="sort.key"
@@ -110,15 +128,10 @@ defineExpose({ focusRow });
       </div>
       <div class="ui-table-desktop">
         <table>
-          <caption>
+          <caption class="ui-table-caption">
             {{
-              title
+              summary
             }}
-            ·
-            {{
-              total
-            }}
-            записей
           </caption>
           <thead>
             <tr>
@@ -143,12 +156,13 @@ defineExpose({ focusRow });
                 <button
                   v-if="column.sortable"
                   class="ui-table-sort"
+                  :class="{ 'ui-table-sort--active': sort.key === column.key }"
                   type="button"
                   :aria-label="'Сортировать: ' + column.label"
                   @click="sortBy(column.key)"
                 >
                   {{ column.label }}
-                  <span aria-hidden="true">{{ sort.key === column.key ? (sort.direction === 'asc' ? '↑' : '↓') : '↕' }}</span>
+                  <v-icon :icon="sortIcon(column.key)" size="16" class="ui-table-sort-icon" aria-hidden="true" />
                 </button>
                 <span v-else>{{ column.label }}</span>
               </th>
@@ -161,7 +175,7 @@ defineExpose({ focusRow });
                 <v-checkbox-btn
                   v-if="selectable"
                   :model-value="selected.includes(row.id)"
-                  :aria-label="'Выбрать ' + row.id"
+                  :aria-label="'Выбрать ' + rowLabel(row)"
                   @update:model-value="toggle(row.id)"
                 />
               </td>
@@ -171,7 +185,7 @@ defineExpose({ focusRow });
                 :data-column="column.key"
                 :class="{ 'ui-table-number': column.type === 'number' || column.type === 'money', 'ui-table-primary': column.primary }"
               >
-                <UiTableCell :value="row[column.key]" :column="column" />
+                <slot :name="'cell-' + column.key" :row="row"><UiTableCell :value="row[column.key]" :column="column" /></slot>
               </td>
               <td>
                 <slot name="actions" :row="row"
@@ -194,23 +208,30 @@ defineExpose({ focusRow });
             <v-checkbox-btn
               v-if="selectable"
               :model-value="selected.includes(row.id)"
-              :aria-label="'Выбрать ' + row.id"
+              :aria-label="'Выбрать ' + rowLabel(row)"
               @update:model-value="toggle(row.id)"
             />
-            <h3>{{ primary ? tableCellText(row[primary.key], primary) : row.id }}</h3>
+            <h3>
+              <slot v-if="primary" :name="'cell-' + primary.key" :row="row">{{ tableCellText(row[primary.key], primary) }}</slot
+              ><template v-else>{{ row.id }}</template>
+            </h3>
           </div>
           <dl>
             <div v-for="column in mobileColumns" :key="column.key">
               <dt>{{ column.label }}</dt>
-              <dd :data-column="column.key"><UiTableCell :value="row[column.key]" :column="column" /></dd>
+              <dd :data-column="column.key">
+                <slot :name="'cell-' + column.key" :row="row"><UiTableCell :value="row[column.key]" :column="column" /></slot>
+              </dd>
             </div>
           </dl>
           <details v-if="extraColumns.length">
-            <summary :aria-label="'Дополнительные сведения ' + row.id">Дополнительные сведения</summary>
+            <summary :aria-label="'Дополнительные сведения ' + rowLabel(row)">Дополнительные сведения</summary>
             <dl>
               <div v-for="column in extraColumns" :key="column.key">
                 <dt>{{ column.label }}</dt>
-                <dd><UiTableCell :value="row[column.key]" :column="column" /></dd>
+                <dd>
+                  <slot :name="'cell-' + column.key" :row="row"><UiTableCell :value="row[column.key]" :column="column" /></slot>
+                </dd>
               </div>
             </dl>
           </details>
@@ -263,9 +284,32 @@ table {
   font-size: var(--mf-text-small);
   line-height: 1.5;
 }
-caption {
-  text-align: left;
-  padding-bottom: var(--mf-space-3);
+.ui-table-caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.ui-table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mf-space-2) var(--mf-space-3);
+  /* Touch compact buttons are 44px: the bar keeps one height with or without a selection. */
+  min-height: 56px;
+  margin-bottom: var(--mf-space-3);
+  padding: 6px var(--mf-space-3);
+  border-radius: var(--mf-radius-sm);
+  font-size: var(--mf-text-small);
+  line-height: 1.5;
+  transition: background-color 0.15s ease;
+}
+.ui-table-toolbar--selected {
+  background: var(--mf-color-selected);
+}
+.ui-table-summary {
   color: var(--mf-color-text-secondary);
 }
 th,
@@ -276,9 +320,12 @@ td {
   vertical-align: middle;
 }
 th {
-  background: var(--mf-color-bg);
-  min-height: var(--mf-table-header);
-  font-weight: 600;
+  height: var(--mf-table-header);
+  border-bottom: 2px solid var(--mf-color-border);
+  background: var(--mf-color-surface-2);
+  color: var(--mf-color-text);
+  font-size: var(--mf-text-md);
+  font-weight: var(--mf-weight-semibold);
 }
 td {
   height: var(--mf-table-row);
@@ -320,8 +367,22 @@ td:last-child {
   font: inherit;
   color: inherit;
 }
-.ui-table-sort span {
+.ui-table-sort-icon {
   flex-shrink: 0;
+  color: var(--mf-color-text-tertiary);
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+.ui-table-sort:hover .ui-table-sort-icon,
+.ui-table-sort:focus-visible .ui-table-sort-icon {
+  opacity: 1;
+}
+.ui-table-sort--active {
+  color: var(--mf-color-primary);
+}
+.ui-table-sort--active .ui-table-sort-icon {
+  color: var(--mf-color-primary);
+  opacity: 1;
 }
 .ui-table-state {
   display: grid;

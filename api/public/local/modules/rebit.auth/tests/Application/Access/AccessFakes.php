@@ -111,6 +111,11 @@ final class InMemoryAccessLinks implements AccessLinkRepositoryInterface
         }
     }
 
+    public function deleteForUser(int $userId): void
+    {
+        $this->links = array_filter($this->links, static fn(AccessLink $link): bool => $link->userId !== $userId);
+    }
+
     public function invitationsFor(array $userIds): array
     {
         $output = [];

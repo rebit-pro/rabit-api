@@ -6,7 +6,7 @@
   "backend": "RaBit API",
   "baseline": {
     "branch": "main",
-    "commit": "49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771",
+    "commit": "fc0cdb94d570aa7046e953029d5e58ac4aed1554",
     "mergedWaves": [
       "A1",
       "A2",
@@ -43,7 +43,8 @@
       "U6",
       "U7",
       "U8",
-      "E6"
+      "E6",
+      "G1"
     ],
     "review": {},
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
@@ -77,7 +78,8 @@
       "U6": "https://github.com/rebit-pro/rabit-api/pull/53",
       "U7": "https://github.com/rebit-pro/rabit-api/pull/53",
       "U8": "https://github.com/rebit-pro/rabit-api/pull/53",
-      "E6": "https://github.com/rebit-pro/rabit-api/pull/66"
+      "E6": "https://github.com/rebit-pro/rabit-api/pull/66",
+      "G1": "https://github.com/rebit-pro/rabit-api/pull/80"
     },
     "mergeCommits": {
       "C4": "cfc334e5890dd51dfd6ff6638eac2cc3e436322b",
@@ -101,7 +103,8 @@
       "U6": "b20423f08c5794f66346a607c376bc89ffe3bb82",
       "U7": "b20423f08c5794f66346a607c376bc89ffe3bb82",
       "U8": "b20423f08c5794f66346a607c376bc89ffe3bb82",
-      "E6": "54bd4abbb62fbda2dc030281e4b4893820d83e84"
+      "E6": "54bd4abbb62fbda2dc030281e4b4893820d83e84",
+      "G1": "fc0cdb94d570aa7046e953029d5e58ac4aed1554"
     },
     "decisionEvidence": {
       "D02-D05": "docs/waves/e3/README.md in rabit-api: user accepted rules before PR #20",
@@ -1479,7 +1482,7 @@
       "legacyIds": [
         "W19"
       ],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "unlocks": [
         "G2",
         "I1",
@@ -1975,7 +1978,7 @@
       ],
       "activation": "Включить на stage после установки токена в secrets, подписки webhook, ID группы и живой проверки; production — после решения о сроке хранения и тексте предупреждения (MAX-D06).",
       "legacyIds": [],
-      "deliveryState": "planned",
+      "deliveryState": "inProgress",
       "unlocks": [
         "K1"
       ],

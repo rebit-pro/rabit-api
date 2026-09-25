@@ -20,6 +20,12 @@ interface StaffIdentityGatewayInterface
     public function revokeSessions(int $userId): void;
 
     /**
+     * Takes cabinet access away from a removed staff member: the identity becomes pending without a session and
+     * every personal link stops working, so a later re-add by the same email sends a fresh invitation.
+     */
+    public function archive(int $userId): void;
+
+    /**
      * Issues a personal invitation link to a pending identity and queues the letter; the caller owns the transaction.
      * A repeated call within the cooldown fails with RATE_LIMITED unless `$force` is set after an address change.
      */

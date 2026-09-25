@@ -57,6 +57,8 @@ services:
             target: rebit_rabbitmq_password
           - source: rebit_telegram_bot_token
             target: rebit_telegram_bot_token
+          - source: morefoto_support_max_webhook_secret
+            target: morefoto_support_max_webhook_secret
         volumes:
           - type: bind
             source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/bitrix
@@ -227,6 +229,38 @@ services:
           restart_policy:
             condition: any
             delay: 5s
+    api-support-consumer:
+        image: ${REGISTRY}/rabit-api-php-cli:${IMAGE_TAG}
+        command: ["php", "public/local/bin/bitrix-console", "app:support:consume"]
+        configs:
+          - source: rebit_backend_env
+            target: /app/public/.env
+        secrets:
+          - source: rebit_encryption_key
+            target: rebit_encryption_key
+          - source: rebit_rabbitmq_password
+            target: rebit_rabbitmq_password
+          - source: rebit_max_bot_token
+            target: rebit_max_bot_token
+          - source: morefoto_support_max_webhook_secret
+            target: morefoto_support_max_webhook_secret
+        volumes:
+          - type: bind
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/bitrix
+            target: /app/public/bitrix
+          - type: bind
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/logs
+            target: /app/logs
+        deploy:
+          mode: replicated
+          replicas: ${SUPPORT_CONSUMER_REPLICAS:-1}
+          update_config:
+            parallelism: 1
+            delay: 10s
+            order: stop-first
+          restart_policy:
+            condition: any
+            delay: 5s
 
     rabbitmq:
         image: rabbitmq:3.13-management-alpine
@@ -313,6 +347,12 @@ secrets:
     rebit_telegram_bot_token:
         external: true
         name: ${REBIT_TELEGRAM_BOT_TOKEN_SECRET_NAME}
+    rebit_max_bot_token:
+        external: true
+        name: ${REBIT_MAX_BOT_TOKEN_SECRET_NAME}
+    morefoto_support_max_webhook_secret:
+        external: true
+        name: ${MOREFOTO_SUPPORT_MAX_WEBHOOK_SECRET_SECRET_NAME}
 networks:
     traefik-public:
         external: true

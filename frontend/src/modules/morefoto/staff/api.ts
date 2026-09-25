@@ -1,13 +1,24 @@
 import { isAxiosError } from 'axios';
 import api from '@/api/http';
-import type { AssignmentOptions, StaffDetail, StaffDraft, StaffFilters, StaffInvitation, StaffMutationResult, StaffPage } from './model';
+import type {
+  AssignmentOptions,
+  StaffDetail,
+  StaffDraft,
+  StaffFilters,
+  StaffInvitation,
+  StaffMutationResult,
+  StaffPage,
+  StaffSort
+} from './model';
 
 export const staffApi = {
-  async list(filters: StaffFilters, page = 1): Promise<StaffPage> {
+  async list(filters: StaffFilters, page: number, pageSize: number, sort: StaffSort): Promise<StaffPage> {
     const result = await api.get<{ data: { items: StaffPage['items'] }; meta: StaffPage['meta'] }>('/api/v1/users', {
       params: {
         page,
-        pageSize: 25,
+        pageSize,
+        sort: sort.key,
+        direction: sort.direction,
         ...(filters.q ? { q: filters.q } : {}),
         ...(filters.role ? { role: filters.role } : {}),
         ...(filters.accountStatus ? { accountStatus: filters.accountStatus } : {})
@@ -21,6 +32,14 @@ export const staffApi = {
   },
   async options(): Promise<AssignmentOptions> {
     return (await api.get<AssignmentOptions>('/api/v1/users/assignment-options')).data;
+  },
+  /** Removes the staff member from the cabinet; an already removed one counts as done. */
+  async remove(id: number): Promise<void> {
+    try {
+      await api.delete('/api/v1/users/' + id);
+    } catch (cause) {
+      if (!isAxiosError(cause) || cause.response?.status !== 404) throw cause;
+    }
   },
   async resendInvitation(id: number): Promise<StaffInvitation> {
     return (await api.post<StaffInvitation>('/api/v1/users/' + id + '/invitations')).data;
@@ -46,7 +65,8 @@ export const staffApi = {
 export function staffError(cause: unknown): string {
   if (!isAxiosError(cause)) return cause instanceof Error ? cause.message : 'Не удалось выполнить запрос.';
   const code = (cause.response?.data as { error?: { code?: string } } | undefined)?.error?.code;
-  if (code === 'LAST_ORGANIZER') return 'Нельзя отключить или понизить последнего активного организатора.';
+  if (code === 'LAST_ORGANIZER') return 'Нельзя удалить, отключить или понизить последнего активного организатора.';
+  if (code === 'CANNOT_ARCHIVE_SELF') return 'Свою учётку удалить нельзя.';
   if (code === 'ASSIGNMENT_OCCUPIED') return 'На выбранных местах уже есть ответственные. Подтвердите замену и укажите причину.';
   if (code === 'ASSIGNMENTS_CHANGED' || code === 'STAFF_VERSION_CONFLICT')
     return 'Данные изменились. Загрузите актуальную версию и повторите действие.';
