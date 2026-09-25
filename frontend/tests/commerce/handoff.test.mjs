@@ -14,10 +14,12 @@ import {
   serverMoment,
   liveLinkErrors,
   transferPreviewFromServer,
-  staffTransferErrorText
+  staffTransferErrorText,
+  handoffRefreshSucceeded
 } from '../../src/modules/morefoto/handoff/rules.ts';
 import { problemText } from '../../src/modules/morefoto/handoff/display.ts';
 import { openDraft } from '../../src/modules/morefoto/handoff/draft.ts';
+import { linkErrorText } from '../../src/modules/morefoto/handoff/link-errors.ts';
 const groups = [
   { id: 'g', institutionId: 'i', shootId: 's', kind: 'regular', state: 'preparing', teacherId: 104 },
   { id: 'g2', institutionId: 'i', shootId: 's', kind: 'regular' },
@@ -236,4 +238,24 @@ test('#28: a stored draft keeps its edits, body and key until an explicit reset,
   assert.deepEqual(openDraft({ ...draft, revision: 4 }, fresh), { command: { ...draft, revision: 4 }, restored: true, stale: false });
   assert.deepEqual(openDraft(null, fresh), { command: fresh, restored: false, stale: false });
   assert.deepEqual(openDraft({ kind: 'link', revision: 3 }, fresh), { command: fresh, restored: false, stale: false });
+});
+
+test('#79: a confirmation is refreshed only with a readable transfer preview, other actions do not need it', () => {
+  assert.equal(handoffRefreshSucceeded('confirm', ''), true);
+  assert.equal(handoffRefreshSucceeded('confirm', 'Не удалось загрузить набор для проверки.'), false);
+  for (const action of ['submit', 'clarify', undefined]) assert.equal(handoffRefreshSucceeded(action, 'Не удалось загрузить набор.'), true);
+});
+
+test('#81: a lost F2 answer is an unknown outcome; HTTP errors keep their texts and point to fresh data', () => {
+  assert.match(linkErrorText({ network: true }), /Ответ сервера не получен — изменение могло сохраниться/);
+  assert.doesNotMatch(linkErrorText({ network: true }), /не сохранил/);
+  assert.equal(
+    linkErrorText({ network: false, status: 409, code: 'LINK_ALREADY_SENT' }),
+    'Приём уже запускался. Дату можно исправить отдельно.'
+  );
+  for (const code of ['REVISION_CONFLICT', 'SIGNATURE_CONFLICT', 'IDEMPOTENCY_CONFLICT'])
+    assert.match(linkErrorText({ network: false, status: 409, code }), /Загрузите актуальные данные/);
+  assert.equal(linkErrorText({ network: false, status: 403 }), 'Для этого действия недостаточно прав.');
+  assert.equal(linkErrorText({ network: false, status: 422, code: 'VALIDATION_FAILED' }), 'Проверьте заполненные поля формы.');
+  assert.equal(linkErrorText({ network: false, status: 503 }), 'Сервер не сохранил изменение. Повторите действие позже.');
 });
