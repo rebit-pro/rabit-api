@@ -2,15 +2,12 @@
 
 ## Точка продолжения
 
-- Ветка `codex/e6-payment-cost-pricing` от main `49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771` (merge плана PR #35). Checkout: `/home/user/rabit-api-worktrees/e6-payment-cost-pricing`. Upstream снят, push только явным `git push -u origin HEAD:codex/e6-payment-cost-pricing`.
-- Завершено: S1–S9 — план, backend, frontend, E2E-спецификация и verifier, канон MoreFoto (patch `docs/waves/e6/morefoto-contract.patch`), отчёт `docs/waves/e6/`. E6 в обоих графах — `review`.
-- Сейчас: S10 завершён — PR https://github.com/rebit-pro/rabit-api/pull/66 в main, быстрые проверки PASS, ждёт ревью.
-- Следующий шаг: ревью PR проводит пользователь; затем правки по ревью, затем полный gate (частичный прогон группы b до ревью пользователь отклонил 25.09). S11: `make test-e2e` (группа b содержит `zzzzzzzz-payment-costs`, verifier `verify-payment-costs.php`), `visual.json`, запись результатов.
-- Блокеров нет. Решения E6-DEC-01…03 приняты 25.09.2026.
-- Канонический MoreFoto изменён на месте; снимок до E6 — в scratchpad сессии (`morefoto-before-e6`), воспроизводимость patch проверена.
-- Проверки backend (том vendor `rabit-e6-vendor` — копия `rabit-u-vendor`; в worktree пустой `api/vendor` как точка монтирования):
-  `docker run --rm --network none --entrypoint php --mount type=bind,source=$PWD/api,target=/app,readonly --mount type=volume,source=rabit-e6-vendor,target=/app/vendor,readonly --tmpfs /app/var:rw,size=512m --workdir /app rabit-api-php-cli:d3-webp -d xdebug.mode=off vendor/bin/phpunit --colors=never` (PHPStan — `vendor/bin/phpstan analyse --configuration=phpstan.neon --no-progress` с `-d memory_limit=2G`).
-- Проверки frontend (том `rabit-e6-node` — копия `rabit-u-node`, lockfile не менялся): `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e6-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce && npm run build-only'`.
+- Ветка `codex/e6-payment-cost-pricing` от main `49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771`, PR https://github.com/rebit-pro/rabit-api/pull/66. Checkout: `/home/user/rabit-api-worktrees/e6-payment-cost-pricing`.
+- Завершено: S1–S11. Ревью — без блокирующих дефектов (неблокирующие #68, #69 — отдельные issue). Финальный gate на `cfb0c06` — PASS (104 сценария, все verifier), визуальная проверка desktop/mobile — PASS.
+- Следующий шаг: merge PR #66 — решение пользователя; deploy — отдельное действие. После merge следующая волна отмечает E6 merged в обоих графах.
+- Блокеров нет. Main на момент gate — `49f40f9`; если main уйдёт вперёд, повторить затронутые проверки на обновлённой базе.
+- Канонический MoreFoto изменён на месте, воспроизводимый diff — `docs/waves/e6/morefoto-contract.patch`.
+- Команда gate: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
 
 ## Хронология
 
@@ -70,3 +67,12 @@
 - Прогон 2 на `50fe25a` (`rabit-e2e-f8aaa9fb6490`, 274,7 с) — FAIL. Группа b 40/40 и все её verifier (storefront, orders, links, transfers, avatar, payment-costs) — PASS. Группа a — 63/64: `catalog.spec.ts` «ошибки полей и серверный 422…» ждал прежний текст «Цена: от 0 до 21 474 836,47 ₽…», а по E6-DEC-02 предел — 1 000 000 ₽. Спецификация обновлена: новый текст и проверка, что 1 000 000,01 ₽ отклоняется в редакторе каталога.
 - Прогон 3 на `daa1aa9` (`rabit-e2e-df93f04fc1f3`, 267,1 с) — PASS: 104 браузерных сценария (a 64, b 40), verifier storefront, orders, links, transfers, avatar, payment-costs, access и контракт Notification — PASS.
 - Визуальная проверка снимков E6 (desktop 1440×1000, mobile 390×844): предпросмотр «Для покупателя: 200 ₽» для 150 ₽ и «150 ₽» для 100 ₽ при 3,80%, сводка «Учитываются: 3,80 %», mobile без горизонтальной прокрутки. Дефект: двойная разделительная линия между блоком «Расходы на оплату» и первым товаром — нижняя граница блока совпадала с верхней границей строки товара. Граница блока убрана; нужен повторный gate на финальном коммите.
+- Прогон 4 на `cfb0c06` (`rabit-e2e-0c2d85d9b8d6`, 357,5 с) — PASS: 104 браузерных сценария (a 64, b 40), verifier storefront, orders, links, transfers, avatar, payment-costs, access и контракт Notification. Снимки подтверждают одну разделительную линию; скопированы в `docs/waves/e6/screenshots/`, хеши — в `visual.json`.
+
+| ID | Статус | Дата | Команда / доказательство |
+| --- | --- | --- | --- |
+| E6-T03…T11 | PASS | 2026-09-25 | `zzzzzzzz-payment-costs.spec.ts` (сценарий API) и `catalog.spec.ts` в gate на `cfb0c06`: политика по умолчанию, идемпотентность и конфликт, отказы 422, витрина и расчёт по цене продажи, `PRICE_CHANGED` и заказ, возврат цен и неизменный снимок, подпись ссылки F2, 403/401, предел 1 000 000 ₽ в каталоге |
+| E6-T12 | PASS | 2026-09-25 | `conditions.spec.ts` E3 (статусы 409/422/404/403, повтор потерянного ответа) в gate на `cfb0c06` |
+| E6-T14 | PASS | 2026-09-25 | UI-сценарий E6, снимки desktop 1440×1000 и mobile 390×844, `docs/waves/e6/visual.json` |
+| E6-T15 | PASS | 2026-09-25 | `verify-payment-costs.php` на стенде `rabit-e2e-0c2d85d9b8d6` |
+| E6-T18 | PASS | 2026-09-25 | Полный gate на `cfb0c06`: 104/104, все verifier, 357,5 с |

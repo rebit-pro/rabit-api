@@ -1,6 +1,6 @@
 {
   "wave": "E6",
-  "status": "review",
+  "status": "passed",
   "date": "2026-09-25",
   "branch": "codex/e6-payment-cost-pricing",
   "base": "49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771",
@@ -86,12 +86,67 @@
       "reproducesCanonicalState": true
     }
   },
-  "pending": {
-    "browserGate": "make test-e2e after review: zzzzzzzz-payment-costs (group b), updated conditions.spec.ts",
-    "verifier": "api/tools/e2e/verify-payment-costs.php",
-    "visual": "desktop/mobile screenshots of the payment cost dialog and summary"
+  "runtimeLiveApiExecuted": true,
+  "mergeAllowed": true,
+  "pr": "https://github.com/rebit-pro/rabit-api/pull/66",
+  "head": "cfb0c067976da04b6a828b6e6f0967739e82960e",
+  "review": {
+    "result": "no blocking defects",
+    "nonBlockingIssues": [
+      "https://github.com/rebit-pro/rabit-api/issues/68",
+      "https://github.com/rebit-pro/rabit-api/issues/69"
+    ]
   },
-  "runtimeLiveApiExecuted": false,
-  "mergeAllowed": false,
-  "pr": "https://github.com/rebit-pro/rabit-api/pull/66"
+  "gate": {
+    "command": "make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor",
+    "final": {
+      "head": "cfb0c067976da04b6a828b6e6f0967739e82960e",
+      "stand": "rabit-e2e-0c2d85d9b8d6",
+      "result": "PASS",
+      "browser": {
+        "a": 64,
+        "b": 40,
+        "total": 104
+      },
+      "verifiers": [
+        "verify-storefront.php",
+        "verify-orders.php",
+        "verify-links.php",
+        "verify-transfers.php",
+        "verify-avatar.php",
+        "verify-payment-costs.php",
+        "verify-access.php",
+        "Notification contract"
+      ],
+      "seconds": 357.5
+    },
+    "runs": [
+      {
+        "head": "509ce80",
+        "stand": "rabit-e2e-463bfddfee92",
+        "result": "FAIL",
+        "reason": "verify-orders.php: the E6 spec order was not recorded in var/e5-orders.json; group a cancelled",
+        "fix": "50fe25a"
+      },
+      {
+        "head": "50fe25a",
+        "stand": "rabit-e2e-f8aaa9fb6490",
+        "result": "FAIL",
+        "reason": "catalog.spec.ts expected the old 21 474 836,47 RUB price message",
+        "fix": "daa1aa9"
+      },
+      {
+        "head": "daa1aa9",
+        "stand": "rabit-e2e-df93f04fc1f3",
+        "result": "PASS",
+        "note": "visual check found a double divider under the payment cost block",
+        "fix": "cfb0c06"
+      },
+      {
+        "head": "cfb0c06",
+        "stand": "rabit-e2e-0c2d85d9b8d6",
+        "result": "PASS"
+      }
+    ]
+  }
 }

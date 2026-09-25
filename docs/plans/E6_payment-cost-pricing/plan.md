@@ -103,7 +103,7 @@
 - [x] S8. E2E: новая live-спека, группа в `groups.json`, обновление `conditions.spec.ts`, verifier в `VERIFIERS`.
 - [x] S9. Канон: COM-04/05/06/08 в `endpoints.json`, генерация и проверка Postman; граф E6 → review; README, verification, visual, patch MoreFoto.
 - [x] S10. Быстрые проверки: phplint, PHPStan, PHPUnit, php-cs-fixer по изменённым файлам, frontend check/test/build; PR.
-- [ ] S11. После ревью без блокеров: `make test-e2e`, визуальная проверка desktop/mobile.
+- [x] S11. После ревью без блокеров: `make test-e2e`, визуальная проверка desktop/mobile.
 
 ## Критерии приёмки
 

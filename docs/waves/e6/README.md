@@ -45,7 +45,18 @@
 - Граф: 51 волна, 110 API ID, 35 WNN, 13 негативных фикстур. Канон: `validate.py` — 110 запросов, 51 волна; Postman offline — 110/220 фикстур.
 - `morefoto-contract.patch`, применённый к снимку MoreFoto до E6, воспроизводит текущее состояние.
 
-Живой gate (`make test-e2e`) — после ревью без блокеров: спецификация `zzzzzzzz-payment-costs` в группе b и verifier `verify-payment-costs.php`. Статусы проверок — в `verification.json`, снимки desktop/mobile появятся в `visual.json` после gate.
+Ревью без блокирующих дефектов; неблокирующие замечания — issue #68 и #69.
+
+Финальный gate на `cfb0c06` (стенд `rabit-e2e-0c2d85d9b8d6`, 357,5 с) — PASS:
+- 104 браузерных сценария: группа a — 64, группа b — 40, включая оба сценария E6;
+- verifier storefront, orders, links, transfers, avatar, payment-costs, access и контракт Notification.
+
+До финального прогона было три запуска:
+1. `verify-orders.php` не находил заказ спецификации E6 в общем списке — исправлено в `50fe25a`.
+2. Сценарий каталога ждал прежний текст предела цены — исправлено в `daa1aa9`.
+3. Прогон прошёл, но визуальная проверка нашла двойную линию под блоком расходов — исправлено в `cfb0c06`.
+
+Снимки desktop 1440×1000 и mobile 390×844 — `screenshots/` и `visual.json`, факты — `verification.json`.
 
 ## Подключение и ограничения
 
