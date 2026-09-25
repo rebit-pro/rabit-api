@@ -6,7 +6,7 @@ namespace Rebit\Share\Infrastructure\Dto\Metadata;
 
 use Rebit\Share\Infrastructure\Exception\ValidationHttpException;
 use Rebit\Share\Shared\Facade\Cache;
-use Symfony\Component\Serializer\Annotation\SerializedName;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
 /**
  * Метаданные DTO через ReflectionClass.
@@ -440,11 +440,12 @@ final class DtoMetadataService
                     $hasConstraints = self::isConstraintAttribute($attr);
                 }
 
-                if ('Symfony\Component\Serializer\Annotation\SerializedName' === $attr->getName()) {
+                // Annotation\SerializedName — class_alias Attribute\SerializedName, is_a покрывает оба имени.
+                if (is_a($attr->getName(), SerializedName::class, true)) {
+                    /** @var SerializedName $instance */
                     $instance = $attr->newInstance();
-                    $externalName = $instance->getSerializedName();
 
-                    $serializedMap[$externalName] = $paramName;
+                    $serializedMap[$instance->serializedName] = $paramName;
                 }
             }
 
