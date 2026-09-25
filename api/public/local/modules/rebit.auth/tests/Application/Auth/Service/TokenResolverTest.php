@@ -109,6 +109,7 @@ final class TokenResolverTest extends TestCase
         $repository = $this->createMock(UserRepository::class);
         $repository->expects($this->never())->method('findByToken');
         $this->expectException(HttpException::class);
+        $this->expectExceptionMessage('UNAUTHORIZED');
         $this->expectExceptionCode(401);
         (new TokenResolver($repository, new FrozenClock()))->resolveUserId('');
     }

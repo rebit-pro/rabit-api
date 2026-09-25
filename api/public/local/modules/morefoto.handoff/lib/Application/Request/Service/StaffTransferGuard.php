@@ -10,7 +10,7 @@ use Rebit\Share\Shared\Exception\HttpException;
 
 /**
  * Допускает к превью и подтверждению льготного переноса только организатора и куратора учреждения заявки
- * и только заявку в состоянии submitted. Переводит текстовые отказы Access в коды контракта до исправления #42.
+ * и только заявку в состоянии submitted. Отказы Access проходят с их кодами UNAUTHORIZED/FORBIDDEN.
  */
 final readonly class StaffTransferGuard
 {
@@ -55,15 +55,7 @@ final readonly class StaffTransferGuard
     /** @param callable(): LinkActorOutputDto $read */
     private function reviewer(callable $read): LinkActorOutputDto
     {
-        try {
-            $actor = $read();
-        } catch (HttpException $error) {
-            throw match ($error->getCode()) {
-                401 => new HttpException('UNAUTHORIZED', 401, $error),
-                403 => new HttpException('FORBIDDEN', 403, $error),
-                default => $error,
-            };
-        }
+        $actor = $read();
         if (!in_array($actor->role, ['organizer', 'curator'], true)) {
             throw new HttpException('FORBIDDEN', 403);
         }

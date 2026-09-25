@@ -9,23 +9,14 @@ use Morefoto\Commerce\Application\Order\Dto\OrderStaffScopeOutputDto;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
-/** Переводит роль и назначения Access в область чтения заказов D08 и отказы Access — в коды commerce. */
+/** Переводит роль и назначения Access в область чтения заказов D08: организатор видит все, куратор — свои учреждения. */
 final readonly class OrderStaffAccess implements OrderStaffAccessInterface
 {
     public function __construct(private InstitutionAccessInterface $institutions) {}
 
     public function scope(int $actorId): OrderStaffScopeOutputDto
     {
-        try {
-            $scope = $this->institutions->scope($actorId);
-        } catch (HttpException $error) {
-            throw match ($error->getCode()) {
-                401 => new HttpException('UNAUTHORIZED', 401, $error),
-                403 => new HttpException('FORBIDDEN', 403, $error),
-                default => $error,
-            };
-        }
-
+        $scope = $this->institutions->scope($actorId);
         $institutionIds = array_values(array_unique(array_map('intval', $scope->institutionIds)));
         sort($institutionIds);
 
