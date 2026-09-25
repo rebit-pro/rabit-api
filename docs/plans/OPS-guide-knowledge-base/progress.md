@@ -7,10 +7,12 @@
   на `7ec736a`. Скрипт съёмки `shots.mjs` и исходные PNG — в scratchpad сессии (`guide-shots/v2/`).
 - Документация: [план](plan.md), предыдущая итерация [OPS-stage-run-guide](../OPS-stage-run-guide/progress.md).
 - Завершено: главная с плитками, 7 статей, 44 скриншота WebP (1,8 МБ), проверки KB-T01…T05.
-- Сейчас: [PR #95](https://github.com/rebit-pro/rabit-api/pull/95) ждёт merge пользователем (merge агентом отклонён
-  автоматическим режимом как «без ревью»).
-- Следующий шаг: после merge — загрузить готовый пакет `guide-kb-20260925151854-7ec736a-b314d77` (scratchpad сессии, sha256 `d469eda1…6d00`)
-  в `/srv/morefoto/releases/` и запустить `switch-frontend.sh`, затем KB-T06.
+- Сейчас: [PR #95](https://github.com/rebit-pro/rabit-api/pull/95) открыт, не слит, ревью не проведено.
+- **Пакет `guide-kb-20260925151854-7ec736a-b314d77` устарел — НЕ выкладывать**: после его сборки другие сессии выкатили
+  G1 (`fc0cdb9`, тестовая оплата ЮKassa включена) и #96 (`d8caca4`, релиз `issues91-20260925165859-d8caca4`) — пакет на
+  `7ec736a` откатил бы их frontend.
+- Следующий шаг (ждёт решения пользователя): обновить статьи под оплату G1 и новую таблицу сотрудников, переснять
+  затронутые скриншоты на стенде `d8caca4`, пересобрать образ из `d8caca4` + `guide/` ветки, затем review, merge, выкладка.
 - Блокеров нет.
 - Рабочее дерево: новые/изменённые файлы `frontend/public/guide/**`, `docs/plans/OPS-guide-knowledge-base/**`.
 
@@ -53,3 +55,10 @@
   MOREFOTO_CHECKOUT_ENABLED=1 morefoto_stage_fpm` — converged, 1/1 на `rabit-api-php-fpm:d3-webp`; `getenv` в FPM
   возвращает `"1"`; `/api/v1/me` 401, `/login` и `/guide/` 200, неизвестная галерея — JSON `GALLERY_NOT_FOUND`.
   Откат: `docker service update --env-rm MOREFOTO_CHECKOUT_ENABLED morefoto_stage_fpm`.
+
+### 2026-09-26
+
+- Пользователь вернулся после перезагрузки. PR #95 открыт; `main` `03f4e3b`. На сайте — релиз `d8caca4` (G1 + #78/#84/#85/#86/#96),
+  #100 слит, но не выложен (DTO serialized name, backend). SSH до `rebit-pro` временно недоступен (таймаут).
+- Устаревает в статьях: «оплата не подключена» (путь, родитель, FAQ, прогон), скриншоты оформления и заказа родителя,
+  список сотрудников (`UiDataTable` из #96).
