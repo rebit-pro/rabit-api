@@ -469,14 +469,15 @@ final class DtoMetadataService
                     );
                 }
 
-                if (!isset(self::SCALAR_TYPES[$arrayDocType])) {
+                // mixed[] — список без приведения элементов: их проверяет presentation mapper со своими кодами.
+                if ('array' === $arrayDocType || 'mixed' === $arrayDocType) {
+                    $paramType = DtoParamTypeEnum::ARRAY;
+                } elseif (!isset(self::SCALAR_TYPES[$arrayDocType])) {
                     $resolvedClassName = self::resolveClassName($arrayDocType, $reflectionClass);
                     $paramType = DtoParamTypeEnum::OBJECT_ARRAY;
-                } elseif ('array' !== $arrayDocType) {
+                } else {
                     $resolvedClassName = $arrayDocType;
                     $paramType = DtoParamTypeEnum::SCALAR_ARRAY;
-                } else {
-                    $paramType = DtoParamTypeEnum::ARRAY;
                 }
             } elseif (isset(self::SCALAR_TYPES[$typeName])) {
                 $paramType = DtoParamTypeEnum::from($typeName);
