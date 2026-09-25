@@ -351,19 +351,19 @@ test('E5: staff narrow orders by institution, shoot and group', async ({ page, b
   for (const label of ['Учреждение', 'Съёмка', 'Группа']) await expect(field(label)).toHaveValue('');
   await expect(reset).toBeDisabled();
 
-  // Curators are offered only institutions of their own area.
-  for (const [account, count] of [
-    ['curator', 1],
-    ['c4-curator', 0]
-  ] as const)
-    await asStaff(browser, baseURL, account, async (viewer) => {
-      const institutions = viewer.waitForResponse((r) => new URL(r.url()).pathname === '/api/v1/institutions');
-      await viewer.goto('/cabinet/orders');
-      expect((await institutions).status()).toBe(200);
-      await viewer.getByRole('combobox', { name: 'Учреждение', exact: true }).press('Enter');
-      await expect(viewer.getByRole('option', { name: 'Все учреждения', exact: true })).toBeVisible();
-      await expect(viewer.getByRole('option', { name: 'E4 Тестовый детский сад', exact: true })).toHaveCount(count);
-    });
+  // Curators are offered exactly the institutions the server lists for their area. A curator without assigned
+  // institutions (c4-curator) has no order.read and cannot open this screen at all.
+  await asStaff(browser, baseURL, 'curator', async (viewer) => {
+    const institutions = viewer.waitForResponse((r) => new URL(r.url()).pathname === '/api/v1/institutions');
+    await viewer.goto('/cabinet/orders');
+    const listed = await institutions;
+    expect(listed.status()).toBe(200);
+    const scope: string[] = (await listed.json()).data.items.map((item: { name: string }) => item.name);
+    expect(scope).toContain('E4 Тестовый детский сад');
+    await viewer.getByRole('combobox', { name: 'Учреждение', exact: true }).press('Enter');
+    await expect(viewer.getByRole('option', { name: 'Все учреждения', exact: true })).toBeVisible();
+    await expect(viewer.getByRole('option')).toHaveCount(scope.length + 1);
+  });
 });
 
 for (const viewport of [
