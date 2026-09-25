@@ -3,8 +3,9 @@
 ## Точка продолжения
 
 - PR https://github.com/rebit-pro/rabit-api/pull/80 влит в `main` как `fc0cdb9` (2026-09-25) и выкачен на https://app.morefoto36.ru, релиз `/srv/morefoto/releases/g1-20260925182710-fc0cdb9`.
-- Оплата на stage **выключена**: ключи тестового магазина, `MOREFOTO_PAYMENT_*` и `MOREFOTO_CHECKOUT_ENABLED` не заданы; DI-smoke — `Payment enabled: no`.
-- Следующий шаг (по решению пользователя): включение тестовой оплаты на stage — ключи тестового магазина и `MOREFOTO_PAYMENT_METHODS=bank_card`, `MOREFOTO_PAYMENT_RETURN_BASE_URL=https://app.morefoto36.ru` в `backend.env`, `MOREFOTO_CHECKOUT_ENABLED=1`, сервис cron-сверки `app:payment:reconcile`, адрес уведомлений `https://app.morefoto36.ru/api/v1/webhooks/yookassa/payments` в кабинете ЮKassa.
+- Тестовая оплата на stage **включена** 2026-09-25 (тестовый магазин ЮKassa, способ `bank_card`): секрет `morefoto_yookassa_secret_key_test_20260925`, переменные `MOREFOTO_PAYMENT_*` у `morefoto_stage_fpm`, новый сервис сверки `morefoto_stage_payment_reconciler`.
+- Следующий шаг: пользователь указывает в кабинете ЮKassa (тестовый магазин, «Интеграция → HTTP-уведомления») адрес `https://app.morefoto36.ru/api/v1/webhooks/yookassa/payments` и события `payment.succeeded`, `payment.canceled`, затем проходит оплату картой `5555 5555 5555 4444` на stage.
+- При следующей выкладке backend `morefoto_stage_payment_reconciler` переключается вместе с остальными сервисами, монтирующими `/app` (добавить в `switch-backend.sh` и `services-before.json`).
 - Графы: G1 отмечается `merged` следующей волной (правило учёта слияний).
 - Ограничение: реальная проверка СБП — `BLOCKED` до боевого магазина.
 
@@ -87,3 +88,12 @@
 - **Откат.** `docker service rollback` для шести backend-сервисов (прежний `/app` — релиз `e6-20260925101815-54bd4ab`) и `morefoto_frontend` (образ `guide-20260925125036-7ec736a`); спецификации — `services-before.json` релиза. Миграция только добавляет таблицы и столбцы; модуль в старом коде не подключается.
 - Вместе с G1 выкачены слитые ранее PR #78 (#26–#28, заявки сотрудников), #84 и #85.
 - **Не проверено на stage:** авторизованные сценарии (реестр платежей организатора, заявки сотрудников #78) и тестовая оплата — после включения по решению пользователя.
+
+### 2026-09-25 — тестовая оплата на stage
+
+- Пользователь: «Да, включаем тестовую оплату на stage».
+- Окружение stage задаётся в спецификациях сервисов (`--env`), конфигов нет. `MOREFOTO_CHECKOUT_ENABLED=1` у FPM уже был. `runtime-env.php` подключается из `init.php` и читает `/run/secrets/morefoto_yookassa_secret_key`.
+- Секрет: `docker secret create morefoto_yookassa_secret_key_test_20260925` (ключ `test_…` тестового магазина передан через stdin по ssh, нигде не выводился; метка `morefoto.purpose=yookassa-test-shop`).
+- FPM: `--secret-add …,target=morefoto_yookassa_secret_key`, `--env-add MOREFOTO_PAYMENT_YOOKASSA_SHOP_ID` (через stdin), `MOREFOTO_PAYMENT_METHODS=bank_card`, `MOREFOTO_PAYMENT_RETURN_BASE_URL=https://app.morefoto36.ru` — 1/1. Выход к `api.yookassa.ru` есть. Проверка в FPM: `enabled: yes; methods: bank_card`, секрет на месте, запрос несуществующего платежа — 404 (авторизация магазина принята); в логе только статусы, без тела и ключей.
+- Сверка: сервис `morefoto_stage_payment_reconciler` — образ `rabit-api-php-cli:d3-webp`, сети `site_default` и `morefoto-stage-private`, монтирования как у `morefoto_stage_media_dispatcher` с `/app` релиза G1, секрет ключа и переменные оплаты, цикл `app:payment:reconcile --limit=100; sleep 60`. Первая задача падала без `MESSENGER_TRANSPORT_DSN` и секрета RabbitMQ (консоль поднимает DI всех модулей) — добавлены как у остальных воркеров (DSN скопирован на сервере из спецификации media dispatcher). Лог: `[OK] Сверено попыток: 0, с ошибкой: 0`.
+- Откат оплаты: `docker service rollback morefoto_stage_fpm` (или `--env-rm MOREFOTO_PAYMENT_YOOKASSA_SHOP_ID` — без магазина оплата выключается) и `docker service rm morefoto_stage_payment_reconciler`.
