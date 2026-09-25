@@ -1,0 +1,370 @@
+diff -ruN -x __pycache__ a/docs/04-bitrix-modules/backend-waves.json b/docs/04-bitrix-modules/backend-waves.json
+--- a/docs/04-bitrix-modules/backend-waves.json	2026-09-25 15:09:22.371778864 +0300
++++ b/docs/04-bitrix-modules/backend-waves.json	2026-09-25 15:19:14.639942664 +0300
+@@ -6,7 +6,7 @@
+   "backend": "RaBit API",
+   "baseline": {
+     "branch": "main",
+-    "commit": "49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771",
++    "commit": "1dd4a5f2295a3f3c7ba10d628906c76a4cb253d6",
+     "mergedWaves": [
+       "A1",
+       "A2",
+@@ -42,7 +42,8 @@
+       "U5",
+       "U6",
+       "U7",
+-      "U8"
++      "U8",
++      "E6"
+     ],
+     "review": {},
+     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
+@@ -75,7 +76,8 @@
+       "U5": "https://github.com/rebit-pro/rabit-api/pull/53",
+       "U6": "https://github.com/rebit-pro/rabit-api/pull/53",
+       "U7": "https://github.com/rebit-pro/rabit-api/pull/53",
+-      "U8": "https://github.com/rebit-pro/rabit-api/pull/53"
++      "U8": "https://github.com/rebit-pro/rabit-api/pull/53",
++      "E6": "https://github.com/rebit-pro/rabit-api/pull/66"
+     },
+     "mergeCommits": {
+       "C4": "cfc334e5890dd51dfd6ff6638eac2cc3e436322b",
+@@ -98,7 +100,8 @@
+       "U5": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+       "U6": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+       "U7": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+-      "U8": "b20423f08c5794f66346a607c376bc89ffe3bb82"
++      "U8": "b20423f08c5794f66346a607c376bc89ffe3bb82",
++      "E6": "54bd4abbb62fbda2dc030281e4b4893820d83e84"
+     },
+     "decisionEvidence": {
+       "D02-D05": "docs/waves/e3/README.md in rabit-api: user accepted rules before PR #20",
+@@ -1278,7 +1281,7 @@
+       ],
+       "activation": "Включение только организатором после проверки эффективной ставки и предварительного расчёта; E6 не подключает платёжного провайдера.",
+       "legacyIds": [],
+-      "deliveryState": "review",
++      "deliveryState": "merged",
+       "unlocks": [
+         "N2"
+       ],
+@@ -1971,7 +1974,7 @@
+       ],
+       "activation": "Включить на stage после установки токена в secrets, подписки webhook, ID группы и живой проверки; production — после решения о сроке хранения и тексте предупреждения (MAX-D06).",
+       "legacyIds": [],
+-      "deliveryState": "planned",
++      "deliveryState": "inProgress",
+       "unlocks": [
+         "K1"
+       ],
+diff -ruN -x __pycache__ a/docs/04-bitrix-modules/backend-waves.md b/docs/04-bitrix-modules/backend-waves.md
+--- a/docs/04-bitrix-modules/backend-waves.md	2026-09-25 15:12:36.292459723 +0300
++++ b/docs/04-bitrix-modules/backend-waves.md	2026-09-25 16:28:40.589776255 +0300
+@@ -18,7 +18,7 @@
+
+ ## Текущий независимый набор
+
+-В main `49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771` приняты: A1, A2, A3, A4, A5, A6, A7, A8, B1, C1, E1, C2, C3, C4, B2, D1, D2, E2, E3, F1, H1, E4, E5, F2, D3, U1, U2, U3, U4, B4, B3, U5, U6, U7, U8. Готовы по графу: E6, G1, K3. Это снимок; фактические зависимости и открытые решения проверяются перед стартом.
++В main `1dd4a5f2295a3f3c7ba10d628906c76a4cb253d6` приняты: A1, A2, A3, A4, A5, A6, A7, A8, B1, C1, E1, C2, C3, C4, B2, D1, D2, E2, E3, F1, H1, E4, E5, F2, D3, U1, U2, U3, U4, B4, B3, U5, U6, U7, U8, E6. Готовы по графу: G1, K3. Это снимок; фактические зависимости и открытые решения проверяются перед стартом.
+
+ Пользователь принял модель Access/Organization, одного продавца, связь фото с несколькими детьми и рекомендации D07/D08/D10. R17 и остальные открытые решения не объявлены закрытыми. D02 не мешает пустому редактируемому каталогу, но продолжает блокировать соответствующие коммерческие правила E3. Для H1 выбран EMAIL, MAX перенесён в отдельный последующий этап. 22.09.2026 первым провайдером выбрана ЮKassa с «Чеками от ЮKassa», СберПэй — необязательный резерв. Расходы в общей цене выделены в независимую E6 с округлением вверх до 50 ₽. Битрикс Старт и своё хранение сохраняются; настройки/параметры чека и оставшиеся вопросы D09/D12 не объявлены закрытыми. GitHub Actions отключён вручную; YAML сохранён, проверки выполняются локально.
+
+@@ -176,7 +176,7 @@
+ | [F1](#f1) | Списки детей сотрудников | B2, D2, E3 | E4, D3, F2, U5 | HND-06, HND-07, HND-08, HND-09, HND-12 | в main |
+ | [E4](#e4) | Приватная витрина и серверный расчёт корзины | D2, E3, F1 | E5, F2, K3 | MED-01, COM-08, COM-09 | в main |
+ | [E5](#e5) | Заказ, снимок покупки и личный ключ | E4 | E6, D3, G1, I1, J1, U5 | COM-10, COM-11, COM-12, COM-13 | в main |
+-| [E6](#e6) | Учёт расходов на оплату в общей цене продукции | E3, E5 | N2 | Без новых REST | на ревью |
++| [E6](#e6) | Учёт расходов на оплату в общей цене продукции | E3, E5 | N2 | Без новых REST | в main |
+ | [D3](#d3) | Атомарные переносы ребёнка и служебной заявки | D2, F1, E5, F2 | I3 | MED-07, HND-10, HND-11 | в main |
+ | [F2](#f2) | Подготовка и факт передачи ссылки | E3, F1, E4 | D3, G1, K3, L1, K2, U5 | HND-01, HND-02, HND-03, HND-04, HND-05 | в main |
+ | [G1](#g1) | Платёжные попытки и подтверждённые факты | E5, F2 | G2, I1, I2, I3 | PAY-01, PAY-02, PAY-03, PAY-07, PAY-10, PAY-11 | в работе |
+@@ -188,7 +188,7 @@
+ | [J1](#j1) | Выдача оригиналов и ZIP по праву заказа | D1, E5, I3 | J2, J3 | FIL-01, FIL-02, FIL-03, FIL-04 | запланирована |
+ | [J2](#j2) | Доставка файлов покупателю | H1, J1 | J3 | FIL-05, FIL-06 | запланирована |
+ | [J3](#j3) | Восстановление доступа к файлам | I3, J1, J2 | K1 | FIL-07, FIL-08 | запланирована |
+-| [K3](#k3) | Вопросы куратору с сайта через MAX | B2, B4, E4, F2, H1 | K1 | SUP-07, SUP-08, SUP-09, SUP-10, SUP-11, SUP-12 | запланирована |
++| [K3](#k3) | Вопросы куратору с сайта через MAX | B2, B4, E4, F2, H1 | K1 | SUP-07, SUP-08, SUP-09, SUP-10, SUP-11, SUP-12 | в работе |
+ | [K1](#k1) | Обращения и ответы по заказу | I3, J3, K3 | L1, K2 | SUP-01, SUP-02, SUP-03, SUP-04, SUP-05 | запланирована |
+ | [L1](#l1) | Версия задания на печать и экспорт | D1, F2, I3, K1 | L2 | PRD-01, PRD-02, PRD-03, PRD-04, PRD-07 | запланирована |
+ | [L2](#l2) | Старт печати и комплектация версии | L1 | K2, M1 | PRD-05, PRD-06 | запланирована |
+@@ -925,7 +925,7 @@
+
+ **Владельцы:** `morefoto.commerce`.
+ **Зависит от:** E3, E5. **Разблокирует:** N2.
+-**Решения:** D02, D04, D05. **Статус:** на ревью.
++**Решения:** D02, D04, D05. **Статус:** в main.
+ **Первичные REST:** нет новых REST.
+ **Вход:** Слитые E3 и E5: существующие условия продаж, quote и снимок заказа; параметры политики расходов согласованы пользователем 22.09.2026.
+ **Выход:** Завершённый сценарий настройки цен через COM-04/05 с витриной/quote/заказом, без новых первичных HTTP-операций.
+@@ -1331,7 +1331,7 @@
+
+ **Владельцы:** `morefoto.support`, `morefoto.media`, `morefoto.access`, `rebit.notification`, `rebit.share`, `frontend`.
+ **Зависит от:** B2, B4, E4, F2, H1. **Разблокирует:** K1.
+-**Решения:** нет новых бизнес-решений. **Статус:** запланирована.
++**Решения:** нет новых бизнес-решений. **Статус:** в работе.
+ **Первичные REST:** SUP-07, SUP-08, SUP-09, SUP-10, SUP-11, SUP-12.
+ **Вход:** Слитые B2, B4, E4, F2, H1: роли и кабинет сотрудников, публичная галерея MED-01 с куратором группы, ссылка галереи, образец надёжной доставки и consumer. Решения MAX-D01…D05, D07, D08 приняты пользователем 25.09.2026.
+ **Выход:** Завершённые операции SUP-07…SUP-12: вопросы родителей и сотрудников куратору через группу MAX с историей на сайте; K1 расширяет тот же модуль.
+diff -ruN -x __pycache__ a/docs/05-rest-api/README.md b/docs/05-rest-api/README.md
+--- a/docs/05-rest-api/README.md	2026-09-25 15:12:36.340668786 +0300
++++ b/docs/05-rest-api/README.md	2026-09-25 16:35:09.257757914 +0300
+@@ -388,9 +388,9 @@
+ | PAY-10 · **П** | **GET** /payments | Реестр платежей; О/К | —; query: status, orderNumber, dateFrom, dateTo, late, page, pageSize; page, pageSize | **200**; items&lt;PaymentAttempt&gt;, meta{summary: total} | G1; product |
+ | PAY-11 · **П** | **GET** /payments/{payment_attempt_id} | Карточка платежа; О/К | — | **200**; payment&lt;PaymentAttempt&gt;, providerPaymentId, checkCount, lastCheckAt, nextCheckAt, attempts, facts | G1; product |
+
+-- **PAY-01:** При pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — провайдер не ответил, повтор выполняет сервер с тем же ключом провайдера. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.
++- **PAY-01:** При pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, итог 0 ₽ — 409 NOTHING_TO_PAY, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — исход у провайдера не известен, повтор выполняет сервер с тем же ключом провайдера; отказ повторного запроса попытку не закрывает, закрывает только подтверждённый исход провайдера или отказ первого запроса. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.
+ - **PAY-02:** Чтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод. G1: для pending/unknown сервер сверяет платёж с ЮKassa не чаще раза в 5 с; чужая или отсутствующая попытка — 404 PAYMENT_ATTEMPT_NOT_FOUND. Ответ no-store.
+-- **PAY-03:** Чтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок. G1: quote {subtotal, discount, giftSaving, total, currency} — итог неизменяемого снимка заказа E5, пересчёта нет. activeAttemptId — открытая попытка, результат которой нужно дождаться (PAY-02). canPay=false при оплаченном заказе, pending/unknown попытке или закрытом периоде. paymentMethods — способы из конфигурации магазина в порядке показа (боевой: sbp, bank_card; тестовый: bank_card).
++- **PAY-03:** Чтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок. G1: quote {subtotal, discount, giftSaving, total, currency} — итог неизменяемого снимка заказа E5, пересчёта нет. activeAttemptId — открытая попытка, результат которой нужно дождаться (PAY-02). canPay=false при оплаченном заказе, итоге 0 ₽, pending/unknown попытке или закрытом периоде. paymentMethods — способы из конфигурации магазина в порядке показа (боевой: sbp, bank_card; тестовый: bank_card).
+ - **PAY-04:** status=pending/sent/failed; receiptUrl только при готовом чеке. MAX доступен только при подтверждённой интеграции; email — базовый канал.
+ - **PAY-05:** Принятие в очередь не равно отправке; результат PAY-06.
+ - **PAY-07:** G1, provider=yookassa: тело уведомления ЮKassa — только сигнал. Сервер берёт event и object.id, запрашивает платёж у ЮKassa и сверяет магазин, сумму, валюту, metadata попытки и заказ. Ключ дедупликации — event:object.id (у ЮKassa нет ID события). Повтор, неизвестный платёж и неподдерживаемое событие — 200 без изменений; тело без object.id — 422 INVALID_NOTIFICATION; неизвестный provider — 404 PROVIDER_NOT_FOUND. Подписи у уведомлений ЮKassa нет, IP не проверяется.
+@@ -449,9 +449,9 @@
+ - **SUP-05:** status=in-progress/resolved; история не перезаписывается. Реальная доставка ответа требует канала, связанного с D09.
+ - **SUP-06:** Обращение связано с заказом этой группы; новая дата позже текущего закрытия и now. Обновить всю группу/доставку, сохранить историю и обе версии, перепроверить производство.
+ - **SUP-07:** K3. Родитель без аккаунта: name 1–60, message 1–2000 символов после trim, иначе 422 INVALID_QUESTION_NAME/INVALID_QUESTION_MESSAGE. Галерея должна быть доступна как в MED-01, иначе 404. Idempotency-Key (32 hex) в области galleryToken: тот же ключ и тело — 201 с тем же id/questionKey, другое тело — 409 IDEMPOTENCY_CONFLICT. questionKey — 64 hex, возвращается только здесь, в БД только SHA-256; frontend хранит его локально. Лимит новых бесед — 429 RATE_LIMITED. Вопрос уходит в закрытую группу кураторов MAX с номером, именем, учреждением, группой и куратором группы; delivery=sending/delivered/failed. Ответ no-store.
+-- **SUP-08:** K3. X-Question-Key: ключ из SUP-07. Отсутствующий, неверный ключ или недоступная галерея — одинаковый 404 QUESTION_NOT_FOUND. messages по createdAt + id; author=parent/curator, authorName куратора — имя отправителя MAX; delivery только у своих реплик. Ответ no-store.
++- **SUP-08:** K3. X-Question-Key: ключ из SUP-07. Отсутствующий или неверный ключ — одинаковый 404 QUESTION_NOT_FOUND; отзыв ссылки галереи переписку не закрывает, доступ даёт только ключ беседы. messages по id; author=parent/curator, authorName куратора — имя отправителя MAX; delivery=sending/delivered/failed только у своих реплик. Ответ no-store.
+ - **SUP-09:** K3. Ключ и 404 как SUP-08; message 1–2000. Idempotency-Key в области беседы: повтор — прежний результат, другое тело — 409 IDEMPOTENCY_CONFLICT. Лимит сообщений беседы — 429 RATE_LIMITED. Новое сообщение уходит в группу MAX с тем же номером.
+-- **SUP-10:** K3. head и teacher: одна своя беседа; до первого сообщения — 200 с пустыми messages. organizer/curator — 403 FORBIDDEN. Контекст в MAX — учреждение сотрудника. Ответ no-store.
++- **SUP-10:** K3. head и teacher: одна своя беседа; до первого сообщения — 200 с id=null и пустыми messages. organizer/curator — 403 FORBIDDEN. author=staff/curator. Контекст в MAX — роль и учреждения сотрудника на момент сообщения. Ответ no-store.
+ - **SUP-11:** K3. Права как SUP-10; первая реплика создаёт беседу. message 1–2000, Idempotency-Key в области сотрудника, 409 IDEMPOTENCY_CONFLICT, 429 RATE_LIMITED.
+ - **SUP-12:** K3. X-Max-Bot-Api-Secret сверяется с секретом подписки; неверный — 401. 200 только после фиксации в inbox; дедупликация botId + mid. В беседу попадает только reply из настроенной группы на сообщение бота этой беседы; прочие события, чаты, пересылки, правки и удаления — 200 без изменений. bot_added/bot_removed сохраняются для получения ID группы. Сырой payload, текст и секрет не логируются.
+
+diff -ruN -x __pycache__ a/docs/05-rest-api/build.py b/docs/05-rest-api/build.py
+--- a/docs/05-rest-api/build.py	2026-09-25 15:12:36.264337770 +0300
++++ b/docs/05-rest-api/build.py	2026-09-25 16:35:09.161525139 +0300
+@@ -336,14 +336,14 @@
+     "id, status, amount, redirectUrl?, created, orderVersion",
+     {"orderVersion":"{{order_version}}","precedingAttemptId":None,"quoteToken":"{{payment_quote_token}}","paymentMethod":"bank_card"},code=202,
+     save={"payment_attempt_id":"id","order_version":"orderVersion"},sample={"id":"attempt-example","status":"pending","amount":25000,"redirectUrl":"https://yoomoney.ru/checkout/payments/v2/contract?orderId=example","created":True,"orderVersion":"order-version-2"},
+-    note="При pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — провайдер не ответил, повтор выполняет сервер с тем же ключом провайдера. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.")
++    note="При pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, итог 0 ₽ — 409 NOTHING_TO_PAY, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — исход у провайдера не известен, повтор выполняет сервер с тем же ключом провайдера; отказ повторного запроса попытку не закрывает, закрывает только подтверждённый исход провайдера или отказ первого запроса. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.")
+ add("payments","PAY-02","GET","/public/orders/current/payment-attempts/{payment_attempt_id}","Проверить результат оплаты",B,
+     "id, status, amount, orderVersion, latePayment",save={"order_version":"orderVersion"},
+     sample={"id":"attempt-example","status":"pending","amount":25000,"orderVersion":"order-version-2","latePayment":False},
+     note="Чтение серверного результата; connection-lost — состояние интерфейса, не подтверждение отказа. Фоновая сверка провайдера — не публичный метод. G1: для pending/unknown сервер сверяет платёж с ЮKassa не чаще раза в 5 с; чужая или отсутствующая попытка — 404 PAYMENT_ATTEMPT_NOT_FOUND. Ответ no-store.")
+ add("payments","PAY-03","GET","/public/orders/current/payment-quote","Актуальные условия оплаты созданного заказа",B,
+     "quote, quoteToken, orderVersion, canPay, precedingAttemptId, activeAttemptId, paymentMethods",save={"payment_quote_token":"quoteToken","order_version":"orderVersion"},
+-    note="Чтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок. G1: quote {subtotal, discount, giftSaving, total, currency} — итог неизменяемого снимка заказа E5, пересчёта нет. activeAttemptId — открытая попытка, результат которой нужно дождаться (PAY-02). canPay=false при оплаченном заказе, pending/unknown попытке или закрытом периоде. paymentMethods — способы из конфигурации магазина в порядке показа (боевой: sbp, bank_card; тестовый: bank_card).")
++    note="Чтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок. G1: quote {subtotal, discount, giftSaving, total, currency} — итог неизменяемого снимка заказа E5, пересчёта нет. activeAttemptId — открытая попытка, результат которой нужно дождаться (PAY-02). canPay=false при оплаченном заказе, итоге 0 ₽, pending/unknown попытке или закрытом периоде. paymentMethods — способы из конфигурации магазина в порядке показа (боевой: sbp, bank_card; тестовый: bank_card).")
+ add("payments","PAY-04","GET","/public/orders/current/receipt","Состояние чека и доступные каналы",B,
+     "status, availableChannels, channel, sentAt?, lastError?, receiptUrl?",
+     note="status=pending/sent/failed; receiptUrl только при готовом чеке. MAX доступен только при подтверждённой интеграции; email — базовый канал.")
+@@ -423,12 +423,12 @@
+     code=201,save={"question_key":"questionKey"},sample=dict(question_sample,questionKey="example-key-not-valid"),
+     note="K3. Родитель без аккаунта: name 1–60, message 1–2000 символов после trim, иначе 422 INVALID_QUESTION_NAME/INVALID_QUESTION_MESSAGE. Галерея должна быть доступна как в MED-01, иначе 404. Idempotency-Key (32 hex) в области galleryToken: тот же ключ и тело — 201 с тем же id/questionKey, другое тело — 409 IDEMPOTENCY_CONFLICT. questionKey — 64 hex, возвращается только здесь, в БД только SHA-256; frontend хранит его локально. Лимит новых бесед — 429 RATE_LIMITED. Вопрос уходит в закрытую группу кураторов MAX с номером, именем, учреждением, группой и куратором группы; delivery=sending/delivered/failed. Ответ no-store.")
+ add("support","SUP-08","GET","/public/questions/current","История вопроса родителя",Q,
+-    "id, number, messages",sample=question_sample,note="K3. X-Question-Key: ключ из SUP-07. Отсутствующий, неверный ключ или недоступная галерея — одинаковый 404 QUESTION_NOT_FOUND. messages по createdAt + id; author=parent/curator, authorName куратора — имя отправителя MAX; delivery только у своих реплик. Ответ no-store.")
++    "id, number, messages",sample=question_sample,note="K3. X-Question-Key: ключ из SUP-07. Отсутствующий или неверный ключ — одинаковый 404 QUESTION_NOT_FOUND; отзыв ссылки галереи переписку не закрывает, доступ даёт только ключ беседы. messages по id; author=parent/curator, authorName куратора — имя отправителя MAX; delivery=sending/delivered/failed только у своих реплик. Ответ no-store.")
+ add("support","SUP-09","POST","/public/questions/current/messages","Дописать вопрос",Q,
+     "id, number, messages",{"message":"Уточнение к вопросу."},sample=question_sample,
+     note="K3. Ключ и 404 как SUP-08; message 1–2000. Idempotency-Key в области беседы: повтор — прежний результат, другое тело — 409 IDEMPOTENCY_CONFLICT. Лимит сообщений беседы — 429 RATE_LIMITED. Новое сообщение уходит в группу MAX с тем же номером.")
+ add("support","SUP-10","GET","/questions/mine","Вопросы сотрудника куратору",RV,
+-    "id?, number?, messages",sample={"messages":[]},note="K3. head и teacher: одна своя беседа; до первого сообщения — 200 с пустыми messages. organizer/curator — 403 FORBIDDEN. Контекст в MAX — учреждение сотрудника. Ответ no-store.")
++    "id?, number?, messages",sample={"messages":[]},note="K3. head и teacher: одна своя беседа; до первого сообщения — 200 с id=null и пустыми messages. organizer/curator — 403 FORBIDDEN. author=staff/curator. Контекст в MAX — роль и учреждения сотрудника на момент сообщения. Ответ no-store.")
+ add("support","SUP-11","POST","/questions/mine/messages","Задать вопрос куратору из кабинета",RV,
+     "id, number, messages",{"message":"Можно перенести съёмку группы на четверг?"},sample=question_sample,
+     note="K3. Права как SUP-10; первая реплика создаёт беседу. message 1–2000, Idempotency-Key в области сотрудника, 409 IDEMPOTENCY_CONFLICT, 429 RATE_LIMITED.")
+diff -ruN -x __pycache__ a/docs/05-rest-api/endpoints.json b/docs/05-rest-api/endpoints.json
+--- a/docs/05-rest-api/endpoints.json	2026-09-25 15:12:36.344686208 +0300
++++ b/docs/05-rest-api/endpoints.json	2026-09-25 16:35:09.265777312 +0300
+@@ -2714,7 +2714,7 @@
+       },
+       "code": 202,
+       "query": [],
+-      "note": "При pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — провайдер не ответил, повтор выполняет сервер с тем же ключом провайдера. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.",
++      "note": "При pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, итог 0 ₽ — 409 NOTHING_TO_PAY, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — исход у провайдера не известен, повтор выполняет сервер с тем же ключом провайдера; отказ повторного запроса попытку не закрывает, закрывает только подтверждённый исход провайдера или отказ первого запроса. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.",
+       "status": "П",
+       "save": {
+         "payment_attempt_id": "id",
+@@ -2782,7 +2782,7 @@
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "Чтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок. G1: quote {subtotal, discount, giftSaving, total, currency} — итог неизменяемого снимка заказа E5, пересчёта нет. activeAttemptId — открытая попытка, результат которой нужно дождаться (PAY-02). canPay=false при оплаченном заказе, pending/unknown попытке или закрытом периоде. paymentMethods — способы из конфигурации магазина в порядке показа (боевой: sbp, bank_card; тестовый: bank_card).",
++      "note": "Чтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок. G1: quote {subtotal, discount, giftSaving, total, currency} — итог неизменяемого снимка заказа E5, пересчёта нет. activeAttemptId — открытая попытка, результат которой нужно дождаться (PAY-02). canPay=false при оплаченном заказе, итоге 0 ₽, pending/unknown попытке или закрытом периоде. paymentMethods — способы из конфигурации магазина в порядке показа (боевой: sbp, bank_card; тестовый: bank_card).",
+       "status": "П",
+       "save": {
+         "payment_quote_token": "quoteToken",
+@@ -3589,7 +3589,7 @@
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "K3. X-Question-Key: ключ из SUP-07. Отсутствующий, неверный ключ или недоступная галерея — одинаковый 404 QUESTION_NOT_FOUND. messages по createdAt + id; author=parent/curator, authorName куратора — имя отправителя MAX; delivery только у своих реплик. Ответ no-store.",
++      "note": "K3. X-Question-Key: ключ из SUP-07. Отсутствующий или неверный ключ — одинаковый 404 QUESTION_NOT_FOUND; отзыв ссылки галереи переписку не закрывает, доступ даёт только ключ беседы. messages по id; author=parent/curator, authorName куратора — имя отправителя MAX; delivery=sending/delivered/failed только у своих реплик. Ответ no-store.",
+       "status": "П",
+       "save": {},
+       "sample": {
+@@ -3663,7 +3663,7 @@
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "K3. head и teacher: одна своя беседа; до первого сообщения — 200 с пустыми messages. organizer/curator — 403 FORBIDDEN. Контекст в MAX — учреждение сотрудника. Ответ no-store.",
++      "note": "K3. head и teacher: одна своя беседа; до первого сообщения — 200 с id=null и пустыми messages. organizer/curator — 403 FORBIDDEN. author=staff/curator. Контекст в MAX — роль и учреждения сотрудника на момент сообщения. Ответ no-store.",
+       "status": "П",
+       "save": {},
+       "sample": {
+diff -ruN -x __pycache__ a/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json
+--- a/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json	2026-09-25 15:12:36.372808162 +0300
++++ b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json	2026-09-25 16:35:09.317903398 +0300
+@@ -7178,7 +7178,7 @@
+                 "payment-attempts"
+               ]
+             },
+-            "description": "**PAY-01 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, redirectUrl?, created, orderVersion.\n\nПри pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — провайдер не ответил, повтор выполняет сервер с тем же ключом провайдера. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_01. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**PAY-01 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, redirectUrl?, created, orderVersion.\n\nПри pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, итог 0 ₽ — 409 NOTHING_TO_PAY, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — исход у провайдера не известен, повтор выполняет сервер с тем же ключом провайдера; отказ повторного запроса попытку не закрывает, закрывает только подтверждённый исход провайдера или отказ первого запроса. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_01. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"orderVersion\": \"{{order_version}}\",\n  \"precedingAttemptId\": null,\n  \"quoteToken\": \"{{payment_quote_token}}\",\n  \"paymentMethod\": \"bank_card\"\n}",
+@@ -7280,7 +7280,7 @@
+                     "payment-attempts"
+                   ]
+                 },
+-                "description": "**PAY-01 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, redirectUrl?, created, orderVersion.\n\nПри pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — провайдер не ответил, повтор выполняет сервер с тем же ключом провайдера. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_01. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++                "description": "**PAY-01 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, redirectUrl?, created, orderVersion.\n\nПри pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, итог 0 ₽ — 409 NOTHING_TO_PAY, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — исход у провайдера не известен, повтор выполняет сервер с тем же ключом провайдера; отказ повторного запроса попытку не закрывает, закрывает только подтверждённый исход провайдера или отказ первого запроса. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_01. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+                 "body": {
+                   "mode": "raw",
+                   "raw": "{\n  \"orderVersion\": \"{{order_version}}\",\n  \"precedingAttemptId\": null,\n  \"quoteToken\": \"{{payment_quote_token}}\",\n  \"paymentMethod\": \"bank_card\"\n}",
+@@ -7451,7 +7451,7 @@
+                 "payment-quote"
+               ]
+             },
+-            "description": "**PAY-03 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: quote, quoteToken, orderVersion, canPay, precedingAttemptId, activeAttemptId, paymentMethods.\n\nЧтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок. G1: quote {subtotal, discount, giftSaving, total, currency} — итог неизменяемого снимка заказа E5, пересчёта нет. activeAttemptId — открытая попытка, результат которой нужно дождаться (PAY-02). canPay=false при оплаченном заказе, pending/unknown попытке или закрытом периоде. paymentMethods — способы из конфигурации магазина в порядке показа (боевой: sbp, bank_card; тестовый: bank_card).\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2."
++            "description": "**PAY-03 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: quote, quoteToken, orderVersion, canPay, precedingAttemptId, activeAttemptId, paymentMethods.\n\nЧтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок. G1: quote {subtotal, discount, giftSaving, total, currency} — итог неизменяемого снимка заказа E5, пересчёта нет. activeAttemptId — открытая попытка, результат которой нужно дождаться (PAY-02). canPay=false при оплаченном заказе, итоге 0 ₽, pending/unknown попытке или закрытом периоде. paymentMethods — способы из конфигурации магазина в порядке показа (боевой: sbp, bank_card; тестовый: bank_card).\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2."
+           },
+           "event": [
+             {
+@@ -10452,7 +10452,7 @@
+                 "current"
+               ]
+             },
+-            "description": "**SUP-08 — morefoto.support**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Вопрос.\n\nОтвет: id, number, messages.\n\nK3. X-Question-Key: ключ из SUP-07. Отсутствующий, неверный ключ или недоступная галерея — одинаковый 404 QUESTION_NOT_FOUND. messages по createdAt + id; author=parent/curator, authorName куратора — имя отправителя MAX; delivery только у своих реплик. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: K3. Проверки: в своей волне."
++            "description": "**SUP-08 — morefoto.support**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Вопрос.\n\nОтвет: id, number, messages.\n\nK3. X-Question-Key: ключ из SUP-07. Отсутствующий или неверный ключ — одинаковый 404 QUESTION_NOT_FOUND; отзыв ссылки галереи переписку не закрывает, доступ даёт только ключ беседы. messages по id; author=parent/curator, authorName куратора — имя отправителя MAX; delivery=sending/delivered/failed только у своих реплик. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: K3. Проверки: в своей волне."
+           },
+           "event": [
+             {
+@@ -10511,7 +10511,7 @@
+                     "current"
+                   ]
+                 },
+-                "description": "**SUP-08 — morefoto.support**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Вопрос.\n\nОтвет: id, number, messages.\n\nK3. X-Question-Key: ключ из SUP-07. Отсутствующий, неверный ключ или недоступная галерея — одинаковый 404 QUESTION_NOT_FOUND. messages по createdAt + id; author=parent/curator, authorName куратора — имя отправителя MAX; delivery только у своих реплик. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: K3. Проверки: в своей волне."
++                "description": "**SUP-08 — morefoto.support**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Вопрос.\n\nОтвет: id, number, messages.\n\nK3. X-Question-Key: ключ из SUP-07. Отсутствующий или неверный ключ — одинаковый 404 QUESTION_NOT_FOUND; отзыв ссылки галереи переписку не закрывает, доступ даёт только ключ беседы. messages по id; author=parent/curator, authorName куратора — имя отправителя MAX; delivery=sending/delivered/failed только у своих реплик. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: K3. Проверки: в своей волне."
+               },
+               "status": "OK",
+               "code": 200,
+@@ -10713,7 +10713,7 @@
+                 "mine"
+               ]
+             },
+-            "description": "**SUP-10 — morefoto.support**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Р/В.\n\nОтвет: id?, number?, messages.\n\nK3. head и teacher: одна своя беседа; до первого сообщения — 200 с пустыми messages. organizer/curator — 403 FORBIDDEN. Контекст в MAX — учреждение сотрудника. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: K3. Проверки: в своей волне."
++            "description": "**SUP-10 — morefoto.support**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Р/В.\n\nОтвет: id?, number?, messages.\n\nK3. head и teacher: одна своя беседа; до первого сообщения — 200 с id=null и пустыми messages. organizer/curator — 403 FORBIDDEN. author=staff/curator. Контекст в MAX — роль и учреждения сотрудника на момент сообщения. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: K3. Проверки: в своей волне."
+           },
+           "event": [
+             {
+@@ -10779,7 +10779,7 @@
+                     "mine"
+                   ]
+                 },
+-                "description": "**SUP-10 — morefoto.support**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Р/В.\n\nОтвет: id?, number?, messages.\n\nK3. head и teacher: одна своя беседа; до первого сообщения — 200 с пустыми messages. organizer/curator — 403 FORBIDDEN. Контекст в MAX — учреждение сотрудника. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: K3. Проверки: в своей волне."
++                "description": "**SUP-10 — morefoto.support**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Р/В.\n\nОтвет: id?, number?, messages.\n\nK3. head и teacher: одна своя беседа; до первого сообщения — 200 с id=null и пустыми messages. organizer/curator — 403 FORBIDDEN. author=staff/curator. Контекст в MAX — роль и учреждения сотрудника на момент сообщения. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: K3. Проверки: в своей волне."
+               },
+               "status": "OK",
+               "code": 200,
+diff -ruN -x __pycache__ a/docs/05-rest-api/postman/MoreFoto.postman_collection.json b/docs/05-rest-api/postman/MoreFoto.postman_collection.json
+--- a/docs/05-rest-api/postman/MoreFoto.postman_collection.json	2026-09-25 15:12:36.356738474 +0300
++++ b/docs/05-rest-api/postman/MoreFoto.postman_collection.json	2026-09-25 16:35:09.289835506 +0300
+@@ -7811,7 +7811,7 @@
+                 "payment-attempts"
+               ]
+             },
+-            "description": "**PAY-01 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, redirectUrl?, created, orderVersion.\n\nПри pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — провайдер не ответил, повтор выполняет сервер с тем же ключом провайдера. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_01. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**PAY-01 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, redirectUrl?, created, orderVersion.\n\nПри pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, итог 0 ₽ — 409 NOTHING_TO_PAY, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — исход у провайдера не известен, повтор выполняет сервер с тем же ключом провайдера; отказ повторного запроса попытку не закрывает, закрывает только подтверждённый исход провайдера или отказ первого запроса. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_01. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"orderVersion\": \"{{order_version}}\",\n  \"precedingAttemptId\": null,\n  \"quoteToken\": \"{{payment_quote_token}}\",\n  \"paymentMethod\": \"bank_card\"\n}",
+@@ -7913,7 +7913,7 @@
+                     "payment-attempts"
+                   ]
+                 },
+-                "description": "**PAY-01 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, redirectUrl?, created, orderVersion.\n\nПри pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — провайдер не ответил, повтор выполняет сервер с тем же ключом провайдера. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_01. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++                "description": "**PAY-01 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, amount, redirectUrl?, created, orderVersion.\n\nПри pending возвращается та же попытка; новый платёж только до закрытия. precedingAttemptId=null для первой, затем ID предыдущей declined. Нельзя принимать paid от браузера. G1: X-Order-Key как COM-11; Idempotency-Key 32 hex. paymentMethod — один из PAY-03 paymentMethods (иначе 422 PAYMENT_METHOD_UNAVAILABLE). Сумма — неизменяемый снимок заказа E5 без пересчёта; quoteToken/orderVersion устарели — 409 QUOTE_CHANGED. Период группы закрыт — 409 PAYMENT_CLOSED, заказ оплачен — 409 ORDER_ALREADY_PAID, итог 0 ₽ — 409 NOTHING_TO_PAY, есть pending/unknown попытка — 200 с ней (created=false). status=pending/unknown/succeeded/canceled; unknown — исход у провайдера не известен, повтор выполняет сервер с тем же ключом провайдера; отказ повторного запроса попытку не закрывает, закрывает только подтверждённый исход провайдера или отказ первого запроса. redirectUrl — готовая страница ЮKassa; return_url ведёт на /orders/payment/{attemptId} без личного ключа.\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_pay_01. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+                 "body": {
+                   "mode": "raw",
+                   "raw": "{\n  \"orderVersion\": \"{{order_version}}\",\n  \"precedingAttemptId\": null,\n  \"quoteToken\": \"{{payment_quote_token}}\",\n  \"paymentMethod\": \"bank_card\"\n}",
+@@ -8084,7 +8084,7 @@
+                 "payment-quote"
+               ]
+             },
+-            "description": "**PAY-03 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: quote, quoteToken, orderVersion, canPay, precedingAttemptId, activeAttemptId, paymentMethods.\n\nЧтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок. G1: quote {subtotal, discount, giftSaving, total, currency} — итог неизменяемого снимка заказа E5, пересчёта нет. activeAttemptId — открытая попытка, результат которой нужно дождаться (PAY-02). canPay=false при оплаченном заказе, pending/unknown попытке или закрытом периоде. paymentMethods — способы из конфигурации магазина в порядке показа (боевой: sbp, bank_card; тестовый: bank_card).\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2."
++            "description": "**PAY-03 — morefoto.payment**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: quote, quoteToken, orderVersion, canPay, precedingAttemptId, activeAttemptId, paymentMethods.\n\nЧтение расчёта перед новой попыткой. При изменении цены клиент показывает новый итог и получает подтверждение. Не изменяет уже оплаченный снимок. G1: quote {subtotal, discount, giftSaving, total, currency} — итог неизменяемого снимка заказа E5, пересчёта нет. activeAttemptId — открытая попытка, результат которой нужно дождаться (PAY-02). canPay=false при оплаченном заказе, итоге 0 ₽, pending/unknown попытке или закрытом периоде. paymentMethods — способы из конфигурации магазина в порядке показа (боевой: sbp, bank_card; тестовый: bank_card).\n\nИсточник: frontend/src/modules/morefoto/orders/services/payment.ts.\n\nОбласть: product. Основная волна: G1. Проверки: N2."
+           },
+           "event": [
+             {
+@@ -11031,7 +11031,7 @@
+                 "current"
+               ]
+             },
+-            "description": "**SUP-08 — morefoto.support**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Вопрос.\n\nОтвет: id, number, messages.\n\nK3. X-Question-Key: ключ из SUP-07. Отсутствующий, неверный ключ или недоступная галерея — одинаковый 404 QUESTION_NOT_FOUND. messages по createdAt + id; author=parent/curator, authorName куратора — имя отправителя MAX; delivery только у своих реплик. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: K3. Проверки: в своей волне."
++            "description": "**SUP-08 — morefoto.support**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Вопрос.\n\nОтвет: id, number, messages.\n\nK3. X-Question-Key: ключ из SUP-07. Отсутствующий или неверный ключ — одинаковый 404 QUESTION_NOT_FOUND; отзыв ссылки галереи переписку не закрывает, доступ даёт только ключ беседы. messages по id; author=parent/curator, authorName куратора — имя отправителя MAX; delivery=sending/delivered/failed только у своих реплик. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: K3. Проверки: в своей волне."
+           },
+           "event": [
+             {
+@@ -11090,7 +11090,7 @@
+                     "current"
+                   ]
+                 },
+-                "description": "**SUP-08 — morefoto.support**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Вопрос.\n\nОтвет: id, number, messages.\n\nK3. X-Question-Key: ключ из SUP-07. Отсутствующий, неверный ключ или недоступная галерея — одинаковый 404 QUESTION_NOT_FOUND. messages по createdAt + id; author=parent/curator, authorName куратора — имя отправителя MAX; delivery только у своих реплик. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: K3. Проверки: в своей волне."
++                "description": "**SUP-08 — morefoto.support**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Вопрос.\n\nОтвет: id, number, messages.\n\nK3. X-Question-Key: ключ из SUP-07. Отсутствующий или неверный ключ — одинаковый 404 QUESTION_NOT_FOUND; отзыв ссылки галереи переписку не закрывает, доступ даёт только ключ беседы. messages по id; author=parent/curator, authorName куратора — имя отправителя MAX; delivery=sending/delivered/failed только у своих реплик. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: K3. Проверки: в своей волне."
+               },
+               "status": "OK",
+               "code": 200,
+@@ -11292,7 +11292,7 @@
+                 "mine"
+               ]
+             },
+-            "description": "**SUP-10 — morefoto.support**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Р/В.\n\nОтвет: id?, number?, messages.\n\nK3. head и teacher: одна своя беседа; до первого сообщения — 200 с пустыми messages. organizer/curator — 403 FORBIDDEN. Контекст в MAX — учреждение сотрудника. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: K3. Проверки: в своей волне."
++            "description": "**SUP-10 — morefoto.support**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Р/В.\n\nОтвет: id?, number?, messages.\n\nK3. head и teacher: одна своя беседа; до первого сообщения — 200 с id=null и пустыми messages. organizer/curator — 403 FORBIDDEN. author=staff/curator. Контекст в MAX — роль и учреждения сотрудника на момент сообщения. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: K3. Проверки: в своей волне."
+           },
+           "event": [
+             {
+@@ -11358,7 +11358,7 @@
+                     "mine"
+                   ]
+                 },
+-                "description": "**SUP-10 — morefoto.support**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Р/В.\n\nОтвет: id?, number?, messages.\n\nK3. head и teacher: одна своя беседа; до первого сообщения — 200 с пустыми messages. organizer/curator — 403 FORBIDDEN. Контекст в MAX — учреждение сотрудника. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: K3. Проверки: в своей волне."
++                "description": "**SUP-10 — morefoto.support**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Р/В.\n\nОтвет: id?, number?, messages.\n\nK3. head и teacher: одна своя беседа; до первого сообщения — 200 с id=null и пустыми messages. organizer/curator — 403 FORBIDDEN. author=staff/curator. Контекст в MAX — роль и учреждения сотрудника на момент сообщения. Ответ no-store.\n\nИсточник: frontend/src/modules/morefoto/curator/types.ts.\n\nОбласть: product. Основная волна: K3. Проверки: в своей волне."
+               },
+               "status": "OK",
+               "code": 200,
+diff -ruN -x __pycache__ a/docs/05-rest-api/verification.json b/docs/05-rest-api/verification.json
+--- a/docs/05-rest-api/verification.json	2026-09-25 15:12:36.790620042 +0300
++++ b/docs/05-rest-api/verification.json	2026-09-25 16:35:10.464629134 +0300
+@@ -28,18 +28,18 @@
+   ],
+   "liveApiRequestsExecuted": false,
+   "sha256": {
+-    "build.py": "61b553e0dc407f7175f8b4dffde3a18de7402215f9f310a0aa30e12c75fcc925",
++    "build.py": "1044df87ca83effbea999b42a5096ceec452c4a325ecf355f6f1188b408a06e7",
+     "validate.py": "7bf233ed80992eb7392120b9ab6f34d83917f280efd5c3302e9bf17991b6ee89",
+     "validate-postman.cjs": "879a609e16602ab971c3296eacb0b0d0c702d840d842d8942c3b410240543877",
+     "../04-bitrix-modules/README.md": "66429b92c44805de3a30634fc47c5074cca96c94fca1c3562af8fac99422f876",
+-    "../04-bitrix-modules/backend-waves.json": "f1eb7d0e5ea3a6718e88a9c5756fbc89a6a31addfc71f15f1e4d1e6eab313865",
+-    "../04-bitrix-modules/backend-waves.md": "8c630564895f9d4ee6517d61a45144e01c1daf364a0ec55ab06baa0aac1d5c18",
++    "../04-bitrix-modules/backend-waves.json": "0c57cdd44e0c52d3319526c70c835369ff79a077fe9b6c1be059db69b29d2a0b",
++    "../04-bitrix-modules/backend-waves.md": "b807e9ce43a9f48de8b6142abf528c8c63c91622a1c2ac00d6310dafa9443988",
+     "../04-bitrix-modules/render-waves.py": "b502e757c9fd854c81d7f828a7a03bb58569f5f3cb0a582eed98b53c358327ec",
+     "../04-bitrix-modules/wave_graph.py": "f1045c84f245114dd0eb44b321f754e57a0a91879fb7415f12041eca1337e53b",
+-    "README.md": "e09961e14a2d4e636e8083cb81a8dda258912b4db31beae483ac48b4c5f361d3",
+-    "endpoints.json": "303d3acf5a70e947c7a931a20a9f994eb8be1c07c034c98a80bc0367a7d950cc",
+-    "postman/MoreFoto.postman_collection.json": "e9b4a8066b0e212021bf986c90ae22f2da47a2633273c17c0e45c99b694795d5",
+-    "postman/MoreFoto.backend-waves.postman_collection.json": "2655c7fb3f3c25427426e725cdee30eafee814e3aecc16d7d00dae8b375791f4",
++    "README.md": "fb278fa80f4e35e9ae1df0e08e7c5076ce769e3a0fcee3bc68eb1174bc03dc5e",
++    "endpoints.json": "4c272cf7dc3d22f2f73bcab48fdf2cdc8f6c617f06173bd3e98487055fb5591f",
++    "postman/MoreFoto.postman_collection.json": "d9bf5dcb818cd9dfdec92e39e907a757e75c2e6dbab92853c70c80cdb58eb02b",
++    "postman/MoreFoto.backend-waves.postman_collection.json": "bf2c8dcaa84f59ecb6313cf03ed117628dea2a19d5aa98f5d1fbafeae748152b",
+     "postman/MoreFoto.local.postman_environment.json": "44a858669f09bf9a4afd70c9ba52fb96399482296aa016abf00aae9ca53dc945",
+     "postman/MoreFoto.stage.postman_environment.json": "0b0e30b670e3555205c6dc155ca680a8659d87442abb6af54553e0ee31b226e2"
+   },

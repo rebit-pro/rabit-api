@@ -7,8 +7,8 @@
 - Связанное: [план K3](plan.md), [план PR #48](../max-support-chat-plan/plan.md), `docs/waves/graph.json`,
   канон `../MoreFoto/docs/04-bitrix-modules/backend-waves.json` (не git, изменения — патчем в `docs/waves/k3/`).
 - Завершено: merge PR #48; граф синхронизирован (E6 merged, K3 inProgress).
-- Сейчас: backend K3 написан и проходит быстрые проверки; далее E2E-верификатор, развёртывание (compose/cron/swarm), frontend.
-- Следующий шаг: `api/tools/e2e/verify-support.php` и окружение E2E-стенда.
+- Сейчас: backend, frontend, E2E-сценарий и развёртывание написаны; быстрые проверки PASS; идёт частичный E2E группы a.
+- Следующий шаг: разобрать результат E2E группы a, затем PR и ревью; полный `make test-e2e` — после ревью.
 - Пользователь: бот прошёл модерацию; группа создана; токен кладёт в `~/.config/morefoto/max-bot.env`, бот
   добавляется в группу администратором.
 - Блокеры: нет. Открыто MAX-D06 (срок хранения) — только для production.
@@ -47,6 +47,14 @@
   - `vendor/bin/phpunit` — PASS, 764 теста / 44861 assertions (новые: support 34, MAX classifier 11 случаев).
   - `vendor/bin/phpstan analyse --no-progress --memory-limit=1G` — PASS, No errors.
   - `vendor/bin/php-cs-fixer fix --config=public/local/php-cs-fixer.php --allow-risky=yes --path-mode=intersection --dry-run <104 изменённых файла>` — после автоисправления 5 файлов: 0 замечаний.
+
+### 25.09.2026 — frontend, E2E и развёртывание
+
+- Frontend: `support/{types,rules,api}.ts`, `useQuestionThread` (опрос 15 с на видимой вкладке, повтор с тем же Idempotency-Key только при неизвестном исходе), `useGalleryQuestion` (ключ беседы и «прочитано» в localStorage по токену галереи), `QuestionThread.vue`, `GalleryQuestionDialog.vue`, кнопка «Вопрос куратору» с отметкой нового ответа, ссылка из «Помощи», раздел `/cabinet/questions` для head/teacher (маршрут, whitelist, навигация), иконка `mdi-send-outline` в реестре. В демо-режиме канал скрыт.
+- E2E: `frontend/e2e/live/zz-questions.spec.ts` (группа a), `shell.spec.ts` проверяет пункт меню по ролям, `api/tools/e2e/verify-support.php` (след браузера в MySQL, доставка с подменой MAX, webhook через nginx стенда `backend`, CHECK БД); runner: MAX-переменные стенда и верификатор.
+- Развёртывание: `api-support-consumer` (dev профиль `support`, Swarm с секретами `rebit_max_bot_token`, `morefoto_support_max_webhook_secret`), webhook-секрет в `api-php-fpm`, cron `app:support:dispatch-pending`, Makefile (`dispatch-support`, `support-max-status`, queue-*), `.env.example`, `deploy/swarm-publish-runtime.sh`.
+- Канон MoreFoto: SUP-08/10 уточнены под реализацию (ключ беседы без проверки ссылки галереи, `author=staff`), синхронизация E6/K3 — `docs/waves/k3/morefoto-implementation.patch`; наложение на снимок до волны воспроизводит канон — PASS; `validate.py`, `validate-postman.cjs` — PASS.
+- Проверки: `npm run check` (lint, stylelint, typecheck, typecheck:e2e, test:ui 32/32) — PASS; `npm run test:commerce` — 197/197 PASS; `npm run build-only` — PASS (docker `mcr.microsoft.com/playwright:v1.52.0-jammy`, node_modules `rabit-issues6263-node`, `--network none`). PHPStan с `tools/e2e/phpstan.neon` — PASS; `php -l` верификатора — PASS.
 
 ## Результаты проверок
 
