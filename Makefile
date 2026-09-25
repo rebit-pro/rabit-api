@@ -114,20 +114,22 @@ cron-logs:
 
 # --- Queue ---
 queue-up:
-	docker compose up -d api-audit-consumer api-media-consumer api-notification-consumer
+	docker compose up -d api-audit-consumer api-media-consumer api-notification-consumer api-support-consumer
 
 queue-down:
 	docker compose stop api-audit-consumer
 	docker compose stop api-media-consumer
 	docker compose stop api-notification-consumer
+	docker compose stop api-support-consumer
 
 queue-restart:
 	docker compose restart api-audit-consumer
 	docker compose restart api-media-consumer
 	docker compose restart api-notification-consumer
+	docker compose restart api-support-consumer
 
 queue-logs:
-	docker compose logs -f api-audit-consumer api-media-consumer api-notification-consumer
+	docker compose logs -f api-audit-consumer api-media-consumer api-notification-consumer api-support-consumer
 
 consume-audit:
 	docker compose run --rm api-php-cli php public/local/bin/bitrix-console app:audit:consume
@@ -143,6 +145,12 @@ consume-notification-once:
 
 dispatch-notification:
 	docker compose run --rm api-php-cli php public/local/bin/bitrix-console app:notification:dispatch-pending --limit=100
+
+dispatch-support:
+	docker compose run --rm api-php-cli php public/local/bin/bitrix-console app:support:dispatch-pending --limit=100
+
+support-max-status:
+	docker compose run --rm api-php-cli php public/local/bin/bitrix-console app:support:max-status
 
 dispatch-media:
 	docker compose run --rm api-php-cli php public/local/bin/bitrix-console app:media:dispatch-pending --limit=100
