@@ -6,11 +6,11 @@
 - Ветка: `codex/issues-59-media-controller`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-59-media-controller`. Общий checkout `/home/user/rabit-api` занят другой сессией, в нём не работать.
 - Base: `origin/main` `5dcb0e0` (merge PR #84). Ветка создана от `d92b4c4`, до push перебазирована; #84 меняет только frontend/docs, пересечений нет.
-- Issue: [#59](https://github.com/rebit-pro/rabit-api/issues/59). PR: [#86](https://github.com/rebit-pro/rabit-api/pull/86), ожидает review, не сливать.
+- Issue: [#59](https://github.com/rebit-pro/rabit-api/issues/59). PR: [#86](https://github.com/rebit-pro/rabit-api/pull/86): review пользователя без блокеров, gate PASS, сливается.
 - Документация: [план](plan.md), прецеденты [#42](../issues-42-access-error-codes/plan.md), [#54/#55/#57](../issues-54-55-57-large-shoot/plan.md).
 - Завершено: S1–S6 — общий multipart-маппер, `mixed[]`, `acceptedJson()`; три чистых контроллера MED-03…06; удалены `MediaController` и `MediaRequestFactory`; unit и архитектурные тесты; быстрые проверки зелёные.
-- Сейчас: ожидание review PR #86.
-- Следующий шаг: review PR; после review без блокеров — полный `make test-e2e` (T17).
+- Сейчас: base обновлён до `4ca7e9c` (merge `a75d267`), полный gate PASS; PR сливается.
+- Следующий шаг: деплой backend — отдельное решение пользователя (сборка релиза из нескольких веток).
 - Блокеров нет. Открытое решение для пользователя (вне scope): ужесточать ли query MED-04 и лишние поля формы MED-03 (R7) — сейчас они игнорируются, как раньше.
 - Рабочее дерево: всё закоммичено; пустые `api/vendor`, `api/var` — точки монтирования docker-проверок, в git не попадают.
 - Команды проверок: см. раздел «Команды».
@@ -62,6 +62,16 @@
 
 - Ветка отправлена, создан PR [#86](https://github.com/rebit-pro/rabit-api/pull/86) в `main` с `Closes #59`. Не сливается до review и E2E-gate.
 
+### 2026-09-25 — review и полный gate
+
+- Review пользователя на `a8af824` (сверена интеграция с `main` `4ca7e9c`): блокирующих замечаний нет.
+- Base обновлён: `git merge origin/main` (`4ca7e9c`) → `a75d267`, конфликтов нет.
+- Gate `rabit-e2e-dedaa9541e04` (443.9 с) — PASS, exit 0:
+  - phpstan, phpunit, frontend-проверки — PASS;
+  - группа `a` 64/64 (включая `zz-media`), группа `b` 43/43 (`zzz-handoff`, `zzzz-links`, `zzzzzz-transfers`);
+  - все верификаторы PASS.
+- Команда: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -73,4 +83,4 @@
 | T14 | PASS | 2026-09-25 | PHPUnit, `PhotoMediaContractTest::testControllersKeepTheCleanBoundary`, `testReadingAndGroupingDoNotNeedTheMessageTransport` |
 | T15 | PASS | 2026-09-25 | архитектурный тест: в контроллерах нет `setStatus`, загрузка отвечает `acceptedJson()`; сам статус 202 подтвердит T17 |
 | T16 | PASS | 2026-09-25 | PHPStan OK, phplint OK, php-cs-fixer 0 из 32 |
-| T17 | PENDING | 2026-09-25 | полный `make test-e2e` после review (`zz-media`, `zzzzzz-transfers`, `zzzz-links`, `zzz-handoff`) |
+| T17 | PASS | 2026-09-25 | `make test-e2e` `dedaa9541e04`: exit 0, a 64/64, b 43/43 (`zz-media`, `zzzzzz-transfers`, `zzzz-links`, `zzz-handoff`) |

@@ -80,7 +80,7 @@
 - [x] S4. Unit и архитектурные тесты media.
 - [x] S5. Быстрые проверки: PHPUnit, PHPStan, phplint, php-cs-fixer по изменённым файлам.
 - [x] S6. Коммиты, push, PR в `main` (`Closes #59`), без merge.
-- [ ] S7. После review — полный `make test-e2e` (PENDING).
+- [x] S7. После review — полный `make test-e2e` (PASS 2026-09-25).
 
 ## Критерии приёмки
 
