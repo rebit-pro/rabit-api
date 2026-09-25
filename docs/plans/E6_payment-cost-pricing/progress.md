@@ -4,7 +4,7 @@
 
 - Ветка `codex/e6-payment-cost-pricing` от main `49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771` (merge плана PR #35). Checkout: `/home/user/rabit-api-worktrees/e6-payment-cost-pricing`. Upstream снят, push только явным `git push -u origin HEAD:codex/e6-payment-cost-pricing`.
 - Завершено: S1–S9 — план, backend, frontend, E2E-спецификация и verifier, канон MoreFoto (patch `docs/waves/e6/morefoto-contract.patch`), отчёт `docs/waves/e6/`. E6 в обоих графах — `review`.
-- Сейчас: S10 — PR в main с быстрыми проверками.
+- Сейчас: S10 завершён — PR https://github.com/rebit-pro/rabit-api/pull/66 в main, быстрые проверки PASS, ждёт ревью.
 - Следующий шаг: ревью PR. После ревью без блокеров — S11: `make test-e2e` (группа b содержит `zzzzzzzz-payment-costs`, verifier `verify-payment-costs.php`), `visual.json`, запись результатов.
 - Блокеров нет. Решения E6-DEC-01…03 приняты 25.09.2026.
 - Канонический MoreFoto изменён на месте; снимок до E6 — в scratchpad сессии (`morefoto-before-e6`), воспроизводимость patch проверена.

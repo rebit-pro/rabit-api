@@ -92,5 +92,6 @@
     "visual": "desktop/mobile screenshots of the payment cost dialog and summary"
   },
   "runtimeLiveApiExecuted": false,
-  "mergeAllowed": false
+  "mergeAllowed": false,
+  "pr": "https://github.com/rebit-pro/rabit-api/pull/66"
 }
