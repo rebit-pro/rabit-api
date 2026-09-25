@@ -10,7 +10,9 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import signal
+import socket
 import subprocess
 import sys
 import threading
@@ -21,6 +23,12 @@ ROOT = Path(__file__).resolve().parents[1]
 IMAGE = "mcr.microsoft.com/playwright:v1.52.0-jammy"
 RABBITMQ_IMAGE = "rabbitmq:3.13-management"
 LABEL = "rabit.browser_e2e"
+# Also on every resource: where the run keeps its report and which process created it, so `prune` can judge abandoned runs.
+REPORT_LABEL = LABEL + ".report"
+OWNER_LABEL = LABEL + ".owner"
+RUN_ID = re.compile(r"rabit-e2e-[0-9a-f]{12}")
+# A container in any other state (running, restarting, paused, removing) still belongs to a live stand.
+STOPPED = {"created", "exited", "dead"}
 # Kept between runs: npm checks every tarball against the lockfile, PHPStan validates its result cache itself.
 NPM_CACHE = "rabit-e2e-npm-cache"
 PHPSTAN_CACHE = "rabit-e2e-phpstan-cache"
@@ -72,6 +80,37 @@ def command(args, log=None, timeout=900):
 
 def docker(*args, **kwargs):
     return command(["docker", *args], **kwargs)
+
+
+def start_time(pid):
+    """Start time of a process in clock ticks since boot; with the PID it identifies the process despite PID reuse."""
+    return Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[19]
+
+
+def process_identity():
+    """Host, PID namespace, PID and start time of this process, recorded as the owner of the resources it creates."""
+    return ":".join([socket.gethostname(), os.readlink("/proc/self/ns/pid").removeprefix("pid:"), str(os.getpid()), start_time(os.getpid())])
+
+
+def owner_alive(owner):
+    """True or False when the owner can be checked from here; None for another host or PID namespace (a WSL distribution)."""
+    try:
+        host, namespace, pid, started = owner.rsplit(":", 3)
+        here = process_identity().rsplit(":", 3)
+    except (OSError, ValueError, IndexError):
+        return None
+    if [host, namespace] != here[:2]:
+        return None
+    try:
+        return start_time(int(pid)) == started
+    except (OSError, ValueError, IndexError):
+        return False
+
+
+def labels(state):
+    """Every resource of a run carries its id; newer runs also record the report path and the owner process."""
+    values = {LABEL: state["id"], REPORT_LABEL: state["report"], OWNER_LABEL: state.get("owner")}
+    return [arg for name, value in values.items() if value for arg in ("--label", name + "=" + value)]
 
 
 def save(state):
@@ -177,7 +216,7 @@ def parallel(state, *actions):
 
 def job(state, name, *args, log=None, timeout=900):
     """Runs a labelled one-off container that a failure elsewhere or a cancellation can stop."""
-    return docker("run", "--rm", "--name", state["id"] + "-" + name, "--label", LABEL + "=" + state["id"], *args, log=log, timeout=timeout)
+    return docker("run", "--rm", "--name", state["id"] + "-" + name, *labels(state), *args, log=log, timeout=timeout)
 
 
 def register(state, kind, name):
@@ -190,7 +229,7 @@ def register(state, kind, name):
 
 def service(state, name, *args):
     register(state, "container", name)
-    docker("run", "--detach", "--name", name, "--label", LABEL + "=" + state["id"], *args)
+    docker("run", "--detach", "--name", name, *labels(state), *args)
 
 
 def ready(check, message):
@@ -300,7 +339,7 @@ def open_stand(state, args, stand, notification):
                 "--mount", f"type=bind,source={Path(state['report'], 'backend.conf')},target=/etc/nginx/conf.d/default.conf,readonly",
                 "--mount", f"type=bind,source={ROOT / 'api/docker/common/nginx/auth.conf'},target=/etc/nginx/auth.conf,readonly", args.nginx)
         frontend = register(state, "container", name + "-frontend")
-        docker("create", "--name", frontend, "--label", LABEL + "=" + state["id"], "--network", state["browserNetwork"], "--publish", "127.0.0.1::80",
+        docker("create", "--name", frontend, *labels(state), "--network", state["browserNetwork"], "--publish", "127.0.0.1::80",
                "--mount", f"type=bind,source={ROOT / 'frontend/dist'},target=/usr/share/nginx/html,readonly",
                "--mount", f"type=bind,source={Path(state['report'], 'frontend.conf')},target=/etc/nginx/conf.d/default.conf,readonly", "nginx:1.29-alpine")
         docker("network", "connect", "--alias", "frontend", stand["network"], frontend)
@@ -339,7 +378,7 @@ def create():
     identity = "rabit-e2e-" + uuid.uuid4().hex[:12]
     report = ROOT / "api/var/e2e" / identity
     report.mkdir(parents=True)
-    state = {"id": identity, "report": str(report), "source": str(ROOT), "stages": [], "stands": [], "results": {},
+    state = {"id": identity, "report": str(report), "source": str(ROOT), "owner": process_identity(), "stages": [], "stands": [], "results": {},
              "containers": [], "networks": [], "volumes": [], "stopped": False}
     save(state)
     return state
@@ -373,18 +412,18 @@ def start(state, args, stands):
     images = {image: docker("image", "inspect", "--format", "{{.Id}}", image)
               for image in [IMAGE, args.php_cli, args.php_fpm, args.nginx, args.mysql, "nginx:1.29-alpine", RABBITMQ_IMAGE]}
     state["environment"] = environment(images)
-    label = LABEL + "=" + identity
+    label = labels(state)
     state["browserNetwork"] = register(state, "network", identity + "-browser")
-    docker("network", "create", "--label", label, state["browserNetwork"])
+    docker("network", "create", *label, state["browserNetwork"])
     for name, groups in stands:
         stand = {"name": name, "prefix": identity + "-" + name, "groups": groups,
                  "network": register(state, "network", f"{identity}-{name}-private"), "runtime": register(state, "volume", f"{identity}-{name}-runtime")}
-        docker("network", "create", "--label", label, "--internal", stand["network"])
-        docker("volume", "create", "--label", label, stand["runtime"])
+        docker("network", "create", *label, "--internal", stand["network"])
+        docker("volume", "create", *label, stand["runtime"])
         state["stands"].append(stand)
     for suffix in ["node", "vendor"]:
         state[suffix] = register(state, "volume", identity + "-" + suffix)
-        docker("volume", "create", "--label", label, state[suffix])
+        docker("volume", "create", *label, state[suffix])
     frontend = ROOT / "frontend"
     (ROOT / "api/vendor").mkdir(exist_ok=True)
     (frontend / "var").mkdir(exist_ok=True)
@@ -492,11 +531,81 @@ def validate(groups):
             raise RuntimeError(f"{script} needs {', '.join(needed)} in one browser group")
 
 
+def created_at(text):
+    """Docker timestamps carry nanoseconds that datetime does not parse; an unknown format gives None."""
+    match = re.fullmatch(r"(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d)(?:\.\d+)?(Z|[+-]\d\d:\d\d)", text or "")
+    return datetime.datetime.fromisoformat(match[1] + ("+00:00" if "Z" == match[2] else match[2])) if match else None
+
+
+def inventory():
+    """Every container, network and volume with the run label, grouped by the run id in that label."""
+    runs = {}
+    for kind, listing in [("container", ["ps", "--all"]), ("network", ["network", "ls"]), ("volume", ["volume", "ls"])]:
+        ids = docker(*listing, "--quiet", "--filter", "label=" + LABEL).split()
+        for data in json.loads(docker(kind, "inspect", *ids)) if ids else []:
+            values = (data.get("Config", {}).get("Labels") if "container" == kind else data.get("Labels")) or {}
+            runs.setdefault(values.get(LABEL, ""), []).append({
+                "kind": kind,
+                "name": data["Name"].lstrip("/"),
+                "running": "container" == kind and data["State"]["Status"] not in STOPPED,
+                "created": created_at(data.get("Created") or data.get("CreatedAt")),
+                "owner": values.get(OWNER_LABEL),
+                "report": values.get(REPORT_LABEL),
+            })
+    return runs
+
+
+def verdict(run, resources, now, min_age, alive=owner_alive):
+    """Why an E2E run must stay, or None when it is abandoned: nothing runs, its owner is gone and it is old enough."""
+    if not RUN_ID.fullmatch(run) or any(not resource["name"].startswith(run + "-") for resource in resources):
+        return "label or names do not belong to one E2E run"
+    running = [resource["name"] for resource in resources if resource["running"]]
+    if running:
+        return "running containers: " + ", ".join(sorted(running))
+    if any(alive(owner) for owner in {resource["owner"] for resource in resources if resource["owner"]}):
+        return "the process that created it is still alive"
+    created = [resource["created"] for resource in resources]
+    if None in created:
+        return "creation time unknown"
+    age = now - max(created)
+    if age < min_age:
+        return f"created {age.total_seconds() / 3600:.1f} h ago, younger than {min_age.total_seconds() / 3600:g} h"
+    return None
+
+
+def prune(apply, min_age_hours):
+    """Reports, and with apply removes, abandoned E2E runs; a live stand of any session is never touched."""
+    now, min_age, errors = datetime.datetime.now(datetime.timezone.utc), datetime.timedelta(hours=min_age_hours), []
+    runs = inventory()
+    if not runs:
+        print("No resources with the " + LABEL + " label.")
+    for run, resources in sorted(runs.items()):
+        reason = verdict(run, resources, now, min_age)
+        report = next((resource["report"] for resource in resources if resource["report"]), None)
+        kept = "state.json present" if report and Path(report, "state.json").is_file() else "state.json missing" if report else "report path not labelled"
+        names = ", ".join(sorted(resource["kind"] + " " + resource["name"] for resource in resources))
+        print(f"{'keep' if reason else 'remove' if apply else 'would remove'} {run or '<empty label>'} ({kept}): {reason or names}", flush=True)
+        if reason or not apply:
+            continue
+        # Containers first: networks and volumes are removable only when unused. Without --force Docker refuses a started container.
+        for kind, flag in [("container", ["rm"]), ("network", ["network", "rm"]), ("volume", ["volume", "rm"])]:
+            for resource in resources:
+                if kind == resource["kind"]:
+                    try:
+                        docker(*flag, resource["name"])
+                    except Exception as error:
+                        errors.append(str(error))
+    if not apply:
+        print("Dry run: nothing removed. Remove the runs marked 'would remove' with: make e2e-prune E2E_PRUNE_APPLY=1")
+    if errors:
+        raise RuntimeError("; ".join(errors))
+
+
 def main():
     for signum in (signal.SIGTERM, signal.SIGHUP):
         signal.signal(signum, lambda number, frame: sys.exit(128 + number))  # Cleanup runs as after Ctrl+C.
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["run", "up", "test", "down"], default="run", nargs="?")
+    parser.add_argument("action", choices=["run", "up", "test", "down", "prune"], default="run", nargs="?")
     parser.add_argument("--state", type=Path)
     parser.add_argument("--kernel", default=os.environ.get("E2E_KERNEL_ROOT", "/home/user/rebit-p2p/api/public/bitrix"))
     parser.add_argument("--vendor", default=os.environ.get("E2E_VENDOR_ROOT", "/home/user/rebit-p2p/api/vendor"))
@@ -507,7 +616,15 @@ def main():
     parser.add_argument("--groups", default=os.environ.get("E2E_GROUPS") or ",".join(GROUPS), help="browser groups; a subset is not a full gate")
     parser.add_argument("--single-stand", action="store_true", default="1" == os.environ.get("E2E_STANDS"),
                         help="run the groups one after another on one stand (E2E_STANDS=1)")
+    parser.add_argument("--apply", action="store_true", help="prune: remove abandoned runs instead of only listing them")
+    parser.add_argument("--min-age-hours", type=float, default=float(os.environ.get("E2E_PRUNE_MIN_AGE_HOURS", 2)),
+                        help="prune: keep runs whose newest resource is younger (E2E_PRUNE_MIN_AGE_HOURS, at least 1)")
     args = parser.parse_args()
+    if "prune" == args.action:
+        if args.min_age_hours < 1:
+            parser.error("--min-age-hours must be at least 1: a run may build images for 30 minutes before it starts containers")
+        prune(args.apply, args.min_age_hours)
+        return
     if args.action in ["test", "down"]:
         if not args.state:
             parser.error("--state is required")
