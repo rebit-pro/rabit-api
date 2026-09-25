@@ -3,7 +3,7 @@
 ## Точка продолжения
 
 - Ветка `codex/issues-91-staff-table`, worktree `/home/user/rabit-api-worktrees/issues-staff-table`,
-  base `origin/main` `4ca7e9c`. PR открыт (ссылка в описании ветки на GitHub). Issues: #91, #92.
+  base `origin/main` `4ca7e9c`. PR [#96](https://github.com/rebit-pro/rabit-api/pull/96). Issues: #91, #92.
 - Завершено: backend (архив, сортировка), frontend (`UiDataTable`, выбор, удаление), unit, live E2E-сценарии написаны,
   быстрые проверки зелёные, визуальная проверка на заглушках.
 - Сейчас: ожидание review.
