@@ -18,5 +18,6 @@ final readonly class OrderSearchCriteria
         public ?string $productionStatus = null,
         public ?\DateTimeImmutable $createdFrom = null,
         public ?\DateTimeImmutable $createdBefore = null,
+        public ?bool $latePayment = null,
     ) {}
 }

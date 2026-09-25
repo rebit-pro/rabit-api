@@ -14,6 +14,7 @@ use Morefoto\Media\Application\Photo\Dto\UploadPhotoOutputDto;
 use Morefoto\Media\Application\Photo\Message\Handler\ProcessPhotoMessageHandler;
 use Morefoto\Media\Application\Photo\Message\ProcessPhotoMessage;
 use Morefoto\Media\Application\Photo\UseCase\DispatchPendingPhotoJobsUseCase;
+use Morefoto\Media\Application\Photo\Dto\UploadPhotoInputDto;
 use Morefoto\Media\Application\Photo\UseCase\UploadPhotoUseCase;
 use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
@@ -245,15 +246,14 @@ final class PhotoPipelineDiagnosticsTest extends TestCase
             $photos,
             $publisher,
             $logger,
-        ))->execute(
-            userId: 4,
+        ))->execute(4, new UploadPhotoInputDto(
             shootId: '22345678-abcd-4abc-8abc-123456789abc',
             groupId: '32345678-abcd-4abc-8abc-123456789abc',
             tmpName: $this->file,
             filename: 'photo.png',
             bytes: (int)filesize($this->file),
             clientFingerprint: null,
-        );
+        ));
     }
 
     private function handler(

@@ -31,6 +31,7 @@ use Morefoto\Commerce\Infrastructure\Order\CheckoutKeySeal;
 use Morefoto\Commerce\Infrastructure\Order\OrderStaffAccess;
 use Morefoto\Commerce\Infrastructure\Order\OrderTokenGenerator;
 use Morefoto\Commerce\Infrastructure\Order\OrderTransaction;
+use Morefoto\Commerce\Infrastructure\Payment\OrderPayments;
 use Morefoto\Commerce\Infrastructure\Transfer\ChildOrders;
 use Morefoto\Commerce\Presentation\Controller\OrderController;
 use Morefoto\Commerce\Presentation\Controller\StaffOrderController;
@@ -40,6 +41,7 @@ use Morefoto\Commerce\Presentation\Storefront\StorefrontMapper;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Contracts\Commerce\ChildOrdersInterface;
+use Rebit\Share\Contracts\Commerce\OrderPaymentInterface;
 use Rebit\Share\Contracts\Media\ChildPhotosInterface;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
 use Rebit\Share\Contracts\Organization\GroupCalendarInterface;
@@ -56,6 +58,14 @@ return [
     ],
     ChildOrdersInterface::class => [
         'constructor' => static fn(): ChildOrdersInterface => new ChildOrders(ServiceLocator::getInstance()->get(OrderRepository::class)),
+    ],
+    OrderPaymentInterface::class => [
+        'constructor' => static fn(): OrderPaymentInterface => new OrderPayments(
+            ServiceLocator::getInstance()->get(OrderAccessKeyRepository::class),
+            ServiceLocator::getInstance()->get(OrderRepository::class),
+            ServiceLocator::getInstance()->get(GroupCalendarInterface::class),
+            ServiceLocator::getInstance()->get(ClockInterface::class),
+        ),
     ],
     CheckoutKeySealInterface::class => [
         'constructor' => static fn(): CheckoutKeySealInterface => new CheckoutKeySeal(),

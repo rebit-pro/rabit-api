@@ -5,7 +5,10 @@ import { useLiveOrder } from '../composables/useLiveOrder';
 import { orderQuoteAsCart } from '../live/rules';
 import OrderComposition from './OrderComposition.vue';
 import OrderLiveFacts from './OrderLiveFacts.vue';
+import OrderPaymentPanel from './OrderPaymentPanel.vue';
+import { useRoute } from 'vue-router';
 const { order, loading, error, missing, copied, reload, copyLink } = useLiveOrder();
+const route = useRoute();
 </script>
 <template>
   <main class="mf-main order-page">
@@ -23,7 +26,7 @@ const { order, loading, error, missing, copied, reload, copyLink } = useLiveOrde
         <p class="order-created">Создан {{ formatMoment(order.createdAt) }} мск</p>
       </header>
       <v-alert type="info" variant="tonal" class="mb-6"
-        >Заказ сохранён без списания денег. Оплата, электронные файлы и печать подключаются отдельными этапами.</v-alert
+        >Деньги списываются только после оплаты на странице ЮKassa. Электронные файлы и печать подключаются отдельными этапами.</v-alert
       >
       <div class="order-layout">
         <div class="order-sections">
@@ -43,6 +46,7 @@ const { order, loading, error, missing, copied, reload, copyLink } = useLiveOrde
               <dd data-testid="order-production-status">{{ productionLabels[order.productionStatus] }}</dd>
             </div>
           </dl>
+          <OrderPaymentPanel :order="order" :order-key="String(route.params.orderKey ?? '')" />
           <p class="order-note" data-testid="order-key-expiry">
             Личная ссылка открывает только этот заказ и действует до {{ formatMoment(order.accessKeyExpiresAt) }} мск. Номер заказа доступа
             не даёт.

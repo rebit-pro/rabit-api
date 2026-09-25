@@ -44,6 +44,7 @@ final readonly class RequestToDtoMapper implements RequestMapperInterface
             : RequestHelper::collectJsonRequestValues(
                 $this->request,
                 $jsonBody->newInstance()->maxBytes,
+                !$strict,
             );
 
         $requestData = (new RequestTechnicalValues($this->request))->append($reflection, $requestData);

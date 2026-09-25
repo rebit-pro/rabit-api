@@ -1,0 +1,72 @@
+{
+  "wave": "G1",
+  "status": "verified",
+  "date": "2026-09-25",
+  "branch": "codex/g1-payment-attempts",
+  "base": "4ca7e9c (main merged in 1aced62)",
+  "head": "0825de7da95b4d1fb84f1a021b3062cee679b1a5",
+  "fixture": "rabit-e2e-47da504c16c6",
+  "decisions": "G1-D12-SCOPE, G1-D09-SANDBOX, G1-DEC-01..08 accepted by the user on 2026-09-25",
+  "review": "PR #80 first review: 5 blockers R1-R5 fixed in c7cd0de; gate findings fixed in d2b9a29, d300a9c (provider notification body), a4d94c7 (registry route guard), 0825de7 (E5 verifier after paid orders); non-blocking polling — issue #83",
+  "checks": {
+    "backend": {
+      "status": "passed",
+      "phplint": "OK",
+      "phpstan": 0,
+      "phpunit": "passed in gate"
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "stylelint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "UI unit",
+        "commerce unit 207",
+        "production build"
+      ]
+    },
+    "graph": {
+      "status": "passed",
+      "waves": 52,
+      "apiIds": 118,
+      "readyFromMain": [
+        "G1",
+        "K3"
+      ]
+    },
+    "browser": {
+      "status": "passed",
+      "scenarios": 109,
+      "groups": {
+        "a": 64,
+        "b": 45
+      },
+      "scope": "full gate",
+      "yookassaTestShop": "on",
+      "g1": [
+        "G1-T14 refused SBP, left the provider page and continued, paid by card, returned, confirmed by the server",
+        "G1-T09/T10 repeat refusals, registry scope (organizer/head/teacher/anonymous), provider notification replay, late filter, desktop/mobile"
+      ]
+    },
+    "verifiers": {
+      "status": "passed",
+      "scripts": [
+        "verify-storefront.php",
+        "verify-handoff.php",
+        "verify-orders.php",
+        "verify-links.php",
+        "verify-transfers.php",
+        "verify-avatar.php",
+        "verify-payment-costs.php",
+        "verify-payments.php",
+        "verify-access.php"
+      ]
+    }
+  },
+  "limits": [
+    "SBP and SberPay are not accepted by the test shop: real SBP check BLOCKED until the live shop",
+    "receipts G2, refunds I2 not in scope"
+  ]
+}
