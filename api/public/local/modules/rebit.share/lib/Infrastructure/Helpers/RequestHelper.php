@@ -62,6 +62,27 @@ final class RequestHelper
         return get_object_vars($object);
     }
 
+    /**
+     * Non-strict JSON DTO (external webhooks): nested JSON objects become arrays for ArrayToDtoMapper.
+     * Strict DTO get the same conversion from StrictRequestValues together with their wire-type checks.
+     *
+     * @param array<string, mixed> $values
+     *
+     * @return array<string, mixed>
+     */
+    public static function jsonObjectsToArrays(array $values): array
+    {
+        $plain = static function(mixed $value) use (&$plain): mixed {
+            if ($value instanceof \stdClass) {
+                $value = get_object_vars($value);
+            }
+
+            return is_array($value) ? array_map($plain, $value) : $value;
+        };
+
+        return array_map($plain, $values);
+    }
+
     /** @return array<string, mixed> */
     public static function collectQueryValues(HttpRequest $request): array
     {
