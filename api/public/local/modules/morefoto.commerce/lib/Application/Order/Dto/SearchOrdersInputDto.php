@@ -17,5 +17,6 @@ final readonly class SearchOrdersInputDto
         public ?string $dateTo,
         public int $page,
         public int $pageSize,
+        public ?bool $latePayment = null,
     ) {}
 }

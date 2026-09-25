@@ -39,8 +39,13 @@ final readonly class OrderInputMapper
 
     public function search(StaffOrderListRequestDto $request): SearchOrdersInputDto
     {
-        if (null !== $this->optional($request->late) || null !== $this->optional($request->settlement)) {
+        // Settlement filters wait for their owner (I1–I3); late payment exists since G1.
+        if (null !== $this->optional($request->settlement)) {
             throw new HttpException('FILTER_UNAVAILABLE', 422);
+        }
+        $late = $this->optional($request->late);
+        if (null !== $late && !in_array($late, ['true', 'false'], true)) {
+            throw new HttpException('INVALID_FILTER', 422);
         }
         if (1 > $request->page || 1000000 < $request->page || 1 > $request->pageSize || 100 < $request->pageSize) {
             throw new HttpException('INVALID_PAGE', 422);
@@ -72,6 +77,7 @@ final readonly class OrderInputMapper
             dateTo: $dateTo,
             page: $request->page,
             pageSize: $request->pageSize,
+            latePayment: null === $late ? null : 'true' === $late,
         );
     }
 
