@@ -6,7 +6,7 @@
 - PR [#53](https://github.com/rebit-pro/rabit-api/pull/53) слит в `main` — merge `b20423f` (дерево равно проверенному `6cb9a73`, финальный gate на `30abfb8` — full gate PASS).
 - Выкачено на app.morefoto36.ru 2026-09-25 (ночь МСК): релиз `design-ux-20260924214616-b20423f` — backend (FPM, nginx, media consumer и dispatcher) и frontend `morefoto-frontend:design-ux-20260924214616-b20423f`; миграции `Version20260923120001…120003`; модуль `rebit.notification` зарегистрирован в `b_module`.
 - Открыто:
-  - доставка писем H1 для кабинета: нет воркера `app:notification:consume` / cron `dispatch-pending` в стеке `morefoto_stage_*` и нет настроек почты — письма приглашений и сброса пароля ставятся в очередь, но не уходят; нужны решение пользователя и данные SMTP;
+  - доставка писем H1 для кабинета настроена 2026-09-25 (запись ниже): воркер `morefoto_stage_notification_consumer`, повтор `morefoto_stage_notification_dispatcher`, отправитель — ящик студии через SMTP Яндекса; проверочное письмо принято сервером — осталось подтвердить его во входящих;
   - DX-FIN-02 (demo Cucumber) и DX-FIN-03 (визуальная проверка desktop/mobile) на `main`;
   - контакт поддержки `MOREFOTO_SUPPORT_*` на проде не задан — раздел «Помощь» пишет «Контакт организатора пока не указан».
 - Откат: `docker service rollback` для `morefoto_stage_fpm`, `morefoto_stage_backend`, `morefoto_stage_media_consumer`, `morefoto_stage_media_dispatcher` (прежний `/app` — релиз `issues60-20260923102153-5e2df6a`) и `morefoto_frontend` (прежний образ в `frontend-before.txt` — `morefoto-frontend:issues64-20260923104946-d1a4c07`); спецификации — `services-before.json` релиза. Миграции только добавляют — старый код с ними работает; регистрация `rebit.notification` старому коду не мешает.
@@ -229,4 +229,17 @@
 - **Smoke frontend.** `/health`, `/login`, `/cabinet/{overview,institutions,users,links,staff-requests,orders,catalog}`, `/access/recover` — 200; SHA-256 отдаваемого `index.html` равен файлу образа; отдаваемые `MfBreadcrumbs-C4mO4KgB.js`, `LinksPage-CgRPrjVA.js`, `OverviewPage-Dm46BMgS.js` содержат новый код.
 - **Не проверено на проде:** авторизованные сценарии (нужны учётные записи прода) — пользовательская проверка; фактическая отправка писем B4 — доставки H1 для кабинета нет (см. «Точку продолжения»).
 - Вывод для следующих выкаток: список модулей в `b_module` прода сверять с `prepare.php` E2E до переключения backend; DI-smoke в FPM подключать через `init.php` (он грузит модули так же, как HTTP).
+
+### 2026-09-25 — доставка писем кабинета
+
+- Пользователь: «надо починить письма, чтобы они отправлялись»; после явного разрешения на изменения прода — настройка ниже.
+- Путь письма H1: `QueueEmailUseCase` пишет операцию в `b_rebit_notification_operation` и публикует сообщение в RabbitMQ (vhost кабинета `morefoto_stage`, отдельный от `rebit` у `site_api`); воркер `app:notification:consume` отправляет через `CEvent::SendImmediate` (шаблон `REBIT_NOTIFICATION_OUTGOING_EMAIL`, сайт `s1`, есть в БД с `Version20260920110001`) и `msmtp`, который `docker-entrypoint.sh` настраивает из `REBIT_SMTP_*` и секрета `rebit_smtp_password`.
+- Не хватало трёх вещей: опции `main.email_from` (без неё отправитель `admin@…`, и SMTP Яндекса его отклоняет), воркера очереди писем и повторной публикации `dispatch-pending` в стеке `morefoto_stage_*`.
+- Сделано:
+  - `main.email_from` = ящик студии (единственная настроенная почта инфраструктуры; через неё же шлют `site_api` и leadhunter);
+  - `morefoto_stage_notification_consumer` — копия спецификации `morefoto_stage_media_consumer` (сети, монтирования, окружение, секрет RabbitMQ, перезапуск `any`/5 с) с командой `app:notification:consume --limit=100 --time-limit=300`, переменными `REBIT_SMTP_HOST/PORT/ENCRYPTION/USERNAME/FROM_EMAIL/TLS_CERTCHECK` из конфига `rebit_backend_env_249` (без `REBIT_SMTP_FROM_NAME`, код её не читает) и секретом `rebit_smtp_password_246`;
+  - `morefoto_stage_notification_dispatcher` — как `morefoto_stage_media_dispatcher`: `app:notification:dispatch-pending --limit=100` раз в минуту.
+- Проверка: оба сервиса 1/1; `/etc/msmtprc` в воркере — SMTP Яндекса, SSL, авторизация. Проверочное письмо через `EmailNotificationInterface` на ящик студии (`consumer=delivery-check`): публикация из `docker exec` не прошла — в таком процессе DSN RabbitMQ без пароля, его подставляет только entrypoint основного процесса; через ~30 с диспетчер переопубликовал операцию, воркер доставил — статус `accepted`, `ACCEPTED_AT` записан, ошибок нет (SMTP-сервер принял письмо). Процессы FPM получают DSN с паролем из entrypoint (медиа публикует так же), поэтому письма из кабинета уходят сразу, а при сбое публикации — в течение минуты.
+- Откат: `docker service rm morefoto_stage_notification_consumer morefoto_stage_notification_dispatcher`; опция `main.email_from` старому коду не мешает.
+- Осталось: подтвердить проверочное письмо во входящих ящика студии; при желании — отдельный ящик кабинета (например, `noreply@morefoto36.ru`): тогда меняются `REBIT_SMTP_*` воркера, его секрет и `main.email_from`.
 
