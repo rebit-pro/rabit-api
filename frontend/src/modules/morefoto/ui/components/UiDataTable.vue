@@ -23,6 +23,8 @@ const props = withDefaults(
     density?: UiDensity;
     emptyTitle?: string;
     emptyDescription?: string;
+    /** Column whose value names a row for assistive labels; the row id by default. */
+    labelKey?: string;
   }>(),
   { selectable: true, removable: true, density: 'comfortable', emptyTitle: 'Список пока пуст', emptyDescription: 'Здесь появятся записи.' }
 );
@@ -48,6 +50,9 @@ const sortable = computed(() =>
 const range = computed(() =>
   props.total ? (props.page - 1) * props.pageSize + 1 + '–' + Math.min(props.page * props.pageSize, props.total) : '0'
 );
+function rowLabel(row: UiTableRow): string {
+  return props.labelKey ? String(row[props.labelKey] ?? row.id) : row.id;
+}
 function toggle(id: string) {
   emit('select', props.selected.includes(id) ? props.selected.filter((selected) => selected !== id) : [...props.selected, id]);
 }
@@ -161,7 +166,7 @@ defineExpose({ focusRow });
                 <v-checkbox-btn
                   v-if="selectable"
                   :model-value="selected.includes(row.id)"
-                  :aria-label="'Выбрать ' + row.id"
+                  :aria-label="'Выбрать ' + rowLabel(row)"
                   @update:model-value="toggle(row.id)"
                 />
               </td>
@@ -171,7 +176,7 @@ defineExpose({ focusRow });
                 :data-column="column.key"
                 :class="{ 'ui-table-number': column.type === 'number' || column.type === 'money', 'ui-table-primary': column.primary }"
               >
-                <UiTableCell :value="row[column.key]" :column="column" />
+                <slot :name="'cell-' + column.key" :row="row"><UiTableCell :value="row[column.key]" :column="column" /></slot>
               </td>
               <td>
                 <slot name="actions" :row="row"
@@ -194,23 +199,30 @@ defineExpose({ focusRow });
             <v-checkbox-btn
               v-if="selectable"
               :model-value="selected.includes(row.id)"
-              :aria-label="'Выбрать ' + row.id"
+              :aria-label="'Выбрать ' + rowLabel(row)"
               @update:model-value="toggle(row.id)"
             />
-            <h3>{{ primary ? tableCellText(row[primary.key], primary) : row.id }}</h3>
+            <h3>
+              <slot v-if="primary" :name="'cell-' + primary.key" :row="row">{{ tableCellText(row[primary.key], primary) }}</slot
+              ><template v-else>{{ row.id }}</template>
+            </h3>
           </div>
           <dl>
             <div v-for="column in mobileColumns" :key="column.key">
               <dt>{{ column.label }}</dt>
-              <dd :data-column="column.key"><UiTableCell :value="row[column.key]" :column="column" /></dd>
+              <dd :data-column="column.key">
+                <slot :name="'cell-' + column.key" :row="row"><UiTableCell :value="row[column.key]" :column="column" /></slot>
+              </dd>
             </div>
           </dl>
           <details v-if="extraColumns.length">
-            <summary :aria-label="'Дополнительные сведения ' + row.id">Дополнительные сведения</summary>
+            <summary :aria-label="'Дополнительные сведения ' + rowLabel(row)">Дополнительные сведения</summary>
             <dl>
               <div v-for="column in extraColumns" :key="column.key">
                 <dt>{{ column.label }}</dt>
-                <dd><UiTableCell :value="row[column.key]" :column="column" /></dd>
+                <dd>
+                  <slot :name="'cell-' + column.key" :row="row"><UiTableCell :value="row[column.key]" :column="column" /></slot>
+                </dd>
               </div>
             </dl>
           </details>
