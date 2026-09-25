@@ -3,7 +3,7 @@
 ## Точка продолжения
 
 - Ветка `codex/k3-max-curator-questions`, worktree `/home/user/rabit-api-worktrees/k3-max-curator-questions`,
-  base `fc0cdb9` (origin/main с G1, PR #80; слит merge-коммитом 25.09.2026). PR [#89](https://github.com/rebit-pro/rabit-api/pull/89) на ревью; неблокирующий issue [#90](https://github.com/rebit-pro/rabit-api/issues/90).
+  base `77fe2df` (origin/main с G1 #80 и #86; слит merge-коммитами 25.09.2026). PR [#89](https://github.com/rebit-pro/rabit-api/pull/89) на ревью; неблокирующий issue [#90](https://github.com/rebit-pro/rabit-api/issues/90).
 - Связанное: [план K3](plan.md), [план PR #48](../max-support-chat-plan/plan.md), `docs/waves/graph.json`,
   канон `../MoreFoto/docs/04-bitrix-modules/backend-waves.json` (не git, изменения — патчем в `docs/waves/k3/`).
 - Завершено: merge PR #48; граф синхронизирован (E6 merged, K3 inProgress).
@@ -89,6 +89,11 @@
 - Граф и канон: G1 → merged (PR #80, `fc0cdb9…`), baseline.commit = main; `verify-wave-graph.py` — PASS (52 волны, 118 API ID, ready K3). Патч канона пересобран от базы без правок K3: воспроизводит канон, чужих изменений нет.
 - Проверки после слияния: `phpunit` — PASS 860 / 45605 (1 deprecation #90); `phpstan` — PASS; `php-cs-fixer --dry-run` (105 файлов) — 0; `npm run check` — PASS (test:ui 34/34); `test:commerce` — 207/207; `build-only` — PASS.
 - `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` (прогон `rabit-e2e-5f610803f8f9`) — **full gate PASS**: браузер 114 (a 69, b 45), все верификаторы, включая `verify-support.php` и `verify-payments.php`.
+
+### 25.09.2026 — слияние PR #86 и ответы на ревью
+
+- В main слит PR #86 (#59: общий multipart-маппер, `DtoMetadataService`, `ArrayToDtoMapper`) — без конфликтов; затронут общий разбор запросов, через который идёт webhook MAX. Повторены: `phpunit` — PASS 901 / 45770 (1 deprecation #90); `phpstan` — PASS; `verify-wave-graph.py` — PASS; `E2E_GROUPS=a make test-e2e …` (прогон `rabit-e2e-8b03c4a0d3b4`) — PASS 69/69, `verify-support.php` PASS (частичный прогон; frontend #86 не менял). Затем слит docs-коммит `77fe2df` (журнал G1).
+- Ответы с коммитом и тестом опубликованы во всех 5 тредах ревью; PR передан на второй круг.
 
 ## Результаты проверок
 
