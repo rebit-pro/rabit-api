@@ -62,12 +62,12 @@
 ## Checklist
 
 - [x] Прочитать `AGENTS.md`, `CLAUDE.md`, issue #77, PR #76 и прецедент issues-72-73.
-- [ ] `helpers.ts`: `peakOverlap`, `uploadSpans`; `zz-media.spec.ts` на общих функциях.
-- [ ] `zz-media-bench.spec.ts`: буфер, счётчик загрузок, Resource Timing для `parallel` и `transfer`.
-- [ ] `npx eslint --fix` по изменённым файлам.
-- [ ] Быстрые проверки: `npm run check`, `npm run test:commerce`.
-- [ ] Стаб-прогон выборки через `helpers.ts`: лимит 2 — PASS, лимит 3 — FAIL.
-- [ ] Commit, push, PR в `main` без merge.
+- [x] `helpers.ts`: `peakOverlap`, `uploadSpans`; `zz-media.spec.ts` на общих функциях.
+- [x] `zz-media-bench.spec.ts`: буфер, счётчик загрузок, Resource Timing для `parallel` и `transfer`.
+- [x] `npx eslint --fix` по изменённым файлам.
+- [x] Быстрые проверки: `npm run check`, `npm run test:commerce`.
+- [x] Стаб-прогон выборки через `helpers.ts`: лимит 2 — PASS, лимит 3 — FAIL.
+- [x] Commit, push, PR в `main` без merge.
 - [ ] После review без блокеров: `make test-e2e`, bench `E2E_MEDIA_BENCH=1`.
 
 ## Критерии приёмки
