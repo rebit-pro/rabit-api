@@ -18,20 +18,23 @@ final readonly class PaymentAttemptPolicy
     /** Срок, в течение которого провайдер гарантирует тот же ответ на повтор с тем же ключом идемпотентности. */
     private const int PROVIDER_KEY_TTL = 86400;
 
-    /** Новая попытка — только по неоплаченному заказу и до окончания приёма группы (G1-DEC-02). */
-    public function assertCanStart(string $orderPaymentStatus, ?string $closesAt, \DateTimeImmutable $now): void
+    /** Новая попытка — только по неоплаченному заказу с суммой больше нуля и до окончания приёма группы (G1-DEC-02). */
+    public function assertCanStart(string $orderPaymentStatus, int $amount, ?string $closesAt, \DateTimeImmutable $now): void
     {
         if ('paid' === $orderPaymentStatus) {
             throw new HttpException('ORDER_ALREADY_PAID', 409);
+        }
+        if (0 >= $amount) {
+            throw new HttpException('NOTHING_TO_PAY', 409);
         }
         if (null !== $closesAt && $this->utc($now) >= $closesAt) {
             throw new HttpException('PAYMENT_CLOSED', 409);
         }
     }
 
-    public function canStart(string $orderPaymentStatus, ?string $closesAt, \DateTimeImmutable $now, bool $hasOpenAttempt): bool
+    public function canStart(string $orderPaymentStatus, int $amount, ?string $closesAt, \DateTimeImmutable $now, bool $hasOpenAttempt): bool
     {
-        return !$hasOpenAttempt && 'paid' !== $orderPaymentStatus && (null === $closesAt || $this->utc($now) < $closesAt);
+        return !$hasOpenAttempt && 'paid' !== $orderPaymentStatus && 0 < $amount && (null === $closesAt || $this->utc($now) < $closesAt);
     }
 
     /** Оплата, подтверждённая после окончания приёма, — денежный факт с latePayment; исполнение решает I3 (G1-D12-SCOPE). */

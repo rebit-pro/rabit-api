@@ -78,3 +78,28 @@ test('registry filters round-trip through the URL and drop unknown values', () =
   assert.deepEqual(paymentParams(filters), { page: 3, pageSize: 25, status: 'succeeded', orderNumber: 'MF-0007', dateFrom: '2026-09-01' });
   assert.equal(paymentFiltersFromQuery({ status: 'paid' }).status, '');
 });
+
+test('review #80: a lost start repeats its own key and method; another method is a new request', async () => {
+  const { isUncertain, startKey } = await import('../../src/modules/morefoto/orders/live/payment-rules.ts');
+  let issued = 0;
+  const fresh = () => 'key-' + ++issued;
+  assert.equal(startKey(null, 'sbp', fresh), 'key-1');
+  const lost = { method: 'sbp', key: 'key-1' };
+  assert.equal(startKey(lost, 'sbp', fresh), 'key-1', 'the same body repeats with the same key');
+  assert.equal(startKey(lost, 'bank_card', fresh), 'key-2', 'another method never reuses the key');
+  assert.equal(isUncertain({ status: null, code: '', network: true }), true);
+  assert.equal(isUncertain({ status: 502, code: '', network: false }), true);
+  assert.equal(isUncertain({ status: 429, code: '', network: false }), true);
+  assert.equal(isUncertain({ status: 409, code: 'QUOTE_CHANGED', network: false }), false);
+  assert.equal(isUncertain({ status: 422, code: 'PAYMENT_METHOD_UNAVAILABLE', network: false }), false);
+});
+
+test('review #80: a pending payment with its provider page can be continued from the return page', async () => {
+  const { returnState } = await import('../../src/modules/morefoto/orders/live/payment-rules.ts');
+  assert.equal(returnState({ status: 'pending', redirectUrl: 'https://yoomoney.ru/checkout/x' }, false), 'continue');
+  assert.equal(returnState({ status: 'pending', redirectUrl: null }, false), 'checking');
+  assert.equal(returnState({ status: 'unknown', redirectUrl: null }, true), 'waiting');
+  assert.equal(returnState({ status: 'succeeded', redirectUrl: null }, false), 'paid');
+  assert.equal(returnState({ status: 'canceled', redirectUrl: null }, true), 'failed');
+  assert.equal(returnState(null, false), 'checking');
+});

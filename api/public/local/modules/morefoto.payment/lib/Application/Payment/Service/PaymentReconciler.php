@@ -52,6 +52,7 @@ final readonly class PaymentReconciler
         $now = $this->clock->now();
         $payment = null;
         $rejected = false;
+        $refused = false;
         // Provider HTTP never runs inside the SQL transaction.
         try {
             if (null !== $attempt['PROVIDER_PAYMENT_ID']) {
@@ -60,18 +61,20 @@ final readonly class PaymentReconciler
                 $payment = $this->provider->create($this->createInput($attempt));
             }
         } catch (ProviderRejectedException $error) {
-            // A rejected status request says nothing about the payment itself: only a rejected creation closes the attempt.
-            $rejected = null === $attempt['PROVIDER_PAYMENT_ID'];
-            $this->logger->error('Payment provider rejected the request.', ['attemptId' => $attempt['PUBLIC_ID'], 'error' => $error->getMessage()]);
+            // Only the very first creation request proves that no payment exists. A refused repeat (another key, changed
+            // return URL) or a refused status request says nothing about a payment an earlier request may have created.
+            $refused = true;
+            $rejected = $this->firstCreation($attempt, $source);
+            $this->logger->error('Payment provider rejected the request.', ['attemptId' => $attempt['PUBLIC_ID'], 'final' => $rejected, 'error' => $error->getMessage()]);
         } catch (ProviderUnavailableException $error) {
             $this->logger->warning('Payment provider is unavailable.', ['attemptId' => $attempt['PUBLIC_ID'], 'error' => $error->getMessage()]);
         }
 
-        return $this->transaction->execute(fn(): AttemptStatusEnum => $this->apply($attempt, $payment, $rejected, $source, $now));
+        return $this->transaction->execute(fn(): AttemptStatusEnum => $this->apply($attempt, $payment, $rejected, $refused, $source, $now));
     }
 
     /** @param AttemptRecord $seen */
-    private function apply(array $seen, ?ProviderPaymentOutputDto $payment, bool $rejected, ConfirmationSourceEnum $source, \DateTimeImmutable $now): AttemptStatusEnum
+    private function apply(array $seen, ?ProviderPaymentOutputDto $payment, bool $rejected, bool $refused, ConfirmationSourceEnum $source, \DateTimeImmutable $now): AttemptStatusEnum
     {
         // Lock order: the order first, then the attempt — the same order as starting a new attempt.
         $order = $this->orders->lock($seen['ORDER_ID']);
@@ -83,7 +86,8 @@ final readonly class PaymentReconciler
         if (!$status->isOpen()) {
             return $status;
         }
-        $outcome = $this->outcome($attempt, $payment, $rejected, $order->closesAt, $now);
+        // A concurrent check may have stored the provider payment meanwhile: a refusal seen before the lock no longer proves anything.
+        $outcome = $this->outcome($attempt, $payment, $rejected && $this->firstCreation($attempt, $source), $refused, $order->closesAt, $now);
         $this->attempts->saveOutcome($attempt['ID'], $outcome);
         if (AttemptStatusEnum::SUCCEEDED === $outcome->status && null !== $outcome->paidAt && null !== $outcome->providerPaymentId) {
             $this->facts->insert([
@@ -109,7 +113,13 @@ final readonly class PaymentReconciler
     }
 
     /** @param AttemptRecord $attempt */
-    private function outcome(array $attempt, ?ProviderPaymentOutputDto $payment, bool $rejected, ?string $closesAt, \DateTimeImmutable $now): AttemptOutcome
+    private function firstCreation(array $attempt, ConfirmationSourceEnum $source): bool
+    {
+        return ConfirmationSourceEnum::START === $source && null === $attempt['PROVIDER_PAYMENT_ID'] && 0 === $attempt['CHECK_COUNT'];
+    }
+
+    /** @param AttemptRecord $attempt */
+    private function outcome(array $attempt, ?ProviderPaymentOutputDto $payment, bool $rejected, bool $refused, ?string $closesAt, \DateTimeImmutable $now): AttemptOutcome
     {
         $checkedAt = $this->policy->utc($now);
         $checks = $attempt['CHECK_COUNT'] + 1;
@@ -126,7 +136,8 @@ final readonly class PaymentReconciler
                 $keyExpired ? null : $this->policy->nextCheckAt($current, $checks, $now),
                 $attempt['PROVIDER_PAYMENT_ID'],
                 $attempt['CONFIRMATION_URL'],
-                $keyExpired ? 'provider_key_expired' : null,
+                // The attempt stays open: only a confirmed provider outcome closes it; the reason is shown in the registry.
+                $keyExpired ? 'provider_key_expired' : ($refused ? 'provider_refused_retry' : null),
             );
         }
         $mismatch = $this->policy->mismatch($attempt['AMOUNT'], $attempt['SHOP_ID'], $attempt['PUBLIC_ID'], $payment->amount, $payment->currency, $payment->shopId, $payment->attemptId)

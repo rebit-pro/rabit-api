@@ -5,8 +5,8 @@
 - Ветка `codex/g1-payment-attempts`, base `main` `49f40f9`, head — последний коммит ветки (после `22dbf4f`). PR https://github.com/rebit-pro/rabit-api/pull/80.
 - Рабочая копия: `/home/user/rabit-api-worktrees/g1-payment-attempts`. Отчёт волны: `docs/waves/g1/README.md`, канонический patch: `docs/waves/g1/morefoto-contract.patch`.
 - Завершено: S1–S12 — план, графы, backend, frontend, быстрые проверки, E2E-спецификация и verifier (не запускались).
-- Сейчас: ревью PR пользователем.
-- Следующий шаг: после ревью без блокеров — полный `make test-e2e` (с файлом ключей тестового магазина), затем `visual.json` и `verification.json`.
+- Сейчас: исправлены 5 блокирующих замечаний ревью PR #80 (R1–R5), база обновлена на `main` `c8a69a7`.
+- Следующий шаг: полный `make test-e2e` на обновлённой ветке, затем второй круг ревью.
 - Блокеры: нет. Ограничение: реальная проверка СБП — `BLOCKED` до боевого магазина.
 - Объём: ~6,5 тыс. рукописных строк (из них ~1,8 тыс. тестов), немного выше ориентира 6 тыс.
 - Рабочее дерево: чистое. `api/vendor`, `api/var/*` принадлежат root (контейнер), игнорируются git.
@@ -26,6 +26,8 @@
 | G1-T13 | PASS (частично) | 2026-09-25 | Прямой вызов API тестового магазина скриптом (ключи из файла, не выводились): `bank_card` → `pending` + `yoomoney.ru`, повтор ключа → тот же платёж, `sbp` → 400, неизвестный `GET` → 404. Оплата картой через страницу — в E2E |
 | G1-T18 | PASS (unit) | 2026-09-25 | `YooKassaClientTest`: Basic-авторизация, `Idempotence-Key`, классификация 400/401/404 → отказ, 429/500/таймаут/JSON → `unknown`, секрет не в сообщении |
 | G1-T16 | PASS | 2026-09-25 | Backend: phplint 1047 файлов OK; PHPStan (tools/e2e/phpstan.neon) — No errors; PHPUnit — OK 718 тестов / 3644 проверки; php-cs-fixer — исправлено 8 из 112, повтор чист. Frontend: `npm run check` (lint, stylelint, typecheck, typecheck:e2e, test:ui) — exit 0; `test:commerce` — 188/188; `build-only` — OK |
+| G1-T19, T21 | PASS (unit) | 2026-09-25 | `PaymentReconcilerTest::testRefusedRetryAfterATimeoutNeverClosesTheUnknownAttempt`, `testLateRefusalDoesNotEraseAPaymentStoredByAConcurrentCheck`; `StartPaymentAttemptTest` zero total, `PaymentAttemptPolicyTest` NOTHING_TO_PAY |
+| G1-T20, T22 | PASS (unit) | 2026-09-25 | `payment-live.test.mjs`: `returnState`, `startKey`, `isUncertain` |
 | G1-T09, T10, T14, T15 | PENDING | — | `make test-e2e`, спецификация `zzzzzzzzz-payments` и `verify-payments.php` — после ревью |
 
 ## Журнал
@@ -51,3 +53,14 @@
 - Канонический план MoreFoto меняла параллельная сессия (K3, вопросы через MAX: +6 API ID, `validate.py`, окружения Postman). Первый patch захватил её правки. Patch пересобран как разница между «текущий план без правок G1» и текущим планом: 8 файлов, `git apply --check --reverse` — OK, строк K3 в изменениях нет. `wave_graph.py` на текущем плане: 52 волны, 118 ID, готовы E6, G1, K3.
 - Повтор быстрых проверок после E2E-правок: `php -l` verifier и `prepare.php` — OK; PHPStan — No errors; PHPUnit — OK 718/3644; `npm run check` — exit 0; `test:commerce` — 188/188; `py_compile` runner — OK.
 - PR https://github.com/rebit-pro/rabit-api/pull/80 создан на head `e0871fb`; ждёт ревью пользователя, gate после ревью.
+
+### 2026-09-25 — ревью PR #80, первый круг
+
+- Ревью на `6b033ec`: 5 блокирующих замечаний (inline), неблокирующий polling — issue #83. Gate ревьюера упал на G1-T14: страница ЮKassa открылась на английском, кнопка `/Заплатить/` не найдена.
+- Base: `git merge origin/main` (`c8a69a7`). Конфликты: `Version20260925120001` — это файл E6, миграция G1 переименована в `Version20260925190001` (prepare.php, verifier, документы); `groups.json` и `VERIFIERS` — обе спецификации E6 и G1; `graph.json` — взят с main, дельта G1 наложена заново (118 ID), E6 отмечена `merged` (`54bd4ab`, `E6-MERGED`). `tools/verify-wave-graph.py` с main: 52 волны, 118 ID, 13 отрицательных фикстур, готовы G1 и K3.
+- R1: `PaymentReconciler::firstCreation()` — окончательный отказ только у первого запроса создания (START, `CHECK_COUNT=0`, без ID), с повторной проверкой под блокировкой; иначе попытка открыта и получает причину `provider_refused_retry`.
+- R2/R3: `returnState` (`continue` для pending с `redirectUrl`, кнопка «Продолжить оплату»), `startKey`/`isUncertain` и блокировка других способов в `useLivePayment` до ответа PAY-03.
+- R4: `PaymentAttemptPolicy::assertCanStart/canStart` учитывают сумму; 409 `NOTHING_TO_PAY`; панель «Сумма заказа 0 ₽ — оплата не требуется».
+- R5: проверка английской страницы с этой машины показала русскую страницу (язык, видимо, зависит от окружения). Локаторы переведены на `input[name]`, `button[type=submit]`, URL `/v2/success` и ссылку `a[data-qa=back-to-shop-link]` с `href` нашего `return_url`; `test.use({ locale: 'ru-RU' })`.
+- Канонический план: в `build.py` добавлены `NOTHING_TO_PAY` и правило отказа повтора; patch пересобран скриптом «текущий план минус правки G1» → текущий (8 файлов, reverse-check OK; `wave_graph.py` — 52/118/35).
+- Проверки после исправлений: php-cs-fixer — 0 из 8; phplint 1082 файла OK; PHPStan — No errors; PHPUnit — OK 816 / 45195; frontend `npm run check` — exit 0, `test:commerce` — 205/205; E2E-спецификация — eslint и `typecheck:e2e` OK.

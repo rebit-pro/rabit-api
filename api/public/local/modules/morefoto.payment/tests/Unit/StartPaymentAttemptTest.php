@@ -148,11 +148,26 @@ final class StartPaymentAttemptTest extends TestCase
         yield 'stale version' => [static fn(PaymentScenario $scenario): StartPaymentInputDto => new StartPaymentInputDto('9', null, new PaymentQuoteToken()->token($scenario->orders->order()), 'sbp'), 'QUOTE_CHANGED'];
         yield 'stale quote token' => [static fn(PaymentScenario $scenario): StartPaymentInputDto => new StartPaymentInputDto('1', null, str_repeat('0', 64), 'sbp'), 'QUOTE_CHANGED'];
         yield 'foreign preceding attempt' => [static fn(PaymentScenario $scenario): StartPaymentInputDto => new StartPaymentInputDto('1', '00000000-0000-4000-8000-000000000099', new PaymentQuoteToken()->token($scenario->orders->order()), 'sbp'), 'ATTEMPT_CONFLICT'];
+        yield 'zero total' => [static function(PaymentScenario $scenario): null {
+            $scenario->orders->total = 0;
+
+            return null;
+        }, 'NOTHING_TO_PAY'];
         yield 'closed period' => [static function(PaymentScenario $scenario): null {
             $scenario->orders->closesAt = '2026-09-25 11:59:59';
 
             return null;
         }, 'PAYMENT_CLOSED'];
+    }
+
+    public function testZeroTotalIsNeverOfferedForPayment(): void
+    {
+        $scenario = new PaymentScenario(orders: new FakeOrders(total: 0));
+
+        $quote = $scenario->quote()->execute(FakeOrders::KEY);
+
+        self::assertFalse($quote->canPay);
+        self::assertSame(0, $quote->total);
     }
 
     public function testUnknownOrderKeyIsIndistinguishable(): void

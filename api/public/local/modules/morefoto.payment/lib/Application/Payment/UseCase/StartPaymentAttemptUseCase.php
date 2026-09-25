@@ -87,7 +87,7 @@ final readonly class StartPaymentAttemptUseCase
             return [$latest['ID'], false];
         }
         $now = $this->clock->now();
-        $this->policy->assertCanStart($order->paymentStatus, $order->closesAt, $now);
+        $this->policy->assertCanStart($order->paymentStatus, $order->total, $order->closesAt, $now);
         if ($input->orderVersion !== $order->version || $input->quoteToken !== $this->tokens->token($order)) {
             throw new HttpException('QUOTE_CHANGED', 409);
         }

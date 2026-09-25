@@ -15,6 +15,32 @@ export const confirmationLabels: Record<StaffPaymentFact['confirmedBy'], string>
   reconcile: 'фоновой сверкой'
 };
 
+/** A start whose answer was lost: its key belongs to this method and must be repeated with the same body. */
+export interface UncertainStart {
+  method: PaymentMethod;
+  key: string;
+}
+
+/** Whether a failed start may have reached the server; a definite refusal (4xx) created nothing. */
+export function isUncertain(problem: ApiProblem): boolean {
+  return problem.network || problem.status === null || problem.status >= 500 || problem.status === 408 || problem.status === 429;
+}
+
+/** One idempotency key per payload: the same method repeats the lost request, another method is a new request. */
+export function startKey(uncertain: UncertainStart | null, method: PaymentMethod, fresh: () => string): string {
+  return uncertain && uncertain.method === method ? uncertain.key : fresh();
+}
+
+export type ReturnState = 'paid' | 'failed' | 'continue' | 'checking' | 'waiting';
+
+/** The return page state: a pending payment with its provider page is not paid yet — the buyer can continue it. */
+export function returnState(attempt: Pick<PaymentAttempt, 'status' | 'redirectUrl'> | null, waitOver: boolean): ReturnState {
+  if (attempt?.status === 'succeeded') return 'paid';
+  if (attempt?.status === 'canceled') return 'failed';
+  if (attempt?.status === 'pending' && attempt.redirectUrl) return 'continue';
+  return waitOver ? 'waiting' : 'checking';
+}
+
 /** A final status ends the wait on the return page; unknown and pending keep being checked by the server. */
 export function isFinal(attempt: Pick<PaymentAttempt, 'status'>): boolean {
   return attempt.status === 'succeeded' || attempt.status === 'canceled';
@@ -70,6 +96,8 @@ export function paymentError(problem: ApiProblem): string {
       return 'Приём заказов группы завершён, оплатить заказ уже нельзя.';
     case 'ORDER_ALREADY_PAID':
       return 'Заказ уже оплачен.';
+    case 'NOTHING_TO_PAY':
+      return 'Сумма заказа 0 ₽ — оплата не требуется.';
     case 'QUOTE_CHANGED':
     case 'ATTEMPT_CONFLICT':
       return 'Состояние оплаты изменилось. Мы обновили данные — проверьте сумму и повторите.';

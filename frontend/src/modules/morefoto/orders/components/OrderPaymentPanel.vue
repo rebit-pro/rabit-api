@@ -7,7 +7,7 @@ import { paymentMethodLabels } from '../live/payment-rules';
 import type { BuyerOrder } from '../live/types';
 const props = defineProps<{ order: BuyerOrder; orderKey: string }>();
 const paid = computed(() => props.order.paymentStatus === 'paid');
-const { quote, loading, starting, error, load, pay, follow } = useLivePayment(
+const { quote, loading, starting, uncertain, error, load, pay, follow } = useLivePayment(
   toRef(props, 'orderKey'),
   computed(() => !paid.value)
 );
@@ -27,8 +27,10 @@ const closed = computed(() => props.order.period.state === 'closed');
     </template>
     <v-skeleton-loader v-else-if="loading && !quote" type="text, button" />
     <template v-else-if="quote?.activeAttemptId">
-      <p class="order-payment__note">Оплата уже начата. Проверьте её результат — второй платёж не создаётся.</p>
-      <v-btn block color="primary" data-testid="payment-follow" @click="follow(quote.activeAttemptId)">Проверить оплату</v-btn>
+      <p class="order-payment__note">Оплата уже начата. Проверьте её результат или продолжите оплату — второй платёж не создаётся.</p>
+      <v-btn block color="primary" data-testid="payment-follow" @click="follow(quote.activeAttemptId)"
+        >Проверить или продолжить оплату</v-btn
+      >
     </template>
     <template v-else-if="quote?.canPay">
       <p class="order-payment__note">
@@ -43,13 +45,16 @@ const closed = computed(() => props.order.period.state === 'closed');
           color="primary"
           :variant="method === quote.paymentMethods[0] ? 'flat' : 'outlined'"
           :loading="starting === method"
-          :disabled="starting !== null"
+          :disabled="starting !== null || (uncertain !== null && uncertain.method !== method)"
           :data-testid="'pay-' + method"
           @click="pay(method)"
           >Оплатить: {{ paymentMethodLabels[method] }}</v-btn
         >
       </div>
     </template>
+    <p v-else-if="quote && quote.quote.total === 0" class="order-payment__note" data-testid="payment-not-required">
+      Сумма заказа 0 ₽ — оплата не требуется.
+    </p>
     <p v-else-if="quote" class="order-payment__note" data-testid="payment-unavailable">
       {{
         closed

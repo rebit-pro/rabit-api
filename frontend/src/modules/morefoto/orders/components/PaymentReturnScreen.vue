@@ -2,33 +2,38 @@
 import { computed } from 'vue';
 import { money } from '../../commerce/money';
 import { usePaymentReturn } from '../composables/usePaymentReturn';
+import { returnState } from '../live/payment-rules';
 const { attempt, orderKey, error, waitOver, recheck } = usePaymentReturn();
 const orderLink = computed(() => (orderKey.value ? '/orders/access/' + orderKey.value : null));
-const view = computed(() => {
-  const status = attempt.value?.status;
-  if (status === 'succeeded')
-    return {
-      icon: 'mdi-check-circle',
-      color: 'success',
-      title: 'Заказ оплачен',
-      text: 'Оплата подтверждена ЮKassa. Статус заказа обновлён.'
-    };
-  if (status === 'canceled')
-    return {
-      icon: 'mdi-close-circle',
-      color: 'error',
-      title: 'Оплата не прошла',
-      text: 'Деньги не списаны. Вернитесь к заказу, чтобы попробовать ещё раз.'
-    };
-  return {
+const state = computed(() => returnState(attempt.value, waitOver.value));
+const views = {
+  paid: { icon: 'mdi-check-circle', color: 'success', title: 'Заказ оплачен', text: 'Оплата подтверждена ЮKassa. Статус заказа обновлён.' },
+  failed: {
+    icon: 'mdi-close-circle',
+    color: 'error',
+    title: 'Оплата не прошла',
+    text: 'Деньги не списаны. Вернитесь к заказу, чтобы попробовать ещё раз.'
+  },
+  continue: {
+    icon: 'mdi-timer-sand',
+    color: 'primary',
+    title: 'Оплата не завершена',
+    text: 'Если вы уже оплатили, результат появится здесь сам. Если нет — продолжите оплату на странице ЮKassa: второй платёж не создаётся.'
+  },
+  checking: {
     icon: 'mdi-timer-sand',
     color: 'primary',
     title: 'Проверяем оплату',
-    text: waitOver.value
-      ? 'ЮKassa ещё не подтвердила результат. Мы продолжим проверку сами — результат появится на странице заказа.'
-      : 'Это займёт несколько секунд. Не оплачивайте заказ повторно.'
-  };
-});
+    text: 'Это займёт несколько секунд. Не оплачивайте заказ повторно.'
+  },
+  waiting: {
+    icon: 'mdi-timer-sand',
+    color: 'primary',
+    title: 'Проверяем оплату',
+    text: 'ЮKassa ещё не подтвердила результат. Мы продолжим проверку сами — результат появится на странице заказа.'
+  }
+} as const;
+const view = computed(() => views[state.value]);
 </script>
 <template>
   <main class="mf-main payment-return">
@@ -48,8 +53,22 @@ const view = computed(() => {
       </p>
       <v-alert v-if="error" type="warning" variant="tonal" density="compact" role="alert">{{ error }}</v-alert>
       <div class="mf-actions payment-return__actions">
+        <v-btn
+          v-if="state === 'continue' && attempt?.redirectUrl"
+          :href="attempt.redirectUrl"
+          color="primary"
+          data-testid="payment-continue"
+          >Продолжить оплату</v-btn
+        >
         <v-btn v-if="waitOver" variant="outlined" @click="recheck">Проверить ещё раз</v-btn>
-        <v-btn v-if="orderLink" :to="orderLink" color="primary" data-testid="payment-return-order">Вернуться к заказу</v-btn>
+        <v-btn
+          v-if="orderLink"
+          :to="orderLink"
+          :variant="state === 'continue' ? 'outlined' : 'flat'"
+          color="primary"
+          data-testid="payment-return-order"
+          >Вернуться к заказу</v-btn
+        >
       </div>
     </section>
   </main>

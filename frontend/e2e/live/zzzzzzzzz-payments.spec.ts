@@ -89,23 +89,25 @@ async function staff(browser: Browser, baseURL: string | undefined, account: str
   await login(page, account);
   return { page, headers: { Authorization: 'Bearer ' + (await token(page)) }, close: () => context.close() };
 }
-async function fillCard(page: Page, number: string) {
-  // The provider page masks its inputs: typed characters, not a pasted value.
+/** Language-independent: the provider page may open in Russian or English (review #80). */
+async function payOnProvider(page: Page, number: string) {
   const fields: [string, string][] = [
     ['card-number', number],
     ['expiry-month', '12'],
     ['expiry-year', '30'],
     ['security-code', '123']
   ];
+  // The provider page masks its inputs: typed characters, not a pasted value.
   for (const [name, value] of fields) {
     const input = page.locator(`input[name="${name}"]`);
     await input.fill('');
     await input.pressSequentially(value, { delay: 30 });
   }
-  await page.getByRole('button', { name: /Заплатить/ }).click();
+  await page.locator('button[type="submit"]').first().click();
 }
 
 test.describe.configure({ mode: 'serial' });
+test.use({ locale: 'ru-RU' });
 
 // Each mode declares only its own scenarios: the gate accepts no skipped test.
 if (!sandbox) {
@@ -143,7 +145,9 @@ if (!sandbox) {
 }
 
 if (sandbox) {
-  test('G1-T14: buyer — refused SBP, then a card on the YooKassa page, confirmed by the server', async ({ page }, testInfo) => {
+  test('G1-T14: buyer — refused SBP, left and continued card payment on the YooKassa page, confirmed by the server', async ({
+    page
+  }, testInfo) => {
     test.setTimeout(240000);
     await page.setViewportSize({ width: 1440, height: 1000 });
     const created = await placeOrder(page);
@@ -162,12 +166,18 @@ if (sandbox) {
 
     await page.getByTestId('pay-bank_card').click();
     await page.waitForURL(/yoomoney\.ru/, { timeout: 30000 });
-    // A declined card keeps the same payment waiting; the buyer retries on the provider page.
-    await fillCard(page, '5555555555554535');
-    await expect(page.getByText('Не сработало')).toBeVisible({ timeout: 30000 });
-    await fillCard(page, '5555555555554444');
-    await expect(page.getByText('Успешно')).toBeVisible({ timeout: 60000 });
-    await page.getByText('Вернуться на сайт').click();
+    // Review #80: leaving the provider page before paying keeps the attempt open, and the buyer continues the same payment.
+    await page.goto('/orders/access/' + created.accessKey);
+    await page.getByTestId('payment-follow').click();
+    await page.waitForURL(/\/orders\/payment\/[a-f0-9-]{36}$/);
+    await expect(page.getByTestId('payment-return-title')).toHaveText('Оплата не завершена');
+    await page.screenshot({ path: testInfo.outputPath('g1-desktop-payment-continue.png'), fullPage: true, animations: 'disabled' });
+    await page.getByTestId('payment-continue').click();
+    await page.waitForURL(/yoomoney\.ru/, { timeout: 30000 });
+    await payOnProvider(page, '5555555555554444');
+    await page.waitForURL(/\/checkout\/payments\/v2\/success/, { timeout: 60000 });
+    // The provider's return link points to our return URL; its text depends on the page language.
+    await page.locator('a[href^="http://127.0.0.1/orders/payment/"]').click();
     await page.waitForURL(/127\.0\.0\.1\/orders\/payment\/[a-f0-9-]{36}$/, { timeout: 30000 });
     await expect(page.getByTestId('payment-return-title')).toHaveText('Заказ оплачен', { timeout: 30000 });
     await page.screenshot({ path: testInfo.outputPath('g1-desktop-payment-return.png'), fullPage: true, animations: 'disabled' });

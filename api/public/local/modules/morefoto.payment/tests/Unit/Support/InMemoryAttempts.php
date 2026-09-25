@@ -18,6 +18,8 @@ final class InMemoryAttempts implements PaymentAttemptRepositoryInterface
     /** @var array<int, AttemptRecord> */
     public array $rows = [];
     public int $locks = 0;
+    /** Runs right before a lock returns: simulates a concurrent check that committed first. */
+    public ?\Closure $beforeLock = null;
 
     public function insert(array $record): int
     {
@@ -70,6 +72,10 @@ final class InMemoryAttempts implements PaymentAttemptRepositoryInterface
     public function lock(int $id): ?array
     {
         ++$this->locks;
+        if (null !== $this->beforeLock) {
+            ($this->beforeLock)($this);
+            $this->beforeLock = null;
+        }
 
         return $this->find($id);
     }

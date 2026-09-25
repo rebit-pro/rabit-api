@@ -20,12 +20,12 @@ final class PaymentAttemptPolicyTest extends TestCase
     private const string CLOSES_AT = '2026-09-30 21:00:00';
 
     #[DataProvider('refusals')]
-    public function testStartIsRefusedForPaidOrderAndClosedPeriod(string $status, string $now, string $code): void
+    public function testStartIsRefusedForPaidZeroAndClosed(string $status, string $now, string $code, int $amount = 105000): void
     {
         $this->expectException(HttpException::class);
         $this->expectExceptionMessage($code);
 
-        new PaymentAttemptPolicy()->assertCanStart($status, self::CLOSES_AT, new \DateTimeImmutable($now, new \DateTimeZone('UTC')));
+        new PaymentAttemptPolicy()->assertCanStart($status, $amount, self::CLOSES_AT, new \DateTimeImmutable($now, new \DateTimeZone('UTC')));
     }
 
     public static function refusals(): iterable
@@ -33,6 +33,7 @@ final class PaymentAttemptPolicyTest extends TestCase
         yield 'paid order' => ['paid', '2026-09-25 12:00:00', 'ORDER_ALREADY_PAID'];
         yield 'exactly at close' => ['unpaid', self::CLOSES_AT, 'PAYMENT_CLOSED'];
         yield 'after close' => ['declined', '2026-10-01 00:00:00', 'PAYMENT_CLOSED'];
+        yield 'nothing to pay' => ['unpaid', '2026-09-25 12:00:00', 'NOTHING_TO_PAY', 0];
     }
 
     public function testStartIsAllowedBeforeCloseAndWithoutDeadline(): void
@@ -40,11 +41,12 @@ final class PaymentAttemptPolicyTest extends TestCase
         $policy = new PaymentAttemptPolicy();
         $now = new \DateTimeImmutable('2026-09-30 20:59:59', new \DateTimeZone('UTC'));
 
-        $policy->assertCanStart('declined', self::CLOSES_AT, $now);
-        self::assertTrue($policy->canStart('unpaid', null, $now, false));
-        self::assertFalse($policy->canStart('unpaid', self::CLOSES_AT, $now, true), 'An open attempt blocks a new one.');
+        $policy->assertCanStart('declined', 1, self::CLOSES_AT, $now);
+        self::assertTrue($policy->canStart('unpaid', 1, null, $now, false));
+        self::assertFalse($policy->canStart('unpaid', 0, null, $now, false), 'A zero total is not paid.');
+        self::assertFalse($policy->canStart('unpaid', 1, self::CLOSES_AT, $now, true), 'An open attempt blocks a new one.');
         // A moment in another zone is compared in UTC.
-        self::assertFalse($policy->canStart('unpaid', self::CLOSES_AT, new \DateTimeImmutable('2026-10-01 00:00:00', new \DateTimeZone('Europe/Moscow')), false));
+        self::assertFalse($policy->canStart('unpaid', 1, self::CLOSES_AT, new \DateTimeImmutable('2026-10-01 00:00:00', new \DateTimeZone('Europe/Moscow')), false));
     }
 
     public function testLatePaymentIsAConfirmationAtOrAfterClose(): void

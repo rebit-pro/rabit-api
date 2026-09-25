@@ -6,13 +6,17 @@ namespace Morefoto\Payment\Tests\Unit;
 
 use Morefoto\Payment\Application\Payment\Dto\PaymentNotificationInputDto;
 use Morefoto\Payment\Application\Payment\Dto\StartPaymentInputDto;
+use Morefoto\Payment\Application\Payment\Exception\ProviderRejectedException;
 use Morefoto\Payment\Application\Payment\Exception\ProviderUnavailableException;
 use Morefoto\Payment\Application\Payment\Service\PaymentQuoteToken;
 use Morefoto\Payment\Application\Payment\UseCase\AcceptPaymentNotificationUseCase;
 use Morefoto\Payment\Application\Payment\UseCase\ReconcilePaymentsUseCase;
+use Morefoto\Payment\Domain\Payment\Enum\AttemptStatusEnum;
 use Morefoto\Payment\Domain\Payment\Enum\ConfirmationSourceEnum;
 use Morefoto\Payment\Domain\Payment\Repository\PaymentNotificationRepositoryInterface;
+use Morefoto\Payment\Domain\Payment\ValueObject\AttemptOutcome;
 use Morefoto\Payment\Domain\Payment\ValueObject\IdempotencyKey;
+use Morefoto\Payment\Tests\Unit\Support\InMemoryAttempts;
 use Morefoto\Payment\Tests\Unit\Support\FakeOrders;
 use Morefoto\Payment\Tests\Unit\Support\FakeProvider;
 use Morefoto\Payment\Tests\Unit\Support\PaymentScenario;
@@ -128,6 +132,47 @@ final class PaymentReconcilerTest extends TestCase
         self::assertSame('unknown', $scenario->attempts->rows[1]['STATUS']);
         self::assertSame('provider_key_expired', $scenario->attempts->rows[1]['CANCEL_REASON']);
         self::assertNull($scenario->attempts->rows[1]['NEXT_CHECK_AT']);
+    }
+
+    public function testRefusedRetryAfterATimeoutNeverClosesTheUnknownAttempt(): void
+    {
+        $scenario = new PaymentScenario();
+        $scenario->provider->answer(new ProviderUnavailableException('timeout'));
+        $this->begin($scenario);
+        $scenario->advance(61);
+        // The first request may have created a payment: a 401 of the repeat is not its cancellation.
+        $scenario->provider->answer(new ProviderRejectedException('HTTP 401'));
+
+        $scenario->reconciler()->reconcile(1, ConfirmationSourceEnum::RECONCILE);
+
+        $attempt = $scenario->attempts->rows[1];
+        self::assertSame('unknown', $attempt['STATUS']);
+        self::assertSame('provider_refused_retry', $attempt['CANCEL_REASON']);
+        self::assertSame('2026-09-25 12:03:01', $attempt['NEXT_CHECK_AT']);
+        self::assertSame('pending', $scenario->orders->order()->paymentStatus);
+        self::assertFalse($scenario->quote()->execute(FakeOrders::KEY)->canPay, 'No second payment while the first may exist.');
+        $scenario->provider->answer(FakeProvider::payment(self::ATTEMPT, 'pending'));
+        $scenario->advance(120);
+        $scenario->reconciler()->reconcile(1, ConfirmationSourceEnum::RECONCILE);
+        self::assertSame('pending', $scenario->attempts->rows[1]['STATUS']);
+        self::assertCount(3, $scenario->provider->created);
+        self::assertCount(1, array_unique(array_map(static fn($input): string => $input->idempotenceKey, $scenario->provider->created)), 'Every retry reuses the stored provider key.');
+    }
+
+    public function testLateRefusalDoesNotEraseAPaymentStoredByAConcurrentCheck(): void
+    {
+        $scenario = new PaymentScenario();
+        $scenario->provider->answer(new ProviderRejectedException('HTTP 400'));
+        // Between the refused request and the lock another check stored the created payment.
+        $scenario->attempts->beforeLock = static function(InMemoryAttempts $attempts): void {
+            $attempts->saveOutcome(1, new AttemptOutcome(AttemptStatusEnum::PENDING, '2026-09-25 12:00:00', '2026-09-25 12:01:00', 'yk-1', 'https://yoomoney.ru/checkout/x'));
+        };
+
+        $this->begin($scenario);
+
+        $attempt = $scenario->attempts->rows[1];
+        self::assertSame(['pending', 'yk-1', 'https://yoomoney.ru/checkout/x'], [$attempt['STATUS'], $attempt['PROVIDER_PAYMENT_ID'], $attempt['CONFIRMATION_URL']]);
+        self::assertSame('pending', $scenario->orders->order()->paymentStatus, 'The order is not declined by a stale refusal.');
     }
 
     public function testNotificationIsASignalAndItsRepeatChangesNothing(): void
