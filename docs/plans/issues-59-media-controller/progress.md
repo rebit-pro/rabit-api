@@ -9,7 +9,7 @@
 - Issue: [#59](https://github.com/rebit-pro/rabit-api/issues/59). PR: [#86](https://github.com/rebit-pro/rabit-api/pull/86): review пользователя без блокеров, gate PASS, сливается.
 - Документация: [план](plan.md), прецеденты [#42](../issues-42-access-error-codes/plan.md), [#54/#55/#57](../issues-54-55-57-large-shoot/plan.md).
 - Завершено: S1–S6 — общий multipart-маппер, `mixed[]`, `acceptedJson()`; три чистых контроллера MED-03…06; удалены `MediaController` и `MediaRequestFactory`; unit и архитектурные тесты; быстрые проверки зелёные.
-- Сейчас: base обновлён до `4ca7e9c` (merge `a75d267`), полный gate PASS; PR сливается.
+- Сейчас: base обновлён до `fc0cdb9` (G1, PR #80; merge `0870483`), повторный полный gate PASS; PR сливается.
 - Следующий шаг: деплой backend — отдельное решение пользователя (сборка релиза из нескольких веток).
 - Блокеров нет. Открытое решение для пользователя (вне scope): ужесточать ли query MED-04 и лишние поля формы MED-03 (R7) — сейчас они игнорируются, как раньше.
 - Рабочее дерево: всё закоммичено; пустые `api/vendor`, `api/var` — точки монтирования docker-проверок, в git не попадают.
@@ -72,6 +72,9 @@
   - все верификаторы PASS.
 - Команда: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
 
+- До merge в `main` слит G1 (PR #80, `fc0cdb9`) с правками `rebit.share` `RequestToDtoMapper`/`RequestHelper`. Base обновлён повторно: `git merge origin/main` → `0870483`, конфликтов нет.
+- Повторный gate `rabit-e2e-d6e8145c46c5` (321.9 с) — PASS, exit 0: phpstan, phpunit PASS; группа `a` 64/64, группа `b` 45/45 (с тестами оплаты G1); все верификаторы, включая `verify-payments.php`, PASS.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -83,4 +86,4 @@
 | T14 | PASS | 2026-09-25 | PHPUnit, `PhotoMediaContractTest::testControllersKeepTheCleanBoundary`, `testReadingAndGroupingDoNotNeedTheMessageTransport` |
 | T15 | PASS | 2026-09-25 | архитектурный тест: в контроллерах нет `setStatus`, загрузка отвечает `acceptedJson()`; сам статус 202 подтвердит T17 |
 | T16 | PASS | 2026-09-25 | PHPStan OK, phplint OK, php-cs-fixer 0 из 32 |
-| T17 | PASS | 2026-09-25 | `make test-e2e` `dedaa9541e04`: exit 0, a 64/64, b 43/43 (`zz-media`, `zzzzzz-transfers`, `zzzz-links`, `zzz-handoff`) |
+| T17 | PASS | 2026-09-25 | `make test-e2e` `dedaa9541e04` (a 64/64, b 43/43) и после G1 `d6e8145c46c5` (a 64/64, b 45/45), exit 0 |
