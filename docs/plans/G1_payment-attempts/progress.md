@@ -2,15 +2,15 @@
 
 ## Точка продолжения
 
-- Ветка `codex/g1-payment-attempts`, base `main` `49f40f9`, head `675928a`. PR ещё не создан.
-- Рабочая копия: `/home/user/rabit-api-worktrees/g1-payment-attempts`.
-- Документация: `plan.md`, `docs/plans/sberpay-start-plan/plan.md`, `MoreFoto/docs/05-rest-api/README.md` (PAY/COM).
-- Завершено: S1–S11 — план, графы, модуль `morefoto.payment` (миграция, контракт с Commerce, сверка, webhook, реестр, cron), frontend покупателя и сотрудника, быстрые проверки.
-- Сейчас: S12 — E2E-стенд (регистрация модуля, ключи тестового магазина, спецификация и verifier).
-- Следующий шаг: подключить модуль и переменные оплаты в `api/tools/e2e/prepare.php` и runner.
-- Блокеры: нет. Открытых решений нет. Ограничение: СБП в тестовом магазине не проверяется (`BLOCKED` до боевого).
-- Рабочее дерево: чистое после коммита `675928a`. Корневые каталоги `api/vendor` и `api/var/*` созданы контейнером от root (игнорируются git).
-- Ключи тестового магазина: `~/.config/morefoto/yookassa-test.env` (права 600, вне git), проверено наличие двух переменных без вывода значений.
+- Ветка `codex/g1-payment-attempts`, base `main` `49f40f9`, head — последний коммит ветки (после `22dbf4f`). PR — см. ниже в журнале.
+- Рабочая копия: `/home/user/rabit-api-worktrees/g1-payment-attempts`. Отчёт волны: `docs/waves/g1/README.md`, канонический patch: `docs/waves/g1/morefoto-contract.patch`.
+- Завершено: S1–S12 — план, графы, backend, frontend, быстрые проверки, E2E-спецификация и verifier (не запускались).
+- Сейчас: ревью PR пользователем.
+- Следующий шаг: после ревью без блокеров — полный `make test-e2e` (с файлом ключей тестового магазина), затем `visual.json` и `verification.json`.
+- Блокеры: нет. Ограничение: реальная проверка СБП — `BLOCKED` до боевого магазина.
+- Объём: ~6,5 тыс. рукописных строк (из них ~1,8 тыс. тестов), немного выше ориентира 6 тыс.
+- Рабочее дерево: чистое. `api/vendor`, `api/var/*` принадлежат root (контейнер), игнорируются git.
+- Команда gate: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` (runner сам берёт `~/.config/morefoto/yookassa-test.env`; итоговая строка `YooKassa test shop: on`).
 
 ## Тест-кейсы
 
@@ -26,7 +26,7 @@
 | G1-T13 | PASS (частично) | 2026-09-25 | Прямой вызов API тестового магазина скриптом (ключи из файла, не выводились): `bank_card` → `pending` + `yoomoney.ru`, повтор ключа → тот же платёж, `sbp` → 400, неизвестный `GET` → 404. Оплата картой через страницу — в E2E |
 | G1-T18 | PASS (unit) | 2026-09-25 | `YooKassaClientTest`: Basic-авторизация, `Idempotence-Key`, классификация 400/401/404 → отказ, 429/500/таймаут/JSON → `unknown`, секрет не в сообщении |
 | G1-T16 | PASS | 2026-09-25 | Backend: phplint 1047 файлов OK; PHPStan (tools/e2e/phpstan.neon) — No errors; PHPUnit — OK 718 тестов / 3644 проверки; php-cs-fixer — исправлено 8 из 112, повтор чист. Frontend: `npm run check` (lint, stylelint, typecheck, typecheck:e2e, test:ui) — exit 0; `test:commerce` — 188/188; `build-only` — OK |
-| G1-T01…T18 прочие | PENDING | — | T09, T10, T14, T15 — HTTP/браузер в `make test-e2e` |
+| G1-T09, T10, T14, T15 | PENDING | — | `make test-e2e`, спецификация `zzzzzzzzz-payments` и `verify-payments.php` — после ревью |
 
 ## Журнал
 
@@ -46,3 +46,7 @@
 - S10 (коммит `675928a`): frontend — панель оплаты на странице заказа (способы из PAY-03, повтор тем же `Idempotency-Key`, переход на ЮKassa), страница возврата `/orders/payment/:attemptId` с опросом PAY-02, реестр `/cabinet/payments` и карточка платежа, пункт меню «Платежи» по `order.read`, оплата в карточке заказа сотрудника. Иконки `mdi-close-circle`, `mdi-credit-card-outline` добавлены в реестр.
 - Команда быстрых проверок frontend: `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e6-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce && npm run build-only'`.
 - Замечание: `zzzzz-orders.spec.ts:251` ждёт `FILTER_UNAVAILABLE` для `late=true` — обновить в S12.
+- Страница оплаты ЮKassa проверена Playwright-скриптом вне стенда: поля `card-number`, `expiry-month`, `expiry-year` (маска — посимвольный ввод), `security-code`, кнопка «Заплатить». Карта `5555…4444` → `succeeded`, `captured_at`, `income_amount`, страница «Успешно» с кнопкой «Вернуться на сайт». Карта `5555…4535` → «Не сработало», платёж остаётся `pending` (срок страницы ~10 минут). `return_url` на `http://127.0.0.1/…` принимается.
+- S12 (коммит `22dbf4f`): runner передаёт ключи env-файлом (`E2E_YOOKASSA_ENV`, по умолчанию `~/.config/morefoto/yookassa-test.env`) и подключает fpm к браузерной сети с выходом в интернет. MySQL и RabbitMQ остаются во внутренней сети. На стенде способы `bank_card,sbp`: отказ СБП тестовым магазином даёт реальную отменённую попытку. Спецификация `zzzzzzzzz-payments` в группе b объявляет тесты по режиму, без пропусков. `verify-payments.php` добавлен в `VERIFIERS`. `zzzzz-orders.spec.ts`: `late=maybe` → `INVALID_FILTER` вместо `FILTER_UNAVAILABLE`.
+- Канонический план MoreFoto меняла параллельная сессия (K3, вопросы через MAX: +6 API ID, `validate.py`, окружения Postman). Первый patch захватил её правки. Patch пересобран как разница между «текущий план без правок G1» и текущим планом: 8 файлов, `git apply --check --reverse` — OK, строк K3 в изменениях нет. `wave_graph.py` на текущем плане: 52 волны, 118 ID, готовы E6, G1, K3.
+- Повтор быстрых проверок после E2E-правок: `php -l` verifier и `prepare.php` — OK; PHPStan — No errors; PHPUnit — OK 718/3644; `npm run check` — exit 0; `test:commerce` — 188/188; `py_compile` runner — OK.

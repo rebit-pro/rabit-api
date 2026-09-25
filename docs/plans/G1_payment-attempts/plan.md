@@ -88,7 +88,7 @@
 - [x] S9. Cron-сверка.
 - [x] S10. Frontend покупателя и сотрудника.
 - [x] S11. Быстрые проверки: php-cs-fixer, unit, arch, frontend lint/type/build.
-- [ ] S12. E2E: регистрация модуля в стенде, sandbox-спецификация, verifier.
+- [x] S12. E2E: регистрация модуля в стенде, sandbox-спецификация, verifier.
 - [ ] S13. PR, ревью пользователя, затем `make test-e2e` и визуальная проверка desktop/mobile; подключение Swarm-секрета при выкладке на stage.
 
 ## Критерии приёмки
