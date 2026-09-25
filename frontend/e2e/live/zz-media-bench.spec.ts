@@ -1,6 +1,6 @@
 import { test, expect, type Request } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { login, token } from './helpers.js';
+import { login, peakOverlap, token, uploadSpans } from './helpers.js';
 
 // Opt-in measurement for #33/#34: E2E_MEDIA_BENCH=1 (optionally E2E_MEDIA_BENCH_COUNT) on the isolated stand only.
 const count = Number(process.env.E2E_MEDIA_BENCH_COUNT ?? 50);
@@ -24,6 +24,10 @@ test('#33/#34: замер партии типичных фото на изоли
   const institution = await create('/api/v1/institutions', { name: 'Бенч ' + suffix, address: 'Москва' });
   const shoot = await create('/api/v1/institutions/' + institution.id + '/shoots', { name: 'Бенч съёмка', date: '2026-10-20' });
   const group = await create('/api/v1/shoots/' + shoot.id + '/groups', { name: 'Бенч группа', groupKind: 'regular' });
+  // Status checks, list refreshes and previews of a long batch must not push the uploads out of the Resource Timing
+  // buffer: at most two checks a second, a list every five seconds and a queue of six previews stay well below it
+  // for the whole timeout. An overflow would drop upload entries and fail the count check, not hide an overlap.
+  await page.addInitScript(() => performance.setResourceTimingBufferSize(100000));
   await page.goto('/cabinet/institutions/' + institution.id + '/shoots/' + shoot.id + '/photos?group=' + group.id);
   await expect(page.getByText('Бенч группа', { exact: true })).toBeVisible();
 
@@ -69,17 +73,14 @@ test('#33/#34: замер партии типичных фото на изоли
 
   const uploads = '/api/v1/shoots/' + shoot.id + '/photos';
   const isUpload = (request: Request) => request.method() === 'POST' && new URL(request.url()).pathname === uploads;
-  // Transfer time and overlap come from the browser network timings, not from the event delivery order.
-  const spans: { start: number; end: number }[] = [];
-  const transfer: number[] = [];
+  let settled = 0;
   const accepted = new Map<string, number>();
   const ready = new Map<string, number>();
-  page.on('requestfinished', (request) => {
-    if (!isUpload(request)) return;
-    const timing = request.timing();
-    spans.push({ start: timing.startTime, end: timing.startTime + Math.max(timing.responseEnd, 0) });
-    transfer.push(Math.round(Math.max(timing.responseEnd, 0)));
-  });
+  const settle = (request: Request) => {
+    if (isUpload(request)) settled++;
+  };
+  page.on('requestfinished', settle);
+  page.on('requestfailed', settle);
   page.on('response', async (response) => {
     const request = response.request();
     const path = new URL(response.url()).pathname;
@@ -90,33 +91,27 @@ test('#33/#34: замер партии типичных фото на изоли
       if ('ready' === photo.status && !ready.has(photo.id)) ready.set(photo.id, Date.now());
     }
   });
-  const overlap = () => {
-    const edges = spans.flatMap(({ start, end }) => [
-      { at: start, delta: 1 },
-      { at: end, delta: -1 }
-    ]);
-    edges.sort((left, right) => left.at - right.at || left.delta - right.delta);
-    let current = 0;
-
-    return edges.reduce((peak, edge) => Math.max(peak, (current += edge.delta)), 0);
-  };
-
   const begin = Date.now();
   await page.locator('input[type="file"][aria-label="Выбрать фотографии"]').setInputFiles(paths);
   await page.getByRole('button', { name: 'Загрузить на сервер', exact: true }).click();
   await expect(page.getByTestId('upload-counts')).toContainText('Готово: ' + count, { timeout: 40 * 60 * 1000 });
   const total = Date.now() - begin;
+  // Transfer time and overlap come from the same Resource Timing entries, taken before any navigation clears them.
+  const spans = await uploadSpans(page, uploads);
+  const transfer = spans.map(({ start, end }) => Math.round(end - start));
+  const parallel = peakOverlap(spans);
   const readiness = [...accepted].filter(([id]) => ready.has(id)).map(([id, time]) => ready.get(id)! - time);
   const report = {
     count,
     averageMegabytes: Math.round((bytes / count / 1024 / 1024) * 10) / 10,
-    parallel: overlap(),
+    parallel,
     totalSeconds: Math.round(total / 1000),
     transferMs: { p50: percentile(transfer, 0.5), p95: percentile(transfer, 0.95) },
     acceptedToReadyMs: { p50: percentile(readiness, 0.5), p95: percentile(readiness, 0.95) }
   };
   writeFileSync(testInfo.outputPath('media-bench.json'), JSON.stringify(report, null, 2));
   console.log('Media bench: ' + JSON.stringify(report));
-  expect(overlap()).toBeLessThanOrEqual(2);
+  expect(spans).toHaveLength(settled);
+  expect(parallel).toBeLessThanOrEqual(2);
   expect(readiness).toHaveLength(count);
 });
