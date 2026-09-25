@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { computed, shallowRef } from 'vue';
+import { computed, shallowRef, useTemplateRef } from 'vue';
 import AdminDialog from '../../management/components/AdminDialog.vue';
 import { roleLabels } from '../../types';
 import StaffFields from './StaffFields.vue';
+import StaffPerson from './StaffPerson.vue';
 import { useStaffEditor } from '../useStaffEditor';
 import { useStaffManagement } from '../useStaffManagement';
-import type { AccountStatus, StaffInvitation, StaffSummary } from '../model';
+import type { AccountStatus, StaffInvitation, StaffSort, StaffSummary } from '../model';
+import UiDataTable from '../../ui/components/UiDataTable.vue';
+import type { UiTableColumn, UiTableRow, UiTableSort } from '../../ui/table-types';
 import { staffApi, staffError } from '../api';
 import { formatMoment } from '../../handoff/display';
 import MfStatus from '@/components/status/MfStatus.vue';
-import MfAvatar from '@/components/avatar/MfAvatar.vue';
 import MfStatTile from '@/components/viz/MfStatTile.vue';
 import MfDistribution from '@/components/viz/MfDistribution.vue';
 import { plural } from '@/components/viz/measures';
@@ -20,7 +22,22 @@ import { useAuthStore } from '@/stores/auth';
 import AvatarEditor from '../../avatar/AvatarEditor.vue';
 import { avatarApi } from '../../avatar/api';
 import { accountStatusTone } from '../../ui/statusTone';
-const { snapshot, loading, error, filters, reload, page, pages } = useStaffManagement();
+import type { StatusTone } from '@/components/status/tones';
+const {
+  snapshot,
+  loading,
+  error,
+  filters,
+  sort,
+  pageSize,
+  selected: selection,
+  reload,
+  setSort,
+  setPageSize,
+  staff,
+  remove,
+  page
+} = useStaffManagement();
 const auth = useAuthStore();
 const notice = shallowRef('');
 const editor = useStaffEditor(async () => {
@@ -38,6 +55,70 @@ const statusIcons: Record<AccountStatus, string> = {
   blocked: 'mdi-account-lock-outline'
 };
 const summary = computed(() => snapshot.value?.meta.summary ?? null);
+const columns: UiTableColumn[] = [
+  { key: 'name', label: 'Сотрудник', sortable: true, primary: true },
+  { key: 'role', label: 'Роль', sortable: true, mobile: true },
+  { key: 'assignments', label: 'Назначения', type: 'number', sortable: true, mobile: true },
+  { key: 'status', label: 'Статус', sortable: true, mobile: true }
+];
+const byId = computed(() => new Map((snapshot.value?.items ?? []).map((item) => [String(item.id), item])));
+const rows = computed<UiTableRow[]>(() =>
+  (snapshot.value?.items ?? []).map((item) => ({
+    id: String(item.id),
+    name: item.name,
+    role: roleLabels[item.role],
+    assignments: item.assignmentCount,
+    status: statusLabels[item.accountStatus]
+  }))
+);
+const selfId = computed(() => String(auth.user?.id ?? ''));
+const table = useTemplateRef<{ focusRow: (id?: string) => void }>('table');
+const removeIds = shallowRef<string[]>([]);
+const removing = shallowRef(false);
+const removal = shallowRef<{ tone: 'success' | 'warning'; text: string; failures: string[] } | null>(null);
+const removeTargets = computed(() => staff(removeIds.value));
+const removeSkipsSelf = computed(() => selection.value.includes(selfId.value));
+const showRemove = computed({
+  get: () => removeIds.value.length > 0,
+  set: (open: boolean) => {
+    if (!open && !removing.value) removeIds.value = [];
+  }
+});
+function askRemove(ids: string[]): void {
+  removal.value = null;
+  removeIds.value = ids.filter((id) => id !== selfId.value);
+}
+async function confirmRemove(): Promise<void> {
+  const ids = removeIds.value;
+  removing.value = true;
+  try {
+    const result = await remove(ids);
+    const text = 'Удалено: ' + result.removed + ' из ' + ids.length + '.';
+    removal.value = {
+      tone: result.failed.length ? 'warning' : 'success',
+      text: result.failed.length ? text : text + ' Их доступ к кабинету закрыт, назначения сняты.',
+      failures: result.failed.map((item) => item.name + ': ' + item.reason)
+    };
+  } finally {
+    removing.value = false;
+    removeIds.value = [];
+  }
+}
+function editRow(id: string): void {
+  const item = byId.value.get(id);
+  if (item) edit(item);
+}
+function statusTone(id: string): StatusTone {
+  const item = byId.value.get(id);
+  return item ? accountStatusTone[item.accountStatus] : 'neutral';
+}
+function invitationNote(id: string): string {
+  const item = byId.value.get(id);
+  return item?.accountStatus === 'pending' && item.invitation ? invitationShort(item.invitation) : '';
+}
+function changeSort(next: UiTableSort): void {
+  setSort(next as StaffSort);
+}
 const roleSegments = computed(() =>
   (Object.keys(roleLabels) as (keyof typeof roleLabels)[]).map((role) => ({
     key: role,
@@ -94,6 +175,7 @@ async function avatarChanged(avatar: AvatarRef | null): Promise<void> {
 }
 function edit(item?: StaffSummary): void {
   notice.value = '';
+  removal.value = null;
   invitationNotice.value = '';
   invitationError.value = '';
   selected.value = item ?? null;
@@ -135,52 +217,94 @@ function edit(item?: StaffSummary): void {
     <v-select v-model="filters.accountStatus" :items="statusItems" label="Статус" aria-label="Статус" hide-details />
     <v-btn type="submit" variant="outlined" :disabled="loading">Найти</v-btn>
   </form>
-  <v-progress-linear v-if="loading" indeterminate aria-label="Загрузка сотрудников" class="mb-5" />
-  <v-alert v-if="error" type="error" variant="tonal" role="alert" class="mb-5">{{ error }}</v-alert>
+  <v-progress-linear v-if="loading && snapshot" indeterminate aria-label="Загрузка сотрудников" class="mb-5" />
   <v-alert v-if="notice" type="success" variant="tonal" role="status" class="mb-5">{{ notice }}</v-alert>
-  <section v-if="snapshot && !error" aria-label="Список сотрудников">
-    <p class="mf-muted mb-4">Всего: {{ snapshot.meta.total }}</p>
-    <v-card variant="outlined" class="staff-table">
-      <div v-if="!snapshot.items.length" class="staff-empty">
-        <v-icon icon="mdi-account-search-outline" size="36" />
-        <p>Сотрудники не найдены</p>
-      </div>
-      <button
-        v-for="item in snapshot.items"
-        :key="item.id"
-        type="button"
-        class="staff-row"
-        :aria-label="'Редактировать сотрудника ' + item.name"
-        @click="edit(item)"
-      >
-        <span class="staff-person"
-          ><MfAvatar
-            :seed="avatarSeed(item.id, item.email)"
-            :name="item.name"
-            :email="item.email"
-            :size="32"
-            :src="item.avatar?.thumbUrl"
-            decorative
-          /><span class="staff-person__text"
-            ><strong>{{ item.name }}</strong
-            ><small>{{ item.email }}</small></span
-          ></span
-        >
-        <span><small>Роль</small>{{ roleLabels[item.role] }}</span>
-        <span><small>Назначения</small>{{ item.assignmentCount }}</span>
+  <v-alert v-if="removal" :type="removal.tone" variant="tonal" role="status" class="mb-5" data-testid="staff-removal">
+    {{ removal.text }}
+    <ul v-if="removal.failures.length" class="staff-removal-failures">
+      <li v-for="failure in removal.failures" :key="failure">{{ failure }}</li>
+    </ul>
+  </v-alert>
+  <div v-if="selection.length" class="staff-bulk mb-4" data-testid="staff-bulk">
+    <p>Выбрано: {{ selection.length }}<template v-if="removeSkipsSelf"> · свою учётку удалить нельзя, она будет пропущена</template></p>
+    <v-btn
+      color="error"
+      variant="outlined"
+      density="compact"
+      prepend-icon="mdi-delete-outline"
+      :disabled="loading || removing || (removeSkipsSelf && selection.length === 1)"
+      @click="askRemove(selection)"
+      >Удалить выбранных</v-btn
+    >
+    <v-btn variant="text" density="compact" @click="selection = []">Снять выбор</v-btn>
+  </div>
+  <section aria-label="Список сотрудников">
+    <UiDataTable
+      ref="table"
+      title="Сотрудники"
+      label-key="name"
+      :columns="columns"
+      :rows="rows"
+      :total="snapshot?.meta.total ?? 0"
+      :page="page"
+      :page-size="pageSize"
+      :sort="sort"
+      :selected="selection"
+      :loading="loading && !snapshot"
+      :error="error"
+      empty-title="Сотрудники не найдены"
+      empty-description="Измените фильтры или добавьте сотрудника."
+      @sort="changeSort"
+      @page="reload($event)"
+      @page-size="setPageSize"
+      @select="selection = $event"
+      @retry="reload()"
+    >
+      <template #cell-name="{ row }">
+        <StaffPerson v-if="byId.get(row.id)" :item="byId.get(row.id)!" @open="edit" />
+      </template>
+      <template #cell-status="{ row }">
         <span class="staff-status"
-          ><MfStatus :tone="accountStatusTone[item.accountStatus]">{{ statusLabels[item.accountStatus] }}</MfStatus
-          ><small v-if="item.accountStatus === 'pending' && item.invitation">{{ invitationShort(item.invitation) }}</small></span
+          ><MfStatus :tone="statusTone(row.id)">{{ row.status }}</MfStatus
+          ><small v-if="invitationNote(row.id)">{{ invitationNote(row.id) }}</small></span
         >
-        <v-icon icon="mdi-chevron-right" aria-hidden="true" />
-      </button>
-    </v-card>
-    <nav v-if="pages > 1" class="mf-actions mt-5" aria-label="Страницы сотрудников">
-      <v-btn variant="outlined" :disabled="loading || page === 1" @click="reload(page - 1)">Предыдущая</v-btn>
-      <span>Страница {{ page }} из {{ pages }}</span>
-      <v-btn variant="outlined" :disabled="loading || page === pages" @click="reload(page + 1)">Следующая</v-btn>
-    </nav>
+      </template>
+      <template #actions="{ row }">
+        <div class="staff-actions">
+          <v-btn variant="text" density="compact" :aria-label="'Изменить сотрудника ' + row.name" @click="editRow(row.id)">Изменить</v-btn>
+          <v-btn
+            v-if="row.id !== selfId"
+            icon="mdi-delete-outline"
+            variant="text"
+            density="compact"
+            color="error"
+            :aria-label="'Удалить сотрудника ' + row.name"
+            :disabled="removing"
+            @click="askRemove([row.id])"
+          />
+        </div>
+      </template>
+    </UiDataTable>
   </section>
+  <v-dialog v-model="showRemove" max-width="520" aria-labelledby="staff-remove-title" @after-leave="table?.focusRow()">
+    <v-card class="morefoto-app mf-panel staff-remove-dialog" data-testid="staff-remove-dialog">
+      <h2 id="staff-remove-title">
+        {{ removeTargets.length === 1 ? 'Удалить сотрудника?' : 'Удалить сотрудников: ' + removeTargets.length + '?' }}
+      </h2>
+      <ul class="staff-remove-names">
+        <li v-for="item in removeTargets.slice(0, 10)" :key="item.id">{{ item.name }} · {{ item.email }}</li>
+        <li v-if="removeTargets.length > 10">и ещё {{ removeTargets.length - 10 }}</li>
+      </ul>
+      <p>
+        Доступ к кабинету закроется сразу, назначения на учреждения и группы будут сняты. История действий сохранится. Вернуть сотрудника
+        можно, добавив его заново по тому же email: он получит новое приглашение.
+      </p>
+      <div class="mf-actions">
+        <v-btn color="error" :loading="removing" @click="confirmRemove">Удалить</v-btn>
+        <v-btn variant="outlined" :disabled="removing" @click="showRemove = false">Отмена</v-btn>
+      </div>
+    </v-card>
+  </v-dialog>
   <AdminDialog
     :open="!!editor.draft.value"
     :title="title"
@@ -254,76 +378,44 @@ function edit(item?: StaffSummary): void {
   gap: 12px;
   align-items: center;
 }
-.staff-table {
-  overflow: hidden;
-}
-.staff-row {
-  width: 100%;
-  display: grid;
-  /* Every row is its own grid: fixed tracks keep the columns aligned when a status carries the invitation date. */
-  grid-template-columns: minmax(190px, 2fr) minmax(120px, 1fr) 100px 210px 24px;
-  gap: 16px;
-  align-items: center;
-  padding: 18px 20px;
-  border: 0;
-  border-bottom: 1px solid var(--mf-color-border);
-  background: transparent;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.staff-row:last-child {
-  border-bottom: 0;
-}
-.staff-row:hover,
-.staff-row:focus-visible {
-  background: var(--mf-color-bg);
-  outline: none;
-}
-.staff-row span {
-  display: grid;
-  gap: 2px;
-}
-.staff-row small {
-  color: var(--mf-color-text-secondary);
-  font-size: 12px;
-}
-.staff-row .staff-person {
+.staff-actions {
   display: flex;
   align-items: center;
-  gap: var(--mf-space-3);
+  gap: var(--mf-space-1);
+}
+.staff-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--mf-radius-sm);
+  background: var(--mf-color-selected);
+  font-size: var(--mf-text-small);
+}
+.staff-removal-failures {
+  margin: var(--mf-space-2) 0 0 var(--mf-space-5);
+}
+.staff-remove-dialog {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+}
+.staff-remove-dialog p {
+  line-height: 1.6;
+}
+.staff-remove-names {
+  display: grid;
+  gap: 4px;
+  margin-left: var(--mf-space-5);
   overflow-wrap: anywhere;
-}
-.staff-row .staff-person__text {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-.staff-empty {
-  display: grid;
-  place-items: center;
-  gap: 8px;
-  padding: 48px 20px;
-  color: var(--mf-color-text-secondary);
 }
 @media (max-width: 760px) {
   .staff-filters {
     grid-template-columns: 1fr;
   }
-  .staff-row {
-    grid-template-columns: 1fr auto;
-    gap: 12px;
-  }
-  .staff-row > span:not(.staff-person) {
-    display: none;
-  }
-  .staff-row .v-chip {
-    grid-column: 1;
-    justify-self: start;
-  }
-  .staff-row > .v-icon {
-    grid-row: 1 / span 2;
-    grid-column: 2;
+  .staff-remove-dialog {
+    padding: 16px;
   }
 }
 </style>

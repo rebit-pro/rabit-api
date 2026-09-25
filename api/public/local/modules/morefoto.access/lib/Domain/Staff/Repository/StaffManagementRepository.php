@@ -185,7 +185,6 @@ final readonly class StaffManagementRepository
         $direction = $input->descending ? 'DESC' : 'ASC';
         $column = match ($input->sort) {
             StaffSortEnum::NAME => 'u.NAME',
-            StaffSortEnum::EMAIL => 'u.EMAIL',
             StaffSortEnum::ROLE => "FIELD(p.UF_ROLE,'organizer','curator','head','teacher')",
             StaffSortEnum::ASSIGNMENTS => 'ASSIGNMENT_COUNT',
             StaffSortEnum::STATUS => 'FIELD(' . self::STATUS_SQL . ",'active','pending','blocked')",

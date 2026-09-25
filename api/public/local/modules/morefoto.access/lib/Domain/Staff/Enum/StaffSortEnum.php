@@ -8,7 +8,6 @@ namespace Morefoto\Access\Domain\Staff\Enum;
 enum StaffSortEnum: string
 {
     case NAME = 'name';
-    case EMAIL = 'email';
     case ROLE = 'role';
     case ASSIGNMENTS = 'assignments';
     case STATUS = 'status';

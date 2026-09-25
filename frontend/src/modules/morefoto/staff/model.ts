@@ -72,6 +72,11 @@ export interface StaffDraft {
   reason: string;
   assignmentSignature: string;
 }
+export type StaffSortKey = 'name' | 'role' | 'assignments' | 'status';
+export interface StaffSort {
+  key: StaffSortKey;
+  direction: 'asc' | 'desc';
+}
 export interface StaffFilters {
   q: string;
   role: StaffRole | null;
