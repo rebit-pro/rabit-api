@@ -5,453 +5,132 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
-<title>Прогон stage — база знаний «Море фото»</title>
+<title>Тестовый прогон — база знаний «Море фото»</title>
 <link rel="icon" href="/favicon.ico?v=morefoto-1" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/icons/morefoto-v1.svg">
-<style>
-:root{
-  --bg:#f4f7f8; --surface:#ffffff; --field:#f7fafb; --ink:#15212b; --muted:#566673; --line:#d6e0e5;
-  --sea:#17677f; --sea-ink:#ffffff; --sea-soft:#e3f0f3; --sand:#f3ecdf;
-  --ok:#2d7a4b; --ok-soft:#e3f2e8; --warn:#9a6212; --warn-soft:#fbf0dc; --stop:#a63b2c; --stop-soft:#f9e6e2;
-  --r-org:#17677f; --r-cur:#7a4fa3; --r-par:#b0572a; --r-team:#566673;
-  --display:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    color-scheme:dark;
-    --bg:#0f171c; --surface:#16222a; --field:#1b2a33; --ink:#e6eef1; --muted:#9db0ba; --line:#2c3d47;
-    --sea:#5fb7d0; --sea-ink:#0f171c; --sea-soft:#15323c; --sand:#2a261e;
-    --ok:#6cc58f; --ok-soft:#173226; --warn:#e5b35c; --warn-soft:#352914; --stop:#f08c7a; --stop-soft:#3a1d18;
-    --r-org:#5fb7d0; --r-cur:#b999dc; --r-par:#e8966a; --r-team:#9db0ba;
-  }
-}
-:root[data-theme="dark"]{
-  color-scheme:dark;
-  --bg:#0f171c; --surface:#16222a; --field:#1b2a33; --ink:#e6eef1; --muted:#9db0ba; --line:#2c3d47;
-  --sea:#5fb7d0; --sea-ink:#0f171c; --sea-soft:#15323c; --sand:#2a261e;
-  --ok:#6cc58f; --ok-soft:#173226; --warn:#e5b35c; --warn-soft:#352914; --stop:#f08c7a; --stop-soft:#3a1d18;
-  --r-org:#5fb7d0; --r-cur:#b999dc; --r-par:#e8966a; --r-team:#9db0ba;
-}
-*{box-sizing:border-box}
-html{color-scheme:light}
-body{margin:0}
-[hidden]{display:none!important}
-body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--body);padding-inline:16px;padding-block:0 72px}
-.wrap{max-width:920px;margin:0 auto;display:grid;gap:44px}
-h1,h2{font-family:var(--display);font-weight:700;letter-spacing:-.01em;text-wrap:balance;margin:0}
-h1{font-size:clamp(28px,5.4vw,44px);line-height:1.1}
-h2{font-size:21px;line-height:1.3}
-h3{font-size:17px;font-weight:600;margin:0}
-p{margin:0}
-a{color:var(--sea)}
-code{font-family:var(--mono);font-size:.86em;background:var(--sea-soft);padding:1px 6px;border-radius:4px;overflow-wrap:anywhere}
-.eyebrow{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-.lead{color:var(--muted);max-width:62ch}
-section{display:grid;gap:16px}
-.sec-head{display:grid;gap:6px}
-
-/* sticky save bar */
-.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);margin-inline:-16px;padding:10px 16px}
-.topbar-in{max-width:920px;margin:0 auto;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-size:14px}
-.brand{font-family:var(--display);font-weight:700;font-size:14px;color:var(--ink);text-decoration:none}
-a.brand{color:var(--sea)}
-.brand-sep{color:var(--muted);margin-inline:-10px}
-.save{display:inline-flex;align-items:center;gap:7px;color:var(--muted)}
-.save::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--muted)}
-.save[data-s="saved"]::before{background:var(--ok)}
-.save[data-s="saving"]::before{background:var(--warn)}
-.save[data-s="local"]::before{background:var(--warn)}
-.save[data-s="error"]::before{background:var(--stop)}
-.bar{flex:1;min-width:120px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
-.bar i{display:block;height:100%;width:0;background:var(--sea);transition:width .25s}
-.count{font-variant-numeric:tabular-nums;color:var(--muted)}
-
-/* hero */
-.hero{display:grid;gap:18px;padding-top:36px}
-.hero-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.fact{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:4px;align-content:start}
-.fact b{font-size:15px}
-.fact span{font-size:14px;color:var(--muted)}
-.fact.stop{background:var(--stop-soft);border-color:color-mix(in srgb,var(--stop) 35%,transparent)}
-.fact.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 35%,transparent)}
-.fact.ok{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 35%,transparent)}
-.fact .k{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
-.fact.stop .k{color:var(--stop)} .fact.warn .k{color:var(--warn)} .fact.ok .k{color:var(--ok)}
-
-/* forms */
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:16px}
-.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
-.f{display:grid;gap:5px;min-width:0}
-.f > span{font-size:13px;font-weight:500;color:var(--muted)}
-input[type=text],input[type=email],input[type=url],input[type=datetime-local],select,textarea{
-  width:100%;font:inherit;font-size:15px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:9px 11px;min-width:0}
-textarea{min-height:110px;resize:vertical;line-height:1.5}
-input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--sea);outline-offset:2px}
-.mono{font-family:var(--mono);font-size:14px}
-
-.team{display:grid;gap:10px}
-.person{display:grid;grid-template-columns:180px minmax(0,1fr) minmax(0,1.3fr) 190px;gap:10px;align-items:end;padding:12px 0;border-top:1px solid var(--line)}
-.person:first-child{border-top:0;padding-top:0}
-.who{display:grid;gap:2px;align-self:center}
-.role{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:14px;white-space:nowrap}
-.role::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c)}
-.r-org{--c:var(--r-org)} .r-cur{--c:var(--r-cur)} .r-par{--c:var(--r-par)} .r-team{--c:var(--r-team)}
-.who small{font-size:13px;color:var(--muted)}
-.who .role{white-space:normal}
-@media (max-width:720px){.person{grid-template-columns:1fr 1fr}.who{grid-column:1/-1}}
-@media (max-width:420px){.person{grid-template-columns:1fr}}
-
-.linkrow{display:flex;gap:8px;align-items:stretch}
-.linkrow input{flex:1}
-.btn{font:inherit;font-size:14px;font-weight:500;border-radius:8px;padding:8px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center}
-.btn.primary{background:var(--sea);border-color:var(--sea);color:var(--sea-ink)}
-.btn[aria-disabled="true"]{opacity:.45;pointer-events:none}
-.hint{font-size:13px;color:var(--muted)}
-.hint.bad{color:var(--stop)}
-
-/* stages */
-ol.stages{list-style:none;margin:0;padding:0;display:grid;gap:14px;counter-reset:st}
-.stage{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;padding:18px 18px 16px;display:grid;gap:12px;counter-increment:st}
-.stage-head{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline}
-.stage-head h3::before{content:counter(st) ". ";color:var(--muted);font-variant-numeric:tabular-nums}
-.stage-head .where{font-family:var(--mono);font-size:13px;color:var(--muted)}
-.stage-head .done{margin-left:auto;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
-.stage[data-complete="1"] .done{color:var(--ok);font-weight:600}
-.stage > p{color:var(--muted);font-size:15px;max-width:65ch}
-ul.steps{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.steps label{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start;cursor:pointer}
-.steps input{width:18px;height:18px;margin:3px 0 0;accent-color:var(--sea)}
-.steps input:checked + span{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
-.ui{font-weight:600}
-.note{font-size:14px;background:var(--sand);border-radius:8px;padding:10px 12px}
-.note.block{background:var(--stop-soft)}
-.stage .f{max-width:520px}
-
-.pay{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
-.pay div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:6px;align-content:start}
-.pay h3{font-size:15px}
-.pay p{font-size:15px;color:var(--muted)}
-dl.faq{margin:0;display:grid;gap:14px}
-dl.faq dt{font-weight:600}
-dl.faq dd{margin:4px 0 0;color:var(--muted);max-width:65ch}
-footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;display:grid;gap:6px}
-@media (prefers-reduced-motion: reduce){.bar i{transition:none}}
-</style>
+<link rel="stylesheet" href="/guide/static/guide.css">
 </head>
 <body>
+<nav class="topnav" aria-label="Навигация"><div class="topnav-in">
+  <a href="/guide/">База знаний</a><span class="sep">/</span><span class="here">Тестовый прогон</span><span class="spacer"></span>
+  <span class="progress"><span class="bar" aria-hidden="true"><i id="bar"></i></span><span id="count">0 из 0</span></span>
+</div></nav>
 
-<div class="topbar"><div class="topbar-in">
-  <a class="brand" href="/guide/">База знаний</a><span class="brand-sep">/</span><span class="brand">Прогон stage</span>
-  <span class="save" id="save" data-s="local">Подключаем хранилище…</span>
-  <div class="bar" aria-hidden="true"><i id="bar"></i></div>
-  <span class="count" id="count">0 из 0</span>
-</div></div>
+<main class="page narrow" data-store="stage-run" data-legacy="morefoto-guide-stage-run-v1">
+  <header class="hero">
+    <p class="eyebrow">Практика</p>
+    <h1>Тестовый прогон: весь путь за один раз</h1>
+    <p class="lead">Чек-лист для проверки на <a href="/login">app.morefoto36.ru</a>: каждый участник отмечает свои шаги и записывает, что получилось. Подробности каждого шага — по ссылкам «как».</p>
+    <p class="hint" id="save">Поля сохраняются в этом браузере</p>
+  </header>
 
-<div class="wrap">
-
-<header class="hero">
-  <p class="eyebrow">Stage · app.morefoto36.ru · сценарий от учреждения до заказа</p>
-  <h1>Пульт прогона: от пустого кабинета до заказа родителя</h1>
-  <p class="lead">Здесь всё для одного тестового прогона: кто в какой роли, какие данные созданы, ссылка на галерею и номер заказа. Поля сохраняются сами, но только в этом браузере: у каждого участника свои записи. Итог прогона — ссылку, номер заказа и заметки — перешлите в общий чат.</p>
-  <div class="hero-grid">
-    <div class="fact stop"><span class="k">Блокирует шаг 8</span><b>Оформление заказа выключено</b><span>Пока флаг оформления на сервере выключен, в корзине нет «Оформить заказ». Его включают перед шагом 8.</span></div>
-    <div class="fact warn"><span class="k">Ещё не сделано</span><b>Оплаты ЮKassa нет</b><span>Заказ создаётся без списания денег. Оплата появится с волной G1.</span></div>
-    <div class="fact ok"><span class="k">Работает</span><b>Письма-приглашения</b><span>Если письмо не пришло: «Спам», затем «Отправить приглашение повторно».</span></div>
+  <div class="facts">
+    <div class="fact"><span class="k">Где хранится</span><b>Только в этом браузере</b><span>У каждого участника свои записи. Итог — ссылку, номер заказа и замечания — перешлите в общий чат.</span></div>
+    <div class="fact"><span class="k">Шаг родителя</span><b>Нужно включённое оформление</b><span>Если в корзине нет «Оформить заказ», его ещё не включили на сервере.</span></div>
+    <div class="fact"><span class="k">Оплата</span><b>Пока без денег</b><span>Заказ сохраняется «Не оплачено». Оплата появится с ЮKassa.</span></div>
   </div>
   <p class="note">Не вносите сюда пароли. Ссылки на галерею и заказ открывают данные без входа — пересылайте их только участникам прогона.</p>
-</header>
 
-<section aria-labelledby="h-team">
-  <div class="sec-head"><h2 id="h-team">Команда прогона</h2><p class="lead">Отмечайте статус приглашения, чтобы видеть, кто уже может войти. Разные роли держите в разных браузерах: повторный вход под тем же логином выбрасывает прежнюю сессию.</p></div>
-  <div class="panel team">
-    <div class="person">
-      <div class="who"><span class="role r-org">Организатор</span><small>Вы. Всё настраиваете и выпускаете ссылку</small></div>
-      <label class="f"><span>Имя</span><input type="text" id="p_me_name" data-f autocomplete="off"></label>
-      <label class="f"><span>Email для входа</span><input type="email" id="p_me_email" data-f autocomplete="off"></label>
-      <label class="f"><span>Статус</span><select id="p_me_status" data-f><option value="in">Вошёл в кабинет</option><option value="">—</option></select></label>
-    </div>
-    <div class="person">
-      <div class="who"><span class="role r-org">Организатор</span><small>Алёна. Второй организатор</small></div>
-      <label class="f"><span>Имя</span><input type="text" id="p_alena_name" data-f value="Алёна" autocomplete="off"></label>
-      <label class="f"><span>Email для приглашения</span><input type="email" id="p_alena_email" data-f autocomplete="off"></label>
-      <label class="f"><span>Статус</span><select id="p_alena_status" data-f><option value="">Не заведена</option><option value="added">Заведена</option><option value="sent">Приглашение отправлено</option><option value="in">Вошла в кабинет</option></select></label>
-    </div>
-    <div class="person">
-      <div class="who"><span class="role r-cur">Куратор</span><small>Рита. Передаёт ссылку, видит заказы своего учреждения</small></div>
-      <label class="f"><span>Имя</span><input type="text" id="p_rita_name" data-f value="Рита" autocomplete="off"></label>
-      <label class="f"><span>Email для приглашения</span><input type="email" id="p_rita_email" data-f autocomplete="off"></label>
-      <label class="f"><span>Статус</span><select id="p_rita_status" data-f><option value="">Не заведена</option><option value="added">Заведена</option><option value="sent">Приглашение отправлено</option><option value="in">Вошла в кабинет</option></select></label>
-    </div>
-    <div class="person">
-      <div class="who"><span class="role r-team">Ответственный группы</span><small>По желанию. Тоже может отметить передачу</small></div>
-      <label class="f"><span>Имя</span><input type="text" id="p_teacher_name" data-f autocomplete="off"></label>
-      <label class="f"><span>Email для приглашения</span><input type="email" id="p_teacher_email" data-f autocomplete="off"></label>
-      <label class="f"><span>Статус</span><select id="p_teacher_status" data-f><option value="">Не нужен</option><option value="added">Заведён</option><option value="sent">Приглашение отправлено</option><option value="in">Вошёл в кабинет</option></select></label>
-    </div>
-    <div class="person">
-      <div class="who"><span class="role r-par">Родитель</span><small>Без входа, только по ссылке</small></div>
-      <label class="f"><span>Кто играет</span><input type="text" id="p_parent_name" data-f autocomplete="off"></label>
-      <label class="f"><span>Email для чека</span><input type="email" id="p_parent_email" data-f autocomplete="off"></label>
-      <label class="f"><span>Устройство</span><select id="p_parent_device" data-f><option value="">—</option><option value="phone">Телефон</option><option value="private">Приватное окно</option><option value="other">Другой браузер</option></select></label>
-    </div>
-  </div>
-</section>
-
-<section aria-labelledby="h-data">
-  <div class="sec-head"><h2 id="h-data">Что создано на стенде</h2><p class="lead">Записывайте названия сразу после создания — по ним Рита найдёт учреждение, а я потом смогу сверить данные. Префикс «Тест —» отделит прогон от настоящих записей.</p></div>
-  <div class="panel">
-    <div class="grid2">
-      <label class="f"><span>Продукция в каталоге и цена</span><input type="text" id="d_product" data-f placeholder="Тест — портрет 15×20, 350 ₽" autocomplete="off"></label>
-      <label class="f"><span>Учреждение</span><input type="text" id="d_institution" data-f placeholder="Тест — детский сад «Ромашка»" autocomplete="off"></label>
-      <label class="f"><span>Съёмка и дата</span><input type="text" id="d_shoot" data-f placeholder="Тест — осень, 25.09.2026" autocomplete="off"></label>
-      <label class="f"><span>Группа</span><input type="text" id="d_group" data-f placeholder="Тест — средняя группа" autocomplete="off"></label>
-      <label class="f"><span>Коды детей</span><input type="text" id="d_codes" data-f placeholder="101, 102" autocomplete="off"></label>
-      <label class="f"><span>Сколько фото загружено</span><input type="text" id="d_photos" data-f inputmode="numeric" placeholder="8" autocomplete="off"></label>
-    </div>
-  </div>
-</section>
-
-<section aria-labelledby="h-link">
-  <div class="sec-head"><h2 id="h-link">Ссылка на галерею и заказ</h2><p class="lead">Главный результат прогона. Ссылку вставьте после шага 5, номер и личную ссылку заказа — после шага 8.</p></div>
-  <div class="panel">
-    <div class="f">
-      <span>Ссылка на галерею группы</span>
-      <div class="linkrow">
-        <input type="url" id="l_gallery" data-f class="mono" placeholder="https://app.morefoto36.ru/g/…" autocomplete="off">
-        <button type="button" class="btn" data-copy="l_gallery">Копировать</button>
-        <a class="btn primary" id="open_gallery" href="#" target="_blank" rel="noopener" aria-disabled="true">Открыть</a>
+  <section aria-labelledby="h-team">
+    <h2 id="h-team">Кто участвует</h2>
+    <div class="panel">
+      <div class="grid2">
+        <label class="f"><span>Организатор — вы</span><input type="text" id="p_me_name" data-f autocomplete="off" placeholder="Имя"></label>
+        <label class="f"><span>Второй организатор</span><input type="text" id="p_alena_name" data-f value="Алёна" autocomplete="off"></label>
+        <label class="f"><span>Email Алёны для приглашения</span><input type="email" id="p_alena_email" data-f autocomplete="off"></label>
+        <label class="f"><span>Статус Алёны</span><select id="p_alena_status" data-f><option value="">Не заведена</option><option value="added">Заведена, ждём письмо</option><option value="in">Вошла в кабинет</option></select></label>
+        <label class="f"><span>Куратор</span><input type="text" id="p_rita_name" data-f value="Рита" autocomplete="off"></label>
+        <label class="f"><span>Email Риты для приглашения</span><input type="email" id="p_rita_email" data-f autocomplete="off"></label>
+        <label class="f"><span>Статус Риты</span><select id="p_rita_status" data-f><option value="">Не заведена</option><option value="added">Заведена, ждём письмо</option><option value="in">Вошла в кабинет</option></select></label>
+        <label class="f"><span>Кто играет родителя</span><input type="text" id="p_parent_name" data-f autocomplete="off"></label>
       </div>
-      <span class="hint" id="l_gallery_hint">Скопируйте кнопкой «Копировать ссылку» в «Ссылках и сроках».</span>
     </div>
-    <div class="grid2">
-      <label class="f"><span>Передача отмечена (МСК)</span><input type="datetime-local" id="l_sent" data-f></label>
-      <label class="f"><span>Кто отметил передачу</span><select id="l_sent_by" data-f><option value="">—</option><option value="rita">Рита</option><option value="me">Я</option><option value="alena">Алёна</option><option value="teacher">Ответственный группы</option></select></label>
-      <label class="f"><span>Номер заказа</span><input type="text" id="o_number" data-f class="mono" placeholder="MF-…" autocomplete="off"></label>
-      <label class="f"><span>Сумма заказа</span><input type="text" id="o_total" data-f placeholder="700 ₽" autocomplete="off"></label>
-    </div>
-    <div class="f">
-      <span>Личная ссылка заказа</span>
-      <div class="linkrow">
-        <input type="url" id="o_link" data-f class="mono" placeholder="https://app.morefoto36.ru/orders/access/…" autocomplete="off">
-        <button type="button" class="btn" data-copy="o_link">Копировать</button>
-        <a class="btn primary" id="open_order" href="#" target="_blank" rel="noopener" aria-disabled="true">Открыть</a>
+  </section>
+
+  <section aria-labelledby="h-steps">
+    <h2 id="h-steps">Шаги</h2>
+    <div class="checklist">
+      <div class="check-group" style="--c:var(--r-org)">
+        <header><span class="role role-org">Организатор</span><span class="done"></span></header>
+        <ul>
+          <li><label><input type="checkbox" id="r_o1"><span>Пригласил Алёну (организатор) и Риту (куратор). <a href="/guide/organizer/#staff">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_o2"><span>Завёл продукцию с ценой, «Доступно для покупки». <a href="/guide/organizer/#catalog">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_o3"><span>Создал учреждение и назначил его Рите в «Сотрудники» → «Назначенные учреждения». <a href="/guide/organizer/#institution">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_o4"><span>Создал съёмку и группу, проверил условия группы. <a href="/guide/organizer/#group">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_o5"><span>Загрузил фото, все «Готово». <a href="/guide/organizer/#photos">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_o6"><span>Назначил коды детей («Без ребёнка: 0») и обложку. <a href="/guide/organizer/#codes">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_o7"><span>«Проверить ссылку» → статус «Готова к передаче», ссылка скопирована и отправлена Рите. <a href="/guide/organizer/#check">как</a></span></label></li>
+        </ul>
       </div>
-      <span class="hint" id="o_link_hint">Только эта ссылка открывает заказ. Номер заказа доступа не даёт.</span>
+      <div class="check-group" style="--c:var(--r-cur)">
+        <header><span class="role role-cur">Куратор</span><span class="done"></span></header>
+        <ul>
+          <li><label><input type="checkbox" id="r_c1"><span>Вошла по приглашению, видит только своё учреждение. <a href="/guide/curator/#login">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_c2"><span>Скопировала ссылку группы и отправила «родителю». <a href="/guide/curator/#send">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_c3"><span>«Отметить передачу» → статус «Приём открыт», видны сроки. <a href="/guide/curator/#mark">как</a></span></label></li>
+        </ul>
+      </div>
+      <div class="check-group" style="--c:var(--r-par)">
+        <header><span class="role role-par">Родитель</span><span class="done"></span></header>
+        <ul>
+          <li><label><input type="checkbox" id="r_p1"><span>Открыл ссылку на телефоне, нашёл серию своего ребёнка. <a href="/guide/parent/#code">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_p2"><span>Добавил в корзину два разных товара. <a href="/guide/parent/#choose">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_p3"><span>Оформил заказ, сохранил личную ссылку заказа. <a href="/guide/parent/#checkout">как</a></span></label></li>
+        </ul>
+      </div>
+      <div class="check-group" style="--c:var(--r-cur)">
+        <header><span class="role role-cur">Куратор и организатор</span><span class="done"></span></header>
+        <ul>
+          <li><label><input type="checkbox" id="r_c4"><span>Нашли заказ в «Заказы», состав совпадает с корзиной родителя. <a href="/guide/curator/#orders">как</a></span></label></li>
+        </ul>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section aria-labelledby="h-path">
-  <div class="sec-head"><h2 id="h-path">Путь по шагам</h2><p class="lead">Порядок важен: галерея открывается родителям только после шага 6 «Передача».</p></div>
+  <section aria-labelledby="h-result">
+    <h2 id="h-result">Что получилось</h2>
+    <div class="panel">
+      <div class="grid2">
+        <label class="f"><span>Учреждение</span><input type="text" id="d_institution" data-f placeholder="Детский сад «Ромашка»" autocomplete="off"></label>
+        <label class="f"><span>Группа</span><input type="text" id="d_group" data-f placeholder="Средняя группа «Солнышко»" autocomplete="off"></label>
+      </div>
+      <div class="f">
+        <span>Ссылка на галерею</span>
+        <div class="linkrow">
+          <input type="url" id="l_gallery" data-f data-link="/g/" placeholder="https://app.morefoto36.ru/g/…" autocomplete="off">
+          <button type="button" class="btn" data-copy="l_gallery">Копировать</button>
+          <a class="btn primary" data-open="l_gallery" href="#" target="_blank" rel="noopener" aria-disabled="true">Открыть</a>
+        </div>
+        <span class="hint" data-hint="l_gallery">Из «Ссылки и сроки» → «Копировать ссылку».</span>
+      </div>
+      <div class="grid2">
+        <label class="f"><span>Передача отмечена (МСК)</span><input type="datetime-local" id="l_sent" data-f></label>
+        <label class="f"><span>Номер заказа</span><input type="text" id="o_number" data-f placeholder="MF-…" autocomplete="off"></label>
+        <label class="f"><span>Сумма заказа</span><input type="text" id="o_total" data-f placeholder="1 250 ₽" autocomplete="off"></label>
+      </div>
+      <div class="f">
+        <span>Личная ссылка заказа</span>
+        <div class="linkrow">
+          <input type="url" id="o_link" data-f data-link="/orders/access/" placeholder="https://app.morefoto36.ru/orders/access/…" autocomplete="off">
+          <button type="button" class="btn" data-copy="o_link">Копировать</button>
+          <a class="btn primary" data-open="o_link" href="#" target="_blank" rel="noopener" aria-disabled="true">Открыть</a>
+        </div>
+        <span class="hint" data-hint="o_link">Со страницы заказа → «Скопировать личную ссылку».</span>
+      </div>
+    </div>
+  </section>
 
-  <ol class="stages">
-    <li class="stage" style="--c:var(--r-org)">
-      <div class="stage-head"><h3>Команда</h3><span class="role r-org">Вы</span><span class="where">«Сотрудники»</span><span class="done"></span></div>
-      <p>Сначала заведите людей: тогда при создании учреждения и группы их можно сразу выбрать ответственными.</p>
-      <ul class="steps">
-        <li><label><input type="checkbox" id="s1a"><span>Войдите на <a href="https://app.morefoto36.ru/login" target="_blank" rel="noopener">app.morefoto36.ru</a>. В «Профиле» должна стоять роль «Организатор».</span></label></li>
-        <li><label><input type="checkbox" id="s1b"><span><span class="ui">Добавить сотрудника</span> → Алёна, её email, роль «Организатор». Назначения не нужны: организатор видит всё.</span></label></li>
-        <li><label><input type="checkbox" id="s1c"><span><span class="ui">Добавить сотрудника</span> → Рита, её email, роль «Куратор». Учреждение ей назначится на шаге 3.</span></label></li>
-        <li><label><input type="checkbox" id="s1d"><span>По желанию — ответственный группы с отдельным email.</span></label></li>
-        <li><label><input type="checkbox" id="s1e"><span>Алёна и Рита переходят по ссылке из письма, задают пароль и входят каждая в своём браузере.</span></label></li>
-      </ul>
-    </li>
+  <section aria-labelledby="h-notes">
+    <h2 id="h-notes">Что заметили</h2>
+    <p class="muted">Ошибки, непонятные места, неудобства. Пишите шаг и что произошло — по этому списку заводятся задачи.</p>
+    <div class="panel">
+      <label class="f"><span>Замечания</span><textarea id="n_notes" data-f placeholder="Родитель: на телефоне не видно кнопку корзины, пришлось искать…"></textarea></label>
+      <div><button type="button" class="btn" id="reset">Очистить всё</button></div>
+    </div>
+  </section>
 
-    <li class="stage" style="--c:var(--r-org)">
-      <div class="stage-head"><h3>Каталог и цены</h3><span class="role r-org">Вы</span><span class="where">«Каталог и цены»</span><span class="done"></span></div>
-      <p>Без продукции в продаже ссылку не выпустить.</p>
-      <ul class="steps">
-        <li><label><input type="checkbox" id="s2a"><span><span class="ui">Новая продукция</span> → название, цена, доступна для покупки → «Сохранить».</span></label></li>
-        <li><label><input type="checkbox" id="s2b"><span>По желанию — вторая позиция, электронная, чтобы проверить подарочный комплект.</span></label></li>
-        <li><label><input type="checkbox" id="s2c"><span><span class="ui">Общие условия</span>: продажа включена. Надбавка «Расходы на оплату» на stage выключена.</span></label></li>
-      </ul>
-    </li>
-
-    <li class="stage" style="--c:var(--r-org)">
-      <div class="stage-head"><h3>Учреждение, съёмка, группа</h3><span class="role r-org">Вы</span><span class="where">«Учреждения»</span><span class="done"></span></div>
-      <ul class="steps">
-        <li><label><input type="checkbox" id="s3a"><span><span class="ui">Новое учреждение</span> → название, адрес, <b>«Куратор учреждения» — Рита</b> → «Сохранить». Так Рита увидит это учреждение у себя.</span></label></li>
-        <li><label><input type="checkbox" id="s3b"><span>В учреждении: <span class="ui">Новая съёмка</span> → название и дата.</span></label></li>
-        <li><label><input type="checkbox" id="s3c"><span>В съёмке: <span class="ui">Новая группа</span> → название, тип «Группа / класс», ответственный, если заведён.</span></label></li>
-        <li><label><input type="checkbox" id="s3d"><span>В съёмке: <span class="ui">Условия групп</span> → группа наследует общие условия или получила свой прайс.</span></label></li>
-      </ul>
-    </li>
-
-    <li class="stage" style="--c:var(--r-org)">
-      <div class="stage-head"><h3>Фотографии</h3><span class="role r-org">Вы</span><span class="where">съёмка → «Фотографии»</span><span class="done"></span></div>
-      <p>По коду ребёнка родитель ищет свои кадры в галерее, поэтому код нужен каждому кадру группы.</p>
-      <ul class="steps">
-        <li><label><input type="checkbox" id="s4a"><span>Вверху выберите «Группу съёмки» и перетащите 5–10 фото в «Перетащите фотографии сюда».</span></label></li>
-        <li><label><input type="checkbox" id="s4b"><span>Дождитесь, пока все кадры перейдут из «Обрабатывается» в «Готово».</span></label></li>
-        <li><label><input type="checkbox" id="s4c"><span>Выделите кадры → <span class="ui">Назначить ребёнку</span> → «Код ребёнка». В фильтре «Без ребёнка» не должно остаться кадров.</span></label></li>
-        <li><label><input type="checkbox" id="s4d"><span><span class="ui">Сделать обложкой</span> на одном кадре, затем <span class="ui">Предпросмотр</span>.</span></label></li>
-      </ul>
-    </li>
-
-    <li class="stage" style="--c:var(--r-org)">
-      <div class="stage-head"><h3>Проверка и выпуск ссылки</h3><span class="role r-org">Вы или Алёна</span><span class="where">«Ссылки и сроки»</span><span class="done"></span></div>
-      <p>Выпускает ссылку только организатор. Сервер выдаёт ключ галереи, когда не осталось проблем.</p>
-      <ul class="steps">
-        <li><label><input type="checkbox" id="s5a"><span>Если у группы есть «Что мешает открыть галерею», пройдите по кнопкам «К фотографиям», «К условиям», «К спискам».</span></label></li>
-        <li><label><input type="checkbox" id="s5b"><span><span class="ui">Проверить ссылку</span> → три отметки: фотографии и коды, продукция и условия, списки сотрудников.</span></label></li>
-        <li><label><input type="checkbox" id="s5c"><span><span class="ui">Копировать ссылку</span> и вставить её выше, в «Ссылку на галерею группы».</span></label></li>
-      </ul>
-      <p class="note">Любая правка после проверки — кадр, код, обложка, цена, название группы, ответственный — сбрасывает проверку. Проверьте ещё раз; ключ не изменится.</p>
-    </li>
-
-    <li class="stage" style="--c:var(--r-cur)">
-      <div class="stage-head"><h3>Передача родителям</h3><span class="role r-cur">Рита</span><span class="where">«Ссылки и сроки»</span><span class="done"></span></div>
-      <p>Этот шаг открывает галерею. До него родитель видит «Ответственный сообщит, когда галерея будет открыта».</p>
-      <ul class="steps">
-        <li><label><input type="checkbox" id="s6a"><span>Рита входит под своим логином. В «Учреждениях» у неё только тестовое учреждение.</span></label></li>
-        <li><label><input type="checkbox" id="s6b"><span>Копирует ссылку группы и отправляет «родителю».</span></label></li>
-        <li><label><input type="checkbox" id="s6c"><span><span class="ui">Отметить передачу</span> → дата и время — сейчас → «Подтверждаю факт передачи и указанные сроки».</span></label></li>
-        <li><label><input type="checkbox" id="s6d"><span>Появились сроки: 7 дней на заказ с передачи и 7 дней на доставку. Ошибку в дате исправляет <span class="ui">Исправить дату</span> с причиной.</span></label></li>
-      </ul>
-    </li>
-
-    <li class="stage" style="--c:var(--r-par)">
-      <div class="stage-head"><h3>Галерея глазами родителя</h3><span class="role r-par">Родитель</span><span class="where">ссылка /g/…</span><span class="done"></span></div>
-      <ul class="steps">
-        <li><label><input type="checkbox" id="s7a"><span>Откройте ссылку и введите код ребёнка: остаются только его кадры.</span></label></li>
-        <li><label><input type="checkbox" id="s7b"><span>Откройте кадр. Водяной знак на превью — это нормально.</span></label></li>
-        <li><label><input type="checkbox" id="s7c"><span><span class="ui">Заказать этот кадр</span> → продукция, количество → <span class="ui">Добавить в корзину</span>. Повторите для второго кадра.</span></label></li>
-        <li><label><input type="checkbox" id="s7d"><span><span class="ui">Посмотреть корзину</span>: позиции, «Итого», подарочные файлы.</span></label></li>
-      </ul>
-    </li>
-
-    <li class="stage" style="--c:var(--r-par)">
-      <div class="stage-head"><h3>Оформление заказа</h3><span class="role r-par">Родитель</span><span class="where">корзина → оформление</span><span class="done"></span></div>
-      <p class="note block">Нужен включённый флаг оформления. Без него в корзине нет кнопки «Оформить заказ».</p>
-      <ul class="steps">
-        <li><label><input type="checkbox" id="s8a"><span><span class="ui">Оформить заказ</span> → имя, email, чек — на email.</span></label></li>
-        <li><label><input type="checkbox" id="s8b"><span><span class="ui">Создать тестовый заказ</span>. Откроется страница заказа <code>MF-…</code>, оплата — «не оплачен». Номер внесите выше.</span></label></li>
-        <li><label><input type="checkbox" id="s8c"><span><span class="ui">Скопировать личную ссылку</span> и вставить выше, в «Личную ссылку заказа».</span></label></li>
-      </ul>
-    </li>
-
-    <li class="stage" style="--c:var(--r-cur)">
-      <div class="stage-head"><h3>Заказ в кабинете</h3><span class="role r-cur">Рита</span><span class="role r-org">Вы</span><span class="where">«Заказы»</span><span class="done"></span></div>
-      <ul class="steps">
-        <li><label><input type="checkbox" id="s9a"><span>Рита находит заказ по номеру, имени или email. Ей видны только заказы её учреждения.</span></label></li>
-        <li><label><input type="checkbox" id="s9b"><span>Вы открываете тот же заказ и сверяете состав и кадры детей с корзиной родителя.</span></label></li>
-      </ul>
-    </li>
-  </ol>
-</section>
-
-<section aria-labelledby="h-notes">
-  <div class="sec-head"><h2 id="h-notes">Что заметили по ходу</h2><p class="lead">Ошибки, неудобства, непонятные тексты. По этому списку заводятся задачи на GitHub — пишите шаг и что именно произошло.</p></div>
-  <div class="panel">
-    <label class="f"><span>Заметки прогона</span><textarea id="n_notes" data-f placeholder="Шаг 4: после загрузки 10 фото два кадра остались в «Обрабатывается» дольше 5 минут…"></textarea></label>
-  </div>
-</section>
-
-<section aria-labelledby="h-pay">
-  <div class="sec-head"><h2 id="h-pay">Оплата ЮKassa: где мы сейчас</h2></div>
-  <div class="pay">
-    <div><h3>Уже есть</h3><p>Тестовый магазин ЮKassa зарегистрирован, ключи подготовлены и хранятся вне репозитория.</p></div>
-    <div><h3>Чего нет</h3><p>Модуля оплаты и страницы оплаты. Волна G1: решения согласованы, код не начат. Сейчас путь заканчивается заказом «не оплачен».</p></div>
-    <div><h3>Что даст G1</h3><p>Кнопку оплаты на странице заказа, переход в ЮKassa и возврат, статусы «ожидает» → «оплачен» или «отклонён», сверку платежа с ЮKassa.</p></div>
-    <div><h3>Ограничения теста</h3><p>Тестовый магазин принимает только карту и кошелёк ЮMoney; СБП и SberPay — только в боевом. Тестовые карты — в <a href="https://yookassa.ru/developers/payment-acceptance/testing-and-going-live/testing" target="_blank" rel="noopener">документации ЮKassa</a>.</p></div>
-  </div>
-</section>
-
-<section aria-labelledby="h-faq">
-  <div class="sec-head"><h2 id="h-faq">Если что-то пошло не так</h2></div>
-  <dl class="faq">
-    <div><dt>«Проверить ссылку» показывает проблемы</dt><dd>Нет готовых фото, идёт обработка, есть кадры без кода ребёнка, в группе нет продукции в продаже или не закрыт список сотрудников. Каждая проблема ведёт кнопкой на свой экран.</dd></div>
-    <div><dt>После проверки ссылка снова «не проверена»</dt><dd>После проверки что-то изменили в фото, условиях или группе. Проверьте ещё раз.</dd></div>
-    <div><dt>Родитель видит «галерея будет открыта позже»</dt><dd>Не отмечена передача, шаг 6.</dd></div>
-    <div><dt>В корзине нет «Оформить заказ»</dt><dd>На сервере выключено оформление. Его включает администратор стенда.</dd></div>
-    <div><dt>Рита не видит учреждение</dt><dd>В карточке учреждения не выбран куратор «Рита», либо она ещё не приняла приглашение.</dd></div>
-    <div><dt>Выбросило из кабинета</dt><dd>Тот же логин открыт в другом окне. Одна роль — один браузер.</dd></div>
-  </dl>
-</section>
-
-<footer>
-  <p>Шаги и названия кнопок сверены с кодом main 4621ad9 и журналами развёртывания F2, E5, E6 на 25.09.2026.</p>
-  <p id="stamp"></p>
-</footer>
-</div>
-
-<script>
-(function(){
-  var LKEY='morefoto-guide-stage-run-v1';
-  var fields=[].slice.call(document.querySelectorAll('[data-f]'));
-  var boxes=[].slice.call(document.querySelectorAll('.steps input[type=checkbox]'));
-  var saveEl=document.getElementById('save');
-  var timer=null;
-
-  function setSave(s,t){saveEl.dataset.s=s;saveEl.textContent=t;}
-  function fmt(iso){try{return new Date(iso).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}catch(e){return '';}}
-  function collect(){
-    var f={},c={};
-    fields.forEach(function(el){f[el.id]=el.value;});
-    boxes.forEach(function(b){c[b.id]=b.checked;});
-    return {fields:f,checks:c,updatedAt:new Date().toISOString()};
-  }
-  function apply(data){
-    var f=(data&&data.fields)||{}, c=(data&&data.checks)||{};
-    fields.forEach(function(el){if(typeof f[el.id]==='string')el.value=f[el.id];});
-    boxes.forEach(function(b){b.checked=!!c[b.id];});
-    if(data&&data.updatedAt)document.getElementById('stamp').textContent='Последнее изменение в этом браузере: '+fmt(data.updatedAt);
-  }
-  function isLink(v,prefix){return /^https:\/\/app\.morefoto36\.ru\//.test(v)&&v.indexOf(prefix)>-1;}
-  function linkState(inputId,openId,hintId,prefix,emptyText,badText){
-    var v=document.getElementById(inputId).value.trim();
-    var a=document.getElementById(openId), h=document.getElementById(hintId);
-    var ok=isLink(v,prefix);
-    a.setAttribute('aria-disabled',ok?'false':'true');
-    a.href=ok?v:'#';
-    if(!v){h.textContent=emptyText;h.classList.remove('bad');}
-    else if(!ok){h.textContent=badText;h.classList.add('bad');}
-    else{h.textContent='Ссылка похожа на правильную.';h.classList.remove('bad');}
-  }
-  function derive(){
-    var done=boxes.filter(function(b){return b.checked;}).length;
-    document.getElementById('count').textContent=done+' из '+boxes.length+' шагов';
-    document.getElementById('bar').style.width=(boxes.length?done/boxes.length*100:0)+'%';
-    [].forEach.call(document.querySelectorAll('.stage'),function(st){
-      var bs=st.querySelectorAll('.steps input'), n=0;
-      [].forEach.call(bs,function(b){if(b.checked)n++;});
-      st.querySelector('.done').textContent=n===bs.length?'Готово':n+' / '+bs.length;
-      st.dataset.complete=n===bs.length?'1':'0';
-    });
-    linkState('l_gallery','open_gallery','l_gallery_hint','/g/','Скопируйте кнопкой «Копировать ссылку» в «Ссылках и сроках».','Ожидается адрес вида https://app.morefoto36.ru/g/…');
-    linkState('o_link','open_order','o_link_hint','/orders/access/','Только эта ссылка открывает заказ. Номер заказа доступа не даёт.','Ожидается адрес вида https://app.morefoto36.ru/orders/access/…');
-  }
-  function save(){
-    var state=collect();
-    try{localStorage.setItem(LKEY,JSON.stringify(state));setSave('saved','Сохранено в этом браузере · '+fmt(state.updatedAt));}
-    catch(e){setSave('error','Браузер не даёт сохранить · запишите данные отдельно');}
-    apply(state);
-  }
-  function changed(delay){derive();clearTimeout(timer);timer=setTimeout(save,delay);}
-  fields.forEach(function(el){
-    el.addEventListener('input',function(){changed(600);});
-    el.addEventListener('change',function(){changed(100);});
-  });
-  boxes.forEach(function(b){b.addEventListener('change',function(){changed(100);});});
-
-  [].forEach.call(document.querySelectorAll('[data-copy]'),function(btn){
-    btn.addEventListener('click',function(){
-      var inp=document.getElementById(btn.getAttribute('data-copy'));
-      var v=inp.value.trim(); if(!v)return;
-      var done=function(){btn.textContent='Скопировано';setTimeout(function(){btn.textContent='Копировать';},1600);};
-      var fallback=function(){inp.focus();inp.select();btn.textContent='Выделено — Ctrl+C';setTimeout(function(){btn.textContent='Копировать';},2200);};
-      try{navigator.clipboard.writeText(v).then(done,fallback);}catch(e){fallback();}
-    });
-  });
-
-  var saved=null;
-  try{saved=JSON.parse(localStorage.getItem(LKEY)||'null');}catch(e){}
-  if(saved){apply(saved);setSave('saved','Сохранено в этом браузере · '+fmt(saved.updatedAt));}
-  else{setSave('saved','Поля сохраняются в этом браузере');}
-  derive();
-})();
-</script>
+  <footer class="foot"><a href="/guide/">← Все статьи</a><a href="/guide/faq/">Частые вопросы</a></footer>
+</main>
+<script src="/guide/static/guide.js"></script>
 </body>
 </html>
