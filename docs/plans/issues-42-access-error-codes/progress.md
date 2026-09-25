@@ -6,11 +6,12 @@
 - Ветка: `codex/issues-42-access-error-codes`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-42-access-error-codes`. Общий checkout `/home/user/rabit-api` занят другой сессией, в нём не работать.
 - Base: `origin/main` `49f40f9` (merge PR #35).
-- Issue: [#42](https://github.com/rebit-pro/rabit-api/issues/42). PR: [#70](https://github.com/rebit-pro/rabit-api/pull/70) (open, не сливать до review и E2E-gate). Head с кодом — `2989af8`.
+- Issue: [#42](https://github.com/rebit-pro/rabit-api/issues/42). PR: [#70](https://github.com/rebit-pro/rabit-api/pull/70): review без блокеров (пользователь, 2026-09-25), gate PASS, сливается в `main`. Head с кодом — `2989af8`.
 - Документация: [план](plan.md), контракт ошибок [E2](../../waves/e2/README.md), порядок E2E [A8](../../waves/a8/README.md).
 - Завершено: план, пункт 1 (коды в источниках, удаление обходов, unit-тесты, E2E-сценарий в `staff.spec.ts`), пункт 2 (`CalendarCommandValidator`, пассивный DTO, архитектурный тест), подтверждение пункта 3, быстрые проверки.
 - Сейчас: ожидание review PR #70.
-- Следующий шаг: review PR; после review без блокеров — полный `make test-e2e` (T17–T19).
+- Base обновлён: в ветку влит `origin/main` `f989aeb` (merge PR #67) merge-коммитом `72d3177`.
+- Следующий шаг: деплой — отдельно, после результатов E2E волны E6 (решение пользователя 2026-09-25).
 - Блокеров нет. Открытое решение: follow-up для `CatalogController`/`ConditionsController` (R4).
 - Рабочее дерево: изменения ветки коммитятся; пустые `api/vendor`, `api/var`, `frontend/node_modules` — точки монтирования docker-проверок, в git не попадают.
 - Команды проверок:
@@ -61,6 +62,16 @@
 - `origin/main` перед push — `49f40f9`, base не менялся.
 - Push `codex/issues-42-access-error-codes`, создан PR [#70](https://github.com/rebit-pro/rabit-api/pull/70) в `main`.
 
+### 2026-09-25 — review и полный gate
+
+- Пользователь провёл review, блокирующих замечаний нет. Разрешил полный E2E и merge. Деплой — позже, после E2E волны E6.
+- Base обновлён до `f989aeb` (PR #67 слит раньше): `git merge origin/main` → `72d3177`, конфликтов нет.
+- Полный gate `rabit-e2e-12fc8335ddd7` (309.6 с) — PASS, exit 0:
+  - php-lint, phpstan, phpunit, frontend lint/typecheck/test/build — все PASS;
+  - группа `a` 64/64, группа `b` 39/39;
+  - `verify-storefront/orders/links/transfers/avatar/access` PASS.
+- Команда: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда | Доказательство |
@@ -76,5 +87,5 @@
 | T14 | PASS | 2026-09-25 | PHPStan, phplint, php-cs-fixer dry-run | No errors; 972 files OK; 0 из 26 |
 | T15 | PASS | 2026-09-25 | `vendor/bin/phpunit` | 684/684 |
 | T16 | PASS | 2026-09-25 | `npm run check && npm run test:commerce` | exit 0 |
-| T17–T19 | PENDING | — | `make test-e2e` после review | код сценария в `staff.spec.ts`, верификаторы обновлены |
+| T17–T19 | PASS | 2026-09-25 | `make test-e2e` `rabit-e2e-12fc8335ddd7` | exit 0; a 64/64 (включая `staff.spec.ts` 401/403), b 39/39; `verify-links.php` с новым `GroupCalendar` PASS |
 | T20 | PASS | 2026-09-25 | `ls docs/plans`, `grep -n OPS CLAUDE.md AGENTS.md` | см. хронологию |

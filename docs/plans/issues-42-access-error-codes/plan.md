@@ -109,8 +109,8 @@
 - [x] S5. Архитектурный тест DTO `rebit.share/lib/Contracts`.
 - [x] S6. E2E-сценарий контракта в `staff.spec.ts`.
 - [x] S7. Быстрые проверки: phplint, PHPStan, PHPUnit, php-cs-fixer по изменённым файлам, frontend `npm run check && npm run test:commerce`.
-- [ ] S8. Коммиты, push, PR в `main` (не сливать).
-- [ ] S9. После review — полный `make test-e2e` (PENDING).
+- [x] S8. Коммиты, push, PR в `main`.
+- [x] S9. После review — полный `make test-e2e` (PASS 2026-09-25).
 
 ## Критерии приёмки
 
