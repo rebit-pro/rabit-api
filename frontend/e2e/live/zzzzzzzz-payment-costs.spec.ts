@@ -290,4 +290,18 @@ test('E6: организатор включает учёт расходов в �
   await expect(page.getByTestId('admin-dialog').getByTestId('payment-costs')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('e6-mobile-payment-costs-dialog.png'), fullPage: true, animations: 'disabled' });
+
+  // #68: switching the policy off is saved even with an invalid draft rate; the stored rate is kept.
+  const mobileDialog = page.getByTestId('admin-dialog');
+  await mobileDialog.getByLabel('Ставка расходов на оплату, %', { exact: true }).fill('10,5');
+  await mobileDialog.getByLabel('Учитывать расходы на оплату в цене', { exact: true }).uncheck();
+  await expect(mobileDialog.getByText('Ставка: от 0 до 10 %, до двух знаков после запятой.')).toHaveCount(0);
+  const off = page.waitForResponse((response) => new URL(response.url()).pathname === globalPath && response.request().method() === 'PUT');
+  await mobileDialog.getByRole('button', { name: 'Сохранить', exact: true }).click();
+  const switchedOff = await off;
+  expect(switchedOff.status()).toBe(200);
+  expect(switchedOff.request().postDataJSON().paymentCosts).toEqual({ enabled: false, rateBps: 380 });
+  await expect(mobileDialog).not.toBeVisible();
+  await expect(page.getByTestId('payment-costs-summary')).toContainText('Не учитываются');
+  expect((await conditions(page)).paymentCosts).toMatchObject({ enabled: false, rateBps: 380 });
 });

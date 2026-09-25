@@ -66,7 +66,7 @@ test('rate input accepts percents with two decimals up to the cap', () => {
 
 test('global command sends the payment cost policy, group command does not', () => {
   const global = createConditionsCommand({ snapshot, groupId: null });
-  assert.deepEqual(global.paymentCosts, { enabled: true, rate: '3,80', maxRateBps: 1000 });
+  assert.deepEqual(global.paymentCosts, { enabled: true, rate: '3,80', maxRateBps: 1000, savedRateBps: 380 });
   assert.deepEqual(conditionsAttempt(global).body.paymentCosts, { enabled: true, rateBps: 380 });
   const group = createConditionsCommand({ snapshot: { ...snapshot, conditionsRevision: 4, inherit: false }, groupId: 'g1' });
   assert.equal(group.paymentCosts, undefined);
@@ -83,4 +83,28 @@ test('editor rejects a rate above the cap and a price above 1 000 000 RUB', () =
   command.paymentCosts.rate = '10';
   command.products[0].price = '1000000';
   assert.deepEqual(conditionsCommandErrors(command), {});
+});
+
+test('#68: a disabled policy is saved with the stored rate despite an invalid draft rate', () => {
+  const command = createConditionsCommand({ snapshot, groupId: null });
+  command.paymentCosts.rate = '10,5';
+  assert.ok(conditionsCommandErrors(command).paymentCostRate);
+  command.paymentCosts.enabled = false;
+  assert.deepEqual(conditionsCommandErrors(command), {});
+  assert.deepEqual(conditionsAttempt(command).body.paymentCosts, { enabled: false, rateBps: 380 });
+  // A valid draft rate is sent as typed even when the policy is off.
+  command.paymentCosts.rate = '2,5';
+  assert.deepEqual(conditionsAttempt(command).body.paymentCosts, { enabled: false, rateBps: 250 });
+  // Turning the policy back on validates the draft rate again.
+  command.paymentCosts.rate = '10,5';
+  command.paymentCosts.enabled = true;
+  assert.ok(conditionsCommandErrors(command).paymentCostRate);
+});
+
+test('#68: a draft saved before the stored rate existed keeps the strict check', () => {
+  const command = createConditionsCommand({ snapshot, groupId: null });
+  delete command.paymentCosts.savedRateBps;
+  command.paymentCosts.enabled = false;
+  command.paymentCosts.rate = '10,5';
+  assert.ok(conditionsCommandErrors(command).paymentCostRate);
 });

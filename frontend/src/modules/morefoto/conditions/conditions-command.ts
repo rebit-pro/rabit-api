@@ -34,8 +34,18 @@ export function createConditionsCommand(source: ConditionsEditorSource): Conditi
     giftForStaff: value.giftForStaff,
     paymentCosts: source.groupId
       ? undefined
-      : { enabled: value.paymentCosts.enabled, rate: rateText(value.paymentCosts.rateBps), maxRateBps: value.paymentCosts.maxRateBps }
+      : {
+          enabled: value.paymentCosts.enabled,
+          rate: rateText(value.paymentCosts.rateBps),
+          maxRateBps: value.paymentCosts.maxRateBps,
+          savedRateBps: value.paymentCosts.rateBps
+        }
   };
+}
+/** The rate is edited only while the policy is on: a disabled policy with an invalid draft rate keeps the saved one. */
+function paymentCostRateBps(costs: NonNullable<ConditionsCommand['paymentCosts']>): number | null {
+  const rate = rateInputValue(costs.rate, costs.maxRateBps);
+  return rate !== null || costs.enabled ? rate : (costs.savedRateBps ?? null);
 }
 /** Предел цены товара в копейках (1 000 000 ₽), как на сервере. */
 export const MAX_PRICE = 100000000;
@@ -47,7 +57,7 @@ export function conditionsCommandErrors(command: ConditionsCommand): ManagementE
     if (price === null || price > MAX_PRICE) errors['price:' + product.id] = 'Цена: от 0 до 1 000 000 ₽, до двух знаков после запятой.';
   }
   const costs = command.paymentCosts;
-  if (!command.groupId && costs && rateInputValue(costs.rate, costs.maxRateBps) === null)
+  if (!command.groupId && costs && paymentCostRateBps(costs) === null)
     errors.paymentCostRate = 'Ставка: от 0 до ' + String(costs.maxRateBps / 100).replace('.', ',') + ' %, до двух знаков после запятой.';
   const threshold = moneyInputValue(command.giftThreshold);
   if (command.giftEnabled && (threshold === null || threshold < 1 || threshold > 2147483647))
@@ -79,7 +89,7 @@ export function conditionsAttempt(command: ConditionsCommand): ConditionsAttempt
   } else if (command.paymentCosts) {
     body.paymentCosts = {
       enabled: command.paymentCosts.enabled,
-      rateBps: rateInputValue(command.paymentCosts.rate, command.paymentCosts.maxRateBps)!
+      rateBps: paymentCostRateBps(command.paymentCosts)!
     };
   }
   return { groupId: command.groupId, key: command.requestId, body };
