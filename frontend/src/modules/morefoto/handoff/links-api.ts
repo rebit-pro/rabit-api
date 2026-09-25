@@ -1,6 +1,7 @@
 import { isAxiosError } from 'axios';
 import api from '@/api/http';
 import { serverMoment } from './rules';
+import { linkErrorText } from './link-errors';
 import type { LinkCommand, LinkEvent, LinkGroup } from './types';
 
 export interface LiveLinkItem {
@@ -132,27 +133,11 @@ export function toLinkGroup(item: LiveLinkItem, detail?: LiveLinkDetail): LinkGr
   };
 }
 
-const messages: Record<string, string> = {
-  REVISION_CONFLICT: 'Ссылку уже изменили. Обновите страницу и повторите действие.',
-  SIGNATURE_CONFLICT: 'Фотографии, условия или списки изменились после открытия формы. Обновите страницу и проверьте заново.',
-  LINK_NOT_READY: 'Группа ещё не готова: устраните проблемы, указанные в карточке.',
-  LINK_NOT_PREPARED: 'Подборка или условия изменились. Организатор должен проверить ссылку перед передачей.',
-  LINK_ALREADY_SENT: 'Приём уже запускался. Дату можно исправить отдельно.',
-  LINK_NOT_SENT: 'Передача ссылки ещё не отмечена.',
-  SENT_AT_IN_FUTURE: 'Дата передачи не может быть позже текущего времени.',
-  SENT_AT_BEFORE_LINK: 'Ссылку не могли передать раньше, чем её выдали после проверки.',
-  SENT_AT_UNCHANGED: 'Новая дата совпадает с записанной.',
-  IDEMPOTENCY_CONFLICT: 'Эта попытка уже использована с другими данными. Закройте форму и откройте её снова.',
-  GROUP_NOT_FOUND: 'Группа больше не доступна в вашей области.',
-  FORBIDDEN: 'Для этого действия недостаточно прав.'
-};
-
 export function linkError(cause: unknown): string {
   if (!isAxiosError(cause)) return cause instanceof Error ? cause.message : 'Не удалось сохранить ссылку.';
-  const code = (cause.response?.data as { error?: { code?: string } } | undefined)?.error?.code ?? '';
-  if (messages[code]) return messages[code];
-  if (cause.response?.status === 403) return messages.FORBIDDEN!;
-  if (cause.response?.status === 404) return messages.GROUP_NOT_FOUND!;
-  if (cause.response?.status === 422) return 'Проверьте заполненные поля формы.';
-  return 'Сервер не сохранил изменение. Проверьте соединение и повторите действие.';
+  return linkErrorText({
+    network: !cause.response,
+    status: cause.response?.status,
+    code: (cause.response?.data as { error?: { code?: string } } | undefined)?.error?.code
+  });
 }
