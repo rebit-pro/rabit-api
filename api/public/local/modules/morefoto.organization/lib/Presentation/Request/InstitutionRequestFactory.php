@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Morefoto\Organization\Presentation\Request;
 
 use Bitrix\Main\HttpRequest;
-use Morefoto\Organization\Application\Institution\Dto\InstitutionDetailInputDto;
 use Morefoto\Organization\Application\Institution\Dto\InstitutionMutationInputDto;
 use Morefoto\Organization\Application\Institution\Dto\ListInstitutionsInputDto;
 use Morefoto\Organization\Domain\Institution\ValueObject\InstitutionDetails;
@@ -106,22 +105,6 @@ final readonly class InstitutionRequestFactory
         );
     }
 
-    public function detail(HttpRequest $request): InstitutionDetailInputDto
-    {
-        $data = $this->queryParameters($request);
-        if ([] !== array_diff(array_keys($data), ['shootsPage', 'groupsPage', 'pageSize'])) {
-            throw new HttpException('UNKNOWN_FIELD', 422);
-        }
-        foreach (['shootsPage', 'groupsPage', 'pageSize'] as $field) {
-            if (array_key_exists($field, $data) && (!is_scalar($data[$field]) || 1 !== preg_match('/^[1-9][0-9]{0,6}$/D', (string)$data[$field]))) {
-                throw new HttpException('INVALID_PAGE', 422);
-            }
-        }
-
-        return new InstitutionDetailInputDto((int)($data['shootsPage'] ?? 1), (int)($data['groupsPage'] ?? 1), (int)($data['pageSize'] ?? 50));
-    }
-
-    /** @return array<string,mixed> */
     private function queryParameters(HttpRequest $request): array
     {
         // Bitrix adds matched path parameters to GET; only the original URI contains client query fields.

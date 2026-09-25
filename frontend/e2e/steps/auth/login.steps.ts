@@ -1,6 +1,7 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import { CustomWorld } from '../../support/world.js';
+import { openUserMenu, signOut } from '../../support/shell.js';
 
 function page(world: CustomWorld) {
   if (!world.page) throw new Error('Страница не создана');
@@ -38,7 +39,7 @@ Then('обязательные поля объясняют ошибки', async 
   await expect(page(this)).toHaveURL(/\/login$/);
 });
 Then('форма входа не содержит витрину P2P и капчу', async function (this: CustomWorld) {
-  await expect(page(this).getByRole('heading', { name: 'Вход в MoreFoto' })).toBeVisible();
+  await expect(page(this).getByRole('heading', { name: 'Вход в кабинет' })).toBeVisible();
   await expect(page(this).locator('body')).not.toContainText(/P2P|Trader|CAPTCHA|GeeTest|Зарегистрироваться/i);
   await expect(page(this).locator('script[src*="geetest"]')).toHaveCount(0);
   await expect(page(this).getByTestId('login-submit')).toBeEnabled();
@@ -53,8 +54,10 @@ Then('кабинет не содержит {string}', async function (this: Cust
   await expect(page(this).locator('body')).not.toContainText(text);
 });
 Then('профиль и выход доступны', async function (this: CustomWorld) {
+  await openUserMenu(page(this));
   await expect(page(this).getByRole('link', { name: 'Профиль', exact: true })).toBeVisible();
   await expect(page(this).getByRole('button', { name: 'Выйти', exact: true })).toBeVisible();
+  await page(this).keyboard.press('Escape');
 });
 Then('пользователь должен увидеть ошибку авторизации {string}', async function (this: CustomWorld, text: string) {
   await expect(page(this).getByTestId('login-api-error')).toContainText(text);
@@ -73,17 +76,18 @@ When('обновляет страницу', async function (this: CustomWorld) {
   await page(this).reload({ waitUntil: 'networkidle' });
 });
 When('пользователь выходит', async function (this: CustomWorld) {
-  await page(this).getByRole('button', { name: 'Выйти', exact: true }).click();
+  await signOut(page(this));
 });
 Then('снова открыта форма входа', async function (this: CustomWorld) {
   await expect(page(this)).toHaveURL(/\/login(?:\?.*)?$/);
-  await expect(page(this).getByRole('heading', { name: 'Вход в MoreFoto' })).toBeVisible();
+  await expect(page(this).getByRole('heading', { name: 'Вход в кабинет' })).toBeVisible();
 });
 When('пользователь открывает адрес {string}', async function (this: CustomWorld, path: string) {
   await page(this).goto(this.baseUrl + path, { waitUntil: 'networkidle' });
 });
 When('следующая загрузка кабинета завершается ошибкой', async function (this: CustomWorld) {
   await expect(page(this).getByRole('heading', { name: 'Кабинет куратора' })).toBeVisible();
+  await openUserMenu(page(this));
   await page(this).getByRole('link', { name: 'Профиль', exact: true }).click();
   await expect(page(this).getByRole('heading', { name: 'Профиль', exact: true })).toBeVisible();
   await page(this).evaluate(() => {

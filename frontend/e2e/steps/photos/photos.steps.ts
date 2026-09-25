@@ -3,6 +3,7 @@ import { expect, type Page } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import { CustomWorld } from '../../support/world.js';
 import type { PhotoState } from '../../../src/modules/morefoto/photos/types.js';
+import { signOut } from '../../support/shell.js';
 const route = '/cabinet/institutions/sun/shoots/sun-autumn-2026/photos';
 const shootRoute = '/cabinet/institutions/sun/shoots/sun-autumn-2026';
 function page(w: CustomWorld) {
@@ -72,10 +73,7 @@ async function openMove(p: Page, code = 'A') {
 }
 async function transfer(p: Page, code = 'A') {
   await p.getByTestId('move-code').locator('input').fill(code);
-  await p
-    .getByRole('dialog')
-    .getByRole('button', { name: /^Перенести \d/ })
-    .click();
+  await p.getByRole('dialog').getByRole('button', { name: 'Перенести набор', exact: true }).click();
 }
 Given('организатор открыл фотографии R08', async function (this: CustomWorld) {
   const p = page(this);
@@ -341,7 +339,7 @@ Then('истёкшая сессия R08 не сохраняет фотограф
 });
 Then('сотрудник R08 {string} не получает редактор', async function (this: CustomWorld, email: string) {
   const p = page(this);
-  await p.getByRole('button', { name: 'Выйти', exact: true }).click();
+  await signOut(p);
   await login(p, this.baseUrl, email);
   await p.goto(this.baseUrl + route, { waitUntil: 'networkidle' });
   await expect(p.locator('input[type=file]')).toHaveCount(0);

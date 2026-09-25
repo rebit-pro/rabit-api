@@ -13,30 +13,40 @@ use Morefoto\Access\Domain\Staff\Exception\AccessStorageException;
 
 final readonly class StaffManagementRepository
 {
+    /** Account status of a staff row, the same rule as StaffDirectoryUseCase::status(): pending wins, then access and identity. */
+    private const string STATUS_SQL = "(CASE WHEN COALESCE(uf.UF_AUTH_REGISTRATION_PENDING,0)=1 THEN 'pending'"
+        . " WHEN COALESCE(p.UF_ACTIVE,0)=1 AND u.ACTIVE='Y' THEN 'active' ELSE 'blocked' END)";
+    private const string SOURCE = ' FROM b_hlbd_mf_staff_profile p JOIN b_user u ON u.ID=p.UF_USER_ID LEFT JOIN b_uts_user uf ON uf.VALUE_ID=u.ID';
+
     /** @return array{Result,int} */
     public function list(ListStaffInputDto $input): array
     {
-        $connection = Application::getConnection();
-        $helper = $connection->getSqlHelper();
-        $where = [];
-        if ('' !== $input->query) {
-            $query = $helper->forSql('%' . $input->query . '%');
-            $where[] = "(u.NAME LIKE '{$query}' OR u.EMAIL LIKE '{$query}')";
-        }
-        if (null !== $input->role) {
-            $where[] = "p.UF_ROLE='" . $input->role->value . "'";
-        }
-        if (null !== $input->active) {
-            $where[] = 'p.UF_ACTIVE=' . ($input->active ? '1' : '0');
-        }
-        $condition = [] === $where ? '' : ' WHERE ' . implode(' AND ', $where);
-        $count = $this->query('SELECT COUNT(*) AS TOTAL FROM b_hlbd_mf_staff_profile p JOIN b_user u ON u.ID=p.UF_USER_ID LEFT JOIN b_uts_user uf ON uf.VALUE_ID=u.ID' . $condition)->fetch();
+        $condition = $this->condition($input, true);
+        $count = $this->query('SELECT COUNT(*) AS TOTAL' . self::SOURCE . $condition)->fetch();
         $offset = ($input->page - 1) * $input->pageSize;
 
         return [
             $this->query($this->select() . $condition . " ORDER BY p.UF_USER_ID LIMIT {$input->pageSize} OFFSET {$offset}"),
             (int)($count['TOTAL'] ?? 0),
         ];
+    }
+
+    /**
+     * Staff of the list's text and access filters counted by role and account status with one aggregate; the role and
+     * status filters are left to the caller, which splits the counts into tiles.
+     *
+     * @return list<array{role: string, accountStatus: string, total: int}>
+     */
+    public function counts(ListStaffInputDto $input): array
+    {
+        $result = $this->query('SELECT p.UF_ROLE AS ROLE,' . self::STATUS_SQL . ' AS ACCOUNT_STATUS,COUNT(*) AS TOTAL' . self::SOURCE
+            . $this->condition($input, false) . ' GROUP BY p.UF_ROLE,ACCOUNT_STATUS');
+        $counts = [];
+        while (false !== ($row = $result->fetch())) {
+            $counts[] = ['role' => (string)$row['ROLE'], 'accountStatus' => (string)$row['ACCOUNT_STATUS'], 'total' => (int)$row['TOTAL']];
+        }
+
+        return $counts;
     }
 
     public function all(): Result
@@ -135,14 +145,34 @@ final readonly class StaffManagementRepository
             ?? throw new AccessStorageException('Staff profile row is unavailable.');
     }
 
+    private function condition(ListStaffInputDto $input, bool $withFacets): string
+    {
+        $where = [];
+        if ('' !== $input->query) {
+            $query = Application::getConnection()->getSqlHelper()->forSql('%' . $input->query . '%');
+            $where[] = "(u.NAME LIKE '{$query}' OR u.EMAIL LIKE '{$query}')";
+        }
+        if (null !== $input->active) {
+            $where[] = 'p.UF_ACTIVE=' . ($input->active ? '1' : '0');
+        }
+        if ($withFacets && null !== $input->role) {
+            $where[] = "p.UF_ROLE='" . $input->role->value . "'";
+        }
+        if ($withFacets && null !== $input->accountStatus) {
+            $where[] = self::STATUS_SQL . "='" . $input->accountStatus->value . "'";
+        }
+
+        return [] === $where ? '' : ' WHERE ' . implode(' AND ', $where);
+    }
+
     private function select(): string
     {
         return 'SELECT p.UF_USER_ID,p.UF_ROLE,p.UF_ACTIVE,p.UF_REVISION,p.UF_ACCESS_REVISION,'
-            . 'u.NAME,u.EMAIL,u.ACTIVE AS AUTH_ACTIVE,COALESCE(uf.UF_AUTH_REGISTRATION_PENDING,0) AS AUTH_PENDING,'
+            . 'u.NAME,u.EMAIL,u.ACTIVE AS AUTH_ACTIVE,COALESCE(uf.UF_AUTH_REGISTRATION_PENDING,0) AS AUTH_PENDING,a.VERSION AS AVATAR_VERSION,'
             . '((SELECT COUNT(*) FROM b_hlbd_mf_institution_assignment ia WHERE ia.UF_USER_ID=p.UF_USER_ID)'
             . '+(SELECT COUNT(*) FROM b_hlbd_mf_group_assignment ga WHERE ga.UF_USER_ID=p.UF_USER_ID)) AS ASSIGNMENT_COUNT '
             . 'FROM b_hlbd_mf_staff_profile p JOIN b_user u ON u.ID=p.UF_USER_ID '
-            . 'LEFT JOIN b_uts_user uf ON uf.VALUE_ID=u.ID';
+            . 'LEFT JOIN b_uts_user uf ON uf.VALUE_ID=u.ID LEFT JOIN mf_staff_avatar a ON a.USER_ID=p.UF_USER_ID';
     }
 
     private function query(string $sql): Result

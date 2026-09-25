@@ -30,6 +30,20 @@ export interface ConfirmRegistrationRequest {
   code: string;
 }
 
+/** Versioned avatar addresses from the API; without them the client draws initials. */
+export interface AvatarRef {
+  version: number;
+  thumbUrl: string;
+  fullUrl: string;
+}
+
+/** The organizer's contact for help with access (DS-12); any part may be missing. */
+export interface SupportContact {
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+}
+
 export interface AuthUser {
   role?: StaffRole;
   permissions?: string[];
@@ -37,6 +51,8 @@ export interface AuthUser {
   id: number;
   email: string;
   name: string;
+  avatar?: AvatarRef | null;
+  support?: SupportContact | null;
 }
 
 export interface LoginResponse {
@@ -51,6 +67,32 @@ export interface StaffProfile extends AuthUser {
   permissions: string[];
   accessRevision: number;
 }
+
+export interface InvitationPreview {
+  maskedEmail: string;
+  name: string;
+  expiresAt: string;
+}
+
+const link = (token: string) => encodeURIComponent(token);
+
+export const accessApi = {
+  invitation(token: string): Promise<InvitationPreview> {
+    return api.get('/api/v1/auth/invitations/' + link(token)).then((r) => r.data);
+  },
+  acceptInvitation(token: string, password: string): Promise<LoginResponse> {
+    return api.post('/api/v1/auth/invitations/' + link(token) + '/accept', { password }).then((r) => r.data);
+  },
+  requestPasswordReset(email: string): Promise<void> {
+    return api.post('/api/v1/auth/password-resets', { email }).then(() => undefined);
+  },
+  confirmPasswordReset(token: string, password: string): Promise<LoginResponse> {
+    return api.post('/api/v1/auth/password-resets/' + link(token) + '/confirm', { password }).then((r) => r.data);
+  },
+  changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    return api.patch('/api/v1/me/password', { currentPassword, newPassword }).then(() => undefined);
+  }
+};
 
 export const authApi = {
   me(): Promise<StaffProfile> {

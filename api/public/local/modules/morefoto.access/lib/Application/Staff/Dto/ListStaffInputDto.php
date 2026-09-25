@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Access\Application\Staff\Dto;
 
+use Morefoto\Access\Domain\Staff\Enum\AccountStatusEnum;
 use Morefoto\Access\Domain\Staff\Enum\RoleEnum;
 
 final readonly class ListStaffInputDto
@@ -12,6 +13,7 @@ final readonly class ListStaffInputDto
         public string $query,
         public ?RoleEnum $role,
         public ?bool $active,
+        public ?AccountStatusEnum $accountStatus,
         public int $page,
         public int $pageSize,
     ) {

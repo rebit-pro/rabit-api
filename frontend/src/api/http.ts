@@ -3,6 +3,8 @@ import { useAuthStore } from '@/stores/auth';
 import { router } from '@/router';
 import { moreFotoMockAdapter } from '@/modules/morefoto/mocks/adapter';
 import { isMockApiEnabled } from '@/mocks/config';
+import { apiErrorCode } from './authErrors';
+import { sessionEndReason } from './sessionEnd';
 
 declare module 'axios' {
   interface AxiosRequestConfig {
@@ -48,11 +50,13 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401) {
       const auth = useAuthStore();
+      // A replaced or revoked session is not the same as an expired one: the sign-in page explains which happened.
+      const reason = sessionEndReason(apiErrorCode(error), auth.expiresAt);
       auth.clearSession();
       if (!error.config?.url?.includes('/auth/login')) {
         const current = router.currentRoute.value;
         if (current.meta.requiresAuth) auth.returnUrl = current.fullPath;
-        void router.replace('/login?reason=session-expired');
+        void router.replace('/login?reason=' + reason);
       }
     }
     return Promise.reject(error);

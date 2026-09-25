@@ -1,5 +1,12 @@
 import type { ManagedPhoto } from './types.js';
-export const photoLimits = { batch: 50, bytes: 25 * 1024 * 1024, pixels: 40_000_000, formats: ['image/jpeg', 'image/png', 'image/webp'] };
+// parallel: simultaneous original uploads; the server prepares previews independently of the queue.
+export const photoLimits = {
+  batch: 2000,
+  parallel: 2,
+  bytes: 25 * 1024 * 1024,
+  pixels: 40_000_000,
+  formats: ['image/jpeg', 'image/png', 'image/webp']
+};
 export function fileProblem(file: { name: string; size: number; type: string }): string {
   if (!photoLimits.formats.includes(file.type)) return 'Допустимы JPEG, PNG и WebP.';
   if (!file.size) return 'Файл пуст.';
@@ -28,15 +35,19 @@ function assignments(photo: ManagedPhoto) {
       : [])
   );
 }
-export function nextChildCode(photos: ManagedPhoto[], groupId: string): string {
-  const codes = new Set(
-    photos.filter((item) => item.groupId === groupId).flatMap((item) => assignments(item).map((assignment) => assignment.childCode))
-  );
+export function freeChildCode(codes: ReadonlySet<string>): string {
   for (let i = 0; i < 18278; i++) {
     const code = childCodeAt(i);
     if (!codes.has(code)) return code;
   }
   throw new Error('Достигнут предел кодов детей.');
+}
+export function nextChildCode(photos: ManagedPhoto[], groupId: string): string {
+  return freeChildCode(
+    new Set(
+      photos.filter((item) => item.groupId === groupId).flatMap((item) => assignments(item).map((assignment) => assignment.childCode))
+    )
+  );
 }
 export function photoCode(child: string, sequence: number): string {
   return child + String(sequence).padStart(3, '0');
@@ -69,4 +80,22 @@ export function completeChildSelection(photos: ManagedPhoto[], ids: string[]): b
       .filter((item) => item.groupId === first.groupId && assignments(item).some((assignment) => assignment.childCode === child))
       .every((item) => ids.includes(item.id))
   );
+}
+const childTransferErrors: Record<string, string> = {
+  SET_CHANGED: 'Набор ребёнка изменился. Список обновлён — проверьте кадры и повторите перенос.',
+  TARGET_CODE_TAKEN: 'Этот код уже занят в целевой группе. Выберите другой код: существующие наборы не объединяются.',
+  GROUP_KIND_MISMATCH: 'Перенос возможен только между группами одного типа.',
+  GROUP_LOCKED: 'Одна из групп уже передана. Перенос набора возможен только до передачи ссылки.',
+  CHILD_HAS_ORDERS: 'По этому набору уже есть заказы. Перенос недоступен.',
+  INVALID_PHOTO_IDS: 'Набор ребёнка не удалось передать на сервер. Обновите страницу и повторите перенос.'
+};
+/** Текст отказа MED-07; null — код не относится к переносу. */
+export function childTransferErrorText(code: string | undefined, photoCodes: string[] = []): string | null {
+  if (code === 'SHARED_PHOTO')
+    return (
+      'Кадры ' +
+      (photoCodes.length ? photoCodes.join(', ') : 'набора') +
+      ' назначены ещё и другому ребёнку этой группы. Такой набор нельзя перенести.'
+    );
+  return code ? (childTransferErrors[code] ?? null) : null;
 }

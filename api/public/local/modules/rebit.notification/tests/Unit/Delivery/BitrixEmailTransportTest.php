@@ -32,6 +32,25 @@ final class BitrixEmailTransportTest extends TestCase
         self::assertStringContainsString('<br', \CEvent::$lastSendImmediateCall['fields']['BODY']);
     }
 
+    public function testSendsSenderHtmlAsIs(): void
+    {
+        $operation = $this->operation();
+        (new BitrixEmailTransport('s1'))->send(new DeliveryOperationDto(
+            id: $operation->id,
+            channel: $operation->channel,
+            recipient: $operation->recipient,
+            subject: $operation->subject,
+            body: $operation->body,
+            status: $operation->status,
+            attempts: $operation->attempts,
+            maxAttempts: $operation->maxAttempts,
+            bodyHtml: '<p>Здравствуйте, <b>Анна</b></p>',
+        ));
+
+        self::assertNotNull(\CEvent::$lastSendImmediateCall);
+        self::assertSame('<p>Здравствуйте, <b>Анна</b></p>', \CEvent::$lastSendImmediateCall['fields']['BODY']);
+    }
+
     public function testRejectedEventIsDefiniteFailure(): void
     {
         \CEvent::$sendImmediateResult = false;

@@ -68,11 +68,11 @@ const shoots = computed(() =>
   margin-top: 6px;
 }
 .dashboard-shoot__total {
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   line-height: 1.8;
 }
 .dashboard-shoot__total strong {
-  color: #253638;
+  color: var(--mf-color-text);
 }
 .dashboard-groups {
   display: grid;

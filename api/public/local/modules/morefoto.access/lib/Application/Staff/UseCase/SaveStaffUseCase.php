@@ -18,6 +18,10 @@ use Rebit\Share\Application\Contract\Auth\StaffIdentityGatewayInterface;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
+/**
+ * Создаёт или изменяет сотрудника по решению организатора: учётку ожидания, роль, доступ и назначения с проверкой
+ * версии и конфликтов. При изменении доступа отзывает сессии, а сотруднику без пароля отправляет приглашение.
+ */
 final readonly class SaveStaffUseCase
 {
     public function __construct(
@@ -91,6 +95,7 @@ final readonly class SaveStaffUseCase
 
             $identityByEmail = $this->identities->findByEmailForUpdate($input->email);
             $contactChanged = false;
+            $emailChanged = false;
             if (null === $userId) {
                 if (null !== $identityByEmail) {
                     $occupied = $this->staff->find($identityByEmail->id, true)->fetch();
@@ -112,6 +117,7 @@ final readonly class SaveStaffUseCase
                     throw new HttpException('STAFF_NOT_FOUND', 404);
                 }
                 $contactChanged = $identity->email !== $input->email || $identity->name !== $input->name;
+                $emailChanged = $identity->email !== $input->email;
                 if ($identity->email !== $input->email || $identity->name !== $input->name) {
                     $identity = $this->identities->updateContact($userId, $input->email, $input->name);
                 }
@@ -232,6 +238,10 @@ final readonly class SaveStaffUseCase
             if ($changed || [] !== $conflicts) {
                 $this->institutions->advanceState();
                 $this->identities->revokeSessions($userId);
+            }
+            // A pending identity learns its link by letter: new staff, a reused pending identity or a changed address.
+            if ($identity->pending && $input->active && (null === $existing || $emailChanged)) {
+                $this->identities->issueInvitation($userId, $actorUserId, force: null !== $existing);
             }
             $signature = $this->access->signature();
             $accountStatus = $identity->pending ? 'pending' : ($input->active && $identity->active ? 'active' : 'blocked');

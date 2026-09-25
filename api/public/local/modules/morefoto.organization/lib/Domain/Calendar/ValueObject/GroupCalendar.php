@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Organization\Domain\Calendar\ValueObject;
 
+use Morefoto\Organization\Domain\Calendar\Exception\CalendarRuleViolation;
 use Morefoto\Organization\Domain\Calendar\Service\CalendarPolicy;
 
 final readonly class GroupCalendar
@@ -46,6 +47,41 @@ final readonly class GroupCalendar
         $close = CalendarPolicy::addDays($now, 7, $this->timezone);
 
         return new self($now, $close, CalendarPolicy::addDays($close, 7, $this->timezone), $this->timezone);
+    }
+
+    /** Staff report the actual moment of the manual delivery; a repeated report never moves the deadlines. */
+    public function recordLinkSent(\DateTimeImmutable $sentAt, \DateTimeImmutable $now): self
+    {
+        if (null !== $this->sentAt) {
+            return $this;
+        }
+        if ($sentAt > $now) {
+            throw new CalendarRuleViolation('SENT_AT_IN_FUTURE');
+        }
+        $close = CalendarPolicy::addDays($sentAt, 7, $this->timezone);
+
+        return new self($sentAt, $close, CalendarPolicy::addDays($close, 7, $this->timezone), $this->timezone);
+    }
+
+    /** An agreed extension beyond the regular seven days survives the correction when it is still later. */
+    public function correctLinkSent(\DateTimeImmutable $sentAt, \DateTimeImmutable $now): self
+    {
+        if (null === $this->sentAt || null === $this->closesAt) {
+            throw new CalendarRuleViolation('LINK_NOT_SENT');
+        }
+        if ($sentAt > $now) {
+            throw new CalendarRuleViolation('SENT_AT_IN_FUTURE');
+        }
+        if ($sentAt->getTimestamp() === $this->sentAt->getTimestamp()) {
+            throw new CalendarRuleViolation('SENT_AT_UNCHANGED');
+        }
+        $close = CalendarPolicy::addDays($sentAt, 7, $this->timezone);
+        $extended = $this->closesAt > CalendarPolicy::addDays($this->sentAt, 7, $this->timezone);
+        if ($extended && $this->closesAt > $close) {
+            $close = $this->closesAt;
+        }
+
+        return new self($sentAt, $close, CalendarPolicy::addDays($close, 7, $this->timezone), $this->timezone);
     }
 
     public function extend(\DateTimeImmutable $newClose, \DateTimeImmutable $now): self

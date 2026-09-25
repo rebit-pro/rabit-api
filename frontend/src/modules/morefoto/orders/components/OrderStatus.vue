@@ -58,7 +58,7 @@ const linkLabel = computed(() =>
   gap: 14px;
 }
 .order-status__row dt {
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 .order-status__row dd {
   margin: 0;
@@ -67,11 +67,11 @@ const linkLabel = computed(() =>
 .order-status__note {
   font-size: 13px;
   line-height: 1.7;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 .order-status__late {
   padding: 12px;
-  background: #fff3df;
+  background: var(--mf-tone-warning-bg);
   border-radius: 6px;
   font-size: 13px;
   line-height: 1.7;

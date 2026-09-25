@@ -1,61 +1,116 @@
 <script setup lang="ts">
-import { shallowRef } from 'vue';
+import { computed, shallowRef, watch } from 'vue';
+import MfProgress from '@/components/viz/MfProgress.vue';
 import { isMockApiEnabled } from '@/mocks/config';
+import { photoLimits } from '../rules';
 import type { UploadJob } from '../types';
 import type { ManagedGroup } from '../../organization/types';
 import { writeDemo } from '../../mocks/storage';
 import UploadQueue from './UploadQueue.vue';
-defineProps<{
+const props = defineProps<{
   jobs: UploadJob[];
   groups: ManagedGroup[];
   busy: boolean;
+  paused: boolean;
   disabled: boolean;
   queued: number;
   accepted: number;
+  waiting: number;
   failed: number;
   error: string;
   groupName: string;
 }>();
-const emit = defineEmits<{ files: [files: File[]]; start: []; retry: [id: string]; clear: []; remove: [id: string] }>();
+const emit = defineEmits<{ files: [files: File[]]; start: []; pause: []; retry: [id: string]; clear: []; remove: [id: string] }>();
 const input = shallowRef<File[]>([]);
 function choose(files: File | File[] | null) {
   const selected = Array.isArray(files) ? files : files ? [files] : [];
   if (selected.length) emit('files', selected);
   input.value = [];
 }
+// Files dropped on the zone go to the same queue as the chosen ones; the queue checks their type and size.
+const dragging = shallowRef(false);
+function drop(event: DragEvent) {
+  dragging.value = false;
+  if (!props.disabled && !props.busy) choose(Array.from(event.dataTransfer?.files ?? []));
+}
+const finished = computed(() => props.jobs.filter((job) => job.status === 'done' || job.status === 'duplicate').length);
+// The list folds away once every file is through, so a finished batch stops pushing the frames down; a failed or a
+// waiting file keeps it open, because it needs an action.
+const settled = computed(() => props.jobs.length > 0 && finished.value === props.jobs.length);
+const listOpen = shallowRef(!settled.value);
+watch(settled, (value) => {
+  listOpen.value = !value;
+});
 </script>
 <template>
   <section class="mf-panel" aria-labelledby="upload-heading">
     <h2 id="upload-heading">{{ isMockApiEnabled ? 'Подготовить фотографии' : 'Загрузить фотографии' }}</h2>
-    <p class="mf-muted mt-2 mb-5">Файлы попадут в группу «{{ groupName }}». JPEG, PNG, WebP · до 25 МБ и 40 Мп · до 50 файлов за раз.</p>
+    <p class="mf-muted mt-2 mb-5">
+      Файлы попадут в группу «{{ groupName }}». JPEG, PNG, WebP · до 25 МБ и 40 Мп · до {{ photoLimits.batch }} файлов за раз.
+    </p>
     <v-alert v-if="isMockApiEnabled" type="info" variant="tonal" class="mb-5"
       >Демонстрация: создаём превью с водяным знаком в этом браузере. Файлы не отправляются на сервер; исходники сохраните у себя.</v-alert
     >
     <v-alert v-else type="info" variant="tonal" class="mb-5">
       Исходник отправляется в приватное хранилище. В интерфейсе публикуются только защищённые превью с водяным знаком.
     </v-alert>
-    <v-file-input
-      :model-value="input"
-      multiple
-      accept="image/jpeg,image/png,image/webp"
-      label="Выбрать фотографии"
-      aria-label="Выбрать фотографии"
-      :disabled="disabled || busy"
-      @update:model-value="choose"
-    />
+    <div
+      class="upload-drop"
+      :class="{ 'upload-drop--active': dragging }"
+      data-testid="upload-drop"
+      @dragenter.prevent="dragging = !disabled && !busy"
+      @dragover.prevent
+      @dragleave.self="dragging = false"
+      @drop.prevent="drop"
+    >
+      <v-icon icon="mdi-image-multiple-outline" size="32" class="upload-drop__icon" aria-hidden="true" />
+      <p><strong>Перетащите фотографии сюда</strong> или выберите файлы</p>
+      <v-file-input
+        :model-value="input"
+        multiple
+        accept="image/jpeg,image/png,image/webp"
+        label="Выбрать фотографии"
+        aria-label="Выбрать фотографии"
+        :disabled="disabled || busy"
+        hide-details
+        @update:model-value="choose"
+      />
+    </div>
     <div class="mf-actions mt-5">
-      <v-btn :disabled="!queued || busy || disabled" :loading="busy" @click="$emit('start')">{{
-        isMockApiEnabled ? 'Начать подготовку' : 'Загрузить на сервер'
+      <v-btn :disabled="!queued || busy || disabled" :loading="busy && !paused" @click="$emit('start')">{{
+        isMockApiEnabled ? 'Начать подготовку' : paused && queued ? 'Продолжить загрузку' : 'Загрузить на сервер'
+      }}</v-btn
+      ><v-btn v-if="busy && !isMockApiEnabled" variant="outlined" :disabled="paused" @click="$emit('pause')">{{
+        paused ? 'Остановим после текущих файлов' : 'Пауза'
       }}</v-btn
       ><v-btn variant="outlined" :disabled="busy || !jobs.some((job) => ['done', 'duplicate'].includes(job.status))" @click="$emit('clear')"
         >Убрать завершённые из очереди</v-btn
       >
     </div>
+    <MfProgress v-if="jobs.length" class="mt-5" label="Загружено" :value="finished" :max="jobs.length" />
     <p class="mt-4" role="status" data-testid="upload-counts">
-      Подготовлено: {{ accepted }} · Требуют внимания: {{ failed }} · В очереди: {{ queued }}
+      Готово: {{ accepted }} · В работе: {{ waiting }} · Требуют внимания: {{ failed }} · В очереди: {{ queued }}
     </p>
     <v-alert v-if="error" type="error" variant="tonal" role="alert" class="mt-4">{{ error }}</v-alert>
-    <UploadQueue :jobs="jobs" :busy="busy" :groups="groups" @retry="$emit('retry', $event)" @remove="$emit('remove', $event)" />
+    <v-btn
+      v-if="jobs.length"
+      variant="text"
+      class="mt-2"
+      :append-icon="listOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+      :aria-expanded="listOpen"
+      aria-controls="upload-queue-list"
+      @click="listOpen = !listOpen"
+      >{{ listOpen ? 'Скрыть список файлов' : 'Показать список файлов (' + jobs.length + ')' }}</v-btn
+    >
+    <UploadQueue
+      v-show="listOpen"
+      id="upload-queue-list"
+      :jobs="jobs"
+      :busy="busy"
+      :groups="groups"
+      @retry="$emit('retry', $event)"
+      @remove="$emit('remove', $event)"
+    />
     <details v-if="isMockApiEnabled" class="upload-demo">
       <summary>Проверка демонстрации</summary>
       <v-btn variant="text" :disabled="busy" @click="writeDemo('photos:fail-next', true)">Ошибка следующего файла</v-btn>
@@ -63,6 +118,30 @@ function choose(files: File | File[] | null) {
   </section>
 </template>
 <style scoped>
+.upload-drop {
+  display: grid;
+  justify-items: center;
+  gap: var(--mf-space-3);
+  padding: var(--mf-space-6) var(--mf-space-5) var(--mf-space-5);
+  border: 2px dashed var(--mf-color-border-strong);
+  border-radius: var(--mf-radius-md);
+  background: var(--mf-color-surface-2);
+  text-align: center;
+  transition:
+    border-color var(--mf-duration-fast) ease,
+    background var(--mf-duration-fast) ease;
+}
+.upload-drop--active {
+  border-color: var(--mf-color-primary);
+  background: var(--mf-color-primary-soft);
+}
+.upload-drop__icon {
+  color: var(--mf-color-text-secondary);
+}
+.upload-drop .v-input {
+  width: 100%;
+  max-width: 460px;
+}
 .upload-demo {
   margin-top: 24px;
 }

@@ -1,7 +1,17 @@
 import type { Catalog } from '../commerce/types.js';
 import type { ManagedGroup } from '../organization/types.js';
 import type { ManagedPhoto, PhotoState } from '../photos/types.js';
-import type { HandoffErrors, RequestRow, SubmittedRow, StaffRequest, ReviewBundle, RequestPreview } from './types.js';
+import type {
+  HandoffErrors,
+  LinkCommand,
+  RequestRow,
+  SubmittedRow,
+  StaffRequest,
+  ReviewBundle,
+  RequestPreview,
+  ReviewPhoto,
+  ServerTransferPreview
+} from './types.js';
 import { nextChildCode } from '../photos/rules.ts';
 
 export function moscowInput(value: string): string {
@@ -13,6 +23,25 @@ export function parseTransmission(value: string, now: string): string | null {
   const time = Date.parse(value + ':00+03:00');
   if (!Number.isFinite(time) || time > Date.parse(now) || moscowInput(new Date(time).toISOString()) !== value) return null;
   return new Date(time).toISOString();
+}
+/** Moscow form input `YYYY-MM-DDTHH:mm` as the server moment with an explicit offset. */
+export function serverMoment(value: string): string {
+  return value + ':00+03:00';
+}
+/** Client checks before a live link command; the server repeats every rule and owns the final answer. */
+export function liveLinkErrors(command: LinkCommand, now: string): HandoffErrors {
+  const errors: HandoffErrors = {};
+  if (command.action === 'prepare') {
+    if (!command.photosReviewed) errors.photosReviewed = 'Подтвердите проверку фотографий.';
+    if (!command.conditionsReviewed) errors.conditionsReviewed = 'Подтвердите проверку продукции, цен и условий.';
+    if (!command.staffReviewed) errors.staffReviewed = 'Подтвердите проверку сотрудников и ответственных.';
+    return errors;
+  }
+  if (!parseTransmission(command.sentAt, now)) errors.sentAt = 'Укажите существующую дату и время не позже текущего (МСК).';
+  if (!command.confirmed) errors.confirmed = 'Подтвердите факт передачи и показанные сроки.';
+  const reason = command.reason.trim().length;
+  if (command.action === 'correct' && (reason < 5 || reason > 500)) errors.reason = 'Укажите причину исправления: от 5 до 500 символов.';
+  return errors;
 }
 export function calendarDays(value: string, days: number): string {
   return new Date(Date.parse(value) + days * 86400000).toISOString();
@@ -129,4 +158,52 @@ export function reviewRequest(
 export function closingAfterCorrection(sentAt: string, extensionClosesAt?: string): string {
   const base = calendarDays(sentAt, 7);
   return extensionClosesAt && Date.parse(extensionClosesAt) > Date.parse(base) ? extensionClosesAt : base;
+}
+
+/** HND-10 → вид проверки переноса. Служебные превью доступны только организатору, остальным показываются коды кадров. */
+export function transferPreviewFromServer(
+  value: ServerTransferPreview,
+  request: StaffRequest,
+  thumbnails: boolean
+): RequestPreview<ReviewPhoto> {
+  return {
+    targetGroupId: value.targetGroupId,
+    targetGroupName: value.targetGroupName,
+    signature: value.signature,
+    hasOrders: value.hasOrders,
+    bundles: value.bundles.map((bundle) => {
+      const row = request.rows.find((item) => item.id === bundle.rowId);
+      if (!row) throw new Error('Список изменился. Обновите страницу и повторите проверку.');
+      return {
+        row: { ...row, childCode: bundle.childCode },
+        targetCode: bundle.targetCode,
+        hasOrders: bundle.hasOrders,
+        photos: bundle.photos.map((photo) => ({
+          id: photo.id,
+          code: photo.code,
+          previewSrc: thumbnails ? '/api/v1/photos/' + photo.id + '/thumb' : ''
+        }))
+      };
+    })
+  };
+}
+const transferErrors: Record<string, string> = {
+  REQUEST_TRANSFERRED: 'Список уже проверен и перенесён.',
+  REQUEST_NOT_SUBMITTED: 'Дождитесь уточнённого списка от автора.',
+  STAFF_GROUP_REQUIRED: 'В этой съёмке ещё нет папки сотрудников. Организатор должен создать её перед переносом.',
+  STAFF_GROUP_AMBIGUOUS: 'В съёмке несколько папок сотрудников. Оставьте одну и повторите проверку.',
+  TARGET_GROUP_CLOSED: 'Приём заказов в папке сотрудников закрыт, перенос в неё недоступен.',
+  SET_CHANGED: 'Исходный набор изменился или уже перенесён. Запросите уточнение списка.',
+  SIGNATURE_CONFLICT: 'Наборы изменились после проверки. Откройте проверку заново.',
+  CONFIRMATION_REQUIRED: 'Подтвердите полный набор и перенос.'
+};
+/** Текст отказа проверки или подтверждения льготного переноса; null — код не относится к переносу. */
+export function staffTransferErrorText(code: string | undefined, photoCodes: string[] = []): string | null {
+  if (code === 'SHARED_PHOTO')
+    return (
+      'Кадры ' +
+      (photoCodes.length ? photoCodes.join(', ') : 'набора') +
+      ' назначены ещё и ребёнку, который остаётся в группе. Такой набор нельзя перенести.'
+    );
+  return code ? (transferErrors[code] ?? null) : null;
 }

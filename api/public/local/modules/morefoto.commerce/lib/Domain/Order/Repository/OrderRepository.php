@@ -6,6 +6,7 @@ namespace Morefoto\Commerce\Domain\Order\Repository;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\Result;
+use Morefoto\Commerce\Domain\Order\Enum\ProductionStatusEnum;
 use Morefoto\Commerce\Domain\Order\Exception\OrderStorageException;
 use Morefoto\Commerce\Domain\Order\ValueObject\OrderSearchCriteria;
 use Rebit\Share\Shared\Exception\HttpException;
@@ -124,6 +125,24 @@ final readonly class OrderRepository
             FROM mf_order_line WHERE ORDER_ID IN (' . implode(',', $orderIds) . ') ORDER BY ORDER_ID,LINE_NO');
     }
 
+    /**
+     * Дети с хотя бы одной строкой заказа; строки заказов не удаляются, поэтому чтения без блокировки достаточно.
+     *
+     * @param non-empty-list<int> $childIds
+     *
+     * @return list<int>
+     */
+    public function childrenWithOrders(array $childIds): array
+    {
+        $result = $this->query('SELECT DISTINCT CHILD_ID FROM mf_order_line WHERE CHILD_ID IN (' . implode(',', $childIds) . ')');
+        $children = [];
+        while (false !== ($row = $result->fetch())) {
+            $children[] = (int)$row['CHILD_ID'];
+        }
+
+        return $children;
+    }
+
     public function page(OrderSearchCriteria $criteria, int $limit, int $offset): Result
     {
         return $this->query('SELECT ' . self::COLUMNS . ' FROM mf_order o WHERE ' . $this->where($criteria)
@@ -136,6 +155,24 @@ final readonly class OrderRepository
         $row = $this->query('SELECT COUNT(*) AS TOTAL FROM mf_order o WHERE ' . $this->where($criteria))->fetch();
 
         return false === $row ? 0 : (int)$row['TOTAL'];
+    }
+
+    /**
+     * Orders of the criteria split by production status with one aggregate; every status is present, zero included.
+     *
+     * @return array<value-of<ProductionStatusEnum>, int>
+     */
+    public function productionCounts(OrderSearchCriteria $criteria): array
+    {
+        $counts = array_fill_keys(array_map(static fn(ProductionStatusEnum $status): string => $status->value, ProductionStatusEnum::cases()), 0);
+        $result = $this->query('SELECT o.PRODUCTION_STATUS AS STATUS,COUNT(*) AS TOTAL FROM mf_order o WHERE ' . $this->where($criteria) . ' GROUP BY o.PRODUCTION_STATUS');
+        while (false !== ($row = $result->fetch())) {
+            if (array_key_exists((string)$row['STATUS'], $counts)) {
+                $counts[(string)$row['STATUS']] = (int)$row['TOTAL'];
+            }
+        }
+
+        return $counts;
     }
 
     private function where(OrderSearchCriteria $criteria): string

@@ -130,14 +130,14 @@ async function clear() {
   gap: 10px;
   font-size: 14px;
   line-height: 1.6;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   margin-bottom: 24px;
 }
 .cart-notice {
   padding: 16px;
   margin-bottom: 20px;
-  background: #eaf3f9;
-  color: #24658a;
+  background: var(--mf-color-selected);
+  color: var(--mf-color-link);
   border-radius: 8px;
   line-height: 1.5;
 }

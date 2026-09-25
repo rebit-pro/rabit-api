@@ -141,7 +141,7 @@ async function add() {
   display: flex;
   flex-direction: column;
   gap: var(--mf-space-4);
-  background: white;
+  background: var(--mf-color-surface);
 }
 .product-selector h3 {
   font-size: 20px;
@@ -149,21 +149,21 @@ async function add() {
 }
 .product-demo {
   font-size: 12px;
-  color: #687781;
+  color: var(--mf-color-text-secondary);
   margin-top: -10px;
 }
 .product-description {
   font-size: 14px;
   line-height: 1.6;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 .product-discount {
-  color: #24658a;
+  color: var(--mf-color-link);
   font-size: 14px;
 }
 .product-discount s {
   margin-left: 8px;
-  color: #687781;
+  color: var(--mf-color-text-secondary);
 }
 .product-price {
   display: flex;
@@ -177,9 +177,9 @@ async function add() {
 }
 .product-notice {
   padding: 12px;
-  background: #eaf3f9;
+  background: var(--mf-color-selected);
   border-radius: 8px;
-  color: #24658a;
+  color: var(--mf-color-link);
   font-size: 14px;
   line-height: 1.5;
 }

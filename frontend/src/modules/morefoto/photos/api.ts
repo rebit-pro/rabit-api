@@ -1,5 +1,6 @@
 import { isAxiosError } from 'axios';
 import api from '@/api/http';
+import { childTransferErrorText } from './rules';
 
 export type ServerPhotoStatus = 'processing' | 'ready' | 'failed' | 'duplicate';
 export interface ServerPhotoAssignment {
@@ -35,12 +36,33 @@ export interface ServerMediaGroup {
   name: string;
   kind: string;
 }
+/** Ready frames of the requested group, whatever page or filter is shown. */
+export interface ServerPhotoGroupSummary {
+  photos: number;
+  unassigned: number;
+  children: string[];
+}
+/** Processing split of the selected group without the page filters (U5). */
+export interface ServerPhotoStats {
+  byStatus: { processing: number; ready: number; failed: number; duplicate: number };
+  unassigned: number;
+}
 export interface ServerPhotoPage {
   items: ServerPhoto[];
   groups: ServerMediaGroup[];
   covers: Record<string, string>;
   revision: number;
   meta: { page: number; pageSize: number; total: number };
+  summary: ServerPhotoGroupSummary | null;
+  stats?: ServerPhotoStats;
+}
+export interface PhotoListQuery {
+  groupId?: string;
+  childCode?: string;
+  assigned?: boolean;
+  status?: ServerPhotoStatus;
+  page?: number;
+  pageSize?: number;
 }
 export interface UploadPhotoResult {
   id: string;
@@ -58,14 +80,31 @@ export interface CoverResult {
   photoId: string;
   revision: number;
 }
+export interface ChildTransfer {
+  fromGroupId: string;
+  toGroupId: string;
+  childCode: string;
+  targetCode: string;
+  expectedPhotoIds: string[];
+  revision: number;
+}
+export interface ChildTransferResult {
+  photoIds: string[];
+  fromGroupId: string;
+  toGroupId: string;
+  childCode: string;
+  revision: number;
+}
+// Matches PHP max_execution_time: the shared 15 s timeout cuts large originals on slow uplinks.
+const uploadTimeout = 300_000;
 function idempotencyKey(): string {
   return crypto.randomUUID().replace(/-/g, '');
 }
 
 export const photosApi = {
-  async list(shootId: string, page = 1, pageSize = 100): Promise<ServerPhotoPage> {
+  async list(shootId: string, query: PhotoListQuery): Promise<ServerPhotoPage> {
     const response = await api.get<ServerPhotoPage | null>('/api/v1/shoots/' + encodeURIComponent(shootId) + '/photos', {
-      params: { page, pageSize }
+      params: query
     });
     if (null === response.data || !Array.isArray(response.data.items) || !response.data.meta) {
       throw new Error('Не удалось загрузить список кадров. Повторите попытку.');
@@ -94,6 +133,13 @@ export const photosApi = {
       )
     ).data;
   },
+  async transferChild(shootId: string, transfer: ChildTransfer): Promise<ChildTransferResult> {
+    return (
+      await api.post<ChildTransferResult>('/api/v1/shoots/' + encodeURIComponent(shootId) + '/child-transfers', transfer, {
+        headers: { 'Idempotency-Key': idempotencyKey() }
+      })
+    ).data;
+  },
   async upload(
     shootId: string,
     groupId: string,
@@ -107,8 +153,9 @@ export const photosApi = {
     return (
       await api.post('/api/v1/shoots/' + encodeURIComponent(shootId) + '/photos', body, {
         signal,
+        timeout: uploadTimeout,
         headers: { 'Content-Type': 'multipart/form-data' },
-        onUploadProgress: (event) => onProgress(event.total ? Math.min(75, Math.round((event.loaded / event.total) * 75)) : 20)
+        onUploadProgress: (event) => onProgress(event.total ? Math.round((event.loaded / event.total) * 100) : 0)
       })
     ).data;
   }
@@ -117,6 +164,13 @@ export const photosApi = {
 export function photoApiErrorCode(cause: unknown): string | undefined {
   if (!isAxiosError(cause)) return undefined;
   return (cause.response?.data as { error?: { code?: string } } | undefined)?.error?.code;
+}
+
+export function childTransferError(cause: unknown): string {
+  const details = isAxiosError(cause)
+    ? (cause.response?.data as { error?: { details?: { photoCodes?: string[] } } } | undefined)?.error?.details
+    : undefined;
+  return childTransferErrorText(photoApiErrorCode(cause), details?.photoCodes) ?? photoApiError(cause);
 }
 
 export function photoApiError(cause: unknown): string {

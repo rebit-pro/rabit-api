@@ -58,7 +58,7 @@ const states = { preparing: 'Ещё не открыт', open: 'Идёт приё
   gap: 12px;
 }
 .order-facts dt {
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 .order-facts dd {
   margin: 0;

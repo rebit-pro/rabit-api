@@ -5,6 +5,7 @@ import { printCount } from '../rules';
 import { productionState } from '../display';
 import { formatMoment } from '../../handoff/display';
 import type { ProductionGroup } from '../types';
+import MfStatus from '@/components/status/MfStatus.vue';
 const props = defineProps<{ groups: ProductionGroup[] }>();
 const route = useRoute(),
   router = useRouter();
@@ -90,7 +91,7 @@ const visible = computed(() =>
       <p class="mf-eyebrow">{{ item.institutionName }}</p>
       <h2>{{ item.group.name }}</h2>
       <p class="mf-muted">{{ item.shootName }} · {{ item.group.kind === 'staff' ? 'Сотрудники' : 'Родители' }}</p>
-      <v-chip class="my-4" :color="item.plan.closed ? 'primary' : 'secondary'">{{ productionState(item) }}</v-chip>
+      <MfStatus class="my-4" :tone="item.plan.closed ? 'info' : 'neutral'">{{ productionState(item) }}</MfStatus>
       <p>
         Отпечатков: <strong>{{ printCount(item.plan.rows) }}</strong> · заказов:
         <strong>{{ new Set(item.plan.rows.map((r) => r.orderId)).size }}</strong>

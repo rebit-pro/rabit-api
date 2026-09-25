@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Morefoto\Organization\Application\Calendar\Service;
 
 use Morefoto\Organization\Application\Calendar\Contract\CalendarClockInterface;
+use Morefoto\Organization\Domain\Calendar\Exception\CalendarRuleViolation;
 use Morefoto\Organization\Domain\Calendar\Repository\GroupCalendarRepository;
 use Morefoto\Organization\Domain\Calendar\ValueObject\GroupCalendar as Calendar;
 use Morefoto\Organization\Domain\Institution\Repository\InstitutionOperationRepository;
@@ -13,8 +14,13 @@ use Rebit\Share\Contracts\Organization\GroupCalendarInterface;
 use Rebit\Share\Contracts\Organization\Dto\CalendarCommandInputDto;
 use Rebit\Share\Contracts\Organization\Dto\CalendarMutationOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\GroupCalendarOutputDto;
+use Rebit\Share\Contracts\Organization\Dto\LinkSentInputDto;
 use Rebit\Share\Shared\Exception\HttpException;
 
+/**
+ * Единственный владелец календаря приёма группы: блокирует группу для внешнего сценария и меняет сроки по правилам D10.
+ * Запись и исправление факта передачи ссылки пересчитывают закрытие и доставку, сохраняя изменение в журнале Organization.
+ */
 final readonly class GroupCalendar implements GroupCalendarInterface
 {
     public function __construct(
@@ -60,6 +66,55 @@ final readonly class GroupCalendar implements GroupCalendarInterface
         }
 
         return $this->mutate($input, $newClosesAt);
+    }
+
+    public function recordLinkSent(LinkSentInputDto $input): CalendarMutationOutputDto
+    {
+        return $this->deliver($input, false);
+    }
+
+    public function correctLinkSent(LinkSentInputDto $input): CalendarMutationOutputDto
+    {
+        return $this->deliver($input, true);
+    }
+
+    /** Handoff owns idempotency of delivery commands; every calendar change still lands in the organization journal. */
+    private function deliver(LinkSentInputDto $input, bool $correction): CalendarMutationOutputDto
+    {
+        // lock() already acquired parents and the group before the caller locked profiles/Auth.
+        $row = $this->calendars->find($input->groupId, true)->fetch();
+        if (false === $row) {
+            throw new HttpException('NOT_FOUND', 404);
+        }
+        $revision = (int)$row['UF_REVISION'];
+        $before = Calendar::fromStorage($row['UF_SENT_AT'], $row['UF_CLOSES_AT'], $row['UF_DELIVERY_DUE_AT'], (string)$row['UF_TIMEZONE']);
+        $now = $this->clock->now();
+        try {
+            $after = $correction ? $before->correctLinkSent($input->sentAt, $now) : $before->recordLinkSent($input->sentAt, $now);
+        } catch (CalendarRuleViolation $violation) {
+            throw new HttpException($violation->getMessage(), 'LINK_NOT_SENT' === $violation->getMessage() ? 409 : 422, $violation);
+        }
+        if ($after === $before) {
+            return new CalendarMutationOutputDto($input->groupId, $revision, CalendarProjection::create($before, $now));
+        }
+        if (!$this->calendars->save((int)$row['ID'], $revision, $after)) {
+            throw new HttpException('VERSION_CONFLICT', 409);
+        }
+        $this->calendars->record(
+            id: (int)$row['ID'],
+            from: $revision,
+            to: $revision + 1,
+            actor: $input->actorUserId,
+            operationId: $input->operationId,
+            delta: json_encode([
+                'action' => $correction ? 'correctLinkSent' : 'recordLinkSent',
+                'reason' => $input->reason,
+                'before' => CalendarProjection::create($before, $now),
+                'after' => CalendarProjection::create($after, $now),
+            ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+        );
+
+        return new CalendarMutationOutputDto($input->groupId, $revision + 1, CalendarProjection::create($after, $now));
     }
 
     private function mutate(CalendarCommandInputDto $input, ?\DateTimeImmutable $newClosesAt): CalendarMutationOutputDto

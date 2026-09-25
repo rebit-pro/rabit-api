@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Morefoto\Handoff\Presentation\Controller;
 
 use Morefoto\Handoff\Application\Request\UseCase\ClarifyStaffRequestUseCase;
+use Morefoto\Handoff\Application\Request\UseCase\ConfirmStaffTransferUseCase;
+use Morefoto\Handoff\Application\Request\UseCase\GetStaffTransferPreviewUseCase;
 use Morefoto\Handoff\Application\Request\UseCase\GetStaffRequestUseCase;
 use Morefoto\Handoff\Application\Request\UseCase\ListStaffRequestsUseCase;
 use Morefoto\Handoff\Application\Request\UseCase\SaveStaffRequestUseCase;
 use Morefoto\Handoff\Presentation\Request\Dto\ClarifyStaffRequestRequestDto;
+use Morefoto\Handoff\Presentation\Request\Dto\ConfirmStaffTransferRequestDto;
 use Morefoto\Handoff\Presentation\Request\Dto\CreateStaffRequestRequestDto;
 use Morefoto\Handoff\Presentation\Request\Dto\StaffRequestDetailRequestDto;
 use Morefoto\Handoff\Presentation\Request\Dto\StaffRequestListRequestDto;
@@ -25,6 +28,8 @@ final class StaffRequestController extends AuthenticatedApiJsonController
         private readonly GetStaffRequestUseCase $detail,
         private readonly SaveStaffRequestUseCase $save,
         private readonly ClarifyStaffRequestUseCase $clarify,
+        private readonly GetStaffTransferPreviewUseCase $transferPreview,
+        private readonly ConfirmStaffTransferUseCase $transfer,
         private readonly StaffRequestInputMapper $inputMapper,
         private readonly StaffRequestResultMapper $resultMapper,
     ) {
@@ -72,6 +77,21 @@ final class StaffRequestController extends AuthenticatedApiJsonController
             $request->requestId,
             $this->inputMapper->key($request),
             $this->inputMapper->clarify($request),
+        )));
+    }
+
+    public function transferPreviewAction(StaffRequestDetailRequestDto $request): ControllerJson
+    {
+        return $this->json($this->resultMapper->preview($this->transferPreview->execute($this->getAuthUserId(), $request->requestId)));
+    }
+
+    public function transferAction(ConfirmStaffTransferRequestDto $request): ControllerJson
+    {
+        return $this->json($this->resultMapper->transfer($this->transfer->execute(
+            $this->getAuthUserId(),
+            $request->requestId,
+            $this->inputMapper->key($request),
+            $this->inputMapper->transfer($request),
         )));
     }
 }

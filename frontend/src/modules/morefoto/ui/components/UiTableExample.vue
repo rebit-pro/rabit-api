@@ -229,7 +229,7 @@ function returnFocus() {
   line-height: 1.6;
 }
 .ui-table-notice {
-  color: #24658a;
+  color: var(--mf-color-link);
 }
 .ui-table-bulk {
   display: flex;
@@ -237,7 +237,7 @@ function returnFocus() {
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: #eaf3f9;
+  background: var(--mf-color-selected);
   border-radius: 8px;
 }
 .ui-table-dialog {
@@ -255,7 +255,7 @@ function returnFocus() {
   gap: 12px;
 }
 .ui-table-dialog dt {
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 .ui-table-dialog dd {
   margin: 0;

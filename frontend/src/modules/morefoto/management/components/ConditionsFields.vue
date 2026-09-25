@@ -6,15 +6,26 @@ defineProps<{ errors: ManagementErrors; catalog: Catalog }>();
 const kinds = { physical: 'Печатный товар', digital: 'Один электронный кадр', bundle: 'Весь набор ребёнка в одной съёмке' };
 </script>
 <template>
-  <v-checkbox
-    v-if="model.groupId"
-    v-model="model.inherit"
-    label="Наследовать общий прайс и предложения"
-    aria-label="Наследовать общий прайс и предложения"
-    hint="Обновления общего каталога будут действовать для этой группы."
-    persistent-hint
-    class="mb-4"
-  />
+  <fieldset v-if="model.groupId" class="conditions-mode mb-5">
+    <legend>Условия группы</legend>
+    <div class="conditions-mode__segments">
+      <label class="conditions-mode__segment" :class="{ 'conditions-mode__segment--on': model.inherit }">
+        <input v-model="model.inherit" type="radio" name="conditions-mode" :value="true" />
+        Общие условия каталога
+      </label>
+      <label class="conditions-mode__segment" :class="{ 'conditions-mode__segment--on': !model.inherit }">
+        <input v-model="model.inherit" type="radio" name="conditions-mode" :value="false" />
+        Собственные условия группы
+      </label>
+    </div>
+    <p class="mf-muted mt-2">
+      {{
+        model.inherit
+          ? 'Обновления общего каталога будут действовать для этой группы.'
+          : 'Цены и предложения ниже действуют только для этой группы.'
+      }}
+    </p>
+  </fieldset>
   <p class="mf-muted mb-5">
     Скидка сотрудникам — 50% только на отмеченные позиции. Печатные товары учитываются в пороге подарка после скидки, отдельно для каждого
     ребёнка в одном заказе.
@@ -88,12 +99,69 @@ const kinds = { physical: 'Печатный товар', digital: 'Один эл
   </section>
 </template>
 <style scoped>
+.conditions-mode {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.conditions-mode legend {
+  margin-bottom: var(--mf-space-2);
+  font-weight: var(--mf-weight-semibold);
+}
+.conditions-mode__segments {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  max-width: 100%;
+  padding: 2px;
+  border: 1px solid var(--mf-color-border-strong);
+  border-radius: var(--mf-radius-sm);
+  background: var(--mf-color-surface-2);
+}
+.conditions-mode__segment {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 var(--mf-space-4);
+  border-radius: var(--mf-radius-xs);
+  color: var(--mf-color-text-secondary);
+  font-weight: var(--mf-weight-medium);
+  text-align: center;
+  cursor: pointer;
+}
+.conditions-mode__segment input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.conditions-mode__segment--on {
+  background: var(--mf-color-surface);
+  box-shadow: var(--mf-shadow-sm);
+  color: var(--mf-color-text);
+}
+.conditions-mode__segment:has(input:focus-visible) {
+  outline: var(--mf-focus-width) solid var(--mf-color-focus);
+  outline-offset: 2px;
+}
+@media (max-width: 600px) {
+  .conditions-mode__segments {
+    display: grid;
+    grid-auto-flow: row;
+    width: 100%;
+  }
+}
 .condition-product {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(160px, 0.6fr);
   gap: 16px;
   padding: 20px 0;
-  border-top: 1px solid #dce3e8;
+  border-top: 1px solid var(--mf-color-border);
   min-width: 0;
 }
 .condition-name {
@@ -111,7 +179,7 @@ const kinds = { physical: 'Печатный товар', digital: 'Один эл
 .gift-fields {
   margin-top: 24px;
   padding-top: 24px;
-  border-top: 1px solid #dce3e8;
+  border-top: 1px solid var(--mf-color-border);
 }
 @media (max-width: 600px) {
   .condition-product,

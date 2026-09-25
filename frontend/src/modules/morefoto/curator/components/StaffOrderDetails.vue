@@ -14,6 +14,9 @@ import OrderContacts from '../../orders/components/OrderContacts.vue';
 import PaymentHistory from '../../orders/components/PaymentHistory.vue';
 import OrderPeriod from './OrderPeriod.vue';
 import { supportStatuses } from '../rules';
+import MfStatus from '@/components/status/MfStatus.vue';
+import { toneOf } from '@/components/status/tones';
+import { paymentTone, productionTone } from '../../ui/statusTone';
 const props = defineProps<{ order: StaffOrder }>();
 const fileState = computed(() =>
   downloadAccess({ ...props.order, accessKey: '', requestId: '', galleryToken: '' }, props.order.period.now)
@@ -36,8 +39,8 @@ const fileLabels = {
       <p class="mf-muted">{{ formatMoment(order.createdAt) }}</p>
       <div class="work-statuses">
         <strong class="work-total">{{ money(order.quote.total) }}</strong
-        ><v-chip>{{ paymentLabels[order.paymentStatus] }}</v-chip
-        ><v-chip>{{ productionLabels[order.productionStatus] }}</v-chip>
+        ><MfStatus :tone="toneOf(paymentTone, order.paymentStatus)">{{ paymentLabels[order.paymentStatus] }}</MfStatus
+        ><MfStatus :tone="toneOf(productionTone, order.productionStatus)">{{ productionLabels[order.productionStatus] }}</MfStatus>
       </div>
       <p v-if="order.latePayment && !lateDecision(order)" class="mt-4">Поздняя оплата: требуется согласование исполнения.</p>
       <p class="mt-4">

@@ -6,6 +6,7 @@ namespace Morefoto\Organization\Domain\Structure\Repository;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\Result;
+use Morefoto\Organization\Domain\Calendar\Repository\GroupStateSql;
 use Morefoto\Organization\Domain\Structure\ValueObject\StructureId;
 use Morefoto\Organization\Domain\Structure\ValueObject\StructureName;
 use Morefoto\Organization\Domain\Structure\ValueObject\ShootDate;
@@ -91,14 +92,16 @@ LEFT JOIN (
 SQL);
     }
 
-    public function groups(int $shootId, int $limit, int $offset): Result
+    /** Page of the shoot's groups; with `$nowUtc` every row also carries the state counters of all its groups. */
+    public function groups(int $shootId, int $limit, int $offset, ?string $nowUtc = null): Result
     {
         $this->bounds($limit, $offset);
+        $counters = null === $nowUtc ? 'NULL AS STATE_PREPARING,NULL AS STATE_OPEN,NULL AS STATE_CLOSED' : GroupStateSql::counters($nowUtc);
 
         return $this->query(<<<SQL
 SELECT page.ID,page.UF_PUBLIC_ID,page.UF_NAME,page.UF_KIND,page.UF_REVISION,page.UF_TIMEZONE,
-DATE_FORMAT(page.UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS UF_SENT_AT,DATE_FORMAT(page.UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS UF_CLOSES_AT,DATE_FORMAT(page.UF_DELIVERY_DUE_AT,'%Y-%m-%d %H:%i:%s') AS UF_DELIVERY_DUE_AT,totals.TOTAL
-FROM (SELECT COUNT(*) AS TOTAL FROM b_hlbd_mf_group WHERE UF_SHOOT_ID={$shootId}) totals
+DATE_FORMAT(page.UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS UF_SENT_AT,DATE_FORMAT(page.UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS UF_CLOSES_AT,DATE_FORMAT(page.UF_DELIVERY_DUE_AT,'%Y-%m-%d %H:%i:%s') AS UF_DELIVERY_DUE_AT,totals.TOTAL,totals.STATE_PREPARING,totals.STATE_OPEN,totals.STATE_CLOSED
+FROM (SELECT COUNT(*) AS TOTAL,{$counters} FROM b_hlbd_mf_group g WHERE g.UF_SHOOT_ID={$shootId}) totals
 LEFT JOIN (
     SELECT ID,UF_PUBLIC_ID,UF_NAME,UF_KIND,UF_REVISION,UF_TIMEZONE,UF_SENT_AT,UF_CLOSES_AT,UF_DELIVERY_DUE_AT,UF_CREATED_AT
     FROM b_hlbd_mf_group WHERE UF_SHOOT_ID={$shootId}
@@ -118,15 +121,16 @@ SQL);
      *     UF_DELIVERY_DUE_AT: string|null, TOTAL: int|string,
      * }
      */
-    public function institutionGroups(int $institutionId, int $limit, int $offset, ?array $institutionIds): Result
+    public function institutionGroups(int $institutionId, int $limit, int $offset, ?array $institutionIds, string $nowUtc): Result
     {
         $this->bounds($limit, $offset);
         $condition = 's.UF_INSTITUTION_ID=' . $institutionId . $this->scope($institutionIds, 's.UF_INSTITUTION_ID');
+        $counters = GroupStateSql::counters($nowUtc);
 
         return $this->query(<<<SQL
 SELECT page.ID,page.UF_PUBLIC_ID,page.SHOOT_PUBLIC_ID,page.UF_NAME,page.UF_KIND,page.UF_REVISION,page.UF_TIMEZONE,
-DATE_FORMAT(page.UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS UF_SENT_AT,DATE_FORMAT(page.UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS UF_CLOSES_AT,DATE_FORMAT(page.UF_DELIVERY_DUE_AT,'%Y-%m-%d %H:%i:%s') AS UF_DELIVERY_DUE_AT,totals.TOTAL
-FROM (SELECT COUNT(*) AS TOTAL FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot s ON s.ID=g.UF_SHOOT_ID WHERE {$condition}) totals
+DATE_FORMAT(page.UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS UF_SENT_AT,DATE_FORMAT(page.UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS UF_CLOSES_AT,DATE_FORMAT(page.UF_DELIVERY_DUE_AT,'%Y-%m-%d %H:%i:%s') AS UF_DELIVERY_DUE_AT,totals.TOTAL,totals.STATE_PREPARING,totals.STATE_OPEN,totals.STATE_CLOSED
+FROM (SELECT COUNT(*) AS TOTAL,{$counters} FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot s ON s.ID=g.UF_SHOOT_ID WHERE {$condition}) totals
 LEFT JOIN (
     SELECT g.ID,g.UF_PUBLIC_ID,s.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID,g.UF_NAME,g.UF_KIND,g.UF_REVISION,g.UF_TIMEZONE,g.UF_SENT_AT,g.UF_CLOSES_AT,g.UF_DELIVERY_DUE_AT,g.UF_CREATED_AT
     FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot s ON s.ID=g.UF_SHOOT_ID WHERE {$condition}

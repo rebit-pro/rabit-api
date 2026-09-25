@@ -4,14 +4,23 @@ declare(strict_types=1);
 
 namespace Rebit\Auth\Infrastructure\Adapter;
 
+use Rebit\Auth\Application\Access\Contract\AccessLinkRepositoryInterface;
+use Rebit\Auth\Application\Access\UseCase\IssueAccessInvitationUseCase;
+use Rebit\Auth\Application\Auth\Contract\ClockInterface;
 use Rebit\Auth\Domain\User\Entity\UserRegistrationState;
 use Rebit\Auth\Domain\User\Repository\UserRepository;
 use Rebit\Share\Application\Contract\Auth\Dto\StaffIdentityOutputDto;
+use Rebit\Share\Application\Contract\Auth\Dto\StaffInvitationOutputDto;
 use Rebit\Share\Application\Contract\Auth\StaffIdentityGatewayInterface;
 
 final readonly class StaffIdentityGateway implements StaffIdentityGatewayInterface
 {
-    public function __construct(private UserRepository $users) {}
+    public function __construct(
+        private UserRepository $users,
+        private IssueAccessInvitationUseCase $invitation,
+        private AccessLinkRepositoryInterface $links,
+        private ClockInterface $clock,
+    ) {}
 
     public function findByEmailForUpdate(string $email): ?StaffIdentityOutputDto
     {
@@ -42,6 +51,29 @@ final readonly class StaffIdentityGateway implements StaffIdentityGatewayInterfa
     public function revokeSessions(int $userId): void
     {
         $this->users->clearToken($userId);
+    }
+
+    public function issueInvitation(int $userId, int $issuedBy, bool $force = false): StaffInvitationOutputDto
+    {
+        $state = $this->invitation->execute($userId, $issuedBy, $force);
+
+        return new StaffInvitationOutputDto($state->userId, $state->sentAt, $state->expiresAt, $state->state);
+    }
+
+    public function invitations(array $userIds): array
+    {
+        $now = $this->clock->now();
+        $output = [];
+        foreach ($this->links->invitationsFor($userIds) as $userId => $link) {
+            $output[$userId] = new StaffInvitationOutputDto(
+                userId: $userId,
+                sentAt: (new \DateTimeImmutable('@' . $link->issuedAt))->format(DATE_ATOM),
+                expiresAt: (new \DateTimeImmutable('@' . $link->expiresAt))->format(DATE_ATOM),
+                state: $link->isUsed() ? 'accepted' : ($link->isExpired($now) ? 'expired' : 'sent'),
+            );
+        }
+
+        return $output;
     }
 
     private function output(?UserRegistrationState $identity): ?StaffIdentityOutputDto

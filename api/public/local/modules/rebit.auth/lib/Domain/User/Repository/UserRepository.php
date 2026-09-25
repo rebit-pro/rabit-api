@@ -245,6 +245,17 @@ final readonly class UserRepository implements LoginUserRepositoryInterface, Tok
         ]);
     }
 
+    /**
+     * @throws RepositoryException
+     */
+    public function changePassword(int $userId, string $password): void
+    {
+        $this->updateUser($userId, [
+            'PASSWORD' => $password,
+            'CONFIRM_PASSWORD' => $password,
+        ]);
+    }
+
     public function updateToken(int $userId, string $token, DateTime $expiresAt): void
     {
         // Token fields belong to Auth. CUser::Update opens a nested transaction and

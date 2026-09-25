@@ -11,21 +11,28 @@ use Morefoto\Organization\Domain\Institution\Repository\InstitutionRepository;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Contracts\Access\Dto\InstitutionAssignmentOutputDto;
 use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
+use Morefoto\Organization\Application\Calendar\Contract\CalendarClockInterface;
+use Morefoto\Organization\Domain\Calendar\Repository\GroupStateSql;
 use Rebit\Share\Shared\Exception\HttpException;
 
+/**
+ * Показывает сотруднику страницу учреждений его области с назначениями и масштабом каждого: сколько съёмок, групп
+ * и групп с открытым приёмом. Если доступ изменился во время чтения, ответ отклоняется целиком.
+ */
 final readonly class ListVisibleInstitutionsUseCase
 {
     public function __construct(
         private InstitutionRepository $institutions,
         private InstitutionAccessInterface $access,
         private TokenResolverInterface $tokens,
+        private CalendarClockInterface $clock,
     ) {}
 
     public function execute(int $actor, string $bearer, ListInstitutionsInputDto $input): VisibleInstitutionPageOutputDto
     {
         $scope = $this->access->scope($actor);
         $signature = $this->access->signature();
-        $result = $this->institutions->page($input->query, $input->pageSize, $input->offset(), 'organizer' === $scope->role ? null : $scope->institutionIds);
+        $result = $this->institutions->page($input->query, $input->pageSize, $input->offset(), 'organizer' === $scope->role ? null : $scope->institutionIds, GroupStateSql::utc($this->clock->now()));
         $rows = [];
         $ids = [];
         $total = 0;
@@ -47,6 +54,11 @@ final readonly class ListVisibleInstitutionsUseCase
                 revision: (int)$row['UF_REVISION'],
                 curatorId: $slot->curatorId,
                 headId: $slot->headId,
+                curatorName: $slot->curatorName,
+                headName: $slot->headName,
+                shootCount: (int)$row['SHOOT_COUNT'],
+                groupCount: (int)$row['GROUP_COUNT'],
+                openGroupCount: (int)$row['OPEN_GROUP_COUNT'],
             );
         }
         $current = $this->access->scope($actor);

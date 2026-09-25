@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { money } from '../../commerce/money';
-import { formatMoment, paymentLabels, productionLabels } from '../formatters';
+import { formatMoment, livePaymentLabels as paymentLabels, productionLabels } from '../formatters';
 import { useLiveOrder } from '../composables/useLiveOrder';
 import { orderQuoteAsCart } from '../live/rules';
 import OrderComposition from './OrderComposition.vue';
@@ -75,11 +75,11 @@ const { order, loading, error, missing, copied, reload, copyLink } = useLiveOrde
   font-size: 36px;
   font-weight: 600;
   margin-top: 12px;
-  color: #24658a;
+  color: var(--mf-color-link);
 }
 .order-created {
   font-size: 13px;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   line-height: 1.7;
   margin-top: 8px;
 }
@@ -94,7 +94,7 @@ const { order, loading, error, missing, copied, reload, copyLink } = useLiveOrde
   gap: 12px;
 }
 .order-state dt {
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 .order-state dd {
   margin: 0;
@@ -104,7 +104,7 @@ const { order, loading, error, missing, copied, reload, copyLink } = useLiveOrde
 .order-note {
   font-size: 13px;
   line-height: 1.6;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   margin-bottom: 16px;
 }
 @media (max-width: 1000px) {

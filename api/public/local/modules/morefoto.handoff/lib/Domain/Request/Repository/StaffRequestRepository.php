@@ -26,7 +26,18 @@ final readonly class StaffRequestRepository
         return is_array($row) ? $row : null;
     }
 
-    /** @return array{items:list<array<string,mixed>>,total:int} */
+    public const array STATUSES = ['submitted', 'clarification', 'transferred'];
+
+    /**
+     * Page of visible requests plus their split by status. The split uses the same visibility and filters except the
+     * status filter, so a client can switch between statuses without losing the other counters.
+     *
+     * @return array{
+     *     items: list<array<string, mixed>>,
+     *     total: int,
+     *     byStatus: array{submitted: int, clarification: int, transferred: int},
+     * }
+     */
     public function page(StaffRequestActorOutputDto $actor, ?string $institutionId, ?string $shootId, ?string $status, int $limit, int $offset): array
     {
         $conditions = [$this->visibility($actor, 'r')];
@@ -36,11 +47,22 @@ final readonly class StaffRequestRepository
         if (null !== $shootId) {
             $conditions[] = 's.UF_PUBLIC_ID=' . $this->quote($shootId);
         }
+        $summaryWhere = implode(' AND ', $conditions);
         if (null !== $status) {
             $conditions[] = 'r.STATUS=' . $this->quote($status);
         }
         $where = implode(' AND ', $conditions);
         $connection = Application::getConnection();
+        $byStatus = array_fill_keys(self::STATUSES, 0);
+        $counts = $connection->query(
+            'SELECT r.STATUS, COUNT(*) AS TOTAL FROM mf_staff_request r INNER JOIN b_hlbd_mf_institution i ON i.ID=r.INSTITUTION_ID '
+            . 'INNER JOIN b_hlbd_mf_shoot s ON s.ID=r.SHOOT_ID WHERE ' . $summaryWhere . ' GROUP BY r.STATUS',
+        );
+        while (false !== ($count = $counts->fetch())) {
+            if (array_key_exists((string)$count['STATUS'], $byStatus)) {
+                $byStatus[(string)$count['STATUS']] = (int)$count['TOTAL'];
+            }
+        }
         $totalRow = $connection->query(
             'SELECT COUNT(*) AS TOTAL FROM mf_staff_request r INNER JOIN b_hlbd_mf_institution i ON i.ID=r.INSTITUTION_ID '
             . 'INNER JOIN b_hlbd_mf_shoot s ON s.ID=r.SHOOT_ID WHERE ' . $where,
@@ -58,7 +80,7 @@ final readonly class StaffRequestRepository
             }
         }
 
-        return ['items' => $items, 'total' => is_array($totalRow) ? (int)$totalRow['TOTAL'] : 0];
+        return ['items' => $items, 'total' => is_array($totalRow) ? (int)$totalRow['TOTAL'] : 0, 'byStatus' => $byStatus];
     }
 
     /** @return array{institutions:list<array{id:string,name:string}>,shoots:list<array{id:string,institutionId:string,name:string}>,groups:list<array{id:string,institutionId:string,shootId:string,shootName:string,name:string,kind:string,state:string}>} */
@@ -66,7 +88,7 @@ final readonly class StaffRequestRepository
     {
         $scope = match ($actor->role) {
             'organizer' => '1=1',
-            'curator' => 'i.ID IN (' . $this->ids($actor->institutionIds) . ')',
+            'curator', 'head' => 'i.ID IN (' . $this->ids($actor->institutionIds) . ')',
             'teacher' => 'g.ID IN (' . $this->ids($actor->groupIds) . ')',
             default => '1=0',
         };
@@ -114,6 +136,7 @@ final readonly class StaffRequestRepository
             'rows' => $this->rows((int)$row['ID']),
             'comment' => (string)$row['COMMENT'],
             'history' => $this->history((int)$row['ID']),
+            'results' => $this->results((int)$row['ID']),
             'staffEligibility' => [
                 'eligible' => 1 === (int)$row['STAFF_ELIGIBLE'],
                 'source' => (string)$row['ELIGIBILITY_SOURCE'],
@@ -126,7 +149,7 @@ final readonly class StaffRequestRepository
     public function rows(int $requestId): array
     {
         $result = Application::getConnection()->query(
-            'SELECT rr.PUBLIC_ID,g.UF_PUBLIC_ID AS GROUP_PUBLIC_ID,rr.INPUT_CODE,c.CODE,rr.PHOTO_IDS_JSON '
+            'SELECT rr.PUBLIC_ID,g.UF_PUBLIC_ID AS GROUP_PUBLIC_ID,rr.INPUT_CODE,COALESCE(rr.TRANSFER_FROM_CODE,c.CODE) AS CODE,rr.PHOTO_IDS_JSON '
             . 'FROM mf_staff_request_row rr INNER JOIN b_hlbd_mf_group g ON g.ID=rr.GROUP_ID '
             . 'INNER JOIN mf_media_child c ON c.ID=rr.CHILD_ID WHERE rr.REQUEST_ID=' . $requestId . ' ORDER BY rr.SORT_NO,rr.ID',
         );
@@ -258,17 +281,112 @@ final readonly class StaffRequestRepository
         }
     }
 
-    public function appendHistory(int $requestId, string $kind, StaffRequestActorOutputDto $actor, string $comment, bool $confirmed): void
+    public function appendHistory(int $requestId, string $kind, int $actorId, string $actorName, string $comment, bool $confirmed): void
     {
         Application::getConnection()->queryExecute(sprintf(
             'INSERT INTO mf_staff_request_history(REQUEST_ID,KIND,ACTOR_ID,ACTOR_NAME,COMMENT,CONFIRMED,CREATED_AT) VALUES(%d,%s,%d,%s,%s,%d,UTC_TIMESTAMP())',
             $requestId,
             $this->quote($kind),
-            $actor->id,
-            $this->quote($actor->name),
+            $actorId,
+            $this->quote($actorName),
             $this->quote($comment),
             $confirmed ? 1 : 0,
         ));
+    }
+
+    /**
+     * Строки заявки для переноса в порядке подачи.
+     *
+     * @return list<array{
+     *     id: int,
+     *     publicId: string,
+     *     groupId: int,
+     *     groupPublicId: string,
+     *     childId: int,
+     *     photoIds: list<string>,
+     * }>
+     */
+    public function transferRows(int $requestId): array
+    {
+        $result = Application::getConnection()->query(
+            'SELECT rr.ID,rr.PUBLIC_ID,rr.GROUP_ID,g.UF_PUBLIC_ID AS GROUP_PUBLIC_ID,rr.CHILD_ID,rr.PHOTO_IDS_JSON '
+            . 'FROM mf_staff_request_row rr INNER JOIN b_hlbd_mf_group g ON g.ID=rr.GROUP_ID WHERE rr.REQUEST_ID=' . $requestId . ' ORDER BY rr.SORT_NO,rr.ID',
+        );
+        $rows = [];
+        while (false !== ($row = $result->fetch())) {
+            $rows[] = [
+                'id' => (int)$row['ID'],
+                'publicId' => (string)$row['PUBLIC_ID'],
+                'groupId' => (int)$row['GROUP_ID'],
+                'groupPublicId' => (string)$row['GROUP_PUBLIC_ID'],
+                'childId' => (int)$row['CHILD_ID'],
+                'photoIds' => $this->photoIds((string)$row['PHOTO_IDS_JSON']),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Итог переноса по строкам; до переноса — пустой список.
+     *
+     * @return list<array{
+     *     rowId: string,
+     *     fromGroupId: string,
+     *     fromChildCode: string,
+     *     targetGroupId: string,
+     *     targetChildCode: string,
+     *     photoIds: list<string>,
+     * }>
+     */
+    public function results(int $requestId): array
+    {
+        $result = Application::getConnection()->query(
+            'SELECT rr.PUBLIC_ID,g.UF_PUBLIC_ID AS FROM_GROUP_ID,rr.TRANSFER_FROM_CODE,t.UF_PUBLIC_ID AS TARGET_GROUP_ID,rr.TRANSFER_CODE,rr.TRANSFER_PHOTO_IDS_JSON '
+            . 'FROM mf_staff_request_row rr INNER JOIN b_hlbd_mf_group g ON g.ID=rr.GROUP_ID INNER JOIN b_hlbd_mf_group t ON t.ID=rr.TRANSFER_GROUP_ID '
+            . 'WHERE rr.REQUEST_ID=' . $requestId . ' ORDER BY rr.SORT_NO,rr.ID',
+        );
+        $results = [];
+        while (false !== ($row = $result->fetch())) {
+            $results[] = [
+                'rowId' => (string)$row['PUBLIC_ID'],
+                'fromGroupId' => (string)$row['FROM_GROUP_ID'],
+                'fromChildCode' => (string)$row['TRANSFER_FROM_CODE'],
+                'targetGroupId' => (string)$row['TARGET_GROUP_ID'],
+                'targetChildCode' => (string)$row['TRANSFER_CODE'],
+                'photoIds' => $this->photoIds((string)$row['TRANSFER_PHOTO_IDS_JSON']),
+            ];
+        }
+
+        return $results;
+    }
+
+    /** @param list<string> $photoIds */
+    public function recordTransfer(int $rowId, string $fromCode, int $targetGroupId, string $targetCode, array $photoIds): void
+    {
+        Application::getConnection()->queryExecute(sprintf(
+            'UPDATE mf_staff_request_row SET TRANSFER_FROM_CODE=%s,TRANSFER_GROUP_ID=%d,TRANSFER_CODE=%s,TRANSFER_PHOTO_IDS_JSON=%s WHERE ID=%d AND TRANSFER_GROUP_ID IS NULL',
+            $this->quote($fromCode),
+            $targetGroupId,
+            $this->quote($targetCode),
+            $this->quote(json_encode($photoIds, JSON_THROW_ON_ERROR)),
+            $rowId,
+        ));
+        if (1 !== Application::getConnection()->getAffectedRowsCount()) {
+            throw new HttpException('REVISION_CONFLICT', 409);
+        }
+    }
+
+    public function markTransferred(int $id, int $revision): int
+    {
+        Application::getConnection()->queryExecute(
+            "UPDATE mf_staff_request SET STATUS='transferred',REVISION=REVISION+1,UPDATED_AT=UTC_TIMESTAMP() WHERE ID={$id} AND REVISION={$revision} AND STATUS='submitted'",
+        );
+        if (1 !== Application::getConnection()->getAffectedRowsCount()) {
+            throw new HttpException('REVISION_CONFLICT', 409);
+        }
+
+        return $revision + 1;
     }
 
     /** @return null|array{PAYLOAD_HASH:string,RESULT_JSON:string} */
@@ -294,11 +412,22 @@ final readonly class StaffRequestRepository
         ));
     }
 
+    /** @return list<string> */
+    private function photoIds(string $json): array
+    {
+        $decoded = json_decode($json, true, 64, JSON_THROW_ON_ERROR);
+        if (!is_array($decoded)) {
+            throw new \UnexpectedValueException('Invalid staff request photo snapshot.');
+        }
+
+        return array_values(array_map('strval', $decoded));
+    }
+
     private function visibility(StaffRequestActorOutputDto $actor, string $alias): string
     {
         return match ($actor->role) {
             'organizer' => '1=1',
-            'curator' => $alias . '.INSTITUTION_ID IN (' . $this->ids($actor->institutionIds) . ')',
+            'curator', 'head' => $alias . '.INSTITUTION_ID IN (' . $this->ids($actor->institutionIds) . ')',
             'teacher' => $alias . '.CREATED_BY=' . $actor->id . ' AND NOT EXISTS (SELECT 1 FROM mf_staff_request_row visible_row WHERE visible_row.REQUEST_ID=' . $alias . '.ID AND visible_row.GROUP_ID NOT IN (' . $this->ids($actor->groupIds) . '))',
             default => '1=0',
         };

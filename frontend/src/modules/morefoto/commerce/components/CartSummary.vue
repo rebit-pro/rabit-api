@@ -57,7 +57,7 @@ defineProps<{ quote: CartQuote; catalog: Catalog; staff: boolean }>();
   white-space: nowrap;
 }
 .cart-summary__total {
-  border-top: 1px solid #dce4ea;
+  border-top: 1px solid var(--mf-color-border);
   padding-top: 20px;
   font-size: 22px !important;
   font-weight: 600;
@@ -71,12 +71,12 @@ defineProps<{ quote: CartQuote; catalog: Catalog; staff: boolean }>();
   display: flex;
   gap: 10px;
   margin: 24px 0 12px;
-  color: #24658a;
+  color: var(--mf-color-link);
   font-size: 14px;
   line-height: 1.5;
 }
 .cart-summary__note {
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 @media (max-width: 767px) {
   .cart-summary {

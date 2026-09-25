@@ -13,13 +13,17 @@ final readonly class LogSanitizer
     public const string REDACTED = '[REDACTED]';
     private const int MAX_FIELDS = 32;
     private const int MAX_LABEL_LENGTH = 200;
+    private const string UUID_PATTERN = '/\A[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\z/D';
 
     /** @var list<string> These values must be application metadata, never copied from a request. */
     private const array FIELDS = [
         'status', 'httpStatus', 'durationMs', 'line', 'exceptionCode', 'leadId', 'userId',
         'attempts', 'added', 'index', 'unknownFields', 'requestId', 'method', 'result',
         'source', 'operation', 'controller', 'class', 'dependency', 'parameter', 'file',
-        'redacted', 'truncated',
+        'photoId', 'operationId', 'photoStatus', 'stage', 'exception', 'previous', 'event', 'published',
+        'bytes', 'revision', 'attempt', 'inspectMs', 'storeMs', 'registerMs', 'publishMs',
+        'decodeMs', 'thumbMs', 'previewMs', 'sinceAcceptedSeconds', 'sinceQueuedSeconds', 'pendingSeconds',
+        'megapixels', 'redacted', 'truncated',
     ];
 
     /** @var list<string> Fixed application events; never add user-generated text. */
@@ -37,6 +41,14 @@ final readonly class LogSanitizer
         'HTTP Request failed',
         'HTTP Response',
         'HTTP_EXCEPTION',
+        'Notification operation remains pending after publish failure.',
+        'Notification operation remains pending after recovery publish failure.',
+        'Pending photo job dispatched.',
+        'Pending photo job was not dispatched.',
+        'Photo job remains pending after immediate publish failure.',
+        'Photo preview preparation failed.',
+        'Photo previews ready.',
+        'Photo upload accepted.',
         'REBIT_LEADHUNTER_RULES: невалидный JSON',
         'REBIT_LEADHUNTER_RULES: пропущено невалидное правило',
         'REQUEST',
@@ -45,6 +57,7 @@ final readonly class LogSanitizer
         'Telegram-получатель внешних заявок не настроен: пустой токен или chat_id',
         'Telegram-получатель заявок не настроен: пустой токен или chat_id',
         'Для площадки не зарегистрирована лента',
+        'Заявка передана почтовому транспорту',
         'Кеширование не readonly объекта без метода __clone!',
         'Лента fl.ru недоступна',
         'Найдены новые внешние заявки',
@@ -75,23 +88,37 @@ final readonly class LogSanitizer
     public function context(array $context): array
     {
         $safe = [];
+        // An allowed key without a value carries no data, so it is omitted without marking the record as redacted.
+        $empty = 0;
         foreach (self::FIELDS as $key) {
             if (!array_key_exists($key, $context)) {
                 continue;
             }
 
             $value = $context[$key];
+            if (null === $value) {
+                ++$empty;
+                continue;
+            }
             $filtered = match ($key) {
                 'status', 'httpStatus' => is_int($value) && 100 <= $value && 599 >= $value ? $value : null,
                 'durationMs' => is_float($value) || is_int($value)
                     ? (is_finite((float)$value) && 0 <= $value ? round((float)$value, 3) : null)
                     : null,
+                'megapixels' => is_float($value) || is_int($value)
+                    ? (is_finite((float)$value) && 0 <= $value ? round((float)$value, 1) : null)
+                    : null,
                 'line', 'exceptionCode', 'leadId', 'userId', 'attempts', 'added', 'index', 'unknownFields' => is_int($value) ? $value : null,
+                'bytes', 'revision', 'attempt', 'inspectMs', 'storeMs', 'registerMs', 'publishMs', 'decodeMs', 'thumbMs',
+                'previewMs', 'sinceAcceptedSeconds', 'sinceQueuedSeconds', 'pendingSeconds' => is_int($value) && 0 <= $value ? $value : null,
                 'requestId' => is_string($value) && 1 === preg_match('/\A[a-f0-9]{14}\.[0-9]{8}\z/D', $value) ? $value : null,
+                'photoId', 'operationId' => is_string($value) && 1 === preg_match(self::UUID_PATTERN, $value) ? $value : null,
+                'photoStatus' => in_array($value, ['processing', 'ready', 'failed', 'duplicate'], true) ? $value : null,
                 'method' => in_array($value, ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'CLI', 'sendMessage', 'sendDocument'], true) ? $value : null,
                 'result' => in_array($value, ['Y', 'N', 'ok', 'error'], true) ? $value : null,
                 'source' => 'flRu' === $value ? $value : null,
-                'operation', 'controller', 'class', 'dependency', 'parameter', 'file' => $this->label($value),
+                'operation', 'controller', 'class', 'dependency', 'parameter', 'file', 'stage', 'exception', 'previous', 'event' => $this->label($value),
+                'published' => is_bool($value) ? $value : null,
                 'redacted', 'truncated' => true === $value ? true : null,
             };
 
@@ -102,7 +129,7 @@ final readonly class LogSanitizer
             $safe[$key] = $filtered;
         }
 
-        if (count($context) > count($safe)) {
+        if (count($context) - $empty > count($safe)) {
             $safe['redacted'] = true;
         }
         if (self::MAX_FIELDS < count($context)) {

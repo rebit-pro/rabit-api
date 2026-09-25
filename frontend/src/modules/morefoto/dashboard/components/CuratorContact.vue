@@ -19,7 +19,7 @@ defineProps<{
 .curator-contact {
   margin-top: 24px;
   padding: 20px 0;
-  border-top: 1px solid #dde2e5;
+  border-top: 1px solid var(--mf-color-border);
   overflow-wrap: anywhere;
 }
 .curator-contact p {

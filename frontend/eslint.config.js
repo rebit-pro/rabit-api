@@ -49,6 +49,24 @@ export default [
     }
   },
   {
+    name: 'design-tokens/no-hex',
+    files: ['src/**/*.{ts,vue}'],
+    ignores: ['src/theme/tokens.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Literal[value=/#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?\\b/]',
+          message: 'Используйте токены из src/theme/tokens.ts вместо hex.'
+        },
+        {
+          selector: 'TemplateElement[value.raw=/#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?\\b/]',
+          message: 'Используйте токены из src/theme/tokens.ts вместо hex.'
+        }
+      ]
+    }
+  },
+  {
     name: 'scripts/commonjs',
     files: ['scripts/**/*.cjs'],
     rules: { '@typescript-eslint/no-require-imports': 'off' }

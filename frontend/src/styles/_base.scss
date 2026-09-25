@@ -1,0 +1,130 @@
+// Global base on top of Vuetify. Replaces the Berry template overrides that affected live screens and overlays.
+// Vuetify component CSS is loaded lazily with route chunks, after this file; `:root` raises specificity so the
+// overrides do not depend on load order.
+html {
+  // No permanent scrollbar on short pages.
+  overflow-y: auto;
+}
+
+body {
+  font-family: var(--mf-font-sans);
+  color: var(--mf-color-text);
+}
+
+// Vuetify buttons are uppercase with wide tracking by default; the cabinet uses sentence case everywhere.
+:root .v-btn {
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+// Vuetify ships Material tracking tuned for Roboto; Golos Text is already wide.
+:root .v-alert-title,
+:root .v-card-title,
+:root .v-card-subtitle,
+:root .v-card-text,
+:root .v-field,
+:root .v-field__input,
+:root .v-input__details,
+:root .v-label,
+:root .v-list-item-title,
+:root .v-list-item-subtitle,
+:root .v-snackbar__content,
+:root .v-dialog > .v-overlay__content > .v-card > .v-card-text,
+:root .v-dialog > .v-overlay__content > form > .v-card > .v-card-text {
+  letter-spacing: normal;
+}
+
+// Panels keep focus rings and inline popovers visible; paddings follow the layout token.
+:root .v-card {
+  width: 100%;
+  overflow: visible;
+}
+
+:root .v-card-item {
+  padding: var(--mf-space-5) var(--mf-panel-pad);
+}
+
+:root .v-card-text {
+  padding: var(--mf-panel-pad);
+  line-height: 1.25rem;
+}
+
+:root .v-card-actions {
+  padding: var(--mf-space-3) var(--mf-panel-pad) var(--mf-panel-pad);
+}
+
+// Field outline in border-strong at rest (3.80:1, WCAG 1.4.11); focus inherits the primary color, errors keep Vuetify's.
+:root .v-field:not(.v-field--focused):not(.v-field--error) .v-field__outline {
+  color: var(--mf-color-border-strong);
+}
+
+// Vuetify paints dividers with currentColor at --v-border-opacity, which the theme sets to 1.
+:root .v-divider {
+  color: var(--mf-color-border);
+}
+
+// Notices (design plan 10.4): tonal alerts take the status tone tokens instead of a tinted currentColor.
+:root .v-alert--variant-tonal {
+  border: 1px solid transparent;
+  border-radius: var(--mf-radius-md);
+}
+
+:root .v-alert--variant-tonal > .v-alert__underlay {
+  display: none;
+}
+
+@each $type, $tone in (success: success, info: info, warning: warning, error: danger) {
+  :root .v-alert--variant-tonal.text-#{$type} {
+    border-color: var(--mf-tone-#{$tone}-border);
+    background: var(--mf-tone-#{$tone}-bg);
+    color: var(--mf-tone-#{$tone}-fg) !important;
+  }
+}
+
+// Menus and popovers float above panels: radius md and the md shadow over a 1px border.
+:root .v-menu > .v-overlay__content {
+  border-radius: var(--mf-radius-md);
+  box-shadow: var(--mf-shadow-md);
+}
+
+:root .v-menu > .v-overlay__content > .v-list,
+:root .v-menu > .v-overlay__content > .v-card {
+  border: 1px solid var(--mf-color-border);
+  border-radius: inherit;
+}
+
+// Hide the drawer scrim immediately on close so it never intercepts clicks during the fade.
+.v-navigation-drawer__scrim.fade-transition-leave-to {
+  display: none;
+}
+
+// Tabular figures wherever numbers are compared.
+td,
+time {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+// Text for screen readers only: every chart carries its numbers as a table or list here.
+.mf-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media print {
+  *,
+  *::before,
+  *::after {
+    box-shadow: none !important;
+  }
+
+  body {
+    background: var(--mf-color-surface);
+  }
+}

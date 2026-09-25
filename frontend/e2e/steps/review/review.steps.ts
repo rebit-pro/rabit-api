@@ -6,6 +6,7 @@ import { CustomWorld } from '../../support/world.js';
 import type { PhotoState } from '../../../src/modules/morefoto/photos/types.js';
 import type { ProductionState } from '../../../src/modules/morefoto/production/types.js';
 import * as h from './helpers.js';
+import { signOut } from '../../support/shell.js';
 const page = (w: CustomWorld) => {
   if (!w.page) throw new Error('Нет страницы');
   return w.page;
@@ -291,7 +292,7 @@ Then('R16 проходит путь {string}', { timeout: 240000 }, async functi
     }
     await h.login(p, base);
     await h.card(p, base, o);
-    await p.getByRole('button', { name: 'Выйти', exact: true }).click();
+    await signOut(p);
     await h.go(p, base, '/cabinet/orders/' + o.id);
     await expect(p).toHaveURL(/login/);
     await p.getByLabel('Email', { exact: true }).fill('teacher@morefoto.test');

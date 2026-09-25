@@ -36,6 +36,10 @@ final readonly class AssignPhotosUseCase
                 throw new HttpException('GROUP_LOCKED', 409);
             }
             $current = $this->media->lockRevision($scope->shootId);
+            // Link delivery takes the same lock: re-read after waiting so no labeling slips into an opened gallery.
+            if (!$this->scopes->resolve($input->shootId, $groupId)->groupEditable) {
+                throw new HttpException('GROUP_LOCKED', 409);
+            }
             $resource = '/groups/' . $groupId . '/photo-assignments';
             $hash = hash('sha256', json_encode([
                 'shootId' => $input->shootId,

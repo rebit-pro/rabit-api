@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router';
 import CartEntry from '../../commerce/components/CartEntry.vue';
 import { useGallery } from '../composables/useGallery';
 import GalleryHeader from './GalleryHeader.vue';
+import MfLogo from '@/components/brand/MfLogo.vue';
 import GalleryFilters from './GalleryFilters.vue';
 import GalleryGrid from './GalleryGrid.vue';
 import PhotoViewer from './PhotoViewer.vue';
@@ -34,7 +35,7 @@ const helpOpen = shallowRef(false);
   <a href="#gallery-content" class="mf-skip">К фотографиям</a>
   <div class="gallery-shell">
     <header class="gallery-topbar">
-      <span class="mf-brand gallery-brand"><img src="/icons/morefoto-v1.svg" alt="" width="30" height="30" />More<span>Foto</span></span>
+      <MfLogo :size="24" mono class="gallery-brand" />
       <span class="gallery-topbar__caption">Фотографии ваших детей</span>
       <CartEntry v-if="gallery && gallery.state !== 'preparing'" :gallery="gallery" :token="String(route.params.token)" />
       <v-btn
@@ -74,7 +75,7 @@ const helpOpen = shallowRef(false);
           Приём заказов завершён. Фотографии можно посмотреть; новые заказы сейчас не принимаются.
         </v-alert>
         <section v-if="gallery.state === 'preparing'" class="mf-panel gallery-empty">
-          <v-icon icon="mdi-image-clock-outline" size="40" color="primary" />
+          <v-icon icon="mdi-timer-sand" size="40" color="primary" />
           <h2>Фотографии ещё готовятся</h2>
           <p class="mf-muted">Ответственный сообщит, когда галерея будет открыта.</p>
         </section>
@@ -110,14 +111,14 @@ const helpOpen = shallowRef(false);
         <GalleryHelp v-model="helpOpen" :gallery="gallery" />
       </template>
     </main>
-    <footer class="gallery-footer"><span>MoreFoto</span><span>Сохраняем моменты детства</span></footer>
+    <footer class="gallery-footer"><MfLogo :size="20" mono /><span>Сохраняем моменты детства</span></footer>
   </div>
 </template>
 
 <style scoped>
 .gallery-shell {
   min-height: 100svh;
-  background: #f8fafb;
+  background: var(--mf-color-bg);
 }
 .gallery-topbar {
   display: flex;
@@ -128,22 +129,18 @@ const helpOpen = shallowRef(false);
   margin: auto;
 }
 .gallery-brand {
-  display: flex;
-  align-items: center;
-}
-.gallery-brand img {
-  margin-right: 10px;
+  flex: 0 0 auto;
 }
 .gallery-topbar__caption {
   font-size: 13px;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   margin-left: auto;
 }
 .gallery-demo {
-  border-block: 1px solid #dce4ea;
-  background: #edf4f8;
+  border-block: 1px solid var(--mf-color-border);
+  background: var(--mf-color-selected);
   text-align: center;
-  color: #506775;
+  color: var(--mf-color-text-secondary);
   padding: 10px 20px;
   font-size: 12px;
   line-height: 1.6;
@@ -188,8 +185,8 @@ const helpOpen = shallowRef(false);
   max-width: 1240px;
   margin: 0 auto;
   padding: 24px 0;
-  border-top: 1px solid #dce4ea;
-  color: #5e6872;
+  border-top: 1px solid var(--mf-color-border);
+  color: var(--mf-color-text-secondary);
   font-size: 12px;
 }
 @media (max-width: 767px) {

@@ -5,6 +5,8 @@ import { getCatalog } from '../commerce/mocks/catalog';
 import { handoffAccess, canReadRequest } from './scope';
 import { calendarDays, currentGroupState, groupSentAt, preparationProblems, preparationSignature } from './rules';
 import { staffRequestsApi } from './api';
+import { linksApi, toLinkGroup } from './links-api';
+import type { StaffRole } from '../types';
 import type { HandoffWorkspace, LinkGroup } from './types';
 export async function loadHandoff(token: string, requestId?: string): Promise<HandoffWorkspace> {
   if (!isMockApiEnabled) return loadLiveHandoff(requestId);
@@ -79,6 +81,7 @@ async function loadLiveHandoff(requestId?: string): Promise<HandoffWorkspace> {
   return {
     role: first.scope.role,
     now: new Date().toISOString(),
+    requestSummary: first.meta.summary?.byStatus,
     requests: items,
     photos: [],
     groups,
@@ -91,5 +94,31 @@ async function loadLiveHandoff(requestId?: string): Promise<HandoffWorkspace> {
       })),
       groups
     }
+  };
+}
+
+/** The links screen reads HND-01 in live mode; keys and history are requested per group only when needed. */
+export async function loadLinks(token: string, role: StaffRole): Promise<HandoffWorkspace> {
+  if (isMockApiEnabled) return loadHandoff(token);
+  const first = await linksApi.list();
+  const items = [...first.items];
+  for (let page = 2; page <= first.meta.totalPages; page++) items.push(...(await linksApi.list(page)).items);
+  const groups = items.map((item) => toLinkGroup(item));
+  const institutions = new Map(
+    items.map((item) => [item.institutionId, { id: item.institutionId, name: item.institutionName, address: '' }])
+  );
+  const shoots = new Map(
+    items.map((item) => [
+      item.shootId,
+      { id: item.shootId, institutionId: item.institutionId, name: item.shootName, date: null, revision: 1 }
+    ])
+  );
+  return {
+    role,
+    now: new Date().toISOString(),
+    requests: [],
+    photos: [],
+    groups,
+    scope: { institutions: [...institutions.values()], shoots: [...shoots.values()], groups }
   };
 }

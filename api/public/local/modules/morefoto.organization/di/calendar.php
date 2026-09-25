@@ -10,8 +10,10 @@ use Morefoto\Organization\Application\Institution\Contract\InstitutionTransactio
 use Morefoto\Organization\Domain\Calendar\Repository\GroupCalendarRepository;
 use Morefoto\Organization\Domain\Institution\Repository\InstitutionOperationRepository;
 use Morefoto\Organization\Infrastructure\Calendar\ServerCalendarClock;
+use Morefoto\Organization\Infrastructure\Handoff\GroupDirectory;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Contracts\Organization\GroupCalendarInterface;
+use Rebit\Share\Contracts\Organization\GroupDirectoryInterface;
 
 return [
     CalendarClockInterface::class => ['constructor' => static fn(): CalendarClockInterface => new ServerCalendarClock()],
@@ -20,6 +22,11 @@ return [
         'constructor' => static fn(): GroupCalendarInterface => new GroupCalendar(
             ServiceLocator::getInstance()->get(GroupCalendarRepository::class),
             ServiceLocator::getInstance()->get(InstitutionOperationRepository::class),
+            ServiceLocator::getInstance()->get(CalendarClockInterface::class),
+        ),
+    ],
+    GroupDirectoryInterface::class => [
+        'constructor' => static fn(): GroupDirectoryInterface => new GroupDirectory(
             ServiceLocator::getInstance()->get(CalendarClockInterface::class),
         ),
     ],

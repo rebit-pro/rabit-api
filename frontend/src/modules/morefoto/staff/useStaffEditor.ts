@@ -1,4 +1,4 @@
-import { computed, shallowRef } from 'vue';
+import { computed, ref, shallowRef } from 'vue';
 import { staffApi, staffError } from './api';
 import type { AssignmentOptions, StaffDraft, StaffSummary } from './model';
 function requestId(): string {
@@ -6,7 +6,8 @@ function requestId(): string {
   return Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join('');
 }
 export function useStaffEditor(saved: () => Promise<void>) {
-  const draft = shallowRef<StaffDraft | null>(null);
+  // StaffFields edits nested fields through v-model, so the draft must be deeply reactive.
+  const draft = ref<StaffDraft | null>(null);
   const options = shallowRef<AssignmentOptions | null>(null);
   const busy = shallowRef(false);
   const error = shallowRef('');

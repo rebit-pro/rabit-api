@@ -158,6 +158,8 @@ test('E3: общие и групповые условия проходят CAS, 
   expect((await page.request.put(globalPath, { headers: await auth(page, key()), data: globalBody })).status()).toBe(409);
 
   await page.goto('/cabinet/catalog');
+  await page.getByRole('tab', { name: 'Общие условия', exact: true }).click();
+  await expect(page).toHaveURL(/\/cabinet\/catalog\?tab=conditions$/);
   await expect(page.getByRole('heading', { name: 'Общие условия', exact: true })).toBeVisible();
   await expect(page.getByTestId('conditions-summary')).toContainText(/200\s*₽/);
   await page.screenshot({ path: testInfo.outputPath('desktop-global-conditions.png'), fullPage: true });
@@ -220,7 +222,7 @@ test('E3: общие и групповые условия проходят CAS, 
   await page.screenshot({ path: testInfo.outputPath('desktop-group-conditions.png'), fullPage: true });
   await page.getByRole('button', { name: 'Изменить условия группы', exact: true }).click();
   await page.getByLabel('Цена: E3 Печатный портрет', { exact: true }).fill('invalid');
-  await page.getByLabel('Наследовать общий прайс и предложения', { exact: true }).check();
+  await page.getByLabel('Общие условия каталога', { exact: true }).check();
   const inheritSave = page.waitForResponse(
     (response) => new URL(response.url()).pathname === groupPath && response.request().method() === 'PUT'
   );
@@ -286,7 +288,7 @@ test('E3: потерянный ответ условий повторяется 
     }
     return route.continue();
   });
-  await page.goto('/cabinet/catalog');
+  await page.goto('/cabinet/catalog?tab=conditions');
   await page.getByRole('button', { name: 'Изменить условия', exact: true }).click();
   await page.getByLabel('Порог подарка, ₽', { exact: true }).fill(String((snapshot.giftThreshold + 100) / 100));
   await page.getByTestId('admin-dialog').getByRole('button', { name: 'Сохранить', exact: true }).click();

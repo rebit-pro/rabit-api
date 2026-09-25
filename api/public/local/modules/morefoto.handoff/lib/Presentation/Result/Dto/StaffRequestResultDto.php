@@ -14,15 +14,17 @@ use Rebit\Share\Application\Interface\ResultDtoInterface;
  *     rows: list<array{id: string, groupId: string, code: string, childCode: string, photoIds: list<string>}>,
  *     comment: string,
  *     history: list<array{kind: string, actorId: int, actorName: string, at: string, comment: string, confirmed: bool}>,
+ *     results: list<array{rowId: string, fromGroupId: string, fromChildCode: string, targetGroupId: string, targetChildCode: string, photoIds: list<string>}>,
  *     staffEligibility: array{eligible: bool, source: string, verifiedAt: string}
  * }
  */
 final readonly class StaffRequestResultDto implements ResultDtoInterface
 {
     /**
-     * @param list<array{id: string, groupId: string, code: string, childCode: string, photoIds: list<string>}>        $rows
-     * @param list<array{kind: string, actorId: int, actorName: string, at: string, comment: string, confirmed: bool}> $history
-     * @param array{eligible: bool, source: string, verifiedAt: string}                                                $staffEligibility
+     * @param list<array{id: string, groupId: string, code: string, childCode: string, photoIds: list<string>}>                                              $rows
+     * @param list<array{kind: string, actorId: int, actorName: string, at: string, comment: string, confirmed: bool}>                                       $history
+     * @param list<array{rowId: string, fromGroupId: string, fromChildCode: string, targetGroupId: string, targetChildCode: string, photoIds: list<string>}> $results
+     * @param array{eligible: bool, source: string, verifiedAt: string}                                                                                      $staffEligibility
      */
     public function __construct(
         public string $id,
@@ -36,6 +38,7 @@ final readonly class StaffRequestResultDto implements ResultDtoInterface
         public array $rows,
         public string $comment,
         public array $history,
+        public array $results,
         public array $staffEligibility,
     ) {}
 }

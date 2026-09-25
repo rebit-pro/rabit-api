@@ -125,7 +125,7 @@ final class LoginUseCaseTest extends TestCase
         ;
 
         $this->expectException(HttpException::class);
-        $this->expectExceptionMessage('Invalid credentials');
+        $this->expectExceptionMessage('INVALID_CREDENTIALS');
         $this->expectExceptionCode(401);
 
         $this->createUseCase($userRepository, $tokenGenerator, $captchaVerifier)
@@ -154,7 +154,7 @@ final class LoginUseCaseTest extends TestCase
         ;
 
         $this->expectException(HttpException::class);
-        $this->expectExceptionMessage('Invalid credentials');
+        $this->expectExceptionMessage('INVALID_CREDENTIALS');
         $this->expectExceptionCode(401);
 
         $this->createUseCase($userRepository, $tokenGenerator, $captchaVerifier)

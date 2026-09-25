@@ -53,7 +53,7 @@ function change(quantity: number) {
   column-gap: var(--mf-space-4);
   row-gap: var(--mf-space-3);
   padding-block: var(--mf-space-6);
-  border-bottom: 1px solid #dce4ea;
+  border-bottom: 1px solid var(--mf-color-border);
 }
 .cart-line:last-of-type {
   border-bottom: 0;
@@ -96,12 +96,12 @@ function change(quantity: number) {
   grid-row: span 2;
   display: grid;
   place-items: center;
-  background: #eaf3f9;
+  background: var(--mf-color-selected);
   border-radius: var(--mf-radius-field);
-  color: #24658a;
+  color: var(--mf-color-link);
 }
 .cart-benefit {
-  color: #24658a;
+  color: var(--mf-color-link);
   margin-top: var(--mf-space-1);
 }
 @media (max-width: 767px) {

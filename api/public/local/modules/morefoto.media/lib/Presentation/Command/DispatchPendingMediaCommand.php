@@ -37,8 +37,8 @@ final class DispatchPendingMediaCommand extends RebitCommand
 
             return Command::INVALID;
         }
-        $count = $this->dispatch->execute($limit);
-        $io->success(sprintf('Опубликовано задач: %d.', $count));
+        $result = $this->dispatch->execute($limit);
+        $io->success(sprintf('Опубликовано задач: %d, ошибок: %d.', $result->published, $result->failed));
 
         return Command::SUCCESS;
     }

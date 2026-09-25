@@ -92,11 +92,11 @@ const period = useOrderPeriod(() => order.value?.groupId ?? '');
   font-size: 36px;
   font-weight: 600;
   margin-top: 12px;
-  color: #24658a;
+  color: var(--mf-color-link);
 }
 .order-created {
   font-size: 13px;
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
   line-height: 1.7;
   margin-top: 8px;
 }

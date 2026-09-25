@@ -2,6 +2,9 @@
 import type { ScopeSnapshot } from '../../types';
 import type { RequestSummary } from '../types';
 import { formatMoment, requestStatus } from '../../handoff/display';
+import MfStatus from '@/components/status/MfStatus.vue';
+import { toneOf } from '@/components/status/tones';
+import { staffRequestTone } from '../../ui/statusTone';
 defineProps<{
   readonly requests: RequestSummary[];
   readonly scope: ScopeSnapshot;
@@ -35,9 +38,7 @@ defineProps<{
         </p>
         <p class="mf-muted">Передан {{ formatMoment(request.createdAt) }}</p>
       </div>
-      <v-chip :color="request.status === 'clarification' ? 'warning' : request.status === 'transferred' ? 'success' : 'primary'">{{
-        requestStatus[request.status]
-      }}</v-chip>
+      <MfStatus :tone="toneOf(staffRequestTone, request.status)">{{ requestStatus[request.status] }}</MfStatus>
       <v-btn :to="'/cabinet/staff-requests/' + request.id" variant="text">{{
         request.status === 'clarification' ? 'Уточнить список' : 'Открыть список'
       }}</v-btn>
@@ -61,7 +62,7 @@ defineProps<{
   min-width: 0;
 }
 .teacher-requests__row {
-  border-top: 1px solid #dde2e5;
+  border-top: 1px solid var(--mf-color-border);
   margin-top: 20px;
   padding-top: 20px;
 }

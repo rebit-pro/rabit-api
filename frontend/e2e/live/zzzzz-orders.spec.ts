@@ -338,6 +338,16 @@ for (const viewport of [
       await expect(staff.getByTestId('order-contacts')).toContainText(viewport.name + '.e5@example.test');
       expect(await staff.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await staff.screenshot({ path: info.outputPath('e5-' + viewport.name + '-staff-card.png'), fullPage: true, animations: 'disabled' });
+      await staff.getByRole('link', { name: 'Все заказы', exact: true }).click();
+      const search = staff.getByRole('textbox', { name: 'Номер, имя, email или телефон', exact: true });
+      const reset = staff.getByRole('button', { name: 'Сбросить', exact: true });
+      await expect(search).toHaveValue(payload.data.number);
+      await expect(reset).toBeEnabled();
+      await staff.getByRole('button', { name: 'Очистить Номер, имя, email или телефон', exact: true }).click();
+      await staff.getByRole('button', { name: 'Найти', exact: true }).click();
+      await expect(staff).not.toHaveURL(/[?&]q=/);
+      await expect(reset).toBeDisabled();
+      await expect(staff.getByTestId('staff-order').first()).toBeVisible();
     } finally {
       await context.close();
     }

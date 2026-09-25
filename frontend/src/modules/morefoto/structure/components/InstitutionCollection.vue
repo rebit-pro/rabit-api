@@ -13,6 +13,15 @@ const props = defineProps<{
 const emit = defineEmits<{ page: [page: number]; edit: [item: StructureItem]; create: [] }>();
 const title = computed(() => (props.kind === 'shoot' ? 'Съёмки учреждения' : 'Группы учреждения'));
 const pages = computed(() => Math.max(1, props.meta.totalPages));
+const emptyText = computed(() =>
+  props.kind === 'shoot'
+    ? props.canManage
+      ? 'Добавьте съёмку — затем в ней появятся группы.'
+      : 'Организатор ещё не запланировал съёмки этого учреждения.'
+    : props.canManage
+      ? 'Группы добавляются на странице съёмки.'
+      : 'В съёмках учреждения пока нет групп.'
+);
 </script>
 <template>
   <section class="institution-collection" :aria-label="title" :data-testid="kind === 'shoot' ? 'institution-shoots' : 'institution-groups'">
@@ -21,18 +30,24 @@ const pages = computed(() => Math.max(1, props.meta.totalPages));
         <h2>{{ title }}</h2>
         <p class="mf-muted mt-2">Всего: {{ meta.total }}</p>
       </div>
-      <v-btn v-if="kind === 'shoot' && canManage" prepend-icon="mdi-plus" :disabled="disabled" @click="emit('create')">
+      <v-btn v-if="kind === 'shoot' && canManage && items.length" prepend-icon="mdi-plus" :disabled="disabled" @click="emit('create')">
         Новая съёмка
       </v-btn>
     </div>
-    <p v-if="kind === 'group' && canManage" class="mf-muted mb-4">Чтобы добавить или изменить группу, откройте её съёмку.</p>
+    <p v-if="kind === 'group' && canManage && items.length" class="mf-muted mb-4">
+      Чтобы добавить или изменить группу, откройте её съёмку.
+    </p>
     <StructureList
       :items="items"
       :scope="{ kind, institutionId }"
       :disabled="disabled"
       :can-manage="canManage && kind === 'shoot'"
       :link-groups-to-shoots="canManage && kind === 'group'"
+      :empty-title="kind === 'shoot' ? 'Съёмок пока нет' : 'Групп пока нет'"
+      :empty-text="emptyText"
+      :create-label="kind === 'shoot' && canManage ? 'Новая съёмка' : ''"
       @edit="emit('edit', $event)"
+      @create="emit('create')"
     />
     <nav v-if="pages > 1" class="mf-actions mt-5" :aria-label="'Страницы: ' + title.toLowerCase()">
       <v-btn variant="outlined" :disabled="disabled || meta.page === 1" @click="emit('page', meta.page - 1)">Предыдущая</v-btn>
@@ -43,14 +58,14 @@ const pages = computed(() => Math.max(1, props.meta.totalPages));
 </template>
 <style scoped>
 .institution-collection {
-  margin-top: 36px;
+  margin-top: var(--mf-space-8);
 }
 .institution-collection-heading {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 20px;
-  margin-bottom: 20px;
+  gap: var(--mf-space-5);
+  margin-bottom: var(--mf-space-5);
 }
 @media (max-width: 600px) {
   .institution-collection-heading {

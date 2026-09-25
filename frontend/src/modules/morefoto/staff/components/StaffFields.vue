@@ -20,7 +20,14 @@ function roleChanged(): void {
 </script>
 <template>
   <v-text-field v-model="model.name" label="Имя сотрудника" aria-label="Имя сотрудника" maxlength="100" />
-  <v-text-field v-model="model.email" label="Email сотрудника" aria-label="Email сотрудника" type="email" autocomplete="off" />
+  <!-- Chromium ignores autocomplete="off" on email fields; an unrecognized token stops it offering the organizer's own addresses. -->
+  <v-text-field
+    v-model="model.email"
+    label="Email сотрудника"
+    aria-label="Email сотрудника"
+    type="email"
+    autocomplete="staff-invite-email"
+  />
   <v-select v-model="model.role" :items="roles" label="Роль" aria-label="Роль сотрудника" @update:model-value="roleChanged" />
   <v-checkbox
     v-model="model.active"
@@ -74,7 +81,6 @@ function roleChanged(): void {
     auto-grow
   />
   <v-alert type="info" variant="tonal" class="mt-5">
-    Новый сотрудник получит статус «Ожидает регистрации» и сам задаст пароль через обычную регистрацию. Пароль здесь не создаётся и не
-    показывается.
+    Новый сотрудник получит письмо со ссылкой для установки пароля; ссылка действует 7 дней. Пароль здесь не создаётся и не показывается.
   </v-alert>
 </template>

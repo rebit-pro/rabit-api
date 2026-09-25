@@ -1,0 +1,138 @@
+{
+  "wave": "F2",
+  "status": "deployed",
+  "date": "2026-09-22",
+  "branch": "codex/f2-link-handoff",
+  "base": "4b507b3b3c27719888e38f582b48e6a56c0c5946",
+  "pr": "https://github.com/rebit-pro/rabit-api/pull/40",
+  "dependencies": {
+    "E3": "#20",
+    "F1": "#25",
+    "E4": "#30"
+  },
+  "decisions": [
+    "F2-D3-ORDER",
+    "raw gallery key stored for staff",
+    "sentAt not before the link issue minute",
+    "pending staff requests block preparation until D3",
+    "own link revision"
+  ],
+  "scope": [
+    "HND-01",
+    "HND-02",
+    "HND-03",
+    "HND-04",
+    "HND-05"
+  ],
+  "checks": {
+    "phpLint": {
+      "result": "PASS",
+      "command": "make test-e2e (php-lint.log)",
+      "files": 800
+    },
+    "phpstan": {
+      "result": "PASS",
+      "command": "make test-e2e (phpstan.log)",
+      "note": "No errors"
+    },
+    "phpunit": {
+      "result": "PASS",
+      "command": "make test-e2e (phpunit.log)",
+      "tests": 511,
+      "assertions": 2384,
+      "newTests": 37
+    },
+    "style": {
+      "result": "PASS",
+      "command": "php-cs-fixer fix --path-mode=intersection over changed files; override for api/tools/e2e"
+    },
+    "frontend": {
+      "result": "PASS",
+      "command": "make test-e2e (check.log, test-commerce.log, build.log)",
+      "unitTests": 169
+    },
+    "graph": {
+      "result": "PASS",
+      "command": "python3 tools/verify-wave-graph.py docs/waves/graph.json",
+      "readyFromMain": [
+        "F2"
+      ]
+    },
+    "contract": {
+      "result": "PASS",
+      "command": "python3 ../MoreFoto/docs/05-rest-api/validate.py; node docs/05-rest-api/validate-postman.cjs (from MoreFoto)"
+    },
+    "browserE2E": {
+      "result": "PASS",
+      "command": "make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor",
+      "fixture": "rabit-e2e-ac59142ba1ce",
+      "expected": 72,
+      "unexpected": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "f2Scenario": "passed, 49.9 s"
+    },
+    "integration": {
+      "result": "PASS",
+      "script": "api/tools/e2e/verify-links.php",
+      "output": "F2 integration passed",
+      "alsoPassed": [
+        "E5 integration",
+        "E4 integration",
+        "E4 F1 trusted eligibility",
+        "Notification H1"
+      ]
+    },
+    "visualDesktopMobile": {
+      "result": "PASS",
+      "record": "docs/waves/f2/visual.json",
+      "artifacts": [
+        "docs/waves/f2/visual/f2-desktop-prepared-top.png",
+        "docs/waves/f2/visual/f2-mobile-open.png"
+      ]
+    }
+  },
+  "remaining": [
+    "user acceptance on stage by docs/testing/manual-wave-checklist.md (F2)"
+  ],
+  "complete": true,
+  "baseHistory": [
+    "8cba22c7655b5886d5fe663523214bcd059e674b",
+    "4b507b3b3c27719888e38f582b48e6a56c0c5946 (E5 merged, main merged into the branch)"
+  ],
+  "testedSource": "2de43f7 (main 4b507b3 + F2)",
+  "merge": {
+    "pr": "https://github.com/rebit-pro/rabit-api/pull/40",
+    "commit": "44f2e36367351614fab66fdc58fa3dc7ee3899b3",
+    "mergedAt": "2026-09-22T13:28:01Z"
+  },
+  "deployment": {
+    "target": "https://app.morefoto36.ru",
+    "server": "rebit-pro",
+    "release": "/srv/morefoto/releases/f2-20260922133013-44f2e36",
+    "frontendImage": "morefoto-frontend:f2-20260922133013-44f2e36",
+    "previousFrontendImage": "morefoto-frontend:d3-20260921173000-3bca388",
+    "previousBackendRelease": "/srv/morefoto/releases/e4-20260921151701-7e606e5",
+    "migrations": [
+      "Version20260922120001",
+      "Version20260922150001"
+    ],
+    "backup": {
+      "file": "database-before.sql.gz",
+      "bytes": 41975,
+      "restoreCheck": "PASS, 152 tables"
+    },
+    "smoke": {
+      "health": 200,
+      "cabinetLinks": 200,
+      "groupLinksUnauthenticated": 401,
+      "groupLinkUnauthenticated": 401,
+      "ordersCurrent": "404 ORDER_NOT_FOUND",
+      "indexSha256Match": true,
+      "diSmoke": "PASS"
+    },
+    "incident": "about 5 minutes (≈14:03–14:08 UTC) of API errors: --mount-rm and --mount-add of /app in one docker service update dropped the mount; rolled back and re-switched with --mount-add only",
+    "rollback": "docker service rollback morefoto_stage_fpm morefoto_stage_backend morefoto_stage_media_consumer morefoto_stage_media_dispatcher morefoto_frontend (one by one); services-before.json; database-before.sql.gz",
+    "notVerified": "authorized user scenario on stage (needs stage accounts and data)"
+  }
+}

@@ -10,8 +10,13 @@ import {
   requestRows,
   reviewRequest,
   preparationProblems,
-  preparationSignature
+  preparationSignature,
+  serverMoment,
+  liveLinkErrors,
+  transferPreviewFromServer,
+  staffTransferErrorText
 } from '../../src/modules/morefoto/handoff/rules.ts';
+import { problemText } from '../../src/modules/morefoto/handoff/display.ts';
 const groups = [
   { id: 'g', institutionId: 'i', shootId: 's', kind: 'regular', state: 'preparing', teacherId: 104 },
   { id: 'g2', institutionId: 'i', shootId: 's', kind: 'regular' },
@@ -148,4 +153,76 @@ test('R10 confirmation rejects a source group moved outside the request context'
       ),
     /Исходная группа/
   );
+});
+
+test('F2 live link form sends an explicit Moscow moment and checks the fields first', () => {
+  assert.equal(serverMoment('2026-09-22T10:15'), '2026-09-22T10:15:00+03:00');
+  const base = {
+    kind: 'link',
+    requestId: 'r',
+    groupId: 'g',
+    revision: 2,
+    signature: 'a'.repeat(64),
+    sentAt: '2026-09-22T10:15',
+    reason: '',
+    confirmed: true,
+    photosReviewed: true,
+    conditionsReviewed: true,
+    staffReviewed: true
+  };
+  const now = '2026-09-22T08:00:00.000Z';
+  assert.deepEqual(liveLinkErrors({ ...base, action: 'prepare' }, now), {});
+  assert.deepEqual(Object.keys(liveLinkErrors({ ...base, action: 'prepare', staffReviewed: false }, now)), ['staffReviewed']);
+  assert.deepEqual(liveLinkErrors({ ...base, action: 'transmit' }, now), {});
+  assert.deepEqual(Object.keys(liveLinkErrors({ ...base, action: 'transmit', sentAt: '2026-09-22T11:01', confirmed: false }, now)), [
+    'sentAt',
+    'confirmed'
+  ]);
+  assert.deepEqual(Object.keys(liveLinkErrors({ ...base, action: 'correct', reason: ' кра ' }, now)), ['reason']);
+  assert.deepEqual(liveLinkErrors({ ...base, action: 'correct', reason: 'Ошибка в дате' }, now), {});
+});
+
+test('F2 live readiness codes are shown as sentences and demo sentences stay unchanged', () => {
+  assert.equal(problemText('staffRequestsPending'), 'Сначала завершите проверку списков сотрудников этой группы.');
+  assert.equal(problemText('photosProcessing'), 'Часть фотографий ещё обрабатывается.');
+  assert.equal(problemText('В группе ещё нет фотографий.'), 'В группе ещё нет фотографий.');
+});
+test('D3 live transfer preview keeps the submitted rows and shows thumbnails only to the organizer', () => {
+  const request = {
+    id: 'request',
+    rows: [{ id: 'row-1', groupId: 'g', code: 'A001', childCode: 'A', photoIds: ['p1'] }]
+  };
+  const server = {
+    targetGroupId: 't',
+    targetGroupName: 'Сотрудники',
+    signature: 'f'.repeat(64),
+    hasOrders: true,
+    revision: 3,
+    bundles: [
+      { rowId: 'row-1', groupId: 'g', childCode: 'A', targetCode: 'C', hasOrders: true, photos: [{ id: 'p1', code: 'A001', revision: 2 }] }
+    ]
+  };
+  const organizer = transferPreviewFromServer(server, request, true);
+  assert.equal(organizer.targetGroupName, 'Сотрудники');
+  assert.equal(organizer.bundles[0].row.code, 'A001');
+  assert.equal(organizer.bundles[0].targetCode, 'C');
+  assert.equal(organizer.bundles[0].hasOrders, true);
+  assert.deepEqual(organizer.bundles[0].photos, [{ id: 'p1', code: 'A001', previewSrc: '/api/v1/photos/p1/thumb' }]);
+  assert.equal(transferPreviewFromServer(server, request, false).bundles[0].photos[0].previewSrc, '');
+  assert.throws(
+    () => transferPreviewFromServer({ ...server, bundles: [{ ...server.bundles[0], rowId: 'gone' }] }, request, true),
+    /Список изменился/
+  );
+});
+test('D3 transfer refusals map to sentences and leave other codes to the list messages', () => {
+  assert.equal(
+    staffTransferErrorText('STAFF_GROUP_AMBIGUOUS'),
+    'В съёмке несколько папок сотрудников. Оставьте одну и повторите проверку.'
+  );
+  assert.equal(staffTransferErrorText('SIGNATURE_CONFLICT'), 'Наборы изменились после проверки. Откройте проверку заново.');
+  assert.equal(
+    staffTransferErrorText('SHARED_PHOTO', ['B001']),
+    'Кадры B001 назначены ещё и ребёнку, который остаётся в группе. Такой набор нельзя перенести.'
+  );
+  assert.equal(staffTransferErrorText('REVISION_CONFLICT'), null);
 });

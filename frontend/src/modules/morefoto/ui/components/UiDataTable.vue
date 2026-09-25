@@ -5,6 +5,7 @@ import type { UiTableColumn, UiTableRow, UiTableSort } from '../table-types';
 import { tableCellText, tablePageCount } from '../table-values';
 import UiTableCell from './UiTableCell.vue';
 import UiTableRowActions from './UiTableRowActions.vue';
+import MfEmptyState from '@/components/states/MfEmptyState.vue';
 const props = withDefaults(
   defineProps<{
     title: string;
@@ -81,11 +82,7 @@ defineExpose({ focusRow });
       {{ error }}
       <div class="mt-3"><v-btn variant="outlined" @click="$emit('retry')">Повторить загрузку списка</v-btn></div>
     </v-alert>
-    <div v-else-if="!rows.length" class="ui-table-state">
-      <v-icon icon="mdi-text-box-search-outline" size="32" color="primary" />
-      <h3>{{ emptyTitle }}</h3>
-      <p class="mf-muted">{{ emptyDescription }}</p>
-    </div>
+    <MfEmptyState v-else-if="!rows.length" :title="emptyTitle" :text="emptyDescription" icon="mdi-text-box-search-outline" />
     <template v-else>
       <div class="ui-table-mobile-tools">
         <v-select
@@ -269,17 +266,17 @@ table {
 caption {
   text-align: left;
   padding-bottom: var(--mf-space-3);
-  color: #5e6872;
+  color: var(--mf-color-text-secondary);
 }
 th,
 td {
   padding: 4px 8px;
-  border-bottom: 1px solid #dce4ea;
+  border-bottom: 1px solid var(--mf-color-border);
   overflow-wrap: anywhere;
   vertical-align: middle;
 }
 th {
-  background: #f3f7fa;
+  background: var(--mf-color-bg);
   min-height: var(--mf-table-header);
   font-weight: 600;
 }
@@ -312,7 +309,7 @@ td:last-child {
   font-variant-numeric: tabular-nums;
 }
 .ui-table-selected {
-  background: #edf5fa;
+  background: var(--mf-color-selected);
 }
 .ui-table-sort {
   display: inline-flex;
@@ -376,7 +373,7 @@ td:last-child {
   }
   .ui-table-card {
     padding: 16px;
-    border: 1px solid #dce4ea;
+    border: 1px solid var(--mf-color-border);
     border-radius: 8px;
     min-width: 0;
   }
@@ -410,7 +407,7 @@ td:last-child {
   .ui-table-card dt {
     min-width: 0;
     overflow-wrap: anywhere;
-    color: #5e6872;
+    color: var(--mf-color-text-secondary);
   }
   .ui-table-card dd {
     margin: 0;
@@ -419,7 +416,7 @@ td:last-child {
   summary {
     min-height: 44px;
     padding-block: 12px;
-    color: #24658a;
+    color: var(--mf-color-link);
     cursor: pointer;
     font-size: var(--mf-text-small);
     overflow-wrap: anywhere;

@@ -8,6 +8,7 @@ import type { ProductionGroup, ProductionCommand } from '../types';
 import { formatMoment } from '../../handoff/display';
 import PrintRows from './PrintRows.vue';
 import OrderPackages from './OrderPackages.vue';
+import MfStatus from '@/components/status/MfStatus.vue';
 const props = defineProps<{ item: ProductionGroup; editable: boolean }>();
 const emit = defineEmits<{ action: [kind: ProductionCommand['kind'], orderId?: string, packed?: boolean] }>();
 const auth = useAuthStore(),
@@ -55,7 +56,7 @@ async function download() {
         <h1>{{ item.group.name }} · производство</h1>
         <p class="mf-muted mt-2">{{ item.shootName }}</p>
       </div>
-      <v-chip color="primary">{{ productionState(item) }}</v-chip>
+      <MfStatus tone="info">{{ productionState(item) }}</MfStatus>
     </div>
     <div class="production-metrics mt-5">
       <div>

@@ -20,13 +20,44 @@ Demo-регресс завершён: покрыты 451 сценарий / 1537
 
 По умолчанию берутся `/home/user/rebit-p2p/api/public/bitrix` и `/home/user/rebit-p2p/api/vendor`. Другие каталоги задаются `E2E_KERNEL_ROOT`/`E2E_VENDOR_ROOT` или аргументами `--kernel`/`--vendor` скрипта.
 
-Образы: `mcr.microsoft.com/playwright:v1.52.0-jammy`, `mysql:8.0`, `nginx:1.29-alpine`, `rabit-api-nginx:20260911-074507` и PHP CLI/FPM, которые по умолчанию собираются из Dockerfile текущего checkout. Перед стендом runner отдельно проверяет WebP capability обоих PHP-образов. Готовые образы можно задать через `E2E_PHP_CLI_IMAGE`, `E2E_PHP_FPM_IMAGE`, `E2E_NGINX_IMAGE`, `E2E_MYSQL_IMAGE`; это также позволяет повторить прогон офлайн после предварительной сборки. Для npm ci и первичной сборки PHP нужен доступ к registry; backend-тесты после подготовки работают без внешней сети. Node/Chromium ограничены двумя CPU и 3 ГиБ памяти; MySQL — 1 ГиБ, PHP-проверки — 1,5 ГиБ. Браузерный набор выполняется одним worker.
+Образы: `mcr.microsoft.com/playwright:v1.52.0-jammy`, `mysql:8.0`, `nginx:1.29-alpine`, `rabit-api-nginx:20260911-074507` и PHP CLI/FPM, которые по умолчанию собираются из Dockerfile текущего checkout. Перед стендом runner отдельно проверяет WebP capability обоих PHP-образов. Готовые образы можно задать через `E2E_PHP_CLI_IMAGE`, `E2E_PHP_FPM_IMAGE`, `E2E_NGINX_IMAGE`, `E2E_MYSQL_IMAGE`; это также позволяет повторить прогон офлайн после предварительной сборки. Для npm ci и первичной сборки PHP нужен доступ к registry; backend-тесты после подготовки работают без внешней сети. Каждый контейнер Node/Chromium ограничен двумя CPU и 3 ГиБ памяти; MySQL — 1 ГиБ, PHP-проверки — 1,5 ГиБ. Каждая браузерная группа выполняется одним worker на собственном стенде.
 
 ```sh
 make test-e2e
 ```
 
-Порядок: npm ci → lint/types → frontend unit → production build без mocks → PHP lint/PHPStan/PHPUnit → настоящие миграции в новой tmpfs-базе → Chromium E2E. Используются штатные nginx-конфигурации, PHP-FPM и Bitrix routing entry point. Ресурсы имеют уникальные имена и метки; при ошибке и после `run` удаляются только ресурсы этого запуска. Логи остаются в игнорируемом `api/var/e2e/<run>/`, браузерные отчёты — `frontend/reports/e2e-live/`.
+Порядок: сначала одновременно идут три ветви.
+
+- Frontend: `npm ci` по lockfile. Затем параллельно выполняются скрипты, из которых состоит `npm run check` (lint, типы приложения и E2E), unit `test:commerce` и production build без mocks (`npm run build-only`). Типы проверяются один раз.
+- Backend: WebP capability PHP-образов, копия vendor с autoload текущего checkout, затем параллельно PHP lint, PHPStan и PHPUnit.
+- Сервисы: MySQL на tmpfs и RabbitMQ каждого стенда.
+
+Затем каждый стенд получает настоящие миграции и учётки в новой базе; первый стенд — ещё и проверку Notification на MySQL/RabbitMQ. После этого стартуют FPM, media worker и nginx. Используются штатные nginx-конфигурации, PHP-FPM и Bitrix routing entry point, Xdebug в PHP-контейнерах выключен (`XDEBUG_MODE=off`, как в production-образах).
+
+Группы Chromium из `frontend/e2e/live/groups.json` выполняются одновременно, каждая на своём стенде. После группы на её стенде запускаются MySQL-верификаторы её данных.
+
+Любая ошибка сразу останавливает одноразовые контейнеры запуска, и гейт становится красным. Зелёный результат требует всех групп, всех spec-файлов каждой группы и нуля skipped/flaky/unexpected.
+
+Ресурсы имеют уникальные имена и метки. При ошибке, отмене (Ctrl+C, SIGTERM, SIGHUP) и после `run` удаляются только ресурсы этого запуска. Длительность и результат каждого этапа сохраняются в `state.json` и печатаются сводкой в конце.
+
+Логи и отчёты остаются в игнорируемом `api/var/e2e/<run>/`:
+
+- `<стенд>/<группа>/` — `browser.log`, `results.json`, HTML-отчёт и `artifacts/` со скриншотами;
+- `<стенд>/var/` — файлы фикстур и данные для верификаторов.
+
+Между запусками сохраняются только два тома:
+
+- `rabit-e2e-npm-cache` — скачанные npm-пакеты. Установка всё равно идёт через `npm ci` по lockfile с проверкой целостности.
+- `rabit-e2e-phpstan-cache` — result cache PHPStan. PHPStan сам сбрасывает его при изменении кода, конфигурации, зависимостей или PHP.
+
+Чистый прогон без кешей: `docker volume rm rabit-e2e-npm-cache rabit-e2e-phpstan-cache`. БД, очереди, runtime, vendor и node_modules у каждого запуска свои.
+
+Режимы:
+
+- `make test-e2e E2E_STANDS=1` выполняет группы по очереди на одном стенде. Нужно меньше RAM, но браузерная часть длится столько же, сколько до разделения на группы.
+- `make test-e2e E2E_GROUPS=b` быстро проверяет выбранные группы при промежуточных правках. Вывод помечает такой прогон как `PARTIAL run, not a full gate`; перед merge нужен полный гейт.
+
+Новый spec-файл добавляется ровно в одну группу `groups.json`, иначе конфиг Playwright и runner откажутся запускаться. Группа должна проходить на свежем стенде без данных других групп.
 
 ## Визуальная проверка перед merge
 
@@ -38,7 +69,7 @@ make e2e-test E2E_STATE=/absolute/path/to/state.json
 make e2e-down E2E_STATE=/absolute/path/to/state.json
 ```
 
-`e2e-test` рассчитан на свежую базу от `e2e-up`: сначала проверяется пустой каталог. Для полного повторного прогона поднимите новый стенд. E2E содержит маркер, ограничивает hostname и не запускается против рабочего сервера. Chromium использует localhost в сетевом пространстве frontend: это обеспечивает стандартный secure context для Web Crypto без ослабления браузерной безопасности.
+`e2e-up` поднимает один стенд, `e2e-test` выполняет на нём все группы по очереди. Отчёты лежат в папке этого запуска. `e2e-test` рассчитан на свежую базу от `e2e-up`: сначала проверяется пустой каталог. Для полного повторного прогона поднимите новый стенд. E2E содержит маркер, ограничивает hostname и не запускается против рабочего сервера. Chromium использует localhost в сетевом пространстве frontend: это обеспечивает стандартный secure context для Web Crypto без ослабления браузерной безопасности.
 
 Тестовые учётки: `organizer@example.invalid`, `another-organizer@example.invalid`, `teacher@example.invalid`, `unassigned@example.invalid`; общий пароль `A8-test-only-password!42`. Они существуют только в disposable базе. После автоматического набора проверить desktop и ширину 390 px: вход/ошибку, каталог, создание/изменение и нижние поля редактора, меню/выход. Проверить сохранённый товар в новой сессии и отсутствие горизонтального скролла. Сохранить скриншоты и фактический результат; тестовые токены и traces не публиковать в Git.
 

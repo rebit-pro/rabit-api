@@ -11,7 +11,15 @@ def validate_graph(plan):
     waves = plan["waves"]
     by_id = {wave["id"]: wave for wave in waves}
     assert len(by_id) == len(waves), "Duplicate wave ID"
-    assert all(re.fullmatch(r"[A-N][1-9]\d*", wid) for wid in by_id), "Invalid wave ID"
+    assert all(re.fullmatch(r"[A-NU][1-9]\d*", wid) for wid in by_id), "Invalid wave ID"
+    bundles = plan.get("deliveryBundles", {})
+    for name, bundle in bundles.items():
+        members = [wave["id"] for wave in waves if wave.get("deliveryBundle") == name]
+        assert members == bundle["waves"], ("Bundle membership mismatch", name)
+        assert bundle["branch"].startswith("codex/"), ("Bundle branch", name)
+        states = {by_id[wid]["deliveryState"] == "merged" for wid in members}
+        assert len(states) == 1, ("Bundle merges as one PR", name)
+    assert all(wave["deliveryBundle"] in bundles for wave in waves if "deliveryBundle" in wave), "Unknown bundle"
     policy = plan["mergePolicy"]
     assert policy["baseBranch"] == "main" and policy["dependenciesMustBeMerged"]
     assert policy["verifyMainPlusOwnDiff"] and policy["decisionGatesMustBeResolved"]
@@ -37,7 +45,9 @@ def validate_graph(plan):
             assert eid not in assigned, ("Duplicate primary owner", eid)
             assigned[eid] = wid
         if wave["deliveryState"] in {"review", "inProgress"}:
-            assert set(deps) <= merged, ("Work depends on unmerged wave", wid)
+            bundle = wave.get("deliveryBundle")
+            same = {other["id"] for other in waves if bundle and other.get("deliveryBundle") == bundle}
+            assert set(deps) <= merged | same, ("Work depends on unmerged wave", wid)
             assert set(wave["decisionGates"]) <= accepted, ("Work depends on open decision", wid)
     assert legacy == {f"W{i:02}" for i in range(35)}, "Missing legacy mapping"
     assert len(assigned) == plan["endpointCount"], "Primary endpoint coverage"
@@ -90,7 +100,7 @@ def negative_checks(plan):
     rejects("cycle", cycle)
     rejects("unknown dependency", lambda data: wave(data, "E1")["dependsOn"].append("Z9"))
     merged_ids = {item["id"] for item in plan["waves"] if item["deliveryState"] == "merged"}
-    blocked_id = next(item["id"] for item in plan["waves"] if item["id"] not in merged_ids and not set(item["dependsOn"]) <= merged_ids)
+    blocked_id = next(item["id"] for item in plan["waves"] if item["id"] not in merged_ids and not set(item["dependsOn"]) <= merged_ids and "deliveryBundle" not in item)
     ready_id = next(item["id"] for item in plan["waves"] if item["id"] not in merged_ids and set(item["dependsOn"]) <= merged_ids)
     rejects("unmerged dependency started", lambda data: wave(data, blocked_id).update(deliveryState="inProgress"))
     rejects("open decision started", lambda data: wave(data, ready_id).update(deliveryState="inProgress", decisionGates=["D99"]))
@@ -100,6 +110,16 @@ def negative_checks(plan):
     rejects("stacked PR permitted", lambda data: data["mergePolicy"].update(stackedPullRequests=True))
     rejects("browser gate disabled", lambda data: data["mergePolicy"].update(browserE2ERequired=False))
     rejects("visual gate disabled", lambda data: data["mergePolicy"].update(userFacingVisualCheckRequired=False))
+    bundled = [item for item in plan["waves"] if "deliveryBundle" in item]
+    if bundled:
+        outside = next(item["id"] for item in plan["waves"] if item["id"] not in merged_ids and "deliveryBundle" not in item)
+        def bundle_escape(data):
+            wave(data, bundled[-1]["id"])["dependsOn"].append(outside)
+            for item in data["waves"]:
+                item["unlocks"] = [other["id"] for other in data["waves"] if item["id"] in other["dependsOn"]]
+        rejects("bundle depends on unmerged wave outside the bundle", bundle_escape)
+        rejects("unknown bundle", lambda data: wave(data, bundled[0]["id"]).update(deliveryBundle="missing"))
+        rejects("bundle partially merged", lambda data: (wave(data, bundled[0]["id"]).update(deliveryState="merged"), data["baseline"]["mergedWaves"].append(bundled[0]["id"])))
     return scenarios
 
 
