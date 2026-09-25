@@ -2,14 +2,15 @@
 
 ## Точка продолжения
 
-- Ветка `codex/e6-payment-cost-pricing` от main `49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771` (merge плана PR #35). Checkout: `/home/user/rabit-api-worktrees/e6-payment-cost-pricing`. PR ещё не создан. Upstream ветки снят, push только явным `git push -u origin HEAD:codex/e6-payment-cost-pricing`.
-- Завершено: S1 — план, журнал, граф; S2–S6 — backend: домен, миграция, условия, витрина и расчёт, чистый контроллер, unit-тесты.
-- Сейчас: S7 — frontend (API, редактор, блок «Расходы на оплату», предпросмотр, предел 1 000 000 ₽).
-- Следующий шаг: типы `conditions/api.ts` и `useConditionsEditor.ts` с политикой и новой версией ключа черновика.
-- Блокеров нет. Решения E6-DEC-01…03 приняты пользователем 25.09.2026.
-- Канонический MoreFoto изменён на месте: `backend-waves.json`, `backend-waves.md`, `wave_graph.py`. Снимок до E6 — в scratchpad сессии (`morefoto-before-e6`); итоговый patch — `docs/waves/e6/morefoto-contract.patch` в S9.
-- Backend-проверки (том vendor `rabit-e6-vendor` — копия `rabit-u-vendor`, `composer.lock` не менялся; в worktree пустой `api/vendor` как точка монтирования):
-  `docker run --rm --network none --entrypoint php --mount type=bind,source=$PWD/api,target=/app,readonly --mount type=volume,source=rabit-e6-vendor,target=/app/vendor,readonly --tmpfs /app/var:rw,size=512m --workdir /app rabit-api-php-cli:d3-webp -d xdebug.mode=off vendor/bin/phpunit --colors=never` (и `vendor/bin/phpstan analyse --configuration=phpstan.neon --no-progress` с `-d memory_limit=2G`).
+- Ветка `codex/e6-payment-cost-pricing` от main `49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771` (merge плана PR #35). Checkout: `/home/user/rabit-api-worktrees/e6-payment-cost-pricing`. Upstream снят, push только явным `git push -u origin HEAD:codex/e6-payment-cost-pricing`.
+- Завершено: S1–S9 — план, backend, frontend, E2E-спецификация и verifier, канон MoreFoto (patch `docs/waves/e6/morefoto-contract.patch`), отчёт `docs/waves/e6/`. E6 в обоих графах — `review`.
+- Сейчас: S10 — PR в main с быстрыми проверками.
+- Следующий шаг: ревью PR. После ревью без блокеров — S11: `make test-e2e` (группа b содержит `zzzzzzzz-payment-costs`, verifier `verify-payment-costs.php`), `visual.json`, запись результатов.
+- Блокеров нет. Решения E6-DEC-01…03 приняты 25.09.2026.
+- Канонический MoreFoto изменён на месте; снимок до E6 — в scratchpad сессии (`morefoto-before-e6`), воспроизводимость patch проверена.
+- Проверки backend (том vendor `rabit-e6-vendor` — копия `rabit-u-vendor`; в worktree пустой `api/vendor` как точка монтирования):
+  `docker run --rm --network none --entrypoint php --mount type=bind,source=$PWD/api,target=/app,readonly --mount type=volume,source=rabit-e6-vendor,target=/app/vendor,readonly --tmpfs /app/var:rw,size=512m --workdir /app rabit-api-php-cli:d3-webp -d xdebug.mode=off vendor/bin/phpunit --colors=never` (PHPStan — `vendor/bin/phpstan analyse --configuration=phpstan.neon --no-progress` с `-d memory_limit=2G`).
+- Проверки frontend (том `rabit-e6-node` — копия `rabit-u-node`, lockfile не менялся): `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e6-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce && npm run build-only'`.
 
 ## Хронология
 
@@ -46,3 +47,16 @@
 | E6-T12 (unit) | PASS | 2026-09-25 | `ConditionsControllerArchitectureTest` (`CleanControllerSource` — без нарушений); `ManageConditionsUseCaseTest`: 10 предметных отказов → коды API, отказ 403 не читает повтор и не проверяет тело |
 | E6-T15 (DDL) | PASS | 2026-09-25 | Одноразовый `mysql:8.0`: `ALTER` миграции, 4 нарушения CHECK, откат; полный verifier на стенде — PENDING |
 | E6-T17 (backend) | PASS | 2026-09-25 | PHPUnit — OK, 693 теста / 44 131 проверка; PHPStan — No errors; `php -l` по 41 изменённому файлу — без ошибок; php-cs-fixer — 1 файл исправлен (порядок типов в catch), повторный dry-run чист |
+
+### 2026-09-25 — frontend, E2E и канон
+
+- Frontend: `conditions/payment-costs.ts` (формула как на сервере, ввод ставки в процентах), `conditions/conditions-command.ts` (создание команды, проверки, тело запроса — вынесены из composable для unit-тестов), блок «Расходы на оплату» и «Для покупателя» в `ConditionsFields.vue`, строка в сводке, подсказка в редакторе группы, предел 1 000 000 ₽ в редакторах каталога и условий, ключ черновика `v2`. Демо-режим политику не показывает (поле команды необязательно).
+- E2E: `zzzzzzzz-payment-costs.spec.ts` в конце группы b — политика по умолчанию, идемпотентный повтор и конфликт, отказы контракта (ставка 1001, без политики, политика в теле группы), витрина, `PRICE_CHANGED` старого расчёта, заказ по новому, возврат цен после выключения, неизменный снимок заказа, подпись ссылки F2, 403 для куратора/руководителя/воспитателя, 401 без токена, UI desktop/mobile. `afterAll` выключает политику. В `conditions.spec.ts` тело общих условий и отказ воспитателю дополнены политикой. Verifier `verify-payment-costs.php` добавлен в `VERIFIERS`.
+- Канон MoreFoto: COM-02/03 (предел цены), COM-04/05/06/07/08 в `build.py`, пересборка README/реестра/Postman; решения E6-DEC-01…03 в `decisions.md` и `decisionEvidence` обоих графов; E6 → `review`.
+
+| ID | Статус | Дата | Команда / доказательство |
+| --- | --- | --- | --- |
+| E6-T13 | PASS | 2026-09-25 | `npm run test:commerce` — 188/188 (`payment-costs.test.mjs`: примеры сервера, диапазон, ввод ставки, тело общих условий и группы, пределы) |
+| E6-T16 | PASS | 2026-09-25 | `tools/verify-wave-graph.py` и канон: 51/110/35, 13 негативных фикстур, E6 `review`; `render-waves.py` дважды — одинаковый SHA; `build.py` + `validate.py` — passed, 110 запросов, 51 волна; `validate-postman.cjs` — 110/220 фикстур; patch на снимке до E6 воспроизводит канон |
+| E6-T17 (frontend) | PASS | 2026-09-25 | `npm run check` (lint, stylelint, vue-tsc, tsc e2e, UI 27) — PASS; `npm run build-only` — PASS; eslint и tsc e2e для новой спецификации — PASS |
+| E6-T04…T11, T14, T15, T18 | PENDING | 2026-09-25 | Живые сценарии, verifier и снимки — в `make test-e2e` после ревью |

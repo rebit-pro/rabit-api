@@ -1,0 +1,96 @@
+{
+  "wave": "E6",
+  "status": "review",
+  "date": "2026-09-25",
+  "branch": "codex/e6-payment-cost-pricing",
+  "base": "49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771",
+  "decisions": [
+    "E6-PRICE-01",
+    "E6-DEC-01",
+    "E6-DEC-02",
+    "E6-DEC-03"
+  ],
+  "checks": {
+    "phpunit": {
+      "command": "vendor/bin/phpunit --colors=never (rabit-api-php-cli:d3-webp, vendor volume rabit-e6-vendor)",
+      "result": "OK",
+      "tests": 693,
+      "assertions": 44131
+    },
+    "phpstan": {
+      "command": "vendor/bin/phpstan analyse --configuration=phpstan.neon --no-progress",
+      "result": "No errors"
+    },
+    "phpCsFixer": {
+      "command": "php-cs-fixer fix --dry-run --path-mode=intersection <changed files>",
+      "result": "clean after fixing 1 file (catch type order)"
+    },
+    "frontendCheck": {
+      "command": "npm run check (lint, lint:styles, typecheck, typecheck:e2e, test:ui) in mcr.microsoft.com/playwright:v1.52.0-jammy",
+      "result": "PASS"
+    },
+    "frontendCommerce": {
+      "command": "npm run test:commerce",
+      "result": "PASS",
+      "tests": 188
+    },
+    "frontendBuild": {
+      "command": "npm run build-only",
+      "result": "PASS"
+    },
+    "migrationDdl": {
+      "command": "disposable mysql:8.0 (tmpfs, no network): ALTER from Version20260925120001, CHECK probes, rollback",
+      "result": "PASS",
+      "rejectedProbes": 4
+    },
+    "graph": {
+      "command": "python3 tools/verify-wave-graph.py docs/waves/graph.json",
+      "result": {
+        "waves": 51,
+        "endpoints": 110,
+        "legacyWaves": 35,
+        "readyFromMain": [
+          "E6"
+        ]
+      },
+      "negativeFixtures": 13
+    },
+    "canonicalGraph": {
+      "command": "python3 docs/04-bitrix-modules/wave_graph.py docs/04-bitrix-modules/backend-waves.json",
+      "result": {
+        "waves": 51,
+        "endpoints": 110,
+        "legacyWaves": 35,
+        "readyFromMain": [
+          "E6"
+        ]
+      },
+      "negativeFixtures": 13
+    },
+    "restApi": {
+      "command": "python3 docs/05-rest-api/build.py && python3 docs/05-rest-api/validate.py",
+      "result": "passed",
+      "requests": 110,
+      "waves": 51
+    },
+    "postmanOffline": {
+      "command": "node docs/05-rest-api/validate-postman.cjs",
+      "positiveFixtures": 110,
+      "negativeFixtures": 220
+    },
+    "renderReproducible": true,
+    "morefotoPatch": {
+      "file": "docs/waves/e6/morefoto-contract.patch",
+      "sha256": "33171d6eebba73cd9c6ede74d911f544a9c57e7010e12f28e69a36d7b036db71",
+      "appliesToSnapshotBeforeE6": true,
+      "reproducesCanonicalState": true
+    }
+  },
+  "pending": {
+    "browserGate": "make test-e2e after review: zzzzzzzz-payment-costs (group b), updated conditions.spec.ts",
+    "verifier": "api/tools/e2e/verify-payment-costs.php",
+    "visual": "desktop/mobile screenshots of the payment cost dialog and summary"
+  },
+  "runtimeLiveApiExecuted": false,
+  "mergeAllowed": false
+}

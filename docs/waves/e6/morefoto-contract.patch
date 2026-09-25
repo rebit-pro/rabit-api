@@ -1,0 +1,685 @@
+diff -ruN a/docs/04-bitrix-modules/backend-waves.json b/docs/04-bitrix-modules/backend-waves.json
+--- a/docs/04-bitrix-modules/backend-waves.json	2026-09-25 11:34:04.933426948 +0300
++++ b/docs/04-bitrix-modules/backend-waves.json	2026-09-25 11:34:04.937427283 +0300
+@@ -1,12 +1,12 @@
+ {
+   "version": 2,
+   "planStatus": "active",
+-  "date": "2026-09-23",
++  "date": "2026-09-25",
+   "endpointCount": 110,
+   "backend": "RaBit API",
+   "baseline": {
+     "branch": "main",
+-    "commit": "bb356653fc1098cf5d56dc949ae374244bf5e313",
++    "commit": "49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771",
+     "mergedWaves": [
+       "A1",
+       "A2",
+@@ -32,7 +32,17 @@
+       "E4",
+       "E5",
+       "F2",
+-      "D3"
++      "D3",
++      "U1",
++      "U2",
++      "U3",
++      "U4",
++      "B4",
++      "B3",
++      "U5",
++      "U6",
++      "U7",
++      "U8"
+     ],
+     "review": {},
+     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
+@@ -55,7 +65,17 @@
+       "E4": "https://github.com/rebit-pro/rabit-api/pull/30",
+       "E5": "https://github.com/rebit-pro/rabit-api/pull/37",
+       "F2": "https://github.com/rebit-pro/rabit-api/pull/40",
+-      "D3": "https://github.com/rebit-pro/rabit-api/pull/46"
++      "D3": "https://github.com/rebit-pro/rabit-api/pull/46",
++      "U1": "https://github.com/rebit-pro/rabit-api/pull/53",
++      "U2": "https://github.com/rebit-pro/rabit-api/pull/53",
++      "U3": "https://github.com/rebit-pro/rabit-api/pull/53",
++      "U4": "https://github.com/rebit-pro/rabit-api/pull/53",
++      "B4": "https://github.com/rebit-pro/rabit-api/pull/53",
++      "B3": "https://github.com/rebit-pro/rabit-api/pull/53",
++      "U5": "https://github.com/rebit-pro/rabit-api/pull/53",
++      "U6": "https://github.com/rebit-pro/rabit-api/pull/53",
++      "U7": "https://github.com/rebit-pro/rabit-api/pull/53",
++      "U8": "https://github.com/rebit-pro/rabit-api/pull/53"
+     },
+     "mergeCommits": {
+       "C4": "cfc334e5890dd51dfd6ff6638eac2cc3e436322b",
+@@ -68,7 +88,17 @@
+       "E4": "7e606e53cc6b347e5c7b70e217ab7f8eb8a45875",
+       "E5": "4b507b3b3c27719888e38f582b48e6a56c0c5946",
+       "F2": "44f2e36367351614fab66fdc58fa3dc7ee3899b3",
+-      "D3": "533c06b926dc63521017c549b6092104f6291dd5"
++      "D3": "533c06b926dc63521017c549b6092104f6291dd5",
++      "U1": "b20423f08c5794f66346a607c376bc89ffe3bb82",
++      "U2": "b20423f08c5794f66346a607c376bc89ffe3bb82",
++      "U3": "b20423f08c5794f66346a607c376bc89ffe3bb82",
++      "U4": "b20423f08c5794f66346a607c376bc89ffe3bb82",
++      "B4": "b20423f08c5794f66346a607c376bc89ffe3bb82",
++      "B3": "b20423f08c5794f66346a607c376bc89ffe3bb82",
++      "U5": "b20423f08c5794f66346a607c376bc89ffe3bb82",
++      "U6": "b20423f08c5794f66346a607c376bc89ffe3bb82",
++      "U7": "b20423f08c5794f66346a607c376bc89ffe3bb82",
++      "U8": "b20423f08c5794f66346a607c376bc89ffe3bb82"
+     },
+     "decisionEvidence": {
+       "D02-D05": "docs/waves/e3/README.md in rabit-api: user accepted rules before PR #20",
+@@ -79,7 +109,8 @@
+       "D11": "2026-09-22: пользователь подтвердил D3-DEC-01…06 («Подтверждаю все восемь решений»): льготный перенос разрешён и при заказах ребёнка, заказы не меняются, скидки задним числом нет; MED-07 только до передачи ссылки и без заказов; совместный кадр с остающимся ребёнком блокирует перенос; единственная staff-группа съёмки; обложки и correctionPhotos по плану D3 (docs/plans/D3_child-transfers/plan.md в rabit-api).",
+       "D3-D12-SCOPE": "2026-09-22: пользователь принял D3-DEC-07. D3 не меняет оплату, возвраты, печать и файлы; перенос в закрытую staff-группу запрещён. D12 снят с decisionGates D3 и остаётся у I3 и последующих волн.",
+       "D3-FOLLOW-UP": "2026-09-22: после merge D3 слиты PR #49 (21311db, текст диалога переноса и стабилизация gate) и PR #52 (93becd8, запись развёртывания stage).",
+-      "DESIGN-UX": "2026-09-23: пользователь утвердил план docs/plans/design-ux-plan/plan.md в rabit-api (PR #50, merge bb35665) и решения DS-01…DS-20 по рекомендациям. Раздел 7 плана закрывает D01 (визуал, логотип, шрифты, палитра), раздел 10.1 — механизм выдачи и восстановления паролей в D08 (персональное приглашение по ссылке, сброс и смена пароля). Волны U1–U8, B3, B4 сдаются одним PR пакета design-ux."
++      "DESIGN-UX": "2026-09-23: пользователь утвердил план docs/plans/design-ux-plan/plan.md в rabit-api (PR #50, merge bb35665) и решения DS-01…DS-20 по рекомендациям. Раздел 7 плана закрывает D01 (визуал, логотип, шрифты, палитра), раздел 10.1 — механизм выдачи и восстановления паролей в D08 (персональное приглашение по ссылке, сброс и смена пароля). Волны U1–U8, B3, B4 сдаются одним PR пакета design-ux.",
++      "E6-DEC-01-03": "2026-09-25: пользователь принял E6-DEC-01 (ставка 0…10%, сначала выбран 99,99%, после разбора крайнего случая — 10%), E6-DEC-02 (предел цены 1 000 000 ₽) и E6-DEC-03 (чистый контроллер условий в E6). План: docs/plans/E6_payment-cost-pricing/plan.md в rabit-api."
+     }
+   },
+   "acceptedImplementationDecisions": [
+@@ -1242,7 +1273,7 @@
+       ],
+       "activation": "Включение только организатором после проверки эффективной ставки и предварительного расчёта; E6 не подключает платёжного провайдера.",
+       "legacyIds": [],
+-      "deliveryState": "planned",
++      "deliveryState": "review",
+       "unlocks": [
+         "N2"
+       ],
+@@ -2473,7 +2504,7 @@
+       ],
+       "activation": "Внутренняя очистка; пользователям не видна.",
+       "legacyIds": [],
+-      "deliveryState": "inProgress",
++      "deliveryState": "merged",
+       "deliveryBundle": "design-ux",
+       "unlocks": [
+         "U2"
+@@ -2513,7 +2544,7 @@
+       ],
+       "activation": "Кабинет и покупательские экраны получают новую типографику и радиусы.",
+       "legacyIds": [],
+-      "deliveryState": "inProgress",
++      "deliveryState": "merged",
+       "deliveryBundle": "design-ux",
+       "unlocks": [
+         "U3",
+@@ -2554,7 +2585,7 @@
+       ],
+       "activation": "Новый каркас виден всем сотрудникам.",
+       "legacyIds": [],
+-      "deliveryState": "inProgress",
++      "deliveryState": "merged",
+       "deliveryBundle": "design-ux",
+       "unlocks": [
+         "B4",
+@@ -2596,7 +2627,7 @@
+       ],
+       "activation": "Единые состояния во всех модулях кабинета.",
+       "legacyIds": [],
+-      "deliveryState": "inProgress",
++      "deliveryState": "merged",
+       "deliveryBundle": "design-ux",
+       "unlocks": [
+         "B4",
+@@ -2654,7 +2685,7 @@
+       ],
+       "activation": "Организатор создаёт сотрудника — сотрудник получает письмо со ссылкой.",
+       "legacyIds": [],
+-      "deliveryState": "inProgress",
++      "deliveryState": "merged",
+       "deliveryBundle": "design-ux",
+       "unlocks": [
+         "U8"
+@@ -2705,7 +2736,7 @@
+       ],
+       "activation": "Фото аватаров появляются в каркасе, профиле и списке сотрудников.",
+       "legacyIds": [],
+-      "deliveryState": "inProgress",
++      "deliveryState": "merged",
+       "deliveryBundle": "design-ux",
+       "unlocks": [],
+       "inputBoundary": "Слитые в main: A4, B2. Внутри пакета design-ux — предыдущие коммиты: U3. Решения: D01, D08.",
+@@ -2759,7 +2790,7 @@
+       ],
+       "activation": "Сводки доступны экранам U6.",
+       "legacyIds": [],
+-      "deliveryState": "inProgress",
++      "deliveryState": "merged",
+       "deliveryBundle": "design-ux",
+       "unlocks": [
+         "U6"
+@@ -2800,7 +2831,7 @@
+       ],
+       "activation": "Сотрудники после входа попадают на обзор своей области.",
+       "legacyIds": [],
+-      "deliveryState": "inProgress",
++      "deliveryState": "merged",
+       "deliveryBundle": "design-ux",
+       "unlocks": [],
+       "inputBoundary": "Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U3, U4, U5. Решения: D01.",
+@@ -2845,7 +2876,7 @@
+       ],
+       "activation": "Обновлённые рабочие экраны организатора и куратора.",
+       "legacyIds": [],
+-      "deliveryState": "inProgress",
++      "deliveryState": "merged",
+       "deliveryBundle": "design-ux",
+       "unlocks": [],
+       "inputBoundary": "Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U4. Решения: D01.",
+@@ -2890,7 +2921,7 @@
+       ],
+       "activation": "Обновлённые экраны ссылок, списков, заказов и сотрудников.",
+       "legacyIds": [],
+-      "deliveryState": "inProgress",
++      "deliveryState": "merged",
+       "deliveryBundle": "design-ux",
+       "unlocks": [],
+       "inputBoundary": "Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U4, B4. Решения: D01, D08.",
+diff -ruN a/docs/04-bitrix-modules/backend-waves.md b/docs/04-bitrix-modules/backend-waves.md
+--- a/docs/04-bitrix-modules/backend-waves.md	2026-09-25 11:34:04.941427618 +0300
++++ b/docs/04-bitrix-modules/backend-waves.md	2026-09-25 11:34:04.945427953 +0300
+@@ -1,6 +1,6 @@
+ # Независимые волны MoreFoto
+
+-Дата: **2026-09-23**. Сервер — **RaBit API**. Активный план — граф зависимостей с буквами направлений и номерами срезов. Буквы не задают порядок выполнения. Статусы ниже — снимок на указанном main; перед стартом/merge проверить GitHub заново. Переименование не объявляет HTTP реализованным.
++Дата: **2026-09-25**. Сервер — **RaBit API**. Активный план — граф зависимостей с буквами направлений и номерами срезов. Буквы не задают порядок выполнения. Статусы ниже — снимок на указанном main; перед стартом/merge проверить GitHub заново. Переименование не объявляет HTTP реализованным.
+
+ [Карта модулей](README.md) · [REST-контракты](../05-rest-api/README.md) · [Postman по волнам](../05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json) · [Решения D01–D12](../frontend/business-review/decisions.md).
+
+@@ -18,7 +18,7 @@
+
+ ## Текущий независимый набор
+
+-В main `bb356653fc1098cf5d56dc949ae374244bf5e313` приняты: A1, A2, A3, A4, A5, A6, A7, A8, B1, C1, E1, C2, C3, C4, B2, D1, D2, E2, E3, F1, H1, E4, E5, F2, D3. Готовы по графу: E6, U1, U5. Это снимок; фактические зависимости и открытые решения проверяются перед стартом.
++В main `49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771` приняты: A1, A2, A3, A4, A5, A6, A7, A8, B1, C1, E1, C2, C3, C4, B2, D1, D2, E2, E3, F1, H1, E4, E5, F2, D3, U1, U2, U3, U4, B4, B3, U5, U6, U7, U8. Готовы по графу: E6. Это снимок; фактические зависимости и открытые решения проверяются перед стартом.
+
+ Пользователь принял модель Access/Organization, одного продавца, связь фото с несколькими детьми и рекомендации D07/D08/D10. R17 и остальные открытые решения не объявлены закрытыми. D02 не мешает пустому редактируемому каталогу, но продолжает блокировать соответствующие коммерческие правила E3. Для H1 выбран EMAIL, MAX перенесён в отдельный последующий этап. 22.09.2026 первым провайдером выбрана ЮKassa с «Чеками от ЮKassa», СберПэй — необязательный резерв. Расходы в общей цене выделены в независимую E6 с округлением вверх до 50 ₽. Битрикс Старт и своё хранение сохраняются; настройки/параметры чека и оставшиеся вопросы D09/D12 не объявлены закрытыми. GitHub Actions отключён вручную; YAML сохранён, проверки выполняются локально.
+
+@@ -176,7 +176,7 @@
+ | [F1](#f1) | Списки детей сотрудников | B2, D2, E3 | E4, D3, F2, U5 | HND-06, HND-07, HND-08, HND-09, HND-12 | в main |
+ | [E4](#e4) | Приватная витрина и серверный расчёт корзины | D2, E3, F1 | E5, F2 | MED-01, COM-08, COM-09 | в main |
+ | [E5](#e5) | Заказ, снимок покупки и личный ключ | E4 | E6, D3, G1, I1, J1, U5 | COM-10, COM-11, COM-12, COM-13 | в main |
+-| [E6](#e6) | Учёт расходов на оплату в общей цене продукции | E3, E5 | N2 | Без новых REST | запланирована |
++| [E6](#e6) | Учёт расходов на оплату в общей цене продукции | E3, E5 | N2 | Без новых REST | на ревью |
+ | [D3](#d3) | Атомарные переносы ребёнка и служебной заявки | D2, F1, E5, F2 | I3 | MED-07, HND-10, HND-11 | в main |
+ | [F2](#f2) | Подготовка и факт передачи ссылки | E3, F1, E4 | D3, G1, L1, K2, U5 | HND-01, HND-02, HND-03, HND-04, HND-05 | в main |
+ | [G1](#g1) | Платёжные попытки и подтверждённые факты | E5, F2 | G2, I1, I2, I3 | PAY-01, PAY-02, PAY-03, PAY-07 | запланирована |
+@@ -195,16 +195,16 @@
+ | [M1](#m1) | Готовность и физическая передача партий | I3, L2, K2 | N1 | SHP-01, SHP-02, SHP-03, SHP-04, SHP-05 | запланирована |
+ | [N1](#n1) | Полные ролевые карточки и сводки | B2, C4, I1, I2, I3, M1 | N2 | ORG-01, ORG-11 | запланирована |
+ | [N2](#n2) | Сквозная приёмка и управляемое включение | N1, E6 | — | Без новых REST | запланирована |
+-| [U1](#u1) | Очистка наследия frontend и направление U | A8 | U2 | Без новых REST | в работе |
+-| [U2](#u2) | Токен-система, шрифты и тема | U1 | U3, U4 | Без новых REST | в работе |
+-| [U3](#u3) | Бренд, каркас и навигация | U2 | B4, B3, U6 | Без новых REST | в работе |
+-| [U4](#u4) | Поверхности, статусы и состояния | U2 | B4, U6, U7, U8 | Без новых REST | в работе |
+-| [B4](#b4) | Приглашения, первый вход и пароли | A3, B2, H1, U3, U4 | U8 | AUTH-05, AUTH-06, AUTH-07, AUTH-08, AUTH-09, ACC-11 | в работе |
+-| [B3](#b3) | Аватары сотрудников с фото | A4, B2, U3 | — | ACC-07, ACC-08, ACC-09, ACC-10, ACC-12 | в работе |
+-| [U5](#u5) | Серверные сводки для инфографики | C4, D2, E5, F1, F2 | U6 | Без новых REST | в работе |
+-| [U6](#u6) | Обзор по ролям и виджеты инфографики | U3, U4, U5 | — | Без новых REST | в работе |
+-| [U7](#u7) | Рабочие экраны: учреждения, съёмки, фото, каталог, условия | U4 | — | Без новых REST | в работе |
+-| [U8](#u8) | Ссылки, списки сотрудников, заказы, сотрудники | U4, B4 | — | Без новых REST | в работе |
++| [U1](#u1) | Очистка наследия frontend и направление U | A8 | U2 | Без новых REST | в main |
++| [U2](#u2) | Токен-система, шрифты и тема | U1 | U3, U4 | Без новых REST | в main |
++| [U3](#u3) | Бренд, каркас и навигация | U2 | B4, B3, U6 | Без новых REST | в main |
++| [U4](#u4) | Поверхности, статусы и состояния | U2 | B4, U6, U7, U8 | Без новых REST | в main |
++| [B4](#b4) | Приглашения, первый вход и пароли | A3, B2, H1, U3, U4 | U8 | AUTH-05, AUTH-06, AUTH-07, AUTH-08, AUTH-09, ACC-11 | в main |
++| [B3](#b3) | Аватары сотрудников с фото | A4, B2, U3 | — | ACC-07, ACC-08, ACC-09, ACC-10, ACC-12 | в main |
++| [U5](#u5) | Серверные сводки для инфографики | C4, D2, E5, F1, F2 | U6 | Без новых REST | в main |
++| [U6](#u6) | Обзор по ролям и виджеты инфографики | U3, U4, U5 | — | Без новых REST | в main |
++| [U7](#u7) | Рабочие экраны: учреждения, съёмки, фото, каталог, условия | U4 | — | Без новых REST | в main |
++| [U8](#u8) | Ссылки, списки сотрудников, заказы, сотрудники | U4, B4 | — | Без новых REST | в main |
+
+ *Разблокирует при выполнении остальных зависимостей и decisionGates. Статус «запланирована» не означает готовность к старту.
+
+@@ -924,7 +924,7 @@
+
+ **Владельцы:** `morefoto.commerce`.
+ **Зависит от:** E3, E5. **Разблокирует:** N2.
+-**Решения:** D02, D04, D05. **Статус:** запланирована.
++**Решения:** D02, D04, D05. **Статус:** на ревью.
+ **Первичные REST:** нет новых REST.
+ **Вход:** Слитые E3 и E5: существующие условия продаж, quote и снимок заказа; параметры политики расходов согласованы пользователем 22.09.2026.
+ **Выход:** Завершённый сценарий настройки цен через COM-04/05 с витриной/quote/заказом, без новых первичных HTTP-операций.
+@@ -1569,7 +1569,7 @@
+
+ **Владельцы:** `frontend`, `project.workflow`.
+ **Зависит от:** A8. **Разблокирует:** U2.
+-**Решения:** нет новых бизнес-решений. **Статус:** в работе.
++**Решения:** нет новых бизнес-решений. **Статус:** в main.
+ **Первичные REST:** нет новых REST.
+ **Пакет доставки:** design-ux — единый PR, см. «Пакеты доставки».
+ **Вход:** Слитые в main: A8. Внутри пакета design-ux — предыдущие коммиты: нет. Решения: не требуются.
+@@ -1602,7 +1602,7 @@
+
+ **Владельцы:** `frontend`.
+ **Зависит от:** U1. **Разблокирует:** U3, U4.
+-**Решения:** D01. **Статус:** в работе.
++**Решения:** D01. **Статус:** в main.
+ **Первичные REST:** нет новых REST.
+ **Пакет доставки:** design-ux — единый PR, см. «Пакеты доставки».
+ **Вход:** Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U1. Решения: D01.
+@@ -1634,7 +1634,7 @@
+
+ **Владельцы:** `frontend`.
+ **Зависит от:** U2. **Разблокирует:** B4, B3, U6.
+-**Решения:** D01. **Статус:** в работе.
++**Решения:** D01. **Статус:** в main.
+ **Первичные REST:** нет новых REST.
+ **Пакет доставки:** design-ux — единый PR, см. «Пакеты доставки».
+ **Вход:** Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U2. Решения: D01.
+@@ -1666,7 +1666,7 @@
+
+ **Владельцы:** `frontend`.
+ **Зависит от:** U2. **Разблокирует:** B4, U6, U7, U8.
+-**Решения:** D01. **Статус:** в работе.
++**Решения:** D01. **Статус:** в main.
+ **Первичные REST:** нет новых REST.
+ **Пакет доставки:** design-ux — единый PR, см. «Пакеты доставки».
+ **Вход:** Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U2. Решения: D01.
+@@ -1698,7 +1698,7 @@
+
+ **Владельцы:** `rebit.auth`, `morefoto.access`, `rebit.share`, `rebit.notification`, `frontend`.
+ **Зависит от:** A3, B2, H1, U3, U4. **Разблокирует:** U8.
+-**Решения:** D08. **Статус:** в работе.
++**Решения:** D08. **Статус:** в main.
+ **Первичные REST:** AUTH-05, AUTH-06, AUTH-07, AUTH-08, AUTH-09, ACC-11.
+ **Пакет доставки:** design-ux — единый PR, см. «Пакеты доставки».
+ **Вход:** Слитые в main: A3, B2, H1. Внутри пакета design-ux — предыдущие коммиты: U3, U4. Решения: D08.
+@@ -1730,7 +1730,7 @@
+
+ **Владельцы:** `morefoto.access`, `rebit.share`, `frontend`.
+ **Зависит от:** A4, B2, U3. **Разблокирует:** нет.
+-**Решения:** D01, D08. **Статус:** в работе.
++**Решения:** D01, D08. **Статус:** в main.
+ **Первичные REST:** ACC-07, ACC-08, ACC-09, ACC-10, ACC-12.
+ **Пакет доставки:** design-ux — единый PR, см. «Пакеты доставки».
+ **Вход:** Слитые в main: A4, B2. Внутри пакета design-ux — предыдущие коммиты: U3. Решения: D01, D08.
+@@ -1762,7 +1762,7 @@
+
+ **Владельцы:** `morefoto.handoff`, `morefoto.organization`, `morefoto.media`, `morefoto.commerce`, `morefoto.access`.
+ **Зависит от:** C4, D2, E5, F1, F2. **Разблокирует:** U6.
+-**Решения:** D08. **Статус:** в работе.
++**Решения:** D08. **Статус:** в main.
+ **Первичные REST:** нет новых REST.
+ **Пакет доставки:** design-ux — единый PR, см. «Пакеты доставки».
+ **Вход:** Слитые в main: C4, D2, E5, F1, F2. Внутри пакета design-ux — предыдущие коммиты: нет. Решения: D08.
+@@ -1794,7 +1794,7 @@
+
+ **Владельцы:** `frontend`.
+ **Зависит от:** U3, U4, U5. **Разблокирует:** нет.
+-**Решения:** D01. **Статус:** в работе.
++**Решения:** D01. **Статус:** в main.
+ **Первичные REST:** нет новых REST.
+ **Пакет доставки:** design-ux — единый PR, см. «Пакеты доставки».
+ **Вход:** Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U3, U4, U5. Решения: D01.
+@@ -1825,7 +1825,7 @@
+
+ **Владельцы:** `frontend`, `morefoto.organization`, `morefoto.access`, `rebit.share`.
+ **Зависит от:** U4. **Разблокирует:** нет.
+-**Решения:** D01. **Статус:** в работе.
++**Решения:** D01. **Статус:** в main.
+ **Первичные REST:** нет новых REST.
+ **Пакет доставки:** design-ux — единый PR, см. «Пакеты доставки».
+ **Вход:** Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U4. Решения: D01.
+@@ -1858,7 +1858,7 @@
+
+ **Владельцы:** `frontend`, `morefoto.handoff`.
+ **Зависит от:** U4, B4. **Разблокирует:** нет.
+-**Решения:** D01, D08. **Статус:** в работе.
++**Решения:** D01, D08. **Статус:** в main.
+ **Первичные REST:** нет новых REST.
+ **Пакет доставки:** design-ux — единый PR, см. «Пакеты доставки».
+ **Вход:** Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U4, B4. Решения: D01, D08.
+diff -ruN a/docs/04-bitrix-modules/wave_graph.py b/docs/04-bitrix-modules/wave_graph.py
+--- a/docs/04-bitrix-modules/wave_graph.py	2026-09-25 11:34:04.949428288 +0300
++++ b/docs/04-bitrix-modules/wave_graph.py	2026-09-25 11:34:04.949428288 +0300
+@@ -44,6 +44,8 @@
+         for eid in wave["endpointIds"]:
+             assert eid not in assigned, ("Duplicate primary owner", eid)
+             assigned[eid] = wid
++        if wave["deliveryState"] == "merged":
++            assert set(deps) <= merged, ("Merged wave depends on unmerged wave", wid)
+         if wave["deliveryState"] in {"review", "inProgress"}:
+             bundle = wave.get("deliveryBundle")
+             same = {other["id"] for other in waves if bundle and other.get("deliveryBundle") == bundle}
+@@ -119,7 +121,15 @@
+                 item["unlocks"] = [other["id"] for other in data["waves"] if item["id"] in other["dependsOn"]]
+         rejects("bundle depends on unmerged wave outside the bundle", bundle_escape)
+         rejects("unknown bundle", lambda data: wave(data, bundled[0]["id"]).update(deliveryBundle="missing"))
+-        rejects("bundle partially merged", lambda data: (wave(data, bundled[0]["id"]).update(deliveryState="merged"), data["baseline"]["mergedWaves"].append(bundled[0]["id"])))
++        def bundle_partial(data):
++            first = wave(data, bundled[0]["id"])
++            if first["deliveryState"] == "merged":
++                first["deliveryState"] = "inProgress"
++                data["baseline"]["mergedWaves"].remove(first["id"])
++            else:
++                first["deliveryState"] = "merged"
++                data["baseline"]["mergedWaves"].append(first["id"])
++        rejects("bundle partially merged", bundle_partial)
+     return scenarios
+
+
+diff -ruN a/docs/05-rest-api/README.md b/docs/05-rest-api/README.md
+--- a/docs/05-rest-api/README.md	2026-09-25 11:34:04.957428958 +0300
++++ b/docs/05-rest-api/README.md	2026-09-25 11:34:04.957428958 +0300
+@@ -311,9 +311,9 @@
+ | COM-01 · **П** | **GET** /catalog/products | Каталог организатора; О | —; page, pageSize | **200**; items&lt;Product&gt;, revision, meta | E2; product |
+ | COM-02 · **П** | **POST** /catalog/products | Создать товар; О | name, description, kind, price, printCount, format, unit, staffDiscount, active | **201**; id, revision | E2; product |
+ | COM-03 · **П** | **PATCH** /catalog/products/{product_id} | Изменить товар; О | name, description, kind, price, printCount, format, unit, staffDiscount, active, revision | **200**; id, revision | E2; product |
+-| COM-04 · **П** | **GET** /catalog/conditions | Общие условия продажи; О | — | **200**; revision, products, giftThreshold, giftForStaff | E3; product |
+-| COM-05 · **П** | **PUT** /catalog/conditions | Сохранить общие условия; О | revision, catalogRevision, products, giftEnabled, giftThreshold, giftForStaff | **200**; revision | E3; product |
+-| COM-06 · **П** | **GET** /groups/{group_id}/conditions | Условия группы для редактора; О | — | **200**; revision, catalogRevision, conditionsRevision, inherit, products, giftThreshold, giftForStaff | E3; product |
++| COM-04 · **П** | **GET** /catalog/conditions | Общие условия продажи; О | — | **200**; revision, catalogRevision, products, giftThreshold, giftForStaff, paymentCosts | E3; product |
++| COM-05 · **П** | **PUT** /catalog/conditions | Сохранить общие условия; О | revision, catalogRevision, products, giftEnabled, giftThreshold, giftForStaff, paymentCosts | **200**; revision | E3; product |
++| COM-06 · **П** | **GET** /groups/{group_id}/conditions | Условия группы для редактора; О | — | **200**; revision, catalogRevision, conditionsRevision, inherit, products, giftThreshold, giftForStaff, paymentCosts | E3; product |
+ | COM-07 · **П** | **PUT** /groups/{group_id}/conditions | Сохранить условия группы; О | revision, catalogRevision, products, giftEnabled, giftThreshold, giftForStaff, conditionsRevision, inherit | **200**; revision, conditionsRevision | E3; product |
+ | COM-08 · **П** | **GET** /public/galleries/{gallery_token}/catalog | Действующий прайс покупателя; Галерея | — | **200**; products, giftThreshold, giftForStaff, revision, conditionsRevision, capabilities, purchaseTerms | E4; product |
+ | COM-09 · **П** | **POST** /public/galleries/{gallery_token}/quotes | Проверить корзину и рассчитать итог; Галерея | lines | **200**; quote: CartQuote, quoteToken, expiresAt | E4; product |
+@@ -322,10 +322,12 @@
+ | COM-12 · **П** | **GET** /orders | Поиск служебных заказов; О/К | —; query: q, institutionId, shootId, groupId, paymentStatus, productionStatus, dateFrom, dateTo, late, settlement, page, pageSize; page, pageSize | **200**; items&lt;StaffOrder&gt;, meta{summary: total, byProductionStatus} | E5; product |
+ | COM-13 · **П** | **GET** /orders/{order_id} | Служебная карточка заказа; О/К | — | **200**; StaffOrder, period, version, correctionPhotos | E5; product |
+
+-- **COM-03:** price — целые копейки (в UI строка рублей), printCount — целое число. Тип physical/digital/bundle. Выключение active вместо несуществующего сценария удаления.
+-- **COM-05:** PUT заменяет весь проверенный набор условий. Цены/порог здесь тестовые; D02/D04/D05 открыты.
+-- **COM-07:** inherit=true берёт общие условия. Эффективный прайс и льготу рассчитывает сервер; изменение инвалидирует подготовку ссылки/расчёт заказа.
+-- **COM-08:** capabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается. E5: capabilities.purchaseEnabled отражает серверное включение оформления (по умолчанию выключено, включается только на изолированном стенде); при false COM-10 отвечает 403 PURCHASE_DISABLED. purchaseTerms остаётся null до утверждения реквизитов продавца, оферты и согласия на обработку ПДн.
++- **COM-03:** price — целые копейки 0…100000000 (до 1 000 000 ₽, E6-DEC-02; больше — 422), в UI строка рублей; printCount — целое число. Тип physical/digital/bundle. Выключение active вместо несуществующего сценария удаления.
++- **COM-04:** E6: paymentCosts {enabled, rateBps 0…1000, roundingStep 5000, maxRateBps 1000} — политика учёта расходов на оплату, по умолчанию выключена со ставкой 380. products[].price — базовая цена, products[].salePrice — цена для покупателя: при enabled ceil(price·10000/((10000−rateBps)·5000))·5000, иначе price.
++- **COM-05:** PUT заменяет весь проверенный набор условий, включая обязательную политику E6 paymentCosts {enabled, rateBps 0…1000}. Сохранение повышает revision и catalogRevision: старые расчёты получают 409 PRICE_CHANGED/QUOTE_STALE, непереданные подготовки ссылок — новую подпись. Цена товара 0…100000000 копеек. Ошибки: 422 VALIDATION_FAILED/UNKNOWN_FIELD, 409 REVISION_CONFLICT/IDEMPOTENCY_CONFLICT, 400 JSON_REQUIRED/MALFORMED_JSON, 413 PAYLOAD_TOO_LARGE. Цены и порог в примере тестовые.
++- **COM-06:** E6: paymentCosts — общая политика продавца только для чтения; products[].salePrice — цена для покупателя от цены группы или унаследованной.
++- **COM-07:** inherit=true берёт общие условия. Эффективный прайс и льготу рассчитывает сервер; изменение инвалидирует подготовку ссылки/расчёт заказа. E6: цена группы 0…100000000 копеек, цена для покупателя — по общей политике; paymentCosts в теле запрещён (422 UNKNOWN_FIELD).
++- **COM-08:** E6: products[].price — цена для покупателя с учётом политики расходов, одна для всех способов оплаты; сама политика покупателю не раскрывается. capabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается. E5: capabilities.purchaseEnabled отражает серверное включение оформления (по умолчанию выключено, включается только на изолированном стенде); при false COM-10 отвечает 403 PURCHASE_DISABLED. purchaseTerms остаётся null до утверждения реквизитов продавца, оферты и согласия на обработку ПДн.
+ - **COM-09:** Не создаёт заказ. Вход только assignmentId/productId/quantity; assignmentId получен из MED-01 и обозначает связь ребёнок—снимок. Сервер проверяет связь, область capability и готовность фото; childCode, скидки, подарок и суммы выводит сам. Для bundle assignmentId определяет ребёнка; сервер нормализует весь разрешённый состав его набора. Клиент не подписывает JSON сам.
+ - **COM-10:** Новый заказ только в открытой группе, reviewed=true и актуальном расчёте. Повтор той же операции возвращает исходный заказ даже после закрытия, без нового списания. Ключ хранить приватно. E5: Idempotency-Key (32 hex) обязателен, область повтора — capability галереи; тот же ключ и тело — 201 с теми же id/number/accessKey, пока ссылка галереи действует; другое тело — 409 IDEMPOTENCY_CONFLICT. lines совпадают с COM-09 для этого quoteToken; один заказ на расчёт (409 QUOTE_ALREADY_USED). Устаревший расчёт: 409 QUOTE_EXPIRED, QUOTE_STALE или PRICE_CHANGED с error.details{quote,quoteToken,expiresAt}; закрытая группа — 409 GALLERY_CLOSED. buyer: name 2–100, phone 10–15 цифр, email обязателен (до 254), comment до 1000, receiptChannel необязателен и только из capabilities.receiptChannels (до G2 — null); ошибки полей — 422 INVALID_BUYER_NAME/PHONE/EMAIL/COMMENT, RECEIPT_CHANNEL_UNAVAILABLE, REVIEW_REQUIRED. accessKey — 64 hex, действует 30 календарных дней по МСК; в БД только SHA-256. Location: /api/v1/public/orders/current. Строки quote содержат метаданные кадра без URL изображений. Оформление выключено по умолчанию: 403 PURCHASE_DISABLED.
+ - **COM-11:** X-Order-Key: отдельный личный ключ из оформления/ссылки. Номер MF и galleryToken не заменяют его. Возвращается только покупательская проекция, без внутренней истории действий сотрудников. E5: отсутствующий, неверный, отозванный и истёкший ключ дают одинаковый 404 ORDER_NOT_FOUND; отзыв ссылки галереи ключ заказа не отключает. period — календарь группы {groupId, state, timezone, sentAt, closesAt, deliveryDueAt, now}; история продлений появится с K2. paidAt/latePayment появятся с G1. Кадры без URL изображений. Ответ no-store.
+diff -ruN a/docs/05-rest-api/build.py b/docs/05-rest-api/build.py
+--- a/docs/05-rest-api/build.py	2026-09-25 11:34:04.965429627 +0300
++++ b/docs/05-rest-api/build.py	2026-09-25 11:34:04.965429627 +0300
+@@ -236,25 +236,28 @@
+     save={"product_id":"id","catalog_revision":"revision"},sample={"id":"product-example","revision":2})
+ add("commerce","COM-03","PATCH","/catalog/products/{product_id}","Изменить товар",O,"id, revision",
+     dict(product,revision=rev("catalog_revision")),save={"catalog_revision":"revision"},
+-    note="price — целые копейки (в UI строка рублей), printCount — целое число. Тип physical/digital/bundle. Выключение active вместо несуществующего сценария удаления.")
++    note="price — целые копейки 0…100000000 (до 1 000 000 ₽, E6-DEC-02; больше — 422), в UI строка рублей; printCount — целое число. Тип physical/digital/bundle. Выключение active вместо несуществующего сценария удаления.")
+ add("commerce","COM-04","GET","/catalog/conditions","Общие условия продажи",O,
+-    "revision, products, giftThreshold, giftForStaff",save={"conditions_revision":"revision"})
++    "revision, catalogRevision, products, giftThreshold, giftForStaff, paymentCosts",save={"conditions_revision":"revision"},
++    note="E6: paymentCosts {enabled, rateBps 0…1000, roundingStep 5000, maxRateBps 1000} — политика учёта расходов на оплату, по умолчанию выключена со ставкой 380. products[].price — базовая цена, products[].salePrice — цена для покупателя: при enabled ceil(price·10000/((10000−rateBps)·5000))·5000, иначе price.")
+ conditions={"revision":rev("conditions_revision"),"catalogRevision":rev("catalog_revision"),
+     "products":[{"id":"{{product_id}}","price":25000,"active":True,"staffDiscount":True}],
+     "giftEnabled":True,"giftThreshold":200000,"giftForStaff":False}
+-add("commerce","COM-05","PUT","/catalog/conditions","Сохранить общие условия",O,"revision",conditions,
+-    save={"conditions_revision":"revision"},note="PUT заменяет весь проверенный набор условий. Цены/порог здесь тестовые; D02/D04/D05 открыты.")
++add("commerce","COM-05","PUT","/catalog/conditions","Сохранить общие условия",O,"revision",
++    dict(conditions,paymentCosts={"enabled":False,"rateBps":380}),
++    save={"conditions_revision":"revision"},note="PUT заменяет весь проверенный набор условий, включая обязательную политику E6 paymentCosts {enabled, rateBps 0…1000}. Сохранение повышает revision и catalogRevision: старые расчёты получают 409 PRICE_CHANGED/QUOTE_STALE, непереданные подготовки ссылок — новую подпись. Цена товара 0…100000000 копеек. Ошибки: 422 VALIDATION_FAILED/UNKNOWN_FIELD, 409 REVISION_CONFLICT/IDEMPOTENCY_CONFLICT, 400 JSON_REQUIRED/MALFORMED_JSON, 413 PAYLOAD_TOO_LARGE. Цены и порог в примере тестовые.")
+ add("commerce","COM-06","GET","/groups/{group_id}/conditions","Условия группы для редактора",O,
+-    "revision, catalogRevision, conditionsRevision, inherit, products, giftThreshold, giftForStaff",
+-    save={"group_conditions_revision":"revision","catalog_revision":"catalogRevision","conditions_revision":"conditionsRevision"})
++    "revision, catalogRevision, conditionsRevision, inherit, products, giftThreshold, giftForStaff, paymentCosts",
++    save={"group_conditions_revision":"revision","catalog_revision":"catalogRevision","conditions_revision":"conditionsRevision"},
++    note="E6: paymentCosts — общая политика продавца только для чтения; products[].salePrice — цена для покупателя от цены группы или унаследованной.")
+ add("commerce","COM-07","PUT","/groups/{group_id}/conditions","Сохранить условия группы",O,"revision, conditionsRevision",
+     dict(conditions,revision=rev("group_conditions_revision"),conditionsRevision=rev("conditions_revision"),inherit=False),
+     save={"group_conditions_revision":"revision","conditions_revision":"conditionsRevision"},
+-    note="inherit=true берёт общие условия. Эффективный прайс и льготу рассчитывает сервер; изменение инвалидирует подготовку ссылки/расчёт заказа.")
++    note="inherit=true берёт общие условия. Эффективный прайс и льготу рассчитывает сервер; изменение инвалидирует подготовку ссылки/расчёт заказа. E6: цена группы 0…100000000 копеек, цена для покупателя — по общей политике; paymentCosts в теле запрещён (422 UNKNOWN_FIELD).")
+ add("commerce","COM-08","GET","/public/galleries/{gallery_token}/catalog","Действующий прайс покупателя",G,
+     "products, giftThreshold, giftForStaff, revision, conditionsRevision, capabilities, purchaseTerms",
+     save={"catalog_revision":"revision","conditions_revision":"conditionsRevision"},
+-    note="capabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается. E5: capabilities.purchaseEnabled отражает серверное включение оформления (по умолчанию выключено, включается только на изолированном стенде); при false COM-10 отвечает 403 PURCHASE_DISABLED. purchaseTerms остаётся null до утверждения реквизитов продавца, оферты и согласия на обработку ПДн.")
++    note="E6: products[].price — цена для покупателя с учётом политики расходов, одна для всех способов оплаты; сама политика покупателю не раскрывается. capabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается. E5: capabilities.purchaseEnabled отражает серверное включение оформления (по умолчанию выключено, включается только на изолированном стенде); при false COM-10 отвечает 403 PURCHASE_DISABLED. purchaseTerms остаётся null до утверждения реквизитов продавца, оферты и согласия на обработку ПДн.")
+ cart_lines=[{"assignmentId":"{{assignment_id}}","productId":"{{product_id}}","quantity":1}]
+ quote_sample={"quote":{"lines":[],"total":25000,"subtotal":25000,"discount":0,"giftSaving":0,"gifts":[],"count":1,"invalid":[],"revision":1,"conditionsRevision":1},
+     "quoteToken":"opaque-quote-example","expiresAt":"2026-10-01T12:15:00+03:00"}
+diff -ruN a/docs/05-rest-api/endpoints.json b/docs/05-rest-api/endpoints.json
+--- a/docs/05-rest-api/endpoints.json	2026-09-25 11:34:04.973430297 +0300
++++ b/docs/05-rest-api/endpoints.json	2026-09-25 11:34:04.973430297 +0300
+@@ -1682,7 +1682,7 @@
+       },
+       "code": 200,
+       "query": [],
+-      "note": "price — целые копейки (в UI строка рублей), printCount — целое число. Тип physical/digital/bundle. Выключение active вместо несуществующего сценария удаления.",
++      "note": "price — целые копейки 0…100000000 (до 1 000 000 ₽, E6-DEC-02; больше — 422), в UI строка рублей; printCount — целое число. Тип physical/digital/bundle. Выключение active вместо несуществующего сценария удаления.",
+       "status": "П",
+       "save": {
+         "catalog_revision": "revision"
+@@ -1707,11 +1707,11 @@
+       "path": "/catalog/conditions",
+       "title": "Общие условия продажи",
+       "roles": "О",
+-      "output": "revision, products, giftThreshold, giftForStaff",
++      "output": "revision, catalogRevision, products, giftThreshold, giftForStaff, paymentCosts",
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "",
++      "note": "E6: paymentCosts {enabled, rateBps 0…1000, roundingStep 5000, maxRateBps 1000} — политика учёта расходов на оплату, по умолчанию выключена со ставкой 380. products[].price — базовая цена, products[].salePrice — цена для покупателя: при enabled ceil(price·10000/((10000−rateBps)·5000))·5000, иначе price.",
+       "status": "П",
+       "save": {
+         "conditions_revision": "revision"
+@@ -1749,11 +1749,15 @@
+         ],
+         "giftEnabled": true,
+         "giftThreshold": 200000,
+-        "giftForStaff": false
++        "giftForStaff": false,
++        "paymentCosts": {
++          "enabled": false,
++          "rateBps": 380
++        }
+       },
+       "code": 200,
+       "query": [],
+-      "note": "PUT заменяет весь проверенный набор условий. Цены/порог здесь тестовые; D02/D04/D05 открыты.",
++      "note": "PUT заменяет весь проверенный набор условий, включая обязательную политику E6 paymentCosts {enabled, rateBps 0…1000}. Сохранение повышает revision и catalogRevision: старые расчёты получают 409 PRICE_CHANGED/QUOTE_STALE, непереданные подготовки ссылок — новую подпись. Цена товара 0…100000000 копеек. Ошибки: 422 VALIDATION_FAILED/UNKNOWN_FIELD, 409 REVISION_CONFLICT/IDEMPOTENCY_CONFLICT, 400 JSON_REQUIRED/MALFORMED_JSON, 413 PAYLOAD_TOO_LARGE. Цены и порог в примере тестовые.",
+       "status": "П",
+       "save": {
+         "conditions_revision": "revision"
+@@ -1777,11 +1781,11 @@
+       "path": "/groups/{group_id}/conditions",
+       "title": "Условия группы для редактора",
+       "roles": "О",
+-      "output": "revision, catalogRevision, conditionsRevision, inherit, products, giftThreshold, giftForStaff",
++      "output": "revision, catalogRevision, conditionsRevision, inherit, products, giftThreshold, giftForStaff, paymentCosts",
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "",
++      "note": "E6: paymentCosts — общая политика продавца только для чтения; products[].salePrice — цена для покупателя от цены группы или унаследованной.",
+       "status": "П",
+       "save": {
+         "group_conditions_revision": "revision",
+@@ -1829,7 +1833,7 @@
+       },
+       "code": 200,
+       "query": [],
+-      "note": "inherit=true берёт общие условия. Эффективный прайс и льготу рассчитывает сервер; изменение инвалидирует подготовку ссылки/расчёт заказа.",
++      "note": "inherit=true берёт общие условия. Эффективный прайс и льготу рассчитывает сервер; изменение инвалидирует подготовку ссылки/расчёт заказа. E6: цена группы 0…100000000 копеек, цена для покупателя — по общей политике; paymentCosts в теле запрещён (422 UNKNOWN_FIELD).",
+       "status": "П",
+       "save": {
+         "group_conditions_revision": "revision",
+@@ -1860,7 +1864,7 @@
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "capabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается. E5: capabilities.purchaseEnabled отражает серверное включение оформления (по умолчанию выключено, включается только на изолированном стенде); при false COM-10 отвечает 403 PURCHASE_DISABLED. purchaseTerms остаётся null до утверждения реквизитов продавца, оферты и согласия на обработку ПДн.",
++      "note": "E6: products[].price — цена для покупателя с учётом политики расходов, одна для всех способов оплаты; сама политика покупателю не раскрывается. capabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается. E5: capabilities.purchaseEnabled отражает серверное включение оформления (по умолчанию выключено, включается только на изолированном стенде); при false COM-10 отвечает 403 PURCHASE_DISABLED. purchaseTerms остаётся null до утверждения реквизитов продавца, оферты и согласия на обработку ПДн.",
+       "status": "П",
+       "save": {
+         "catalog_revision": "revision",
+diff -ruN a/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json
+--- a/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json	2026-09-25 11:34:04.985431302 +0300
++++ b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json	2026-09-25 11:34:04.985431302 +0300
+@@ -4129,7 +4129,7 @@
+                 "{{product_id}}"
+               ]
+             },
+-            "description": "**COM-03 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: id, revision.\n\nprice — целые копейки (в UI строка рублей), printCount — целое число. Тип physical/digital/bundle. Выключение active вместо несуществующего сценария удаления.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E2. Проверки: A8, E6, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_03. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**COM-03 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: id, revision.\n\nprice — целые копейки 0…100000000 (до 1 000 000 ₽, E6-DEC-02; больше — 422), в UI строка рублей; printCount — целое число. Тип physical/digital/bundle. Выключение active вместо несуществующего сценария удаления.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E2. Проверки: A8, E6, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_03. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"name\": \"Отпечаток 10×15\",\n  \"description\": \"Тестовая продукция\",\n  \"kind\": \"physical\",\n  \"price\": 25000,\n  \"printCount\": 1,\n  \"format\": \"10×15\",\n  \"unit\": \"шт.\",\n  \"staffDiscount\": true,\n  \"active\": true,\n  \"revision\": {{catalog_revision}}\n}",
+@@ -4231,7 +4231,7 @@
+                 "conditions"
+               ]
+             },
+-            "description": "**COM-04 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: revision, products, giftThreshold, giftForStaff.\n\n\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E3. Проверки: E6, N2."
++            "description": "**COM-04 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: revision, catalogRevision, products, giftThreshold, giftForStaff, paymentCosts.\n\nE6: paymentCosts {enabled, rateBps 0…1000, roundingStep 5000, maxRateBps 1000} — политика учёта расходов на оплату, по умолчанию выключена со ставкой 380. products[].price — базовая цена, products[].salePrice — цена для покупателя: при enabled ceil(price·10000/((10000−rateBps)·5000))·5000, иначе price.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E3. Проверки: E6, N2."
+           },
+           "event": [
+             {
+@@ -4312,10 +4312,10 @@
+                 "conditions"
+               ]
+             },
+-            "description": "**COM-05 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: revision.\n\nPUT заменяет весь проверенный набор условий. Цены/порог здесь тестовые; D02/D04/D05 открыты.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E3. Проверки: E6, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**COM-05 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: revision.\n\nPUT заменяет весь проверенный набор условий, включая обязательную политику E6 paymentCosts {enabled, rateBps 0…1000}. Сохранение повышает revision и catalogRevision: старые расчёты получают 409 PRICE_CHANGED/QUOTE_STALE, непереданные подготовки ссылок — новую подпись. Цена товара 0…100000000 копеек. Ошибки: 422 VALIDATION_FAILED/UNKNOWN_FIELD, 409 REVISION_CONFLICT/IDEMPOTENCY_CONFLICT, 400 JSON_REQUIRED/MALFORMED_JSON, 413 PAYLOAD_TOO_LARGE. Цены и порог в примере тестовые.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E3. Проверки: E6, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+-              "raw": "{\n  \"revision\": {{conditions_revision}},\n  \"catalogRevision\": {{catalog_revision}},\n  \"products\": [\n    {\n      \"id\": \"{{product_id}}\",\n      \"price\": 25000,\n      \"active\": true,\n      \"staffDiscount\": true\n    }\n  ],\n  \"giftEnabled\": true,\n  \"giftThreshold\": 200000,\n  \"giftForStaff\": false\n}",
++              "raw": "{\n  \"revision\": {{conditions_revision}},\n  \"catalogRevision\": {{catalog_revision}},\n  \"products\": [\n    {\n      \"id\": \"{{product_id}}\",\n      \"price\": 25000,\n      \"active\": true,\n      \"staffDiscount\": true\n    }\n  ],\n  \"giftEnabled\": true,\n  \"giftThreshold\": 200000,\n  \"giftForStaff\": false,\n  \"paymentCosts\": {\n    \"enabled\": false,\n    \"rateBps\": 380\n  }\n}",
+               "options": {
+                 "raw": {
+                   "language": "json"
+@@ -4409,7 +4409,7 @@
+                 "conditions"
+               ]
+             },
+-            "description": "**COM-06 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: revision, catalogRevision, conditionsRevision, inherit, products, giftThreshold, giftForStaff.\n\n\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E3. Проверки: E6, F2, G1, N2."
++            "description": "**COM-06 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: revision, catalogRevision, conditionsRevision, inherit, products, giftThreshold, giftForStaff, paymentCosts.\n\nE6: paymentCosts — общая политика продавца только для чтения; products[].salePrice — цена для покупателя от цены группы или унаследованной.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E3. Проверки: E6, F2, G1, N2."
+           },
+           "event": [
+             {
+@@ -4501,7 +4501,7 @@
+                 "conditions"
+               ]
+             },
+-            "description": "**COM-07 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: revision, conditionsRevision.\n\ninherit=true берёт общие условия. Эффективный прайс и льготу рассчитывает сервер; изменение инвалидирует подготовку ссылки/расчёт заказа.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E3. Проверки: E6, F2, G1, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_07. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**COM-07 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: revision, conditionsRevision.\n\ninherit=true берёт общие условия. Эффективный прайс и льготу рассчитывает сервер; изменение инвалидирует подготовку ссылки/расчёт заказа. E6: цена группы 0…100000000 копеек, цена для покупателя — по общей политике; paymentCosts в теле запрещён (422 UNKNOWN_FIELD).\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E3. Проверки: E6, F2, G1, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_07. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"revision\": {{group_conditions_revision}},\n  \"catalogRevision\": {{catalog_revision}},\n  \"products\": [\n    {\n      \"id\": \"{{product_id}}\",\n      \"price\": 25000,\n      \"active\": true,\n      \"staffDiscount\": true\n    }\n  ],\n  \"giftEnabled\": true,\n  \"giftThreshold\": 200000,\n  \"giftForStaff\": false,\n  \"conditionsRevision\": {{conditions_revision}},\n  \"inherit\": false\n}",
+@@ -5268,7 +5268,7 @@
+                 "catalog"
+               ]
+             },
+-            "description": "**COM-08 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Галерея.\n\nОтвет: products, giftThreshold, giftForStaff, revision, conditionsRevision, capabilities, purchaseTerms.\n\ncapabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается. E5: capabilities.purchaseEnabled отражает серверное включение оформления (по умолчанию выключено, включается только на изолированном стенде); при false COM-10 отвечает 403 PURCHASE_DISABLED. purchaseTerms остаётся null до утверждения реквизитов продавца, оферты и согласия на обработку ПДн.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E4. Проверки: E6, F2, G2, N2."
++            "description": "**COM-08 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Галерея.\n\nОтвет: products, giftThreshold, giftForStaff, revision, conditionsRevision, capabilities, purchaseTerms.\n\nE6: products[].price — цена для покупателя с учётом политики расходов, одна для всех способов оплаты; сама политика покупателю не раскрывается. capabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается. E5: capabilities.purchaseEnabled отражает серверное включение оформления (по умолчанию выключено, включается только на изолированном стенде); при false COM-10 отвечает 403 PURCHASE_DISABLED. purchaseTerms остаётся null до утверждения реквизитов продавца, оферты и согласия на обработку ПДн.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E4. Проверки: E6, F2, G2, N2."
+           },
+           "event": [
+             {
+diff -ruN a/docs/05-rest-api/postman/MoreFoto.postman_collection.json b/docs/05-rest-api/postman/MoreFoto.postman_collection.json
+--- a/docs/05-rest-api/postman/MoreFoto.postman_collection.json	2026-09-25 11:34:04.997432306 +0300
++++ b/docs/05-rest-api/postman/MoreFoto.postman_collection.json	2026-09-25 11:34:04.997432306 +0300
+@@ -5020,7 +5020,7 @@
+                 "{{product_id}}"
+               ]
+             },
+-            "description": "**COM-03 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: id, revision.\n\nprice — целые копейки (в UI строка рублей), printCount — целое число. Тип physical/digital/bundle. Выключение active вместо несуществующего сценария удаления.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E2. Проверки: A8, E6, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_03. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**COM-03 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: id, revision.\n\nprice — целые копейки 0…100000000 (до 1 000 000 ₽, E6-DEC-02; больше — 422), в UI строка рублей; printCount — целое число. Тип physical/digital/bundle. Выключение active вместо несуществующего сценария удаления.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E2. Проверки: A8, E6, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_03. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"name\": \"Отпечаток 10×15\",\n  \"description\": \"Тестовая продукция\",\n  \"kind\": \"physical\",\n  \"price\": 25000,\n  \"printCount\": 1,\n  \"format\": \"10×15\",\n  \"unit\": \"шт.\",\n  \"staffDiscount\": true,\n  \"active\": true,\n  \"revision\": {{catalog_revision}}\n}",
+@@ -5116,7 +5116,7 @@
+                 "conditions"
+               ]
+             },
+-            "description": "**COM-04 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: revision, products, giftThreshold, giftForStaff.\n\n\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E3. Проверки: E6, N2."
++            "description": "**COM-04 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: revision, catalogRevision, products, giftThreshold, giftForStaff, paymentCosts.\n\nE6: paymentCosts {enabled, rateBps 0…1000, roundingStep 5000, maxRateBps 1000} — политика учёта расходов на оплату, по умолчанию выключена со ставкой 380. products[].price — базовая цена, products[].salePrice — цена для покупателя: при enabled ceil(price·10000/((10000−rateBps)·5000))·5000, иначе price.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E3. Проверки: E6, N2."
+           },
+           "event": [
+             {
+@@ -5197,10 +5197,10 @@
+                 "conditions"
+               ]
+             },
+-            "description": "**COM-05 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: revision.\n\nPUT заменяет весь проверенный набор условий. Цены/порог здесь тестовые; D02/D04/D05 открыты.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E3. Проверки: E6, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**COM-05 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: revision.\n\nPUT заменяет весь проверенный набор условий, включая обязательную политику E6 paymentCosts {enabled, rateBps 0…1000}. Сохранение повышает revision и catalogRevision: старые расчёты получают 409 PRICE_CHANGED/QUOTE_STALE, непереданные подготовки ссылок — новую подпись. Цена товара 0…100000000 копеек. Ошибки: 422 VALIDATION_FAILED/UNKNOWN_FIELD, 409 REVISION_CONFLICT/IDEMPOTENCY_CONFLICT, 400 JSON_REQUIRED/MALFORMED_JSON, 413 PAYLOAD_TOO_LARGE. Цены и порог в примере тестовые.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E3. Проверки: E6, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+-              "raw": "{\n  \"revision\": {{conditions_revision}},\n  \"catalogRevision\": {{catalog_revision}},\n  \"products\": [\n    {\n      \"id\": \"{{product_id}}\",\n      \"price\": 25000,\n      \"active\": true,\n      \"staffDiscount\": true\n    }\n  ],\n  \"giftEnabled\": true,\n  \"giftThreshold\": 200000,\n  \"giftForStaff\": false\n}",
++              "raw": "{\n  \"revision\": {{conditions_revision}},\n  \"catalogRevision\": {{catalog_revision}},\n  \"products\": [\n    {\n      \"id\": \"{{product_id}}\",\n      \"price\": 25000,\n      \"active\": true,\n      \"staffDiscount\": true\n    }\n  ],\n  \"giftEnabled\": true,\n  \"giftThreshold\": 200000,\n  \"giftForStaff\": false,\n  \"paymentCosts\": {\n    \"enabled\": false,\n    \"rateBps\": 380\n  }\n}",
+               "options": {
+                 "raw": {
+                   "language": "json"
+@@ -5294,7 +5294,7 @@
+                 "conditions"
+               ]
+             },
+-            "description": "**COM-06 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: revision, catalogRevision, conditionsRevision, inherit, products, giftThreshold, giftForStaff.\n\n\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E3. Проверки: E6, F2, G1, N2."
++            "description": "**COM-06 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: revision, catalogRevision, conditionsRevision, inherit, products, giftThreshold, giftForStaff, paymentCosts.\n\nE6: paymentCosts — общая политика продавца только для чтения; products[].salePrice — цена для покупателя от цены группы или унаследованной.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E3. Проверки: E6, F2, G1, N2."
+           },
+           "event": [
+             {
+@@ -5386,7 +5386,7 @@
+                 "conditions"
+               ]
+             },
+-            "description": "**COM-07 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: revision, conditionsRevision.\n\ninherit=true берёт общие условия. Эффективный прайс и льготу рассчитывает сервер; изменение инвалидирует подготовку ссылки/расчёт заказа.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E3. Проверки: E6, F2, G1, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_07. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**COM-07 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: revision, conditionsRevision.\n\ninherit=true берёт общие условия. Эффективный прайс и льготу рассчитывает сервер; изменение инвалидирует подготовку ссылки/расчёт заказа. E6: цена группы 0…100000000 копеек, цена для покупателя — по общей политике; paymentCosts в теле запрещён (422 UNKNOWN_FIELD).\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E3. Проверки: E6, F2, G1, N2.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_com_07. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"revision\": {{group_conditions_revision}},\n  \"catalogRevision\": {{catalog_revision}},\n  \"products\": [\n    {\n      \"id\": \"{{product_id}}\",\n      \"price\": 25000,\n      \"active\": true,\n      \"staffDiscount\": true\n    }\n  ],\n  \"giftEnabled\": true,\n  \"giftThreshold\": 200000,\n  \"giftForStaff\": false,\n  \"conditionsRevision\": {{conditions_revision}},\n  \"inherit\": false\n}",
+@@ -5482,7 +5482,7 @@
+                 "catalog"
+               ]
+             },
+-            "description": "**COM-08 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Галерея.\n\nОтвет: products, giftThreshold, giftForStaff, revision, conditionsRevision, capabilities, purchaseTerms.\n\ncapabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается. E5: capabilities.purchaseEnabled отражает серверное включение оформления (по умолчанию выключено, включается только на изолированном стенде); при false COM-10 отвечает 403 PURCHASE_DISABLED. purchaseTerms остаётся null до утверждения реквизитов продавца, оферты и согласия на обработку ПДн.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E4. Проверки: E6, F2, G2, N2."
++            "description": "**COM-08 — morefoto.commerce**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Галерея.\n\nОтвет: products, giftThreshold, giftForStaff, revision, conditionsRevision, capabilities, purchaseTerms.\n\nE6: products[].price — цена для покупателя с учётом политики расходов, одна для всех способов оплаты; сама политика покупателю не раскрывается. capabilities.receiptChannels содержит только подключённые каналы; purchaseTerms — согласованные сведения продавца и условия. Самостоятельный флаг льготы не принимается. E5: capabilities.purchaseEnabled отражает серверное включение оформления (по умолчанию выключено, включается только на изолированном стенде); при false COM-10 отвечает 403 PURCHASE_DISABLED. purchaseTerms остаётся null до утверждения реквизитов продавца, оферты и согласия на обработку ПДн.\n\nИсточник: frontend/src/modules/morefoto/commerce/types.ts.\n\nОбласть: product. Основная волна: E4. Проверки: E6, F2, G2, N2."
+           },
+           "event": [
+             {
+diff -ruN a/docs/05-rest-api/verification.json b/docs/05-rest-api/verification.json
+--- a/docs/05-rest-api/verification.json	2026-09-25 11:34:05.005432861 +0300
++++ b/docs/05-rest-api/verification.json	2026-09-25 11:34:05.005432861 +0300
+@@ -28,18 +28,18 @@
+   ],
+   "liveApiRequestsExecuted": false,
+   "sha256": {
+-    "build.py": "15188667486645549cd95653ec5524d44d9f49b8db7382aef5301ba07d6e1be5",
++    "build.py": "b33ba00e50937f21544681b7f36bade2b3525e675e666ca7d7b1ffff8d30d55f",
+     "validate.py": "18a387833a1581f8445fe731787bbe5a0407d9fe95950c4138c881792a4ba939",
+     "validate-postman.cjs": "879a609e16602ab971c3296eacb0b0d0c702d840d842d8942c3b410240543877",
+     "../04-bitrix-modules/README.md": "786c34ef6c226a57e141c206f88eee75dc04e46226ce982d8ce5d0c9ec457023",
+-    "../04-bitrix-modules/backend-waves.json": "bdd4aa625cf99f912cb3258314ae2a6a238db6fd6157a7a9d24fb34f516a154c",
+-    "../04-bitrix-modules/backend-waves.md": "1a54c57c981f40360faae36186fdd0c7f8f75111cd702f0d10d826ca2a7fd36a",
++    "../04-bitrix-modules/backend-waves.json": "83a6a32ebce182d8d17be65f5d03e0bd17f88ff184ee66d6487522a8bda6454e",
++    "../04-bitrix-modules/backend-waves.md": "814eb64421bc7db98744f7c8674a77944e04fc49ca2b0a20c3f8458d47743e9d",
+     "../04-bitrix-modules/render-waves.py": "b502e757c9fd854c81d7f828a7a03bb58569f5f3cb0a582eed98b53c358327ec",
+-    "../04-bitrix-modules/wave_graph.py": "031e14b1312851cc491dabf3a48d7a8c9a61b16e634f93400284c0f3fe50b2db",
+-    "README.md": "4b0465449f21abc82134770c07ba8edd51e9b308c2f70ddda1007d0db7f9269f",
+-    "endpoints.json": "284674a9189e6975c5d4f0467f4834622c00c57e3820537a0b27c39a104ee987",
+-    "postman/MoreFoto.postman_collection.json": "04c350a837de7e92e045108505ce62757250c0f107582402b70eeef48d834337",
+-    "postman/MoreFoto.backend-waves.postman_collection.json": "df608edeb7896421a4502e86dac6a021456e804d1fd4bab735cc29317c5bf9fd",
++    "../04-bitrix-modules/wave_graph.py": "f1045c84f245114dd0eb44b321f754e57a0a91879fb7415f12041eca1337e53b",
++    "README.md": "220ca100154f3eb2cee4208e336bd7a58c831f450ee9a9f3a2e31e822e3e3b08",
++    "endpoints.json": "51971978e08c41356b14978945f171509051a551f1ceff9b69546059ebc6423d",
++    "postman/MoreFoto.postman_collection.json": "5a776178de76bf4142f60c0bd348bad7cb057f9cf8f69c5149b7755fd04d9aa6",
++    "postman/MoreFoto.backend-waves.postman_collection.json": "707392fe4a4e35606c13fafc24e5705cc9404f9a324dbca7eac67666c38cae4b",
+     "postman/MoreFoto.local.postman_environment.json": "83b1156b34630e0d248c5079dcbbc0f1b039edb06d1c3029c47f0e312e5f3cbb",
+     "postman/MoreFoto.stage.postman_environment.json": "0298c5fa230d687240b2a1a264bebcc86368576c378af78f3573b584e7ed5f11"
+   },
+diff -ruN a/docs/frontend/business-review/decisions.md b/docs/frontend/business-review/decisions.md
+--- a/docs/frontend/business-review/decisions.md	2026-09-25 11:34:05.013432885 +0300
++++ b/docs/frontend/business-review/decisions.md	2026-09-25 11:34:05.013432885 +0300
+@@ -82,3 +82,12 @@
+
+ Волны U1–U8, B3, B4 сдаются одним PR пакета `design-ux` (`deliveryBundles` в `backend-waves.json`).
+
++## Дополнение 2026-09-25 — E6: учёт расходов на оплату
++
++Пользователь взял волну E6 (ИП ещё не оформлен, E6 от него не зависит) и принял решения по реализации:
++
++- E6-DEC-01: ставка расходов 0…10% (0…1000 bps), ввод в процентах с двумя знаками; по умолчанию политика выключена со ставкой 3,80%. Сначала был выбран предел 99,99%; после разбора крайнего случая (множитель до ×10 000, опечатка «38» вместо «3,8») пользователь выбрал 10%.
++- E6-DEC-02: предел базовой цены товара 1 000 000 ₽ в каталоге, общих условиях и условиях группы; наибольшая цена для покупателя — 1 111 150 ₽.
++- E6-DEC-03: контроллер условий продаж приводится к чистой DTO-границе в самой E6.
++
++Политика — часть общих условий (та же ревизия), применяется к эффективной цене любого товара, в том числе к цене группы. Сохранение политики делает старые расчёты устаревшими; существующие заказы хранят свой снимок. План и журнал: `docs/plans/E6_payment-cost-pricing/` в rabit-api.
