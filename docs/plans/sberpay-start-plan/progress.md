@@ -4,7 +4,7 @@
 
 - Ветка: `codex/sberpay-start-plan`, PR https://github.com/rebit-pro/rabit-api/pull/35. Историческое имя сохранено; активный провайдер — ЮKassa.
 - Checkout: `/home/user/rabit-api-worktrees/yookassa-plan`. База — main `fdb6302f78ade1a827509fd356eb2dc8ad9be608`, слит в ветку merge-коммитом `18d3d8312dc922ad850ec9e1d033586a7e926761`; точный HEAD журнала — `git rev-parse HEAD`.
-- Завершено 25.09.2026: ветка обновлена на актуальный main, конфликт `docs/waves/graph.json` разрешён как «main + собственная дельта PR #35», YK-01/02/04/05/06/08 повторены, план и отчёт обновлены.
+- Завершено 25.09.2026: ветка обновлена на актуальный main, конфликт `docs/waves/graph.json` разрешён как «main + собственная дельта PR #35», YK-01/02/04/05/06/07/08 PASS, план, отчёт и описание PR обновлены; GitHub: MERGEABLE/CLEAN.
 - Следующий шаг: merge PR #35 по решению пользователя. После merge — ветка `codex/e6-payment-cost-pricing` от актуального main и план `docs/plans/E6_payment-cost-pricing/`.
 - G1: runtime-зависимости E5/F2 слиты. Держат решения D09 (sandbox: тестовый магазин, служебные API ID реестра) и D12 (предложен узкий вариант для G1), плюс регистрация тестового магазина ЮKassa. ИП не оформлен; для тестового магазина он не нужен, для боевого и схемы чеков G2 — нужен выбор статуса (ИП/ООО или самозанятость).
 - Учёт merge пакета design-ux (U1–U8/B3/B4, PR #53) в графе выполняет следующая волна (E6). Валидатор при этом потребует правки отрицательных fixtures для полностью слитого пакета — см. запись 25.09.
@@ -127,7 +127,7 @@ Backend/frontend/runtime/HTTP/E2E: PENDING для будущих реализа�
 | YK-04 | PASS | 2026-09-25 | Общие paymentIntegration/E6/G1/G2/I2/E5/N2 графа PR и канонического плана равны; различие — только N1 (PR #36). Обратная проверка исторического patch — FAIL, ожидаемо (см. выше) |
 | YK-05 | PASS | 2026-09-25 | `python3 -` с целочисленной формулой: 8 примеров и 14 610 граничных случаев (10 ставок), кратность 50 ₽, компенсация ставки и минимальность шага; 500 ₽ → 550 ₽, скидка 50% → 275 ₽ |
 | YK-06 | PASS | 2026-09-25 | `git diff --check origin/main HEAD` — без ошибок. `git diff --cached --check` в merge показывает пробелы в файлах, уже лежащих на main (design-ux, F2), — не часть diff PR |
-| YK-07 | PENDING | 2026-09-25 | Push и описание PR — следующий шаг этой записи |
+| YK-07 | PASS | 2026-09-25 | `git push origin HEAD:codex/sberpay-start-plan` (`bc53f9a..b9ebee1`), `gh pr edit 35 --body-file …`; `gh pr view 35` — head `b9ebee1`, MERGEABLE/CLEAN |
 | YK-08 | PASS | 2026-09-25 | Две сборки графа (main + дельта PR; канонический план с N1 main) равны; `cp` результата в `docs/waves/graph.json`, merge-коммит `18d3d83` |
 
 Runtime, HTTP и E2E не запускались: PR содержит только документы и граф.
