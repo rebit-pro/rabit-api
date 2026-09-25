@@ -49,3 +49,7 @@
   тестовый прогон (14 отметок, поля в localStorage).
 - Релизный образ `morefoto-frontend:guide-kb-20260925151854-7ec736a-b314d77` собран из `7ec736a` + `frontend/public/guide` из `b314d77`; smoke
   контейнера: `/guide/**`, изображения, `/login`, `/health` — 200. Пакет с `SHA256SUMS` и `switch-frontend.sh` не загружен.
+- По поручению пользователя включено оформление заказов на stage: `docker service update --env-add
+  MOREFOTO_CHECKOUT_ENABLED=1 morefoto_stage_fpm` — converged, 1/1 на `rabit-api-php-fpm:d3-webp`; `getenv` в FPM
+  возвращает `"1"`; `/api/v1/me` 401, `/login` и `/guide/` 200, неизвестная галерея — JSON `GALLERY_NOT_FOUND`.
+  Откат: `docker service update --env-rm MOREFOTO_CHECKOUT_ENABLED morefoto_stage_fpm`.
