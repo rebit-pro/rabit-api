@@ -6,10 +6,10 @@
 - Ветка: `codex/issues-42-access-error-codes`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-42-access-error-codes`. Общий checkout `/home/user/rabit-api` занят другой сессией, в нём не работать.
 - Base: `origin/main` `49f40f9` (merge PR #35).
-- Issue: [#42](https://github.com/rebit-pro/rabit-api/issues/42). PR: ещё не создан.
+- Issue: [#42](https://github.com/rebit-pro/rabit-api/issues/42). PR: [#70](https://github.com/rebit-pro/rabit-api/pull/70) (open, не сливать до review и E2E-gate). Head с кодом — `2989af8`.
 - Документация: [план](plan.md), контракт ошибок [E2](../../waves/e2/README.md), порядок E2E [A8](../../waves/a8/README.md).
 - Завершено: план, пункт 1 (коды в источниках, удаление обходов, unit-тесты, E2E-сценарий в `staff.spec.ts`), пункт 2 (`CalendarCommandValidator`, пассивный DTO, архитектурный тест), подтверждение пункта 3, быстрые проверки.
-- Сейчас: коммиты, push и PR.
+- Сейчас: ожидание review PR #70.
 - Следующий шаг: review PR; после review без блокеров — полный `make test-e2e` (T17–T19).
 - Блокеров нет. Открытое решение: follow-up для `CatalogController`/`ConditionsController` (R4).
 - Рабочее дерево: изменения ветки коммитятся; пустые `api/vendor`, `api/var`, `frontend/node_modules` — точки монтирования docker-проверок, в git не попадают.
@@ -54,6 +54,12 @@
 - php-cs-fixer dry-run по 29 изменённым PHP (26 попадают в finder конфига; `tools/*` и `tests/stubs` вне его) — сначала 1 файл (перенос `;` в `CalendarCommandValidatorTest`), после правки 0 из 26.
 - Frontend: `npm run check && npm run test:commerce` — exit 0 (lint, stylelint, typecheck, typecheck:e2e, test:ui 27/27, test:commerce 183/183).
 - T10 grep — совпадений нет.
+
+### 2026-09-25 — публикация
+
+- Коммиты: `1a15b0b` (коды отказа), `ed602bf` (валидатор календаря), `2989af8` (план и журнал).
+- `origin/main` перед push — `49f40f9`, base не менялся.
+- Push `codex/issues-42-access-error-codes`, создан PR [#70](https://github.com/rebit-pro/rabit-api/pull/70) в `main`.
 
 ## Результаты тест-кейсов
 
