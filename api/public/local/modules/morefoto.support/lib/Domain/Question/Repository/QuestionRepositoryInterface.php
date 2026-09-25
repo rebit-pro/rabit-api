@@ -25,6 +25,8 @@ interface QuestionRepositoryInterface
 
     public function createStaff(int $userId, string $authorName, string $context, \DateTimeImmutable $now): int;
 
+    public function createGuest(string $authorName, string $context, \DateTimeImmutable $now): int;
+
     /** Имя и учреждения сотрудника меняются: следующая реплика уходит в MAX с актуальным контекстом. */
     public function refreshStaff(int $questionId, string $authorName, string $context): void;
 
@@ -48,6 +50,8 @@ interface QuestionRepositoryInterface
     public function messages(int $questionId): array;
 
     public function countParentQuestions(int $groupId, \DateTimeImmutable $since): int;
+
+    public function countGuestQuestions(\DateTimeImmutable $since): int;
 
     /** Реплики автора беседы (без ответов куратора) начиная с момента. */
     public function countOwnMessages(int $questionId, \DateTimeImmutable $since): int;
