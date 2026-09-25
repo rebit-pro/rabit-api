@@ -204,6 +204,17 @@ export function staffScopeOptions(source: StaffScopeSource, scope: StaffScope): 
   };
 }
 
+/** Loading state of one source of the scope options: the institution list or the card of one institution. */
+export type StaffScopeLoad = 'idle' | 'loading' | 'ready' | 'failed';
+
+/**
+ * Sources an explicit retry loads again. Only a failed source is repeated: one still loading is never started twice,
+ * so repeated clicks send no parallel requests, and a loaded one keeps its options.
+ */
+export function staffScopeRetry(list: StaffScopeLoad, card: StaffScopeLoad): { list: boolean; card: boolean } {
+  return { list: list === 'failed', card: card === 'failed' };
+}
+
 function scopeList(any: string, items: StaffScopeOption[], selected: string): StaffScopeOption[] {
   const linked = selected !== '' && !items.some((item) => item.value === selected);
   return [{ title: any, value: '' }, ...(linked ? [{ title: 'Выбрано по ссылке', value: selected }] : []), ...items];
