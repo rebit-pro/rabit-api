@@ -7,6 +7,7 @@ namespace Morefoto\Access\Presentation\Staff;
 use Morefoto\Access\Application\Staff\Dto\ListStaffInputDto;
 use Morefoto\Access\Domain\Staff\Enum\AccountStatusEnum;
 use Morefoto\Access\Domain\Staff\Enum\RoleEnum;
+use Morefoto\Access\Domain\Staff\Enum\StaffSortEnum;
 use Morefoto\Access\Presentation\Staff\Dto\StaffListRequestDto;
 use Rebit\Share\Shared\Exception\HttpException;
 
@@ -28,6 +29,9 @@ final readonly class StaffListInputMapper
         if (null !== $request->active && null === $active) {
             throw new HttpException('INVALID_ACTIVE', 422);
         }
+        if (null !== $request->direction && !in_array($request->direction, ['asc', 'desc'], true)) {
+            throw new HttpException('INVALID_SORT', 422);
+        }
 
         return new ListStaffInputDto(
             query: trim($request->q ?? ''),
@@ -38,6 +42,10 @@ final readonly class StaffListInputMapper
                 : (AccountStatusEnum::tryFrom($request->accountStatus) ?? throw new HttpException('INVALID_ACCOUNT_STATUS', 422)),
             page: (int)($request->page ?? 1),
             pageSize: (int)($request->pageSize ?? 25),
+            sort: null === $request->sort
+                ? StaffSortEnum::NAME
+                : (StaffSortEnum::tryFrom($request->sort) ?? throw new HttpException('INVALID_SORT', 422)),
+            descending: 'desc' === $request->direction,
         );
     }
 }
