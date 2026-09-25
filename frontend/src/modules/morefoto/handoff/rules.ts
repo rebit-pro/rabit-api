@@ -207,3 +207,11 @@ export function staffTransferErrorText(code: string | undefined, photoCodes: str
     );
   return code ? (transferErrors[code] ?? null) : null;
 }
+
+/**
+ * Whether «Загрузить актуальные данные» may rebuild the form. A confirmation takes its signature and review from the
+ * fresh transfer preview, so a failed preview keeps the current command; other actions do not depend on it (#79).
+ */
+export function handoffRefreshSucceeded(action: string | undefined, previewError: string): boolean {
+  return action !== 'confirm' || previewError === '';
+}

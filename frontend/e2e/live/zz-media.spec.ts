@@ -1,5 +1,5 @@
 import { test, expect, type APIResponse, type Page, type Request, type Route } from '@playwright/test';
-import { login, logout, token } from './helpers.js';
+import { login, logout, peakOverlap, token, uploadSpans } from './helpers.js';
 
 const png = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAUAAAADICAIAAAAWZq/8AAABvElEQVR42u3TQQ0AMAgAsTE1CEMiAhHBi6SVcMlFVj/gpi8BGBgwMGBgMDBgYMDAgIHBwICBAQODgQEDAwYGDAwGBgwMGBgwMBgYMDBgYDAwYGDAwICBwcCAgQEDAwYGAwMGBgwMBgYMDBgYMDAYGDAwYGAwMGBgwMCAgcHAgIEBAwMGBgMDBgYMDAYGDAwYGDAwGBgwMGBgwMBgYMDAgIHBwICBAQMDBgYDAwYGDAwYGAwMGBgwMBgYMDBgYMDAYGDAwICBwcCAgQEDAwYGAwMGBgwMGBgMDBgYMDAYGDAwYGDAwGBgwMCAgQEDg4EBAwMGBgMDBgYMDBgYDAwYGDAwYGAwMGBgwMBgYMDAgIEBA4OBAQMDBgYDAwYGDAwYGAwMGBgwMGBgMDBgYMDAYGDAwICBAQODgQEDAwYGDAwGBgwMGBgMDBgYMDBgYDAwYGDAwGBgwMCAgQEDg4EBAwMGBgwMBgYMDBgYDAwYGDAwYGAwMGBgwMCAgcHAgIEBA4OBAQMDBgYMDAYGDAwYGDAwGBgwMGBgMDBgYMDAgIHBwICBAQODgQEDAwYGDAwGBgwMGBgwMBgYMDCwMUuEAtA7HouzAAAAAElFTkSuQmCC',
@@ -26,18 +26,6 @@ function pngVariant(label: string): Buffer {
   checksum.writeUInt32BE(crc32(Buffer.concat([type, text])));
   const end = png.length - 12;
   return Buffer.concat([png.subarray(0, end), length, type, text, checksum, png.subarray(end)]);
-}
-
-// Peak number of requests in flight, rebuilt from browser network timings: Playwright delivers request events in its own order.
-function peakOverlap(spans: { start: number; end: number }[]): number {
-  const edges = spans.flatMap(({ start, end }) => [
-    { at: start, delta: 1 },
-    { at: end, delta: -1 }
-  ]);
-  edges.sort((left, right) => left.at - right.at || left.delta - right.delta);
-  let current = 0;
-
-  return edges.reduce((peak, edge) => Math.max(peak, (current += edge.delta)), 0);
 }
 
 async function result(response: APIResponse, status: number) {
@@ -490,22 +478,10 @@ test('#33: партия отправляется по два файла без �
   await expect(rows.filter({ hasText: 'batch-broken.png' })).toContainText('Ошибка');
   await expect(rows.filter({ hasText: 'batch-broken.png' })).toContainText('Сервер отклонил файл');
   expect(finished).toHaveLength(6);
-  // Resource Timing keeps start and end on one sub-millisecond clock of the page: the queue starts the next upload
-  // right after the previous one ends, and Playwright's millisecond start times would overlap them. The frame list
-  // GET of the same path always carries a query, so an upload is that path without one; the count proves that no
-  // upload is missed or mixed with the list. A reload clears the buffer, so the batch is measured before it.
-  const uploadSpans = await page.evaluate(
-    (path) =>
-      (performance.getEntriesByType('resource') as PerformanceResourceTiming[])
-        .filter((entry) => {
-          const url = new URL(entry.name);
-          return url.pathname === path && url.search === '' && entry.initiatorType === 'xmlhttprequest' && entry.responseEnd > 0;
-        })
-        .map((entry) => ({ start: entry.startTime, end: entry.responseEnd })),
-    uploads
-  );
-  expect(uploadSpans).toHaveLength(finished.length);
-  expect(peakOverlap(uploadSpans)).toBeLessThanOrEqual(2);
+  // A reload clears the Resource Timing buffer, so the batch is measured before it.
+  const spans = await uploadSpans(page, uploads);
+  expect(spans).toHaveLength(finished.length);
+  expect(peakOverlap(spans)).toBeLessThanOrEqual(2);
   // Statuses are checked from two seconds after acceptance, so more POSTs than the parallel limit end before the first check.
   expect(finished.filter((time) => time < Math.min(...checks)).length).toBeGreaterThanOrEqual(3);
   await expect(page.getByTestId('photo-card')).toHaveCount(5);
