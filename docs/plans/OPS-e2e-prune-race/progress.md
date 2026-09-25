@@ -2,9 +2,9 @@
 
 ## Точка продолжения
 
-- Ветка `codex/ops-e2e-prune-race`, base `main` `94502a1`, head — коммит этого журнала после `d1a957f`. Worktree `/home/user/rabit-api-worktrees/ops-e2e-prune-race`. Issue [#88](https://github.com/rebit-pro/rabit-api/issues/88). PR [#99](https://github.com/rebit-pro/rabit-api/pull/99), `Closes #88`, не слит.
+- Ветка `codex/ops-e2e-prune-race`, base `main` `94502a1`, head — коммит этого журнала после `d1a957f`. Worktree `/home/user/rabit-api-worktrees/ops-e2e-prune-race`. Issue [#88](https://github.com/rebit-pro/rabit-api/issues/88). PR [#99](https://github.com/rebit-pro/rabit-api/pull/99), `Closes #88`: два ревью без замечаний, полный gate PASS, сливается. Base обновлён до актуального `main` (merge `4ed8757`).
 - Завершено: `inspect()`/`inventory()`/`verdict()`, unit-тесты, строка в `docs/waves/a8/README.md`; T01–T06 PASS.
-- Следующий шаг: ревью PR #99 пользователем; merge — отдельным действием после ревью.
+- Следующий шаг: по #61 остаются разовая очистка и T12 (согласие пользователя).
 - Блокеры: нет.
 - Ограничения сессии: на машине работают E2E-стенды других сессий; ресурсы Docker не удалялись и не останавливались, `make test-e2e`/`make e2e-up` не запускались, `make e2e-prune` — только dry-run.
 - Рабочее дерево: чисто после коммита журнала.
@@ -40,3 +40,10 @@
 
 - Дополнительно на реальном демоне (только чтение): `inspect(kind, [<существующий ID с меткой>, "rabit-nope-000"])` для container/network/volume — 1 запись и `{'rabit-nope-000'}` в `gone`, без исключения.
 - Коммиты `ef79e8d` (план), `d1a957f` (исправление, тесты, a8); push; PR [#99](https://github.com/rebit-pro/rabit-api/pull/99).
+
+### 2026-09-25 — ревью и полный gate
+
+- Самостоятельное ревью и независимое ревью пользователя на `2f6d4ef`: замечаний нет.
+- Первый gate (`rabit-e2e-5b88e8b0c2f1`) не стартовал: Docker daemon был недоступен (перезапуск WSL). Не засчитан.
+- Base обновлён от актуального `main` (`4ed8757`, автослияние `tools/run-browser-e2e.py`); `python3 -m unittest discover -s tools/tests` — OK; `make e2e-prune` (dry-run) — exit 0, живые стенды других сессий `keep`, прогоны 12–13.09 `would remove`.
+- Gate `rabit-e2e-3fb38782eece` (284.0 с, без параллельных стендов) — PASS, exit 0: phpunit, phpstan PASS; группа `a` 71/71, группа `b` 46/46; верификаторы, включая `verify-payments.php` и `verify-support.php`, PASS.
