@@ -5,7 +5,7 @@
 - Дата: 2026-09-25.
 - Ветка: `codex/issues-26-27-28-staff-requests` от `origin/main` `54bd4ab`, upstream `origin/codex/issues-26-27-28-staff-requests`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-26-27-28-staff-requests`. Основной checkout `/home/user/rabit-api` занят другой сессией — в нём не работать.
-- Issues: #26, #27, #28. PR: см. хронологию (создаётся этим этапом), не сливать.
+- Issues: #26, #27, #28. PR: [#78](https://github.com/rebit-pro/rabit-api/pull/78) OPEN, не сливать.
 - Коммиты: #26 `92fbc7f`, #27 `82712b2`, #28 `02d4904` (+ журнал).
 - Документация: [план](plan.md), F1: [plan](../F1_staff_requests/plan.md), [README](../../waves/f1/README.md).
 - Завершено: код и тесты трёх issue, быстрые проверки backend/frontend, push.
