@@ -6,7 +6,7 @@
 - Ветка: `codex/issues-62-63-photo-group-switch`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-62-63-photo-group-switch`. Основной checkout `/home/user/rabit-api` занят другой сессией (`codex/design-ux-plan`), в нём не работать.
 - Base: `origin/main` `49f40f9`.
-- Issues: [#62](https://github.com/rebit-pro/rabit-api/issues/62), [#63](https://github.com/rebit-pro/rabit-api/issues/63). PR — см. хронологию.
+- Issues: [#62](https://github.com/rebit-pro/rabit-api/issues/62), [#63](https://github.com/rebit-pro/rabit-api/issues/63). PR: [#67](https://github.com/rebit-pro/rabit-api/pull/67), на review.
 - Параллельно в работе, в отдельных ветках и PR: #42 (`codex/issues-42-access-error-codes`), #39/#41 (`codex/issues-39-41-staff-orders`).
 - Завершено:
   - исправление (S2, S3);
