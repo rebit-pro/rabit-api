@@ -7,6 +7,7 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Morefoto\Media\Domain\Gallery\Service\GalleryAvailability;
 use Morefoto\Organization\Application\Calendar\Contract\CalendarClockInterface;
+use Morefoto\Organization\Application\Calendar\Service\CalendarCommandValidator;
 use Morefoto\Organization\Application\Calendar\Service\GroupCalendar;
 use Morefoto\Organization\Domain\Calendar\Repository\GroupCalendarRepository;
 use Morefoto\Organization\Domain\Institution\Repository\InstitutionOperationRepository;
@@ -90,7 +91,7 @@ $fixture = static function(string $name) use ($connection): string {
 
     return $group;
 };
-$calendar = new GroupCalendar($services->get(GroupCalendarRepository::class), $services->get(InstitutionOperationRepository::class), $clock);
+$calendar = new GroupCalendar($services->get(GroupCalendarRepository::class), $services->get(InstitutionOperationRepository::class), $clock, $services->get(CalendarCommandValidator::class));
 $rejects = static function(string $code, callable $operation) use ($check): void {
     try {
         $operation();

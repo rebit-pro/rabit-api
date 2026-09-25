@@ -27,21 +27,21 @@ final readonly class CatalogAccessGuard implements CatalogAccessGuardInterface
     {
         try {
             if (0 >= $actorId || '' === $token) {
-                throw new CatalogAccessException('Unauthorized', 401);
+                throw new CatalogAccessException('UNAUTHORIZED', 401);
             }
             $profile = StaffProfile::fromRow($this->profiles->lockProfile($actorId)->fetch());
             if (null === $this->identities->lockActive($actorId) || $actorId !== $this->tokens->resolveUserId($token)) {
-                throw new CatalogAccessException('Unauthorized', 401);
+                throw new CatalogAccessException('UNAUTHORIZED', 401);
             }
             if (null === $profile || !$this->policy->allows($profile, PermissionEnum::CATALOG_MANAGE)) {
-                throw new CatalogAccessException('Catalogue access is forbidden.', 403);
+                throw new CatalogAccessException('FORBIDDEN', 403);
             }
         } catch (CatalogAccessException $exception) {
             throw $exception;
         } catch (HttpException $exception) {
-            throw new CatalogAccessException('Unauthorized', 401, $exception);
+            throw new CatalogAccessException('UNAUTHORIZED', 401, $exception);
         } catch (\Throwable $exception) {
-            throw new CatalogAccessException('Access service is unavailable.', 503, $exception);
+            throw new CatalogAccessException('ACCESS_UNAVAILABLE', 503, $exception);
         }
     }
 }

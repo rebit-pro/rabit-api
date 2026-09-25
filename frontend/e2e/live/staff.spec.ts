@@ -218,12 +218,16 @@ test('B2: форма показывает замену занятой групп
 });
 
 test('B2: teacher не читает управление, а последний организатор защищён', async ({ page, browser, baseURL }) => {
+  // #42: refusals of authenticated endpoints carry contract codes, not SERVICE_UNAVAILABLE.
+  for (const path of [usersApi, '/api/v1/staff-requests']) {
+    expect((await body(await page.request.get(path), 401)).error.code).toBe('UNAUTHORIZED');
+  }
   await login(page);
   const context = await browser.newContext({ baseURL });
   try {
     const teacher = await context.newPage();
     await login(teacher, 'teacher');
-    expect((await teacher.request.get(usersApi, { headers: await auth(teacher) })).status()).toBe(403);
+    expect((await body(await teacher.request.get(usersApi, { headers: await auth(teacher) }), 403)).error.code).toBe('FORBIDDEN');
   } finally {
     await context.close();
   }
