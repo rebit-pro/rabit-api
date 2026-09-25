@@ -15,13 +15,22 @@ export function usePaymentReturn() {
   const waitOver = shallowRef(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
   let startedAt = 0;
-  async function poll() {
+  // A request outlives the page or its attempt: an answer of an older generation changes nothing and plans no timer (#83).
+  let generation = 0;
+  function restart(): number {
+    clearTimeout(timer);
+    return ++generation;
+  }
+  async function poll(current: number) {
     const key = orderKey.value;
     if (!key) return;
     try {
-      attempt.value = await livePaymentsApi.attempt(key, attemptId.value);
+      const next = await livePaymentsApi.attempt(key, attemptId.value);
+      if (current !== generation) return;
+      attempt.value = next;
       error.value = '';
     } catch (cause) {
+      if (current !== generation) return;
       const problem = apiProblem(cause);
       // A lost connection is a page state, not a refused payment: keep asking.
       error.value = problem.network ? 'Нет связи с сервером. Продолжаем проверять оплату.' : paymentError(problem);
@@ -33,23 +42,24 @@ export function usePaymentReturn() {
     }
     const delay = nextPollDelay(Date.now() - startedAt);
     if (null === delay) waitOver.value = true;
-    else timer = setTimeout(poll, delay);
+    else timer = setTimeout(() => void poll(current), delay);
   }
   function start() {
-    clearTimeout(timer);
+    const current = restart();
     attempt.value = null;
     error.value = '';
     waitOver.value = false;
     orderKey.value = recallOrderKey(localStorage, attemptId.value);
     startedAt = Date.now();
-    void poll();
+    void poll(current);
   }
   function recheck() {
+    const current = restart();
     waitOver.value = false;
     startedAt = Date.now();
-    void poll();
+    void poll(current);
   }
   watch(attemptId, start, { immediate: true });
-  onBeforeUnmount(() => clearTimeout(timer));
+  onBeforeUnmount(restart);
   return { attempt, orderKey, error, waitOver, recheck };
 }

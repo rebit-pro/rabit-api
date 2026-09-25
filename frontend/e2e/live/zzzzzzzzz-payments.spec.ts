@@ -26,6 +26,9 @@ const record = {
   providerPaymentId: ''
 };
 let paid: Created | null = null;
+// #97: the buyer scenario remembers its attempts by id; the registry order is checked as a contract, not as positions.
+const attempts = { sbp: '', card: '' };
+const attemptOf = (url: string) => new URL(url).pathname.split('/').pop() ?? '';
 
 async function body(response: APIResponse, status = 200) {
   expect(response.status(), await response.text()).toBe(status);
@@ -160,6 +163,7 @@ if (sandbox) {
     // The test shop refuses SBP: a real canceled attempt, the order is declined and can be paid again.
     await panel.getByTestId('pay-sbp').click();
     await page.waitForURL(/\/orders\/payment\/[a-f0-9-]{36}$/);
+    attempts.sbp = attemptOf(page.url());
     await expect(page.getByTestId('payment-return-title')).toHaveText('Оплата не прошла');
     await page.getByTestId('payment-return-order').click();
     await expect(page.getByTestId('order-payment-status')).toHaveText('Оплата отклонена');
@@ -179,6 +183,7 @@ if (sandbox) {
     // The provider's return link points to our return URL; its text depends on the page language.
     await page.locator('a[href^="http://127.0.0.1/orders/payment/"]').click();
     await page.waitForURL(/127\.0\.0\.1\/orders\/payment\/[a-f0-9-]{36}$/, { timeout: 30000 });
+    attempts.card = attemptOf(page.url());
     await expect(page.getByTestId('payment-return-title')).toHaveText('Заказ оплачен', { timeout: 30000 });
     await page.screenshot({ path: testInfo.outputPath('g1-desktop-payment-return.png'), fullPage: true, animations: 'disabled' });
     await page.getByTestId('payment-return-order').click();
@@ -236,12 +241,18 @@ if (sandbox) {
         params: { orderNumber: order.number }
       });
       const text = await list.text();
-      const listed = (await body(list)).data.items as { id: string; status: string; paymentMethod: string }[];
-      const cardId = listed[0]?.id ?? '';
-      expect(listed.map((item) => [item.paymentMethod, item.status])).toEqual([
-        ['bank_card', 'succeeded'],
-        ['sbp', 'canceled']
-      ]);
+      const listed = (await body(list)).data.items as { id: string; status: string; paymentMethod: string; createdAt: string }[];
+      // #97: attempts are found by the ids the buyer scenario saw; positions depend on creation times of the stand.
+      expect(attempts.card).not.toBe('');
+      expect(attempts.sbp).not.toBe('');
+      const cardId = attempts.card;
+      expect(Object.fromEntries(listed.map((item) => [item.id, [item.paymentMethod, item.status]]))).toEqual({
+        [attempts.card]: ['bank_card', 'succeeded'],
+        [attempts.sbp]: ['sbp', 'canceled']
+      });
+      // The registry contract: newest first by creation time.
+      const created = listed.map((item) => Date.parse(item.createdAt));
+      expect(created).toEqual([...created].sort((left, right) => right - left));
       for (const secret of [order.accessKey, ...record.idempotencyKeys, 'confirmation', 'yoomoney', 'test_'])
         expect(text).not.toContain(secret);
       const card = (await body(await organizer.page.request.get('/api/v1/payments/' + cardId, { headers: organizer.headers }))).data;
@@ -303,3 +314,78 @@ if (sandbox) {
     expect((await page.request.get('/api/v1/payments')).status()).toBe(401);
   });
 }
+
+// #83: a status answer that outlives its page or its attempt changes nothing and plans no new request. The provider is
+// not needed: the test answers the attempt statuses and holds chosen answers. Leaving by «Вернуться к заказу» reloads
+// the document, so the in-app cases are reached through the router's history listener, as the browser Back does.
+test('#83: a late status answer of a left page or a previous attempt stops its polling', async ({ page }) => {
+  const orderKey = 'a'.repeat(64);
+  const ids = { first: crypto.randomUUID(), second: crypto.randomUUID() };
+  const amounts = { [ids.first]: 100000, [ids.second]: 250000 };
+  await page.addInitScript(({ keys, value }) => keys.forEach((key) => localStorage.setItem('morefoto:payment:' + key, value)), {
+    keys: [ids.first, ids.second],
+    value: orderKey
+  });
+  const requests: Record<string, number> = { [ids.first]: 0, [ids.second]: 0 };
+  const holds = new Map<string, Promise<void>>();
+  const releases = new Map<string, () => void>();
+  const hold = (id: string) => holds.set(id, new Promise<void>((resolve) => releases.set(id, resolve)));
+  const release = (id: string) => {
+    releases.get(id)?.();
+    holds.delete(id);
+  };
+  await page.route(
+    (url) => url.pathname.startsWith('/api/v1/public/orders/current/payment-attempts/'),
+    async (route) => {
+      const id = new URL(route.request().url()).pathname.split('/').pop()!;
+      requests[id] = (requests[id] ?? 0) + 1;
+      await holds.get(id);
+      await route.fulfill({
+        json: {
+          data: {
+            id,
+            status: 'pending',
+            amount: amounts[id] ?? 0,
+            paymentMethod: 'bank_card',
+            orderVersion: 'v1',
+            latePayment: false,
+            redirectUrl: null,
+            created: false
+          }
+        }
+      });
+    }
+  );
+  const navigate = (path: string) =>
+    page.evaluate((to) => {
+      history.pushState(history.state, '', to);
+      dispatchEvent(new PopStateEvent('popstate', { state: history.state }));
+    }, path);
+  const status = page.getByTestId('payment-return');
+
+  hold(ids.first);
+  await page.goto('/orders/payment/' + ids.first);
+  await expect.poll(() => requests[ids.first]).toBe(1);
+  await page.evaluate(() => ((window as unknown as { stay: number }).stay = 1));
+
+  // Another attempt opens while the first answer is on its way: the late answer neither shows nor polls.
+  await navigate('/orders/payment/' + ids.second);
+  await expect(status).toContainText('2 500');
+  release(ids.first);
+  await expect.poll(() => requests[ids.second], { timeout: 6000 }).toBeGreaterThanOrEqual(2);
+  await expect(status).toContainText('2 500');
+  expect(requests[ids.first]).toBe(1);
+
+  // The page is left while its request waits: no request follows the answer.
+  hold(ids.second);
+  const seen = requests[ids.second]!;
+  await expect.poll(() => requests[ids.second], { timeout: 6000 }).toBe(seen + 1);
+  await navigate('/orders/access/' + orderKey);
+  await expect(page.getByTestId('payment-return')).toHaveCount(0);
+  release(ids.second);
+  await page.waitForTimeout(4000);
+  expect(requests[ids.second]).toBe(seen + 1);
+  expect(requests[ids.first]).toBe(1);
+  // Both transitions stayed inside the application: a reload would have hidden the defect.
+  expect(await page.evaluate(() => (window as unknown as { stay?: number }).stay)).toBe(1);
+});
