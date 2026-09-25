@@ -20,6 +20,7 @@ enum LogChannelEnum: string
     case todo = 'todo'; // канал для оценки, временного сбора информации и т.п.
     case payment = 'payment';
     case import = 'import'; // канал импортов
+    case support = 'support'; // вопросы куратору через MAX
 
     /**
      * Определяет канал логирования по namespace класса.

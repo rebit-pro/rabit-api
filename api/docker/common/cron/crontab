@@ -14,3 +14,4 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # G1: сверяет открытые попытки оплаты с ЮKassa, если уведомление не пришло и покупатель не вернулся со страницы оплаты.
 * * * * * cd /app/public && php local/bin/bitrix-console app:payment:reconcile --limit=100 2>&1
+* * * * * cd /app/public && php local/bin/bitrix-console app:support:dispatch-pending --limit=100 2>&1

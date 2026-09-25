@@ -64,6 +64,8 @@ export function cabinetNavigation({ role, permissions, demo, counters = {} }: Na
         item('Платежи', '/cabinet/payments', 'mdi-credit-card-outline')
       );
     }
+    // K3: the institution's staff write to the curators; curators answer in MAX.
+    if ('head' === role || 'teacher' === role) work.push(item('Вопрос куратору', '/cabinet/questions', 'mdi-message-text-outline'));
     if (can('catalog.manage')) settings.push(item('Каталог и цены', '/cabinet/catalog', 'mdi-tag-outline'));
     if (can('staff.manage')) settings.push(item('Сотрудники', '/cabinet/users', 'mdi-account-group-outline'));
   }

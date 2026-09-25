@@ -71,6 +71,12 @@ const MainRoutes: RouteRecordRaw = {
       meta: { title: 'Ссылки и сроки' }
     },
     {
+      name: 'Questions',
+      path: 'questions',
+      component: () => import('@/modules/morefoto/views/QuestionsPage.vue'),
+      meta: { title: 'Вопрос куратору', staffRoles: ['head', 'teacher'] }
+    },
+    {
       name: 'StaffRequests',
       path: 'staff-requests',
       component: () => import('@/modules/morefoto/views/StaffRequestsPage.vue'),
