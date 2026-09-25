@@ -28,7 +28,7 @@ final readonly class TokenResolver implements TokenResolverInterface
     public function resolveUserId(string $token): int
     {
         if ('' === $token) {
-            throw new HttpException('Unauthorized', 401);
+            throw new HttpException('UNAUTHORIZED', 401);
         }
 
         $userToken = $this->repository->findByToken($token);

@@ -27,6 +27,7 @@ final readonly class GroupCalendar implements GroupCalendarInterface
         private GroupCalendarRepository $calendars,
         private InstitutionOperationRepository $operations,
         private CalendarClockInterface $clock,
+        private CalendarCommandValidator $validator,
     ) {}
 
     public function lock(string $groupId): int
@@ -55,11 +56,15 @@ final readonly class GroupCalendar implements GroupCalendarInterface
 
     public function confirmLinkSent(CalendarCommandInputDto $input): CalendarMutationOutputDto
     {
+        $this->validator->validate($input);
+
         return $this->mutate($input, null);
     }
 
     public function extend(CalendarCommandInputDto $input, \DateTimeImmutable $newClosesAt): CalendarMutationOutputDto
     {
+        $this->validator->validate($input);
+
         // DATETIME persistence has second precision; reject silent deadline truncation.
         if ('000000' !== $newClosesAt->format('u') || 1000 > (int)$newClosesAt->format('Y') || 9999 < (int)$newClosesAt->format('Y')) {
             throw new \InvalidArgumentException('A whole-second calendar deadline within the database range is required.');

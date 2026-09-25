@@ -17,7 +17,7 @@ final readonly class AccessGuard implements AccessGuardInterface
     {
         $permission = PermissionEnum::tryFrom($action);
         if (null === $permission) {
-            throw new HttpException('Action is forbidden.', 403);
+            throw new HttpException('FORBIDDEN', 403);
         }
         $this->authorization->assertCan($userId, $permission, $institutionId, $groupId);
     }

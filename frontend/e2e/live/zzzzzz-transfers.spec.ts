@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { crc32, deflateSync } from 'node:zlib';
-import { test, expect, type APIResponse, type Browser, type Page, type Response } from '@playwright/test';
+import { test, expect, type APIResponse, type Browser, type Page, type Response, type Route } from '@playwright/test';
 import { login, token } from './helpers.js';
 
 type Media = {
@@ -630,4 +630,125 @@ test('D3: параллельные подтверждения переносят
     'var/d3-transfers.json',
     JSON.stringify({ requestId: second.id, shootId: shoot.id, regularId: regular.id, staffId: staff.id, photoId: p2 }) + '\n'
   );
+});
+
+/** Holds matching requests until the test decides to let them through or to break the connection. */
+async function hold(page: Page, match: (url: URL) => boolean) {
+  let arrive!: () => void;
+  let decide!: (action: 'continue' | 'abort') => void;
+  const reached = new Promise<void>((resolve) => (arrive = resolve));
+  const decided = new Promise<'continue' | 'abort'>((resolve) => (decide = resolve));
+  const handler = async (route: Route) => {
+    arrive();
+    if ((await decided) === 'abort') await route.abort('failed');
+    else await route.continue();
+  };
+  await page.route(match, handler);
+  return { reached, release: decide, stop: () => page.unroute(match, handler) };
+}
+
+test('#62/#63: смена группы не показывает кадры прежней группы и не смешивает контекст переноса', async ({ page }, testInfo) => {
+  test.setTimeout(120000);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await login(page);
+  const suffix = crypto.randomUUID().slice(0, 8);
+  const institution = await create(page, '/api/v1/institutions', {
+    name: '#62 Детский сад ' + suffix,
+    address: 'Москва'
+  });
+  const shoot = await create(page, '/api/v1/institutions/' + institution.id + '/shoots', { name: '#62 Съёмка', date: '2026-10-23' });
+  const from = await create(page, '/api/v1/shoots/' + shoot.id + '/groups', {
+    name: '#62 Ромашки',
+    groupKind: 'regular'
+  });
+  const other = await create(page, '/api/v1/shoots/' + shoot.id + '/groups', {
+    name: '#62 Солнышко',
+    groupKind: 'regular'
+  });
+  const [a1, a2] = await upload(page, shoot.id, [
+    [from.id, 21],
+    [from.id, 22],
+    [other.id, 23]
+  ]);
+  await label(page, shoot.id, from.id, [a1, a2], 'A');
+  await body(
+    await page.request.put('/api/v1/groups/' + from.id + '/cover', {
+      headers: await auth(page),
+      data: { revision: (await media(page, shoot.id)).revision, photoId: a1 }
+    })
+  );
+  const list = (groupId: string, childCode?: string) => (url: URL) =>
+    url.pathname === '/api/v1/shoots/' + shoot.id + '/photos' &&
+    url.searchParams.get('groupId') === groupId &&
+    (!childCode || (url.searchParams.get('childCode') === childCode && url.searchParams.get('pageSize') === '100'));
+  // The group select has no accessible name, so it is opened through its test id like the frames filter.
+  const groupSelect = page.getByTestId('photo-group');
+  const chooseGroup = async (name: string) => {
+    await groupSelect.click();
+    await page.getByRole('option', { name: name + ' · Подготовка', exact: true }).click();
+  };
+  const cards = page.getByTestId('photo-card');
+  const readiness = page.getByTestId('photo-readiness');
+  const coverChosen = page.getByText('Обложка группы выбрана', { exact: true });
+
+  await page.goto('/cabinet/institutions/' + institution.id + '/shoots/' + shoot.id + '/photos?group=' + from.id);
+  await expect(cards).toHaveCount(2);
+  await expect(coverChosen).toBeVisible();
+
+  // #62: while the new group loads and after its load fails, nothing of the previous group is shown under its name.
+  const otherList = await hold(page, list(other.id));
+  await chooseGroup('#62 Солнышко');
+  await otherList.reached;
+  await expect(page.getByRole('heading', { name: '#62 Солнышко', exact: true })).toBeVisible();
+  await expect(readiness).toHaveText('Загружаем кадры группы…');
+  await expect(cards).toHaveCount(0);
+  await expect(coverChosen).toHaveCount(0);
+  otherList.release('abort');
+  await expect(readiness).toHaveText('Кадры группы не загружены.');
+  await expect(page.getByRole('alert').filter({ hasText: 'Сервер не завершил операцию. Повторите попытку.' })).toBeVisible();
+  await expect(cards).toHaveCount(0);
+  await expect(page.getByAltText('Обложка группы', { exact: true })).toHaveCount(0);
+  await page.screenshot({
+    path: testInfo.outputPath('issue62-failed-group.png'),
+    fullPage: true,
+    animations: 'disabled'
+  });
+  await otherList.stop();
+  await chooseGroup('#62 Ромашки');
+  await expect(cards).toHaveCount(2);
+  await expect(readiness).toHaveText('Кадров: 2 · Детей: 1 · Без ребёнка: 0');
+  await expect(coverChosen).toBeVisible();
+
+  // #63: the set is loaded for a fixed group: the selector is locked, a failed load opens no dialog, a retry works.
+  await page.getByTestId('photo-filter').click();
+  await page.getByRole('option', { name: 'Ребёнок A', exact: true }).click();
+  const moveButton = page.getByRole('button', {
+    name: 'Перенести весь набор',
+    exact: true
+  });
+  const failedSet = await hold(page, list(from.id, 'A'));
+  await moveButton.click();
+  await failedSet.reached;
+  await expect(groupSelect.locator('input')).toBeDisabled();
+  failedSet.release('abort');
+  await expect(page.getByRole('alert').filter({ hasText: 'Сервер не завершил операцию. Повторите попытку.' })).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(groupSelect.locator('input')).toBeEnabled();
+  await failedSet.stop();
+  const slowSet = await hold(page, list(from.id, 'A'));
+  await moveButton.click();
+  await slowSet.reached;
+  await expect(groupSelect.locator('input')).toBeDisabled();
+  slowSet.release('continue');
+  const dialog = page.getByRole('dialog');
+  await expect(
+    dialog.getByRole('heading', {
+      name: 'Перенести набор ребёнка A',
+      exact: true
+    })
+  ).toBeVisible();
+  await expect(dialog).toContainText('Из группы «#62 Ромашки» будет перенесён весь набор. Кадров в наборе: 2.');
+  await slowSet.stop();
+  await dialog.getByRole('button', { name: 'Отмена', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
 });
