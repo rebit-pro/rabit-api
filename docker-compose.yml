@@ -138,6 +138,11 @@ services:
         <<: *api-consumer-service
         command: ["php", "public/local/bin/bitrix-console", "app:notification:consume"]
 
+    api-support-consumer:
+        profiles: [support]
+        <<: *api-consumer-service
+        command: ["php", "public/local/bin/bitrix-console", "app:support:consume"]
+
     api-mysql:
         build:
             context: api/docker

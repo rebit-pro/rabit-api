@@ -11,3 +11,4 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Восстанавливает ожидающие и retryWait email-операции H1 после временного сбоя публикации.
 * * * * * cd /app/public && php local/bin/bitrix-console app:notification:dispatch-pending --limit=100 2>&1
+* * * * * cd /app/public && php local/bin/bitrix-console app:support:dispatch-pending --limit=100 2>&1

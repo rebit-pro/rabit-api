@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { isMockApiEnabled } from '@/mocks/config';
-import { shallowRef } from 'vue';
+import { computed, shallowRef } from 'vue';
 import { useRoute } from 'vue-router';
 import CartEntry from '../../commerce/components/CartEntry.vue';
 import { useGallery } from '../composables/useGallery';
@@ -10,6 +10,8 @@ import GalleryFilters from './GalleryFilters.vue';
 import GalleryGrid from './GalleryGrid.vue';
 import PhotoViewer from './PhotoViewer.vue';
 import GalleryHelp from './GalleryHelp.vue';
+import GalleryQuestionDialog from './GalleryQuestionDialog.vue';
+import { useGalleryQuestion } from '../../support/composables/useGalleryQuestion';
 const {
   gallery,
   loading,
@@ -29,6 +31,15 @@ const {
 } = useGallery();
 const route = useRoute();
 const helpOpen = shallowRef(false);
+const questionOpen = shallowRef(false);
+const token = computed(() => String(route.params.token));
+// Demo mode has no server conversation: the curator channel exists only against the real API.
+const questions = isMockApiEnabled ? null : useGalleryQuestion(token, questionOpen);
+
+function askCurator(): void {
+  helpOpen.value = false;
+  questionOpen.value = true;
+}
 </script>
 
 <template>
@@ -38,6 +49,26 @@ const helpOpen = shallowRef(false);
       <MfLogo :size="24" mono class="gallery-brand" />
       <span class="gallery-topbar__caption">Фотографии ваших детей</span>
       <CartEntry v-if="gallery && gallery.state !== 'preparing'" :gallery="gallery" :token="String(route.params.token)" />
+      <v-btn
+        v-if="gallery && questions"
+        class="gallery-question-top"
+        :aria-label="questions.unread.value ? 'Вопрос куратору, новый ответ' : 'Вопрос куратору'"
+        variant="tonal"
+        color="primary"
+        prepend-icon="mdi-message-text-outline"
+        data-testid="gallery-question-open"
+        @click="askCurator"
+      >
+        <span class="gallery-question-top__label">Вопрос куратору</span>
+        <v-badge
+          v-if="questions.unread.value"
+          dot
+          color="error"
+          inline
+          class="gallery-question-top__badge"
+          data-testid="gallery-question-unread"
+        />
+      </v-btn>
       <v-btn
         v-if="gallery"
         class="gallery-help-top"
@@ -108,7 +139,21 @@ const helpOpen = shallowRef(false);
           @close="closePhoto"
           @step="stepPhoto"
         />
-        <GalleryHelp v-model="helpOpen" :gallery="gallery" />
+        <GalleryHelp v-model="helpOpen" :gallery="gallery" :can-ask="questions !== null" @ask="askCurator" />
+        <GalleryQuestionDialog
+          v-if="questions"
+          v-model="questionOpen"
+          v-model:name="questions.name.value"
+          :gallery="gallery"
+          :messages="questions.question.value?.messages ?? []"
+          :loading="questions.loading.value"
+          :load-error="questions.loadError.value"
+          :sending="questions.sending.value"
+          :send-error="questions.sendError.value"
+          :needs-name="questions.needsName.value"
+          :submit="questions.send"
+          @reload="questions.reload()"
+        />
       </template>
     </main>
     <footer class="gallery-footer"><MfLogo :size="20" mono /><span>Сохраняем моменты детства</span></footer>
@@ -130,6 +175,9 @@ const helpOpen = shallowRef(false);
 }
 .gallery-brand {
   flex: 0 0 auto;
+}
+.gallery-question-top__badge {
+  margin-left: 6px;
 }
 .gallery-topbar__caption {
   font-size: 13px;
@@ -196,15 +244,24 @@ const helpOpen = shallowRef(false);
   .gallery-topbar {
     gap: 8px !important;
   }
+  .gallery-question-top,
   .gallery-help-top {
     min-width: 44px;
     width: 44px;
     padding: 0 !important;
   }
-  .gallery-help-top :deep(.v-btn__content) {
+  .gallery-help-top :deep(.v-btn__content),
+  .gallery-question-top__label {
     font-size: 0;
   }
+  .gallery-question-top :deep(.v-btn__prepend),
   .gallery-help-top :deep(.v-btn__prepend) {
+    margin: 0;
+  }
+  .gallery-question-top__badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
     margin: 0;
   }
 
