@@ -18,3 +18,4 @@ Loader::includeModule('rebit.notification');
 
 Loader::includeModule('morefoto.access');
 Loader::includeModule('morefoto.commerce');
+Loader::includeModule('morefoto.support');

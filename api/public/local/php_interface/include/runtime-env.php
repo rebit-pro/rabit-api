@@ -36,3 +36,5 @@ if (is_file($envPath)) {
 $loadSecret('REBIT_ENCRYPTION_KEY', '/run/secrets/rebit_encryption_key');
 $loadSecret('REBIT_GEETEST_CAPTCHA_KEY', '/run/secrets/rebit_geetest_captcha_key');
 $loadSecret('REBIT_NOTIFICATION_TELEGRAM_BOT_TOKEN', '/run/secrets/rebit_telegram_bot_token');
+$loadSecret('REBIT_NOTIFICATION_MAX_BOT_TOKEN', '/run/secrets/rebit_max_bot_token');
+$loadSecret('MOREFOTO_SUPPORT_MAX_WEBHOOK_SECRET', '/run/secrets/morefoto_support_max_webhook_secret');

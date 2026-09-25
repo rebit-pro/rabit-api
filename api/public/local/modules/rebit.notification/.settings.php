@@ -10,6 +10,7 @@ return [
         'value' => array_merge(
             require __DIR__ . '/di/lead.php',
             require __DIR__ . '/di/delivery.php',
+            require __DIR__ . '/di/max.php',
         ),
         'readonly' => true,
     ],

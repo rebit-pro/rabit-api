@@ -9,6 +9,7 @@ enum MessengerQueueEnum: string
     case AUDIT = 'audit';
     case NOTIFICATION_EMAIL = 'notificationEmail';
     case MEDIA_PROCESSING = 'mediaProcessing';
+    case SUPPORT_MAX = 'supportMax';
     case FAILED = 'messengerFailed';
 
     /**
