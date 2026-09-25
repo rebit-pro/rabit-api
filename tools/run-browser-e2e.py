@@ -60,6 +60,8 @@ VERIFIERS = [
     ("verify-avatar.php", None, "B3 avatar integration passed", ["zz-avatar"]),
     # E6: schema, CHECK limits and migration replay after the browser switched the payment cost policy back off.
     ("verify-payment-costs.php", None, "E6 payment cost integration passed", ["zzzzzzzz-payment-costs"]),
+    # K3: the browser records the parent question key; delivery uses a scripted MAX boundary, the webhook goes through nginx.
+    ("verify-support.php", "k3-questions.json", "K3 support integration passed", ["zz-questions"]),
     # G1: attempts, money facts and order statuses agree; no buyer secret reaches the payment tables.
     ("verify-payments.php", "g1-payments.json", "G1 payment integration passed", ["zzzzzzzzz-payments"]),
 ]
@@ -68,8 +70,9 @@ BROWSER_TIMEOUT = 900
 BENCH_TIMEOUT = 45 * 60
 # Production images have no Xdebug; the development one would try to reach a debugger on every PHP request.
 PHP_ENV = ["--env", "XDEBUG_MODE=off"]
-# DS-12: a test-only organizer contact for the «Помощь» section of the profile.
-SUPPORT = ["--env", "MOREFOTO_SUPPORT_NAME=Организатор E2E", "--env", "MOREFOTO_SUPPORT_EMAIL=support@example.invalid", "--env", "MOREFOTO_SUPPORT_PHONE=+7 900 000-00-00"]
+# DS-12: a test-only organizer contact for the «Помощь» section of the profile; K3: a fake MAX group ID and webhook secret (no real bot).
+SUPPORT = ["--env", "MOREFOTO_SUPPORT_NAME=Организатор E2E", "--env", "MOREFOTO_SUPPORT_EMAIL=support@example.invalid", "--env", "MOREFOTO_SUPPORT_PHONE=+7 900 000-00-00", "--env", "MOREFOTO_SUPPORT_MAX_CHAT_ID=-72000000001",
+           "--env", "MOREFOTO_SUPPORT_MAX_WEBHOOK_SECRET=e2e_webhook_secret_0123456789abcdef"]
 # G1: the YooKassa test shop keys stay outside the repository; without them payment runs in its disabled mode.
 YOOKASSA_ENV = Path(os.environ.get("E2E_YOOKASSA_ENV", Path.home() / ".config/morefoto/yookassa-test.env"))
 LOCK = threading.RLock()
