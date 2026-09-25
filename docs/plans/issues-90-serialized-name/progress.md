@@ -6,11 +6,12 @@
 - Ветка: `codex/issues-90-serialized-name`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-90-serialized-name`. Общий checkout `/home/user/rabit-api` не трогать.
 - Base: `origin/main` `94502a1` (merge PR #87).
-- Issue: [#90](https://github.com/rebit-pro/rabit-api/issues/90). PR: [#100](https://github.com/rebit-pro/rabit-api/pull/100), head с кодом — `ffc6b5e`.
+- Issue: [#90](https://github.com/rebit-pro/rabit-api/issues/90). PR: [#100](https://github.com/rebit-pro/rabit-api/pull/100), head с кодом — `ffc6b5e`: самостоятельное ревью без замечаний, gate PASS, сливается.
 - Документация: [план](plan.md).
 - Завершено: план, тест, исправление, быстрые проверки (T01–T07).
 - Сейчас: ожидание review PR.
-- Следующий шаг: review; после review без блокеров — gate `make test-e2e` (T08).
+- Base обновлён merge-коммитом `08a4232` от актуального `main`.
+- Следующий шаг: деплой backend — отдельное решение пользователя.
 - Блокеров нет. Открытых решений нет.
 - Рабочее дерево: изменения закоммичены; пустые `api/vendor`, `api/var` — точки монтирования docker-проверок, в git не попадают.
 - Команды проверок:
@@ -31,7 +32,7 @@
 | T05 | PASS | 2026-09-25 | `[OK] No errors` |
 | T06 | PASS | 2026-09-25 | `[OK] 1104 files` |
 | T07 | PASS | 2026-09-25 | `Found 0 of 2 files that can be fixed` |
-| T08 | PENDING | — | gate после review |
+| T08 | PASS | 2026-09-25 | `make test-e2e` `rabit-e2e-b416ef603ded`: exit 0, phpunit/phpstan PASS, a 65/65, b 46/46, все верификаторы PASS |
 
 ## Хронология
 
@@ -60,3 +61,10 @@
 ### 2026-09-25 — публикация
 
 - Push `codex/issues-90-serialized-name`, создан PR #100 в `main` (`Closes #90`). Не сливать до review; gate T08 — PENDING.
+
+### 2026-09-25 — ревью и gate
+
+- Самостоятельное ревью (правило пользователя для простых задач): замечаний нет, итог — комментарий в PR #100.
+- Base обновлён от актуального `main` (`08a4232`), конфликтов нет.
+- Gate `rabit-e2e-b416ef603ded` (328.6 с) — PASS, exit 0: phpunit, phpstan PASS; группа `a` 65/65, группа `b` 46/46; все верификаторы PASS.
+- Команда: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.

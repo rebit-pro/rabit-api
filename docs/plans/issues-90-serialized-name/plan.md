@@ -56,7 +56,7 @@
 - [x] 4. Исправление `DtoMetadataService`.
 - [x] 5. Быстрые backend-проверки.
 - [x] 6. Commit, push, PR с `Closes #90`.
-- [ ] 7. Review; gate после review без блокеров.
+- [x] 7. Review; gate после review без блокеров (PASS 2026-09-25).
 
 ## Критерии приёмки
 
