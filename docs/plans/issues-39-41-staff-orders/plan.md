@@ -94,11 +94,11 @@
 
 - [x] Прочитать `AGENTS.md`, `CLAUDE.md`, issues #39/#41, прецедент issues-38-43-44.
 - [x] Сверить COM-12 (`OrderInputMapper`) и доступ Organization API по ролям.
-- [ ] #41: вид отправки в `useLiveCheckout.ts`, правило и unit-тест.
-- [ ] #39: типы, правила, `useStaffOrderScope`, `useStaffOrders`, форма; unit-тесты правил.
-- [ ] Live E2E: задержка повтора (#41), фильтры области (#39) в `zzzzz-orders.spec.ts`.
-- [ ] Быстрые проверки: `npm run check`, `npm run test:commerce`.
-- [ ] Стаб-прогон в Chromium: каскад, URL, сброс, карточка и возврат; экран восстановления во время повтора;
+- [x] #41: вид отправки в `useLiveCheckout.ts`, правило и unit-тест.
+- [x] #39: типы, правила, `useStaffOrderScope`, `useStaffOrders`, форма; unit-тесты правил.
+- [x] Live E2E: задержка повтора (#41), фильтры области (#39) в `zzzzz-orders.spec.ts` (написаны, прогон после review).
+- [x] Быстрые проверки: `npm run check`, `npm run test:commerce`.
+- [x] Стаб-прогон в Chromium: каскад, URL, сброс, карточка и возврат; экран восстановления во время повтора;
       скриншоты desktop/mobile.
 - [ ] Commit, push, PR в `main` без merge.
 - [ ] После review без блокеров: полный `make test-e2e`, визуальная проверка desktop/mobile.
@@ -145,8 +145,11 @@
 ```bash
 docker run --rm --network none \
   -v /home/user/rabit-api-worktrees/issues-39-41-staff-orders/frontend:/app \
-  -v rabit-e5-node:/app/node_modules -w /app \
+  -v rabit-issues6263-node:/app/node_modules -w /app \
   mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'
 ```
+
+Том `rabit-e5-node` устарел: в нём нет `stylelint`, `npm run check` падает с `stylelint: not found`. Том
+`rabit-issues6263-node` соответствует текущему lockfile (`npm ls --depth=0` без ошибок).
 
 Полный gate — `make test-e2e` с параметрами из `docs/waves/a8/README.md`.
