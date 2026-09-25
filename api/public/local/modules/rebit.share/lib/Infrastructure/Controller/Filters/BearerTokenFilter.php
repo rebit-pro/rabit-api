@@ -51,7 +51,7 @@ final class BearerTokenFilter extends Base
 
         if (null === $token) {
             if ($this->required) {
-                throw new HttpException('Unauthorized', 401);
+                throw new HttpException('UNAUTHORIZED', 401);
             }
 
             return null;

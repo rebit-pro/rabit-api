@@ -15,6 +15,11 @@ use Morefoto\Access\Domain\Staff\Service\PermissionPolicy;
 use Rebit\Share\Application\Contract\Auth\IdentityGatewayInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
+/**
+ * Единая точка решения о доступе сотрудника: при каждом запросе заново читает identity, профиль и назначения
+ * и проверяет право по PermissionPolicy. Отказ сразу несёт код контракта ошибок: UNAUTHORIZED, FORBIDDEN
+ * или NOT_FOUND для скрытого чужого учреждения или группы.
+ */
 final readonly class StaffAuthorization
 {
     public function __construct(
@@ -30,11 +35,11 @@ final readonly class StaffAuthorization
     {
         $identity = $this->identities->findActive($userId);
         if (null === $identity) {
-            throw new HttpException('Unauthorized', 401);
+            throw new HttpException('UNAUTHORIZED', 401);
         }
         $profile = StaffProfile::fromRow($this->profiles->findByUserId($userId)->fetch());
         if (null === $profile || !$profile->isEnabled()) {
-            throw new HttpException('Staff access is unavailable.', 403);
+            throw new HttpException('FORBIDDEN', 403);
         }
 
         return new StaffContextOutputDto($identity, $profile);
@@ -58,7 +63,7 @@ final readonly class StaffAuthorization
         if (!$this->policy->allows($context->profile, $permission, institutionIds: $this->institutionIds($context->profile), groupIds: $this->groupIds($context->profile), institutionId: $institutionId, groupId: $groupId)) {
             $scoped = in_array($permission, [PermissionEnum::INSTITUTION_READ, PermissionEnum::SHOOT_READ, PermissionEnum::GROUP_READ], true);
             $status = $scoped && (null !== $institutionId || null !== $groupId) ? 404 : 403;
-            throw new HttpException(404 === $status ? 'Resource not found.' : 'Action is forbidden.', $status);
+            throw new HttpException(404 === $status ? 'NOT_FOUND' : 'FORBIDDEN', $status);
         }
     }
 }

@@ -116,15 +116,28 @@ final class TransferChildUseCaseTest extends TestCase
         yield 'purchased frames' => ['CHILD_HAS_ORDERS', ['orders' => [11 => true]]];
     }
 
-    public function testAccessRefusalsAreReportedWithCodes(): void
+    #[DataProvider('accessRefusals')]
+    public function testAccessRefusalsAreReportedWithCodes(HttpException $refusal, string $code, int $status): void
     {
         $access = $this->createStub(AccessGuardInterface::class);
-        $access->method('assertCan')->willThrowException(new HttpException('Action is forbidden.', 403));
+        $access->method('assertCan')->willThrowException($refusal);
         $media = $this->createMock(MediaMutationRepository::class);
         $media->expects(self::never())->method('lockRevision');
 
-        $this->expectExceptionMessage('FORBIDDEN');
-        $this->useCase(media: $media, access: $access)->execute(9, $this->key(), $this->input());
+        try {
+            $this->useCase(media: $media, access: $access)->execute(9, $this->key(), $this->input());
+            self::fail($code . ' expected.');
+        } catch (HttpException $error) {
+            self::assertSame([$code, $status], [$error->getMessage(), $error->getCode()]);
+        }
+    }
+
+    /** @return iterable<string, array{HttpException, string, int}> */
+    public static function accessRefusals(): iterable
+    {
+        yield 'unauthorized passes through' => [new HttpException('UNAUTHORIZED', 401), 'UNAUTHORIZED', 401];
+        yield 'forbidden passes through' => [new HttpException('FORBIDDEN', 403), 'FORBIDDEN', 403];
+        yield 'hidden group names the group' => [new HttpException('NOT_FOUND', 404), 'GROUP_NOT_FOUND', 404];
     }
 
     private function useCase(

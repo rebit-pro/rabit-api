@@ -39,7 +39,7 @@ trait AuthenticatedControllerTrait
     public function getAuthUserId(): int
     {
         if (null === $this->authUserId) {
-            throw new HttpException('Unauthorized', 401);
+            throw new HttpException('UNAUTHORIZED', 401);
         }
 
         return $this->authUserId;
