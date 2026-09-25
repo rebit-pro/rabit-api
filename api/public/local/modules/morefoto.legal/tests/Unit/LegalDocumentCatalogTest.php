@@ -36,6 +36,9 @@ final class LegalDocumentCatalogTest extends TestCase
                 $blocks = $renderer->render($catalog->text($version), $unpublished);
                 self::assertNotEmpty($blocks, $code->value);
                 self::assertStringNotContainsString('{{', (string)json_encode($blocks, JSON_UNESCAPED_UNICODE), $code->value);
+                // Published requisites fill every placeholder: optional ones (phone) must not appear in the texts.
+                $published = new SellerOutputDto(true, 'ИП Тестов Т. Т.', '366200000000', '300000000000000', 'Воронеж', 'pd@example.test', null);
+                self::assertStringNotContainsString(LegalTextRenderer::MISSING, (string)json_encode($renderer->render($catalog->text($version), $published), JSON_UNESCAPED_UNICODE), $code->value);
             }
         }
     }

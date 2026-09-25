@@ -2,22 +2,32 @@
 
 ## Точка продолжения
 
-- Ветка `codex/ops-legal-compliance-plan`, base `main` `94502a1`. Worktree `/home/user/rabit-api-worktrees/ops-legal-compliance-plan`.
-- Документация: [план](plan.md). [PR #101](https://github.com/rebit-pro/rabit-api/pull/101) открыт на review.
-- Завершено: инвентаризация ПДн и юридических элементов по коду, HTTP-проверка лендинга и кабинета, сверка норм, план.
-- Следующий шаг: ответы пользователя на LEG-DEC-01…09 (в первую очередь правовая форма и тексты), затем
-  отдельные PR срезов LEG-1…LEG-4.
-- Блокеры: выбор правовой формы (LEG-DEC-01) блокирует реквизиты, уведомление в РКН и G2.
-- Рабочее дерево: только `docs/plans/OPS-legal-compliance/{plan,progress}.md`.
-- Следующая проверка: `git diff --stat origin/main...HEAD`.
+- Ветка `codex/ops-legal-compliance` (реализация этапа A), base `main` `caa37b6`.
+  Worktree `/home/user/rabit-api-worktrees/ops-legal-compliance`.
+- Предыдущая ветка плана `codex/ops-legal-compliance-plan`, [PR #101](https://github.com/rebit-pro/rabit-api/pull/101):
+  её два коммита перенесены сюда cherry-pick; PR #101 закрывается ссылкой на PR реализации.
+- Документация: [план](plan.md).
+- Завершено: контракт `Consent` в `rebit.share`, модуль `morefoto.legal` (реестр, черновики 4 документов, продавец из
+  окружения, журнал `mf_legal_consent`, API), согласия в заказе и приглашении, страницы `/legal`, футер, плашка о cookie,
+  диалог согласия в кабинете, TTL черновика контактов, E2E.
+- Выполняется: полный `make test-e2e`, затем PR.
+- Следующий шаг: PR на review; после merge — переменные `MOREFOTO_SELLER_*` на stage, миграция и symlink модуля при
+  выкладке (решение пользователя).
+- Открытые решения: LEG-DEC-03, 04, 06, 07, 08; проверка черновиков юристом; организационные шаги O1–O9.
+- Рабочее дерево: всё закоммичено, кроме правок этого журнала и плана.
+- Следующая проверка: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
 
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
 | --- | --- | --- | --- |
-| LEG-T01 | PASS | 2026-09-25 | `git diff --stat origin/main...HEAD`: только два файла плана |
-| LEG-T02 | PASS | 2026-09-25 | `find`/`grep`: `CheckoutForm.vue`, `CheckoutTerms.vue`, `OrderPaymentPanel.vue`, `YooKassaRequestMapper.php`, `useLiveCheckout.ts` (`morefoto:live:checkout:`), `CheckoutAvailability::receiptChannels()` → `[]`, `SubmitLeadUseCase.php`, `api/docker/common/php/conf.d/zz_session.ini`, `deploy/secrets/README.md` существуют |
-| LEG-T10…T19 | PENDING | — | Приёмка будущих срезов, переносится в их планы |
+| LEG-T01 | PASS | 2026-09-25 | Ветка плана: `git diff --stat origin/main...HEAD` — только два файла плана |
+| LEG-T02 | PASS | 2026-09-25 | `find`/`grep`: пути раздела «Фактическое состояние» существуют |
+| LEG-T03 | PASS | 2026-09-25 | `phpunit --testsuite unit` в `rabit-api-php-cli:d1-local`: 734 теста OK; `morefoto.legal/tests/Unit` 17/17; `rebit.auth/tests` 86/86 |
+| LEG-T04 | PASS | 2026-09-25 | `phpstan analyse --configuration=phpstan.neon`: No errors; php-cs-fixer dry-run по изменённым путям — 2 файла исправлены, повтор чистый |
+| LEG-T05 | PASS | 2026-09-25 | `npm run check` в `mcr.microsoft.com/playwright:v1.52.0-jammy` (том `rabit-issues6263-node`): lint, stylelint, typecheck, typecheck:e2e, test:ui 43/43; `npm run test:commerce` 207/207 |
+| LEG-T10…T17, T20, T21 | PENDING | — | `make test-e2e`: `legal.spec.ts`, `zz-access`, `zzzzz-orders`, `verify-orders.php` |
+| LEG-T18, T19 | PENDING | — | Этап C (LEG-5, LEG-6), не в этом PR |
 
 ## Журнал
 
@@ -34,5 +44,23 @@
   шрифты локальные, `/privacy` отдаёт SPA (страницы нет).
 - Нормы сверены по открытым источникам (ссылки в плане): отдельное согласие с 01.09.2025 (156-ФЗ), штрафы КоАП
   13.11 с 30.05.2025, штрафы за авторизацию (КоАП 13.55) с 07.07.2026, требования ЮKassa к сайту.
-- План написан; тексты документов и спорные пункты оставлены юристу.
-- Открыт [PR #101](https://github.com/rebit-pro/rabit-api/pull/101).
+- План написан; тексты документов и спорные пункты оставлены юристу. Открыт PR #101.
+- Пользователь взял план в реализацию. Ответы: LEG-DEC-01 — ИП; LEG-DEC-02 — черновики пишем мы; LEG-DEC-09 — один PR
+  на этап A; LEG-DEC-05 — плашка «Понятно». Новая ветка `codex/ops-legal-compliance` от `main` `caa37b6`, план перенесён.
+- Архитектура: общий контракт `Rebit\Share\Application\Contract\Consent` (его вызывают `morefoto.commerce` и общий
+  `rebit.auth` внутри своих транзакций), реализация и тексты — новый модуль `morefoto.legal`. IP и user agent в журнал
+  не пишутся (минимизация).
+- Backend (`1e9b77b`): модуль, миграция `Version20260925230001` (таблица + регистрация модуля), согласия в
+  `CreateOrderUseCase` (после размещения, откат вместе с заказом; хеш идемпотентности учитывает документы) и
+  `AcceptAccessInvitationUseCase`, общий `AcceptedDocumentInputMapper` в `rebit.share`, переменные `MOREFOTO_SELLER_*`.
+- Frontend (`b40b7dd`): `/legal`, `/legal/:code`, `/legal/:code/v/:version`, футер в `BlankLayout`, пункт «Документы» в
+  меню, чекбоксы согласия и оферты в live-оформлении, продавец в условиях, ссылка на оферту у оплаты, чекбокс в
+  приглашении, диалог согласия в кабинете, срок жизни черновика контактов 7 дней.
+- Плашка о cookie сначала была плавающей внизу; переделана в полосу в потоке страницы: плавающая перекрывала бы кнопки на
+  mobile и в десятках E2E-сценариев.
+- E2E: засеяно согласие фикстурных сотрудников, добавлен `legal-pending`; тестовые реквизиты ИП передаются стенду;
+  обновлены спеки заказов и приглашения; новый `legal.spec.ts` (группа `a`); `verify-orders.php` проверяет две записи
+  согласия на каждый заказ и отсутствие записей у отклонённых.
+- `make test-e2e` №1 (288.8 с): быстрые проверки и браузерная группа b PASS (214.6 с); `verify-orders.php` FAIL —
+  скрипт сам создаёт заказ без `consents` (`ArgumentCountError` конструктора `CreateOrderInputDto`), группа a
+  отменена. Исправлено: верификатор берёт действующие версии из `LegalDocumentCatalogInterface`. Прогон №2 запущен.
