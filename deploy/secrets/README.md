@@ -69,6 +69,18 @@ REBIT_NOTIFICATION_TELEGRAM_PROXY=
 - `rebit_telegram_bot_token` — имя source-файла;
 - `rebit_telegram_bot_token_145` — имя versioned Swarm secret для `BUILD_NUMBER=145`.
 
+## Секретный ключ ЮKassa (morefoto.payment, G1)
+
+Необязательный секрет `morefoto_yookassa_secret_key`: без него оплата выключена. `runtime-env.php` читает `/run/secrets/morefoto_yookassa_secret_key` в `MOREFOTO_PAYMENT_YOOKASSA_SECRET_KEY`. Остальные параметры задаются в `/srv/rabit-api/swarm/backend.env`:
+
+```dotenv
+MOREFOTO_PAYMENT_YOOKASSA_SHOP_ID=
+MOREFOTO_PAYMENT_METHODS=bank_card
+MOREFOTO_PAYMENT_RETURN_BASE_URL=https://app.morefoto36.ru
+```
+
+Для тестового магазина допустимо временно указать и `MOREFOTO_PAYMENT_YOOKASSA_SECRET_KEY` в `backend.env`. Боевой ключ хранится только как Swarm secret. Подключение секрета в `docker-compose-production.yml` (сервисы `api-php-fpm` и `api-cron`), в Makefile и в `OPTIONAL_SECRET_NAMES` скрипта `deploy/swarm-publish-runtime.sh` выполняется при выкладке оплаты. Ключ не записывается в документы, журналы и сообщения.
+
 ## Охота за лидами (rebit.leadhunter, команда app:leadhunter:scan)
 
 Отдельного секрета не требует: используется общий Telegram bot token из `rebit.share` (см. выше).

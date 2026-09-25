@@ -35,5 +35,8 @@ final readonly class OrderOutputDto
         public string $paymentStatus,
         public string $productionStatus,
         public string $version,
+        /** Момент подтверждённой оплаты в бизнес-времени; null до оплаты. */
+        public ?string $paidAt = null,
+        public bool $latePayment = false,
     ) {}
 }

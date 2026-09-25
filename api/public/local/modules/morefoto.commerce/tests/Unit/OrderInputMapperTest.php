@@ -36,6 +36,15 @@ final class OrderInputMapperTest extends TestCase
         self::assertNull($input->institutionId);
         self::assertSame('11111111-1111-4111-8111-111111111111', $input->groupId);
         self::assertSame(2, $input->page);
+        self::assertNull($input->latePayment);
+    }
+
+    public function testLatePaymentFilterIsAvailableSinceG1(): void
+    {
+        $mapper = new OrderInputMapper(new StorefrontMapper());
+
+        self::assertTrue($mapper->search(new StaffOrderListRequestDto(late: 'true'))->latePayment);
+        self::assertFalse($mapper->search(new StaffOrderListRequestDto(late: 'false'))->latePayment);
     }
 
     #[DataProvider('invalid')]
@@ -48,7 +57,7 @@ final class OrderInputMapperTest extends TestCase
 
     public static function invalid(): iterable
     {
-        yield 'late before G1' => [new StaffOrderListRequestDto(late: 'true'), 'FILTER_UNAVAILABLE'];
+        yield 'late is a boolean' => [new StaffOrderListRequestDto(late: 'yes'), 'INVALID_FILTER'];
         yield 'settlement before I1' => [new StaffOrderListRequestDto(settlement: 'refund'), 'FILTER_UNAVAILABLE'];
         yield 'page size above limit' => [new StaffOrderListRequestDto(pageSize: 101), 'INVALID_PAGE'];
         yield 'zero page' => [new StaffOrderListRequestDto(page: 0), 'INVALID_PAGE'];

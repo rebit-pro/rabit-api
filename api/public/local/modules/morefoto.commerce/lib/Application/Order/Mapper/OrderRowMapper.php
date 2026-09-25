@@ -62,6 +62,8 @@ final readonly class OrderRowMapper
             paymentStatus: (string)$row['PAYMENT_STATUS'],
             productionStatus: (string)$row['PRODUCTION_STATUS'],
             version: (string)$row['VERSION'],
+            paidAt: null === ($row['PAID_AT'] ?? null) ? null : $this->calendar->display(new \DateTimeImmutable((string)$row['PAID_AT'], new \DateTimeZone('UTC'))),
+            latePayment: 1 === (int)($row['LATE_PAYMENT'] ?? 0),
         );
     }
 

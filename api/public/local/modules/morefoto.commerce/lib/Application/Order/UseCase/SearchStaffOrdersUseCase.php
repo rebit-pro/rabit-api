@@ -38,6 +38,7 @@ final readonly class SearchStaffOrdersUseCase
             productionStatus: $input->productionStatus,
             createdFrom: null === $input->dateFrom ? null : $this->calendar->dayStart($input->dateFrom),
             createdBefore: null === $input->dateTo ? null : $this->calendar->dayStart($input->dateTo, true),
+            latePayment: $input->latePayment,
         );
         $total = $this->orders->count($criteria);
         // Production tiles filter the list themselves, so their counts ignore the production filter of the search.
@@ -50,6 +51,7 @@ final readonly class SearchStaffOrdersUseCase
             paymentStatus: $criteria->paymentStatus,
             createdFrom: $criteria->createdFrom,
             createdBefore: $criteria->createdBefore,
+            latePayment: $criteria->latePayment,
         ));
         /** @var array<int, array<string, mixed>> $rows */
         $rows = [];

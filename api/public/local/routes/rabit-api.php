@@ -17,4 +17,6 @@ return static function(RoutingConfigurator $routes): void {
     $handoffRoutes($routes);
     $configureCommerce = require __DIR__ . '/../modules/morefoto.commerce/routes.php';
     $configureCommerce($routes);
+    $configurePayment = require __DIR__ . '/../modules/morefoto.payment/routes.php';
+    $configurePayment($routes);
 };
