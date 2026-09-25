@@ -149,6 +149,6 @@ final class OrderReceiptsAndAccessTest extends TestCase
             $lines[] = new QuoteLineInputDto($assignment, self::PRODUCT, 1);
         }
 
-        return new CreateOrderInputDto(str_repeat('c', 64), $lines, new OrderBuyerInputDto($name, '+79001234567', 'buyer@example.test', '', null, true));
+        return new CreateOrderInputDto(str_repeat('c', 64), $lines, new OrderBuyerInputDto($name, '+79001234567', 'buyer@example.test', '', null, true), []);
     }
 }

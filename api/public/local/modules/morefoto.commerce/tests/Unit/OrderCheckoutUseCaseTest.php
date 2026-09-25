@@ -24,6 +24,9 @@ use Morefoto\Commerce\Domain\Order\Service\BuyerPolicy;
 use Morefoto\Commerce\Domain\Order\ValueObject\IdempotencyKey;
 use Morefoto\Commerce\Domain\Storefront\Exception\QuotePriceChangedException;
 use PHPUnit\Framework\TestCase;
+use Rebit\Share\Application\Contract\Consent\ConsentRecorderInterface;
+use Rebit\Share\Application\Contract\Consent\Dto\AcceptedDocumentDto;
+use Rebit\Share\Application\Contract\Consent\Enum\ConsentContextEnum;
 use Rebit\Share\Contracts\Media\Dto\GalleryAccessOutputDto;
 use Rebit\Share\Contracts\Media\Dto\GalleryContextOutputDto;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
@@ -98,6 +101,40 @@ final class OrderCheckoutUseCaseTest extends TestCase
         self::assertSame($created, $result);
     }
 
+    public function testAcceptedDocumentsAreRecordedForThePlacedOrder(): void
+    {
+        $receipts = $this->createStub(CheckoutReceipts::class);
+        $receipts->method('reserve')->willReturn(null);
+        $quotes = $this->createStub(ValidateQuoteUseCase::class);
+        $quotes->method('executeWithinTransaction')->willReturn($this->validated());
+        $placement = $this->createStub(OrderPlacement::class);
+        $placement->method('place')->willReturn(new PlacedOrderOutputDto(7, $this->created('new-key')));
+        $consents = $this->createMock(ConsentRecorderInterface::class);
+        $consents->expects(self::once())->method('record')->with(ConsentContextEnum::ORDER, 7, $this->input()->consents);
+
+        $this->useCase(receipts: $receipts, quotes: $quotes, placement: $placement, consents: $consents)
+            ->execute(str_repeat('a', 64), new IdempotencyKey(str_repeat('b', 32)), $this->input())
+        ;
+    }
+
+    public function testMissingConsentFailsTheCheckoutBeforeTheReceiptCompletes(): void
+    {
+        $receipts = $this->createMock(CheckoutReceipts::class);
+        $receipts->method('reserve')->willReturn(null);
+        $receipts->expects(self::never())->method('complete');
+        $quotes = $this->createStub(ValidateQuoteUseCase::class);
+        $quotes->method('executeWithinTransaction')->willReturn($this->validated());
+        $placement = $this->createStub(OrderPlacement::class);
+        $placement->method('place')->willReturn(new PlacedOrderOutputDto(7, $this->created('new-key')));
+        $consents = $this->createStub(ConsentRecorderInterface::class);
+        $consents->method('record')->willThrowException(new HttpException('CONSENT_REQUIRED', 422));
+        $this->expectExceptionMessage('CONSENT_REQUIRED');
+
+        $this->useCase(receipts: $receipts, quotes: $quotes, placement: $placement, consents: $consents)
+            ->execute(str_repeat('a', 64), new IdempotencyKey(str_repeat('b', 32)), $this->input())
+        ;
+    }
+
     public function testChangedPriceReturnsFreshQuoteForConfirmation(): void
     {
         $receipts = $this->createStub(CheckoutReceipts::class);
@@ -126,6 +163,7 @@ final class OrderCheckoutUseCaseTest extends TestCase
         ?CreateQuoteUseCase $freshQuotes = null,
         ?OrderPlacement $placement = null,
         ?OrderTransactionInterface $transaction = null,
+        ?ConsentRecorderInterface $consents = null,
     ): CreateOrderUseCase {
         if (null === $gallery) {
             $gallery = $this->createStub(GalleryAccessInterface::class);
@@ -145,6 +183,7 @@ final class OrderCheckoutUseCaseTest extends TestCase
             $freshQuotes ?? $this->createStub(CreateQuoteUseCase::class),
             $placement ?? $this->createStub(OrderPlacement::class),
             $transaction,
+            $consents ?? $this->createStub(ConsentRecorderInterface::class),
         );
     }
 
@@ -154,6 +193,7 @@ final class OrderCheckoutUseCaseTest extends TestCase
             str_repeat('c', 64),
             [new QuoteLineInputDto('11111111-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 1)],
             new OrderBuyerInputDto('Анна', '+79001234567', 'buyer@example.test', '', null, true),
+            [new AcceptedDocumentDto('buyer-consent', '2026-09-25'), new AcceptedDocumentDto('offer', '2026-09-25')],
         );
     }
 

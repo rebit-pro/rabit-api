@@ -15,12 +15,15 @@ use Morefoto\Commerce\Application\Storefront\UseCase\ValidateQuoteUseCase;
 use Morefoto\Commerce\Domain\Order\Service\BuyerPolicy;
 use Morefoto\Commerce\Domain\Order\ValueObject\IdempotencyKey;
 use Morefoto\Commerce\Domain\Storefront\Exception\QuotePriceChangedException;
+use Rebit\Share\Application\Contract\Consent\ConsentRecorderInterface;
+use Rebit\Share\Application\Contract\Consent\Enum\ConsentContextEnum;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /** Оформляет заказ покупателя из проверенного серверного расчёта одной атомарной операцией.
  * Повтор с тем же Idempotency-Key возвращает исходный заказ даже после закрытия приёма; новый заказ создаётся
- * только в открытой группе по актуальному расчёту, а изменение цены возвращает новый расчёт для подтверждения.
+ * только в открытой группе по актуальному расчёту и с принятыми действующими редакциями согласия и оферты,
+ * а изменение цены возвращает новый расчёт для подтверждения.
  */
 final readonly class CreateOrderUseCase
 {
@@ -33,6 +36,7 @@ final readonly class CreateOrderUseCase
         private CreateQuoteUseCase $freshQuotes,
         private OrderPlacement $placement,
         private OrderTransactionInterface $transaction,
+        private ConsentRecorderInterface $consents,
     ) {}
 
     public function execute(string $galleryToken, IdempotencyKey $key, CreateOrderInputDto $input): CreatedOrderOutputDto
@@ -65,6 +69,8 @@ final readonly class CreateOrderUseCase
         $buyer = $input->buyer;
         $accepted = $this->buyers->accept($buyer->name, $buyer->phone, $buyer->email, $buyer->comment, $buyer->receiptChannel, $buyer->reviewed, $this->availability->receiptChannels());
         $placed = $this->placement->place($this->quotes->executeWithinTransaction($galleryToken, $input->quoteToken, $input->lines), $accepted, $galleryToken, $input->quoteToken);
+        // A missing or outdated document rolls the whole checkout back together with the order.
+        $this->consents->record(ConsentContextEnum::ORDER, $placed->orderId, $input->consents);
         $this->receipts->complete($galleryToken, $key, $placed);
 
         return $placed->created;

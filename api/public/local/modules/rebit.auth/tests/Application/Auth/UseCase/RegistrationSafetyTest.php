@@ -33,6 +33,8 @@ use Rebit\Auth\Tests\Application\Access\SequenceAccessTokens;
 use Rebit\Auth\Tests\Application\Access\SequenceSessionTokens;
 use Rebit\Auth\Tests\Support\FrozenClock;
 use Rebit\Auth\Tests\Support\ImmediateTransaction;
+use Rebit\Auth\Tests\Support\RecordingConsents;
+use Rebit\Share\Application\Contract\Consent\Dto\AcceptedDocumentDto;
 use Rebit\Share\Shared\Exception\HttpException;
 
 require_once __DIR__ . '/../../Access/AccessFakes.php';
@@ -130,10 +132,11 @@ final class RegistrationSafetyTest extends TestCase
             new SessionIssuer(new SequenceSessionTokens(), $sessions, $clock, 24),
             $clock,
             new ImmediateTransaction(),
+            new RecordingConsents(),
         );
 
         try {
-            $accept->execute(new AcceptInvitationInputDto($mailer->sent[0][1]->token, 'someone else password'));
+            $accept->execute(new AcceptInvitationInputDto($mailer->sent[0][1]->token, 'someone else password', [new AcceptedDocumentDto('staff-consent', '2026-09-25')]));
             self::fail('A stale invitation must not change the password of an active account.');
         } catch (HttpException $error) {
             self::assertSame('LINK_USED', $error->getMessage());

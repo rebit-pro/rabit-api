@@ -38,7 +38,9 @@ use Morefoto\Commerce\Presentation\Controller\StaffOrderController;
 use Morefoto\Commerce\Presentation\Order\OrderInputMapper;
 use Morefoto\Commerce\Presentation\Order\OrderResultMapper;
 use Morefoto\Commerce\Presentation\Storefront\StorefrontMapper;
+use Rebit\Share\Presentation\Consent\AcceptedDocumentInputMapper;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
+use Rebit\Share\Application\Contract\Consent\ConsentRecorderInterface;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Contracts\Commerce\ChildOrdersInterface;
 use Rebit\Share\Contracts\Commerce\OrderPaymentInterface;
@@ -150,6 +152,7 @@ return [
             ServiceLocator::getInstance()->get(CreateQuoteUseCase::class),
             ServiceLocator::getInstance()->get(OrderPlacement::class),
             ServiceLocator::getInstance()->get(OrderTransactionInterface::class),
+            ServiceLocator::getInstance()->get(ConsentRecorderInterface::class),
         ],
     ],
     GetBuyerOrderUseCase::class => [
@@ -185,6 +188,7 @@ return [
         'className' => OrderInputMapper::class,
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(StorefrontMapper::class),
+            ServiceLocator::getInstance()->get(AcceptedDocumentInputMapper::class),
         ],
     ],
     OrderController::class => [

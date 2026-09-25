@@ -10,6 +10,7 @@ return [
         'value' => array_merge(
             require __DIR__ . '/di/Layers/Infrastructure.php',
             require __DIR__ . '/di/Layers/Messenger.php',
+            require __DIR__ . '/di/Layers/Presentation.php',
             require __DIR__ . '/di/audit.php',
             require __DIR__ . '/di/file.php',
             require __DIR__ . '/di/telegram.php',

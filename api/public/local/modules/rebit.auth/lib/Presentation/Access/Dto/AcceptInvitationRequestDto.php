@@ -9,14 +9,18 @@ use Rebit\Share\Application\Interface\RequestDtoInterface;
 use Rebit\Share\Infrastructure\Controller\Request\Attribute\JsonBody;
 use Rebit\Share\Infrastructure\Controller\Request\Attribute\RouteParameter;
 use Rebit\Share\Infrastructure\Controller\Request\Attribute\StrictRequest;
+use Rebit\Share\Presentation\Consent\Dto\AcceptedDocumentRequestDto;
 
 #[JsonBody]
 #[StrictRequest]
 final readonly class AcceptInvitationRequestDto implements RequestDtoInterface
 {
+    /** @param list<AcceptedDocumentRequestDto> $consents */
     public function __construct(
         public string $password,
         #[RouteParameter(name: 'token', pattern: AccessInputMapper::TOKEN_PATTERN, errorCode: 'LINK_NOT_FOUND', errorStatus: 404)]
         public string $token,
+        /** @var AcceptedDocumentRequestDto[] */
+        public array $consents = [],
     ) {}
 }
