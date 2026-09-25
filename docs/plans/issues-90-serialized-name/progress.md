@@ -6,7 +6,7 @@
 - Ветка: `codex/issues-90-serialized-name`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-90-serialized-name`. Общий checkout `/home/user/rabit-api` не трогать.
 - Base: `origin/main` `94502a1` (merge PR #87).
-- Issue: [#90](https://github.com/rebit-pro/rabit-api/issues/90). PR: создаётся после push (ссылка — в описании ветки на GitHub).
+- Issue: [#90](https://github.com/rebit-pro/rabit-api/issues/90). PR: [#100](https://github.com/rebit-pro/rabit-api/pull/100), head с кодом — `ffc6b5e`.
 - Документация: [план](plan.md).
 - Завершено: план, тест, исправление, быстрые проверки (T01–T07).
 - Сейчас: ожидание review PR.
@@ -56,3 +56,7 @@
 - Тест `rebit.share/tests/Infrastructure/Dto/Metadata/DtoMetadataServiceSerializedNameTest.php`.
 - php-cs-fixer переупорядочил data provider и убрал пробел в `static function(`; повторный dry-run — 0 файлов.
 - Полный PHPUnit — OK (860 tests), **0 deprecations после**; phpstan, phplint — OK (T04–T07).
+
+### 2026-09-25 — публикация
+
+- Push `codex/issues-90-serialized-name`, создан PR #100 в `main` (`Closes #90`). Не сливать до review; gate T08 — PENDING.
