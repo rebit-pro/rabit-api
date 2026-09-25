@@ -26,13 +26,14 @@
   <figure class="shot"><a href="/guide/img/p01-gallery-desktop.webp" target="_blank"><img src="/guide/img/p01-gallery-desktop.webp" width="1280" height="800" alt="Галерея группы на компьютере"></a><figcaption>Так галерея выглядит на компьютере</figcaption></figure>
 
   <nav class="toc" aria-label="Шаги">
-    <b>Пять шагов</b>
+    <b>Шесть шагов</b>
     <ol>
       <li><a href="#open">Открыть ссылку</a></li>
       <li><a href="#code">Найти своего ребёнка</a></li>
       <li><a href="#choose">Выбрать фото и продукцию</a></li>
       <li><a href="#cart">Проверить корзину</a></li>
       <li><a href="#checkout">Оформить заказ и сохранить ссылку</a></li>
+      <li><a href="#pay">Оплатить картой</a></li>
     </ol>
   </nav>
 
@@ -83,13 +84,28 @@
     <li class="step" id="checkout">
       <div class="step-head"><div><h2>Оформить заказ и сохранить ссылку</h2><p class="muted">Экран «Оформление заказа»</p></div></div>
       <div class="step-body">
-        <p>Заполните <span class="ui">Имя покупателя</span>, телефон (обязателен) и <span class="ui">Email</span>, комментарий — по желанию. Отметьте <span class="ui">Состав и демонстрационные условия проверены</span> и нажмите <span class="ui">Создать тестовый заказ</span>. Деньги не списываются.</p>
+        <p>Заполните <span class="ui">Имя покупателя</span>, телефон (обязателен) и <span class="ui">Email</span>, комментарий — по желанию. Отметьте <span class="ui">Состав и демонстрационные условия проверены</span> и нажмите <span class="ui">Создать тестовый заказ</span>. Заказ сохранится, но ещё не будет оплачен.</p>
         <p>Откроется страница заказа с номером <code>MF-…</code>, суммой и статусами «Оплата: Не оплачено», «Изготовление: Не начато». Нажмите <span class="ui">Скопировать личную ссылку</span> и сохраните её — только она открывает заказ.</p>
         <div class="shots">
           <figure class="shot phone"><a href="/guide/img/p06-checkout.webp" target="_blank"><img src="/guide/img/p06-checkout.webp" width="600" height="1298" loading="lazy" alt="Оформление заказа, кнопка Создать тестовый заказ"></a><figcaption>Кнопка «Создать тестовый заказ»</figcaption></figure>
-          <figure class="shot phone"><a href="/guide/img/p07-order.webp" target="_blank"><img src="/guide/img/p07-order.webp" width="600" height="1298" loading="lazy" alt="Страница заказа, кнопка Скопировать личную ссылку"></a><figcaption>Кнопка «Скопировать личную ссылку»</figcaption></figure>
+          </div>
+        <p class="note warn"><span class="k">Сохраните ссылку</span><span>Личная ссылка заказа нужна, чтобы вернуться к оплате и следить за заказом. Номер заказа доступа не даёт. Выбрать, куда прислать чек, пока нельзя.</span></p>
+      </div>
+    </li>
+
+    <li class="step" id="pay">
+      <div class="step-head"><div><h2>Оплатить картой</h2><p class="muted">На странице заказа</p></div></div>
+      <div class="step-body">
+        <p>На странице заказа указана сумма «К оплате». Нажмите <span class="ui">Оплатить: Банковская карта</span> — откроется защищённая страница ЮKassa.</p>
+        <figure class="shot phone"><a href="/guide/img/p07-order.webp" target="_blank"><img src="/guide/img/p07-order.webp" width="600" height="1298" loading="lazy" alt="Страница заказа, кнопка Оплатить: Банковская карта"></a><figcaption>Кнопка «Оплатить: Банковская карта»</figcaption></figure>
+        <p>Введите <span class="ui">Номер карты</span>, <span class="ui">Срок действия</span> и <span class="ui">Код</span> и нажмите <span class="ui">Заплатить</span>. После оплаты нажмите <span class="ui">Вернуться на сайт</span>.</p>
+        <p class="note warn"><span class="k">Сейчас магазин тестовый</span><span>Настоящие деньги не списываются. Платите тестовой картой <code>5555 5555 5555 4444</code>, срок <code>12/30</code>, код <code>123</code>; вверху страницы будет плашка «Платёж тестовой картой».</span></p>
+        <div class="shots">
+          <figure class="shot phone"><a href="/guide/img/p08-yookassa.webp" target="_blank"><img src="/guide/img/p08-yookassa.webp" width="600" height="1298" loading="lazy" alt="Страница ЮKassa с тестовой картой, кнопка Заплатить"></a><figcaption>Кнопка «Заплатить» на странице ЮKassa</figcaption></figure>
+          <figure class="shot phone"><a href="/guide/img/p09-payment-return.webp" target="_blank"><img src="/guide/img/p09-payment-return.webp" width="600" height="1298" loading="lazy" alt="Страница Заказ оплачен, кнопка Вернуться к заказу"></a><figcaption>«Заказ оплачен» → «Вернуться к заказу»</figcaption></figure>
+          <figure class="shot phone"><a href="/guide/img/p10-order-paid.webp" target="_blank"><img src="/guide/img/p10-order-paid.webp" width="600" height="1298" loading="lazy" alt="Страница заказа со статусом Оплачено"></a><figcaption>Статус «Оплачено»</figcaption></figure>
         </div>
-        <p class="note warn"><span class="k">Пока не работает</span><span>Оплата и выбор, куда прислать чек, появятся вместе с подключением ЮKassa.</span></p>
+        <p>Если появилось «Оплата не прошла» — вернитесь к заказу и оплатите ещё раз. Если ушли со страницы ЮKassa, не заплатив, откройте заказ по личной ссылке и продолжите оплату.</p>
       </div>
     </li>
   </ol>
