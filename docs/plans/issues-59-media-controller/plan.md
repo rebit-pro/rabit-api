@@ -13,7 +13,7 @@
 
 - Ветка: `codex/issues-59-media-controller`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-59-media-controller`.
-- Base: `origin/main` `d92b4c4` (merge PR #82).
+- Base: `origin/main` `5dcb0e0` (merge PR #84; ветка создана от `d92b4c4` и перебазирована до push, пересечений с #84 нет).
 
 ## Установленные факты (main d92b4c4)
 
@@ -74,11 +74,11 @@
 
 ## Checklist
 
-- [ ] S1. План и прогресс.
-- [ ] S2. `rebit.share`: multipart-маппер, атрибуты, `mixed[]`, `acceptedJson()`, тесты.
-- [ ] S3. `morefoto.media`: DTO, mappers, `UploadPhotoInputDto`, контроллеры, routes, DI, удаление `MediaController`/`MediaRequestFactory`.
-- [ ] S4. Unit и архитектурные тесты media.
-- [ ] S5. Быстрые проверки: PHPUnit, PHPStan, phplint, php-cs-fixer по изменённым файлам.
+- [x] S1. План и прогресс.
+- [x] S2. `rebit.share`: multipart-маппер, атрибуты, `mixed[]`, `acceptedJson()`, тесты.
+- [x] S3. `morefoto.media`: DTO, mappers, `UploadPhotoInputDto`, контроллеры, routes, DI, удаление `MediaController`/`MediaRequestFactory`.
+- [x] S4. Unit и архитектурные тесты media.
+- [x] S5. Быстрые проверки: PHPUnit, PHPStan, phplint, php-cs-fixer по изменённым файлам.
 - [ ] S6. Коммиты, push, PR в `main` (`Closes #59`), без merge.
 - [ ] S7. После review — полный `make test-e2e` (PENDING).
 
@@ -108,6 +108,6 @@
 | T12 | result DTO MED-03…06 | JSON совпадает с сериализацией прежних output DTO | PHPUnit |
 | T13 | `@var mixed[]` в strict JSON-DTO | элементы не приводятся, объект вместо списка → `VALIDATION_FAILED` | PHPUnit |
 | T14 | архитектура `PhotoUploadController`, `PhotoDetailController`, `GroupMediaController` | нет нарушений `CleanControllerSource`; чтение и разметка без `UploadPhotoUseCase`/`MediaPublisherInterface`; канал логов `media` | PHPUnit |
-| T15 | `acceptedJson()` | 202 и тело DTO | PHPUnit |
+| T15 | `acceptedJson()` и отсутствие `setStatus` в concrete controller | загрузка отвечает общим helper | PHPUnit (архитектурный тест) |
 | T16 | статический анализ и стиль | PHPStan OK, phplint OK, php-cs-fixer 0 файлов | docker-команды из progress |
 | T17 | live E2E `zz-media`, `zzzzzz-transfers`, `zzzz-links`, `zzz-handoff` | зелёные без изменения ожиданий | `make test-e2e` после review |
