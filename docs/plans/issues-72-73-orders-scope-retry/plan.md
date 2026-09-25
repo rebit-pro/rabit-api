@@ -89,14 +89,14 @@
 
 ## Checklist
 
-- [ ] Прочитать `AGENTS.md`, `CLAUDE.md`, issues #72/#73, прецедент issues-39-41.
-- [ ] #72: правило `staffScopeRetry` и unit-тест.
-- [ ] #72: `useStaffOrderScope` (`retry`, `listing`, состояния), кнопка «Повторить» в экране.
-- [ ] #72: live E2E в `zzzzz-orders.spec.ts` (написан, прогон после review).
-- [ ] #72: стаб-прогон на ветке и на `src` из `origin/main` (дефект воспроизводится), скриншоты desktop/mobile.
-- [ ] #73: замер по Resource Timing в тесте #33.
-- [ ] #73: стаб-прогон замера с лимитом 2 и 3.
-- [ ] Быстрые проверки: `npm run check`, `npm run test:commerce`.
+- [x] Прочитать `AGENTS.md`, `CLAUDE.md`, issues #72/#73, прецедент issues-39-41.
+- [x] #72: правило `staffScopeRetry` и unit-тест.
+- [x] #72: `useStaffOrderScope` (`retry`, `listing`, состояния), кнопка «Повторить» в экране.
+- [x] #72: live E2E в `zzzzz-orders.spec.ts` (написан, прогон после review).
+- [x] #72: стаб-прогон на ветке и на `src` из `origin/main` (дефект воспроизводится), скриншоты desktop/mobile.
+- [x] #73: замер по Resource Timing в тесте #33.
+- [x] #73: стаб-прогон замера с лимитом 2 и 3.
+- [x] Быстрые проверки: `npm run check`, `npm run test:commerce`.
 - [ ] Commit, push, PR в `main` без merge.
 - [ ] После review без блокеров: полный `make test-e2e`, 5 прогонов группы `a`.
 
