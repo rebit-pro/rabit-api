@@ -78,13 +78,13 @@
 
 - [x] Прочитать CLAUDE.md, AGENTS.md, #61, план и журнал OPS-e2e-optimization.
 - [x] План и журнал.
-- [ ] П.6: `.gitignore`.
-- [ ] П.1: метки ресурсов, `prune`, `make e2e-prune`, unit-тесты, dry-run.
-- [ ] П.4: возврат владельца в `stop()`.
-- [ ] П.5: таймаут браузера с bench.
-- [ ] П.2: `xdebug.ini` без двойной загрузки и лога; проверка на существующем образе с подменённым ini.
-- [ ] П.3: разделение F2, `groups.json`, `VERIFIERS`, eslint, `npm run check`.
-- [ ] Документация: `frontend/docs/e2e-optimization.md`, `docs/waves/a8/README.md` при необходимости.
+- [x] П.6: `.gitignore`.
+- [x] П.1: метки ресурсов, `prune`, `make e2e-prune`, unit-тесты, dry-run.
+- [x] П.4: возврат владельца в `stop()`.
+- [x] П.5: таймаут браузера с bench.
+- [x] П.2: `xdebug.ini` без двойной загрузки и лога; проверка на существующем образе с подменённым ini.
+- [x] П.3: разделение F2, `groups.json`, `VERIFIERS`, eslint, `npm run check`.
+- [x] Документация: `frontend/docs/e2e-optimization.md`, `docs/waves/a8/README.md` при необходимости.
 - [ ] Коммиты по пунктам, push, PR `Refs #61`.
 - [ ] Полный gate после ревью (PENDING).
 
