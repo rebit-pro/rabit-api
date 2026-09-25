@@ -144,6 +144,8 @@ export interface CheckoutBody {
   lines: { assignmentId: string; productId: string; quantity: number }[];
   buyer: { name: string; phone: string; email: string; comment: string; reviewed: boolean };
   quoteToken: string;
+  /** Current versions of the buyer consent and the offer, accepted with separate checkboxes. */
+  consents: { code: string; version: string }[];
 }
 export interface ApiProblem {
   status: number | null;

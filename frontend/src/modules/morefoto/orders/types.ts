@@ -31,7 +31,8 @@ export interface BuyerFields {
 export interface CheckoutDraft extends BuyerFields {
   requestId: string;
 }
-export type BuyerErrors = Partial<Record<keyof BuyerFields, string>>;
+/** consent and offer are the two separate checkboxes of a live checkout. */
+export type BuyerErrors = Partial<Record<keyof BuyerFields | 'consent' | 'offer', string>>;
 export interface OrderSnapshot {
   physicalDelivery?: { readyAt?: string; transferredAt?: string; number?: string };
   id: string;

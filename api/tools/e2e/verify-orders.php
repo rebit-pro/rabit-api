@@ -82,6 +82,13 @@ if (0 !== $scalar('SELECT COUNT(*) FROM (SELECT QUOTE_HASH FROM mf_order GROUP B
 }
 $proof[] = 'one order per quote and receipt';
 
+// OPS legal: every order carries exactly the buyer consent and the offer; rejected checkouts left no consent behind.
+if (0 !== $scalar("SELECT COUNT(*) FROM mf_order o WHERE 2 <> (SELECT COUNT(DISTINCT c.DOCUMENT_CODE) FROM mf_legal_consent c WHERE c.CONTEXT='order' AND c.SUBJECT_ID=o.ID AND c.DOCUMENT_CODE IN ('buyer-consent','offer'))")
+    || 0 !== $scalar("SELECT COUNT(*) FROM mf_legal_consent c LEFT JOIN mf_order o ON o.ID=c.SUBJECT_ID WHERE c.CONTEXT='order' AND o.ID IS NULL")) {
+    throw new RuntimeException('Every order must keep its accepted consent and offer, and nothing else.');
+}
+$proof[] = 'consent and offer recorded per order';
+
 // 3. Personal key lifecycle: revoke, expiry, reissue and independence from the gallery link.
 $buyer = $services->get(GetBuyerOrderUseCase::class);
 $keys = $services->get(OrderAccessKeys::class);

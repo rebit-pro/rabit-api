@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import type { GallerySnapshot } from '../../gallery/types';
-defineProps<{ gallery: GallerySnapshot }>();
+import { documentPath, sellerLine } from '../../legal/rules';
+import type { LegalDocument, Seller } from '../../legal/types';
+import { isMockApiEnabled } from '@/mocks/config';
+defineProps<{ gallery: GallerySnapshot; seller: Seller | null; offer: LegalDocument | null }>();
 </script>
 <template>
   <section class="mf-panel checkout-terms" aria-labelledby="checkout-terms-title">
@@ -27,16 +30,22 @@ defineProps<{ gallery: GallerySnapshot }>();
         </dd>
       </div>
     </dl>
-    <details>
+    <details v-if="isMockApiEnabled">
       <summary>Продавец и демонстрационные условия</summary>
       <p>
         Это тестовое оформление MoreFoto: цены и предложения служат для проверки интерфейса, платежи и отправка сообщений не выполняются.
-      </p>
-      <p>
-        Продавец, реквизиты и окончательные условия покупки будут добавлены перед запуском продаж. Сейчас используйте вымышленные контакты.
-        Заполнение сохраняется только в этом браузере.
+        Используйте вымышленные контакты. Заполнение сохраняется только в этом браузере.
       </p>
     </details>
+    <div v-else class="checkout-terms__seller" data-testid="checkout-seller">
+      <p>Продавец: {{ sellerLine(seller) }}.</p>
+      <p>
+        Условия покупки, получения и возврата — в
+        <a v-if="offer" :href="documentPath(offer.code, offer.version)" target="_blank" rel="noopener">публичной оферте</a
+        ><span v-else>публичной оферте</span>. Контакты из формы хранятся в этом браузере не дольше 7 дней и удаляются после оформления
+        заказа.
+      </p>
+    </div>
   </section>
 </template>
 <style scoped>
@@ -67,6 +76,20 @@ defineProps<{ gallery: GallerySnapshot }>();
 }
 .checkout-terms summary {
   cursor: pointer;
+  color: var(--mf-color-link);
+}
+.checkout-terms__seller {
+  border-top: 1px solid var(--mf-color-border);
+  margin-top: 24px;
+  padding-top: 18px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--mf-color-text-secondary);
+}
+.checkout-terms__seller p + p {
+  margin-top: 8px;
+}
+.checkout-terms__seller a {
   color: var(--mf-color-link);
 }
 .checkout-terms details p {

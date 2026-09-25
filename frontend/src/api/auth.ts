@@ -80,8 +80,8 @@ export const accessApi = {
   invitation(token: string): Promise<InvitationPreview> {
     return api.get('/api/v1/auth/invitations/' + link(token)).then((r) => r.data);
   },
-  acceptInvitation(token: string, password: string): Promise<LoginResponse> {
-    return api.post('/api/v1/auth/invitations/' + link(token) + '/accept', { password }).then((r) => r.data);
+  acceptInvitation(token: string, password: string, consents: { code: string; version: string }[]): Promise<LoginResponse> {
+    return api.post('/api/v1/auth/invitations/' + link(token) + '/accept', { password, consents }).then((r) => r.data);
   },
   requestPasswordReset(email: string): Promise<void> {
     return api.post('/api/v1/auth/password-resets', { email }).then(() => undefined);
