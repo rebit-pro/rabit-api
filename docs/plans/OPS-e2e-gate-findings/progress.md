@@ -2,9 +2,9 @@
 
 ## Точка продолжения
 
-- Ветка `codex/ops-e2e-gate-findings`, base `main` `5dcb0e0` (после rebase; исходный base `d92b4c4`). Worktree `/home/user/rabit-api-worktrees/ops-e2e-gate-findings`. Issue [#61](https://github.com/rebit-pro/rabit-api/issues/61). PR [#87](https://github.com/rebit-pro/rabit-api/pull/87) OPEN, `Refs #61`: часть пунктов ждёт решения. Не сливать до ревью и полного gate.
+- Ветка `codex/ops-e2e-gate-findings`, base `main` `5dcb0e0` (после rebase; исходный base `d92b4c4`). Worktree `/home/user/rabit-api-worktrees/ops-e2e-gate-findings`. Issue [#61](https://github.com/rebit-pro/rabit-api/issues/61). PR [#87](https://github.com/rebit-pro/rabit-api/pull/87), `Refs #61`: review без блокеров, gate PASS, сливается. Base обновлён до `11df16a` (G1 и #86; merge `11a0886`).
 - Завершено: пункты 1, 3, 4, 5, 6; в пункте 2 — двойная загрузка и лог. Быстрые проверки T01–T09 — PASS.
-- Следующий шаг: ревью PR, затем полный gate `make test-e2e` (T10, T11) и проверка `prune` против живого стенда (T12).
+- Следующий шаг: по #61 остаются разовая очистка ресурсов 12–13.09 и томов `rabit-a8-*` (согласие пользователя), T12 и замеры п. 7; после пересборки dev-образов — локальная проверка Xdebug `mode=off`.
 - Открытые решения пользователя:
   - п. 7 — резервы ускорения, только после замеров;
   - разовое удаление ресурсов 12–13.09 (`make e2e-prune E2E_PRUNE_APPLY=1`) и томов `rabit-a8-1789211965-node/runtime` (у них нет метки `rabit.browser_e2e`, нужна ручная команда `docker volume rm rabit-a8-1789211965-node rabit-a8-1789211965-runtime`).
@@ -49,6 +49,18 @@
   - `docker compose -f docker-compose.yml --env-file .env.example config` — `XDEBUG_MODE: "off"` у всех PHP-сервисов.
 - Эффект в локальном окружении — после пересборки dev-образов (`docker compose build api-php-fpm api-php-cli`).
 
+### 2026-09-25 — merge `main` с G1 и полный gate
+
+- `git merge origin/main` (`11df16a`: G1 PR #80 и #86) — два конфликта, разрешены с сохранением обеих сторон (`11a0886`):
+  - `frontend/e2e/live/groups.json`: группа `b` — `z-links-preparation` первым и `zzzzzzzzz-payments` последним (11 спеков);
+  - `tools/run-browser-e2e.py`: запуск браузера получает и `E2E_YOOKASSA=1` (G1), и `timeout=browser_timeout(group)` (п. 5).
+  - `python3 -m py_compile tools/run-browser-e2e.py`, `python3 -m unittest discover -s tools/tests` — 18/18 OK.
+- Gate `rabit-e2e-9011c70baab1` (446.1 с) — PASS, exit 0:
+  - группа `a` 64/64, группа `b` 46/46;
+  - `z-links-preparation` ✓ 5.3 с, `zzzz-links` ✓ 17.4 с (без ожидания полной минуты);
+  - все верификаторы PASS, включая `verify-links.php` и `verify-payments.php`.
+- `find frontend api/var/e2e/rabit-e2e-9011c70baab1 ! -user $(id -u)` — 0 файлов.
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда | Доказательство |
@@ -63,6 +75,6 @@
 | T08 | PASS | 2026-09-25 | `docker run --rm --network none --mount type=bind,source=<worktree>/api/docker/development/php/conf.d/xdebug.ini,target=/usr/local/etc/php/conf.d/xdebug.ini,readonly --entrypoint php rabit-api-php-{cli,fpm}:d1-local -r …` | Xdebug загружен, нет `already loaded` и `[Log Files]`; с `XDEBUG_MODE=off` — без предупреждений. После решения A (`9ae51f7`) по умолчанию режимов нет и попыток подключения нет; `XDEBUG_MODE=debug,develop` включает отладку |
 | T09 | PASS | 2026-09-25 | `docker run --rm --network none -v <worktree>/frontend:/app -v rabit-issues262728-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npx eslint --fix <3 файла> && npm run check'` | exit 0: lint, stylelint, typecheck, typecheck:e2e, 27 unit |
 | — | PASS | 2026-09-25 | `restore_owner()` на scratch-каталоге с root-файлами, созданными контейнером | `ownerRestored True`; root-файлы в `dist`, `report`, `report/g` возвращены, содержимое `node_modules` не тронуто |
-| T10 | PENDING | | `make test-e2e` | полный gate после ревью |
-| T11 | PENDING | | `find frontend api/var/e2e/<run> ! -user $(id -u)` | после T10 |
-| T12 | PENDING | | `make e2e-up` в одном worktree, `make e2e-prune E2E_PRUNE_APPLY=1` из другого | после ревью, с согласия пользователя |
+| T10 | PASS | 2026-09-25 | `make test-e2e` `9011c70baab1` | exit 0, a 64/64, b 46/46; `zzzz-links` 17.4 с, `verify-links` PASS |
+| T11 | PASS | 2026-09-25 | `find frontend api/var/e2e/rabit-e2e-9011c70baab1 ! -user $(id -u)` | 0 файлов |
+| T12 | PENDING | | `make e2e-up` в одном worktree, `make e2e-prune E2E_PRUNE_APPLY=1` из другого | с согласия пользователя; вне merge-gate, `Refs #61` |

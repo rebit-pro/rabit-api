@@ -86,7 +86,7 @@
 - [x] П.3: разделение F2, `groups.json`, `VERIFIERS`, eslint, `npm run check`.
 - [x] Документация: `frontend/docs/e2e-optimization.md`, `docs/waves/a8/README.md` при необходимости.
 - [x] Коммиты по пунктам, push, PR `Refs #61` — [#87](https://github.com/rebit-pro/rabit-api/pull/87).
-- [ ] Полный gate после ревью (PENDING).
+- [x] Полный gate после ревью (PASS 2026-09-25).
 
 ## Критерии приёмки
 
