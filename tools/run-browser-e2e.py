@@ -138,8 +138,27 @@ def stop_jobs(state):
             subprocess.run(["docker", "rm", "--force", name], capture_output=True)
 
 
+def restore_owner(state):
+    """Node and Playwright containers run as root and write into the bind-mounted frontend and the run folder (dist,
+    reports, fixture files). Their files go back to the user, so a checkout or worktree is removable without sudo."""
+    uid, gid = os.getuid(), os.getgid()
+    if 0 == uid:
+        return
+    try:
+        job(state, "chown", "--network", "none", "--user", "0", "--mount", f"type=bind,source={ROOT / 'frontend'},target=/own/frontend",
+            "--mount", f"type=bind,source={state['report']},target=/own/report", "--entrypoint", "find", IMAGE,
+            "/own", "-path", "/own/frontend/node_modules/*", "-prune", "-o", "(", "!", "-user", str(uid), "-o", "!", "-group", str(gid), ")",
+            "-exec", "chown", "-h", f"{uid}:{gid}", "{}", "+", timeout=300)
+        state["ownerRestored"] = True
+    except Exception as error:
+        # Leftover root files never hide the result of the gate; the next run or `down` of this checkout retries.
+        state["ownerRestored"] = False
+        print("Could not return container-written files to the user: " + str(error), file=sys.stderr)
+
+
 def stop(state):
     stop_jobs(state)  # One-off containers may still use the run's networks and volumes.
+    restore_owner(state)
     errors = []
 
     def remove(kind, flag, name):
