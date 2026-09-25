@@ -6,14 +6,15 @@
 - Ветка: `codex/issues-72-73-orders-scope-retry`. Worktree: `/home/user/rabit-api-worktrees/issues-72-73-orders-scope-retry`.
   Общий checkout `/home/user/rabit-api` не трогается: там чужая ветка с незакоммиченными правками.
 - Base: `origin/main` `54bd4ab`. Код: `6042865` (#72), `b1e0495` (#73). План: `11a465d`.
-- Issues: [#72](https://github.com/rebit-pro/rabit-api/issues/72), [#73](https://github.com/rebit-pro/rabit-api/issues/73). PR: [#76](https://github.com/rebit-pro/rabit-api/pull/76), ждёт review, merge не выполнялся.
+- Issues: [#72](https://github.com/rebit-pro/rabit-api/issues/72), [#73](https://github.com/rebit-pro/rabit-api/issues/73). PR: [#76](https://github.com/rebit-pro/rabit-api/pull/76): ревью выполнено по поручению пользователя, блокеров нет; gate PASS; сливается в `main`.
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md), прецедент [issues-39-41](../issues-39-41-staff-orders/progress.md).
 - Завершено:
   - реализация #72, unit-тест правила, live E2E-сценарий в `zzzzz-orders.spec.ts` (написан, не запускался);
   - #73: замер в тесте #33 переведён на Resource Timing;
   - быстрые проверки и стаб-прогоны в Chromium зелёные.
 - Сейчас: PR #76 открыт в `main`, ждёт review пользователя.
-- Следующий шаг: review пользователя. После review без блокеров — полный `make test-e2e` и 5 прогонов группы `a`.
+- Base обновлён: `origin/main` `4621ad9` влит merge-коммитом `0b011c1`.
+- Следующий шаг: деплой — отдельным решением пользователя.
 - Блокеров нет. Открытых решений нет.
 - Рабочее дерево: чистое после коммита журнала. Скрипты стабов и скриншоты вне репозитория (scratchpad сессии,
   `stub72/`).
@@ -84,20 +85,30 @@
 - `git push -u origin codex/issues-72-73-orders-scope-retry`, `gh pr create --base main`:
   [#76](https://github.com/rebit-pro/rabit-api/pull/76). Merge не выполнялся.
 
+### 2026-09-25 — ревью и gate
+
+- Пользователь поручил ревью простых PR выполнять самостоятельно: блокирующие замечания — комментарии в тредах PR, неблокирующие — отдельные issues.
+- Ревью: блокирующих нет, итог — комментарий в PR #76. Неблокирующее: тот же `request.timing()` в `zz-media-bench.spec.ts` → [#77](https://github.com/rebit-pro/rabit-api/issues/77).
+- Base обновлён до `4621ad9` (PR #74 и его выкатка), конфликтов нет.
+- Полный gate `rabit-e2e-f4841cd93bde` (329.6 с) — PASS, exit 0:
+  - группа `a` 64/64, группа `b` 43/43, «#72…» ✓;
+  - все верификаторы PASS, включая `verify-payment-costs.php`.
+- Пять прогонов `E2E_GROUPS=a` (`5848ca604886`, `cbf5b3e27eb1`, `1b5d03555fa5`, `d5b8ff04bfb0`, `22262204d3ce`) — 5/5 exit 0, по 64/64, «#33» ✓ в каждом.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда | Доказательство |
 |---|---|---|---|---|
 | T01 | PASS | 2026-09-25 | `npm run test:commerce` | «a scope retry repeats only failed sources…», 196/196 |
-| T02 | PASS (стаб); live PENDING | 2026-09-25 | `scope-retry.stub.mjs`; live E2E после review | повтор восстанавливает учреждения, сообщение скрыто |
-| T03 | PASS (стаб); live PENDING | 2026-09-25 | то же | группы единственного учреждения после повтора |
-| T04 | PASS (стаб); live PENDING | 2026-09-25 | то же | `groupId` в URL и в «Группа» сохранён |
+| T02 | PASS (стаб + live `f4841cd93bde`) | 2026-09-25 | `scope-retry.stub.mjs`; live E2E после review | повтор восстанавливает учреждения, сообщение скрыто |
+| T03 | PASS (стаб + live `f4841cd93bde`) | 2026-09-25 | то же | группы единственного учреждения после повтора |
+| T04 | PASS (стаб + live `f4841cd93bde`) | 2026-09-25 | то же | `groupId` в URL и в «Группа» сохранён |
 | T05 | PASS (стаб) | 2026-09-25 | то же | `dblclick` при задержке — один новый запрос |
 | T06 | PASS (дефект воспроизведён) | 2026-09-25 | `MODE=main`, `src` из `origin/main` | нет «Повторить», «Найти» и повторный выбор не повторяют запросы |
 | T07 | PASS (стаб) | 2026-09-25 | `scope-retry.stub.mjs` | 1280/390 px без прокрутки, скриншоты `stub72/out/` |
-| T08 | PASS (стаб); live PENDING | 2026-09-25 | `upload-overlap.stub.mjs` `LIMIT=2 RUNS=5`; live группа `a` ×5 после review | 10 из 12 записей, пик 2, 5/5 |
+| T08 | PASS (стаб + live группа `a` ×5) | 2026-09-25 | `upload-overlap.stub.mjs` `LIMIT=2 RUNS=5`; live группа `a` ×5 после review | 10 из 12 записей, пик 2, 5/5 |
 | T09 | PASS (стаб) | 2026-09-25 | `upload-overlap.stub.mjs` `LIMIT=3 RUNS=3` на копии с `parallel: 3` | 3/3 падают `Received: 3` |
 | T10 | PASS | 2026-09-25 | `npm run check` | exit 0 |
 | T11 | PASS | 2026-09-25 | `npm run test:commerce` | 196/196 |
 | T12 | PASS | 2026-09-25 | `git diff --stat origin/main...HEAD` | 8 файлов: план, журнал, 2 live E2E, экран, composable, правила, unit-тест; backend и очередь не затронуты |
-| T13 | PENDING | | `make test-e2e` после review, `E2E_GROUPS=a` ×5 | |
+| T13 | PASS | 2026-09-25 | `make test-e2e` `f4841cd93bde`; `E2E_GROUPS=a` ×5 | exit 0; a 64/64, b 43/43; ×5 по 64/64 |

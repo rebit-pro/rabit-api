@@ -98,7 +98,7 @@
 - [x] #73: стаб-прогон замера с лимитом 2 и 3.
 - [x] Быстрые проверки: `npm run check`, `npm run test:commerce`.
 - [x] Commit, push, PR в `main` без merge ([#76](https://github.com/rebit-pro/rabit-api/pull/76)).
-- [ ] После review без блокеров: полный `make test-e2e`, 5 прогонов группы `a`.
+- [x] После review без блокеров: полный `make test-e2e`, 5 прогонов группы `a` (PASS 2026-09-25).
 
 ## Критерии приёмки
 
