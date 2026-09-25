@@ -91,7 +91,11 @@ test('ошибки полей и серверный 422 оставляют ре�
   await login(page);
   await fillProduct(page, 'A8 Валидация', '-1');
   await page.getByTestId('admin-dialog').getByRole('button', { name: 'Сохранить', exact: true }).click();
-  await expect(page.getByText('Цена: от 0 до 21 474 836,47 ₽, до двух знаков после запятой.')).toBeVisible();
+  await expect(page.getByText('Цена: от 0 до 1 000 000 ₽, до двух знаков после запятой.')).toBeVisible();
+  // E6-DEC-02: the catalogue price is capped at 1 000 000 RUB.
+  await page.getByLabel('Цена, ₽', { exact: true }).fill('1000000,01');
+  await page.getByTestId('admin-dialog').getByRole('button', { name: 'Сохранить', exact: true }).click();
+  await expect(page.getByText('Цена: от 0 до 1 000 000 ₽, до двух знаков после запятой.')).toBeVisible();
   await page.getByLabel('Цена, ₽', { exact: true }).fill('100');
   await page.getByLabel('Описание', { exact: true }).fill('Недопустимый нулевой символ\u0000');
   await saveProduct(page, 'POST', 422);
