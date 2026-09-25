@@ -231,8 +231,7 @@ const kinds = { physical: 'Печатный товар', digital: 'Один эл
   font-size: 14px;
 }
 .payment-costs {
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--mf-color-border);
+  min-width: 0;
 }
 .payment-costs__rate {
   max-width: 220px;
