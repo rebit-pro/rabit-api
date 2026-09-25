@@ -75,6 +75,9 @@ export interface BuyerOrder {
   buyer: LiveBuyer;
   quote: LiveOrderQuote;
   paymentStatus: PaymentStatus;
+  /** G1: confirmed payment moment; late — confirmed after the group closed. */
+  paidAt: string | null;
+  latePayment: boolean;
   productionStatus: ProductionStatus;
   version: string;
   period: OrderPeriod;
@@ -95,6 +98,8 @@ export interface StaffOrder {
   buyer: LiveBuyer;
   quote: LiveOrderQuote;
   paymentStatus: PaymentStatus;
+  paidAt: string | null;
+  latePayment: boolean;
   productionStatus: ProductionStatus;
   version: string;
 }

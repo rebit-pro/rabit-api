@@ -74,6 +74,9 @@ function lastDays(days: number): void {
         <div class="staff-order__state">
           <strong>{{ money(card.quote.total) }}</strong>
           <MfStatus :tone="toneOf(paymentTone, card.paymentStatus)">{{ paymentLabels[card.paymentStatus] }}</MfStatus>
+          <span v-if="card.paidAt" class="mf-muted" data-testid="staff-order-paid-at">Оплачен {{ formatMoment(card.paidAt) }} мск</span>
+          <MfStatus v-if="card.latePayment" tone="warning" data-testid="staff-order-late">Поздняя оплата</MfStatus>
+          <RouterLink :to="{ path: '/cabinet/payments', query: { orderNumber: card.number } }" class="mf-muted">Платежи заказа</RouterLink>
           <MfStatus :tone="toneOf(productionTone, card.productionStatus)">{{ productionLabels[card.productionStatus] }}</MfStatus>
         </div>
       </header>
