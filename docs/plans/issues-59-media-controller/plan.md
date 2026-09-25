@@ -79,7 +79,7 @@
 - [x] S3. `morefoto.media`: DTO, mappers, `UploadPhotoInputDto`, контроллеры, routes, DI, удаление `MediaController`/`MediaRequestFactory`.
 - [x] S4. Unit и архитектурные тесты media.
 - [x] S5. Быстрые проверки: PHPUnit, PHPStan, phplint, php-cs-fixer по изменённым файлам.
-- [ ] S6. Коммиты, push, PR в `main` (`Closes #59`), без merge.
+- [x] S6. Коммиты, push, PR в `main` (`Closes #59`), без merge.
 - [ ] S7. После review — полный `make test-e2e` (PENDING).
 
 ## Критерии приёмки

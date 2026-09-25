@@ -6,10 +6,10 @@
 - Ветка: `codex/issues-59-media-controller`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-59-media-controller`. Общий checkout `/home/user/rabit-api` занят другой сессией, в нём не работать.
 - Base: `origin/main` `5dcb0e0` (merge PR #84). Ветка создана от `d92b4c4`, до push перебазирована; #84 меняет только frontend/docs, пересечений нет.
-- Issue: [#59](https://github.com/rebit-pro/rabit-api/issues/59). PR: создаётся (см. хронологию).
+- Issue: [#59](https://github.com/rebit-pro/rabit-api/issues/59). PR: [#86](https://github.com/rebit-pro/rabit-api/pull/86), ожидает review, не сливать.
 - Документация: [план](plan.md), прецеденты [#42](../issues-42-access-error-codes/plan.md), [#54/#55/#57](../issues-54-55-57-large-shoot/plan.md).
-- Завершено: S1–S5 — общий multipart-маппер, `mixed[]`, `acceptedJson()`; три чистых контроллера MED-03…06; удалены `MediaController` и `MediaRequestFactory`; unit и архитектурные тесты; быстрые проверки зелёные.
-- Сейчас: S6 — push и PR.
+- Завершено: S1–S6 — общий multipart-маппер, `mixed[]`, `acceptedJson()`; три чистых контроллера MED-03…06; удалены `MediaController` и `MediaRequestFactory`; unit и архитектурные тесты; быстрые проверки зелёные.
+- Сейчас: ожидание review PR #86.
 - Следующий шаг: review PR; после review без блокеров — полный `make test-e2e` (T17).
 - Блокеров нет. Открытое решение для пользователя (вне scope): ужесточать ли query MED-04 и лишние поля формы MED-03 (R7) — сейчас они игнорируются, как раньше.
 - Рабочее дерево: всё закоммичено; пустые `api/vendor`, `api/var` — точки монтирования docker-проверок, в git не попадают.
@@ -57,6 +57,10 @@
 - `vendor/bin/phpstan analyse --no-progress --memory-limit=1G` — `[OK] No errors`.
 - `vendor/bin/phplint` — `[OK] 1009 files`.
 - php-cs-fixer dry-run по 33 изменённым PHP (32 в finder, `tests/stubs` вне его): сначала 2 файла (выравнивание phpDoc, экранирование в regex теста), после `fix` — 0 из 32.
+
+### 2026-09-25 — публикация
+
+- Ветка отправлена, создан PR [#86](https://github.com/rebit-pro/rabit-api/pull/86) в `main` с `Closes #59`. Не сливается до review и E2E-gate.
 
 ## Результаты тест-кейсов
 
