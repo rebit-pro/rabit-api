@@ -41,6 +41,8 @@ VERIFIERS = [
     ("verify-access.php", None, "B4 access integration passed", ["staff", "zz-access"]),
     # B3: avatar rows and files match the browser steps.
     ("verify-avatar.php", None, "B3 avatar integration passed", ["zz-avatar"]),
+    # E6: schema, CHECK limits and migration replay after the browser switched the payment cost policy back off.
+    ("verify-payment-costs.php", None, "E6 payment cost integration passed", ["zzzzzzzz-payment-costs"]),
 ]
 # Production images have no Xdebug; the development one would try to reach a debugger on every PHP request.
 PHP_ENV = ["--env", "XDEBUG_MODE=off"]
