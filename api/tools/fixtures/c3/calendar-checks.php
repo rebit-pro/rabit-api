@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Morefoto\Organization\Application\Calendar\Contract\CalendarClockInterface;
+use Morefoto\Organization\Application\Calendar\Service\CalendarCommandValidator;
 use Morefoto\Organization\Application\Calendar\Service\GroupCalendar;
 use Morefoto\Organization\Application\Calendar\UseCase\ChangeGroupCalendarUseCase;
 use Morefoto\Organization\Application\Institution\Contract\InstitutionTransactionInterface;
@@ -180,9 +181,10 @@ return static function(array $context): void {
             $locator->get(GroupCalendarRepository::class),
             $locator->get(InstitutionOperationRepository::class),
             $clock,
+            $locator->get(CalendarCommandValidator::class),
         );
 
-        return [$provider, new ChangeGroupCalendarUseCase($provider, $access, $transaction)];
+        return [$provider, new ChangeGroupCalendarUseCase($provider, $access, $transaction, $locator->get(CalendarCommandValidator::class))];
     };
     $frozenGroup = $context['createGroup']();
     $frozenRow = $connection->query("SELECT UF_PUBLIC_ID,UF_REVISION FROM b_hlbd_mf_group WHERE ID={$frozenGroup}")->fetch();

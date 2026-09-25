@@ -5,24 +5,27 @@ declare(strict_types=1);
 namespace Morefoto\Handoff\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
-use Rebit\Share\Contracts\Access\Dto\StaffRequestActorOutputDto;
-use Rebit\Share\Contracts\Media\Dto\StaffChildOutputDto;
-use Rebit\Share\Contracts\Organization\Dto\MediaScopeOutputDto;
 
 /** @internal */
 final class StaffRequestDtoArchitectureTest extends TestCase
 {
+    /** Handoff DTOs and every shared contract DTO in rebit.share/lib/Contracts. */
     public function testWaveDtosContainOnlyReadonlyPropertiesAndEmptyConstructor(): void
     {
-        $root = dirname(__DIR__, 2) . '/lib/';
-        $classes = [StaffRequestActorOutputDto::class, StaffChildOutputDto::class, MediaScopeOutputDto::class];
-        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root)) as $file) {
-            if (!$file instanceof \SplFileInfo || !str_ends_with($file->getFilename(), 'Dto.php')) {
-                continue;
+        $classes = [];
+        foreach ([
+            'Morefoto\Handoff\\' => dirname(__DIR__, 2) . '/lib/',
+            'Rebit\Share\Contracts\\' => dirname(__DIR__, 3) . '/rebit.share/lib/Contracts/',
+        ] as $namespace => $root) {
+            foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root)) as $file) {
+                if (!$file instanceof \SplFileInfo || !str_ends_with($file->getFilename(), 'Dto.php')) {
+                    continue;
+                }
+                $classes[] = $namespace . str_replace('/', '\\', substr($file->getPathname(), strlen($root), -4));
             }
-            $classes[] = 'Morefoto\Handoff\\' . str_replace('/', '\\', substr($file->getPathname(), strlen($root), -4));
         }
-        self::assertGreaterThan(3, count($classes));
+        self::assertContains('Rebit\Share\Contracts\Organization\Dto\CalendarCommandInputDto', $classes);
+        self::assertGreaterThan(25, count($classes));
         foreach ($classes as $class) {
             $reflection = new \ReflectionClass($class);
             foreach ($reflection->getProperties() as $property) {

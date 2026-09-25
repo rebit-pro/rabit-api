@@ -10,7 +10,6 @@ use Morefoto\Organization\Domain\Calendar\ValueObject\GroupCalendar;
 use Morefoto\Organization\Infrastructure\Calendar\ServerCalendarClock;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Rebit\Share\Contracts\Organization\Dto\CalendarCommandInputDto;
 
 require_once __DIR__ . '/../bootstrap.php';
 
@@ -146,49 +145,6 @@ final class GroupCalendarTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         (new GroupCalendar())->confirmLinkSent(new \DateTimeImmutable('2026-09-11T14:30:00.123456+03:00'));
-    }
-
-    #[DataProvider('invalidCommandKeys')]
-    public function testCommandRejectsInvalidJournalKeysBeforeAnyMutation(string $key): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        new CalendarCommandInputDto('12345678-abcd-4abc-8abc-123456789abc', 1, 1, $key, 'Подтверждение');
-    }
-
-    /** @return iterable<string, array{string}> */
-    public static function invalidCommandKeys(): iterable
-    {
-        yield 'empty' => [''];
-        yield 'human readable label' => ['native-calendar-confirm'];
-        yield '31 characters' => [str_repeat('a', 31)];
-        yield '33 characters' => [str_repeat('a', 33)];
-        yield 'uppercase hex' => [str_repeat('A', 32)];
-        yield 'non hex' => [str_repeat('g', 32)];
-        yield 'space' => [str_repeat('a', 31) . ' '];
-        yield 'trailing newline' => [str_repeat('a', 32) . "\n"];
-    }
-
-    public function testCommandAcceptsThePersisted32LowerHexKeyContract(): void
-    {
-        $key = '0123456789abcdef0123456789abcdef';
-        $input = new CalendarCommandInputDto('12345678-abcd-4abc-8abc-123456789abc', 1, 1, $key, 'Подтверждение');
-        self::assertSame($key, $input->key);
-    }
-
-    #[DataProvider('nonCanonicalCommandIds')]
-    public function testCommandRejectsNonCanonicalGroupIdsBeforeDatabaseLookup(string $id): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        new CalendarCommandInputDto($id, 1, 1, str_repeat('a', 32), 'Подтверждение');
-    }
-
-    /** @return iterable<string, array{string}> */
-    public static function nonCanonicalCommandIds(): iterable
-    {
-        yield 'uppercase' => ['12345678-ABCD-4ABC-8ABC-123456789ABC'];
-        yield 'compact' => ['12345678abcd4abc8abc123456789abc'];
-        yield 'leading whitespace' => [' 12345678-abcd-4abc-8abc-123456789abc'];
-        yield 'non uuid' => ['group-1'];
     }
 
     public function testServerClockFitsUtcSecondPrecisionStorage(): void
