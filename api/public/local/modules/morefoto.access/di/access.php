@@ -115,6 +115,7 @@ return [
             ServiceLocator::getInstance()->get(InstitutionAssignmentRepository::class),
             ServiceLocator::getInstance()->get(GroupAssignmentRepository::class),
             ServiceLocator::getInstance()->get(StaffIdentityGatewayInterface::class),
+            ServiceLocator::getInstance()->get(InstitutionAccessInterface::class),
         ],
     ],
     StaffArchiveInputMapper::class => ['className' => StaffArchiveInputMapper::class],

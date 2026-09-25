@@ -22,7 +22,7 @@ final class StaffArchiveController extends AuthenticatedApiJsonController
 
     public function deleteAction(ArchiveStaffRequestDto $request): EmptyResponse
     {
-        $this->archive->execute($this->getAuthUserId(), $this->input->userId($request));
+        $this->archive->execute($this->getAuthUserId(), $this->input->bearer($request), $this->input->userId($request));
 
         return $this->noContent();
     }
