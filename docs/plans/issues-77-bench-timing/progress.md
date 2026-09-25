@@ -6,12 +6,12 @@
 - Ветка: `codex/issues-77-bench-timing`. Worktree: `/home/user/rabit-api-worktrees/issues-77-bench-timing`.
   Общий checkout `/home/user/rabit-api` не трогается.
 - Base: `origin/main` `d92b4c4`. План: `8dec16c`. Код: `29ba68d`.
-- Issue: [#77](https://github.com/rebit-pro/rabit-api/issues/77). PR: [#85](https://github.com/rebit-pro/rabit-api/pull/85).
+- Issue: [#77](https://github.com/rebit-pro/rabit-api/issues/77). PR: [#85](https://github.com/rebit-pro/rabit-api/pull/85): самостоятельное ревью без замечаний, gate и bench PASS, сливается.
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md), прецедент [issues-72-73](../issues-72-73-orders-scope-retry/progress.md).
 - Завершено: реализация, быстрые проверки, стаб-прогоны (лимит 2, лимит 3, малый буфер).
 - Сейчас: PR открыт в `main`, ждёт review. Merge не выполняется.
-- Следующий шаг: review; после review без блокеров — `make test-e2e` (T08) и bench-прогон
-  `E2E_MEDIA_BENCH=1` на изолированном стенде (T09).
+- Base обновлён: `origin/main` `5dcb0e0` влит merge-коммитом `621611a`.
+- Следующий шаг: деплой не требуется (изменены только E2E-спеки).
 - Блокеров нет. Открытых решений нет.
 - Рабочее дерево: чистое после коммита журнала. Скрипты стаба и логи — вне репозитория (scratchpad сессии, `stub77/`).
 - Следующая проверка после изменения base: команда из раздела «Команды» плана (том `rabit-issues42-node`).
@@ -75,6 +75,17 @@
 - `git push -u origin codex/issues-77-bench-timing`, `gh pr create --base main`:
   [#85](https://github.com/rebit-pro/rabit-api/pull/85). Merge не выполнялся.
 
+### 2026-09-25 — ревью, gate и bench
+
+- Самостоятельное ревью (правило пользователя для простых задач): замечаний нет, итог — комментарий в PR #85.
+- Base обновлён до `5dcb0e0` (PR #84), конфликтов нет.
+- Gate `rabit-e2e-8105711e98f8` (371.4 с) — PASS, exit 0: группа `a` 64/64 (тест #33 на общем хелпере), группа `b` 43/43, верификаторы PASS.
+- Bench `E2E_MEDIA_BENCH=1 E2E_MEDIA_BENCH_COUNT=20 make test-e2e … E2E_GROUPS=a` (`rabit-e2e-e2a87bfb3125`) — PASS, exit 0, 65/65:
+  - `parallel` 2, партия 20 × 7.4 МБ за 24 с;
+  - передача p50 418 мс, p95 785 мс;
+  - приём → готовность p50 14.7 с, p95 17.8 с.
+  - Партия уменьшена до 20: при старом runner браузерный этап ограничен 900 с (#61, пункт 5, PR #87).
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда | Доказательство |
@@ -86,5 +97,5 @@
 | T05 | PASS (стаб) | 2026-09-25 | `bench-overlap.stub.ts` `LIMIT=3 RUNS=3` на копии с `parallel: 3` | 3/3 падают `Received: 3` |
 | T06 | PASS (стаб) | 2026-09-25 | `bench-overlap.stub.ts` `BUFFER=150 RUNS=1` | падает сверка числа записей: 0 из 30 |
 | T07 | PASS | 2026-09-25 | `git diff --stat origin/main...HEAD` | 3 файла live E2E, план и журнал; очередь, `src`, backend не затронуты |
-| T08 | PENDING | — | `make test-e2e` | после review без блокеров |
-| T09 | PENDING | — | `E2E_MEDIA_BENCH=1 make test-e2e` | после review, изолированный стенд |
+| T08 | PASS | 2026-09-25 | `make test-e2e` `8105711e98f8` | exit 0, a 64/64, b 43/43 |
+| T09 | PASS | 2026-09-25 | `E2E_MEDIA_BENCH=1 E2E_MEDIA_BENCH_COUNT=20 … E2E_GROUPS=a` `e2a87bfb3125` | 65/65, `parallel` 2, transfer p50/p95 418/785 мс |

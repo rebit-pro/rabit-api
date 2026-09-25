@@ -68,7 +68,7 @@
 - [x] Быстрые проверки: `npm run check`, `npm run test:commerce`.
 - [x] Стаб-прогон выборки через `helpers.ts`: лимит 2 — PASS, лимит 3 — FAIL.
 - [x] Commit, push, PR в `main` без merge.
-- [ ] После review без блокеров: `make test-e2e`, bench `E2E_MEDIA_BENCH=1`.
+- [x] После review без блокеров: `make test-e2e`, bench `E2E_MEDIA_BENCH=1` (PASS 2026-09-25).
 
 ## Критерии приёмки
 
