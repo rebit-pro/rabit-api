@@ -6,7 +6,7 @@
 - Ветка: `codex/issues-77-bench-timing`. Worktree: `/home/user/rabit-api-worktrees/issues-77-bench-timing`.
   Общий checkout `/home/user/rabit-api` не трогается.
 - Base: `origin/main` `d92b4c4`. План: `8dec16c`. Код: `29ba68d`.
-- Issue: [#77](https://github.com/rebit-pro/rabit-api/issues/77). PR: см. раздел «PR».
+- Issue: [#77](https://github.com/rebit-pro/rabit-api/issues/77). PR: [#85](https://github.com/rebit-pro/rabit-api/pull/85).
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md), прецедент [issues-72-73](../issues-72-73-orders-scope-retry/progress.md).
 - Завершено: реализация, быстрые проверки, стаб-прогоны (лимит 2, лимит 3, малый буфер).
 - Сейчас: PR открыт в `main`, ждёт review. Merge не выполняется.
@@ -69,6 +69,11 @@
     length: 0`. Переполнение буфера роняет сверку, а не занижает `parallel`.
   - Временные каталоги `frontend/.stub` и `frontend/test-results` (root) удалены после прогонов.
 - Не запускались до review: полный `make test-e2e` (T08) и bench-прогон `E2E_MEDIA_BENCH=1` (T09).
+
+### 2026-09-25 — PR
+
+- `git push -u origin codex/issues-77-bench-timing`, `gh pr create --base main`:
+  [#85](https://github.com/rebit-pro/rabit-api/pull/85). Merge не выполнялся.
 
 ## Результаты тест-кейсов
 
