@@ -67,3 +67,34 @@ export async function createViaApi(page: Page, name: string): Promise<void> {
   });
   expect(response.status()).toBe(201);
 }
+type Span = { start: number; end: number };
+/** Peak number of requests in flight, rebuilt from browser network timings: Playwright delivers request events in its own order. */
+export function peakOverlap(spans: Span[]): number {
+  const edges = spans.flatMap(({ start, end }) => [
+    { at: start, delta: 1 },
+    { at: end, delta: -1 }
+  ]);
+  edges.sort((left, right) => left.at - right.at || left.delta - right.delta);
+  let current = 0;
+
+  return edges.reduce((peak, edge) => Math.max(peak, (current += edge.delta)), 0);
+}
+/**
+ * Completed photo uploads to `path` from the Resource Timing of the page. It keeps start and end on one
+ * sub-millisecond clock: the queue starts the next upload right after the previous one ends, and Playwright's
+ * millisecond start times would overlap them. The frame list GET of the same path always carries a query, so an
+ * upload is that path without one. Callers compare the count with the settled uploads, so no upload is missed or
+ * mixed with the list. Navigation clears the buffer, so the batch is measured before it.
+ */
+export async function uploadSpans(page: Page, path: string): Promise<Span[]> {
+  return page.evaluate(
+    (uploads) =>
+      (performance.getEntriesByType('resource') as PerformanceResourceTiming[])
+        .filter((entry) => {
+          const url = new URL(entry.name);
+          return url.pathname === uploads && url.search === '' && entry.initiatorType === 'xmlhttprequest' && entry.responseEnd > 0;
+        })
+        .map((entry) => ({ start: entry.startTime, end: entry.responseEnd })),
+    path
+  );
+}
