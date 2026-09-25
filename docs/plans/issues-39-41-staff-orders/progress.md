@@ -6,13 +6,13 @@
 - Ветка: `codex/issues-39-41-staff-orders`. Worktree: `/home/user/rabit-api-worktrees/issues-39-41-staff-orders`.
   Общий checkout `/home/user/rabit-api` не трогается: там чужая ветка с незакоммиченными правками.
 - Base: `origin/main` `49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771`. Код: `3396b05` (#41), `1f7d1da` (#39).
-- Issues: [#39](https://github.com/rebit-pro/rabit-api/issues/39), [#41](https://github.com/rebit-pro/rabit-api/issues/41). PR: создаётся.
+- Issues: [#39](https://github.com/rebit-pro/rabit-api/issues/39), [#41](https://github.com/rebit-pro/rabit-api/issues/41). PR: [#71](https://github.com/rebit-pro/rabit-api/pull/71) (open, не сливать до review и gate).
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md).
 - Завершено:
   - реализация #41 и #39, unit-тесты правил;
   - live E2E-сценарии в `zzzzz-orders.spec.ts`: написаны, не запускались;
   - быстрые проверки и стаб-прогон в Chromium зелёные.
-- Сейчас: push и PR в `main` без merge.
+- Сейчас: PR #71 ждёт review.
 - Следующий шаг: review PR. После review без блокеров — полный `make test-e2e` (T02, T04, T08–T13, T17) и визуальная
   проверка desktop/mobile по скриншотам gate.
 - Блокеров нет. Открытых решений нет.
@@ -78,6 +78,11 @@
     (`recovery:false`, кнопка без загрузки) — дефект #41 воспроизведён. Дальнейшее поведение этой копии на стабе
     (запрос завершается без ответа стаба) не исследовалось: к ветке не относится.
 - Полный `make test-e2e` не запускался: gate после review без блокеров.
+
+### 2026-09-25 — PR
+
+- `git push -u origin codex/issues-39-41-staff-orders`, `gh pr create --base main`:
+  [#71](https://github.com/rebit-pro/rabit-api/pull/71). Merge не выполнялся.
 
 ## Результаты тест-кейсов
 
