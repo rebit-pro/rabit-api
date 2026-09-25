@@ -5,10 +5,11 @@
 - Дата: 2026-09-25.
 - Ветка: `codex/issues-83-97-payment-followups`, worktree `/home/user/rabit-api-worktrees/issues-83-97-payment-followups`. Общий checkout занят другими сессиями.
 - Base: `origin/main` `94502a1`.
-- Issues: [#83](https://github.com/rebit-pro/rabit-api/issues/83), [#97](https://github.com/rebit-pro/rabit-api/issues/97), назначены на себя. PR — см. хронологию.
+- Issues: [#83](https://github.com/rebit-pro/rabit-api/issues/83), [#97](https://github.com/rebit-pro/rabit-api/issues/97), назначены на себя. PR: [#102](https://github.com/rebit-pro/rabit-api/pull/102): самостоятельное и независимое ревью без замечаний, gate PASS, сливается.
 - Параллельно: #88 (`codex/ops-e2e-prune-race`, PR #99), #90 (`codex/issues-90-serialized-name`).
 - Завершено: исправление, тесты, быстрые проверки, stub-доказательство #83.
-- Следующий шаг: самостоятельное ревью, полный gate, merge.
+- Base обновлён от актуального `main` (merge `e2c7ed3`).
+- Следующий шаг: деплой frontend — отдельное решение пользователя.
 - Блокеров нет. Открыто вне scope: причина расхождения `createdAt` в прогоне ревью PR #89.
 - Команды:
   - быстрые: `docker run --rm --network none -v <worktree>/frontend:/app -v rabit-issues6263-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`;
@@ -27,14 +28,20 @@
   - ветка — PASS (15.2 с).
 - `npx eslint --fix` по изменённым файлам; `npm run check` — exit 0; `npm run test:commerce` — 207/207.
 
+### 2026-09-25 — ревью и gate
+
+- Самостоятельное ревью и независимое ревью пользователя на `6e1872e`: замечаний нет.
+- Base обновлён от актуального `main` (`e2c7ed3`), конфликтов нет.
+- Gate `rabit-e2e-72c5af9a6eab` (424.8 с, параллельно с чужим стендом) — PASS, exit 0: phpunit, phpstan PASS; группа `a` 71/71, группа `b` 47/47; «G1-T09, G1-T10…» ✓ (с тестовым магазином), «#83…» ✓ 11.8 с; все верификаторы PASS.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда / доказательство |
 |---|---|---|---|
 | T01 | PASS | 2026-09-25 | `npm run check` — exit 0 |
 | T02 | PASS | 2026-09-25 | `npm run test:commerce` — 207/207 |
-| T03 | PASS (stub) / PENDING (gate) | 2026-09-25 | stub: ветка PASS |
-| T04 | PASS (stub) / PENDING (gate) | 2026-09-25 | stub: `main` FAIL 5≠4, ветка PASS |
+| T03 | PASS | 2026-09-25 | stub и gate `72c5af9a6eab` |
+| T04 | PASS | 2026-09-25 | stub (`main` FAIL 5≠4, ветка PASS) и gate `72c5af9a6eab` |
 | T05 | PASS | 2026-09-25 | см. хронологию |
-| T06 | PENDING | — | полный gate с тестовым магазином |
-| T07 | PENDING | — | `make test-e2e` |
+| T06 | PASS | 2026-09-25 | gate `72c5af9a6eab`, «G1-T09, G1-T10…» ✓ |
+| T07 | PASS | 2026-09-25 | `make test-e2e` `72c5af9a6eab`: exit 0, a 71/71, b 47/47 |
