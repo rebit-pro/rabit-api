@@ -146,7 +146,25 @@
         "head": "cfb0c06",
         "stand": "rabit-e2e-0c2d85d9b8d6",
         "result": "PASS"
+      },
+      {
+        "head": "b75e797",
+        "stand": "rabit-e2e-e0538bbb0c27",
+        "result": "PASS",
+        "note": "main 8077de2 merged (#67, #70, #71)"
       }
-    ]
+    ],
+    "updatedBase": {
+      "main": "8077de2",
+      "head": "b75e797",
+      "stand": "rabit-e2e-e0538bbb0c27",
+      "result": "PASS",
+      "browser": {
+        "a": 64,
+        "b": 42,
+        "total": 106
+      },
+      "seconds": 256.8
+    }
   }
 }

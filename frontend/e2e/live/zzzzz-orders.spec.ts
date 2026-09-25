@@ -284,6 +284,88 @@ test('E5: staff see orders only in their scope', async ({ page, browser, baseURL
     });
 });
 
+/** Picks an option of a Vuetify select by its accessible name. */
+async function choose(page: Page, label: string, option: string) {
+  await page.getByRole('combobox', { name: label, exact: true }).press('Enter');
+  await page.getByRole('option', { name: option, exact: true }).click();
+}
+
+test('E5: staff narrow orders by institution, shoot and group', async ({ page, browser, baseURL }) => {
+  await login(page);
+  const organizer = await auth(page);
+  const detail = (await body(await page.request.get('/api/v1/institutions/' + institutionId + '?pageSize=100', { headers: organizer })))
+    .data;
+  const shoot = detail.shoots.items.find((item: { name: string }) => item.name === 'E4 Осенняя съёмка');
+  const group = detail.groups.items.find((item: { id: string }) => item.id === fixture.open.groupId);
+  expect(group.shootId).toBe(shoot.id);
+  const inGroup = (await body(await page.request.get('/api/v1/orders?groupId=' + group.id, { headers: organizer }))).meta.total;
+  expect(inGroup).toBeGreaterThan(0);
+  const searched = () => page.waitForResponse((r) => new URL(r.url()).pathname === '/api/v1/orders' && r.request().method() === 'GET');
+  const total = page.getByText(/^Найдено заказов: \d+$/);
+  const reset = page.getByRole('button', { name: 'Сбросить', exact: true });
+  const field = (label: string) => page.getByRole('combobox', { name: label, exact: true });
+
+  // A manual link with only a group narrows the request itself, not just the screen.
+  let listed = searched();
+  await page.goto('/cabinet/orders?groupId=' + group.id);
+  expect(new URL((await listed).url()).searchParams.get('groupId')).toBe(group.id);
+  await expect(total).toHaveText('Найдено заказов: ' + inGroup);
+  await reset.click();
+  await expect(page).not.toHaveURL(/groupId=/);
+
+  // The cascade offers the Organization API structure and sends all three levels.
+  await choose(page, 'Учреждение', 'E4 Тестовый детский сад');
+  await choose(page, 'Съёмка', 'E4 Осенняя съёмка');
+  await choose(page, 'Группа', group.name);
+  listed = searched();
+  await page.getByRole('button', { name: 'Найти', exact: true }).click();
+  expect(Object.fromEntries(new URL((await listed).url()).searchParams)).toMatchObject({
+    institutionId,
+    shootId: shoot.id,
+    groupId: group.id
+  });
+  await expect(total).toHaveText('Найдено заказов: ' + inGroup);
+  await expect(page.getByTestId('staff-order').first()).toContainText(group.name);
+
+  // List → card → list keeps the scope in the URL and in the form.
+  await page.getByTestId('staff-order').first().getByRole('link').click();
+  await expect(page.getByTestId('staff-order-number')).toBeVisible();
+  await page.getByRole('link', { name: 'Все заказы', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp('groupId=' + group.id));
+  await expect(field('Учреждение')).toHaveValue(institutionId);
+  await expect(field('Съёмка')).toHaveValue(shoot.id);
+  await expect(field('Группа')).toHaveValue(group.id);
+
+  // A new parent drops the levels below it; the general reset clears everything.
+  await choose(page, 'Съёмка', 'Все съёмки');
+  await expect(field('Учреждение')).toHaveValue(institutionId);
+  await expect(field('Группа')).toHaveValue('');
+  await choose(page, 'Съёмка', 'E4 Осенняя съёмка');
+  await choose(page, 'Учреждение', 'Все учреждения');
+  await expect(field('Съёмка')).toHaveValue('');
+  await expect(field('Группа')).toHaveValue('');
+  await choose(page, 'Учреждение', 'E4 Тестовый детский сад');
+  await choose(page, 'Съёмка', 'E4 Осенняя съёмка');
+  await reset.click();
+  await expect(page).not.toHaveURL(/institutionId=|shootId=|groupId=/);
+  for (const label of ['Учреждение', 'Съёмка', 'Группа']) await expect(field(label)).toHaveValue('');
+  await expect(reset).toBeDisabled();
+
+  // Curators are offered exactly the institutions the server lists for their area. A curator without assigned
+  // institutions (c4-curator) has no order.read and cannot open this screen at all.
+  await asStaff(browser, baseURL, 'curator', async (viewer) => {
+    const institutions = viewer.waitForResponse((r) => new URL(r.url()).pathname === '/api/v1/institutions');
+    await viewer.goto('/cabinet/orders');
+    const listed = await institutions;
+    expect(listed.status()).toBe(200);
+    const scope: string[] = (await listed.json()).data.items.map((item: { name: string }) => item.name);
+    expect(scope).toContain('E4 Тестовый детский сад');
+    await viewer.getByRole('combobox', { name: 'Учреждение', exact: true }).press('Enter');
+    await expect(viewer.getByRole('option', { name: 'Все учреждения', exact: true })).toBeVisible();
+    await expect(viewer.getByRole('option')).toHaveCount(scope.length + 1);
+  });
+});
+
 for (const viewport of [
   { name: 'desktop', width: 1280, height: 900 },
   { name: 'mobile', width: 390, height: 844 }
@@ -368,12 +450,27 @@ async function fillCheckout(page: Page, name: string, email: string, quantity: n
   await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
   await page.getByLabel('Состав и демонстрационные условия проверены').check();
 }
-/** Recovers an unconfirmed attempt on its own screen and proves the server replayed the one stored order. */
-async function recover(page: Page, key: string, email: string) {
+/**
+ * Recovers an unconfirmed attempt on its own screen and proves the server replayed the one stored order. `whilePending`
+ * runs while the replay is held back, before its answer reaches the page.
+ */
+async function recover(page: Page, key: string, email: string, whilePending?: () => Promise<void>) {
   await page.unroute('**/orders');
   await page.unroute(/\/api\/v1\/public\/galleries\/[a-f0-9]{64}$/);
+  let release = () => {};
+  if (whilePending) {
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/orders', async (route) => {
+      await held;
+      await route.continue();
+    });
+  }
   const replayed = page.waitForResponse((r) => r.url().endsWith('/orders') && r.request().method() === 'POST');
   await page.getByTestId('recover-order').click();
+  if (whilePending) {
+    await whilePending();
+    release();
+  }
   const response = await replayed;
   expect(response.status()).toBe(201);
   expect(response.request().headers()['idempotency-key']).toBe(key);
@@ -405,7 +502,13 @@ test('E5: lost response survives group closure and reload, then recovers the sam
   await page.reload();
   await expect(page.getByTestId('checkout-recovery')).toBeVisible();
   await expect(page.getByText('Сначала выберите фотографии')).toHaveCount(0);
-  await recover(page, keys[0]!, 'lost.e5@example.test');
+  // #41: while the replay runs, the recovery screen stays with a loading button; neither the form nor an empty cart flashes.
+  await recover(page, keys[0]!, 'lost.e5@example.test', async () => {
+    await expect(page.getByTestId('recover-order')).toHaveClass(/v-btn--loading/);
+    await expect(page.getByTestId('checkout-recovery')).toBeVisible();
+    await expect(page.getByTestId('create-order')).toHaveCount(0);
+    await expect(page.getByText('Сначала выберите фотографии')).toHaveCount(0);
+  });
 });
 
 test('E5: 502 after a committed order keeps the attempt and recovers the same key', async ({ page }) => {

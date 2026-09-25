@@ -114,13 +114,8 @@ final readonly class TransferChildUseCase
         try {
             $this->access->assertCan($actorId, 'media.manage', $scope->institutionId, $scope->groupId);
         } catch (HttpException $error) {
-            // Access reports refusals as text until #42; the transfer contract promises error codes.
-            throw match ($error->getCode()) {
-                401 => new HttpException('UNAUTHORIZED', 401, $error),
-                403 => new HttpException('FORBIDDEN', 403, $error),
-                404 => new HttpException('GROUP_NOT_FOUND', 404, $error),
-                default => $error,
-            };
+            // Access hides a group outside the scope as NOT_FOUND; the transfer contract names the missing group.
+            throw 404 === $error->getCode() ? new HttpException('GROUP_NOT_FOUND', 404, $error) : $error;
         }
     }
 

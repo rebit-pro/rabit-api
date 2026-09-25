@@ -79,14 +79,14 @@ final class OrderReceiptsAndAccessTest extends TestCase
         self::assertSame('MF-000007', $replay->order->number);
     }
 
-    public function testStaffScopeFollowsD08AndMapsAccessFailures(): void
+    public function testStaffScopeFollowsD08AndPassesAccessRefusalCodes(): void
     {
         self::assertNull($this->access(new InstitutionScopeOutputDto('organizer', 3, []))->scope(1)->institutionIds);
         self::assertSame([4, 9], $this->access(new InstitutionScopeOutputDto('curator', 3, [9, 4, 9]))->scope(1)->institutionIds);
         foreach ([
             [new InstitutionScopeOutputDto('head', 3, [4]), 'FORBIDDEN'],
-            [new HttpException('Action is forbidden.', 403), 'FORBIDDEN'],
-            [new HttpException('Unauthorized', 401), 'UNAUTHORIZED'],
+            [new HttpException('FORBIDDEN', 403), 'FORBIDDEN'],
+            [new HttpException('UNAUTHORIZED', 401), 'UNAUTHORIZED'],
         ] as [$source, $code]) {
             try {
                 $this->access($source)->scope(1);

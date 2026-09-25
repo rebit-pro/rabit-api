@@ -4,8 +4,8 @@
 
 - Ветка `codex/e6-payment-cost-pricing` от main `49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771`, PR https://github.com/rebit-pro/rabit-api/pull/66. Checkout: `/home/user/rabit-api-worktrees/e6-payment-cost-pricing`.
 - Завершено: S1–S11. Ревью — без блокирующих дефектов (неблокирующие #68, #69 — отдельные issue). Финальный gate на `cfb0c06` — PASS (104 сценария, все verifier), визуальная проверка desktop/mobile — PASS.
-- Следующий шаг: merge PR #66 — решение пользователя; deploy — отдельное действие. После merge следующая волна отмечает E6 merged в обоих графах.
-- Блокеров нет. Main на момент gate — `49f40f9`; если main уйдёт вперёд, повторить затронутые проверки на обновлённой базе.
+- Пользователь 25.09 поручил слить PR #66 и выкатить. Main ушёл на `8077de2` (#67, #70, #71) — влит в ветку (`b75e797`), полный gate повторён — PASS.
+- Следующий шаг: merge PR #66 и выкатка на app.morefoto36.ru по рецепту design-ux (журнал выкатки — ниже). После merge следующая волна отмечает E6 merged в обоих графах.
 - Канонический MoreFoto изменён на месте, воспроизводимый diff — `docs/waves/e6/morefoto-contract.patch`.
 - Команда gate: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
 
@@ -76,3 +76,8 @@
 | E6-T14 | PASS | 2026-09-25 | UI-сценарий E6, снимки desktop 1440×1000 и mobile 390×844, `docs/waves/e6/visual.json` |
 | E6-T15 | PASS | 2026-09-25 | `verify-payment-costs.php` на стенде `rabit-e2e-0c2d85d9b8d6` |
 | E6-T18 | PASS | 2026-09-25 | Полный gate на `cfb0c06`: 104/104, все verifier, 357,5 с |
+
+### 2026-09-25 — обновление базы, merge и выкатка
+
+- Пользователь: «Сливай PR #66, можно делать деплой». Main ушёл вперёд на `8077de2` (PR #67 фото, #70 коды отказа доступа #42, #71 фильтры заказов #39/#41). `git merge origin/main` — без конфликтов, `b75e797`.
+- Прогон 5 на `b75e797` (`rabit-e2e-e0538bbb0c27`, 256,8 с) — PASS: 106 браузерных сценариев (a 64, b 42 — два новых из #71), verifier storefront, orders, links, transfers, avatar, payment-costs, access и контракт Notification.

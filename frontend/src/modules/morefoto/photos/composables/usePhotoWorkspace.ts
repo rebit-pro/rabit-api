@@ -78,6 +78,8 @@ export function usePhotoWorkspace() {
   // Live only: the demo keeps ready frames in the browser and has nothing in processing.
   const stats = shallowRef<ServerPhotoStats | null>(null);
   const cover = shallowRef<{ id: string; thumbSrc: string }>();
+  // The group the page data above belongs to: data of another group is never shown under the selected one.
+  const pageGroupId = shallowRef('');
   const mediaRevision = shallowRef(1);
   const mediaLoading = shallowRef(false);
   let mediaRequest = 0;
@@ -119,6 +121,7 @@ export function usePhotoWorkspace() {
   const loadError = computed(() => (isMockApiEnabled ? organization!.error.value : contextError.value));
   const group = computed(() => groups.value.find((item) => item.id === selectedGroupId.value));
   const editable = computed(() => group.value?.state === 'preparing');
+  const pageReady = computed(() => !!group.value && pageGroupId.value === group.value.id);
   const childCodes = computed(() => summary.value.children);
   const suggestedCode = computed(() => freeChildCode(new Set(summary.value.children)));
   const pages = computed(() => photoPages(total.value));
@@ -129,8 +132,9 @@ export function usePhotoWorkspace() {
     if (onPage) return onPage;
     return isMockApiEnabled ? (readPhotos().photos.find((item) => item.id === id)?.thumbSrc ?? '') : managedPreviewSource(id, 'thumb');
   }
-  function applyPage(next: PageData) {
-    const coverId = next.covers[group.value?.id ?? ''];
+  function applyPage(groupId: string, next: PageData) {
+    const coverId = next.covers[groupId];
+    pageGroupId.value = groupId;
     items.value = next.items;
     total.value = next.total;
     summary.value = next.summary;
@@ -144,15 +148,16 @@ export function usePhotoWorkspace() {
   async function refreshPhotos(): Promise<boolean> {
     const groupId = group.value?.id;
     if (!groupId) {
-      applyPage({ items: [], total: 0, summary: emptySummary, covers: {} });
+      applyPage('', { items: [], total: 0, summary: emptySummary, covers: {} });
       return true;
     }
     if (isMockApiEnabled) {
       const state = readPhotos();
-      applyPage({ ...localPhotoPage(state.photos, groupId, filter.value, page.value), covers: state.covers });
+      applyPage(groupId, { ...localPhotoPage(state.photos, groupId, filter.value, page.value), covers: state.covers });
       return true;
     }
     const ticket = ++mediaRequest;
+    const current = () => alive && ticket === mediaRequest && groupId === group.value?.id;
     mediaLoading.value = true;
     error.value = '';
     try {
@@ -163,9 +168,9 @@ export function usePhotoWorkspace() {
         pageSize: photoPageSize,
         ...filterQuery(filter.value)
       });
-      if (!alive || ticket !== mediaRequest) return false;
+      if (!current()) return false;
       mediaRevision.value = result.revision;
-      applyPage({
+      applyPage(groupId, {
         items: result.items.filter(isReady).map(managedPhoto),
         total: result.meta.total,
         summary: result.summary ?? emptySummary,
@@ -174,7 +179,7 @@ export function usePhotoWorkspace() {
       });
       return true;
     } catch (cause) {
-      if (alive && ticket === mediaRequest) error.value = photoApiError(cause);
+      if (current()) error.value = photoApiError(cause);
       return false;
     } finally {
       if (alive && ticket === mediaRequest) mediaLoading.value = false;
@@ -211,6 +216,12 @@ export function usePhotoWorkspace() {
     filter.value = 'all';
     page.value = 1;
     selected.value = [];
+    items.value = [];
+    total.value = 0;
+    summary.value = emptySummary;
+    stats.value = null;
+    cover.value = undefined;
+    pageGroupId.value = '';
     error.value = '';
     notice.value = '';
   }
@@ -362,8 +373,8 @@ export function usePhotoWorkspace() {
       }
     }, 'Обложка группы сохранена.');
   }
-  function transfer(child: string, toId: string, value: string, ids: string[]) {
-    const groupId = group.value?.id ?? '';
+  /** The source group is fixed by the caller when the set was loaded, not read from the current selection. */
+  function transfer(groupId: string, child: string, toId: string, value: string, ids: string[]) {
     const code = value.trim().toUpperCase();
     if (!validChildCode(code)) {
       error.value = 'Код в целевой группе — от 1 до 3 латинских букв.';
@@ -403,6 +414,7 @@ export function usePhotoWorkspace() {
     selectedGroupId,
     changeGroup,
     editable,
+    pageReady,
     items,
     total,
     page,
