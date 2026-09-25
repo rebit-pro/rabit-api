@@ -5,10 +5,10 @@
 - Ветка `codex/ops-stage-run-guide`, base `main` `1dd4a5f`. Worktree `/home/user/rabit-api-worktrees/ops-stage-run-guide`.
 - Документация: [план](plan.md). Черновик на claude.ai: пульт прогона (общее хранилище, для владельца).
 - Завершено: страницы `frontend/public/guide/`, проверки GUIDE-T01…T05.
-- Сейчас: [PR #82](https://github.com/rebit-pro/rabit-api/pull/82) в `main` на review.
-- Следующий шаг: после merge — frontend-only релиз по рецепту PR #45 (решение пользователя), затем GUIDE-T06.
-- Блокеры: выкладка и включение оформления на stage требуют действий на сервере, которые агенту запрещены
-  автоматическим режимом; выполняет пользователь или даёт разрешение.
+- [PR #82](https://github.com/rebit-pro/rabit-api/pull/82) слит в `main` как `d92b4c4`; выложен frontend-only релиз
+  `guide-20260925125036-7ec736a` (с #76, без #78).
+- Следующий шаг: включение `MOREFOTO_CHECKOUT_ENABLED` на stage перед шагом 8 прогона — отдельным решением пользователя.
+- Блокеров нет. Открыто: флаг оформления на stage (запись на сервер отклонялась автоматическим режимом).
 - Рабочее дерево: новые файлы `frontend/public/guide/**`, `docs/plans/OPS-stage-run-guide/**`.
 
 ## Тест-кейсы
@@ -20,7 +20,7 @@
 | GUIDE-T03 | PASS | 2026-09-25 | `curl` к контейнеру образа: `/guide/` и `/guide/stage-run/` — 200 со своим `<title>`; `/login`, `/cabinet/overview` — SPA; `/health` 200; `X-Robots-Tag: noindex, nofollow`, `Referrer-Policy: no-referrer` |
 | GUIDE-T04 | PASS | 2026-09-25 | Playwright 1280×900 light, 390×844 light и dark: горизонтальный overflow 0, ошибок страницы и неудачных запросов нет; скриншоты в scratchpad сессии |
 | GUIDE-T05 | PASS | 2026-09-25 | Отметки s1a/s1b, ссылка галереи и группа восстановлены после reload; «2 из 32 шагов», этап 1 «2 / 5», «Открыть» активна |
-| GUIDE-T06 | PENDING | — | после выкладки |
+| GUIDE-T06 | PASS | 2026-09-25 | `curl https://app.morefoto36.ru`: `/guide/`, `/guide/stage-run/` 200 со своим `<title>`, `X-Robots-Tag: noindex, nofollow`; `/login`, `/cabinet/orders` 200 (SPA), `/health` 200; `index-B70UKJai.js` совпадает с образом |
 
 ## Журнал
 
@@ -40,3 +40,11 @@
   и перенос подписи, повторный прогон чистый.
 - Замечание вне scope: `/guide/stage-run` без слеша nginx перенаправляет абсолютным адресом со схемой `http`
   (`absolute_redirect` по умолчанию); ссылки используют адрес со слешем.
+- По поручению пользователя PR #82 слит (`d92b4c4`). В `main` к этому моменту слит PR #78 (#26–#28) с изменениями
+  backend и frontend; по его журналу деплой отложен. Frontend собран из `7ec736a` (база `1dd4a5f`: выложенный
+  `cfd5718` + #76 + путеводитель, #78 не входит — проверено `git merge-base --is-ancestor`).
+- Релиз `/srv/morefoto/releases/guide-20260925125036-7ec736a` по рецепту PR #45: `frontend-image.tar.gz`
+  (sha256 `a2c5d080…063b7`), `SHA256SUMS`, `switch-frontend.sh`. `morefoto_frontend` → `morefoto-frontend:guide-20260925125036-7ec736a`,
+  converged, 2/2. Прежний образ (откат): `morefoto-frontend:issues68-69-20260925104722-cfd5718` в `frontend-before.txt`;
+  откат — `docker service rollback morefoto_frontend`. Backend не менялся (`e6-20260925101815-54bd4ab`).
+- GUIDE-T06 PASS (см. таблицу).
