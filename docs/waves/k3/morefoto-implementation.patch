@@ -1,46 +1,49 @@
 diff -ruN -x __pycache__ -x verification.json a/docs/04-bitrix-modules/backend-waves.json b/docs/04-bitrix-modules/backend-waves.json
 --- a/docs/04-bitrix-modules/backend-waves.json	2026-09-25 18:25:30.602154566 +0300
-+++ b/docs/04-bitrix-modules/backend-waves.json	2026-09-25 15:19:14.639942664 +0300
++++ b/docs/04-bitrix-modules/backend-waves.json	2026-09-25 18:35:43.015683198 +0300
 @@ -6,7 +6,7 @@
    "backend": "RaBit API",
    "baseline": {
      "branch": "main",
 -    "commit": "49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771",
-+    "commit": "1dd4a5f2295a3f3c7ba10d628906c76a4cb253d6",
++    "commit": "fc0cdb94d570aa7046e953029d5e58ac4aed1554",
      "mergedWaves": [
        "A1",
        "A2",
-@@ -42,7 +42,8 @@
+@@ -42,7 +42,9 @@
        "U5",
        "U6",
        "U7",
 -      "U8"
 +      "U8",
-+      "E6"
++      "E6",
++      "G1"
      ],
      "review": {},
      "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
-@@ -75,7 +76,8 @@
+@@ -75,7 +77,9 @@
        "U5": "https://github.com/rebit-pro/rabit-api/pull/53",
        "U6": "https://github.com/rebit-pro/rabit-api/pull/53",
        "U7": "https://github.com/rebit-pro/rabit-api/pull/53",
 -      "U8": "https://github.com/rebit-pro/rabit-api/pull/53"
 +      "U8": "https://github.com/rebit-pro/rabit-api/pull/53",
-+      "E6": "https://github.com/rebit-pro/rabit-api/pull/66"
++      "E6": "https://github.com/rebit-pro/rabit-api/pull/66",
++      "G1": "https://github.com/rebit-pro/rabit-api/pull/80"
      },
      "mergeCommits": {
        "C4": "cfc334e5890dd51dfd6ff6638eac2cc3e436322b",
-@@ -98,7 +100,8 @@
+@@ -98,7 +102,9 @@
        "U5": "b20423f08c5794f66346a607c376bc89ffe3bb82",
        "U6": "b20423f08c5794f66346a607c376bc89ffe3bb82",
        "U7": "b20423f08c5794f66346a607c376bc89ffe3bb82",
 -      "U8": "b20423f08c5794f66346a607c376bc89ffe3bb82"
 +      "U8": "b20423f08c5794f66346a607c376bc89ffe3bb82",
-+      "E6": "54bd4abbb62fbda2dc030281e4b4893820d83e84"
++      "E6": "54bd4abbb62fbda2dc030281e4b4893820d83e84",
++      "G1": "fc0cdb94d570aa7046e953029d5e58ac4aed1554"
      },
      "decisionEvidence": {
        "D02-D05": "docs/waves/e3/README.md in rabit-api: user accepted rules before PR #20",
-@@ -1278,7 +1281,7 @@
+@@ -1278,7 +1284,7 @@
        ],
        "activation": "Включение только организатором после проверки эффективной ставки и предварительного расчёта; E6 не подключает платёжного провайдера.",
        "legacyIds": [],
@@ -49,7 +52,16 @@ diff -ruN -x __pycache__ -x verification.json a/docs/04-bitrix-modules/backend-w
        "unlocks": [
          "N2"
        ],
-@@ -1971,7 +1974,7 @@
+@@ -1475,7 +1481,7 @@
+       "legacyIds": [
+         "W19"
+       ],
+-      "deliveryState": "inProgress",
++      "deliveryState": "merged",
+       "unlocks": [
+         "G2",
+         "I1",
+@@ -1971,7 +1977,7 @@
        ],
        "activation": "Включить на stage после установки токена в secrets, подписки webhook, ID группы и живой проверки; production — после решения о сроке хранения и тексте предупреждения (MAX-D06).",
        "legacyIds": [],
@@ -60,17 +72,17 @@ diff -ruN -x __pycache__ -x verification.json a/docs/04-bitrix-modules/backend-w
        ],
 diff -ruN -x __pycache__ -x verification.json a/docs/04-bitrix-modules/backend-waves.md b/docs/04-bitrix-modules/backend-waves.md
 --- a/docs/04-bitrix-modules/backend-waves.md	2026-09-25 18:25:30.661999625 +0300
-+++ b/docs/04-bitrix-modules/backend-waves.md	2026-09-25 16:28:40.589776255 +0300
++++ b/docs/04-bitrix-modules/backend-waves.md	2026-09-25 18:35:43.216716831 +0300
 @@ -18,7 +18,7 @@
 
  ## Текущий независимый набор
 
 -В main `49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771` приняты: A1, A2, A3, A4, A5, A6, A7, A8, B1, C1, E1, C2, C3, C4, B2, D1, D2, E2, E3, F1, H1, E4, E5, F2, D3, U1, U2, U3, U4, B4, B3, U5, U6, U7, U8. Готовы по графу: E6, G1, K3. Это снимок; фактические зависимости и открытые решения проверяются перед стартом.
-+В main `1dd4a5f2295a3f3c7ba10d628906c76a4cb253d6` приняты: A1, A2, A3, A4, A5, A6, A7, A8, B1, C1, E1, C2, C3, C4, B2, D1, D2, E2, E3, F1, H1, E4, E5, F2, D3, U1, U2, U3, U4, B4, B3, U5, U6, U7, U8, E6. Готовы по графу: G1, K3. Это снимок; фактические зависимости и открытые решения проверяются перед стартом.
++В main `fc0cdb94d570aa7046e953029d5e58ac4aed1554` приняты: A1, A2, A3, A4, A5, A6, A7, A8, B1, C1, E1, C2, C3, C4, B2, D1, D2, E2, E3, F1, H1, E4, E5, F2, D3, U1, U2, U3, U4, B4, B3, U5, U6, U7, U8, E6, G1. Готовы по графу: K3. Это снимок; фактические зависимости и открытые решения проверяются перед стартом.
 
  Пользователь принял модель Access/Organization, одного продавца, связь фото с несколькими детьми и рекомендации D07/D08/D10. R17 и остальные открытые решения не объявлены закрытыми. D02 не мешает пустому редактируемому каталогу, но продолжает блокировать соответствующие коммерческие правила E3. Для H1 выбран EMAIL, MAX перенесён в отдельный последующий этап. 22.09.2026 первым провайдером выбрана ЮKassa с «Чеками от ЮKassa», СберПэй — необязательный резерв. Расходы в общей цене выделены в независимую E6 с округлением вверх до 50 ₽. Битрикс Старт и своё хранение сохраняются; настройки/параметры чека и оставшиеся вопросы D09/D12 не объявлены закрытыми. GitHub Actions отключён вручную; YAML сохранён, проверки выполняются локально.
 
-@@ -176,7 +176,7 @@
+@@ -176,10 +176,10 @@
  | [F1](#f1) | Списки детей сотрудников | B2, D2, E3 | E4, D3, F2, U5 | HND-06, HND-07, HND-08, HND-09, HND-12 | в main |
  | [E4](#e4) | Приватная витрина и серверный расчёт корзины | D2, E3, F1 | E5, F2, K3 | MED-01, COM-08, COM-09 | в main |
  | [E5](#e5) | Заказ, снимок покупки и личный ключ | E4 | E6, D3, G1, I1, J1, U5 | COM-10, COM-11, COM-12, COM-13 | в main |
@@ -78,7 +90,11 @@ diff -ruN -x __pycache__ -x verification.json a/docs/04-bitrix-modules/backend-w
 +| [E6](#e6) | Учёт расходов на оплату в общей цене продукции | E3, E5 | N2 | Без новых REST | в main |
  | [D3](#d3) | Атомарные переносы ребёнка и служебной заявки | D2, F1, E5, F2 | I3 | MED-07, HND-10, HND-11 | в main |
  | [F2](#f2) | Подготовка и факт передачи ссылки | E3, F1, E4 | D3, G1, K3, L1, K2, U5 | HND-01, HND-02, HND-03, HND-04, HND-05 | в main |
- | [G1](#g1) | Платёжные попытки и подтверждённые факты | E5, F2 | G2, I1, I2, I3 | PAY-01, PAY-02, PAY-03, PAY-07, PAY-10, PAY-11 | в работе |
+-| [G1](#g1) | Платёжные попытки и подтверждённые факты | E5, F2 | G2, I1, I2, I3 | PAY-01, PAY-02, PAY-03, PAY-07, PAY-10, PAY-11 | в работе |
++| [G1](#g1) | Платёжные попытки и подтверждённые факты | E5, F2 | G2, I1, I2, I3 | PAY-01, PAY-02, PAY-03, PAY-07, PAY-10, PAY-11 | в main |
+ | [H1](#h1) | Общая надёжная доставка Notification | A2, A5 | G2, J2, K3, B4 | Без новых REST | в main |
+ | [G2](#g2) | Чеки и повтор доставки | G1, H1 | I1 | PAY-04, PAY-05, PAY-06, PAY-09 | запланирована |
+ | [I1](#i1) | История исправлений и сопровождение заказа | E5, G1, G2 | I2, I3, N1 | SET-01, SET-02, SET-03 | запланирована |
 @@ -188,7 +188,7 @@
  | [J1](#j1) | Выдача оригиналов и ZIP по праву заказа | D1, E5, I3 | J2, J3 | FIL-01, FIL-02, FIL-03, FIL-04 | запланирована |
  | [J2](#j2) | Доставка файлов покупателю | H1, J1 | J3 | FIL-05, FIL-06 | запланирована |
@@ -97,6 +113,15 @@ diff -ruN -x __pycache__ -x verification.json a/docs/04-bitrix-modules/backend-w
  **Первичные REST:** нет новых REST.
  **Вход:** Слитые E3 и E5: существующие условия продаж, quote и снимок заказа; параметры политики расходов согласованы пользователем 22.09.2026.
  **Выход:** Завершённый сценарий настройки цен через COM-04/05 с витриной/quote/заказом, без новых первичных HTTP-операций.
+@@ -1029,7 +1029,7 @@
+
+ **Владельцы:** `morefoto.payment`, `morefoto.commerce`.
+ **Зависит от:** E5, F2. **Разблокирует:** G2, I1, I2, I3.
+-**Решения:** D10. **Статус:** в работе.
++**Решения:** D10. **Статус:** в main.
+ **Первичные REST:** PAY-01, PAY-02, PAY-03, PAY-07, PAY-10, PAY-11.
+ **Вход:** Установленные и принятые в main контракты/схема: E5, F2. Открытые decisionGates проверяются отдельно до начала зависимого участка.
+ **Выход:** Завершённые операции PAY-01, PAY-02, PAY-03, PAY-07, PAY-10, PAY-11; Попытка, webhook и неизвестный исход обрабатываются без ложного успешного заказа.
 @@ -1331,7 +1331,7 @@
 
  **Владельцы:** `morefoto.support`, `morefoto.media`, `morefoto.access`, `rebit.notification`, `rebit.share`, `frontend`.
@@ -108,7 +133,7 @@ diff -ruN -x __pycache__ -x verification.json a/docs/04-bitrix-modules/backend-w
  **Выход:** Завершённые операции SUP-07…SUP-12: вопросы родителей и сотрудников куратору через группу MAX с историей на сайте; K1 расширяет тот же модуль.
 diff -ruN -x __pycache__ -x verification.json a/docs/05-rest-api/README.md b/docs/05-rest-api/README.md
 --- a/docs/05-rest-api/README.md	2026-09-25 18:25:30.721844684 +0300
-+++ b/docs/05-rest-api/README.md	2026-09-25 18:24:29.056727070 +0300
++++ b/docs/05-rest-api/README.md	2026-09-25 18:35:43.286164813 +0300
 @@ -448,10 +448,10 @@
  - **SUP-02:** Только текст ответа и разрешённая история покупателю; без внутренних данных сотрудников.
  - **SUP-05:** status=in-progress/resolved; история не перезаписывается. Реальная доставка ответа требует канала, связанного с D09.
@@ -146,7 +171,7 @@ diff -ruN -x __pycache__ -x verification.json a/docs/05-rest-api/build.py b/docs
      note="K3. Права как SUP-10; первая реплика создаёт беседу. message 1–2000, Idempotency-Key в области сотрудника, 409 IDEMPOTENCY_CONFLICT, 429 RATE_LIMITED.")
 diff -ruN -x __pycache__ -x verification.json a/docs/05-rest-api/endpoints.json b/docs/05-rest-api/endpoints.json
 --- a/docs/05-rest-api/endpoints.json	2026-09-25 18:25:30.726119331 +0300
-+++ b/docs/05-rest-api/endpoints.json	2026-09-25 18:24:29.064034356 +0300
++++ b/docs/05-rest-api/endpoints.json	2026-09-25 18:35:43.289819970 +0300
 @@ -3550,7 +3550,7 @@
        },
        "code": 201,
@@ -176,7 +201,7 @@ diff -ruN -x __pycache__ -x verification.json a/docs/05-rest-api/endpoints.json 
        "sample": {
 diff -ruN -x __pycache__ -x verification.json a/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json
 --- a/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json	2026-09-25 18:25:30.756041861 +0300
-+++ b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json	2026-09-25 18:24:29.137107220 +0300
++++ b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json	2026-09-25 18:35:43.322716383 +0300
 @@ -10306,7 +10306,7 @@
                  "questions"
                ]
@@ -233,7 +258,7 @@ diff -ruN -x __pycache__ -x verification.json a/docs/05-rest-api/postman/MoreFot
                "code": 200,
 diff -ruN -x __pycache__ -x verification.json a/docs/05-rest-api/postman/MoreFoto.postman_collection.json b/docs/05-rest-api/postman/MoreFoto.postman_collection.json
 --- a/docs/05-rest-api/postman/MoreFoto.postman_collection.json	2026-09-25 18:25:30.734668625 +0300
-+++ b/docs/05-rest-api/postman/MoreFoto.postman_collection.json	2026-09-25 18:24:29.100570788 +0300
++++ b/docs/05-rest-api/postman/MoreFoto.postman_collection.json	2026-09-25 18:35:43.308095755 +0300
 @@ -10885,7 +10885,7 @@
                  "questions"
                ]

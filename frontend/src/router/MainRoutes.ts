@@ -41,6 +41,18 @@ const MainRoutes: RouteRecordRaw = {
       meta: { title: 'Заказ', staffRoles: ['organizer', 'curator'] }
     },
     {
+      name: 'WorkPayments',
+      path: 'payments',
+      component: () => import('@/modules/morefoto/views/PaymentsPage.vue'),
+      meta: { title: 'Платежи', staffRoles: ['organizer', 'curator'] }
+    },
+    {
+      name: 'WorkPayment',
+      path: 'payments/:attemptId',
+      component: () => import('@/modules/morefoto/views/PaymentsPage.vue'),
+      meta: { title: 'Платёж', staffRoles: ['organizer', 'curator'] }
+    },
+    {
       name: 'SupportInbox',
       path: 'support',
       component: () => import('@/modules/morefoto/views/CuratorPage.vue'),

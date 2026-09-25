@@ -36,7 +36,8 @@ final readonly class OrderRepository
     private const string COLUMNS = "o.ID,o.PUBLIC_ID,o.NUMBER,o.INSTITUTION_ID,o.INSTITUTION_PUBLIC_ID,o.SHOOT_ID,o.SHOOT_PUBLIC_ID,
         o.GROUP_ID,o.GROUP_PUBLIC_ID,o.AUDIENCE,o.INSTITUTION_NAME,o.SHOOT_NAME,o.GROUP_NAME,o.BUYER_NAME,o.BUYER_PHONE,o.BUYER_EMAIL,
         o.BUYER_COMMENT,o.RECEIPT_CHANNEL,o.SUBTOTAL,o.DISCOUNT,o.GIFT_SAVING,o.TOTAL,o.ITEM_COUNT,o.GIFTS,o.CATALOG_REVISION,
-        o.CONDITIONS_REVISION,o.PAYMENT_STATUS,o.PRODUCTION_STATUS,o.VERSION,DATE_FORMAT(o.CREATED_AT,'%Y-%m-%d %H:%i:%s') AS CREATED_AT";
+        o.CONDITIONS_REVISION,o.PAYMENT_STATUS,o.PRODUCTION_STATUS,o.VERSION,DATE_FORMAT(o.CREATED_AT,'%Y-%m-%d %H:%i:%s') AS CREATED_AT,
+        DATE_FORMAT(o.PAID_AT,'%Y-%m-%d %H:%i:%s') AS PAID_AT,o.LATE_PAYMENT";
 
     /**
      * @param OrderRecord           $order
@@ -106,6 +107,26 @@ final readonly class OrderRepository
     public function find(int $id): Result
     {
         return $this->query('SELECT ' . self::COLUMNS . " FROM mf_order o WHERE o.ID={$id}");
+    }
+
+    /** Блокирует строку заказа до конца транзакции вызывающего: статус оплаты меняется только под этой блокировкой. */
+    public function lock(int $id): Result
+    {
+        return $this->query('SELECT ' . self::COLUMNS . " FROM mf_order o WHERE o.ID={$id} FOR UPDATE");
+    }
+
+    /** Меняет статус оплаты и повышает версию заказа; снимок покупки не трогает. */
+    public function applyPayment(int $id, string $status, ?string $paidAt, bool $latePayment): void
+    {
+        $connection = Application::getConnection();
+        $helper = $connection->getSqlHelper();
+        $paid = null === $paidAt ? 'NULL' : "'" . $helper->forSql($paidAt) . "'";
+        try {
+            $connection->queryExecute("UPDATE mf_order SET PAYMENT_STATUS='" . $helper->forSql($status) . "',PAID_AT={$paid},LATE_PAYMENT="
+                . (int)$latePayment . ",VERSION=VERSION+1,UPDATED_AT=UTC_TIMESTAMP() WHERE ID={$id}");
+        } catch (\Throwable $error) {
+            throw new OrderStorageException('Cannot change order payment status.', 0, $error);
+        }
     }
 
     /** @param null|list<int> $institutionScope */
@@ -189,6 +210,9 @@ final readonly class OrderRepository
             if (null !== $value) {
                 $where .= " AND {$column}='" . $helper->forSql($value) . "'";
             }
+        }
+        if (null !== $criteria->latePayment) {
+            $where .= ' AND o.LATE_PAYMENT=' . (int)$criteria->latePayment;
         }
         if (null !== $criteria->createdFrom) {
             $where .= " AND o.CREATED_AT>='" . $criteria->createdFrom->format('Y-m-d H:i:s') . "'";

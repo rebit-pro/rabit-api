@@ -58,9 +58,8 @@ JSON);
 
     private function map(string $json): MaxUpdateInputDto
     {
-        $object = json_decode($json, false, 16, JSON_THROW_ON_ERROR);
-        self::assertInstanceOf(\stdClass::class, $object);
-        $request = ArrayToDtoMapper::map(RequestHelper::jsonObjectsToArrays(get_object_vars($object)), MaxUpdateRequestDto::class);
+        // Non-strict JSON body: the same decoding as RequestToDtoMapper for a DTO without #[StrictRequest].
+        $request = ArrayToDtoMapper::map(RequestHelper::decodeJsonObject($json, true), MaxUpdateRequestDto::class);
 
         return (new MaxUpdateMapper())->update($request);
     }

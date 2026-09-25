@@ -7,14 +7,14 @@ const organizerPermissions = ['catalog.manage', 'staff.manage', 'order.read', 'm
 
 test('live organizer sees work and settings groups', () => {
   assert.deepEqual(titles(cabinetNavigation({ role: 'organizer', permissions: organizerPermissions, demo: false })), [
-    ['Работа', ['Обзор', 'Учреждения', 'Ссылки и сроки', 'Списки сотрудников', 'Заказы']],
+    ['Работа', ['Обзор', 'Учреждения', 'Ссылки и сроки', 'Списки сотрудников', 'Заказы', 'Платежи']],
     ['Настройки', ['Каталог и цены', 'Сотрудники']]
   ]);
 });
 
 test('live roles keep the visibility of the router guards', () => {
   assert.deepEqual(titles(cabinetNavigation({ role: 'curator', permissions: ['order.read'], demo: false })), [
-    ['Работа', ['Обзор', 'Учреждения', 'Ссылки и сроки', 'Списки сотрудников', 'Заказы']]
+    ['Работа', ['Обзор', 'Учреждения', 'Ссылки и сроки', 'Списки сотрудников', 'Заказы', 'Платежи']]
   ]);
   assert.deepEqual(titles(cabinetNavigation({ role: 'head', permissions: [], demo: false })), [
     ['Работа', ['Обзор', 'Учреждения', 'Ссылки и сроки', 'Списки сотрудников', 'Вопрос куратору']]

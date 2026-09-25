@@ -2,11 +2,11 @@
   "version": 2,
   "planStatus": "active",
   "date": "2026-09-25",
-  "endpointCount": 116,
+  "endpointCount": 118,
   "backend": "RaBit API",
   "baseline": {
     "branch": "main",
-    "commit": "1dd4a5f2295a3f3c7ba10d628906c76a4cb253d6",
+    "commit": "fc0cdb94d570aa7046e953029d5e58ac4aed1554",
     "mergedWaves": [
       "A1",
       "A2",
@@ -43,7 +43,8 @@
       "U6",
       "U7",
       "U8",
-      "E6"
+      "E6",
+      "G1"
     ],
     "review": {},
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
@@ -77,7 +78,8 @@
       "U6": "https://github.com/rebit-pro/rabit-api/pull/53",
       "U7": "https://github.com/rebit-pro/rabit-api/pull/53",
       "U8": "https://github.com/rebit-pro/rabit-api/pull/53",
-      "E6": "https://github.com/rebit-pro/rabit-api/pull/66"
+      "E6": "https://github.com/rebit-pro/rabit-api/pull/66",
+      "G1": "https://github.com/rebit-pro/rabit-api/pull/80"
     },
     "mergeCommits": {
       "C4": "cfc334e5890dd51dfd6ff6638eac2cc3e436322b",
@@ -101,7 +103,8 @@
       "U6": "b20423f08c5794f66346a607c376bc89ffe3bb82",
       "U7": "b20423f08c5794f66346a607c376bc89ffe3bb82",
       "U8": "b20423f08c5794f66346a607c376bc89ffe3bb82",
-      "E6": "54bd4abbb62fbda2dc030281e4b4893820d83e84"
+      "E6": "54bd4abbb62fbda2dc030281e4b4893820d83e84",
+      "G1": "fc0cdb94d570aa7046e953029d5e58ac4aed1554"
     },
     "decisionEvidence": {
       "D02-D05": "docs/waves/e3/README.md in rabit-api: user accepted rules before PR #20",
@@ -113,7 +116,11 @@
       "D3-D12-SCOPE": "2026-09-22: пользователь принял D3-DEC-07. D3 не меняет оплату, возвраты, печать и файлы; перенос в закрытую staff-группу запрещён. D12 снят с decisionGates D3 и остаётся у I3 и последующих волн.",
       "D3-FOLLOW-UP": "2026-09-22: после merge D3 слиты PR #49 (21311db, текст диалога переноса и стабилизация gate) и PR #52 (93becd8, запись развёртывания stage).",
       "DESIGN-UX": "2026-09-23: пользователь утвердил план docs/plans/design-ux-plan/plan.md в rabit-api (PR #50, merge bb35665) и решения DS-01…DS-20 по рекомендациям. Раздел 7 плана закрывает D01 (визуал, логотип, шрифты, палитра), раздел 10.1 — механизм выдачи и восстановления паролей в D08 (персональное приглашение по ссылке, сброс и смена пароля). Волны U1–U8, B3, B4 сдаются одним PR пакета design-ux.",
-      "E6-DEC-01-03": "2026-09-25: пользователь принял E6-DEC-01 (ставка 0…10%, сначала выбран 99,99%, после разбора крайнего случая — 10%), E6-DEC-02 (предел цены 1 000 000 ₽) и E6-DEC-03 (чистый контроллер условий в E6). План: docs/plans/E6_payment-cost-pricing/plan.md в rabit-api."
+      "E6-DEC-01-03": "2026-09-25: пользователь принял E6-DEC-01 (ставка 0…10%, сначала выбран 99,99%, после разбора крайнего случая — 10%), E6-DEC-02 (предел цены 1 000 000 ₽) и E6-DEC-03 (чистый контроллер условий в E6). План: docs/plans/E6_payment-cost-pricing/plan.md в rabit-api.",
+      "G1-D12-SCOPE": "2026-09-25: пользователь принял узкое D12 для G1: поздний платёж записывается денежным фактом с latePayment и не открывает файлы и печать; решения исполнения, возвраты и перенос с оплатой — I2/I3. D12 снят с decisionGates G1 и остаётся у I1–I3 и последующих волн.",
+      "G1-D09-SANDBOX": "2026-09-25: D09 закрыт для G1 в части тестового режима: зарегистрирован тестовый магазин ЮKassa (ключи вне репозитория), служебный реестр PAY-10/11. Чеки, налогообложение, форма продавца (ИП/ООО или НПД) и боевой магазин остаются D09 для G2 и далее. D09 снят с decisionGates G1.",
+      "G1-DEC": "2026-09-25: пользователь принял план docs/plans/G1_payment-attempts/plan.md в rabit-api: модуль morefoto.payment (namespace Morefoto\\Payment); оплачивается неизменяемый снимок заказа E5 без пересчёта; новая попытка только до closesAt; способ оплаты выбирается на странице MoreFoto из конфигурации магазина (СБП, карта; в тестовом магазине только карта); личный ключ заказа не передаётся провайдеру; webhook — сигнал серверной сверки; клиент PaymentClient поверх RebitHttpClient по образцу orteka.payment; реестр PAY-10/11 с областью COM-12; фоновая сверка cron.",
+      "E6-MERGED": "2026-09-25: PR #66 слит (54bd4ab) и выкачен на app.morefoto36.ru; follow-up PR #74 (#68/#69) слит (cfd5718). Отмечено веткой G1 по правилу учёта слияний следующей волной."
     }
   },
   "acceptedImplementationDecisions": [
@@ -1428,7 +1435,7 @@
       "title": "Платёжные попытки и подтверждённые факты",
       "kind": "implementation",
       "owners": [
-        "morefoto.payments",
+        "morefoto.payment",
         "morefoto.commerce"
       ],
       "dependsOn": [
@@ -1436,15 +1443,15 @@
         "F2"
       ],
       "decisionGates": [
-        "D09",
-        "D10",
-        "D12"
+        "D10"
       ],
       "endpointIds": [
         "PAY-01",
         "PAY-02",
         "PAY-03",
-        "PAY-07"
+        "PAY-07",
+        "PAY-10",
+        "PAY-11"
       ],
       "verifiesEndpointIds": [
         "COM-06",
@@ -1457,9 +1464,9 @@
       "scope": [
         "API ЮKassa, готовая внешняя платёжная страница, своё хранение попыток/фактов, серверная сверка и реестр.",
         "Уникальные provider payment/event ID, сохранённый idempotency key, локальная операция и сверка unknown; HTTP вне SQL-транзакции.",
-        "Денежный факт отделён от исполнения; поздний платёж не открывает файлы/печать до I3. PAY-07 уточнить для уведомлений ЮKassa.",
+        "Денежный факт отделён от исполнения; поздний платёж не открывает файлы/печать до I3. PAY-07 — /webhooks/yookassa/payments, тело уведомления только сигнал сверки.",
         "Реестр платежей MoreFoto с серверными правами/фильтрами/пагинацией, без секретов. Сумма берётся из неизменяемого заказа, включая опубликованную политику цен E6, если она включена.",
-        "До старта G1 закрепить дополнительные служебные API ID/DTO реестра и параметры магазина, не переименовывая исходные 99 ID."
+        "Служебный реестр — PAY-10/11 (область COM-12); параметры тестового магазина в защищённой конфигурации; исходные ID не переименованы."
       ],
       "review": [
         "Дубликаты, чужая сумма/валюта/заказ/магазин, переставленные события и перезапуск.",
@@ -1475,7 +1482,7 @@
       "legacyIds": [
         "W19"
       ],
-      "deliveryState": "planned",
+      "deliveryState": "merged",
       "unlocks": [
         "G2",
         "I1",
@@ -1483,7 +1490,7 @@
         "I3"
       ],
       "inputBoundary": "Установленные и принятые в main контракты/схема: E5, F2. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
-      "outputBoundary": "Завершённые операции PAY-01, PAY-02, PAY-03, PAY-07; Попытка, webhook и неизвестный исход обрабатываются без ложного успешного заказа.",
+      "outputBoundary": "Завершённые операции PAY-01, PAY-02, PAY-03, PAY-07, PAY-10, PAY-11; Попытка, webhook и неизвестный исход обрабатываются без ложного успешного заказа.",
       "mergeCheck": "Отдельный PR к актуальному main; все dependsOn уже merged. Проверки на main + только этот diff, без файлов/коммитов незамерженных волн; установить миграции и DI своего сценария. Повторить проверку после обновления base."
     },
     {
@@ -1540,7 +1547,7 @@
       "title": "Чеки и повтор доставки",
       "kind": "implementation",
       "owners": [
-        "morefoto.payments",
+        "morefoto.payment",
         "rebit.notification"
       ],
       "dependsOn": [
@@ -1649,7 +1656,7 @@
       "kind": "implementation",
       "owners": [
         "morefoto.settlement",
-        "morefoto.payments"
+        "morefoto.payment"
       ],
       "dependsOn": [
         "G1",
@@ -1708,7 +1715,7 @@
       "owners": [
         "morefoto.settlement",
         "morefoto.commerce",
-        "morefoto.payments"
+        "morefoto.payment"
       ],
       "dependsOn": [
         "D3",
@@ -2365,7 +2372,7 @@
         "morefoto.media",
         "morefoto.commerce",
         "morefoto.handoff",
-        "morefoto.payments",
+        "morefoto.payment",
         "morefoto.files",
         "morefoto.support",
         "morefoto.settlement",
@@ -2998,7 +3005,7 @@
     "platform": "Битрикс Старт: Main/D7 и собственные модули; без sale/catalog, Bitrix Sale Order/Payment, PaySystem и таблиц b_sale_*.",
     "storage": {
       "orders": "morefoto.commerce",
-      "paymentAttemptsAndFacts": "morefoto.payments",
+      "paymentAttemptsAndFacts": "morefoto.payment",
       "refundReservationsAndAllocations": "morefoto.settlement"
     },
     "adminInterface": "Админ-панель MoreFoto: реестр платежей и чеков, карточка/история, полный и частичный возврат с причиной, подтверждением и серверными правами.",
@@ -3008,7 +3015,7 @@
       "G2": "Чеки от ЮKassa при покупке/возврате, отдельный статус чека и повтор выдачи существующего документа.",
       "I2": "Полный/частичный refund ЮKassa, локальный резерв, сверка неизвестного исхода и возврат из админ-панели."
     },
-    "registryApiStatus": "Требует расширения до старта G1: отдельные служебные список/карточка платежа отсутствуют среди 99 API ID. Закрепить новые ID/DTO/права/фильтры в API-генераторе и Postman, сохранив все существующие ID. Плановые URL: GET /api/v1/payments и GET /api/v1/payments/{payment_attempt_id}.",
+    "registryApiStatus": "Закреплено в G1: PAY-10 GET /api/v1/payments и PAY-11 GET /api/v1/payments/{payment_attempt_id}, область доступа как COM-12; прежние ID не переименованы.",
     "pricing": {
       "owner": "morefoto.commerce",
       "wave": "E6",
