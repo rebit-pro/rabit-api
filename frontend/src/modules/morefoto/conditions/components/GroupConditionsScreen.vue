@@ -192,7 +192,13 @@ onScopeDispose(() => {
     @save="save"
     @reset="reset"
   >
-    <ConditionsFields v-if="command" v-model="command" :errors="errors" :catalog="catalog" />
+    <ConditionsFields
+      v-if="command"
+      v-model="command"
+      :errors="errors"
+      :catalog="catalog"
+      :payment-costs="groupConditions.snapshot.value?.paymentCosts ?? null"
+    />
   </AdminDialog>
 </template>
 <style scoped>

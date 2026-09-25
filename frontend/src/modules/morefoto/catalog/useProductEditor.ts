@@ -39,7 +39,7 @@ function validate(command: ProductCommand): ManagementErrors {
   if ([...p.format].length > 100) errors.format = 'Формат: до 100 символов.';
   if ([...p.unit].length > 100) errors.unit = 'Единица продажи: до 100 символов.';
   const price = moneyInputValue(p.price);
-  if (price === null || price > 2147483647) errors.price = 'Цена: от 0 до 21 474 836,47 ₽, до двух знаков после запятой.';
+  if (price === null || price > 100000000) errors.price = 'Цена: от 0 до 1 000 000 ₽, до двух знаков после запятой.';
   if (p.kind === 'physical' && quantityValue(p.printCount, 0, 2147483647) === null)
     errors.printCount = 'Укажите целое неотрицательное число отпечатков.';
   return errors;

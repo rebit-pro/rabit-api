@@ -1,8 +1,26 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { ConditionsCommand, ManagementErrors } from '../types';
 import type { Catalog } from '../../commerce/types';
+import { money } from '../../commerce/money';
+import { moneyInputValue } from '../../ui/field-values';
+import { MAX_PRICE } from '../../conditions/conditions-command';
+import { rateInputValue, salePrice, type PaymentCostPolicy } from '../../conditions/payment-costs';
 const model = defineModel<ConditionsCommand>({ required: true });
-defineProps<{ errors: ManagementErrors; catalog: Catalog }>();
+const props = defineProps<{ errors: ManagementErrors; catalog: Catalog; paymentCosts?: PaymentCostPolicy | null }>();
+/** Общие условия берут политику из формы, условия группы — сохранённую общую политику. */
+const policy = computed<PaymentCostPolicy | null>(() => {
+  const costs = model.value.paymentCosts;
+  if (!model.value.groupId && costs) {
+    const rateBps = rateInputValue(costs.rate, costs.maxRateBps);
+    return rateBps === null ? null : { enabled: costs.enabled, rateBps };
+  }
+  return props.paymentCosts ?? null;
+});
+function buyerPrice(price: string): number | null {
+  const base = moneyInputValue(price);
+  return policy.value?.enabled && base !== null && base <= MAX_PRICE ? salePrice(base, policy.value) : null;
+}
 const kinds = { physical: 'Печатный товар', digital: 'Один электронный кадр', bundle: 'Весь набор ребёнка в одной съёмке' };
 </script>
 <template>
@@ -30,6 +48,30 @@ const kinds = { physical: 'Печатный товар', digital: 'Один эл
     Скидка сотрудникам — 50% только на отмеченные позиции. Печатные товары учитываются в пороге подарка после скидки, отдельно для каждого
     ребёнка в одном заказе.
   </p>
+  <section v-if="!model.groupId && model.paymentCosts" class="payment-costs mb-5" data-testid="payment-costs">
+    <h3>Расходы на оплату</h3>
+    <p class="mf-muted mt-2 mb-3">
+      Цена для покупателя = цена каталога ÷ (1 − ставка), с округлением вверх до 50 ₽. Скидка сотрудникам и порог подарка считаются от неё.
+      Выключение возвращает цены каталога.
+    </p>
+    <v-checkbox
+      v-model="model.paymentCosts.enabled"
+      label="Учитывать расходы на оплату в цене"
+      aria-label="Учитывать расходы на оплату в цене"
+      hide-details
+    />
+    <v-text-field
+      v-model="model.paymentCosts.rate"
+      label="Ставка расходов"
+      aria-label="Ставка расходов на оплату, %"
+      suffix="%"
+      inputmode="decimal"
+      class="payment-costs__rate"
+      :disabled="!model.paymentCosts.enabled"
+      :error-messages="errors.paymentCostRate"
+      :aria-invalid="!!errors.paymentCostRate"
+    />
+  </section>
   <v-alert v-if="errors.products" type="error" variant="tonal" class="mb-4">{{ errors.products }}</v-alert>
   <div v-for="product in model.products" :key="product.id" class="condition-product" :data-testid="'condition-' + product.id">
     <div class="condition-name">
@@ -39,16 +81,21 @@ const kinds = { physical: 'Печатный товар', digital: 'Один эл
         >Отключено в общем каталоге</span
       >
     </div>
-    <v-text-field
-      v-model="product.price"
-      label="Цена"
-      :aria-label="'Цена: ' + product.name"
-      suffix="₽"
-      inputmode="decimal"
-      :disabled="!!model.groupId && model.inherit"
-      :error-messages="errors['price:' + product.id]"
-      :aria-invalid="!!errors['price:' + product.id]"
-    />
+    <div class="condition-price">
+      <v-text-field
+        v-model="product.price"
+        label="Цена"
+        :aria-label="'Цена: ' + product.name"
+        suffix="₽"
+        inputmode="decimal"
+        :disabled="!!model.groupId && model.inherit"
+        :error-messages="errors['price:' + product.id]"
+        :aria-invalid="!!errors['price:' + product.id]"
+      />
+      <p v-if="buyerPrice(product.price) !== null" class="condition-sale mf-muted" :data-testid="'sale-price-' + product.id">
+        Для покупателя: {{ money(buyerPrice(product.price) ?? 0) }}
+      </p>
+    </div>
     <div class="condition-switches">
       <v-checkbox
         v-model="product.active"
@@ -175,6 +222,20 @@ const kinds = { physical: 'Печатный товар', digital: 'Один эл
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+.condition-price {
+  min-width: 0;
+}
+.condition-sale {
+  margin-top: 4px;
+  font-size: 14px;
+}
+.payment-costs {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--mf-color-border);
+}
+.payment-costs__rate {
+  max-width: 220px;
 }
 .gift-fields {
   margin-top: 24px;
