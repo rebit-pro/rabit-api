@@ -5,12 +5,12 @@
 - Дата: 2026-09-25.
 - Ветка: `codex/issues-26-27-28-staff-requests` от `origin/main` `54bd4ab`, upstream `origin/codex/issues-26-27-28-staff-requests`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-26-27-28-staff-requests`. Основной checkout `/home/user/rabit-api` занят другой сессией — в нём не работать.
-- Issues: #26, #27, #28. PR: [#78](https://github.com/rebit-pro/rabit-api/pull/78) OPEN, не сливать.
+- Issues: #26, #27, #28. PR: [#78](https://github.com/rebit-pro/rabit-api/pull/78): review пользователя — одно блокирующее замечание (P1, черновик при новой revision), исправлено `274b7cf`.
 - Коммиты: #26 `92fbc7f`, #27 `82712b2`, #28 `02d4904` (+ журнал).
 - Документация: [план](plan.md), F1: [plan](../F1_staff_requests/plan.md), [README](../../waves/f1/README.md).
 - Завершено: код и тесты трёх issue, быстрые проверки backend/frontend, push.
-- Сейчас: ожидание review пользователя.
-- Следующий шаг: после review без блокеров — полный `make test-e2e` (T08–T15), фактические время/память из `verify-handoff.log` перенести в журнал и PR.
+- Сейчас: блокер review исправлен; обновление base и полный gate.
+- Следующий шаг: влить свежий `main`, полный `make test-e2e` (T08–T15), фактические время/память из `verify-handoff.log` перенести в журнал и PR, затем merge (решение пользователя 2026-09-25). Деплой — позже, пользователь соберёт несколько веток.
 - Блокеров нет. Открыто: Q1 (убрать `history` из элементов HND-06 — изменение контракта).
 - Рабочее дерево: закоммичено. Пустые `api/vendor`, `api/var`, `frontend/node_modules` — точки монтирования docker, в git не попадают; `frontend/reports` игнорируется.
 - Команды проверок:
@@ -59,6 +59,18 @@
 - Frontend: `npm run check` exit 0, `npm run test:commerce` 195/195.
 - Дополнительно: демо-Cucumber `e2e/features/handoff.feature` + `dashboard.feature` (`start-server-and-test e2e:server … cucumber-js`). Сценарии R10 (handoff, включая «черновик и повтор после ошибки» и reset подтверждения переноса) — без падений. Падения только в `dashboard.feature` на входе демо-кабинета («Не удалось загрузить данные» на странице логина) — вне diff ветки (auth не менялся), демо-Cucumber открыт и на `main`. Прогон остановлен по таймауту 60 мин после прохождения handoff.
 - Push `codex/issues-26-27-28-staff-requests`.
+
+### 2026-09-25 — блокирующее замечание review и исправление
+
+- Review пользователя на `aaba2a9`: одно блокирующее замечание P1 в `useHandoffEditor.ts:42`.
+  - При открытии формы с draft revision=3 и серверной revision=4 форма подменялась свежими данными, и синхронный watcher сразу перезаписывал тот же ключ localStorage. Правки пропадали без явного действия.
+  - После потерянного успешного ответа терялись тело и `Idempotency-Key`. Повтор после reload становился новой мутацией, и live-сценарий это закреплял.
+- Исправление `274b7cf`:
+  - новое правило `handoff/draft.ts` `openDraft()`: draft того же вида восстанавливается всегда, `stale` лишь помечает несовпадение revision; `restored` остаётся true, поэтому кнопка «Загрузить актуальные данные» видна;
+  - тексты «Черновик устарел…» в `StaffRequestsScreen` и `LinksScreen` объясняют выбор: повтор без правок или загрузка актуальных данных;
+  - unit-тест «#28: a stored draft keeps its edits…» в `tests/commerce/handoff.test.mjs`;
+  - live `zzz-handoff.spec.ts`: после reload повтор идёт с тем же ключом и получает replay `{revision: 9}` без второй мутации; при внешнем конфликте draft «Мой черновик» переживает закрытие и открытие, повтор снова даёт `REVISION_CONFLICT`, замена — только кнопкой; последующие revision сдвинуты на единицу.
+- Проверки (том `rabit-issues262728-node`): `npx eslint --fix` по изменённым файлам, `npm run check` — exit 0, `npm run test:commerce` — 196/196.
 
 ## Результаты тест-кейсов
 
