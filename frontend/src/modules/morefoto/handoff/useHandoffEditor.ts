@@ -3,17 +3,26 @@ import { useAuthStore } from '@/stores/auth';
 import { isMockApiEnabled } from '@/mocks/config';
 import type { HandoffCommand, HandoffErrors } from './types';
 import { HandoffValidationError } from './scope';
+import { openDraft } from './draft';
 import { saveLink } from './links-service';
 import { saveStaffRequest } from './requests-service';
-export function useHandoffEditor(saved: () => void) {
+/**
+ * Draft, submit and errors of a handoff form. A stored draft survives until a successful save or an explicit reset;
+ * `refresh` reads the workspace from the server and reports success: the reset button and a close after a failed save
+ * use it, so a form is never rebuilt from a stale local copy (#28).
+ */
+export function useHandoffEditor(saved: () => void, refresh?: () => Promise<boolean>) {
   const auth = useAuthStore(),
     command = ref<HandoffCommand | null>(null),
     busy = shallowRef(false),
     error = shallowRef(''),
     errors = shallowRef<HandoffErrors>({}),
-    restored = shallowRef(false);
+    restored = shallowRef(false),
+    /** The restored draft was written for another server revision: its repeat is a replay or a revision conflict. */
+    stale = shallowRef(false);
   let factory: (() => HandoffCommand) | null = null,
     key = '',
+    failed = false,
     alive = true;
   onScopeDispose(() => {
     alive = false;
@@ -29,17 +38,32 @@ export function useHandoffEditor(saved: () => void) {
     } catch {
       draft = null;
     }
-    command.value = draft?.kind === fresh.kind ? draft : fresh;
-    restored.value = !!draft;
+    const opened = openDraft(draft, fresh);
+    stale.value = opened.stale;
+    command.value = opened.command;
+    restored.value = opened.restored;
+    failed = false;
     error.value = '';
     errors.value = {};
   }
-  function reset() {
-    if (factory) {
+  /** «Загрузить актуальные данные»: reads the server first, then rebuilds the form with a new key. */
+  async function reset() {
+    if (!factory || busy.value) return;
+    busy.value = true;
+    error.value = '';
+    errors.value = {};
+    try {
+      if (refresh && !(await refresh())) {
+        if (alive) error.value = 'Не удалось загрузить актуальные данные. Проверьте соединение и повторите.';
+        return;
+      }
+      if (!alive || !command.value) return;
       command.value = factory();
       restored.value = false;
-      error.value = '';
-      errors.value = {};
+      stale.value = false;
+      failed = false;
+    } finally {
+      if (alive) busy.value = false;
     }
   }
   watch(
@@ -50,7 +74,11 @@ export function useHandoffEditor(saved: () => void) {
     { deep: true, flush: 'sync' }
   );
   function close() {
-    if (!busy.value) command.value = null;
+    if (busy.value) return;
+    command.value = null;
+    // After a failed save the workspace may be behind the server; the next open compares the draft with fresh data.
+    if (failed && refresh) void refresh();
+    failed = false;
   }
   async function save() {
     if (!command.value || busy.value) return;
@@ -62,6 +90,7 @@ export function useHandoffEditor(saved: () => void) {
       if (copy.kind === 'link') await saveLink(auth.getAccessToken() ?? '', copy);
       else await saveStaffRequest(auth.getAccessToken() ?? '', copy);
       localStorage.removeItem(key);
+      failed = false;
       if (alive) {
         command.value = null;
         saved();
@@ -70,6 +99,7 @@ export function useHandoffEditor(saved: () => void) {
       if (alive) {
         error.value = cause instanceof Error ? cause.message : 'Не удалось сохранить. Черновик сохранён.';
         if (cause instanceof HandoffValidationError) errors.value = cause.errors;
+        else failed = true;
         busy.value = false;
         await nextTick();
         (
@@ -81,5 +111,5 @@ export function useHandoffEditor(saved: () => void) {
       if (alive) busy.value = false;
     }
   }
-  return { command, busy, error, errors, restored, open, reset, close, save };
+  return { command, busy, error, errors, restored, stale, open, reset, close, save };
 }

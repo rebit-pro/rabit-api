@@ -32,8 +32,10 @@ BENCH = "zz-media-bench"
 # MySQL checks after the browser: script, file recorded by the browser, success marker, specs that produce the data.
 VERIFIERS = [
     ("verify-storefront.php", None, "E4 integration passed", ["zzz-handoff", "zzzz-storefront"]),
+    # #26: HND-06 on 1000 staff requests keeps a fixed SQL count; the set is rolled back after the measurement.
+    ("verify-handoff.php", None, "F1 list integration passed", ["zzz-handoff"]),
     # The browser records the secrets it received so the verifier can prove none of them is stored in clear text.
-    ("verify-orders.php", "e5-orders.json", "E5 integration passed", ["zzzzz-orders", "zzzzzz-transfers"]),
+    ("verify-orders.php", "e5-orders.json", "E5 integration passed", ["zzzzz-orders", "zzzzzz-transfers", "zzzzzzzz-payment-costs"]),
     ("verify-links.php", None, "F2 integration passed", ["zzzz-links"]),
     # D3: the browser leaves one untransferred staff request for the injected-failure check on MySQL.
     ("verify-transfers.php", "d3-transfers.json", "D3 integration passed", ["zzzzzz-transfers"]),
@@ -41,6 +43,8 @@ VERIFIERS = [
     ("verify-access.php", None, "B4 access integration passed", ["staff", "zz-access"]),
     # B3: avatar rows and files match the browser steps.
     ("verify-avatar.php", None, "B3 avatar integration passed", ["zz-avatar"]),
+    # E6: schema, CHECK limits and migration replay after the browser switched the payment cost policy back off.
+    ("verify-payment-costs.php", None, "E6 payment cost integration passed", ["zzzzzzzz-payment-costs"]),
     # G1: attempts, money facts and order statuses agree; no buyer secret reaches the payment tables.
     ("verify-payments.php", "g1-payments.json", "G1 payment integration passed", ["zzzzzzzzz-payments"]),
 ]

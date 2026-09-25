@@ -15,7 +15,7 @@
 
 ## Хранение и сверка
 
-Миграция `20260925120001` создаёт три таблицы:
+Миграция `20260925190001` создаёт три таблицы:
 - `mf_payment_attempt`: одна открытая попытка на заказ (`ACTIVE_ORDER_ID`); хеш клиентского ключа и тела; `PROVIDER_KEY` для `Idempotence-Key`; расписание проверок.
 - `mf_payment_fact`: денежный факт, один на платёж, не переписывается.
 - `mf_payment_notification`: только ключ события и итог, без тела запроса.
@@ -38,7 +38,7 @@ Payment меняет заказ только через `Rebit\Share\Contracts\C
 
 ## Условия подключения на stage
 
-1. Применить миграцию `20260925120001` и установить модуль `morefoto.payment` (`b_module`), затем сверить список модулей stage с `api/tools/e2e/prepare.php`.
+1. Применить миграцию `20260925190001` и установить модуль `morefoto.payment` (`b_module`), затем сверить список модулей stage с `api/tools/e2e/prepare.php`.
 2. Добавить ключи тестового магазина и `MOREFOTO_PAYMENT_RETURN_BASE_URL=https://app.morefoto36.ru`. Для тестового магазина допустим `backend.env`. Для боевого — Swarm-секрет, его подключение в compose, Makefile и `swarm-publish-runtime.sh` делается вместе с выкладкой.
 3. В кабинете ЮKassa в разделе «Интеграция → HTTP-уведомления» указать `https://app.morefoto36.ru/api/v1/webhooks/yookassa/payments` и события `payment.succeeded`, `payment.canceled`.
 4. Cron `app:payment:reconcile` входит в `api/docker/common/cron/crontab`.

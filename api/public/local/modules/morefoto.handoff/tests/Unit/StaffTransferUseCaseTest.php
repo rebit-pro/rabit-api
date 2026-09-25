@@ -145,7 +145,8 @@ final class StaffTransferUseCaseTest extends TestCase
     public static function previewRefusals(): iterable
     {
         yield 'teacher' => ['FORBIDDEN', new LinkActorOutputDto(7, 'Воспитатель', 'teacher', [], [30]), 'submitted'];
-        yield 'text refusal of Access' => ['FORBIDDEN', new HttpException('Staff access is unavailable.', 403), 'submitted'];
+        yield 'disabled profile in Access' => ['FORBIDDEN', new HttpException('FORBIDDEN', 403), 'submitted'];
+        yield 'inactive identity in Access' => ['UNAUTHORIZED', new HttpException('UNAUTHORIZED', 401), 'submitted'];
         yield 'already transferred' => ['REQUEST_TRANSFERRED', new LinkActorOutputDto(5, 'Организатор', 'organizer', [], []), 'transferred'];
         yield 'waiting for clarification' => ['REQUEST_NOT_SUBMITTED', new LinkActorOutputDto(5, 'Организатор', 'organizer', [], []), 'clarification'];
     }

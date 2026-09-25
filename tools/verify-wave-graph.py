@@ -44,6 +44,8 @@ def validate_graph(plan):
         for eid in wave["endpointIds"]:
             assert eid not in assigned, ("Duplicate primary owner", eid)
             assigned[eid] = wid
+        if wave["deliveryState"] == "merged":
+            assert set(deps) <= merged, ("Merged wave depends on unmerged wave", wid)
         if wave["deliveryState"] in {"review", "inProgress"}:
             bundle = wave.get("deliveryBundle")
             same = {other["id"] for other in waves if bundle and other.get("deliveryBundle") == bundle}
@@ -119,7 +121,15 @@ def negative_checks(plan):
                 item["unlocks"] = [other["id"] for other in data["waves"] if item["id"] in other["dependsOn"]]
         rejects("bundle depends on unmerged wave outside the bundle", bundle_escape)
         rejects("unknown bundle", lambda data: wave(data, bundled[0]["id"]).update(deliveryBundle="missing"))
-        rejects("bundle partially merged", lambda data: (wave(data, bundled[0]["id"]).update(deliveryState="merged"), data["baseline"]["mergedWaves"].append(bundled[0]["id"])))
+        def bundle_partial(data):
+            first = wave(data, bundled[0]["id"])
+            if first["deliveryState"] == "merged":
+                first["deliveryState"] = "inProgress"
+                data["baseline"]["mergedWaves"].remove(first["id"])
+            else:
+                first["deliveryState"] = "merged"
+                data["baseline"]["mergedWaves"].append(first["id"])
+        rejects("bundle partially merged", bundle_partial)
     return scenarios
 
 

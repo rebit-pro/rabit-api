@@ -37,6 +37,8 @@ export interface ConditionsCommand extends CommandBase {
   giftEnabled: boolean;
   giftThreshold: string;
   giftForStaff: boolean;
+  /** Политика учёта расходов на оплату (E6): только общие условия live-кабинета. */
+  paymentCosts?: { enabled: boolean; rate: string; maxRateBps: number; savedRateBps: number };
 }
 export interface UserCommand extends CommandBase {
   kind: 'user';

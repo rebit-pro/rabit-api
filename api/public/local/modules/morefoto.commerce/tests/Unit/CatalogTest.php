@@ -51,15 +51,15 @@ final class CatalogTest extends TestCase
         yield 'invalid UTF8' => ['name', "\xff"];
         yield 'NUL' => ['description', "foo\0bar"];
         yield 'negative price' => ['price', -1];
-        yield 'price storage bound' => ['price', 2147483648];
+        yield 'price bound' => ['price', ProductDetails::MAX_PRICE + 1];
         yield 'negative count' => ['printCount', -1];
         yield 'count storage bound' => ['printCount', 2147483648];
     }
 
     public function testAcceptsBoundariesWithoutInventingProductRules(): void
     {
-        $details = new ProductDetails(str_repeat('Я', 255), str_repeat('Я', 4000), ProductKind::DIGITAL, 2147483647, 2147483647, str_repeat('Я', 100), str_repeat('Я', 100), true, false);
-        self::assertSame(2147483647, $details->price);
+        $details = new ProductDetails(str_repeat('Я', 255), str_repeat('Я', 4000), ProductKind::DIGITAL, ProductDetails::MAX_PRICE, 2147483647, str_repeat('Я', 100), str_repeat('Я', 100), true, false);
+        self::assertSame(100_000_000, $details->price);
         self::assertSame(2147483647, $details->printCount);
     }
 

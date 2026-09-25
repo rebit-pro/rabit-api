@@ -4,12 +4,22 @@ import { readPhotos } from '../photos/repository';
 import { getCatalog } from '../commerce/mocks/catalog';
 import { handoffAccess, canReadRequest } from './scope';
 import { calendarDays, currentGroupState, groupSentAt, preparationProblems, preparationSignature } from './rules';
-import { staffRequestsApi } from './api';
+import { isAxiosError } from 'axios';
+import { staffRequestsApi, type StaffRequestPage } from './api';
 import { linksApi, toLinkGroup } from './links-api';
 import type { StaffRole } from '../types';
-import type { HandoffWorkspace, LinkGroup } from './types';
-export async function loadHandoff(token: string, requestId?: string): Promise<HandoffWorkspace> {
-  if (!isMockApiEnabled) return loadLiveHandoff(requestId);
+import type { HandoffWorkspace, LinkGroup, StaffRequest } from './types';
+/** One page of the live staff request list: server filters and a bounded page size (#26). */
+export interface StaffRequestQuery {
+  page: number;
+  status: StaffRequest['status'] | null;
+  shootId: string | null;
+}
+export const STAFF_REQUEST_PAGE_SIZE = 20;
+const FIRST_PAGE: StaffRequestQuery = { page: 1, status: null, shootId: null };
+
+export async function loadHandoff(token: string, requestId?: string, query: StaffRequestQuery = FIRST_PAGE): Promise<HandoffWorkspace> {
+  if (!isMockApiEnabled) return loadLiveHandoff(requestId, query);
   await simulateRequest();
   const access = handoffAccess(token),
     { organization, scope, account, now } = access,
@@ -19,7 +29,8 @@ export async function loadHandoff(token: string, requestId?: string): Promise<Ha
     role: account.role,
     now,
     photos: photos.photos.filter((p) => scope.groups.some((g) => g.id === p.groupId)),
-    requests: (photos.staffRequests ?? []).filter((r) => canReadRequest(r, access)),
+    // Newest first, as the live list is ordered by the server.
+    requests: (photos.staffRequests ?? []).filter((r) => canReadRequest(r, access)).reverse(),
     groups: organization.groups
       .filter((g) => scope.groups.some((item) => item.id === g.id))
       .map((group) => {
@@ -53,16 +64,26 @@ export async function loadHandoff(token: string, requestId?: string): Promise<Ha
   };
 }
 
-async function loadLiveHandoff(requestId?: string): Promise<HandoffWorkspace> {
-  const first = await staffRequestsApi.list();
-  const items = [...first.items];
-  for (let page = 2; page <= first.meta.totalPages; page++) items.push(...(await staffRequestsApi.list(page)).items);
+async function loadLiveHandoff(requestId: string | undefined, query: StaffRequestQuery): Promise<HandoffWorkspace> {
+  // The card reads HND-08 and only the scope from a one-item HND-06 page; other pages stay on the server.
   if (requestId) {
-    const detail = await staffRequestsApi.detail(requestId);
-    const index = items.findIndex((item) => item.id === detail.id);
-    if (index === -1) items.push(detail);
-    else items[index] = detail;
+    const [scope, detail] = await Promise.all([staffRequestsApi.list(1, 1), staffRequestsApi.detail(requestId).catch(missing)]);
+    return liveWorkspace(scope, detail ? [detail] : []);
   }
+  const page = await staffRequestsApi.list(query.page, STAFF_REQUEST_PAGE_SIZE, { status: query.status, shootId: query.shootId });
+  return {
+    ...liveWorkspace(page, page.items),
+    requestPage: { page: page.meta.page, totalPages: page.meta.totalPages, total: page.meta.total }
+  };
+}
+
+/** A request outside the actor's scope answers 404: the screen says it is unavailable instead of failing the load. */
+function missing(cause: unknown): null {
+  if (isAxiosError(cause) && cause.response?.status === 404) return null;
+  throw cause;
+}
+
+function liveWorkspace(first: StaffRequestPage, requests: StaffRequest[]): HandoffWorkspace {
   const groups = first.scope.groups.map<LinkGroup>((group) => ({
     ...group,
     galleryToken: '',
@@ -82,7 +103,7 @@ async function loadLiveHandoff(requestId?: string): Promise<HandoffWorkspace> {
     role: first.scope.role,
     now: new Date().toISOString(),
     requestSummary: first.meta.summary?.byStatus,
-    requests: items,
+    requests,
     photos: [],
     groups,
     scope: {

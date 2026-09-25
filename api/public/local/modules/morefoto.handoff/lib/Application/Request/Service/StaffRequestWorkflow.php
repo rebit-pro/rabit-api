@@ -25,6 +25,7 @@ use Rebit\Share\Shared\Exception\HttpException;
  * Выполняет серверный workflow служебной заявки и сохраняет доказательство права сотрудника.
  *
  * Проверяет текущую роль, область, ребёнка, optimistic lock и идемпотентность до атомарной смены состояния и истории.
+ * Ключ идемпотентности резервируется до блокировки заявки, поэтому одновременные одинаковые команды получают один результат.
  */
 final readonly class StaffRequestWorkflow
 {
@@ -80,7 +81,7 @@ final readonly class StaffRequestWorkflow
                 'comment' => $input->comment,
                 'revision' => $input->revision,
             ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
-            $replayed = $this->replay($actor->id, $resource, $key, $hash);
+            $replayed = $this->claim($actor->id, $resource, $key, $hash);
             if (null !== $replayed) {
                 return $replayed;
             }
@@ -147,7 +148,7 @@ final readonly class StaffRequestWorkflow
             }
             $this->requests->appendHistory($nativeId, 'submitted', $actor->id, $actor->name, $input->comment, true);
             $output = new StaffRequestMutationOutputDto($publicId, $revision, 'submitted');
-            $this->remember($actor->id, $resource, $key, $hash, $output);
+            $this->remember($actor->id, $resource, $key, $output);
 
             return $output;
         });
@@ -160,7 +161,7 @@ final readonly class StaffRequestWorkflow
         return $this->transaction->execute(function() use ($actor, $requestId, $key, $input): StaffRequestMutationOutputDto {
             $resource = '/staff-requests/' . $requestId . '/clarifications';
             $hash = hash('sha256', json_encode([$requestId, $input->revision, $input->comment, $input->confirmed], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
-            $replayed = $this->replay($actor->id, $resource, $key, $hash);
+            $replayed = $this->claim($actor->id, $resource, $key, $hash);
             if (null !== $replayed) {
                 return $replayed;
             }
@@ -178,7 +179,7 @@ final readonly class StaffRequestWorkflow
             $revision = $this->requests->clarify((int)$request['ID'], (int)$request['REVISION']);
             $this->requests->appendHistory((int)$request['ID'], 'clarification', $actor->id, $actor->name, $input->comment, true);
             $output = new StaffRequestMutationOutputDto($requestId, $revision, 'clarification');
-            $this->remember($actor->id, $resource, $key, $hash, $output);
+            $this->remember($actor->id, $resource, $key, $output);
 
             return $output;
         });
@@ -221,12 +222,17 @@ final readonly class StaffRequestWorkflow
         }
     }
 
-    private function replay(int $actorId, string $resource, IdempotencyKey $key, string $hash): ?StaffRequestMutationOutputDto
+    /**
+     * Резервирует ключ до блокировки заявки (порядок: ключ → заявка). null — ключ наш, команду нужно выполнить;
+     * иначе ключ принадлежит зафиксированной команде, в том числе конкурентной, которую мы дождались на PK.
+     */
+    private function claim(int $actorId, string $resource, IdempotencyKey $key, string $hash): ?StaffRequestMutationOutputDto
     {
-        $stored = $this->requests->idempotency($actorId, $resource, $key->value);
-        if (null === $stored) {
+        if ($this->requests->reserveIdempotency($actorId, $resource, $key->value, $hash)) {
             return null;
         }
+        $stored = $this->requests->idempotency($actorId, $resource, $key->value, false)
+            ?? throw new \UnexpectedValueException('Handoff idempotency key was neither reserved nor stored.');
         if (!hash_equals($stored['PAYLOAD_HASH'], $hash)) {
             throw new HttpException('IDEMPOTENCY_CONFLICT', 409);
         }
@@ -238,9 +244,9 @@ final readonly class StaffRequestWorkflow
         return new StaffRequestMutationOutputDto((string)$value['id'], (int)$value['revision'], (string)$value['status']);
     }
 
-    private function remember(int $actorId, string $resource, IdempotencyKey $key, string $hash, StaffRequestMutationOutputDto $output): void
+    private function remember(int $actorId, string $resource, IdempotencyKey $key, StaffRequestMutationOutputDto $output): void
     {
-        $this->requests->saveIdempotency($actorId, $resource, $key->value, $hash, json_encode([
+        $this->requests->completeIdempotency($actorId, $resource, $key->value, json_encode([
             'id' => $output->id,
             'revision' => $output->revision,
             'status' => $output->status,

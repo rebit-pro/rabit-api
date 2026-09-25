@@ -1,12 +1,12 @@
 {
   "version": 2,
   "planStatus": "active",
-  "date": "2026-09-23",
-  "endpointCount": 112,
+  "date": "2026-09-25",
+  "endpointCount": 118,
   "backend": "RaBit API",
   "baseline": {
     "branch": "main",
-    "commit": "bb356653fc1098cf5d56dc949ae374244bf5e313",
+    "commit": "49f40f97fb5ee8b16425fa3a6b2e2b3da0c2b771",
     "mergedWaves": [
       "A1",
       "A2",
@@ -32,7 +32,18 @@
       "E4",
       "E5",
       "F2",
-      "D3"
+      "D3",
+      "U1",
+      "U2",
+      "U3",
+      "U4",
+      "B4",
+      "B3",
+      "U5",
+      "U6",
+      "U7",
+      "U8",
+      "E6"
     ],
     "review": {},
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
@@ -55,7 +66,18 @@
       "E4": "https://github.com/rebit-pro/rabit-api/pull/30",
       "E5": "https://github.com/rebit-pro/rabit-api/pull/37",
       "F2": "https://github.com/rebit-pro/rabit-api/pull/40",
-      "D3": "https://github.com/rebit-pro/rabit-api/pull/46"
+      "D3": "https://github.com/rebit-pro/rabit-api/pull/46",
+      "U1": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "U2": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "U3": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "U4": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "B4": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "B3": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "U5": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "U6": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "U7": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "U8": "https://github.com/rebit-pro/rabit-api/pull/53",
+      "E6": "https://github.com/rebit-pro/rabit-api/pull/66"
     },
     "mergeCommits": {
       "C4": "cfc334e5890dd51dfd6ff6638eac2cc3e436322b",
@@ -68,7 +90,18 @@
       "E4": "7e606e53cc6b347e5c7b70e217ab7f8eb8a45875",
       "E5": "4b507b3b3c27719888e38f582b48e6a56c0c5946",
       "F2": "44f2e36367351614fab66fdc58fa3dc7ee3899b3",
-      "D3": "533c06b926dc63521017c549b6092104f6291dd5"
+      "D3": "533c06b926dc63521017c549b6092104f6291dd5",
+      "U1": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "U2": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "U3": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "U4": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "B4": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "B3": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "U5": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "U6": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "U7": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "U8": "b20423f08c5794f66346a607c376bc89ffe3bb82",
+      "E6": "54bd4abbb62fbda2dc030281e4b4893820d83e84"
     },
     "decisionEvidence": {
       "D02-D05": "docs/waves/e3/README.md in rabit-api: user accepted rules before PR #20",
@@ -80,9 +113,11 @@
       "D3-D12-SCOPE": "2026-09-22: пользователь принял D3-DEC-07. D3 не меняет оплату, возвраты, печать и файлы; перенос в закрытую staff-группу запрещён. D12 снят с decisionGates D3 и остаётся у I3 и последующих волн.",
       "D3-FOLLOW-UP": "2026-09-22: после merge D3 слиты PR #49 (21311db, текст диалога переноса и стабилизация gate) и PR #52 (93becd8, запись развёртывания stage).",
       "DESIGN-UX": "2026-09-23: пользователь утвердил план docs/plans/design-ux-plan/plan.md в rabit-api (PR #50, merge bb35665) и решения DS-01…DS-20 по рекомендациям. Раздел 7 плана закрывает D01 (визуал, логотип, шрифты, палитра), раздел 10.1 — механизм выдачи и восстановления паролей в D08 (персональное приглашение по ссылке, сброс и смена пароля). Волны U1–U8, B3, B4 сдаются одним PR пакета design-ux.",
+      "E6-DEC-01-03": "2026-09-25: пользователь принял E6-DEC-01 (ставка 0…10%, сначала выбран 99,99%, после разбора крайнего случая — 10%), E6-DEC-02 (предел цены 1 000 000 ₽) и E6-DEC-03 (чистый контроллер условий в E6). План: docs/plans/E6_payment-cost-pricing/plan.md в rabit-api.",
       "G1-D12-SCOPE": "2026-09-25: пользователь принял узкое D12 для G1: поздний платёж записывается денежным фактом с latePayment и не открывает файлы и печать; решения исполнения, возвраты и перенос с оплатой — I2/I3. D12 снят с decisionGates G1 и остаётся у I1–I3 и последующих волн.",
       "G1-D09-SANDBOX": "2026-09-25: D09 закрыт для G1 в части тестового режима: зарегистрирован тестовый магазин ЮKassa (ключи вне репозитория), служебный реестр PAY-10/11. Чеки, налогообложение, форма продавца (ИП/ООО или НПД) и боевой магазин остаются D09 для G2 и далее. D09 снят с decisionGates G1.",
-      "G1-DEC": "2026-09-25: пользователь принял план docs/plans/G1_payment-attempts/plan.md в rabit-api: модуль morefoto.payment (namespace Morefoto\\Payment); оплачивается неизменяемый снимок заказа E5 без пересчёта; новая попытка только до closesAt; способ оплаты выбирается на странице MoreFoto из конфигурации магазина (СБП, карта; в тестовом магазине только карта); личный ключ заказа не передаётся провайдеру; webhook — сигнал серверной сверки; клиент PaymentClient поверх RebitHttpClient по образцу orteka.payment; реестр PAY-10/11 с областью COM-12; фоновая сверка cron."
+      "G1-DEC": "2026-09-25: пользователь принял план docs/plans/G1_payment-attempts/plan.md в rabit-api: модуль morefoto.payment (namespace Morefoto\\Payment); оплачивается неизменяемый снимок заказа E5 без пересчёта; новая попытка только до closesAt; способ оплаты выбирается на странице MoreFoto из конфигурации магазина (СБП, карта; в тестовом магазине только карта); личный ключ заказа не передаётся провайдеру; webhook — сигнал серверной сверки; клиент PaymentClient поверх RebitHttpClient по образцу orteka.payment; реестр PAY-10/11 с областью COM-12; фоновая сверка cron.",
+      "E6-MERGED": "2026-09-25: PR #66 слит (54bd4ab) и выкачен на app.morefoto36.ru; follow-up PR #74 (#68/#69) слит (cfd5718). Отмечено веткой G1 по правилу учёта слияний следующей волной."
     }
   },
   "acceptedImplementationDecisions": [
@@ -819,6 +854,7 @@
       "deliveryState": "merged",
       "unlocks": [
         "F1",
+        "K3",
         "N1",
         "B4",
         "B3"
@@ -1131,7 +1167,8 @@
       "deliveryState": "merged",
       "unlocks": [
         "E5",
-        "F2"
+        "F2",
+        "K3"
       ],
       "inputBoundary": "Установленные и принятые в main контракты/схема: D2, E3, F1. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
       "outputBoundary": "Завершённые операции MED-01, COM-08, COM-09; Покупатель видит разрешённые превью и получает проверяемый сервером quote.",
@@ -1245,7 +1282,7 @@
       ],
       "activation": "Включение только организатором после проверки эффективной ставки и предварительного расчёта; E6 не подключает платёжного провайдера.",
       "legacyIds": [],
-      "deliveryState": "planned",
+      "deliveryState": "merged",
       "unlocks": [
         "N2"
       ],
@@ -1381,6 +1418,7 @@
       "unlocks": [
         "D3",
         "G1",
+        "K3",
         "L1",
         "K2",
         "U5"
@@ -1494,6 +1532,7 @@
       "unlocks": [
         "G2",
         "J2",
+        "K3",
         "B4"
       ],
       "inputBoundary": "Установленные и принятые в main контракты/схема: A2, A5. Для H1 пользователь выбрал EMAIL; MAX и остальные вопросы D09 остаются отдельными последующими решениями.",
@@ -1886,6 +1925,65 @@
       "mergeCheck": "Отдельный PR к актуальному main; все dependsOn уже merged. Проверки на main + только этот diff, без файлов/коммитов незамерженных волн; установить миграции и DI своего сценария. Повторить проверку после обновления base."
     },
     {
+      "id": "K3",
+      "title": "Вопросы куратору с сайта через MAX",
+      "kind": "implementation",
+      "owners": [
+        "morefoto.support",
+        "morefoto.media",
+        "morefoto.access",
+        "rebit.notification",
+        "rebit.share",
+        "frontend"
+      ],
+      "dependsOn": [
+        "B2",
+        "B4",
+        "E4",
+        "F2",
+        "H1"
+      ],
+      "decisionGates": [],
+      "endpointIds": [
+        "SUP-07",
+        "SUP-08",
+        "SUP-09",
+        "SUP-10",
+        "SUP-11",
+        "SUP-12"
+      ],
+      "verifiesEndpointIds": [
+        "MED-01"
+      ],
+      "outcome": "Родитель из галереи и сотрудник учреждения задают вопрос на сайте; кураторы получают его в закрытой группе MAX и отвечают через «Ответить», ответ появляется у автора на сайте.",
+      "scope": [
+        "Создать morefoto.support: беседа, реплика, номер, хеш ключа родителя; миграции foundation, DI, маршруты SUP-07…12, LogChannelEnum support. Беседа не связана с заказом.",
+        "Родитель без аккаунта: имя и текст из галереи (контекст — группа, учреждение, куратор группы через публичный контракт Media), ключ беседы X-Question-Key только в браузере. head/teacher — одна беседа сотрудника по Bearer.",
+        "Технический контракт MAX в rebit.share/Application/Contract/Notification, HTTP-реализация в rebit.notification; outbox в транзакции с репликой, RabbitMQ как сигнал, dispatcher pending, неизвестный результат без слепого повтора.",
+        "SUP-12: webhook MAX с секретом, inbox до 200, дедупликация по mid; reply из настроенной группы на сообщение бота добавляет реплику куратора; bot_added сохраняет ID группы; команда подписки webhook.",
+        "Frontend: панель «Вопрос куратору» в галерее и раздел в кабинете head/teacher, опрос истории на видимой вкладке, отметка нового ответа."
+      ],
+      "review": [
+        "Беседа родителя доступна только по её ключу; ключ галереи не открывает чужие беседы; единый 404 без различия причин.",
+        "Сообщения других чатов, без reply, reply на чужие сообщения, пересылки, правки и удаления не меняют историю; токен, секрет, ключи и тексты не логируются.",
+        "Нет привязки к заказу, оплате, K1 и уведомлений родителю вне сайта; H1 EMAIL не меняется."
+      ],
+      "acceptance": [
+        "Реальные SUP-07…12 через HTTP: повтор, конкурентный повтор, чужой ключ, лимиты 422/429, webhook с повтором и сбоем БД.",
+        "Браузерный E2E с HTTP-двойником MAX: галерея → группа → «Ответить» → история родителя и сотрудника; desktop/mobile.",
+        "Живая проверка на stage с модерированным ботом и группой кураторов до включения."
+      ],
+      "activation": "Включить на stage после установки токена в secrets, подписки webhook, ID группы и живой проверки; production — после решения о сроке хранения и тексте предупреждения (MAX-D06).",
+      "legacyIds": [],
+      "deliveryState": "planned",
+      "unlocks": [
+        "K1"
+      ],
+      "inputBoundary": "Слитые B2, B4, E4, F2, H1: роли и кабинет сотрудников, публичная галерея MED-01 с куратором группы, ссылка галереи, образец надёжной доставки и consumer. Решения MAX-D01…D05, D07, D08 приняты пользователем 25.09.2026.",
+      "outputBoundary": "Завершённые операции SUP-07…SUP-12: вопросы родителей и сотрудников куратору через группу MAX с историей на сайте; K1 расширяет тот же модуль.",
+      "mergeCheck": "Отдельная codex/k3-max-curator-questions от актуального main и один PR; main + собственный diff, миграции/DI, backend/frontend, реальный HTTP/browser E2E с HTTP-двойником MAX, desktop/mobile и живая проверка MAX на stage."
+    },
+    {
       "id": "K1",
       "title": "Обращения и ответы по заказу",
       "kind": "implementation",
@@ -1894,7 +1992,8 @@
       ],
       "dependsOn": [
         "I3",
-        "J3"
+        "J3",
+        "K3"
       ],
       "decisionGates": [
         "D07",
@@ -1932,7 +2031,7 @@
         "L1",
         "K2"
       ],
-      "inputBoundary": "Установленные и принятые в main контракты/схема: I3, J3. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
+      "inputBoundary": "Установленные и принятые в main контракты/схема: I3, J3, K3. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
       "outputBoundary": "Завершённые операции SUP-01, SUP-02, SUP-03, SUP-04, SUP-05; Покупатель и куратор работают с одним обращением с разной видимостью данных.",
       "mergeCheck": "Отдельный PR к актуальному main; все dependsOn уже merged. Проверки на main + только этот diff, без файлов/коммитов незамерженных волн; установить миграции и DI своего сценария. Повторить проверку после обновления base."
     },
@@ -2465,7 +2564,7 @@
       ],
       "activation": "Внутренняя очистка; пользователям не видна.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [
         "U2"
@@ -2505,7 +2604,7 @@
       ],
       "activation": "Кабинет и покупательские экраны получают новую типографику и радиусы.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [
         "U3",
@@ -2546,7 +2645,7 @@
       ],
       "activation": "Новый каркас виден всем сотрудникам.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [
         "B4",
@@ -2588,7 +2687,7 @@
       ],
       "activation": "Единые состояния во всех модулях кабинета.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [
         "B4",
@@ -2646,9 +2745,10 @@
       ],
       "activation": "Организатор создаёт сотрудника — сотрудник получает письмо со ссылкой.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [
+        "K3",
         "U8"
       ],
       "inputBoundary": "Слитые в main: A3, B2, H1. Внутри пакета design-ux — предыдущие коммиты: U3, U4. Решения: D08.",
@@ -2697,7 +2797,7 @@
       ],
       "activation": "Фото аватаров появляются в каркасе, профиле и списке сотрудников.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [],
       "inputBoundary": "Слитые в main: A4, B2. Внутри пакета design-ux — предыдущие коммиты: U3. Решения: D01, D08.",
@@ -2751,7 +2851,7 @@
       ],
       "activation": "Сводки доступны экранам U6.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [
         "U6"
@@ -2792,7 +2892,7 @@
       ],
       "activation": "Сотрудники после входа попадают на обзор своей области.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [],
       "inputBoundary": "Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U3, U4, U5. Решения: D01.",
@@ -2837,7 +2937,7 @@
       ],
       "activation": "Обновлённые рабочие экраны организатора и куратора.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [],
       "inputBoundary": "Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U4. Решения: D01.",
@@ -2882,7 +2982,7 @@
       ],
       "activation": "Обновлённые экраны ссылок, списков, заказов и сотрудников.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "merged",
       "deliveryBundle": "design-ux",
       "unlocks": [],
       "inputBoundary": "Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U4, B4. Решения: D01, D08.",

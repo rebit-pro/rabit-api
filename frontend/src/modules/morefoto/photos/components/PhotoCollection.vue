@@ -108,10 +108,10 @@ function changePage(value: number) {
       <span>Не загрузилось превью: {{ failedPreviews }}</span>
       <v-btn variant="outlined" size="small" @click="retryFailedPreviews">Повторить все</v-btn>
     </p>
-    <p v-if="!photos.length" class="mf-muted py-8" data-testid="photos-empty">
+    <p v-if="!photos.length && !loading" class="mf-muted py-8" data-testid="photos-empty">
       Кадров пока нет. Выберите фотографии для подготовки или измените фильтр.
     </p>
-    <div v-else class="photo-grid mt-6">
+    <div v-else-if="photos.length" class="photo-grid mt-6">
       <article v-for="photo in photos" :key="photo.id" class="photo-card" :data-photo-id="photo.id" data-testid="photo-card">
         <GalleryImage :src="photo.thumbSrc" :alt="'Кадр ' + (photo.code || photo.filename)" :width="photo.width" :height="photo.height" />
         <div class="photo-card-body">

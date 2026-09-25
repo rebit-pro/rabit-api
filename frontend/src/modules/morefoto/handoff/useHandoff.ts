@@ -12,19 +12,21 @@ export function useHandoff(load: (token: string, requestId?: string) => Promise<
     error = shallowRef('');
   let run = 0,
     alive = true;
-  async function reload() {
+  /** Reads the workspace again; true only when this call's server answer became the current data. */
+  async function reload(): Promise<boolean> {
     const id = ++run;
     loading.value = true;
     error.value = '';
     try {
       const requestId = typeof route.params.requestId === 'string' ? route.params.requestId : undefined;
       const next = await load(auth.getAccessToken() ?? '', requestId);
-      if (alive && id === run) data.value = next;
+      if (!alive || id !== run) return false;
+      data.value = next;
+      return true;
     } catch (e) {
-      if (alive && id === run) {
-        data.value = null;
-        error.value = e instanceof Error ? e.message : 'Не удалось загрузить данные.';
-      }
+      // The previous workspace stays visible next to the error: an open form keeps its context.
+      if (alive && id === run) error.value = e instanceof Error ? e.message : 'Не удалось загрузить данные.';
+      return false;
     } finally {
       if (alive && id === run) loading.value = false;
     }

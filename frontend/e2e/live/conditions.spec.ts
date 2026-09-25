@@ -75,7 +75,9 @@ function conditionBody(snapshot: Conditions, ids: { physical: string; digital: s
     })),
     giftEnabled: true,
     giftThreshold: group ? 30000 : 20000,
-    giftForStaff: true
+    giftForStaff: true,
+    // E6: the global body always carries the payment cost policy, the group body never does.
+    ...(group ? {} : { paymentCosts: { enabled: false, rateBps: 380 } })
   };
 }
 async function createStructure(page: Page) {
@@ -264,7 +266,8 @@ test('E3: воспитатель не читает и не меняет усло
           products: [],
           giftEnabled: false,
           giftThreshold: 0,
-          giftForStaff: false
+          giftForStaff: false,
+          paymentCosts: { enabled: false, rateBps: 380 }
         }
       })
     ).status()

@@ -121,9 +121,17 @@ if (!class_exists(Application::class)) {
     {
         private static ?self $instance = null;
 
+        /** Тесты SQL-репозиториев подменяют соединение через reflection; по умолчанию запросы ничего не возвращают. */
+        private static ?DB\Connection $connection = null;
+
         public static function getInstance(): self
         {
             return self::$instance ??= new self();
+        }
+
+        public static function getConnection(): DB\Connection
+        {
+            return self::$connection ??= new DB\Connection();
         }
 
         public static function getDocumentRoot(): string
@@ -244,5 +252,164 @@ if (!class_exists(Result::class)) {
         {
             return false;
         }
+    }
+}
+
+if (!class_exists(SqlHelper::class)) {
+    class SqlHelper
+    {
+        public function forSql(string $value): string
+        {
+            return addslashes($value);
+        }
+    }
+}
+
+if (!class_exists(Connection::class)) {
+    /** Стаб соединения: тесты наследуют его, чтобы записывать SQL и подставлять строки результата. */
+    class Connection
+    {
+        public function query(string $sql): Result
+        {
+            return new Result();
+        }
+
+        public function queryExecute(string $sql): void {}
+
+        public function getSqlHelper(): SqlHelper
+        {
+            return new SqlHelper();
+        }
+
+        public function getAffectedRowsCount(): int
+        {
+            return 0;
+        }
+
+        public function getInsertedId(): int
+        {
+            return 0;
+        }
+    }
+}
+
+namespace Bitrix\Main;
+
+if (!class_exists(Response::class)) {
+    /** Стаб ответа: хранит тело, достаточно для проверки JSON-ответов контроллеров. */
+    class Response
+    {
+        protected $content = '';
+
+        public function setContent($content)
+        {
+            $this->content = $content;
+
+            return $this;
+        }
+
+        public function getContent()
+        {
+            return $this->content;
+        }
+    }
+}
+
+if (!class_exists(HttpResponse::class)) {
+    class HttpResponse extends Response
+    {
+        private $status = 200;
+
+        /** @var array<string, string> */
+        private array $headers = [];
+
+        public function setStatus($status)
+        {
+            $this->status = $status;
+
+            return $this;
+        }
+
+        public function getStatus()
+        {
+            return $this->status;
+        }
+
+        public function addHeader($name, $value = '')
+        {
+            $this->headers[$name] = $value;
+
+            return $this;
+        }
+
+        /** @return array<string, string> */
+        public function getHeaders(): array
+        {
+            return $this->headers;
+        }
+    }
+}
+
+if (!class_exists(HttpRequest::class)) {
+    /** Стаб HTTP-запроса: тесты подставляют заголовки через моки `getHeader()`. */
+    class HttpRequest
+    {
+        public function getHeader($name)
+        {
+            return null;
+        }
+    }
+}
+
+if (!class_exists(EventResult::class)) {
+    class EventResult {}
+}
+
+if (!class_exists(Event::class)) {
+    /** Стаб события Bitrix: параметры передаются в конструктор. */
+    class Event
+    {
+        /** @param array<string, mixed> $parameters */
+        public function __construct(
+            private readonly array $parameters = [],
+        ) {}
+
+        public function getParameter($key)
+        {
+            return $this->parameters[$key] ?? null;
+        }
+    }
+}
+
+namespace Bitrix\Main\Engine\Response;
+
+if (!class_exists(Json::class)) {
+    /** Стаб JSON-ответа Bitrix: наследник переопределяет `setData()` своим сериализатором. */
+    class Json extends \Bitrix\Main\HttpResponse
+    {
+        protected $data;
+        protected $jsonEncodingOptions = 0;
+
+        public function __construct($data = null, $options = 0)
+        {
+            $this->jsonEncodingOptions = $options;
+            $this->setData($data);
+        }
+
+        public function setData($data)
+        {
+            $this->data = json_encode($data, $this->jsonEncodingOptions | JSON_THROW_ON_ERROR);
+
+            return $this->setContent($this->data);
+        }
+    }
+}
+
+namespace Bitrix\Main\Engine\ActionFilter;
+
+if (!class_exists(Base::class)) {
+    class Base
+    {
+        public function __construct() {}
     }
 }

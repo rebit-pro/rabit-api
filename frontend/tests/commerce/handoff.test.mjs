@@ -17,6 +17,7 @@ import {
   staffTransferErrorText
 } from '../../src/modules/morefoto/handoff/rules.ts';
 import { problemText } from '../../src/modules/morefoto/handoff/display.ts';
+import { openDraft } from '../../src/modules/morefoto/handoff/draft.ts';
 const groups = [
   { id: 'g', institutionId: 'i', shootId: 's', kind: 'regular', state: 'preparing', teacherId: 104 },
   { id: 'g2', institutionId: 'i', shootId: 's', kind: 'regular' },
@@ -225,4 +226,14 @@ test('D3 transfer refusals map to sentences and leave other codes to the list me
     'Кадры B001 назначены ещё и ребёнку, который остаётся в группе. Такой набор нельзя перенести.'
   );
   assert.equal(staffTransferErrorText('REVISION_CONFLICT'), null);
+});
+
+test('#28: a stored draft keeps its edits, body and key until an explicit reset, even for a newer server revision', () => {
+  const fresh = { kind: 'request', action: 'update', requestId: 'fresh-key', revision: 4, comment: 'С сервера' };
+  const draft = { kind: 'request', action: 'update', requestId: 'first-key', revision: 3, comment: 'Мой черновик' };
+  // A lost successful save or an outside change raised the revision: the draft is still what the form opens with.
+  assert.deepEqual(openDraft(draft, fresh), { command: draft, restored: true, stale: true });
+  assert.deepEqual(openDraft({ ...draft, revision: 4 }, fresh), { command: { ...draft, revision: 4 }, restored: true, stale: false });
+  assert.deepEqual(openDraft(null, fresh), { command: fresh, restored: false, stale: false });
+  assert.deepEqual(openDraft({ kind: 'link', revision: 3 }, fresh), { command: fresh, restored: false, stale: false });
 });

@@ -6,8 +6,9 @@ import { money } from '../../commerce/money';
 import OrderComposition from '../../orders/components/OrderComposition.vue';
 import OrderLiveFacts from '../../orders/components/OrderLiveFacts.vue';
 import { formatMoment, livePaymentLabels as paymentLabels, productionLabels } from '../../orders/formatters';
-import { orderQuoteAsCart } from '../../orders/live/rules';
+import { hasStaffFilters, orderQuoteAsCart } from '../../orders/live/rules';
 import { useStaffOrders } from '../useStaffOrders';
+import { useStaffOrderScope } from '../useStaffOrderScope';
 import MfStatus from '@/components/status/MfStatus.vue';
 import { toneOf } from '@/components/status/tones';
 import { paymentTone, productionTone } from '../../ui/statusTone';
@@ -17,7 +18,18 @@ import { plural } from '@/components/viz/measures';
 import { CHART_CATEGORY } from '../../ui/chartPalette';
 const route = useRoute();
 const auth = useAuthStore();
-const { orderId, filters, page, card, loading, error, reload, apply, reset } = useStaffOrders();
+const { orderId, filters, page, card, loading, error, reload, apply, reset, selectScope } = useStaffOrders();
+const {
+  institutionId: scopeInstitution,
+  options: scopeOptions,
+  listing: scopeListing,
+  loading: scopeLoading,
+  error: scopeError,
+  retry: retryScope
+} = useStaffOrderScope(filters, () => !orderId.value);
+// A shoot or group list without an institution has nothing to offer, unless a link already chose a value there.
+const shootDisabled = computed(() => !scopeInstitution.value && !filters.shootId);
+const groupDisabled = computed(() => !scopeInstitution.value && !filters.groupId);
 // Managed previews are organizer-only in Media; curators see frame codes (E5-DEC-03).
 const thumb = computed(() =>
   auth.user?.permissions?.includes('media.manage') ? (photoId: string) => '/api/v1/photos/' + photoId + '/thumb' : undefined
@@ -28,9 +40,7 @@ const productionOptions = [
   { title: 'Любое изготовление', value: '' },
   ...Object.entries(productionLabels).map(([value, title]) => ({ title, value }))
 ];
-const hasFilters = computed(() =>
-  (['q', 'paymentStatus', 'productionStatus', 'dateFrom', 'dateTo'] as const).some((key) => filters[key] !== '')
-);
+const hasFilters = computed(() => hasStaffFilters(filters));
 // U5: the split ignores the production filter, so it keeps showing where the found orders are in production.
 const summary = computed(() => page.value?.meta.summary ?? null);
 const productionSegments = computed(() =>
@@ -121,6 +131,44 @@ function lastDays(days: number): void {
         <v-btn type="submit" color="primary" density="compact" :loading="loading">Найти</v-btn>
         <v-btn variant="text" density="compact" :disabled="!hasFilters" @click="reset">Сбросить</v-btn>
       </div>
+      <div class="staff-orders__scope" data-testid="order-scope-filters">
+        <v-select
+          :model-value="filters.institutionId"
+          :items="scopeOptions.institutionId"
+          label="Учреждение"
+          aria-label="Учреждение"
+          density="compact"
+          hide-details
+          :loading="scopeListing"
+          @update:model-value="selectScope('institutionId', $event)"
+        />
+        <v-select
+          :model-value="filters.shootId"
+          :items="scopeOptions.shootId"
+          label="Съёмка"
+          aria-label="Съёмка"
+          density="compact"
+          hide-details
+          :loading="scopeLoading"
+          :disabled="shootDisabled"
+          @update:model-value="selectScope('shootId', $event)"
+        />
+        <v-select
+          :model-value="filters.groupId"
+          :items="scopeOptions.groupId"
+          label="Группа"
+          aria-label="Группа"
+          density="compact"
+          hide-details
+          :loading="scopeLoading"
+          :disabled="groupDisabled"
+          @update:model-value="selectScope('groupId', $event)"
+        />
+        <div v-if="scopeError" class="staff-orders__scope-error">
+          <p class="mf-muted" role="alert">{{ scopeError }}</p>
+          <v-btn variant="text" density="compact" @click="retryScope">Повторить</v-btn>
+        </div>
+      </div>
       <div class="staff-orders__refine">
         <v-select v-model="filters.paymentStatus" :items="paymentOptions" label="Оплата" density="compact" hide-details />
         <v-select v-model="filters.productionStatus" :items="productionOptions" label="Изготовление" density="compact" hide-details />
@@ -179,6 +227,25 @@ function lastDays(days: number): void {
   align-items: center;
   padding: 16px;
   margin-bottom: 24px;
+}
+.staff-orders__scope {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+.staff-orders__scope-error {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mf-space-2);
+  font-size: 14px;
+}
+@media (min-width: 768px) {
+  .staff-orders__scope {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 .staff-orders__refine {
   grid-column: 1 / -1;

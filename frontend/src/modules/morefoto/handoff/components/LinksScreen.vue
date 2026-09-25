@@ -43,8 +43,8 @@ const editor = useHandoffEditor(() => {
   failure.value = '';
   notice.value = 'Изменения сохранены.';
   void reload();
-});
-const { command, busy, errors, restored, error: saveError } = editor;
+}, reload);
+const { command, busy, errors, restored, stale, error: saveError } = editor;
 const filter = computed({
   get: () => (typeof route.query.group === 'string' ? route.query.group : ''),
   set: (group) => {
@@ -227,7 +227,11 @@ async function history(group: LinkGroup, event: Event) {
     @close="editor.close"
     @reset="editor.reset"
     @save="editor.save"
-    ><LinkFields
+    ><p v-if="stale" role="status" class="mf-muted mb-4">
+      Черновик устарел: группа изменена на сервере после него. Отправьте форму без правок — если это ваша прошлая отправка, сервер вернёт её
+      результат. Чтобы начать с актуальных данных группы, загрузите актуальные данные.
+    </p>
+    <LinkFields
       v-if="command?.kind === 'link' && current && data"
       :command="command"
       :group="current"

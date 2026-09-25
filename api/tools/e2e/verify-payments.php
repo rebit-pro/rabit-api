@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
-use Sprint\Migration\Version20260925120001;
+use Sprint\Migration\Version20260925190001;
 
 // G1: MySQL trail of the payment scenarios — attempts, money facts and order statuses agree, no buyer secret is stored.
 if ('test' !== getenv('APP_ENV') || !is_dir('/runtime/public/bitrix') || !is_file('/runtime/g1-payments.json')) {
@@ -60,10 +60,10 @@ if ($record['sandbox']) {
 
 // 3. Rollback never drops money silently.
 Loader::includeModule('sprint.migration');
-require_once '/app/public/local/php_interface/migrations.foundation/Version20260925120001.php';
+require_once '/app/public/local/php_interface/migrations.foundation/Version20260925190001.php';
 if ($record['sandbox']) {
     try {
-        (new Version20260925120001())->down();
+        (new Version20260925190001())->down();
         throw new LogicException('down() must refuse while payment data exists.');
     } catch (RuntimeException $error) {
         $check(str_contains($error->getMessage(), 'Payment data exists'), 'down() refuses with payment data');

@@ -8,127 +8,63 @@ use Bitrix\Main\Application;
 
 final class Version20260925120001 extends Version
 {
-    private const array TABLES = ['mf_payment_notification', 'mf_payment_fact', 'mf_payment_attempt'];
-
     protected $author = 'codex';
-    protected $description = 'G1: payment attempts, confirmed payment facts, provider notification inbox; paid moment of an order';
+    protected $description = 'E6: payment cost policy in global sales conditions and the 1 000 000 RUB price cap';
+
+    private const int MAX_PRICE = 100000000;
 
     public function up(): void
     {
         $connection = Application::getConnection();
-        if (false === $connection->query("SHOW COLUMNS FROM mf_order LIKE 'PAID_AT'")->fetch()) {
-            $connection->queryExecute('ALTER TABLE mf_order ADD PAID_AT DATETIME NULL AFTER PRODUCTION_STATUS,'
-                . ' ADD LATE_PAYMENT TINYINT(1) NOT NULL DEFAULT 0 AFTER PAID_AT,'
-                . ' ADD KEY ix_mf_order_late (LATE_PAYMENT, CREATED_AT, ID),'
-                . " ADD CONSTRAINT ck_mf_order_paid CHECK ((PAYMENT_STATUS = 'paid') = (PAID_AT IS NOT NULL) AND (LATE_PAYMENT = 0 OR PAID_AT IS NOT NULL))");
+        foreach (['mf_sales_conditions', 'mf_group_product_condition', 'b_hlbd_mf_product'] as $table) {
+            if (!$connection->isTableExists($table)) {
+                throw new \RuntimeException('E6 payment cost pricing requires the merged E3 schema.');
+            }
         }
-        // ACTIVE_ORDER_ID equals ORDER_ID only while the outcome is open: one unknown/pending attempt per order.
-        $connection->queryExecute(<<<'SQL'
-CREATE TABLE IF NOT EXISTS mf_payment_attempt (
-    ID BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    PUBLIC_ID CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    ORDER_ID BIGINT UNSIGNED NOT NULL,
-    ORDER_PUBLIC_ID CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    ORDER_NUMBER VARCHAR(20) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
-    ORDER_VERSION VARCHAR(20) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    INSTITUTION_ID BIGINT UNSIGNED NOT NULL,
-    INSTITUTION_NAME VARCHAR(255) NOT NULL,
-    GROUP_NAME VARCHAR(255) NOT NULL,
-    AMOUNT BIGINT UNSIGNED NOT NULL,
-    CURRENCY CHAR(3) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    PAYMENT_METHOD VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    PROVIDER VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    SHOP_ID VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    STATUS VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    ACTIVE_ORDER_ID BIGINT UNSIGNED NULL,
-    PRECEDING_ID BIGINT UNSIGNED NULL,
-    CLIENT_KEY_HASH CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    REQUEST_HASH CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    PROVIDER_KEY CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    PROVIDER_PAYMENT_ID VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL,
-    CONFIRMATION_URL VARCHAR(1024) CHARACTER SET ascii COLLATE ascii_bin NULL,
-    CANCEL_REASON VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL,
-    PAID_AT DATETIME NULL,
-    INCOME_AMOUNT BIGINT UNSIGNED NULL,
-    LATE_PAYMENT TINYINT(1) NOT NULL DEFAULT 0,
-    CHECK_COUNT INT UNSIGNED NOT NULL DEFAULT 0,
-    NEXT_CHECK_AT DATETIME NULL,
-    LAST_CHECK_AT DATETIME NULL,
-    CREATED_AT DATETIME NOT NULL,
-    UPDATED_AT DATETIME NOT NULL,
-    PRIMARY KEY (ID),
-    UNIQUE KEY ux_mf_payment_attempt_public (PUBLIC_ID),
-    UNIQUE KEY ux_mf_payment_attempt_active (ACTIVE_ORDER_ID),
-    UNIQUE KEY ux_mf_payment_attempt_client (ORDER_ID, CLIENT_KEY_HASH),
-    UNIQUE KEY ux_mf_payment_attempt_provider_key (PROVIDER_KEY),
-    UNIQUE KEY ux_mf_payment_attempt_provider (PROVIDER, PROVIDER_PAYMENT_ID),
-    KEY ix_mf_payment_attempt_order (ORDER_ID, ID),
-    KEY ix_mf_payment_attempt_check (NEXT_CHECK_AT),
-    KEY ix_mf_payment_attempt_created (CREATED_AT, ID),
-    KEY ix_mf_payment_attempt_institution (INSTITUTION_ID, CREATED_AT, ID),
-    KEY ix_mf_payment_attempt_number (ORDER_NUMBER),
-    CONSTRAINT fk_mf_payment_attempt_order FOREIGN KEY (ORDER_ID) REFERENCES mf_order(ID) ON DELETE RESTRICT,
-    CONSTRAINT ck_mf_payment_attempt_values CHECK (
-        STATUS IN ('unknown', 'pending', 'succeeded', 'canceled')
-        AND (STATUS IN ('unknown', 'pending')) = (ACTIVE_ORDER_ID IS NOT NULL)
-        AND (ACTIVE_ORDER_ID IS NULL OR ACTIVE_ORDER_ID = ORDER_ID)
-        AND (STATUS = 'succeeded') = (PAID_AT IS NOT NULL)
-        AND CURRENCY = 'RUB' AND AMOUNT > 0
-    )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-SQL);
-        $connection->queryExecute(<<<'SQL'
-CREATE TABLE IF NOT EXISTS mf_payment_fact (
-    ID BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    ATTEMPT_ID BIGINT UNSIGNED NOT NULL,
-    ORDER_ID BIGINT UNSIGNED NOT NULL,
-    PROVIDER VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    PROVIDER_PAYMENT_ID VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    AMOUNT BIGINT UNSIGNED NOT NULL,
-    INCOME_AMOUNT BIGINT UNSIGNED NULL,
-    PAID_AT DATETIME NOT NULL,
-    LATE_PAYMENT TINYINT(1) NOT NULL,
-    CONFIRMED_BY VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    CREATED_AT DATETIME NOT NULL,
-    PRIMARY KEY (ID),
-    UNIQUE KEY ux_mf_payment_fact_attempt (ATTEMPT_ID),
-    UNIQUE KEY ux_mf_payment_fact_provider (PROVIDER, PROVIDER_PAYMENT_ID),
-    KEY ix_mf_payment_fact_order (ORDER_ID),
-    CONSTRAINT fk_mf_payment_fact_attempt FOREIGN KEY (ATTEMPT_ID) REFERENCES mf_payment_attempt(ID) ON DELETE RESTRICT,
-    CONSTRAINT ck_mf_payment_fact_values CHECK (AMOUNT > 0 AND CONFIRMED_BY IN ('start', 'return', 'notification', 'reconcile'))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-SQL);
-        // Provider notifications carry no event ID: EVENT_KEY is `event:object id`, the body itself is not stored.
-        $connection->queryExecute(<<<'SQL'
-CREATE TABLE IF NOT EXISTS mf_payment_notification (
-    ID BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    PROVIDER VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    EVENT_KEY VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    EVENT VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    PROVIDER_OBJECT_ID VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    RECEIVED_AT DATETIME NOT NULL,
-    PROCESSED_AT DATETIME NULL,
-    RESULT VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NULL,
-    PRIMARY KEY (ID),
-    UNIQUE KEY ux_mf_payment_notification_event (PROVIDER, EVENT_KEY)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-SQL);
+        $row = $connection->query('SELECT (SELECT COUNT(*) FROM b_hlbd_mf_product WHERE UF_PRICE>' . self::MAX_PRICE
+            . ')+(SELECT COUNT(*) FROM mf_group_product_condition WHERE PRICE>' . self::MAX_PRICE . ') AS OVER_CAP')->fetch();
+        if (false === $row || 0 !== (int)$row['OVER_CAP']) {
+            throw new \RuntimeException('Catalogue or group prices exceed 1 000 000 RUB; lower them before applying E6.');
+        }
+        if (!$this->columnExists('mf_sales_conditions', 'PAYMENT_COSTS_ENABLED')) {
+            $connection->queryExecute('ALTER TABLE mf_sales_conditions'
+                . ' ADD COLUMN PAYMENT_COSTS_ENABLED TINYINT NOT NULL DEFAULT 0,'
+                . ' ADD COLUMN PAYMENT_COST_RATE_BPS SMALLINT NOT NULL DEFAULT 380,'
+                . ' ADD CONSTRAINT ck_mf_sales_conditions_payment_costs CHECK (PAYMENT_COSTS_ENABLED IN (0,1) AND PAYMENT_COST_RATE_BPS BETWEEN 0 AND 1000)');
+        }
+        $caps = ['b_hlbd_mf_product' => ['ck_mf_product_price_cap', 'UF_PRICE'], 'mf_group_product_condition' => ['ck_mf_group_product_condition_price_cap', 'PRICE']];
+        foreach ($caps as $table => [$name, $column]) {
+            if (!$this->constraintExists($table, $name)) {
+                $connection->queryExecute('ALTER TABLE ' . $table . ' ADD CONSTRAINT ' . $name . ' CHECK (' . $column . '<=' . self::MAX_PRICE . ')');
+            }
+        }
     }
 
     public function down(): void
     {
         $connection = Application::getConnection();
-        // Money facts never disappear silently: rollback only removes tables that stayed empty.
-        foreach (self::TABLES as $table) {
-            if ($connection->isTableExists($table) && false !== $connection->query('SELECT ID FROM ' . $table . ' LIMIT 1')->fetch()) {
-                throw new \RuntimeException('Payment data exists, refusing to drop ' . $table . '.');
+        if ($this->columnExists('mf_sales_conditions', 'PAYMENT_COSTS_ENABLED')) {
+            $row = $connection->query('SELECT PAYMENT_COSTS_ENABLED FROM mf_sales_conditions WHERE ID=1')->fetch();
+            if (false !== $row && 0 !== (int)$row['PAYMENT_COSTS_ENABLED']) {
+                throw new \RuntimeException('The payment cost policy is enabled; disable it before rolling back E6.');
+            }
+            $connection->queryExecute('ALTER TABLE mf_sales_conditions DROP CHECK ck_mf_sales_conditions_payment_costs,'
+                . ' DROP COLUMN PAYMENT_COST_RATE_BPS, DROP COLUMN PAYMENT_COSTS_ENABLED');
+        }
+        foreach (['b_hlbd_mf_product' => 'ck_mf_product_price_cap', 'mf_group_product_condition' => 'ck_mf_group_product_condition_price_cap'] as $table => $name) {
+            if ($this->constraintExists($table, $name)) {
+                $connection->queryExecute('ALTER TABLE ' . $table . ' DROP CHECK ' . $name);
             }
         }
-        foreach (self::TABLES as $table) {
-            $connection->queryExecute('DROP TABLE IF EXISTS ' . $table);
-        }
-        if (false !== $connection->query("SHOW COLUMNS FROM mf_order LIKE 'PAID_AT'")->fetch()) {
-            $connection->queryExecute('ALTER TABLE mf_order DROP CHECK ck_mf_order_paid, DROP KEY ix_mf_order_late, DROP COLUMN LATE_PAYMENT, DROP COLUMN PAID_AT');
-        }
+    }
+
+    private function columnExists(string $table, string $column): bool
+    {
+        return false !== Application::getConnection()->query("SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$table}' AND COLUMN_NAME='{$column}'")->fetch();
+    }
+
+    private function constraintExists(string $table, string $name): bool
+    {
+        return false !== Application::getConnection()->query("SELECT 1 FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='{$table}' AND CONSTRAINT_NAME='{$name}'")->fetch();
     }
 }

@@ -15,6 +15,10 @@ use Rebit\Share\Contracts\Access\Dto\InstitutionAssignmentOutputDto;
 use Rebit\Share\Contracts\Access\Dto\InstitutionScopeOutputDto;
 use Rebit\Share\Shared\Exception\HttpException;
 
+/**
+ * Отдаёт другим модулям область учреждений сотрудника и атомарно заменяет назначения куратора и заведующего.
+ * Замена сверяет подпись назначений, повышает ревизии затронутых профилей и отзывает их сессии; отказы доступа несут коды контракта.
+ */
 final readonly class InstitutionAccess implements InstitutionAccessInterface
 {
     public function __construct(
@@ -39,7 +43,7 @@ final readonly class InstitutionAccess implements InstitutionAccessInterface
     {
         $profile = $this->authorization->context($userId)->profile;
         if (!in_array($profile->role->value, ['organizer', 'curator', 'head'], true)) {
-            throw new HttpException('Action is forbidden.', 403);
+            throw new HttpException('FORBIDDEN', 403);
         }
 
         return new InstitutionScopeOutputDto($profile->role->value, $profile->accessRevision, $this->assignments->institutionIds($userId, $profile->role->value));
@@ -77,11 +81,11 @@ final readonly class InstitutionAccess implements InstitutionAccessInterface
             $this->identities->lockActive($userId);
         }
         if ($actorUserId !== $this->tokens->resolveUserId($bearer)) {
-            throw new HttpException('Unauthorized', 401);
+            throw new HttpException('UNAUTHORIZED', 401);
         }
         $context = $this->authorization->context($actorUserId);
         if ('organizer' !== $context->profile->role->value) {
-            throw new HttpException('Action is forbidden.', 403);
+            throw new HttpException('FORBIDDEN', 403);
         }
     }
 

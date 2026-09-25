@@ -118,6 +118,10 @@ export interface StaffOrderCard extends StaffOrder {
 }
 export interface StaffOrderFilters {
   q: string;
+  /** Scope of the search; the server still limits it to the staff member's own area. */
+  institutionId: string;
+  shootId: string;
+  groupId: string;
   paymentStatus: string;
   productionStatus: string;
   dateFrom: string;
