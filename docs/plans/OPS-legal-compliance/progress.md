@@ -6,7 +6,7 @@
   Worktree `/home/user/rabit-api-worktrees/ops-legal-compliance`.
 - Предыдущая ветка плана `codex/ops-legal-compliance-plan`, [PR #101](https://github.com/rebit-pro/rabit-api/pull/101):
   её два коммита перенесены сюда cherry-pick; PR #101 закрывается ссылкой на PR реализации.
-- Документация: [план](plan.md).
+- Документация: [план](plan.md). PR реализации: [#112](https://github.com/rebit-pro/rabit-api/pull/112); #101 закрыт со ссылкой.
 - Завершено: контракт `Consent` в `rebit.share`, модуль `morefoto.legal` (реестр, черновики 4 документов, продавец из
   окружения, журнал `mf_legal_consent`, API), согласия в заказе и приглашении, страницы `/legal`, футер, плашка о cookie,
   диалог согласия в кабинете, TTL черновика контактов, E2E.
