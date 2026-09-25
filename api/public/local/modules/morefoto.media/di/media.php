@@ -27,12 +27,14 @@ use Morefoto\Media\Infrastructure\Messenger\MediaMessengerFactory;
 use Morefoto\Media\Infrastructure\Messenger\MediaPublisher;
 use Morefoto\Media\Presentation\Command\DispatchPendingMediaCommand;
 use Morefoto\Media\Presentation\Command\MediaConsumerCommand;
-use Morefoto\Media\Presentation\Controller\MediaController;
+use Morefoto\Media\Presentation\Controller\GroupMediaController;
+use Morefoto\Media\Presentation\Controller\PhotoDetailController;
 use Morefoto\Media\Presentation\Controller\PhotoListController;
+use Morefoto\Media\Presentation\Controller\PhotoUploadController;
+use Morefoto\Media\Presentation\Photo\PhotoInputMapper;
 use Morefoto\Media\Presentation\Photo\PhotoListInputMapper;
 use Morefoto\Media\Presentation\Photo\PhotoListResultMapper;
-use Morefoto\Media\Presentation\Request\MediaRequestFactory;
-use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
+use Morefoto\Media\Presentation\Photo\PhotoResultMapper;
 use Rebit\Share\Application\Contract\Messenger\MessageConsumerRunnerInterface;
 use Rebit\Share\Application\Contract\Messenger\MessageTransportFactoryInterface;
 use Rebit\Share\Contracts\Access\AccessGuardInterface;
@@ -52,9 +54,10 @@ return [
     MediaTransactionInterface::class => ['className' => BitrixMediaTransaction::class],
     PhotoFileInspector::class => ['className' => PhotoFileInspector::class],
     PhotoRowMapper::class => ['className' => PhotoRowMapper::class],
-    MediaRequestFactory::class => ['className' => MediaRequestFactory::class],
     PhotoListInputMapper::class => ['className' => PhotoListInputMapper::class],
     PhotoListResultMapper::class => ['className' => PhotoListResultMapper::class],
+    PhotoInputMapper::class => ['className' => PhotoInputMapper::class],
+    PhotoResultMapper::class => ['className' => PhotoResultMapper::class],
     PrivatePhotoStorageInterface::class => [
         'constructor' => static function(): PrivatePhotoStorageInterface {
             $root = (string)getenv('MOREFOTO_PRIVATE_MEDIA_PATH');
@@ -166,15 +169,29 @@ return [
             ServiceLocator::getInstance()->get(PhotoListResultMapper::class),
         ],
     ],
-    MediaController::class => [
-        'className' => MediaController::class,
+    // Only the upload needs the message transport; reading and grouping photos work without the broker.
+    PhotoUploadController::class => [
+        'className' => PhotoUploadController::class,
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(UploadPhotoUseCase::class),
+            ServiceLocator::getInstance()->get(PhotoInputMapper::class),
+            ServiceLocator::getInstance()->get(PhotoResultMapper::class),
+        ],
+    ],
+    PhotoDetailController::class => [
+        'className' => PhotoDetailController::class,
+        'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(GetPhotoUseCase::class),
+            ServiceLocator::getInstance()->get(PhotoResultMapper::class),
+        ],
+    ],
+    GroupMediaController::class => [
+        'className' => GroupMediaController::class,
+        'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(AssignPhotosUseCase::class),
             ServiceLocator::getInstance()->get(SetGroupCoverUseCase::class),
-            ServiceLocator::getInstance()->get(MediaRequestFactory::class),
-            ServiceLocator::getInstance()->get(TokenResolverInterface::class),
+            ServiceLocator::getInstance()->get(PhotoInputMapper::class),
+            ServiceLocator::getInstance()->get(PhotoResultMapper::class),
         ],
     ],
     MediaConsumerCommand::class => [

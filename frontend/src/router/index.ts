@@ -57,7 +57,10 @@ router.beforeEach(async (to) => {
         'StaffRequest',
         'WorkOrders',
         'WorkOrder',
-        'Links'
+        'WorkPayments',
+        'WorkPayment',
+        'Links',
+        'Questions'
       ].includes(String(to.name))
     )
       return auth.homePath;
@@ -65,7 +68,11 @@ router.beforeEach(async (to) => {
       return '/access-unavailable';
     if (to.path === '/cabinet/users' && !auth.user?.permissions?.includes('staff.manage')) return '/access-unavailable';
     if (to.name === 'PhotoWorkspace' && !auth.user?.permissions?.includes('media.manage')) return '/access-unavailable';
-    if (['WorkOrders', 'WorkOrder'].includes(String(to.name)) && !auth.user?.permissions?.includes('order.read'))
+    // G1: the payment registry has the order scope and the same permission.
+    if (
+      ['WorkOrders', 'WorkOrder', 'WorkPayments', 'WorkPayment'].includes(String(to.name)) &&
+      !auth.user?.permissions?.includes('order.read')
+    )
       return '/access-unavailable';
   }
   return true;

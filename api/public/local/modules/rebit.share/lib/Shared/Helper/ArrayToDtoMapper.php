@@ -29,6 +29,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  *    - BackedEnum — гидрация через ::tryFrom(), бросает исключение при невалидном значении.
  *    - Вложенные DTO (object) — рекурсивная гидрация с полной обработкой (SerializedName, фильтрация, валидация).
  *    - Типизированные массивы: string[], int[], SomeDto[] — тип определяется ТОЛЬКО из phpDoc над свойством (@ var Type[] или @ var array<..., Type>).
+ *    - Нетипизированные массивы: array[] или mixed[] — элементы передаются без приведения.
  *
  * 3. Для параметров типа array обязателен phpDoc с @ var, иначе — исключение.
  *    Формат (убрать пробел между @ и var): `@ var Type[]` или `@ var array<key, Type>`.

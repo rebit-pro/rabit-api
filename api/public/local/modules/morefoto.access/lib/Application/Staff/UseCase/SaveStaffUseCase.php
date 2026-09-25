@@ -178,11 +178,11 @@ final readonly class SaveStaffUseCase
             $profileChanged = null === $existing || $existing->role !== $input->role || $existing->active !== $input->active;
             $changed = $assignmentChanged || $profileChanged || $contactChanged;
 
-            $fromRevision = null === $existing ? 0 : $existing->revision;
+            $fromRevision = null === $existing ? $this->staff->lastRevision($userId) : $existing->revision;
             $revision = $fromRevision + 1;
             $accessRevision = (null === $existing ? 0 : $existing->accessRevision) + 1;
             if (null === $existing) {
-                $this->staff->createProfile($userId, $input->role, $input->active);
+                $this->staff->createProfile($userId, $input->role, $input->active, $revision);
             }
 
             $this->institutions->deleteForUser($userId);

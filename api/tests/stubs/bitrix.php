@@ -124,6 +124,9 @@ if (!class_exists(Application::class)) {
         /** Тесты SQL-репозиториев подменяют соединение через reflection; по умолчанию запросы ничего не возвращают. */
         private static ?DB\Connection $connection = null;
 
+        /** @var array<string, string>|null параметры текущего маршрута для тестов request-мапперов; null — маршрута нет */
+        public static ?array $routeParameters = null;
+
         public static function getInstance(): self
         {
             return self::$instance ??= new self();
@@ -147,6 +150,16 @@ if (!class_exists(Application::class)) {
         public function getManagedCache(): Data\ManagedCache
         {
             return new Data\ManagedCache();
+        }
+
+        public function hasCurrentRoute(): bool
+        {
+            return null !== self::$routeParameters;
+        }
+
+        public function getCurrentRoute(): Routing\Route
+        {
+            return new Routing\Route(self::$routeParameters ?? []);
         }
     }
 }
@@ -351,15 +364,69 @@ if (!class_exists(HttpResponse::class)) {
 }
 
 if (!class_exists(HttpRequest::class)) {
-    /** Стаб HTTP-запроса: тесты подставляют заголовки через моки `getHeader()`. */
+    /** Стаб HTTP-запроса: тесты подставляют заголовки, метод и multipart-списки через моки. */
     class HttpRequest
     {
         public function getHeader($name)
         {
             return null;
         }
+
+        public function getRequestMethod()
+        {
+            return 'GET';
+        }
+
+        public function getPostList()
+        {
+            return new Type\ParameterDictionary();
+        }
+
+        public function getFileList()
+        {
+            return new Type\ParameterDictionary();
+        }
     }
 }
+
+namespace Bitrix\Main\Type;
+
+if (!class_exists(ParameterDictionary::class)) {
+    /** Стаб словаря параметров запроса. */
+    class ParameterDictionary
+    {
+        /** @param array<array-key, mixed> $values */
+        public function __construct(
+            private readonly array $values = [],
+        ) {}
+
+        /** @return array<array-key, mixed> */
+        public function getValues(): array
+        {
+            return $this->values;
+        }
+    }
+}
+
+namespace Bitrix\Main\Routing;
+
+if (!class_exists(Route::class)) {
+    /** Стаб маршрута: значения параметров передаются в конструктор. */
+    class Route
+    {
+        /** @param array<string, string> $parameters */
+        public function __construct(
+            private readonly array $parameters = [],
+        ) {}
+
+        public function getParameterValue($name)
+        {
+            return $this->parameters[$name] ?? null;
+        }
+    }
+}
+
+namespace Bitrix\Main;
 
 if (!class_exists(EventResult::class)) {
     class EventResult {}

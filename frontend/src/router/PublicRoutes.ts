@@ -28,6 +28,12 @@ const PublicRoutes: RouteRecordRaw = {
       meta: { title: 'Демонстрационная оплата', demoOnly: true }
     },
     {
+      name: 'PaymentReturn',
+      path: '/orders/payment/:attemptId',
+      component: () => import('@/modules/morefoto/views/PaymentReturnPage.vue'),
+      meta: { title: 'Результат оплаты' }
+    },
+    {
       name: 'Checkout',
       path: '/g/:token/checkout',
       component: () => import('@/modules/morefoto/views/CheckoutPage.vue'),

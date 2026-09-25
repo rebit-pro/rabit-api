@@ -25,6 +25,8 @@ final readonly class StaffOrderResultDto implements ResultDtoInterface
         public OrderBuyerResultDto $buyer,
         public array $quote,
         public string $paymentStatus,
+        public ?string $paidAt,
+        public bool $latePayment,
         public string $productionStatus,
         public string $version,
     ) {}

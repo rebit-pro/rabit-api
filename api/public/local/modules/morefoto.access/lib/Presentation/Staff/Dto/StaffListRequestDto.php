@@ -17,5 +17,7 @@ final readonly class StaffListRequestDto implements RequestDtoInterface
         public ?string $accountStatus = null,
         public ?string $page = null,
         public ?string $pageSize = null,
+        public ?string $sort = null,
+        public ?string $direction = null,
     ) {}
 }

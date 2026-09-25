@@ -205,6 +205,8 @@ try {
         l.STAFF_DISCOUNT,l.QUANTITY,l.UNIT_PRICE,l.DISCOUNT,l.TOTAL,l.COVERED_BY_GIFT
         FROM mf_order o JOIN mf_order_line l ON l.ORDER_ID={$source['ID']} AND l.LINE_NO=1 WHERE o.NUMBER LIKE 'MF-V%'");
     $total = $scalar('SELECT COUNT(*) FROM mf_order');
+    // G1 pays orders of the run: the unpaid filter counts only unpaid ones.
+    $unpaid = $scalar("SELECT COUNT(*) FROM mf_order WHERE PAYMENT_STATUS='unpaid'");
     $search = $services->get(SearchStaffOrdersUseCase::class);
     // The number of SQL statements must not depend on the page size: no N+1 over orders or lines.
     $measure = static function(int $pageSize) use ($connection, $search, $organizer): array {
@@ -221,7 +223,7 @@ try {
     [$large, $largeQueries, $elapsed] = $measure(100);
     $filtered = $search->execute($organizer, new SearchOrdersInputDto('volume11', null, null, $fixture['open']['groupId'], null, null, null, null, 1, 100));
     if ($smallQueries !== $largeQueries || $largeQueries > 15 || 10 !== count($small->items) || 100 !== count($large->items)
-        || $large->total !== $total || 11 > $filtered->total) {
+        || $large->total !== $unpaid || 11 > $filtered->total) {
         throw new RuntimeException(sprintf('Volume search is wrong or grows with the page: %d vs %d SQL.', $smallQueries, $largeQueries));
     }
     $proof[] = sprintf('search on %d orders: %d SQL for 10 and 100 rows, %.1f ms per page of 100', $total, $largeQueries, $elapsed);

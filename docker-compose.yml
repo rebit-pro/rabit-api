@@ -24,6 +24,7 @@ x-api-cli-environment: &api-cli-environment
     REBIT_GEETEST_CAPTCHA_KEY: ${REBIT_GEETEST_CAPTCHA_KEY:-}
     REBIT_GEETEST_API_URL: ${REBIT_GEETEST_API_URL:-https://gcaptcha4.geetest.com}
     MESSENGER_TRANSPORT_DSN: amqp://${RABBITMQ_USER:-rebit}:${RABBITMQ_PASSWORD:-rebit}@rabbitmq:5672/${RABBITMQ_VHOST:-rebit}
+    XDEBUG_MODE: ${XDEBUG_MODE:-off}
 
 x-api-cli-service: &api-cli-service
     build:
@@ -108,6 +109,7 @@ services:
             REBIT_GEETEST_API_URL: ${REBIT_GEETEST_API_URL:-https://gcaptcha4.geetest.com}
             MESSENGER_TRANSPORT_DSN: amqp://${RABBITMQ_USER:-rebit}:${RABBITMQ_PASSWORD:-rebit}@rabbitmq:5672/${RABBITMQ_VHOST:-rebit}
             PHP_IDE_CONFIG: "serverName=API"
+            XDEBUG_MODE: ${XDEBUG_MODE:-off}
 
     api-php-cli:
         <<: *api-cli-service
@@ -137,6 +139,11 @@ services:
         profiles: [notification]
         <<: *api-consumer-service
         command: ["php", "public/local/bin/bitrix-console", "app:notification:consume"]
+
+    api-support-consumer:
+        profiles: [support]
+        <<: *api-consumer-service
+        command: ["php", "public/local/bin/bitrix-console", "app:support:consume"]
 
     api-mysql:
         build:

@@ -6,7 +6,7 @@ namespace Rebit\Share\Infrastructure\Dto\Metadata;
 
 use Rebit\Share\Infrastructure\Exception\ValidationHttpException;
 use Rebit\Share\Shared\Facade\Cache;
-use Symfony\Component\Serializer\Annotation\SerializedName;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
 /**
  * Метаданные DTO через ReflectionClass.
@@ -440,11 +440,12 @@ final class DtoMetadataService
                     $hasConstraints = self::isConstraintAttribute($attr);
                 }
 
-                if ('Symfony\Component\Serializer\Annotation\SerializedName' === $attr->getName()) {
+                // Annotation\SerializedName — class_alias Attribute\SerializedName, is_a покрывает оба имени.
+                if (is_a($attr->getName(), SerializedName::class, true)) {
+                    /** @var SerializedName $instance */
                     $instance = $attr->newInstance();
-                    $externalName = $instance->getSerializedName();
 
-                    $serializedMap[$externalName] = $paramName;
+                    $serializedMap[$instance->serializedName] = $paramName;
                 }
             }
 
@@ -469,14 +470,15 @@ final class DtoMetadataService
                     );
                 }
 
-                if (!isset(self::SCALAR_TYPES[$arrayDocType])) {
+                // mixed[] — список без приведения элементов: их проверяет presentation mapper со своими кодами.
+                if ('array' === $arrayDocType || 'mixed' === $arrayDocType) {
+                    $paramType = DtoParamTypeEnum::ARRAY;
+                } elseif (!isset(self::SCALAR_TYPES[$arrayDocType])) {
                     $resolvedClassName = self::resolveClassName($arrayDocType, $reflectionClass);
                     $paramType = DtoParamTypeEnum::OBJECT_ARRAY;
-                } elseif ('array' !== $arrayDocType) {
+                } else {
                     $resolvedClassName = $arrayDocType;
                     $paramType = DtoParamTypeEnum::SCALAR_ARRAY;
-                } else {
-                    $paramType = DtoParamTypeEnum::ARRAY;
                 }
             } elseif (isset(self::SCALAR_TYPES[$typeName])) {
                 $paramType = DtoParamTypeEnum::from($typeName);

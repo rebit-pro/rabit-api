@@ -37,7 +37,7 @@ final class RequestHelper
     }
 
     /** @return array<string, mixed> */
-    public static function collectJsonRequestValues(HttpRequest $request, int $maxBytes): array
+    public static function collectJsonRequestValues(HttpRequest $request, int $maxBytes, bool $nestedArrays = false): array
     {
         $contentType = strtolower(trim(explode(';', (string)$request->getHeader('Content-Type'))[0]));
         if ([] !== self::collectQueryValues($request) || 'application/json' !== $contentType) {
@@ -49,6 +49,19 @@ final class RequestHelper
             throw new HttpException('PAYLOAD_TOO_LARGE', 413);
         }
 
+        return self::decodeJsonObject($raw, $nestedArrays);
+    }
+
+    /**
+     * Тело — JSON-объект. Строгие DTO получают вложенные объекты как stdClass для проверки формы; нестрогие
+     * (тело внешнего провайдера с лишними полями) — как массивы, которые гидратор сопоставляет вложенным DTO.
+     *
+     * @return array<string, mixed>
+     *
+     * @throws HttpException
+     */
+    public static function decodeJsonObject(string $raw, bool $nestedArrays = false): array
+    {
         try {
             $object = json_decode($raw, false, 16, JSON_THROW_ON_ERROR);
         } catch (\JsonException $exception) {
@@ -59,7 +72,7 @@ final class RequestHelper
             throw new HttpException('VALIDATION_FAILED', 422);
         }
 
-        return get_object_vars($object);
+        return $nestedArrays ? (array)json_decode($raw, true, 16, JSON_THROW_ON_ERROR) : get_object_vars($object);
     }
 
     /** @return array<string, mixed> */

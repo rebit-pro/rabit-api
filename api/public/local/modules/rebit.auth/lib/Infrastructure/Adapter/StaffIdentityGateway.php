@@ -53,6 +53,12 @@ final readonly class StaffIdentityGateway implements StaffIdentityGatewayInterfa
         $this->users->clearToken($userId);
     }
 
+    public function archive(int $userId): void
+    {
+        $this->users->resetToPending($userId);
+        $this->links->deleteForUser($userId);
+    }
+
     public function issueInvitation(int $userId, int $issuedBy, bool $force = false): StaffInvitationOutputDto
     {
         $state = $this->invitation->execute($userId, $issuedBy, $force);

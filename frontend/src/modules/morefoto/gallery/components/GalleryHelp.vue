@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { GallerySnapshot } from '../types';
-defineProps<{ gallery: GallerySnapshot }>();
+defineProps<{ gallery: GallerySnapshot; canAsk?: boolean }>();
+const emit = defineEmits<{ ask: [] }>();
 const open = defineModel<boolean>({ default: false });
 </script>
 <template>
@@ -13,12 +14,21 @@ const open = defineModel<boolean>({ default: false });
       <h3>Готовые фотографии</h3>
       <p>{{ gallery.delivery }} Дату выдачи сообщит ответственный группы.</p>
       <h3>Вопрос по съёмке</h3>
-      <p>
-        Напишите ответственному в том чате, где получили ссылку. Он передаст вопрос куратору{{
-          gallery.curator ? ' ' + gallery.curator : ''
-        }}.
-      </p>
-      <p class="mf-muted">Укажите группу «{{ gallery.groupName }}» и код кадра, например A001-01.</p>
+      <template v-if="canAsk">
+        <p>Напишите куратору{{ gallery.curator ? ' ' + gallery.curator : '' }} прямо здесь — ответ появится в этой же галерее.</p>
+        <p class="mf-muted">Если вопрос о снимке, укажите код кадра, например A001-01.</p>
+        <v-btn color="primary" variant="tonal" prepend-icon="mdi-message-text-outline" data-testid="gallery-help-ask" @click="emit('ask')"
+          >Задать вопрос куратору</v-btn
+        >
+      </template>
+      <template v-else>
+        <p>
+          Напишите ответственному в том чате, где получили ссылку. Он передаст вопрос куратору{{
+            gallery.curator ? ' ' + gallery.curator : ''
+          }}.
+        </p>
+        <p class="mf-muted">Укажите группу «{{ gallery.groupName }}» и код кадра, например A001-01.</p>
+      </template>
     </v-card>
   </v-dialog>
 </template>

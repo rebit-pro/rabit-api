@@ -6,6 +6,7 @@ namespace Morefoto\Media\Application\Photo\UseCase;
 
 use Morefoto\Media\Application\Photo\Contract\MediaPublisherInterface;
 use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
+use Morefoto\Media\Application\Photo\Dto\UploadPhotoInputDto;
 use Morefoto\Media\Application\Photo\Dto\UploadPhotoOutputDto;
 use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
@@ -33,16 +34,9 @@ final readonly class UploadPhotoUseCase
         private LoggerInterface $logger,
     ) {}
 
-    public function execute(
-        int $userId,
-        string $shootId,
-        string $groupId,
-        string $tmpName,
-        string $filename,
-        int $bytes,
-        ?string $clientFingerprint,
-    ): UploadPhotoOutputDto {
-        $scope = $this->scopes->resolve($shootId, $groupId);
+    public function execute(int $userId, UploadPhotoInputDto $input): UploadPhotoOutputDto
+    {
+        $scope = $this->scopes->resolve($input->shootId, $input->groupId);
         $this->access->assertCan($userId, 'media.manage', $scope->institutionId, $scope->groupId);
         if (null === $scope->groupId) {
             throw new \LogicException('Resolved media group is missing.');
@@ -51,7 +45,7 @@ final readonly class UploadPhotoUseCase
             throw new HttpException('GROUP_MEDIA_LOCKED', 409);
         }
         $started = hrtime(true);
-        $photo = $this->inspector->inspect($tmpName, $filename, $bytes, $clientFingerprint);
+        $photo = $this->inspector->inspect($input->tmpName, $input->filename, $input->bytes, $input->clientFingerprint);
         $inspected = hrtime(true);
         $originalPath = $this->storage->store($scope->shootPublicId, $photo);
         $stored = hrtime(true);
@@ -74,7 +68,7 @@ final readonly class UploadPhotoUseCase
         $this->logger->info('Photo upload accepted.', [
             'photoId' => $registration->publicId,
             'photoStatus' => $registration->status,
-            'bytes' => $bytes,
+            'bytes' => $input->bytes,
             'published' => $published,
             'inspectMs' => self::milliseconds($started, $inspected),
             'storeMs' => self::milliseconds($inspected, $stored),

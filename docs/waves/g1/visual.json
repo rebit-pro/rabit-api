@@ -1,0 +1,37 @@
+{
+  "wave": "G1",
+  "status": "passed",
+  "fixture": "rabit-e2e-47da504c16c6",
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ],
+  "provider": "YooKassa test shop (real hosted page, test card 5555…4444)",
+  "screenshots": [
+    {
+      "file": "docs/waves/g1/screenshots/g1-desktop-order-payment.png",
+      "sha256": "4374cb8d9cd2d77639a30096adf99dc634ce735c07b713fb23ee13dc674d046a"
+    },
+    {
+      "file": "docs/waves/g1/screenshots/g1-desktop-payment-continue.png",
+      "sha256": "4677fe7880caaf36437251bbfd2ef69406bfb5b531b91de229d45bec1c317175"
+    },
+    {
+      "file": "docs/waves/g1/screenshots/g1-desktop-payment-return.png",
+      "sha256": "ef05b27c2fab5fd05ab9177d5cf7477bcaaa2cd974350b501a3d3d0b56e8ad29"
+    },
+    {
+      "file": "docs/waves/g1/screenshots/g1-desktop-registry.png",
+      "sha256": "2930778c864ac916fc27f87a8e3f8c1b202c57411dd3ceb24f48d1cf61b9bff2"
+    },
+    {
+      "file": "docs/waves/g1/screenshots/g1-mobile-order-paid.png",
+      "sha256": "8bf7a978b996044bc8d56df01e1c8ac16223d66f955a79bc3b0d1ed4cdcc2a92"
+    },
+    {
+      "file": "docs/waves/g1/screenshots/g1-mobile-payment-card.png",
+      "sha256": "0b1769f4da79287155daf72dafc71f99a02871ebac200bdad9f4bc6a99cab125"
+    }
+  ],
+  "reviewed": "2026-09-25: order payment panel, «Оплата не завершена» with «Продолжить оплату», return page, paid order on mobile, registry list, payment card on mobile — layout, texts and statuses checked by eye"
+}

@@ -136,10 +136,12 @@ test('B4: организатор находит ожидающих регист�
   await page.getByRole('button', { name: 'Найти', exact: true }).click();
   expect((await filtered).status()).toBe(200);
   await expect(page.getByRole('button', { name: 'Редактировать сотрудника teacher', exact: true })).toHaveCount(0);
-  const row = page.getByRole('button', { name: 'Редактировать сотрудника B2 Новый учитель' });
+  const row = page
+    .locator('[data-row-id]:visible')
+    .filter({ has: page.getByRole('button', { name: 'Редактировать сотрудника B2 Новый учитель', exact: true }) });
   await expect(row).toContainText('Ожидает регистрации');
   await expect(row).toContainText('приглашение отправлено');
-  await row.click();
+  await row.getByRole('button', { name: 'Редактировать сотрудника B2 Новый учитель', exact: true }).click();
   const panel = page.getByTestId('staff-invitation');
   await expect(panel).toContainText('Приглашение отправлено');
   const resend = page.waitForResponse((r) => r.url().endsWith('/invitations') && r.request().method() === 'POST');

@@ -41,6 +41,18 @@ const MainRoutes: RouteRecordRaw = {
       meta: { title: 'Заказ', staffRoles: ['organizer', 'curator'] }
     },
     {
+      name: 'WorkPayments',
+      path: 'payments',
+      component: () => import('@/modules/morefoto/views/PaymentsPage.vue'),
+      meta: { title: 'Платежи', staffRoles: ['organizer', 'curator'] }
+    },
+    {
+      name: 'WorkPayment',
+      path: 'payments/:attemptId',
+      component: () => import('@/modules/morefoto/views/PaymentsPage.vue'),
+      meta: { title: 'Платёж', staffRoles: ['organizer', 'curator'] }
+    },
+    {
       name: 'SupportInbox',
       path: 'support',
       component: () => import('@/modules/morefoto/views/CuratorPage.vue'),
@@ -57,6 +69,12 @@ const MainRoutes: RouteRecordRaw = {
       path: 'links',
       component: () => import('@/modules/morefoto/views/LinksPage.vue'),
       meta: { title: 'Ссылки и сроки' }
+    },
+    {
+      name: 'Questions',
+      path: 'questions',
+      component: () => import('@/modules/morefoto/views/QuestionsPage.vue'),
+      meta: { title: 'Вопрос куратору', staffRoles: ['head', 'teacher'] }
     },
     {
       name: 'StaffRequests',

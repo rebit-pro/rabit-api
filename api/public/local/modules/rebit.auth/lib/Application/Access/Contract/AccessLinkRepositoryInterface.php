@@ -29,6 +29,9 @@ interface AccessLinkRepositoryInterface
 
     public function markUsed(int $id, int $usedAt): void;
 
+    /** Every link of the user stops working; the next invitation starts without a resend cooldown. */
+    public function deleteForUser(int $userId): void;
+
     /**
      * @param list<int> $userIds
      *
