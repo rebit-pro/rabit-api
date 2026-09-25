@@ -1,20 +1,34 @@
-# Прогресс: чат клиента MoreFoto36.ru с куратором через MAX
+# Прогресс: вопросы куратору с сайта МореФото через MAX
 
 ## Точка продолжения
 
-- Ветка: `codex/max-support-chat-plan`.
-- Worktree: `/home/user/rabit-api-worktrees/max-support-chat-plan`.
-- Base: `5b750c07e964e279e3517292dae6517643f3e7be` (`origin/main`, повторно проверен fetch перед push). Проверенный head с полным планом: `0da91d32b22acdf5303d0e5e4b9cf82ef5cce621`; итоговый HEAD включает последующий commit финализации этого журнала, точный SHA: `git rev-parse HEAD`.
-- PR: [#48 — План чата клиента MoreFoto с куратором через MAX](https://github.com/rebit-pro/rabit-api/pull/48), draft, base `main`. Отдельный issue не создавался.
-- Связанные материалы: `plan.md`, `docs/waves/graph.json` (K1/H1), `docs/architecture.md`, соседний MoreFoto `docs/05-rest-api/README.md`.
-- Завершено: исследование проекта/MAX, полный план, DOC-01…05, commit/push, draft PR #48.
-- Сейчас: документ готов к обсуждению; финализирован журнал результатов. Продуктовая реализация не начата.
-- Следующий шаг: обсудить CHAT-D01…06 в PR и выбрать место чата в графе; до этого не начинать продуктовый код.
-- Открытые решения реализации: CHAT-D01…06; отдельная группа на клиента не подтверждена API, личный бот предложен; зависимости K1 и live MAX ещё не закрыты. Для документационного результата блокеров нет.
-- Рабочее дерево: два документа входят в PR; финальный docs-only commit сохраняет отметки проверок и эту точку продолжения. Ожидаемое состояние после push — чистое; проверить `git status --short`. Чужих файлов и runtime-изменений нет.
-- Команды продолжения: `git status --short`; `git rev-parse HEAD`; `gh pr view 48 --json number,url,isDraft,baseRefName,headRefName,headRefOid,files`; `git diff --check origin/main...HEAD`.
+- Ветка: `codex/max-support-chat-plan`, worktree `/home/user/rabit-api-worktrees/max-support-chat-plan`.
+- Base: `4621ad9` (`origin/main` на 25.09.2026, ветка перебазирована). PR: [#48](https://github.com/rebit-pro/rabit-api/pull/48), draft.
+- Связанное: `plan.md`, `docs/waves/graph.json` (K1, F2, E4, B2, H1, B4), соседний MoreFoto `docs/05-rest-api/README.md`.
+- Завершено: план переписан под постановку 25.09.2026 (общий канал без заказа, родитель по ссылке и имени,
+  воспитатель из кабинета, кураторы в группе MAX); сверены требования MAX; логотип бота 500×500 подготовлен вне репозитория.
+- Сейчас: план на согласовании у пользователя. Пользователь создаёт бота и отправляет на модерацию.
+- Следующий шаг: получить ответы по MAX-D07/MAX-D08, затем добавить K3 и SUP-07…12 в граф, канон и реестр API.
+- Блокеры: для плана — нет. Для включения K3 — модерация бота, токен, группа MAX; MAX-D06 до production.
+- Рабочее дерево: изменены `plan.md`, `progress.md`; runtime-кода нет. Токен в Git не хранится.
+- Команды: `git status --short`; `git diff --check origin/main...HEAD`;
+  `python3 tools/verify-wave-graph.py docs/waves/graph.json`; `gh pr view 48 --json isDraft,headRefOid,files`.
 
 ## Журнал
+
+### 25.09.2026 — новая постановка и переписанный план
+
+- Пользователь: чат не привязан к заказу; родители без аккаунтов приходят по ссылке галереи и оставляют имя;
+  воспитатели пишут из кабинета; Рита и Алёна получают вопросы и отвечают в MAX. Приняты MAX-D01…D05, прежний
+  вариант по заказу и K1 заменён отдельной волной K3.
+- Пользователь подтвердил профиль самозанятого на платформе MAX для партнёров (снимок экрана).
+- Сверены [подключение](https://dev.max.ru/docs/maxbusiness/connection) и [создание бота](https://dev.max.ru/docs/chatbots/bots-create/create):
+  самозанятый допускается, до 2 ботов, логотип 500×500 до 5 МБ, название до 59, описание до 200 символов, модерация до 48 ч.
+- Проверено в коде: MED-01 отдаёт `curator` группы; роли `teacher`/`head` имеют кабинет; H1 даёт образец outbox,
+  dispatcher и consumer; `IssueAccessInvitationUseCase` — образец 429 `RATE_LIMITED`; секреты — `/run/secrets` через `runtime-env.php`.
+- Зависимости K3 (F2, E4, B2, H1, B4) — merged по `docs/waves/graph.json`.
+- `git rebase origin/main` — PASS, base `4621ad9`.
+- Логотип `morefoto-max-logo-500.png` сгенерирован из знака favicon и токенов бренда (sea-600, sea-200, Manrope), передан пользователю; в репозиторий не добавлен.
 
 ### 22.09.2026 — исследование и изоляция
 
@@ -85,3 +99,16 @@ Runtime-тесты, браузерный E2E и MAX round-trip не запуск
 - `gh pr create --draft --base main --head codex/max-support-chat-plan --title "План чата клиента MoreFoto с куратором через MAX" --body-file /tmp/rabit-max-plan-pr-body.md` — PASS, PR #48. PR прикреплён к текущей задаче Codex.
 - `gh pr view 48 --json number,url,isDraft,baseRefName,headRefName,headRefOid,files` — PASS: draft, main, нужная ветка, только plan.md/progress.md. `git status --short` после первого push пустой.
 - Перед заключительным commit/push обновлены checklist документа и точка продолжения; смысл плана не изменён. Merge и deployment не выполнялись. Ответ на optional-вопрос о предпочтительном UX пока не получен; вариант личного бота остаётся предложением.
+
+## Тест-кейсы редакции 25.09.2026
+
+CHAT-01…13 первой редакции заменены MAX-01…13 (plan.md, раздел 13).
+
+| ID | Статус | Дата | Команда / доказательство |
+| --- | --- | --- | --- |
+| DOC-01 | PENDING | 25.09.2026 | Проверить после изменения графа |
+| DOC-02 | PASS | 25.09.2026 | Открыты dev.max.ru: подключение к платформе и создание бота; требования внесены в plan.md, раздел 3–4 |
+| DOC-03 | PENDING | 25.09.2026 | K3 в граф ещё не добавлена |
+| DOC-04 | PENDING | 25.09.2026 | После изменения графа |
+| DOC-05 | PENDING | 25.09.2026 | После push |
+| MAX-01…MAX-13 | PENDING | 25.09.2026 | Реализация K3 не начата |
