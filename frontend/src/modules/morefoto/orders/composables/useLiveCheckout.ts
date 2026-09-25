@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router';
 import { forgetLiveCart, liveQuote, liveState, refreshStorefront } from '../../commerce/services/storefront';
 import type { GallerySnapshot } from '../../gallery/types';
 import { apiProblem, liveOrdersApi } from '../live/api';
-import { checkoutOutcome, isCreatedOrder, newRequestId } from '../live/rules';
+import { checkoutOutcome, isCreatedOrder, newRequestId, showsCheckoutRecovery, type CheckoutSubmission } from '../live/rules';
 import type { CheckoutBody } from '../live/types';
 import { validateBuyer } from '../services/validation';
 import type { BuyerErrors, CheckoutDraft } from '../types';
@@ -40,11 +40,11 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
   const quote = computed(() => liveQuote(gallery.groupId));
   const catalog = computed(() => state.catalog);
   const draft = reactive(readDraft(gallery.groupId));
-  const submitting = shallowRef(false);
+  const submission = shallowRef<CheckoutSubmission>('idle');
   // A running server recalculation also blocks submission and is shown as loading, not as a silently disabled button.
-  const busy = computed(() => submitting.value || state.busy);
+  const busy = computed(() => submission.value !== 'idle' || state.busy);
   // An unconfirmed attempt is recovered on its own screen, independent of a fresh quote or an open group.
-  const recovering = computed(() => draft.pending !== null && !submitting.value);
+  const recovering = computed(() => showsCheckoutRecovery(draft.pending !== null, submission.value));
   const error = shallowRef('');
   const errors = shallowRef<BuyerErrors>({});
   const oldTotal = shallowRef<number | null>(null);
@@ -80,7 +80,7 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
       await focus('[name="buyer-' + Object.keys(errors.value)[0] + '"]');
       return;
     }
-    submitting.value = true;
+    submission.value = recovery ? 'recovery' : 'first';
     const attempt = draft.pending ?? body();
     draft.pending = attempt;
     try {
@@ -114,7 +114,7 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
       error.value = outcome.message;
       await focus('#checkout-error');
     } finally {
-      submitting.value = false;
+      submission.value = 'idle';
     }
   }
   return { quote, catalog, draft, busy, error, errors, oldTotal, capabilities, previous, canSubmit, recovering, submit };
