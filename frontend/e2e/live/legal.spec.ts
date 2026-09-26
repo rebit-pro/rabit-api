@@ -3,6 +3,8 @@ import { password, token } from './helpers.js';
 
 // OPS legal: public documents with the test-only requisites of tools/run-browser-e2e.py, the cookie notice and the
 // consent of a staff member who has not accepted it yet (fixture legal-pending from tools/e2e/prepare.php).
+// A first visit: without the stored mark of the closed cookie notice from playwright.live.config.ts.
+test.use({ storageState: { cookies: [], origins: [] } });
 const pageErrors = new WeakMap<object, string[]>();
 test.beforeEach(async ({ page }) => {
   const errors: string[] = [];
