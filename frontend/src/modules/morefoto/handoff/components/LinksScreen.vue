@@ -17,6 +17,8 @@ import '../handoff.css';
 import MfStatus from '@/components/status/MfStatus.vue';
 import MfTimeline from '@/components/viz/MfTimeline.vue';
 import { linkStatus } from '../../ui/statusTone';
+import GalleryPath from './GalleryPath.vue';
+import { galleryPath, type GalleryStepKey } from '../galleryPath';
 const live = !isMockApiEnabled,
   authStore = useAuthStore(),
   route = useRoute(),
@@ -27,16 +29,14 @@ const live = !isMockApiEnabled,
   notice = shallowRef(''),
   failure = shallowRef(''),
   histories = shallowRef<Record<string, LinkEvent[]>>({});
-/** Where the organizer fixes what keeps a group from its link (INF-04): the tab of the shoot or the staff lists. */
-function problemFix(group: LinkGroup, problem: string): { to: string; label: string } | null {
+/** Where the organizer fixes a step of the path to the gallery (INF-04); the check and the transmission are on this card. */
+function stepFix(group: LinkGroup, key: GalleryStepKey): { to: string; label: string } | null {
   if (!live || data.value?.role !== 'organizer') return null;
   const shoot = '/cabinet/institutions/' + encodeURIComponent(group.institutionId) + '/shoots/' + encodeURIComponent(group.shootId);
   const query = '?group=' + encodeURIComponent(group.id);
-  if (['noPhotos', 'photosProcessing', 'unassignedPhotos'].includes(problem))
-    return { to: shoot + '/photos' + query, label: 'К фотографиям' };
-  if (problem === 'noProducts') return { to: shoot + '/conditions' + query, label: 'К условиям' };
-  if (problem === 'staffRequestsPending')
-    return { to: '/cabinet/staff-requests?shoot=' + encodeURIComponent(group.shootId), label: 'К спискам' };
+  if (key === 'photos' || key === 'assign') return { to: shoot + '/photos' + query, label: 'К фотографиям' };
+  if (key === 'conditions') return { to: shoot + '/conditions' + query, label: 'К условиям' };
+  if (key === 'staff') return { to: '/cabinet/staff-requests?shoot=' + encodeURIComponent(group.shootId), label: 'К спискам' };
   return null;
 }
 const editor = useHandoffEditor(() => {
@@ -174,22 +174,26 @@ async function history(group: LinkGroup, event: Event) {
           :aria-label="'Ссылка группы ' + group.name"
           @focus="($event.target as HTMLInputElement).select()"
       /></label>
+      <GalleryPath v-if="live && !group.sentAt" :steps="galleryPath(group)" :fix="(key) => stepFix(group, key)" />
       <p v-if="!group.sentAt" class="mf-muted mb-2">
-        {{ live && !group.prepared ? 'Ссылка появится после проверки группы.' : 'Копирование не запускает срок.' }}
+        {{
+          live && !group.prepared
+            ? 'Ссылка появится после проверки группы.'
+            : 'До отметки передачи родители видят «Фотографии ещё готовятся». Копирование ссылки не запускает срок.'
+        }}
       </p>
-      <ul v-if="!group.sentAt && group.problems.length" class="handoff-problems" aria-label="Что мешает открыть галерею">
+      <ul v-if="!live && !group.sentAt && group.problems.length" class="handoff-problems" aria-label="Что мешает открыть галерею">
         <li v-for="problem in group.problems" :key="problem">
           <v-icon icon="mdi-alert-circle-outline" size="18" aria-hidden="true" />
           <span>{{ problemText(problem) }}</span>
-          <RouterLink v-if="problemFix(group, problem)" :to="problemFix(group, problem)!.to">{{
-            problemFix(group, problem)!.label
-          }}</RouterLink>
         </li>
       </ul>
       <div class="mf-actions">
         <template v-if="!live || group.prepared">
           <v-btn variant="outlined" @click="copy(group)">Копировать ссылку</v-btn
-          ><v-btn variant="text" @click="openGallery(group)">Открыть галерею</v-btn>
+          ><v-btn variant="text" @click="openGallery(group)">{{
+            group.sentAt ? 'Открыть галерею' : 'Посмотреть страницу родителей'
+          }}</v-btn>
         </template>
         <v-btn v-if="data.role === 'organizer' && !group.sentAt" :disabled="!!group.problems.length" @click="open(group, 'prepare')"
           >Проверить ссылку</v-btn
