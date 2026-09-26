@@ -171,9 +171,12 @@ watch(settled, (value) => {
       @reset="archives.reset"
     />
     <div class="mf-actions mt-5">
-      <v-btn :disabled="!queued || busy || disabled" :loading="busy && !paused" @click="$emit('start')">{{
-        isMockApiEnabled ? 'Начать подготовку' : paused && queued ? 'Продолжить загрузку' : 'Загрузить на сервер'
-      }}</v-btn
+      <v-btn
+        v-if="!archiveMode || queued || busy"
+        :disabled="!queued || busy || disabled"
+        :loading="busy && !paused"
+        @click="$emit('start')"
+        >{{ isMockApiEnabled ? 'Начать подготовку' : paused && queued ? 'Продолжить загрузку' : 'Загрузить на сервер' }}</v-btn
       ><v-btn v-if="busy && !isMockApiEnabled" variant="outlined" :disabled="paused" @click="$emit('pause')">{{
         paused ? 'Остановим после текущих файлов' : 'Пауза'
       }}</v-btn

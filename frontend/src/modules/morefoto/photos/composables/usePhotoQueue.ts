@@ -153,9 +153,15 @@ export function usePhotoQueue(shootId: string) {
     for (const item of chosen)
       archives.set(item.source.key, { file: item.file, entries: new Map(item.source.entries.map((entry) => [entry.path, entry])) });
     const keys = new Set(chosen.map((item) => item.source.key));
+    // Group frames are sent again every time: the server keeps one photo and only adds children labelled since.
     const kept = jobs.value.filter(
       (job) =>
-        !(job.groupId === groupId && job.archive && keys.has(job.archive) && !['processing', 'done', 'duplicate'].includes(job.status))
+        !(
+          job.groupId === groupId &&
+          job.archive &&
+          keys.has(job.archive) &&
+          (job.shared || !['processing', 'done', 'duplicate'].includes(job.status))
+        )
     );
     const listed = new Set(kept.filter((job) => job.groupId === groupId && job.archive).map((job) => job.archive + '\n' + job.entry));
     const added: UploadJob[] = [];
@@ -164,7 +170,7 @@ export function usePhotoQueue(shootId: string) {
       const childCodes = folderCodes(folder, plan);
       for (const file of folder.files) {
         if (listed.has(file.archive + '\n' + file.path)) continue;
-        if (progress.has(groupId + ' ' + file.archive, file.path)) {
+        if (folder.kind === 'child' && progress.has(groupId + ' ' + file.archive, file.path)) {
           skipped++;
           continue;
         }
@@ -342,14 +348,30 @@ export function usePhotoQueue(shootId: string) {
       update(job.id, { status: 'error', progress: 0, message: photoApiError(cause) });
     }
   }
+  /**
+   * The server numbers a frame when it accepts it, so the frames of one child go one after another in archive order
+   * (A001.jpg becomes A001) while different children go in parallel. Group frames follow all own frames of the group.
+   */
+  function inOrder(job: UploadJob): boolean {
+    if (!job.archive) return true;
+    const pending = (item: UploadJob) =>
+      item.archive !== undefined && item.groupId === job.groupId && ['queued', 'uploading'].includes(item.status);
+    if (job.shared && jobs.value.some((item) => pending(item) && !item.shared)) return false;
+    const first = jobs.value.find(
+      (item) => pending(item) && (job.shared ? item.shared === true : !item.shared && item.folder === job.folder)
+    );
+
+    return first?.id === job.id;
+  }
   async function worker() {
     while (alive && !controller.signal.aborted && !paused.value) {
       const waitingJobs = jobs.value.filter((item) => item.status === 'queued');
       if (!waitingJobs.length) return;
       const now = Date.now();
-      const job = waitingJobs.find((item) => (item.retryAt ?? 0) <= now);
+      const job = waitingJobs.find((item) => (item.retryAt ?? 0) <= now && inOrder(item));
       if (!job) {
-        await sleep(Math.min(...waitingJobs.map((item) => item.retryAt ?? now)) - now);
+        // Either a repeat is due later or a folder waits for its previous frame: check again shortly.
+        await sleep(Math.max(300, Math.min(...waitingJobs.map((item) => (item.retryAt ?? 0) - now))));
         continue;
       }
       try {

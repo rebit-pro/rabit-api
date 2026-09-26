@@ -62,8 +62,9 @@ const lookalikes: Record<string, string> = {
   У: 'Y'
 };
 
-export function archiveKey(file: { name: string; size: number; lastModified: number }): string {
-  return JSON.stringify([file.name, file.size, file.lastModified]);
+/** Name and size: a copied or downloaded again archive keeps them, while its modification time may change. */
+export function archiveKey(file: { name: string; size: number }): string {
+  return JSON.stringify([file.name, file.size]);
 }
 
 export function mimeType(name: string): string {

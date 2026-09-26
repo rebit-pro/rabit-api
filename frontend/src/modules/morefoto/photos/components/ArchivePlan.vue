@@ -122,10 +122,18 @@ const byName = (folder: string) => /^group/i.test(folder);
   z-index: 1;
   border-top: 0;
   background: var(--mf-color-surface-2);
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 .archive-plan__number {
   text-align: right;
   white-space: nowrap;
+}
+@media (max-width: 599px) {
+  .archive-plan th,
+  .archive-plan td {
+    padding: 8px 6px;
+  }
 }
 .archive-plan__skipped summary {
   cursor: pointer;
