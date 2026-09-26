@@ -6,6 +6,7 @@ import { readDemo, writeDemo } from '../mocks/storage';
 import { simulateRequest } from '../mocks/runtime';
 import { DemoError } from '../mocks/service';
 import { downloadAccess } from '../orders/delivery/rules';
+import { phoneDigits } from '../ui/field-values';
 import {
   settlement,
   saleVersion,
@@ -100,9 +101,7 @@ export async function saveSettlement(token: string, c: SaleCommand): Promise<voi
           after = {
             ...before,
             email: c.email.trim().toLowerCase(),
-            ...(c.action === 'contacts'
-              ? { name: c.name.trim(), phone: '+' + c.phone.replace(/\D/g, '').replace(/^8(?=\d{10}$)/, '7') }
-              : {})
+            ...(c.action === 'contacts' ? { name: c.name.trim(), phone: '+' + phoneDigits(c.phone) } : {})
           };
         if (c.action === 'recover' && downloadAccess(order, now).state !== 'available')
           throw new Error('Повторная выдача недоступна: проверьте решение по оплате, возврат и исходный месячный срок.');
