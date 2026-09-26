@@ -26,3 +26,27 @@ export const maxRetries = retryDelays.length;
 export function sessionTooShort(expiresAt: number | null, now: number, bytes: number, bytesPerSecond: number): boolean {
   return expiresAt !== null && expiresAt - now < (bytes / bytesPerSecond) * 1000 * 2;
 }
+
+export type PauseReason = 'manual' | 'offline' | 'session' | 'locked';
+
+/**
+ * Why the queue stopped. Only a stop for a lost network is lifted by the network itself, and only once the workers
+ * still sending have finished: an `online` event that comes while one of them is busy is kept, not lost (#153).
+ * A manual pause, an ended session or a handed-over group need a person and override the network stop.
+ */
+export class QueuePause {
+  private reason: PauseReason | null = null;
+
+  stop(reason: PauseReason): void {
+    if (reason !== 'offline' || this.reason === null) this.reason = reason;
+  }
+
+  clear(): void {
+    this.reason = null;
+  }
+
+  /** The queue may start again by itself: the network is back and no worker is still sending. */
+  resumable(online: boolean, busy: boolean): boolean {
+    return this.reason === 'offline' && online && !busy;
+  }
+}

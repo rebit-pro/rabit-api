@@ -8,9 +8,10 @@ import { preparePhoto } from '../prepare';
 import { acceptPhoto, editableGroup } from '../service';
 import { photoApiError, photoApiErrorCode, photosApi } from '../api';
 import { photosChangedEvent } from '../repository';
-import { folderCodes, mimeType, type ArchivePlan, type ArchiveSource } from '../archive';
+import { mimeType, type ArchivePlan, type ArchiveSource } from '../archive';
+import { archiveJobs, deliveredForResume } from '../archive-queue';
 import { ArchiveProgress, browserStorage } from '../archive-progress';
-import { maxRetries, retryDelay, uploadFailure } from '../upload-retry';
+import { maxRetries, QueuePause, retryDelay, uploadFailure } from '../upload-retry';
 import { zipEntryBlob, type ZipEntry } from '../zip-reader';
 import type { UploadJob } from '../types';
 
@@ -61,7 +62,7 @@ export function usePhotoQueue(shootId: string) {
   let trackTimer = 0;
   let refreshTimer = 0;
   let refreshedAt = 0;
-  let offline = false;
+  const stop = new QueuePause();
   let wakeUps: (() => void)[] = [];
   const queued = computed(() => jobs.value.filter((job) => job.status === 'queued').length);
   const accepted = computed(() => jobs.value.filter((job) => job.status === 'done').length);
@@ -90,6 +91,10 @@ export function usePhotoQueue(shootId: string) {
     if (alive) {
       jobs.value = jobs.value.map((job) => (job.id === id ? { ...job, ...value } : job));
       persist('status' in value);
+      if (value.status && deliveredForResume(value.status)) {
+        const job = jobs.value.find((item) => item.id === id);
+        if (job?.archive && job.entry) progress.mark(job.groupId + ' ' + job.archive, job.entry);
+      }
     }
   }
   function refreshWorkspace() {
@@ -152,48 +157,15 @@ export function usePhotoQueue(shootId: string) {
     error.value = '';
     for (const item of chosen)
       archives.set(item.source.key, { file: item.file, entries: new Map(item.source.entries.map((entry) => [entry.path, entry])) });
-    const keys = new Set(chosen.map((item) => item.source.key));
-    // Group frames are sent again every time: the server keeps one photo and only adds children labelled since.
-    const kept = jobs.value.filter(
-      (job) =>
-        !(
-          job.groupId === groupId &&
-          job.archive &&
-          keys.has(job.archive) &&
-          (job.shared || !['processing', 'done', 'duplicate'].includes(job.status))
-        )
+    const { jobs: next, skipped } = archiveJobs(
+      plan,
+      jobs.value,
+      { shootId, groupId, archives: new Set(chosen.map((item) => item.source.key)) },
+      (archive, path) => progress.has(groupId + ' ' + archive, path),
+      () => crypto.randomUUID()
     );
-    const listed = new Set(kept.filter((job) => job.groupId === groupId && job.archive).map((job) => job.archive + '\n' + job.entry));
-    const added: UploadJob[] = [];
-    let skipped = 0;
-    for (const folder of plan.folders) {
-      const childCodes = folderCodes(folder, plan);
-      for (const file of folder.files) {
-        if (listed.has(file.archive + '\n' + file.path)) continue;
-        if (folder.kind === 'child' && progress.has(groupId + ' ' + file.archive, file.path)) {
-          skipped++;
-          continue;
-        }
-        added.push({
-          id: crypto.randomUUID(),
-          shootId,
-          groupId,
-          filename: file.name,
-          bytes: file.bytes,
-          modified: 0,
-          progress: 0,
-          status: 'queued',
-          message: 'Готов к отправке',
-          childCodes,
-          archive: file.archive,
-          entry: file.path,
-          folder: folder.code ?? folder.folder,
-          shared: folder.kind === 'group'
-        });
-      }
-    }
     previous.value += skipped;
-    jobs.value = [...kept, ...added];
+    jobs.value = next;
     persist(true);
   }
   async function check(job: UploadJob) {
@@ -252,7 +224,6 @@ export function usePhotoQueue(shootId: string) {
       job.childCodes
     );
     files.delete(job.id);
-    if (job.archive && job.entry) progress.mark(job.groupId + ' ' + job.archive, job.entry);
     if (result.status === 'duplicate') {
       const message = !job.childCodes?.length
         ? duplicateMessage
@@ -333,15 +304,17 @@ export function usePhotoQueue(shootId: string) {
           '.'
       });
     } else if (kind === 'offline') {
-      offline = true;
+      stop.stop('offline');
       paused.value = true;
       update(job.id, { status: 'queued', progress: 0, message: 'Нет подключения к интернету. Продолжим сами, когда связь появится.' });
     } else if (kind === 'session') {
+      stop.stop('session');
       paused.value = true;
       error.value = 'Сессия завершилась. Войдите снова и выберите те же файлы: отправленные повторно не уйдут.';
       update(job.id, { status: 'queued', progress: 0, message: 'Ждёт входа в кабинет.' });
     } else {
       if (kind === 'locked') {
+        stop.stop('locked');
         paused.value = true;
         error.value = 'Группа уже передана. Загрузка в неё остановлена.';
       }
@@ -399,7 +372,7 @@ export function usePhotoQueue(shootId: string) {
     if (busy.value) return;
     busy.value = true;
     paused.value = false;
-    offline = false;
+    stop.clear();
     error.value = '';
     // A sleeping laptop drops the connection: an upload of a whole shoot keeps the screen on while it runs.
     const awake = await keepAwake();
@@ -411,17 +384,20 @@ export function usePhotoQueue(shootId: string) {
       if (alive) {
         busy.value = false;
         persist(true);
+        // The network may have come back while the last worker was still sending.
+        if (stop.resumable(navigator.onLine, false)) void start();
       }
     }
   }
   function pause() {
     if (busy.value) {
+      stop.stop('manual');
       paused.value = true;
       wake();
     }
   }
   function online() {
-    if (offline && !busy.value) void start();
+    if (stop.resumable(true, busy.value)) void start();
   }
   function retry(id: string) {
     if (busy.value) return;
