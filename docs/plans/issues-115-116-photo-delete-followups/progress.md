@@ -7,8 +7,8 @@
   Issues: #115, #116 (follow-up ревью PR #107). PR [#135](https://github.com/rebit-pro/rabit-api/pull/135).
 - Завершено: реализация #115 и #116; gate `rabit-e2e-939944822035` (head `8ce962b`) — браузер PASS, верификатор FAIL
   (оригинал удалённого кадра остался); причина в продукте исправлена (DEC-6), быстрые проверки PASS.
-- Сейчас: PR #135, исправление запушено; не слит.
-- Следующий шаг: повторный полный `make test-e2e` (координатор) — T08/T09 по верификатору.
+- Сейчас: повторный полный gate `rabit-e2e-cc3ee6da854f` PASS на head `73aa844` (main `09597fd`). PR сливается.
+- Следующий шаг: деплой backend+frontend; превью удалённых кадров остаются до #141 (воркер от `www-data`, решение пользователя — вариант 1), затем вернуть проверку превью в верификатор.
 - Блокеров нет. Открытое решение: способ удалять превью (#141) — вне этого PR.
 - Рабочее дерево чистое после коммита исправления.
 - Команды:
@@ -32,12 +32,12 @@
 | T05 | PASS | 2026-09-26 | `npm run test:commerce` | тот же тест: другой набор/группа → `key-3`, `key-4` |
 | T06 | PASS | 2026-09-26 | `npm run check` | `tests/support/*` без изменений: все 56 node-тестов `test:ui` PASS |
 | T07 | PASS | 2026-09-26 | `make test-e2e`, прогон `rabit-e2e-939944822035` (координатор) | группа a целиком зелёная, включая `#115/#116` |
-| T08 | FAIL → исправлено, PENDING повтор | 2026-09-26 | `make test-e2e`, прогон `rabit-e2e-939944822035`, head `8ce962b` | браузерная часть PASS; `verify-photo-deletion.php:107` FAIL «the unused original of the deleted frame is removed»: превью (root, воркер) не удалились FPM (`www-data`), исключение в том же `try` пропустило удаление оригинала. Исправлено DEC-6; проверка превью отложена до #141 |
-| T09 | PENDING | 2026-09-26 | `make test-e2e` (группа a) | раздел 2 `verify-photo-deletion.php` не дошёл: верификатор упал раньше (T08) |
+| T08 | PASS | 2026-09-26 | `make test-e2e`, прогон `rabit-e2e-cc3ee6da854f`, head `73aa844` | первый прогон `rabit-e2e-939944822035` — FAIL (оригинал не удалялся из-за превью root, DEC-6); повтор: `verify-photo-deletion.php` раздел 1 passed, оригинал удалён; превью — #141 |
+| T09 | PASS | 2026-09-26 | `make test-e2e` (группа a), `rabit-e2e-cc3ee6da854f` | раздел 2: реальный `DeleteGroupPhotosUseCase` → 409 `PHOTO_PROCESSING`, состояние не изменилось; маркер `#116 photo deletion integration passed` |
 | T10 | PASS | 2026-09-26 | PHPUnit | `MediaMutationDeletionSqlTest` (4 теста): порядок duplicate → назначения → обложка → строки; `processing` → 409 без записей; шпион SQL, не реальная БД |
 | T13 | PASS | 2026-09-26 | PHPUnit | `DeleteGroupPhotosUseCaseTest::testOriginalIsRemovedEvenWhenThePreviewsCannotBe`, `testPreviewsAreRemovedEvenWhenTheOriginalCannotBe` |
 | T11 | PASS | 2026-09-26 | см. «Команды» | `npm run check` + `test:commerce` (213); PHPUnit 980/980; PHPStan OK; php-cs-fixer 0 из 2 |
-| T12 | PENDING | — | `make test-e2e` | gate после ревью (координатор) |
+| T12 | PASS | 2026-09-26 | `make test-e2e`, `rabit-e2e-cc3ee6da854f` | exit 0, Total 383.5 s, 127 браузерных сценариев (a 79, b 48), все verify-*.php passed; скриншот `i115-desktop-unknown-outcome.png` просмотрен |
 
 ## Журнал
 
@@ -99,3 +99,10 @@
   со ссылкой на #141; оригинал проверяется строго.
 - Проверки: PHPUnit `DeleteGroupPhotosUseCaseTest` 9/9, весь PHPUnit 982/982, PHPStan OK, php-cs-fixer 0 из 2
   (intersection) и 0 из 1 (override, верификатор), `php -l` верификатора — ok. Frontend не менялся.
+
+### 2026-09-26 — повторный полный gate
+
+- Ветка: исправление `94ea82a` (DEC-6) + main `09597fd` (merge `73aa844`). Исправление после независимого ревью просмотрено координатором, блокирующих нет.
+- `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`
+  — `rabit-e2e-cc3ee6da854f`: exit 0, Total 383.5 s, 127 сценариев, `verify-photo-deletion.php` passed. T07–T09, T12 PASS.
+- Остаток: превью удалённых кадров на диске — #141 (в работе, ветка `codex/issues-141-media-worker-user`).
