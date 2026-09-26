@@ -4,13 +4,13 @@
 
 - Ветка `codex/issues-115-116-photo-delete-followups`, worktree
   `/home/user/rabit-api-worktrees/issues-115-116-photo-delete-followups`, base `origin/main` `4fc9dce`.
-  Issues: #115, #116 (follow-up ревью PR #107). PR — см. журнал ниже.
+  Issues: #115, #116 (follow-up ревью PR #107). PR [#135](https://github.com/rebit-pro/rabit-api/pull/135).
 - Завершено: реализация #115 и #116, быстрые проверки frontend и backend (PASS).
-- Сейчас: коммит, push, PR в main (без merge).
+- Сейчас: PR #135 ждёт ревью; не слит.
 - Следующий шаг: ревью PR; после ревью без блокеров — полный `make test-e2e` (координатор). Он впервые выполнит
   новый сценарий `#115/#116` в `zz-media.spec.ts` и верификатор `verify-photo-deletion.php`.
 - Блокеров нет. Открытых решений нет.
-- Рабочее дерево: чистое после коммита.
+- Рабочее дерево чистое; код в `bf47cc0` (#115) и `fcfce47` (#116).
 - Команды:
   - Frontend: `docker run --rm -v $PWD/frontend:/app -v rabit-issues115116-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy npm ci`,
     затем с `--network none`: `sh -c "npm run check && npm run test:commerce"`.
@@ -78,3 +78,5 @@
 - `make test-e2e`/`make e2e-up` не запускались по поручению: T07–T09, T12 — PENDING до gate после ревью.
 - Визуальная проверка на заглушках не проводилась: изменён только текст кнопки и сообщение диалога; скриншот
   `i115-desktop-unknown-outcome.png` снимет live-сценарий.
+- Коммиты `bf47cc0` (fix #115), `fcfce47` (test #116), `3b96e0e` (docs); push. Дублей по
+  `gh pr list --state all --search "115 in:title"` / `"116 in:title"` нет. Создан PR #135 в main, не слит.
