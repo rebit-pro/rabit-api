@@ -6,10 +6,10 @@
 - Ветка: `codex/issues-109-110-order-texts-phone`.
 - Worktree: `/home/user/rabit-api-worktrees/issues-109-110-order-texts-phone`. Общий checkout `/home/user/rabit-api` не трогать.
 - Base: `origin/main` `23642d4` (merge PR #112).
-- Issues: [#109](https://github.com/rebit-pro/rabit-api/issues/109), [#110](https://github.com/rebit-pro/rabit-api/issues/110). PR: ещё нет.
+- Issues: [#109](https://github.com/rebit-pro/rabit-api/issues/109), [#110](https://github.com/rebit-pro/rabit-api/issues/110). PR: [#118](https://github.com/rebit-pro/rabit-api/pull/118), head с кодом `c27aeb6`.
 - Документация: [план](plan.md).
 - Завершено: разведка, план, реализация #109 и #110, unit-тест, быстрые проверки (T01–T05 PASS).
-- Сейчас: commit, push и PR.
+- Сейчас: ожидание review PR #118. PR не сливать без review.
 - Следующий шаг: review PR; после review без блокеров — `make test-e2e` и визуальная проверка desktop/mobile (T06–T08).
 - Блокеров нет. Открытые решения:
   - плашка тестового магазина требует поля API (R3) — отдельный issue по решению пользователя;
@@ -65,3 +65,9 @@
   исправлено `npx eslint --fix` по двум файлам.
 - Повторный прогон `sh -c 'npm run check && npm run test:commerce'` (`--network none`) — exit 0: `test:ui` 47/47,
   `test:commerce` 209/209. `git diff --check` — чисто.
+
+### 2026-09-26 — PR
+
+- Коммиты `b1b3550` (план и журнал) и `c27aeb6` (код и спеки); повторная проверка дублей PR — пусто.
+- `origin/main` сдвинулся на `00c507f`: только `docs/plans/OPS-legal-compliance/`, пересечений нет, проверки не повторялись.
+- Push `codex/issues-109-110-order-texts-phone`, PR [#118](https://github.com/rebit-pro/rabit-api/pull/118) в `main`.

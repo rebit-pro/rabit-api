@@ -89,7 +89,7 @@
 - [x] 4. Вывод телефона в трёх компонентах.
 - [x] 5. Тексты #109 и E2E-спеки.
 - [x] 6. Быстрые проверки: `npm ci` в свежий том, `npm run check`, `npm run test:commerce`.
-- [ ] 7. Commit, push, PR с `Closes #109`, `Closes #110`.
+- [x] 7. Commit, push, PR с `Closes #109`, `Closes #110` — [#118](https://github.com/rebit-pro/rabit-api/pull/118).
 - [ ] 8. Review; после review без блокеров — `make test-e2e` и визуальная проверка desktop/mobile.
 
 ## Критерии приёмки
