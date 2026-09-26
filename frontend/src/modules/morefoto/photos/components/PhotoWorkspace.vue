@@ -15,6 +15,9 @@ import GalleryImage from '../../gallery/components/GalleryImage.vue';
 import MfBreadcrumbs from '@/components/navigation/MfBreadcrumbs.vue';
 import ShootTabs from '../../structure/components/ShootTabs.vue';
 import PhotoStats from './PhotoStats.vue';
+import GalleryPath from '../../handoff/components/GalleryPath.vue';
+import { useGroupGalleryPath } from '../../handoff/useGroupGalleryPath';
+import type { GalleryStepKey } from '../../handoff/galleryPath';
 const route = useRoute();
 const workspace = usePhotoWorkspace();
 const {
@@ -65,6 +68,28 @@ const groupItems = computed(() =>
 );
 const institutionId = String(route.params.institutionId);
 const shootId = String(route.params.shootId);
+// Every refresh of the page data replaces the summary, so the path follows uploads, labelling and deletions.
+const pathSteps = useGroupGalleryPath(
+  () => group.value?.id ?? '',
+  () => summary.value
+);
+function pathFix(key: GalleryStepKey): { to: string; label: string } | null {
+  const id = group.value?.id ?? '';
+  if (key === 'conditions')
+    return {
+      to:
+        '/cabinet/institutions/' +
+        encodeURIComponent(institutionId) +
+        '/shoots/' +
+        encodeURIComponent(shootId) +
+        '/conditions?group=' +
+        encodeURIComponent(id),
+      label: 'К условиям'
+    };
+  if (key === 'staff') return { to: '/cabinet/staff-requests?shoot=' + encodeURIComponent(shootId), label: 'К спискам' };
+  if (key === 'prepare' || key === 'transmit') return { to: '/cabinet/links?group=' + encodeURIComponent(id), label: 'К ссылкам и срокам' };
+  return null;
+}
 const crumbs = computed(() => [
   { title: 'Учреждения', to: '/cabinet/institutions' },
   {
@@ -204,6 +229,11 @@ async function confirmMove(toId: string, code: string) {
           <GalleryImage v-if="cover" :src="cover.thumbSrc" alt="Обложка группы" class="group-cover" />
         </div>
         <PhotoStats v-if="stats" :stats="stats" class="mt-5" />
+      </section>
+      <section v-if="pathSteps" class="mf-panel photo-path mb-6" aria-labelledby="photo-path-heading" data-testid="photo-gallery-path">
+        <h2 id="photo-path-heading">Путь к галерее</h2>
+        <p class="mf-muted mt-2 mb-4">Родители увидят кадры группы только после отметки передачи ссылки.</p>
+        <GalleryPath :steps="pathSteps" :fix="pathFix" />
       </section>
       <v-alert v-if="!editable" type="info" variant="tonal" class="mb-6"
         >Подборка уже опубликована. Здесь можно просмотреть наборы; изменения доступны в группах со статусом «Подготовка».</v-alert

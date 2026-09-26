@@ -160,3 +160,75 @@ test('a first question answered after the switch stays with its gallery and does
   assert.deepEqual([calls[2].method, calls[2].args], ['current', [keyA]]);
   unmount();
 });
+
+/** What axios rejects with when the server no longer knows the conversation key. */
+const notFound = { isAxiosError: true, response: { status: 404, data: { error: { code: 'notFound' } } } };
+const keyC = 'c'.repeat(64);
+
+test('a late 404 for the old key keeps the key of the conversation started after the current 404', async () => {
+  storage.set(questionStorageKey(galleryA), keyA);
+  storage.set(seenStorageKey(galleryA), '5');
+  storage.set(questionStorageKey(galleryB), keyB);
+  const { api, calls } = server();
+  const token = ref(galleryA);
+  const { questions, unmount } = mount(token, api);
+  assert.deepEqual([calls[0].method, calls[0].args], ['current', [keyA]], 'the first check stays unanswered');
+
+  token.value = galleryB;
+  calls[1].resolve(conversation('Вопрос B'));
+  token.value = galleryA;
+  assert.deepEqual([calls[2].method, calls[2].args], ['current', [keyA]], 'the second check of A');
+  calls[2].reject(notFound);
+  await settle();
+  assert.equal(storage.has(questionStorageKey(galleryA)), false, 'the current 404 forgets the lost conversation');
+  assert.equal(questions.needsName.value, true);
+
+  questions.name.value = 'Мария';
+  const sent = questions.send('Новый вопрос');
+  assert.deepEqual([calls[3].method, calls[3].args.slice(0, 3)], ['ask', [galleryA, 'Мария', 'Новый вопрос']]);
+  calls[3].resolve({ ...conversation('Новый вопрос'), questionKey: keyC });
+  assert.equal(await sent, true);
+  assert.equal(storage.get(questionStorageKey(galleryA)), keyC);
+
+  calls[0].reject(notFound);
+  await settle();
+  assert.equal(storage.get(questionStorageKey(galleryA)), keyC, 'the late 404 does not erase the new key');
+  assert.equal(questions.needsName.value, false, 'the new conversation continues');
+  assert.equal(questions.question.value.messages[0].text, 'Новый вопрос');
+  assert.equal(storage.has(pendingStorageKey(galleryA)), false);
+  assert.equal(storage.get(seenStorageKey(galleryA)), '5');
+  assert.equal(storage.get(questionStorageKey(galleryB)), keyB, 'the other gallery keeps its conversation');
+
+  void questions.send('Ещё вопрос');
+  assert.deepEqual([calls[4].method, calls[4].args.slice(0, 2)], ['add', [keyC, 'Ещё вопрос']]);
+  unmount();
+});
+
+test('a 404 for the old key keeps a key another tab stored meanwhile', async () => {
+  storage.set(questionStorageKey(galleryA), keyA);
+  const { api, calls } = server();
+  const { unmount } = mount(ref(galleryA), api);
+
+  storage.set(questionStorageKey(galleryA), keyC);
+  calls[0].reject(notFound);
+  await settle();
+  assert.equal(storage.get(questionStorageKey(galleryA)), keyC);
+  unmount();
+});
+
+test('a 404 for the stored key forgets it and lets the parent start a new conversation', async () => {
+  storage.set(questionStorageKey(galleryA), keyA);
+  const { api, calls } = server();
+  const { questions, unmount } = mount(ref(galleryA), api);
+
+  calls[0].reject(notFound);
+  await settle();
+  assert.equal(storage.has(questionStorageKey(galleryA)), false);
+  assert.equal(questions.needsName.value, true);
+  assert.equal(questions.question.value, null);
+
+  questions.name.value = 'Мария';
+  void questions.send('Новый вопрос');
+  assert.deepEqual([calls[1].method, calls[1].args.slice(0, 3)], ['ask', [galleryA, 'Мария', 'Новый вопрос']]);
+  unmount();
+});

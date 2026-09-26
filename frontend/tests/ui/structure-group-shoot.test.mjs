@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createAttempt, defaultShootId, fieldsFrom, restorableDraft } from '../../src/modules/morefoto/structure/model.ts';
+import { createAttempt, defaultShootId, fieldsFrom, hasDraftChanges, restorableDraft } from '../../src/modules/morefoto/structure/model.ts';
 
 const shoot = (id, date) => ({
   id,
@@ -55,4 +55,39 @@ test('a kept draft of a shoot is restored only for that shoot and with its own p
   assert.equal(restorableDraft(draft, 'group', 'a', null), null);
   assert.equal(restorableDraft({ ...pending, pending: { ...pending.pending, key: 'b'.repeat(32) } }, 'group', 'b', null), null);
   assert.equal(restorableDraft(null, 'group', 'b', null), null);
+});
+
+test('an untouched draft is not kept and not restored, a changed or sent one is', () => {
+  const fields = fieldsFrom();
+  const untouched = {
+    kind: 'shoot',
+    parentId: 'i',
+    id: null,
+    revision: null,
+    fields: { ...fields },
+    base: { ...fields },
+    key: 'a'.repeat(32),
+    pending: null
+  };
+  assert.equal(hasDraftChanges(untouched), false);
+  assert.equal(restorableDraft(untouched, 'shoot', 'i', null), null, 'an empty dialog closed without input has nothing to restore');
+
+  for (const [name, value] of [
+    ['name', 'Осень'],
+    ['address', 'Воронеж'],
+    ['date', '2026-10-01'],
+    ['groupKind', 'staff']
+  ]) {
+    const changed = { ...untouched, fields: { ...fields, [name]: value } };
+    assert.equal(hasDraftChanges(changed), true, name);
+    assert.equal(restorableDraft(changed, 'shoot', 'i', null), changed, name);
+  }
+
+  const edited = { ...untouched, fields: { ...fields, name: 'Осень' } };
+  const sent = { ...untouched, pending: createAttempt(edited) };
+  assert.equal(hasDraftChanges(sent), true, 'a sent attempt without an answer is kept even with the initial fields');
+  assert.equal(restorableDraft(sent, 'shoot', 'i', null), sent);
+
+  const reordered = JSON.parse(JSON.stringify({ ...untouched, base: { groupKind: 'regular', date: '', address: '', name: '' } }));
+  assert.equal(hasDraftChanges(reordered), false, 'the order of stored fields does not matter');
 });
