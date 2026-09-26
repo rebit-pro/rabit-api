@@ -360,7 +360,8 @@ def open_stand(state, args, stand, notification):
     report = Path(state["report"], stand["name"])
     report.mkdir(exist_ok=True)
     name, network = stand["prefix"], ["--network", stand["network"]]
-    php = ["--user", "0", *PHP_ENV, "--entrypoint", "php", *php_mounts(state, stand), "--workdir", "/app"]
+    cli = [*PHP_ENV, "--entrypoint", "php", *php_mounts(state, stand), "--workdir", "/app"]
+    php = ["--user", "0", *cli]
     amqp = ["--env", "MESSENGER_TRANSPORT_DSN=amqp://rebit:rebit@rabbitmq:5672/rebit"]
     media = ["--env", "MOREFOTO_PRIVATE_MEDIA_PATH=/runtime/private/media", "--env", "MOREFOTO_PUBLIC_PREVIEW_PATH=/runtime/public/upload/morefoto/previews",
              "--env", "MOREFOTO_PUBLIC_PREVIEW_URL=/upload/morefoto/previews"]
@@ -387,7 +388,8 @@ def open_stand(state, args, stand, notification):
         if YOOKASSA_ENV.is_file():
             # Only php-fpm and the browser reach the provider; MySQL and RabbitMQ stay on the internal network.
             docker("network", "connect", state["browserNetwork"], name + "-fpm")
-        service(state, name + "-media", *network, *php, *amqp, *media, args.php_cli, "tools/e2e/consume-media.php")
+        # #141: the worker runs as www-data, like PHP-FPM, so that FPM can delete the previews it writes.
+        service(state, name + "-media", *network, "--user", "www-data", *cli, *amqp, *media, args.php_cli, "tools/e2e/consume-media.php")
         service(state, name + "-backend", *network, "--network-alias", "backend", *php_mounts(state, stand),
                 "--mount", f"type=bind,source={Path(state['report'], 'backend.conf')},target=/etc/nginx/conf.d/default.conf,readonly",
                 "--mount", f"type=bind,source={ROOT / 'api/docker/common/nginx/auth.conf'},target=/etc/nginx/auth.conf,readonly", args.nginx)
@@ -400,6 +402,8 @@ def open_stand(state, args, stand, notification):
         time.sleep(1)
         if not json.loads(docker("container", "inspect", name + "-media"))[0]["State"]["Running"]:
             raise RuntimeError("Disposable media worker did not stay running")
+        if "www-data" != docker("exec", name + "-media", "stat", "-c", "%U", "/proc/1"):
+            raise RuntimeError("Disposable media worker must run as www-data, not as root (#141)")
         for _ in range(10):
             ports = json.loads(docker("container", "inspect", frontend))[0]["NetworkSettings"]["Ports"].get("80/tcp")
             if ports:
@@ -535,7 +539,8 @@ def test_stand(state, stand):
     var.mkdir(exist_ok=True)
 
     def storefront():
-        docker("exec", fpm, "php", "/app/tools/e2e/prepare-storefront.php", log=report / "storefront-fixture.log")
+        # #141: the fixture renders previews like the worker, as www-data, so that PHP-FPM can delete them.
+        docker("exec", "--user", "www-data", fpm, "php", "/app/tools/e2e/prepare-storefront.php", log=report / "storefront-fixture.log")
         docker("cp", fpm + ":/runtime/e4-fixture.json", str(var / "e4-fixture.json"))
     stage(state, stand["name"] + ": E4 gallery fixture through internal lifecycle", storefront)
     bench = [arg for name in ("E2E_MEDIA_BENCH", "E2E_MEDIA_BENCH_COUNT") if os.environ.get(name) for arg in ("--env", name + "=" + os.environ[name])]

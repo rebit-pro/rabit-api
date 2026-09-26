@@ -134,6 +134,10 @@ services:
         profiles: [media]
         <<: *api-consumer-service
         command: ["php", "public/local/bin/bitrix-console", "app:media:consume"]
+        environment:
+            <<: *api-cli-environment
+            # #141: превью пишутся от www-data, как у PHP-FPM, чтобы FPM мог их удалить.
+            APP_RUN_AS_USER: www-data
 
     api-notification-consumer:
         profiles: [notification]

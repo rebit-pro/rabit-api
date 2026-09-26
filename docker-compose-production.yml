@@ -165,6 +165,9 @@ services:
     api-media-consumer:
         image: ${REGISTRY}/rabit-api-php-cli:${IMAGE_TAG}
         command: ["php", "public/local/bin/bitrix-console", "app:media:consume"]
+        environment:
+          # #141: превью пишутся от www-data, как у PHP-FPM, чтобы FPM мог их удалить.
+          APP_RUN_AS_USER: www-data
         configs:
           - source: rebit_backend_env
             target: /app/public/.env

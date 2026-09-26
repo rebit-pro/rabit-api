@@ -174,7 +174,9 @@ foreach (['bitrix/cache', 'bitrix/managed_cache', 'bitrix/stack_cache', 'bitrix/
 $runtimeUser = posix_getpwnam('www-data');
 $runtimeUid = is_array($runtimeUser) ? (int)$runtimeUser['uid'] : 1000;
 $runtimeGid = is_array($runtimeUser) ? (int)$runtimeUser['gid'] : 1000;
+// #141: media files are written only as www-data (PHP-FPM, the worker, the E4 fixture), like on the server.
 foreach ([
+    ['/runtime', 0755],
     ['/runtime/private', 0700],
     ['/runtime/private/media', 0700],
     ['/runtime/public/upload/morefoto/previews', 0755],
