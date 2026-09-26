@@ -2,15 +2,15 @@
 
 ## Точка продолжения
 
-- Ветка `codex/j1-order-files`, base `main` `4fc9dce`, head — без коммитов. PR ещё не открыт.
+- Ветка `codex/j1-order-files`, base `main` `09597fd` (слит в ветку), head `01edcc5` и последующий docs-коммит. PR — см. ниже в хронологии.
 - Рабочая копия `/home/user/rabit-api-worktrees/j1-order-files`.
 - Документы: `plan.md` этой папки, граф `docs/waves/graph.json` (J1), канонический `MoreFoto/docs/05-rest-api/endpoints.json` (FIL-01…04), решения `docs/waves/w05/decisions.md` (D07, D10, D12).
-- Завершено: S0–S4 и unit-часть S6 — графы, контракты Share, реализации Commerce/Media, модуль `morefoto.files` (FIL-01…04, сборка ZIP, dispatch/purge), docker/nginx/cron, E2E-стенд.
-- Сейчас: S5 — frontend, блок файлов на странице заказа.
-- Следующий шаг: E2E-спецификация и verifier (S7), документы волны (S8), PR.
+- Завершено: S0–S6, S8 — графы, контракты, модуль `morefoto.files`, docker/nginx/cron, frontend-блок, unit/architecture-тесты, E2E-спецификация `zzzzzzzzzz-files` и `verify-files.php` (написаны, не запускались), документы волны, issue #142.
+- Сейчас: ожидание ревью PR.
+- Следующий шаг: после ревью без блокеров — полный `make test-e2e` (с ключами тестового магазина), визуальная проверка скриншотов, `visual.json`, затем выкладка на stage по `docs/waves/j1/README.md`.
 - Блокеры: нет. Открытых решений нет.
 - Рабочее дерево: всё закоммичено в `codex/j1-order-files`.
-- Следующая проверка: быстрые frontend-проверки (`npm run check`, `test:commerce`) в Playwright-образе, см. память local-check-commands.
+- Следующая проверка: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=<vendor>` — nginx-образ стенд соберёт сам из `api/docker/development/nginx/Dockerfile`.
 
 ## Результаты тест-кейсов
 
@@ -22,7 +22,8 @@
 | J1-T05…T08, T11 | PASS (unit) | 2026-09-26 | PHPUnit `DownloadFlowTest`, `FilesAdaptersTest` | идемпотентность, одна сборка на заказ, переиспользование, настоящий ZIP (CM_STORE, байты совпадают), дубль сообщения, 3 попытки → failed без остатков, сбой брокера → dispatch, токен/ключ/срок/состав, purge |
 | J1-T10 | PASS | 2026-09-26 | PHPUnit `FilesArchitectureTest` | контроллер, границы Commerce/Media, phpDoc |
 | J1-T09 | PASS (unit) | 2026-09-26 | PHPUnit `OrderPaymentsTest` | paid продлевает ключ, pending — нет; миграция — в E2E verifier |
-| J1-T12…T15 | PENDING | — | — | — |
+| J1-T12 | PASS | 2026-09-26 | docker Playwright-образ, volume `rabit-j1-node`: `npm run check`, `npm run test:commerce`, `npm run build-only` | check exit 0 (UI unit 56), commerce 214/214 (5 новых J1-T12), сборка OK |
+| J1-T13, T14, T15 | PENDING | — | `make test-e2e` после ревью | спецификация `zzzzzzzzzz-files`, `verify-files.php` |
 
 ## Хронология
 
@@ -41,3 +42,5 @@
 - 2026-09-26. Реализация backend. Ошибка, найденная тестом: при сбое сборки деструктор `ZipArchive` дописывал частичный архив — теперь `unchangeAll()` и `close()` в `finally`. PHPStan выявил конфликт свойства `$request` контроллера с Bitrix — переименовано.
 - 2026-09-26. X-Accel-Redirect проверен на живом nginx 1.25 (python upstream): uid 1000 читает файл 0600, `Content-Disposition` и `Cache-Control` проходят от upstream, Range → 206, прямой `/_protected/` → 404. Решение по правам: в образах nginx пользователь `nginx` переназначен на 1000:1000 (как `www-data` в php-образах); архивы, собранные consumer от root, наследуют владельца корня хранилища.
 - 2026-09-26. Проверки: `php.sh` (docker `rabit-api-php-cli:d1-local`, volume `rabit-j1-vendor`) — phplint OK 1347; PHPStan `tools/e2e/phpstan.neon` — No errors; PHPUnit — OK 1019 тестов / 46734 проверки; php-cs-fixer по изменённым файлам — исправлено 5, повтор 0. `tools/tests/test_run_browser_e2e.py` — 22 OK. `docker compose -f docker-compose-production.yml config` с подставными переменными — OK, 4 монтирования private-files.
+- 2026-09-26. S5–S8: блок «Электронные фотографии» на странице заказа; E2E-спецификация `zzzzzzzzzz-files` (группа b): неоплаченный заказ, оплата картой на странице ЮKassa, файл и ZIP со сверкой sha256 оригинала, Range, подпись, идемпотентность, desktop/mobile; `verify-files.php`. Фикстура E4 передаёт оригиналы `www-data` (docker exec работает от root) и отдаёт sha256. `payOnProvider` перенесён в `helpers.ts`. Контракт FIL-01…04 обновлён в каноническом `build.py`, patch `docs/waves/j1/morefoto-contract.patch` (8 файлов, reverse-check OK). Неблокирующее — issue #142 (удаление купленных кадров).
+- 2026-09-26. Слит `origin/main` `09597fd`: конфликт `prepare.php` (#117 перенёс миграцию legal после загрузки init.php) — оставлен цикл main, добавлены `20260926180001` и DoInstall files. Повтор: граф 52/118, ready [J1]; runner tests 22 OK; PHPStan — No errors; PHPUnit — OK 1029 / 46768; frontend check — exit 0, commerce 214/214, build OK.

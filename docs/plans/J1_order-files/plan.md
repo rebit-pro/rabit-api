@@ -102,13 +102,13 @@
 
 - [x] S0. План, progress, согласование J1-DEC-01…05.
 - [x] S1. Графы: J1 dependsOn D1/E5/G1, обязательства I2/I3, проверка DAG/ID, patch канонического плана.
-- [ ] S2. Контракты Share + реализации Commerce/Media, продление ключа, миграция.
-- [ ] S3. Модуль `morefoto.files`: хранение, Domain, UseCase FIL-01…04, контроллер.
-- [ ] S4. Сборка ZIP: messenger, consumer, уборка, docker/nginx/cron.
-- [ ] S5. Frontend: блок файлов на странице заказа.
-- [ ] S6. Unit/architecture-тесты, PHPStan, cs-fixer, frontend check.
-- [ ] S7. E2E-сценарий и verifier (после ревью, по [[e2e-gate-deferred]]).
-- [ ] S8. Документация волны, PR.
+- [x] S2. Контракты Share + реализации Commerce/Media, продление ключа, миграция.
+- [x] S3. Модуль `morefoto.files`: хранение, Domain, UseCase FIL-01…04, контроллер.
+- [x] S4. Сборка ZIP: messenger, consumer, уборка, docker/nginx/cron.
+- [x] S5. Frontend: блок файлов на странице заказа.
+- [x] S6. Unit/architecture-тесты, PHPStan, cs-fixer, frontend check.
+- [ ] S7. E2E-сценарий и verifier написаны; полный `make test-e2e` — после ревью без блокеров.
+- [x] S8. Документация волны, PR.
 
 ## Критерии приёмки
 
