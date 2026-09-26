@@ -5,8 +5,8 @@
 - Ветка `codex/ops-login-feedback` (worktree `.worktrees/ops-login-feedback`), base `caa37b6` (origin/main).
 - PR: https://github.com/rebit-pro/rabit-api/pull/108 (head cdb59f6 + docs). Связано: K3 `morefoto.support` (PR #89).
 - Завершено: backend, frontend, тесты, ревью без блокеров (неблокирующее — #111), полный gate PASS.
-- Следующий шаг: merge PR #108 и выкат на stage (backend + миграция `Version20260925210001`, затем frontend) —
-  по подтверждению пользователя.
+- Следующий шаг: выкат на stage (backend + миграция `Version20260925210001` + DI-smoke, затем frontend) —
+  после того как пользователь разрешит SSH на `rebit-pro`.
 - Блокеры: нет. Открыто: после деплоя применить миграцию `Version20260925210001` на stage/prod.
 - Рабочее дерево: всё закоммичено.
 - Следующая проверка:
@@ -45,6 +45,15 @@
   b 46/46; все верификаторы, включая `verify-support.php` (гостевое обращение, повтор/409/422, текст MAX, ответ
   в MAX не сохраняется, CHECK) и `verify-payments.php`. Скриншоты `login-{desktop,mobile}.png`,
   `login-feedback-{desktop,mobile}.png` в `api/var/e2e/rabit-e2e-f21b110864a4/a/a/artifacts/` — вёрстка корректна.
+
+### 2026-09-26 — merge
+
+- Пользователь: «можно мержить и выкатывать».
+- В ветку влит main `57c00c1` (PR #102, платежи). Полный gate на `b9bd1d5` (`rabit-e2e-3931662471ec`) — PASS за 356 с:
+  браузер a 73/73, b 47/47, все верификаторы.
+- Затем в main пришли только docs и статика `/guide/` (PR #95), код задачи не затронут — повтор не требуется.
+- Выкат: SSH на `rebit-pro` отклоняется автоматическим режимом («Production Reads»); нужен разрешающий
+  `Bash(ssh rebit-pro:*)` или ручное подтверждение команд. Обход не выполнялся.
 
 ## Тест-кейсы
 
