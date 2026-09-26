@@ -3,15 +3,14 @@
 ## Точка продолжения
 
 - Ветка `codex/issues-105-106-group-create-photo-delete`, worktree
-  `/home/user/rabit-api-worktrees/issues-105-106-group-create-photo-delete`, base `origin/main` `57c00c1`
-  (слит в ветку `2cd7246`). PR [#107](https://github.com/rebit-pro/rabit-api/pull/107). Issues: #105, #106 (связано: #92).
-- Завершено: решения DEC-1…DEC-6 приняты; #105 (группа со страницы учреждения) и #106 (удаление кадров:
-  API, use case, файлы после коммита, UI с подтверждением, mock-режим); unit, контрактные и node-тесты; live E2E
-  написаны; быстрые проверки PASS; визуальная проверка на заглушках API (desktop 1440, mobile 390).
-- Сейчас: PR ждёт review пользователя (есть backend и SQL — не self-review).
-- Следующий шаг: после review без блокеров — полный `make test-e2e`.
+  `/home/user/rabit-api-worktrees/issues-105-106-group-create-photo-delete`, base `origin/main` `00c507f`
+  (слит `a1f4747`). PR [#107](https://github.com/rebit-pro/rabit-api/pull/107). Issues: #105, #106; follow-up #122.
+- Завершено: реализация; review 1 (P1 блокировка пути оригинала, P2 восстановление черновика съёмки) исправлен в
+  `8df4ad9`, ответы в тредах; полный gate PASS на `48f62a6`.
+- Сейчас: merge и выкатка на stage (команда пользователя 2026-09-26).
+- Следующий шаг: `gh pr merge 107 --merge --match-head-commit <head>`, затем релиз по образцу legal.
 - Блокеров нет. Открытых решений нет.
-- Рабочее дерево чистое после коммита; `api/vendor` — пустая точка монтирования для docker-проверок (в `.gitignore`).
+- Рабочее дерево чистое после коммита.
 - Команды:
   - PHPUnit: `docker run --rm --network none --memory 2g --cpus 2 --env XDEBUG_MODE=off --mount type=bind,source=$PWD/api,target=/app,readonly --mount type=bind,source=/home/user/rabit-api/api/vendor,target=/app/vendor,readonly --tmpfs /app/var:rw,size=256m --workdir /app --entrypoint php rabit-api-php-cli:d1-local vendor/bin/phpunit --colors=never`
   - PHPStan: та же команда с `vendor/bin/phpstan analyse --no-progress --memory-limit=1G`.
@@ -22,26 +21,26 @@
 
 | ID | Статус | Дата | Команда | Доказательство |
 |---|---|---|---|---|
-| T01 | PASS (node) · PENDING (live) | 2026-09-26 | `npm run check`; gate | `structure-group-shoot.test.mjs`: путь POST в выбранную съёмку; live — `#105` в `z-institution-detail.spec.ts` |
-| T02 | PASS (node, заглушки) · PENDING (live) | 2026-09-26 | `npm run check`; stub | `defaultShootId`: поздняя по дате; заглушки: по умолчанию «Новогодняя съёмка · 20.12.2026» |
-| T03 | PASS (заглушки) · PENDING (live) | 2026-09-26 | stub | скриншот без съёмок: пояснение, кнопки «Новая группа» нет |
-| T04 | PASS (заглушки) · PENDING (live) | 2026-09-26 | stub | диалог «Редактирование группы»; live проверяет PATCH и disabled поля |
-| T05 | PENDING | 2026-09-26 | gate | C4 куратор: добавлена проверка «Новая группа» = 0 |
-| T06 | PASS (unit) · PENDING (live) | 2026-09-26 | PHPUnit | `DeleteGroupPhotosUseCaseTest::testDeletesPhotosAndRemovesTheirFilesOnlyAfterTheCommit` |
-| T07 | PENDING | 2026-09-26 | gate | live: обложка переходит на оставшийся назначенный кадр |
-| T08 | PENDING | 2026-09-26 | gate | SQL `deletePhotos()` удаляет дубликаты до строк кадров; отдельного live-сценария нет |
+| T01 | PASS (live) | 2026-09-26 | `npm run check`; gate | `structure-group-shoot.test.mjs`: путь POST в выбранную съёмку; live — `#105` в `z-institution-detail.spec.ts` |
+| T02 | PASS (live) | 2026-09-26 | `npm run check`; stub | `defaultShootId`: поздняя по дате; заглушки: по умолчанию «Новогодняя съёмка · 20.12.2026» |
+| T03 | PASS (live) | 2026-09-26 | stub | скриншот без съёмок: пояснение, кнопки «Новая группа» нет |
+| T04 | PASS (live) | 2026-09-26 | stub | диалог «Редактирование группы»; live проверяет PATCH и disabled поля |
+| T05 | PASS (live) | 2026-09-26 | gate | C4 куратор: добавлена проверка «Новая группа» = 0 |
+| T06 | PASS (live) | 2026-09-26 | PHPUnit | `DeleteGroupPhotosUseCaseTest::testDeletesPhotosAndRemovesTheirFilesOnlyAfterTheCommit` |
+| T07 | PASS (live) | 2026-09-26 | gate | live: обложка переходит на оставшийся назначенный кадр |
+| T08 | PENDING | 2026-09-26 | gate | SQL `deletePhotos()` удаляет дубликаты до строк кадров; gate PASS, но сценария с дубликатом нет |
 | T09 | PASS (unit) | 2026-09-26 | PHPUnit | `testSentGroupIsRejectedBeforeTheLock`, `testDeletionWaitingForTheLinkDeliveryIsRejectedAfterTheLock` |
 | T10 | PENDING | 2026-09-26 | — | `deletablePhotos()` отклоняет `processing`; ни unit, ни live не воспроизводят обработку — открытый риск покрытия |
-| T11 | PASS (unit) · PENDING (live) | 2026-09-26 | PHPUnit | `testStaleRevisionDeletesNothing` |
-| T12 | PASS (unit) · PENDING (live) | 2026-09-26 | PHPUnit | `testRepeatedKeyReturnsTheStoredResultWithoutDeletingAgain`, `testRepeatedKeyWithAnotherSetIsAConflict` |
-| T13 | PENDING | 2026-09-26 | gate | live: куратор → 403 `FORBIDDEN` |
-| T14 | PENDING | 2026-09-26 | gate | live: удалённый кадр → 409 `PHOTO_NOT_DELETABLE` |
+| T11 | PASS (live) | 2026-09-26 | PHPUnit | `testStaleRevisionDeletesNothing` |
+| T12 | PASS (live) | 2026-09-26 | PHPUnit | `testRepeatedKeyReturnsTheStoredResultWithoutDeletingAgain`, `testRepeatedKeyWithAnotherSetIsAConflict` |
+| T13 | PASS (live) | 2026-09-26 | gate | live: куратор → 403 `FORBIDDEN` |
+| T14 | PASS (live) | 2026-09-26 | gate | live: удалённый кадр → 409 `PHOTO_NOT_DELETABLE` |
 | T15 | PASS (unit) | 2026-09-26 | PHPUnit | общий оригинал (`originalPathInUse` = true) не удаляется |
 | T16 | PASS | 2026-09-26 | PHPUnit | `PhotoMediaContractTest::testControllersKeepTheCleanBoundary` с `DeleteGroupPhotosUseCase`; mapper/strict body |
-| T17 | PASS (заглушки) · PENDING (live) | 2026-09-26 | stub | выбор 2 → диалог «Удалить кадры: 2?» → «Удалено кадров» |
-| T18 | PASS (заглушки) | 2026-09-26 | stub | desktop/mobile скриншоты, `scrollWidth <= innerWidth` |
-| T19 | PASS | 2026-09-26 | см. «Команды» | PHPUnit 935/935 (45959 assertions), PHPStan OK, php-cs-fixer 0 из 16, `npm run check` (lint, stylelint, typecheck, typecheck:e2e, 40 node-тестов) |
-| T20 | PENDING | — | `make test-e2e …` | после review |
+| T17 | PASS (live) | 2026-09-26 | stub | выбор 2 → диалог «Удалить кадры: 2?» → «Удалено кадров» |
+| T18 | PASS (live, заглушки) | 2026-09-26 | stub | desktop/mobile скриншоты, `scrollWidth <= innerWidth` |
+| T19 | PASS | 2026-09-26 | см. «Команды» | после слияния main: PHPUnit 962/962, PHPStan OK, php-cs-fixer, `npm run check` (50 node-тестов) |
+| T20 | PASS | 2026-09-26 | `make test-e2e` №2 (`rabit-e2e-58019d5311de`) | группа a 78/78, группа b 47/47, 10 верификаторов MySQL; `#105` и `#106` — PASS |
 
 ## Журнал
 
@@ -80,3 +79,21 @@
 - Визуальная проверка на заглушках API (Vite + Playwright, desktop 1440 и mobile 390): пустое состояние групп,
   список с кнопками, диалоги новой/редактируемой группы, выбор и диалог удаления кадров, результат. Ошибок консоли нет,
   горизонтальной прокрутки нет. Не заменяет live E2E.
+
+### 2026-09-26, review 1 и gate
+
+- Review (COMMENT, два блокера в тредах):
+  - P1 — удаление могло стереть оригинал новой загрузки того же содержимого между `store()` и `register()`.
+    Исправлено: порт `OriginalFileLockInterface` + `MysqlOriginalFileLock` (`GET_LOCK` по sha1 пути, 30 с);
+    `store→register` в загрузке и `originalPathInUse→delete` в удалении под одной блокировкой; путь заранее из
+    `PrivatePhotoStorageInterface::path()`. Попутно закрыта та же гонка двух одновременных загрузок одного файла.
+  - P2 — смена съёмки затирала сохранённый черновик целевой съёмки, включая pending и `Idempotency-Key`.
+    Исправлено: `restorableDraft()` в `model.ts`; `setParent()` восстанавливает черновик выбранной съёмки, текущий
+    остаётся под своим ключом.
+- Коммит `8df4ad9`, слит `origin/main` `00c507f` (`a1f4747`). PHPUnit 962/962, PHPStan OK, `npm run check` (50) PASS.
+  Ответы в тредах: discussion_r4110711894, discussion_r4110711946.
+- Gate №1 (`rabit-e2e-4947f02619b5`, стартовал после чужого прогона): FAIL — группа a 77/78: в `#106` утверждение
+  `covers` = `{}`, а PHP отдаёт пустую карту как `[]` (поведение API прежнее). Все проверки UI и API до этой строки
+  прошли. Исправлено утверждение (`48f62a6`).
+- Gate №2 (`rabit-e2e-58019d5311de`, 358 с): PASS — группа a 78/78, группа b 47/47, 10 верификаторов.
+- Неблокирующее: пустой черновик при повторном открытии помечается восстановленным (было и до PR) — issue #122.
