@@ -24,8 +24,8 @@ final readonly class OriginalFiles implements OriginalFilesInterface
         }
         $originals = [];
         $result = $this->photos->originals($ids);
-        /** @var array{UF_PUBLIC_ID: string, UF_MIME_TYPE: string, UF_BYTES: int|string, UF_ORIGINAL_PATH: string} $row */
         while (false !== ($row = $result->fetch())) {
+            /** @var array{UF_PUBLIC_ID: string, UF_MIME_TYPE: string, UF_BYTES: int|string, UF_ORIGINAL_PATH: string} $row */
             $originals[$row['UF_PUBLIC_ID']] = new OriginalFileOutputDto(
                 photoId: $row['UF_PUBLIC_ID'],
                 mimeType: $row['UF_MIME_TYPE'],

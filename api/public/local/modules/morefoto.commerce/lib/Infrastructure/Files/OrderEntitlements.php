@@ -49,8 +49,8 @@ final readonly class OrderEntitlements implements OrderEntitlementInterface
         $photos = [];
         $children = [];
         $result = $this->orders->lines([(int)$order['ID']]);
-        /** @var array{CHILD_ID: int|string, CHILD_CODE: string, PHOTO_PUBLIC_ID: null|string, PHOTO_CODE: null|string, PRODUCT_KIND: string} $line */
         while (false !== ($line = $result->fetch())) {
+            /** @var array{CHILD_ID: int|string, CHILD_CODE: string, PHOTO_PUBLIC_ID: null|string, PHOTO_CODE: null|string, PRODUCT_KIND: string} $line */
             $kind = ProductKind::from($line['PRODUCT_KIND']);
             if (ProductKind::DIGITAL === $kind && null !== $line['PHOTO_PUBLIC_ID']) {
                 $photos[] = new OrderEntitledPhotoOutputDto($line['PHOTO_PUBLIC_ID'], $line['CHILD_CODE'], (string)$line['PHOTO_CODE']);

@@ -20,4 +20,5 @@ Loader::includeModule('morefoto.legal');
 Loader::includeModule('morefoto.access');
 Loader::includeModule('morefoto.commerce');
 Loader::includeModule('morefoto.payment');
+Loader::includeModule('morefoto.files');
 Loader::includeModule('morefoto.support');

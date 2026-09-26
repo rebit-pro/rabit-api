@@ -20,7 +20,7 @@ require_once '/kernel/modules/highloadblock/install/index.php';
 if (!(new highloadblock())->InstallDB()) {
     throw new RuntimeException('Cannot install test highloadblock schema.');
 }
-foreach (['morefoto.access', 'morefoto.commerce', 'morefoto.organization', 'morefoto.media', 'morefoto.handoff', 'morefoto.payment', 'morefoto.support', 'morefoto.legal', 'rebit.notification', 'rebit.leadhunter'] as $module) {
+foreach (['morefoto.access', 'morefoto.commerce', 'morefoto.organization', 'morefoto.media', 'morefoto.handoff', 'morefoto.payment', 'morefoto.files', 'morefoto.support', 'morefoto.legal', 'rebit.notification', 'rebit.leadhunter'] as $module) {
     symlink('/app/public/local/modules/' . $module, $fixture['documentRoot'] . '/local/modules/' . $module);
 }
 if (!ModuleManager::isModuleInstalled('rebit.notification')) {
@@ -28,7 +28,7 @@ if (!ModuleManager::isModuleInstalled('rebit.notification')) {
 }
 ob_start();
 try {
-    foreach (['20260323120001', '20260326120008', '20260911120001', '20260911200001', '20260911210001', '20260911220001', '20260912210001', '20260912220001', '20260913010001', '20260913010002', '20260919090001', '20260919100001', '20260919130001', '20260920100001', '20260920110001', '20260920120001', '20260921130001', '20260921140001', '20260922120001', '20260922150001', '20260922180001', '20260923120001', '20260923120002', '20260923120003', '20260925120001', '20260925150001', '20260925190001', '20260925210001', '20260925230001', '20260926120001'] as $id) {
+    foreach (['20260323120001', '20260326120008', '20260911120001', '20260911200001', '20260911210001', '20260911220001', '20260912210001', '20260912220001', '20260913010001', '20260913010002', '20260919090001', '20260919100001', '20260919130001', '20260920100001', '20260920110001', '20260920120001', '20260921130001', '20260921140001', '20260922120001', '20260922150001', '20260922180001', '20260923120001', '20260923120002', '20260923120003', '20260925120001', '20260925150001', '20260925190001', '20260925210001', '20260925230001', '20260926120001', '20260926180001'] as $id) {
         require_once '/app/public/local/php_interface/migrations.foundation/Version' . $id . '.php';
         $class = 'Sprint\Migration\Version' . $id;
         (new $class())->up();
@@ -41,6 +41,8 @@ try {
     (new Morefoto_Handoff())->DoInstall();
     require '/app/public/local/modules/morefoto.payment/install/index.php';
     (new Morefoto_Payment())->DoInstall();
+    require '/app/public/local/modules/morefoto.files/install/index.php';
+    (new Morefoto_Files())->DoInstall();
     require '/app/public/local/modules/morefoto.support/install/index.php';
     (new Morefoto_Support())->DoInstall();
     require '/app/public/local/modules/morefoto.legal/install/index.php';
@@ -48,7 +50,7 @@ try {
 } finally {
     ob_end_clean();
 }
-foreach (['rebit.share', 'rebit.auth', 'rebit.notification', 'morefoto.access', 'morefoto.commerce', 'morefoto.organization', 'morefoto.media', 'morefoto.handoff', 'morefoto.payment', 'morefoto.support', 'morefoto.legal'] as $module) {
+foreach (['rebit.share', 'rebit.auth', 'rebit.notification', 'morefoto.access', 'morefoto.commerce', 'morefoto.organization', 'morefoto.media', 'morefoto.handoff', 'morefoto.payment', 'morefoto.files', 'morefoto.support', 'morefoto.legal'] as $module) {
     if (!Loader::includeModule($module)) {
         throw new RuntimeException('Cannot load fixture module.');
     }
@@ -161,6 +163,7 @@ $runtimeGid = is_array($runtimeUser) ? (int)$runtimeUser['gid'] : 1000;
 foreach ([
     ['/runtime/private', 0700],
     ['/runtime/private/media', 0700],
+    ['/runtime/private/files', 0700],
     ['/runtime/public/upload/morefoto/previews', 0755],
 ] as [$directory, $mode]) {
     if (!is_dir($directory) && !mkdir($directory, $mode, true) && !is_dir($directory)) {
