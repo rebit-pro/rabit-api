@@ -3,7 +3,7 @@
 ## Точка продолжения
 
 - Ветка `codex/issues-92-compact-tables`, worktree `/home/user/rabit-api-worktrees/issues-92-compact-tables`,
-  base `origin/main` `41b1146e`. Issue [#92](https://github.com/rebit-pro/rabit-api/issues/92). PR — draft, см. журнал.
+  base `origin/main` `41b1146e`. Issue [#92](https://github.com/rebit-pro/rabit-api/issues/92). PR [#152](https://github.com/rebit-pro/rabit-api/pull/152) (draft).
 - Завершено: разбор экранов и схемы, прототип, скриншоты desktop/mobile, план с решениями DEC-01…07.
 - Сейчас: ожидание одобрения скриншотов и решений пользователем. Код реализации не начат.
 - Следующий шаг: после одобрения — пункт 4 плана (контракты и участники удаления).
@@ -44,3 +44,4 @@
   ~24,8 суток (предел `setTimeout`) таймер срабатывает сразу и сессия сбрасывается. Сейчас срок токена задаётся
   в часах и так далеко не заходит, поэтому issue не заводится; учтено в заглушках стенда (срок +2 часа).
 - Проверки кода не запускались: в ветке нет изменений кода, только документы и скриншоты.
+- Открыт draft PR [#152](https://github.com/rebit-pro/rabit-api/pull/152) с планом и скриншотами (`1889ca5`).
