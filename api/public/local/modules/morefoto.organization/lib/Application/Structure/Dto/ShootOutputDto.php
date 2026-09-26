@@ -8,5 +8,5 @@ use Rebit\Share\Shared\Interface\ResponseDtoInterface;
 
 final readonly class ShootOutputDto implements ResponseDtoInterface
 {
-    public function __construct(public string $id, public string $institutionId, public string $name, public ?string $date, public int $revision) {}
+    public function __construct(public string $id, public string $institutionId, public string $name, public ?string $date, public int $revision, public int $groupCount) {}
 }

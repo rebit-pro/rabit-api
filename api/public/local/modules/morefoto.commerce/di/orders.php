@@ -43,6 +43,8 @@ use Rebit\Share\Application\Contract\Clock\ClockInterface;
 use Rebit\Share\Application\Contract\Consent\ConsentRecorderInterface;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Contracts\Commerce\ChildOrdersInterface;
+use Rebit\Share\Contracts\Commerce\StructureSalesRemovalInterface;
+use Morefoto\Commerce\Infrastructure\Organization\StructureSalesRemoval;
 use Rebit\Share\Contracts\Commerce\OrderPaymentInterface;
 use Rebit\Share\Contracts\Media\ChildPhotosInterface;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
@@ -60,6 +62,9 @@ return [
     ],
     ChildOrdersInterface::class => [
         'constructor' => static fn(): ChildOrdersInterface => new ChildOrders(ServiceLocator::getInstance()->get(OrderRepository::class)),
+    ],
+    StructureSalesRemovalInterface::class => [
+        'constructor' => static fn(): StructureSalesRemovalInterface => new StructureSalesRemoval(),
     ],
     OrderPaymentInterface::class => [
         'constructor' => static fn(): OrderPaymentInterface => new OrderPayments(

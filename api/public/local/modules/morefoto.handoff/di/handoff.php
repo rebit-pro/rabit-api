@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Morefoto\Handoff\Infrastructure\Organization\StructureHandoffRemoval;
+use Rebit\Share\Contracts\Handoff\StructureHandoffRemovalInterface;
 use Bitrix\Main\DI\ServiceLocator;
 use Morefoto\Handoff\Application\Request\Contract\HandoffTransactionInterface;
 use Morefoto\Handoff\Application\Request\Service\StaffRequestWorkflow;
@@ -32,6 +34,7 @@ use Rebit\Share\Contracts\Handoff\StaffEligibilityInterface;
 
 $services = [
     StaffEligibilityInterface::class => ['constructor' => static fn(): StaffEligibilityInterface => new StaffEligibility()],
+    StructureHandoffRemovalInterface::class => ['constructor' => static fn(): StructureHandoffRemovalInterface => new StructureHandoffRemoval()],
     StaffRequestInputMapper::class => ['className' => StaffRequestInputMapper::class],
     StaffRequestResultMapper::class => ['className' => StaffRequestResultMapper::class],
     HandoffTransactionInterface::class => ['constructor' => static fn(): HandoffTransactionInterface => new BitrixHandoffTransaction()],

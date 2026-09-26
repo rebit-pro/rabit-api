@@ -62,17 +62,17 @@ final readonly class GetInstitutionDetailUseCase
         while (false !== ($row = $result->fetch())) {
             /** @var array{
              *     ID: null|int|string, UF_PUBLIC_ID: null|string, UF_NAME: null|string, UF_DATE: null|string,
-             *     UF_REVISION: null|int|string, TOTAL: int|string,
+             *     UF_REVISION: null|int|string, GROUP_COUNT: null|int|string, TOTAL: int|string,
              * } $row */
             $shootTotal = (int)$row['TOTAL'];
             if (null !== $row['ID']) {
-                $shoots[] = new ShootOutputDto((string)$row['UF_PUBLIC_ID'], $id->value, (string)$row['UF_NAME'], null === $row['UF_DATE'] ? null : (string)$row['UF_DATE'], (int)$row['UF_REVISION']);
+                $shoots[] = new ShootOutputDto((string)$row['UF_PUBLIC_ID'], $id->value, (string)$row['UF_NAME'], null === $row['UF_DATE'] ? null : (string)$row['UF_DATE'], (int)$row['UF_REVISION'], (int)$row['GROUP_COUNT']);
             }
         }
         $now = $this->clock->now();
         $result = $this->structure->institutionGroups($nativeId, $input->groups->pageSize, $input->groups->offset(), $ids, GroupStateSql::utc($now));
         /** @var list<array{
-         *     ID: int|string, UF_PUBLIC_ID: string, SHOOT_PUBLIC_ID: string, UF_NAME: string, UF_KIND: string,
+         *     ID: int|string, UF_PUBLIC_ID: string, SHOOT_PUBLIC_ID: string, SHOOT_NAME: string, UF_NAME: string, UF_KIND: string,
          *     UF_REVISION: int|string, UF_TIMEZONE: string, UF_SENT_AT: null|string,
          *     UF_CLOSES_AT: null|string, UF_DELIVERY_DUE_AT: null|string, TOTAL: int|string,
          * }> $groupRows */
@@ -94,7 +94,7 @@ final readonly class GetInstitutionDetailUseCase
         $groups = [];
         foreach ($groupRows as $row) {
             $teacher = $teachers[(int)$row['ID']] ?? new GroupAssignmentOutputDto();
-            $groups[] = GroupOutputDto::fromRow($row, (string)$row['SHOOT_PUBLIC_ID'], $teacher->teacherId, $now);
+            $groups[] = GroupOutputDto::fromRow($row, (string)$row['SHOOT_PUBLIC_ID'], (string)$row['SHOOT_NAME'], $teacher->teacherId, $now);
         }
         $current = $this->access->scope($actor);
         if ($actor !== $this->tokens->resolveUserId($bearer)) {

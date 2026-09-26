@@ -5,15 +5,11 @@ declare(strict_types=1);
 namespace Morefoto\Media\Application\Photo\UseCase;
 
 use Morefoto\Media\Application\Photo\Contract\MediaTransactionInterface;
-use Morefoto\Media\Application\Photo\Contract\OriginalFileLockInterface;
-use Morefoto\Media\Application\Photo\Contract\PreviewRendererInterface;
-use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
 use Morefoto\Media\Application\Photo\Dto\DeletePhotosInputDto;
 use Morefoto\Media\Application\Photo\Dto\DeletionMutationOutputDto;
+use Morefoto\Media\Application\Photo\Service\PhotoFileCleaner;
 use Morefoto\Media\Domain\Photo\Repository\MediaMutationRepository;
-use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Morefoto\Media\Domain\Photo\ValueObject\IdempotencyKey;
-use Psr\Log\LoggerInterface;
 use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Rebit\Share\Contracts\Organization\GroupReferenceInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
@@ -29,14 +25,10 @@ final readonly class DeleteGroupPhotosUseCase
     public function __construct(
         private MediaTransactionInterface $transaction,
         private MediaMutationRepository $media,
-        private PhotoRepository $photos,
         private GroupReferenceInterface $groups,
         private MediaScopeInterface $scopes,
         private AccessGuardInterface $access,
-        private PrivatePhotoStorageInterface $storage,
-        private OriginalFileLockInterface $originals,
-        private PreviewRendererInterface $previews,
-        private LoggerInterface $logger,
+        private PhotoFileCleaner $files,
     ) {}
 
     public function execute(int $actorId, string $groupId, IdempotencyKey $key, DeletePhotosInputDto $input): DeletionMutationOutputDto
@@ -81,43 +73,10 @@ final readonly class DeleteGroupPhotosUseCase
             return $output;
         });
         foreach ($removed as $photo) {
-            $this->removeFiles($photo['publicId'], $photo['originalPath']);
+            $this->files->remove($photo['publicId'], $photo['originalPath']);
         }
 
         return $output;
-    }
-
-    /**
-     * A leftover file does not bring the photo back, so the committed deletion still succeeds.
-     *
-     * Each file is removed on its own: previews written by the media worker may refuse deletion, the private original must still go.
-     */
-    private function removeFiles(string $photoId, ?string $originalPath): void
-    {
-        if (null !== $originalPath) {
-            $this->removeLogged($photoId, 'original', function() use ($originalPath): void {
-                // An upload of the same content reuses this path: it either registers first and keeps the file, or stores it anew after us.
-                $this->originals->synchronized($originalPath, function() use ($originalPath): void {
-                    if (!$this->photos->originalPathInUse($originalPath)) {
-                        $this->storage->delete($originalPath);
-                    }
-                });
-            });
-        }
-        $this->removeLogged($photoId, 'previews', fn() => $this->previews->remove($photoId));
-    }
-
-    private function removeLogged(string $photoId, string $files, \Closure $removal): void
-    {
-        try {
-            $removal();
-        } catch (\Throwable $error) {
-            $this->logger->warning('Deleted photo files remain on disk.', [
-                'photoId' => $photoId,
-                'files' => $files,
-                'exception' => $error::class,
-            ]);
-        }
     }
 
     private function restore(string $json): DeletionMutationOutputDto
