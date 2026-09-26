@@ -54,6 +54,8 @@ const {
   assign,
   setCover,
   removePhotos,
+  removalUnknown,
+  cancelRemoval,
   transfer
 } = workspace;
 const queue = usePhotoQueue(String(route.params.shootId));
@@ -155,6 +157,10 @@ const removal = shallowRef<ManagedPhoto[] | null>(null);
 function askRemove(ids: string[]) {
   error.value = '';
   removal.value = items.value.filter((photo) => ids.includes(photo.id));
+}
+function closeRemove() {
+  removal.value = null;
+  cancelRemoval();
 }
 async function confirmRemove() {
   if (removal.value && (await removePhotos(removal.value.map((photo) => photo.id)))) removal.value = null;
@@ -304,7 +310,8 @@ async function confirmMove(toId: string, code: string) {
         :photos="removal ?? []"
         :busy="busy"
         :error="error"
-        @close="removal = null"
+        :retry="removalUnknown"
+        @close="closeRemove"
         @confirm="confirmRemove"
       />
     </template>

@@ -1,4 +1,5 @@
 import type { BuyerErrors, BuyerFields } from '../types';
+import { phoneDigits } from '../../ui/field-values.ts';
 export function validateBuyer(value: BuyerFields, maxAvailable: boolean): BuyerErrors {
   const errors: BuyerErrors = {};
   if (value.name.trim().length < 2 || value.name.trim().length > 100) errors.name = 'Укажите имя: от 2 до 100 символов.';
@@ -14,11 +15,9 @@ export function validateBuyer(value: BuyerFields, maxAvailable: boolean): BuyerE
   return errors;
 }
 export function normalizeBuyer(value: BuyerFields): Omit<BuyerFields, 'reviewed'> {
-  let digits = value.phone.replace(/\D/g, '');
-  if (digits.length === 11 && digits.startsWith('8')) digits = '7' + digits.slice(1);
   return {
     name: value.name.trim(),
-    phone: '+' + digits,
+    phone: '+' + phoneDigits(value.phone),
     email: value.email.trim().toLowerCase(),
     comment: value.comment.trim(),
     receiptChannel: value.receiptChannel

@@ -1,3 +1,4 @@
+import { writeFileSync } from 'node:fs';
 import { test, expect, type APIResponse, type Page, type Request, type Response, type Route } from '@playwright/test';
 import { login, logout, peakOverlap, token, uploadSpans } from './helpers.js';
 
@@ -888,4 +889,147 @@ test('#106: организатор удаляет лишние кадры гру
   await page.reload();
   await expect(page.getByTestId('photos-empty')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test('#115/#116: потерянный ответ удаления восстанавливается повтором, duplicate уходит вместе с canonical', async ({ page }, testInfo) => {
+  test.setTimeout(120000);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await login(page);
+  const suffix = crypto.randomUUID().slice(0, 8);
+  const institution = (
+    await result(
+      await page.request.post('/api/v1/institutions', {
+        headers: await headers(page),
+        data: { name: 'I116 Сад ' + suffix, address: 'Москва' }
+      }),
+      201
+    )
+  ).data;
+  const shoot = (
+    await result(
+      await page.request.post('/api/v1/institutions/' + institution.id + '/shoots', {
+        headers: await headers(page),
+        data: { name: 'I116 Съёмка', date: '2026-10-21' }
+      }),
+      201
+    )
+  ).data;
+  const group = (
+    await result(
+      await page.request.post('/api/v1/shoots/' + shoot.id + '/groups', {
+        headers: await headers(page),
+        data: { name: 'I116 Ромашки', groupKind: 'regular' }
+      }),
+      201
+    )
+  ).data;
+  await page.goto('/cabinet/institutions/' + institution.id + '/shoots/' + shoot.id + '/photos');
+  const picker = page.locator('input[type="file"][aria-label="Выбрать фотографии"]');
+  await picker.setInputFiles(
+    ['keep', 'canonical', 'busy'].map((label) => ({
+      name: 'i116-' + label + '.png',
+      mimeType: 'image/png',
+      buffer: pngVariant('i116-' + label)
+    }))
+  );
+  await page.getByRole('button', { name: 'Загрузить на сервер', exact: true }).click();
+  await expect(page.getByTestId('photo-card')).toHaveCount(3, { timeout: 30000 });
+  // The same bytes once more: the server stores a duplicate record that references the canonical frame (FK RESTRICT).
+  await picker.setInputFiles({ name: 'i116-copy.png', mimeType: 'image/png', buffer: pngVariant('i116-canonical') });
+  await page.getByRole('button', { name: 'Загрузить на сервер', exact: true }).click();
+  await expect(page.locator('[data-upload-id]').filter({ hasText: 'i116-copy.png' })).toContainText('Повтор файла');
+
+  const auth = { Authorization: 'Bearer ' + (await token(page)) };
+  const listed = await result(await page.request.get('/api/v1/shoots/' + shoot.id + '/photos', { headers: auth }), 200);
+  const byName = (name: string) => listed.data.items.find((item: { filename: string }) => item.filename === name);
+  const keep: string = byName('i116-keep.png').id;
+  const canonical: string = byName('i116-canonical.png').id;
+  const busy: string = byName('i116-busy.png').id;
+  const duplicate = byName('i116-copy.png');
+  expect(duplicate).toMatchObject({ status: 'duplicate', existingPhotoId: canonical });
+  const labelled = await result(
+    await page.request.post('/api/v1/groups/' + group.id + '/photo-assignments', {
+      headers: await headers(page),
+      data: { shootId: shoot.id, revision: listed.data.revision, photoIds: [canonical, keep], childCode: 'A' }
+    }),
+    200
+  );
+  const second = await result(
+    await page.request.post('/api/v1/groups/' + group.id + '/photo-assignments', {
+      headers: await headers(page),
+      data: { shootId: shoot.id, revision: labelled.data.revision, photoIds: [busy], childCode: 'B' }
+    }),
+    200
+  );
+  const covered = await result(
+    await page.request.put('/api/v1/groups/' + group.id + '/cover', {
+      headers: await headers(page),
+      data: { revision: second.data.revision, photoId: canonical }
+    }),
+    200
+  );
+  await page.reload();
+  await expect(page.getByTestId('photo-card')).toHaveCount(3);
+
+  // #115: the server commits the deletion, the browser never sees the answer; the repeat must be the same request.
+  const path = '/api/v1/groups/' + group.id + '/photo-deletions';
+  const sent: { key: string; body: string }[] = [];
+  const committed: { status?: number; body?: unknown } = {};
+  const lose = async (route: Route) => {
+    sent.push({ key: route.request().headers()['idempotency-key'] ?? '', body: route.request().postData() ?? '' });
+    if (committed.status) return route.continue();
+    const response = await route.fetch();
+    committed.body = await response.json();
+    committed.status = response.status();
+    return route.abort('connectionreset');
+  };
+  await page.route((url) => url.pathname === path, lose);
+  const dialog = page.getByTestId('photo-delete-dialog');
+  await page
+    .locator('[data-photo-id="' + canonical + '"]')
+    .getByRole('button', { name: /^Удалить кадр/ })
+    .click();
+  await dialog.getByTestId('photo-delete-confirm').click();
+  await expect(dialog.getByRole('alert')).toContainText('Не удалось подтвердить удаление');
+  await expect(dialog.getByTestId('photo-delete-confirm')).toHaveText('Повторить удаление');
+  expect(committed).toEqual({ status: 200, body: { data: { deleted: 1, revision: covered.data.revision + 1 } } });
+  await page.screenshot({ path: testInfo.outputPath('i115-desktop-unknown-outcome.png') });
+
+  const repeated = page.waitForResponse((r) => new URL(r.url()).pathname === path);
+  await dialog.getByTestId('photo-delete-confirm').click();
+  expect(await result(await repeated, 200)).toEqual(committed.body);
+  await page.unroute((url) => url.pathname === path, lose);
+  expect(sent).toHaveLength(2);
+  expect(sent[1]).toEqual(sent[0]);
+  expect(sent[0]!.key).toMatch(/^[a-f0-9]{32}$/);
+  expect(JSON.parse(sent[0]!.body)).toEqual({ revision: covered.data.revision, photoIds: [canonical] });
+  await expect(dialog).not.toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Удалено кадров: 1.' })).toBeVisible();
+  await expect(page.getByTestId('photo-card')).toHaveCount(2);
+
+  // #116: the duplicate record left with its canonical frame; the other frames, labels and the cover stay consistent.
+  const after = await result(await page.request.get('/api/v1/shoots/' + shoot.id + '/photos', { headers: auth }), 200);
+  expect(after.data.items.map((item: { id: string }) => item.id).sort()).toEqual([keep, busy].sort());
+  expect(after.data.items.every((item: { status: string }) => item.status === 'ready')).toBe(true);
+  const assignments = (id: string) =>
+    after.data.items.find((item: { id: string }) => item.id === id).assignments.map((item: { childCode: string }) => item.childCode);
+  expect(assignments(keep)).toEqual(['A']);
+  expect(assignments(busy)).toEqual(['B']);
+  expect(after.data.covers).toEqual({ [group.id]: keep });
+  expect(after.data.revision).toBe(covered.data.revision + 1);
+  expect((await page.request.get('/api/v1/photos/' + canonical, { headers: auth })).status()).toBe(404);
+  expect((await page.request.get('/api/v1/photos/' + duplicate.id, { headers: auth })).status()).toBe(404);
+  // verify-photo-deletion.php checks the rows and files on MySQL and holds `busy` in processing for PHOTO_PROCESSING.
+  writeFileSync(
+    'var/i116-deletion.json',
+    JSON.stringify({
+      shootId: shoot.id,
+      groupId: group.id,
+      keep,
+      busy,
+      canonical,
+      duplicate: duplicate.id,
+      fingerprint: byName('i116-canonical.png').fingerprint
+    })
+  );
 });

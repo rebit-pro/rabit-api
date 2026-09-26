@@ -64,6 +64,8 @@ VERIFIERS = [
     ("verify-support.php", "k3-questions.json", "K3 support integration passed", ["zz-questions"]),
     # G1: attempts, money facts and order statuses agree; no buyer secret reaches the payment tables.
     ("verify-payments.php", "g1-payments.json", "G1 payment integration passed", ["zzzzzzzzz-payments"]),
+    # #116: the browser deleted a frame with a duplicate record; the verifier holds another frame in processing for PHOTO_PROCESSING.
+    ("verify-photo-deletion.php", "i116-deletion.json", "#116 photo deletion integration passed", ["zz-media"]),
     # J1: downloads agree with archives on disk, the paid key lasts the files month, expired archives are purged.
     ("verify-files.php", "j1-files.json", "J1 files integration passed", ["zzzzzzzzzz-files"]),
 ]

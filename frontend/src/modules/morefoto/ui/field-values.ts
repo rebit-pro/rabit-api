@@ -5,11 +5,20 @@ export function quantityValue(value: string | number | null | undefined, min = 1
   return Number.isSafeInteger(number) && number >= min && number <= max ? number : null;
 }
 
-/** Digits of a Russian number (11 digits after +7 or 8); null keeps anything else as entered. */
+/**
+ * Phone digits as stored, same rule as backend BuyerPolicy: national 8XXXXXXXXXX without "+" becomes Russian 7XXXXXXXXXX,
+ * an explicit international "+" before the first digit (+852…, +8…) keeps the number as is.
+ */
+export function phoneDigits(value: string): string {
+  const digits = value.replace(/\D/g, '');
+  return digits.length === 11 && digits.startsWith('8') && !/^\D*\+/.test(value) ? '7' + digits.slice(1) : digits;
+}
+
+/** Digits of a Russian number (+7/7 or national 8 with 10 more digits); null keeps anything else as entered. */
 function russianPhoneDigits(value: string): string | null {
   if (!/^[+\d\s().-]+$/.test(value)) return null;
-  const digits = value.replace(/\D/g, '');
-  return digits.length === 11 && /^[78]/.test(digits) ? digits : null;
+  const digits = phoneDigits(value);
+  return digits.length === 11 && digits.startsWith('7') ? digits : null;
 }
 
 /** Input mask of the phone field: +7 (900) 123-45-67. */
