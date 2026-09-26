@@ -12,6 +12,9 @@ const valid = {
 test('buyer accepts formatted phones and normalizes contacts without changing the comment', () => {
   assert.deepEqual(validateBuyer(valid, false), {});
   assert.equal(normalizeBuyer({ ...valid, phone: '8 900 123-45-67' }).phone, '+79001234567');
+  assert.equal(normalizeBuyer({ ...valid, phone: '7 900 123-45-67' }).phone, '+79001234567');
+  assert.equal(normalizeBuyer({ ...valid, phone: '+852 9123 4567' }).phone, '+85291234567');
+  assert.equal(normalizeBuyer({ ...valid, phone: '+8 900 123-45-67' }).phone, '+89001234567');
   assert.equal(normalizeBuyer(valid).email, 'test@example.test');
 });
 test('buyer reports the required fields independently', () => {

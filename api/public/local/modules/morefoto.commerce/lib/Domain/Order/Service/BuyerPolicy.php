@@ -7,8 +7,9 @@ namespace Morefoto\Commerce\Domain\Order\Service;
 use Morefoto\Commerce\Domain\Order\ValueObject\OrderBuyer;
 use Rebit\Share\Shared\Exception\HttpException;
 
-/** Проверяет контакты покупателя по правилам оформления и приводит их к единому виду.
- * Канал чека принимается только из реально подключённых каналов, подтверждение состава обязательно.
+/** Проверяет контакты покупателя по правилам оформления и приводит их к единому виду: национальная запись 8… без «+»
+ * становится российским +7…, номер с явным международным «+» сохраняется как есть. Канал чека принимается только
+ * из реально подключённых каналов, подтверждение состава обязательно.
  */
 final readonly class BuyerPolicy
 {
@@ -23,7 +24,7 @@ final readonly class BuyerPolicy
         if (1 !== preg_match('/^[+\d\s().-]+$/D', $phone) || 10 > strlen($digits) || 15 < strlen($digits)) {
             throw new HttpException('INVALID_BUYER_PHONE', 422);
         }
-        if (11 === strlen($digits) && str_starts_with($digits, '8')) {
+        if (11 === strlen($digits) && str_starts_with($digits, '8') && 1 !== preg_match('/^\D*\+/', $phone)) {
             $digits = '7' . substr($digits, 1);
         }
         $email = mb_strtolower(trim($email));
