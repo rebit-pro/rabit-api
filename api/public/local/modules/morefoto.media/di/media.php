@@ -11,6 +11,7 @@ use Morefoto\Media\Application\Photo\Message\Handler\ProcessPhotoMessageHandler;
 use Morefoto\Media\Application\Photo\Service\PhotoRowMapper;
 use Morefoto\Media\Application\Photo\UseCase\AssignPhotosUseCase;
 use Morefoto\Media\Application\Photo\UseCase\ConsumeMediaUseCase;
+use Morefoto\Media\Application\Photo\UseCase\DeleteGroupPhotosUseCase;
 use Morefoto\Media\Application\Photo\UseCase\DispatchPendingPhotoJobsUseCase;
 use Morefoto\Media\Application\Photo\UseCase\GetPhotoUseCase;
 use Morefoto\Media\Application\Photo\UseCase\ListPhotosUseCase;
@@ -136,6 +137,20 @@ return [
             ServiceLocator::getInstance()->get(AccessGuardInterface::class),
         ],
     ],
+    DeleteGroupPhotosUseCase::class => [
+        'className' => DeleteGroupPhotosUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(MediaTransactionInterface::class),
+            ServiceLocator::getInstance()->get(MediaMutationRepository::class),
+            ServiceLocator::getInstance()->get(PhotoRepository::class),
+            ServiceLocator::getInstance()->get(GroupReferenceInterface::class),
+            ServiceLocator::getInstance()->get(MediaScopeInterface::class),
+            ServiceLocator::getInstance()->get(AccessGuardInterface::class),
+            ServiceLocator::getInstance()->get(PrivatePhotoStorageInterface::class),
+            ServiceLocator::getInstance()->get(PreviewRendererInterface::class),
+            Log::channel(LogChannelEnum::media),
+        ],
+    ],
     GetPhotoUseCase::class => [
         'className' => GetPhotoUseCase::class,
         'constructorParams' => static fn(): array => [
@@ -190,6 +205,7 @@ return [
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(AssignPhotosUseCase::class),
             ServiceLocator::getInstance()->get(SetGroupCoverUseCase::class),
+            ServiceLocator::getInstance()->get(DeleteGroupPhotosUseCase::class),
             ServiceLocator::getInstance()->get(PhotoInputMapper::class),
             ServiceLocator::getInstance()->get(PhotoResultMapper::class),
         ],

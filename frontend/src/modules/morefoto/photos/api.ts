@@ -44,7 +44,12 @@ export interface ServerPhotoGroupSummary {
 }
 /** Processing split of the selected group without the page filters (U5). */
 export interface ServerPhotoStats {
-  byStatus: { processing: number; ready: number; failed: number; duplicate: number };
+  byStatus: {
+    processing: number;
+    ready: number;
+    failed: number;
+    duplicate: number;
+  };
   unassigned: number;
 }
 export interface ServerPhotoPage {
@@ -88,6 +93,10 @@ export interface ChildTransfer {
   expectedPhotoIds: string[];
   revision: number;
 }
+export interface PhotoDeletionResult {
+  deleted: number;
+  revision: number;
+}
 export interface ChildTransferResult {
   photoIds: string[];
   fromGroupId: string;
@@ -129,6 +138,15 @@ export const photosApi = {
       await api.put<CoverResult>(
         '/api/v1/groups/' + encodeURIComponent(groupId) + '/cover',
         { revision, photoId },
+        { headers: { 'Idempotency-Key': idempotencyKey() } }
+      )
+    ).data;
+  },
+  async remove(groupId: string, revision: number, photoIds: string[]): Promise<PhotoDeletionResult> {
+    return (
+      await api.post<PhotoDeletionResult>(
+        '/api/v1/groups/' + encodeURIComponent(groupId) + '/photo-deletions',
+        { revision, photoIds },
         { headers: { 'Idempotency-Key': idempotencyKey() } }
       )
     ).data;
@@ -180,6 +198,8 @@ export function photoApiError(cause: unknown): string {
   if (code === 'REVISION_CONFLICT') return 'Разметка уже изменилась. Обновите список и повторите действие.';
   if (code === 'PHOTO_NOT_ASSIGNABLE') return 'Один из кадров ещё не готов или уже относится к другой группе.';
   if (code === 'PHOTO_NOT_COVER_ELIGIBLE') return 'Сначала назначьте кадр ребёнку в этой группе.';
+  if (code === 'PHOTO_NOT_DELETABLE') return 'Один из кадров уже удалён или относится к другой группе. Обновите список.';
+  if (code === 'PHOTO_PROCESSING') return 'Один из кадров ещё обрабатывается. Дождитесь окончания и повторите удаление.';
   if (code === 'GROUP_LOCKED') return 'Подборка уже опубликована и недоступна для изменений.';
   if (cause.response?.status === 403) return 'Недостаточно прав для работы с фотографиями.';
   if (cause.response?.status === 404) return 'Съёмка, группа или фотография больше недоступна.';

@@ -1,4 +1,4 @@
-import { test, expect, type APIResponse, type Page, type Request, type Route } from '@playwright/test';
+import { test, expect, type APIResponse, type Page, type Request, type Response, type Route } from '@playwright/test';
 import { login, logout, peakOverlap, token, uploadSpans } from './helpers.js';
 
 const png = Buffer.from(
@@ -28,7 +28,7 @@ function pngVariant(label: string): Buffer {
   return Buffer.concat([png.subarray(0, end), length, type, text, checksum, png.subarray(end)]);
 }
 
-async function result(response: APIResponse, status: number) {
+async function result(response: APIResponse | Response, status: number) {
   expect(response.status(), await response.text()).toBe(status);
   return response.json();
 }
@@ -738,4 +738,153 @@ test('#55: превью прежней сессии отменяются при 
   await expect(page.getByRole('button', { name: 'Новая продукция', exact: true })).toBeEnabled();
   expect(await token(page)).toBe(current);
   await expect(page).not.toHaveURL(/\/login/);
+});
+
+test('#106: организатор удаляет лишние кадры группы с подтверждением', async ({ page, browser, baseURL }, testInfo) => {
+  test.setTimeout(120000);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await login(page);
+  const suffix = crypto.randomUUID().slice(0, 8);
+  const institution = (
+    await result(
+      await page.request.post('/api/v1/institutions', {
+        headers: await headers(page),
+        data: { name: 'I106 Сад ' + suffix, address: 'Москва' }
+      }),
+      201
+    )
+  ).data;
+  const shoot = (
+    await result(
+      await page.request.post('/api/v1/institutions/' + institution.id + '/shoots', {
+        headers: await headers(page),
+        data: { name: 'I106 Съёмка', date: '2026-10-20' }
+      }),
+      201
+    )
+  ).data;
+  const group = (
+    await result(
+      await page.request.post('/api/v1/shoots/' + shoot.id + '/groups', {
+        headers: await headers(page),
+        data: { name: 'I106 Ромашки', groupKind: 'regular' }
+      }),
+      201
+    )
+  ).data;
+  await page.goto('/cabinet/institutions/' + institution.id + '/shoots/' + shoot.id + '/photos');
+  await page.locator('input[type="file"][aria-label="Выбрать фотографии"]').setInputFiles(
+    ['first', 'second', 'third'].map((label) => ({
+      name: 'i106-' + label + '.png',
+      mimeType: 'image/png',
+      buffer: pngVariant('i106-' + label)
+    }))
+  );
+  await page.getByRole('button', { name: 'Загрузить на сервер', exact: true }).click();
+  await expect(page.getByTestId('photo-card')).toHaveCount(3, { timeout: 30000 });
+
+  const auth = { Authorization: 'Bearer ' + (await token(page)) };
+  const listed = await result(await page.request.get('/api/v1/shoots/' + shoot.id + '/photos', { headers: auth }), 200);
+  const byName = (name: string): string => listed.data.items.find((item: { filename: string }) => item.filename === name).id;
+  const [first, second, third] = [byName('i106-first.png'), byName('i106-second.png'), byName('i106-third.png')];
+  const assigned = await result(
+    await page.request.post('/api/v1/groups/' + group.id + '/photo-assignments', {
+      headers: await headers(page),
+      data: { shootId: shoot.id, revision: listed.data.revision, photoIds: [first, third], childCode: 'A' }
+    }),
+    200
+  );
+  const covered = await result(
+    await page.request.put('/api/v1/groups/' + group.id + '/cover', {
+      headers: await headers(page),
+      data: { revision: assigned.data.revision, photoId: first }
+    }),
+    200
+  );
+  await page.reload();
+  await expect(page.getByTestId('photo-card')).toHaveCount(3);
+  const card = (id: string) => page.locator('[data-photo-id="' + id + '"]');
+  const dialog = page.getByTestId('photo-delete-dialog');
+
+  // A cancelled confirmation deletes nothing.
+  await card(second)
+    .getByRole('button', { name: /^Удалить кадр/ })
+    .click();
+  await expect(dialog.getByRole('heading', { name: 'Удалить кадр?', exact: true })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Отмена', exact: true }).click();
+  await expect(dialog).not.toBeVisible();
+  await expect(page.getByTestId('photo-card')).toHaveCount(3);
+
+  await card(first).getByRole('checkbox').check();
+  await card(second).getByRole('checkbox').check();
+  await page.getByTestId('photo-remove-selected').click();
+  await expect(dialog.getByRole('heading', { name: 'Удалить кадры: 2?', exact: true })).toBeVisible();
+  await expect(dialog).toContainText('A001');
+  await expect(dialog).toContainText('i106-second.png');
+  await page.screenshot({ path: testInfo.outputPath('i106-desktop-delete-dialog.png') });
+  const deleted = page.waitForResponse((r) => new URL(r.url()).pathname === '/api/v1/groups/' + group.id + '/photo-deletions');
+  await dialog.getByTestId('photo-delete-confirm').click();
+  expect((await result(await deleted, 200)).data).toEqual({ deleted: 2, revision: covered.data.revision + 1 });
+  await expect(dialog).not.toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Удалено кадров: 2.' })).toBeVisible();
+  await expect(page.getByTestId('photo-card')).toHaveCount(1);
+  await expect(page.getByTestId('photo-readiness')).toContainText('Кадров: 1 · Детей: 1 · Без ребёнка: 0');
+  await expect(page.getByTestId('photo-selection-count')).toHaveText('0');
+
+  const after = await result(await page.request.get('/api/v1/shoots/' + shoot.id + '/photos?groupId=' + group.id, { headers: auth }), 200);
+  expect(after.data.items.map((item: { id: string }) => item.id)).toEqual([third]);
+  expect(after.data.items[0].assignments).toMatchObject([{ childCode: 'A', code: 'A002' }]);
+  // The deleted cover falls back to the remaining labelled frame.
+  expect(after.data.covers).toEqual({ [group.id]: third });
+  expect((await page.request.get('/api/v1/photos/' + first, { headers: auth })).status()).toBe(404);
+  expect((await page.request.get('/api/v1/photos/' + second + '/thumb', { headers: auth })).status()).toBe(404);
+
+  const retryHeaders = await headers(page);
+  const stale = await page.request.post('/api/v1/groups/' + group.id + '/photo-deletions', {
+    headers: retryHeaders,
+    data: { revision: covered.data.revision, photoIds: [third] }
+  });
+  expect(stale.status()).toBe(409);
+  expect((await stale.json()).error.code).toBe('REVISION_CONFLICT');
+  const missing = await page.request.post('/api/v1/groups/' + group.id + '/photo-deletions', {
+    headers: await headers(page),
+    data: { revision: after.data.revision, photoIds: [first] }
+  });
+  expect(missing.status()).toBe(409);
+  expect((await missing.json()).error.code).toBe('PHOTO_NOT_DELETABLE');
+
+  const curatorContext = await browser.newContext({ baseURL });
+  try {
+    const curator = await curatorContext.newPage();
+    await login(curator, 'curator');
+    const forbidden = await curator.request.post('/api/v1/groups/' + group.id + '/photo-deletions', {
+      headers: await headers(curator),
+      data: { revision: after.data.revision, photoIds: [third] }
+    });
+    expect(forbidden.status()).toBe(403);
+    expect((await forbidden.json()).error.code).toBe('FORBIDDEN');
+  } finally {
+    await curatorContext.close();
+  }
+
+  const replayHeaders = await headers(page);
+  const body = { revision: after.data.revision, photoIds: [third] };
+  const removed = await result(
+    await page.request.post('/api/v1/groups/' + group.id + '/photo-deletions', { headers: replayHeaders, data: body }),
+    200
+  );
+  const replayed = await result(
+    await page.request.post('/api/v1/groups/' + group.id + '/photo-deletions', { headers: replayHeaders, data: body }),
+    200
+  );
+  expect(replayed.data).toEqual(removed.data);
+  const empty = await result(await page.request.get('/api/v1/shoots/' + shoot.id + '/photos?groupId=' + group.id, { headers: auth }), 200);
+  expect(empty.data.items).toEqual([]);
+  expect(empty.data.covers).toEqual({});
+  expect(empty.data.revision).toBe(removed.data.revision);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  await expect(page.getByTestId('photos-empty')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

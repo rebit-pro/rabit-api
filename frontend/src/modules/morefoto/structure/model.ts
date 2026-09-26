@@ -101,6 +101,12 @@ export interface StructureDraft {
   key: string;
   pending: StructureAttempt | null;
 }
+/** A new group on the institution page goes to the latest dated shoot; without dates — to the first one listed. */
+export function defaultShootId(shoots: Shoot[]): string {
+  return (
+    shoots.reduce<Shoot | undefined>((best, shoot) => (!best || (shoot.date ?? '') > (best.date ?? '') ? shoot : best), undefined)?.id ?? ''
+  );
+}
 export function fieldsFrom(item?: StructureItem): StructureFields {
   return {
     name: item?.name ?? '',

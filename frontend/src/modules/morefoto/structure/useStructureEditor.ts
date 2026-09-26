@@ -34,10 +34,14 @@ export function useStructureEditor(scope: StructureScope, saved: () => Promise<u
       return false;
     }
   }
-  function open(kind: StructureKind, item?: StructureItem): void {
+  function keyFor(kind: StructureKind, parentId: string | null, id: string | null): string {
+    return `morefoto:live:structure-draft:${auth.user?.id}:${kind}:${parentId ?? 'root'}:${id ?? 'new'}`;
+  }
+  /** A group opened outside its shoot page (the institution page) names its shoot explicitly. */
+  function open(kind: StructureKind, item?: StructureItem, parent?: string): void {
     if (busy.value) return;
-    const parentId = kind === 'institution' ? null : kind === 'shoot' ? (scope.institutionId ?? null) : (scope.shootId ?? null);
-    storageKey = `morefoto:live:structure-draft:${auth.user?.id}:${kind}:${parentId ?? 'root'}:${item?.id ?? 'new'}`;
+    const parentId = kind === 'institution' ? null : kind === 'shoot' ? (scope.institutionId ?? null) : (parent ?? scope.shootId ?? null);
+    storageKey = keyFor(kind, parentId, item?.id ?? null);
     const fields = fieldsFrom(item);
     let stored: StructureDraft | null = null;
     try {
@@ -81,6 +85,15 @@ export function useStructureEditor(scope: StructureScope, saved: () => Promise<u
     error.value = draft.value.pending ? uncertainMessage : '';
     errors.value = {};
     persist();
+  }
+  /** Moves a new, not yet sent group to another shoot; its local draft follows under the new key. */
+  function setParent(parentId: string): void {
+    const current = draft.value;
+    if (!current || busy.value || current.id || current.pending || current.parentId === parentId) return;
+    localStorage.removeItem(storageKey);
+    // The key changes first: the synchronous draft watcher persists the change under it.
+    storageKey = keyFor(current.kind, parentId, null);
+    current.parentId = parentId;
   }
   function close(): void {
     if (!busy.value) draft.value = null;
@@ -161,5 +174,16 @@ export function useStructureEditor(scope: StructureScope, saved: () => Promise<u
   onScopeDispose(() => {
     alive = false;
   });
-  return { draft, busy, restored, error, errors, open, close, refresh, save };
+  return {
+    draft,
+    busy,
+    restored,
+    error,
+    errors,
+    open,
+    setParent,
+    close,
+    refresh,
+    save
+  };
 }

@@ -8,7 +8,8 @@ import InstitutionCollection from './InstitutionCollection.vue';
 import StructureFields from './StructureFields.vue';
 import { useInstitutionPage } from '../useInstitutionPage';
 import { useStructureEditor } from '../useStructureEditor';
-import type { StructureItem } from '../model';
+import { structureApi, structureError } from '../api';
+import { defaultShootId, type Group, type Shoot, type StructureItem } from '../model';
 const props = defineProps<{ institutionId: string }>();
 const auth = useAuthStore();
 const canManage = computed(() => auth.user?.role === 'organizer' && !!auth.user.permissions?.includes('organization.manage'));
@@ -19,21 +20,44 @@ const editor = useStructureEditor({ kind: 'shoot', institutionId: props.institut
   await reload();
 });
 const { draft, busy, restored, error: saveError, errors, close, refresh, save } = editor;
-const disabled = computed(() => loading.value || !snapshot.value || !!error.value);
-const title = computed(() =>
-  !draft.value
-    ? ''
-    : draft.value.kind === 'institution'
-      ? 'Редактирование учреждения'
-      : draft.value.id
-        ? 'Редактирование съёмки'
-        : 'Новая съёмка'
+// All shoots of the institution, read when a group dialog opens: the page itself shows only one page of them.
+const shoots = shallowRef<Shoot[]>([]);
+const shootsLoading = shallowRef(false);
+const groupError = shallowRef('');
+const shootItems = computed(() =>
+  shoots.value.map((shoot) => ({
+    title: shoot.name + (shoot.date ? ' · ' + shoot.date.split('-').reverse().join('.') : ''),
+    value: shoot.id
+  }))
 );
+const disabled = computed(() => loading.value || !snapshot.value || !!error.value);
+const title = computed(() => {
+  if (!draft.value) return '';
+  if (draft.value.kind === 'institution') return 'Редактирование учреждения';
+  if (draft.value.kind === 'group') return draft.value.id ? 'Редактирование группы' : 'Новая группа';
+  return draft.value.id ? 'Редактирование съёмки' : 'Новая съёмка';
+});
 function editShoot(item?: StructureItem): void {
   if (canManage.value && !disabled.value) {
     notice.value = '';
     editor.open('shoot', item);
   }
+}
+async function editGroup(item?: StructureItem): Promise<void> {
+  if (!canManage.value || disabled.value || shootsLoading.value) return;
+  notice.value = '';
+  groupError.value = '';
+  shootsLoading.value = true;
+  try {
+    shoots.value = await structureApi.shoots(props.institutionId);
+  } catch (cause) {
+    groupError.value = structureError(cause);
+    return;
+  } finally {
+    shootsLoading.value = false;
+  }
+  const group = item as Group | undefined;
+  editor.open('group', group, group?.shootId ?? defaultShootId(shoots.value));
 }
 function editInstitution(): void {
   if (canManage.value && !disabled.value && snapshot.value) {
@@ -55,6 +79,7 @@ function editInstitution(): void {
   </header>
   <v-progress-linear v-if="loading" indeterminate aria-label="Загрузка учреждения" class="mb-5" />
   <v-alert v-if="error" type="error" variant="tonal" role="alert" class="mb-5">{{ error }}</v-alert>
+  <v-alert v-if="groupError && !error" type="error" variant="tonal" role="alert" class="mb-5">{{ groupError }}</v-alert>
   <v-alert v-if="notice && !error" type="success" variant="tonal" role="status" class="mb-5">{{ notice }}</v-alert>
   <template v-if="snapshot && !error">
     <InstitutionOverview :institution="snapshot" />
@@ -74,8 +99,11 @@ function editInstitution(): void {
       kind="group"
       :items="snapshot.groups.items"
       :meta="snapshot.groups.meta"
-      :disabled="disabled"
+      :disabled="disabled || shootsLoading"
       :can-manage="canManage"
+      :has-shoots="snapshot.shoots.meta.total > 0"
+      @create="editGroup()"
+      @edit="editGroup"
       @page="reload({ groupsPage: $event })"
     />
   </template>
@@ -91,7 +119,16 @@ function editInstitution(): void {
     @save="save"
     @reset="refresh"
   >
-    <StructureFields v-if="draft" v-model="draft.fields" :kind="draft.kind" :existing="!!draft.id" :errors="errors" />
+    <StructureFields
+      v-if="draft"
+      v-model="draft.fields"
+      :parent-id="draft.parentId"
+      :kind="draft.kind"
+      :existing="!!draft.id"
+      :errors="errors"
+      :shoots="draft.kind === 'group' ? shootItems : undefined"
+      @update:parent-id="$event && editor.setParent($event)"
+    />
   </AdminDialog>
 </template>
 <style scoped>

@@ -48,6 +48,15 @@ export const structureApi = {
     });
     return { items: result.data.data.items, meta: result.data.meta };
   },
+  /** All shoots of the institution, for choosing the shoot of a group on the institution page. */
+  async shoots(institutionId: string): Promise<Shoot[]> {
+    const shoots: Shoot[] = [];
+    for (let page = 1; ; page++) {
+      const result = await structureApi.list({ kind: 'shoot', institutionId }, page, 100);
+      shoots.push(...(result.items as Shoot[]));
+      if (page >= result.meta.totalPages || !result.items.length) return shoots;
+    }
+  },
   async save(attempt: StructureAttempt): Promise<{ id: string; revision: number }> {
     const options = { headers: { 'Idempotency-Key': attempt.key } };
     return (

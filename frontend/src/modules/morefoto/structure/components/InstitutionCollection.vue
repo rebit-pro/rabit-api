@@ -9,8 +9,14 @@ const props = defineProps<{
   meta: PageMeta;
   disabled: boolean;
   canManage: boolean;
+  /** Groups only: a group is created inside a shoot, so without shoots there is nothing to add it to. */
+  hasShoots?: boolean;
 }>();
-const emit = defineEmits<{ page: [page: number]; edit: [item: StructureItem]; create: [] }>();
+const emit = defineEmits<{
+  page: [page: number];
+  edit: [item: StructureItem];
+  create: [];
+}>();
 const title = computed(() => (props.kind === 'shoot' ? 'Съёмки учреждения' : 'Группы учреждения'));
 const pages = computed(() => Math.max(1, props.meta.totalPages));
 const emptyText = computed(() =>
@@ -18,10 +24,14 @@ const emptyText = computed(() =>
     ? props.canManage
       ? 'Добавьте съёмку — затем в ней появятся группы.'
       : 'Организатор ещё не запланировал съёмки этого учреждения.'
-    : props.canManage
-      ? 'Группы добавляются на странице съёмки.'
-      : 'В съёмках учреждения пока нет групп.'
+    : !props.canManage
+      ? 'В съёмках учреждения пока нет групп.'
+      : props.hasShoots
+        ? 'Добавьте группу: у каждой будут свои фотографии и ссылка для родителей.'
+        : 'Сначала добавьте съёмку — группа создаётся внутри неё.'
 );
+const createLabel = computed(() => (props.kind === 'shoot' ? 'Новая съёмка' : 'Новая группа'));
+const canCreate = computed(() => props.canManage && (props.kind === 'shoot' || props.hasShoots));
 </script>
 <template>
   <section class="institution-collection" :aria-label="title" :data-testid="kind === 'shoot' ? 'institution-shoots' : 'institution-groups'">
@@ -30,22 +40,19 @@ const emptyText = computed(() =>
         <h2>{{ title }}</h2>
         <p class="mf-muted mt-2">Всего: {{ meta.total }}</p>
       </div>
-      <v-btn v-if="kind === 'shoot' && canManage && items.length" prepend-icon="mdi-plus" :disabled="disabled" @click="emit('create')">
-        Новая съёмка
+      <v-btn v-if="canCreate && items.length" prepend-icon="mdi-plus" :disabled="disabled" @click="emit('create')">
+        {{ createLabel }}
       </v-btn>
     </div>
-    <p v-if="kind === 'group' && canManage && items.length" class="mf-muted mb-4">
-      Чтобы добавить или изменить группу, откройте её съёмку.
-    </p>
     <StructureList
       :items="items"
       :scope="{ kind, institutionId }"
       :disabled="disabled"
-      :can-manage="canManage && kind === 'shoot'"
+      :can-manage="canManage"
       :link-groups-to-shoots="canManage && kind === 'group'"
       :empty-title="kind === 'shoot' ? 'Съёмок пока нет' : 'Групп пока нет'"
       :empty-text="emptyText"
-      :create-label="kind === 'shoot' && canManage ? 'Новая съёмка' : ''"
+      :create-label="canCreate ? createLabel : ''"
       @edit="emit('edit', $event)"
       @create="emit('create')"
     />

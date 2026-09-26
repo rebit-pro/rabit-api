@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Morefoto\Media\Tests\Unit;
 
 use Morefoto\Media\Application\Photo\Dto\InspectedPhoto;
+use Morefoto\Media\Domain\Photo\Exception\MediaStorageException;
 use Morefoto\Media\Infrastructure\File\GdPreviewRenderer;
 use Morefoto\Media\Infrastructure\File\LocalPrivatePhotoStorage;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
@@ -86,6 +87,29 @@ final class PhotoFilesTest extends TestCase
         self::assertSame('/protected-previews/12/12345678-abcd-4abc-8abc-123456789abc-preview.webp', $result->previewSrc);
         self::assertFileExists($this->directory . '/public/12/12345678-abcd-4abc-8abc-123456789abc-thumb.webp');
         self::assertFileExists($this->directory . '/public/12/12345678-abcd-4abc-8abc-123456789abc-preview.webp');
+    }
+
+    public function testRendererRemovesBothVariantsAndToleratesMissingFiles(): void
+    {
+        $photoId = '12345678-abcd-4abc-8abc-123456789abc';
+        self::assertTrue(mkdir($this->directory . '/public/12', 0700, true));
+        touch($this->directory . '/public/12/' . $photoId . '-thumb.webp');
+        touch($this->directory . '/public/12/' . $photoId . '-preview.webp');
+        touch($this->directory . '/public/12/other-thumb.webp');
+        $renderer = new GdPreviewRenderer($this->directory . '/public', '/protected-previews');
+
+        $renderer->remove($photoId);
+        $renderer->remove($photoId);
+
+        self::assertFileDoesNotExist($this->directory . '/public/12/' . $photoId . '-thumb.webp');
+        self::assertFileDoesNotExist($this->directory . '/public/12/' . $photoId . '-preview.webp');
+        self::assertFileExists($this->directory . '/public/12/other-thumb.webp');
+    }
+
+    public function testRendererRefusesToRemoveOutsideItsPreviews(): void
+    {
+        $this->expectException(MediaStorageException::class);
+        (new GdPreviewRenderer($this->directory . '/public', '/protected-previews'))->remove('../../etc/passwd-aaaaaaaaaaaaaaaaaaaaaaaaa');
     }
 
     private function image(string $name, string $format, int $width = 18, int $height = 12): string

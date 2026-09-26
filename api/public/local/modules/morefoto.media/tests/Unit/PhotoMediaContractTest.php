@@ -8,6 +8,8 @@ use Morefoto\Media\Application\Photo\Contract\MediaPublisherInterface;
 use Morefoto\Media\Application\Photo\Dto\AssignmentMutationOutputDto;
 use Morefoto\Media\Application\Photo\Dto\AssignPhotosInputDto;
 use Morefoto\Media\Application\Photo\Dto\CoverMutationOutputDto;
+use Morefoto\Media\Application\Photo\Dto\DeletePhotosInputDto;
+use Morefoto\Media\Application\Photo\Dto\DeletionMutationOutputDto;
 use Morefoto\Media\Application\Photo\Dto\PhotoAssignmentOutputDto;
 use Morefoto\Media\Application\Photo\Dto\PhotoOutputDto;
 use Morefoto\Media\Application\Photo\Dto\SetCoverInputDto;
@@ -15,6 +17,7 @@ use Morefoto\Media\Application\Photo\Dto\UploadPhotoInputDto;
 use Morefoto\Media\Application\Photo\Dto\UploadPhotoOutputDto;
 use Morefoto\Media\Application\Photo\UseCase\UploadPhotoUseCase;
 use Morefoto\Media\Presentation\Photo\Dto\AssignPhotosRequestDto;
+use Morefoto\Media\Presentation\Photo\Dto\DeleteGroupPhotosRequestDto;
 use Morefoto\Media\Presentation\Photo\Dto\SetGroupCoverRequestDto;
 use Morefoto\Media\Presentation\Photo\Dto\UploadPhotoRequestDto;
 use Morefoto\Media\Presentation\Photo\PhotoInputMapper;
@@ -129,6 +132,47 @@ final class PhotoMediaContractTest extends TestCase
         yield 'photo is not an id' => [4, 'photo-1'];
     }
 
+    public function testDeletionBodyBecomesTheScenarioInput(): void
+    {
+        self::assertEquals(
+            new DeletePhotosInputDto(5, [self::PHOTO, self::OTHER]),
+            (new PhotoInputMapper())->deletion(new DeleteGroupPhotosRequestDto(5, [self::PHOTO, self::OTHER], self::GROUP, self::KEY)),
+        );
+    }
+
+    /** @param list<mixed> $photoIds */
+    #[DataProvider('invalidDeletions')]
+    public function testInvalidDeletionsAreRejected(string $code, int $revision, array $photoIds): void
+    {
+        $this->expectException(HttpException::class);
+        $this->expectExceptionMessage($code);
+        $this->expectExceptionCode(422);
+
+        (new PhotoInputMapper())->deletion(new DeleteGroupPhotosRequestDto($revision, $photoIds, self::GROUP, self::KEY));
+    }
+
+    /** @return iterable<string, array{0: string, 1: int, 2: list<mixed>}> */
+    public static function invalidDeletions(): iterable
+    {
+        yield 'zero revision' => ['VALIDATION_FAILED', 0, [self::PHOTO]];
+        yield 'empty set' => ['VALIDATION_FAILED', 3, []];
+        yield 'set above limit' => ['VALIDATION_FAILED', 3, array_fill(0, 101, self::PHOTO)];
+        yield 'duplicate photo' => ['INVALID_PHOTO_IDS', 3, [self::PHOTO, self::PHOTO]];
+        yield 'photo is not an id' => ['INVALID_PHOTO_IDS', 3, ['photo-1']];
+    }
+
+    public function testStrictDeletionBodyRejectsUnknownFields(): void
+    {
+        $this->expectException(HttpException::class);
+        $this->expectExceptionMessage('UNKNOWN_FIELD');
+
+        StrictRequestValues::normalize(
+            ['revision' => 3, 'photoIds' => [self::PHOTO], 'shootId' => self::SHOOT, 'groupId' => self::GROUP, 'idempotencyKey' => self::KEY],
+            DeleteGroupPhotosRequestDto::class,
+            true,
+        );
+    }
+
     public function testIdempotencyKeyIsValidated(): void
     {
         self::assertSame(self::KEY, (new PhotoInputMapper())->key(strtoupper(self::KEY))->value);
@@ -165,6 +209,7 @@ final class PhotoMediaContractTest extends TestCase
         $duplicate = new UploadPhotoOutputDto(self::PHOTO, 'duplicate', 1, self::OTHER);
         $assigned = new AssignmentMutationOutputDto([self::PHOTO], 'B', self::OTHER, 3);
         $cover = new CoverMutationOutputDto(self::PHOTO, 4);
+        $deleted = new DeletionMutationOutputDto(2, 5);
 
         self::assertSame($this->json($photo), $this->json($mapper->photo($photo)));
         self::assertSame($this->json($failed), $this->json($mapper->photo($failed)));
@@ -172,6 +217,7 @@ final class PhotoMediaContractTest extends TestCase
         self::assertSame($this->json($duplicate), $this->json($mapper->upload($duplicate)));
         self::assertSame($this->json($assigned), $this->json($mapper->assignment($assigned)));
         self::assertSame($this->json($cover), $this->json($mapper->cover($cover)));
+        self::assertSame(['deleted' => 2, 'revision' => 5], $this->json($mapper->deletion($deleted)));
         self::assertSame(['id', 'status', 'revision', 'existingPhotoId'], array_keys($this->json($mapper->upload($uploaded))));
     }
 
@@ -207,7 +253,7 @@ final class PhotoMediaContractTest extends TestCase
     {
         yield 'MED-03 upload' => ['PhotoUploadController', ['UploadPhotoUseCase']];
         yield 'MED-04 detail' => ['PhotoDetailController', ['GetPhotoUseCase']];
-        yield 'MED-05/06 grouping' => ['GroupMediaController', ['AssignPhotosUseCase', 'SetGroupCoverUseCase']];
+        yield 'MED-05/06 grouping' => ['GroupMediaController', ['AssignPhotosUseCase', 'SetGroupCoverUseCase', 'DeleteGroupPhotosUseCase']];
     }
 
     #[DataProvider('messageFreeControllers')]

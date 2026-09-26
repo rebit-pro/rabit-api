@@ -10,6 +10,7 @@ import PhotoUpload from './PhotoUpload.vue';
 import PhotoCollection from './PhotoCollection.vue';
 import PhotoPreview from './PhotoPreview.vue';
 import ChildMoveDialog from './ChildMoveDialog.vue';
+import PhotoDeleteDialog from './PhotoDeleteDialog.vue';
 import GalleryImage from '../../gallery/components/GalleryImage.vue';
 import MfBreadcrumbs from '@/components/navigation/MfBreadcrumbs.vue';
 import ShootTabs from '../../structure/components/ShootTabs.vue';
@@ -49,6 +50,7 @@ const {
   notice,
   assign,
   setCover,
+  removePhotos,
   transfer
 } = workspace;
 const queue = usePhotoQueue(String(route.params.shootId));
@@ -63,7 +65,10 @@ const institutionId = String(route.params.institutionId);
 const shootId = String(route.params.shootId);
 const crumbs = computed(() => [
   { title: 'Учреждения', to: '/cabinet/institutions' },
-  { title: institution.value?.name ?? 'Учреждение', to: '/cabinet/institutions/' + encodeURIComponent(institutionId) },
+  {
+    title: institution.value?.name ?? 'Учреждение',
+    to: '/cabinet/institutions/' + encodeURIComponent(institutionId)
+  },
   {
     title: shoot.value?.name ?? 'Съёмка',
     to: '/cabinet/institutions/' + encodeURIComponent(institutionId) + '/shoots/' + encodeURIComponent(shootId)
@@ -76,7 +81,11 @@ const previewPhotos = shallowRef<ManagedPhoto[]>([]);
 const previewLoading = shallowRef(false);
 const previewError = shallowRef('');
 let previewRequest = 0;
-const move = shallowRef<{ groupId: string; child: string; ids: string[] } | null>(null);
+const move = shallowRef<{
+  groupId: string;
+  child: string;
+  ids: string[];
+} | null>(null);
 const moveLoading = shallowRef(false);
 const targets = computed(() =>
   groups.value.filter((item) => item.id !== group.value?.id && item.kind === group.value?.kind && item.state === 'preparing')
@@ -116,6 +125,15 @@ async function showMove(code: string) {
     moveLoading.value = false;
   }
 }
+// Selection never spans pages, so the frames to delete are always on the shown page.
+const removal = shallowRef<ManagedPhoto[] | null>(null);
+function askRemove(ids: string[]) {
+  error.value = '';
+  removal.value = items.value.filter((photo) => ids.includes(photo.id));
+}
+async function confirmRemove() {
+  if (removal.value && (await removePhotos(removal.value.map((photo) => photo.id)))) removal.value = null;
+}
 async function confirmMove(toId: string, code: string) {
   if (move.value && (await transfer(move.value.groupId, move.value.child, toId, code, move.value.ids))) move.value = null;
 }
@@ -143,7 +161,7 @@ async function confirmMove(toId: string, code: string) {
         :items="groupItems"
         label="Группа съёмки"
         data-testid="photo-group"
-        :disabled="busy || moveLoading || !!move"
+        :disabled="busy || moveLoading || !!move || !!removal"
         @update:model-value="changeGroup"
       />
       <div class="photo-preview-action">
@@ -169,7 +187,9 @@ async function confirmMove(toId: string, code: string) {
               <p class="mt-2" data-testid="photo-readiness">
                 Кадров: {{ summary.photos }} · Детей: {{ childCodes.length }} · Без ребёнка: {{ summary.unassigned }}
               </p>
-              <p class="mf-muted mt-2">{{ cover ? 'Обложка группы выбрана' : 'Обложка группы ещё не выбрана' }}</p>
+              <p class="mf-muted mt-2">
+                {{ cover ? 'Обложка группы выбрана' : 'Обложка группы ещё не выбрана' }}
+              </p>
             </template>
             <p v-else class="mf-muted mt-2" data-testid="photo-readiness">
               {{ mediaLoading ? 'Загружаем кадры группы…' : 'Кадры группы не загружены.' }}
@@ -203,7 +223,7 @@ async function confirmMove(toId: string, code: string) {
         @clear="queue.clear"
         @remove="queue.remove"
       />
-      <v-alert v-if="error && !move" type="error" variant="tonal" role="alert" class="mb-5">{{ error }}</v-alert>
+      <v-alert v-if="error && !move && !removal" type="error" variant="tonal" role="alert" class="mb-5">{{ error }}</v-alert>
       <v-alert v-if="notice" type="success" variant="tonal" role="status" class="mb-5">{{ notice }}</v-alert>
       <PhotoCollection
         v-model:selected="selected"
@@ -225,6 +245,7 @@ async function confirmMove(toId: string, code: string) {
         @cover="setCover"
         @preview="showPreview"
         @move="showMove"
+        @remove="askRemove"
       />
       <PhotoPreview
         :open="preview"
@@ -247,6 +268,14 @@ async function confirmMove(toId: string, code: string) {
         :error="error"
         @close="move = null"
         @move="confirmMove"
+      />
+      <PhotoDeleteDialog
+        :open="!!removal"
+        :photos="removal ?? []"
+        :busy="busy"
+        :error="error"
+        @close="removal = null"
+        @confirm="confirmRemove"
       />
     </template>
   </template>

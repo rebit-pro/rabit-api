@@ -49,6 +49,20 @@ final readonly class GdPreviewRenderer implements PreviewRendererInterface
         );
     }
 
+    public function remove(string $photoId): void
+    {
+        if (1 !== preg_match('/^[a-f0-9-]{36}$/D', $photoId)) {
+            throw new MediaStorageException('Invalid preview photo ID.');
+        }
+        $directory = rtrim($this->publicRoot, '/') . '/' . substr($photoId, 0, 2);
+        foreach (['thumb', 'preview'] as $variant) {
+            $path = $directory . '/' . $photoId . '-' . $variant . '.webp';
+            if (is_file($path) && !unlink($path)) {
+                throw new MediaStorageException('Cannot delete protected preview.');
+            }
+        }
+    }
+
     private static function milliseconds(float|int $from, float|int $to): int
     {
         return (int)(($to - $from) / 1_000_000);
