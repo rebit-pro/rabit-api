@@ -60,6 +60,24 @@ const PublicRoutes: RouteRecordRaw = {
         description: 'Фотографии вашей группы в «Море фото».'
       }
     },
+    {
+      name: 'LegalIndex',
+      path: '/legal',
+      component: () => import('@/modules/morefoto/legal/LegalIndexPage.vue'),
+      meta: { title: 'Документы и реквизиты', description: 'Политика, оферта, согласия и реквизиты продавца «Море фото».' }
+    },
+    {
+      name: 'LegalDocument',
+      path: '/legal/:code(privacy|offer|buyer-consent|staff-consent)',
+      component: () => import('@/modules/morefoto/legal/LegalDocumentPage.vue'),
+      meta: { title: 'Документ' }
+    },
+    {
+      name: 'LegalDocumentVersion',
+      path: '/legal/:code(privacy|offer|buyer-consent|staff-consent)/v/:version',
+      component: () => import('@/modules/morefoto/legal/LegalDocumentPage.vue'),
+      meta: { title: 'Документ' }
+    },
     { path: '/', redirect: '/login' },
     { path: '/documentation', redirect: '/login' },
     { path: '/register', redirect: '/login' },

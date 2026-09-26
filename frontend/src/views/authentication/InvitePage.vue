@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, shallowRef, useTemplateRef } from 'vue';
+import { computed, onMounted, shallowRef, useTemplateRef } from 'vue';
 import { useRoute } from 'vue-router';
 import AccessShell from './AccessShell.vue';
 import AccessLinkProblem from './authForms/AccessLinkProblem.vue';
@@ -8,6 +8,9 @@ import { accessApi, type InvitationPreview } from '@/api/auth';
 import { apiErrorCode, authErrorText } from '@/api/authErrors';
 import { useAuthStore } from '@/stores/auth';
 import { formatMoment } from '@/modules/morefoto/handoff/display';
+import ConsentField from '@/modules/morefoto/legal/components/ConsentField.vue';
+import { acceptedDocuments, findDocument, STAFF_DOCUMENTS } from '@/modules/morefoto/legal/rules';
+import { useLegalCatalog } from '@/modules/morefoto/legal/useLegalCatalog';
 
 const route = useRoute();
 const auth = useAuthStore();
@@ -20,6 +23,10 @@ const password = shallowRef('');
 const confirmation = shallowRef('');
 const busy = shallowRef(false);
 const error = shallowRef('');
+const { catalog, reload } = useLegalCatalog();
+const staffConsent = computed(() => findDocument(catalog.value, 'staff-consent'));
+const consented = shallowRef(false);
+const consentError = shallowRef('');
 
 onMounted(async () => {
   try {
@@ -34,15 +41,26 @@ onMounted(async () => {
 async function submit(): Promise<void> {
   if (busy.value) return;
   const result = await form.value?.validate();
-  if (!result?.valid) return;
+  consentError.value = consented.value ? '' : 'Отметьте согласие на обработку персональных данных.';
+  if (!result?.valid || consentError.value) return;
+  const consents = acceptedDocuments(catalog.value, STAFF_DOCUMENTS);
+  if (!consents) {
+    error.value = 'Не удалось загрузить текст согласия. Обновите страницу.';
+    void reload();
+    return;
+  }
   busy.value = true;
   error.value = '';
   try {
-    await auth.startSession(await accessApi.acceptInvitation(token, password.value), '/cabinet/welcome');
+    await auth.startSession(await accessApi.acceptInvitation(token, password.value, consents), '/cabinet/welcome');
   } catch (cause) {
     const code = apiErrorCode(cause);
     if (code?.startsWith('LINK_')) problem.value = code;
-    else error.value = authErrorText(cause, 'Не удалось сохранить пароль. Попробуйте ещё раз.');
+    else if (code === 'CONSENT_REQUIRED') {
+      consented.value = false;
+      consentError.value = 'Текст согласия обновился. Откройте его и отметьте согласие ещё раз.';
+      void reload();
+    } else error.value = authErrorText(cause, 'Не удалось сохранить пароль. Попробуйте ещё раз.');
   } finally {
     busy.value = false;
   }
@@ -70,6 +88,16 @@ async function submit(): Promise<void> {
       </dl>
       <v-alert v-if="error" type="error" variant="tonal" role="alert" data-testid="access-error">{{ error }}</v-alert>
       <NewPasswordFields v-model:password="password" v-model:confirmation="confirmation" :disabled="busy" />
+      <ConsentField
+        v-if="staffConsent"
+        v-model="consented"
+        :document="staffConsent"
+        name="staff-consent"
+        before="Даю"
+        link="согласие на обработку персональных данных"
+        :error-messages="consentError"
+        :disabled="busy"
+      />
       <v-btn type="submit" block :loading="busy">Задать пароль и войти</v-btn>
     </v-form>
   </AccessShell>

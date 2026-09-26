@@ -30,6 +30,8 @@ use Rebit\Auth\Presentation\Access\AccessInputMapper;
 use Rebit\Auth\Presentation\Controller\AccessLinkController;
 use Rebit\Auth\Presentation\Controller\PasswordController;
 use Rebit\Share\Application\Contract\Notification\EmailNotificationInterface;
+use Rebit\Share\Application\Contract\Consent\ConsentRecorderInterface;
+use Rebit\Share\Presentation\Consent\AcceptedDocumentInputMapper;
 
 $locator = static fn(): ServiceLocator => ServiceLocator::getInstance();
 $cooldown = static fn(): int => (int)(getenv('REBIT_AUTH_LINK_COOLDOWN_SECONDS') ?: 60);
@@ -54,7 +56,10 @@ return [
     PasswordPolicy::class => ['className' => PasswordPolicy::class],
     EmailMask::class => ['className' => EmailMask::class],
     AccessLinkGuard::class => ['className' => AccessLinkGuard::class],
-    AccessInputMapper::class => ['className' => AccessInputMapper::class],
+    AccessInputMapper::class => [
+        'className' => AccessInputMapper::class,
+        'constructorParams' => static fn(): array => [$locator()->get(AcceptedDocumentInputMapper::class)],
+    ],
     SessionIssuer::class => [
         'className' => SessionIssuer::class,
         'constructorParams' => static fn(): array => [
@@ -96,6 +101,7 @@ return [
             $locator()->get(SessionIssuer::class),
             $locator()->get(ClockInterface::class),
             $locator()->get(AuthTransactionInterface::class),
+            $locator()->get(ConsentRecorderInterface::class),
         ],
     ],
     RequestPasswordResetUseCase::class => [

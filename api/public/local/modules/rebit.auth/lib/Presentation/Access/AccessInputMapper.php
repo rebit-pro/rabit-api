@@ -12,6 +12,7 @@ use Rebit\Auth\Presentation\Access\Dto\AcceptInvitationRequestDto;
 use Rebit\Auth\Presentation\Access\Dto\ChangePasswordRequestDto;
 use Rebit\Auth\Presentation\Access\Dto\ConfirmPasswordResetRequestDto;
 use Rebit\Auth\Presentation\Access\Dto\PasswordResetRequestDto;
+use Rebit\Share\Presentation\Consent\AcceptedDocumentInputMapper;
 
 /** Stateless mapping of access link requests to application input. */
 final readonly class AccessInputMapper
@@ -19,9 +20,11 @@ final readonly class AccessInputMapper
     /** Token of a personal link: 256 random bits in base64url without padding. */
     public const string TOKEN_PATTERN = '/^[A-Za-z0-9_-]{43}$/D';
 
+    public function __construct(private AcceptedDocumentInputMapper $consents) {}
+
     public function accept(AcceptInvitationRequestDto $request): AcceptInvitationInputDto
     {
-        return new AcceptInvitationInputDto(token: $request->token, password: $request->password);
+        return new AcceptInvitationInputDto(token: $request->token, password: $request->password, consents: $this->consents->documents($request->consents));
     }
 
     public function reset(PasswordResetRequestDto $request): PasswordResetInputDto

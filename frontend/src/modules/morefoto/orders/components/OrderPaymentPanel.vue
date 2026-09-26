@@ -4,6 +4,7 @@ import { money } from '../../commerce/money';
 import { formatMoment } from '../formatters';
 import { useLivePayment } from '../composables/useLivePayment';
 import { paymentMethodLabels } from '../live/payment-rules';
+import { documentPath } from '../../legal/rules';
 import type { BuyerOrder } from '../live/types';
 const props = defineProps<{ order: BuyerOrder; orderKey: string }>();
 const paid = computed(() => props.order.paymentStatus === 'paid');
@@ -35,7 +36,8 @@ const closed = computed(() => props.order.period.state === 'closed');
     <template v-else-if="quote?.canPay">
       <p class="order-payment__note">
         К оплате <strong data-testid="payment-total">{{ money(quote.quote.total) }}</strong
-        >. Вы перейдёте на защищённую страницу ЮKassa, а после оплаты вернётесь сюда.
+        >. Вы перейдёте на защищённую страницу ЮKassa, а после оплаты вернётесь сюда. Оплачивая заказ, вы подтверждаете его на условиях
+        <RouterLink :to="documentPath('offer')" target="_blank" data-testid="payment-offer">публичной оферты</RouterLink>.
       </p>
       <div class="order-payment__methods">
         <v-btn

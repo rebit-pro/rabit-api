@@ -16,6 +16,7 @@ Loader::includeModule('rebit.auth');
 Loader::includeModule('morefoto.organization');
 Loader::includeModule('rebit.notification');
 
+Loader::includeModule('morefoto.legal');
 Loader::includeModule('morefoto.access');
 Loader::includeModule('morefoto.commerce');
 Loader::includeModule('morefoto.payment');

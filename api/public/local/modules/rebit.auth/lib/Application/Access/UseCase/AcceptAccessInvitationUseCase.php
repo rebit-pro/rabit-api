@@ -16,11 +16,13 @@ use Rebit\Auth\Application\Auth\Dto\Result\LoginResultDto;
 use Rebit\Auth\Domain\Access\Entity\AccessLink;
 use Rebit\Auth\Domain\Access\Enum\AccessLinkPurposeEnum;
 use Rebit\Auth\Domain\Access\Service\PasswordPolicy;
+use Rebit\Share\Application\Contract\Consent\ConsentRecorderInterface;
+use Rebit\Share\Application\Contract\Consent\Enum\ConsentContextEnum;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /**
- * Завершает приглашение: сотрудник задаёт пароль, учётка активируется, ссылка гаснет и сразу открывается сессия.
- * Повторное открытие той же ссылки после этого отклоняется.
+ * Завершает приглашение: сотрудник задаёт пароль и принимает свои юридические документы, учётка активируется,
+ * ссылка гаснет и сразу открывается сессия. Повторное открытие той же ссылки после этого отклоняется.
  */
 final readonly class AcceptAccessInvitationUseCase
 {
@@ -32,6 +34,7 @@ final readonly class AcceptAccessInvitationUseCase
         private SessionIssuer $sessions,
         private ClockInterface $clock,
         private AuthTransactionInterface $transaction,
+        private ConsentRecorderInterface $consents,
     ) {}
 
     /**
@@ -54,6 +57,7 @@ final readonly class AcceptAccessInvitationUseCase
             if (!$this->policy->isAcceptable($input->password, $account->email)) {
                 throw new HttpException('PASSWORD_WEAK', 422);
             }
+            $this->consents->record(ConsentContextEnum::STAFF, $account->id, $input->consents);
 
             $this->accounts->changePassword($account->id, $input->password);
             $this->accounts->activate($account->id);

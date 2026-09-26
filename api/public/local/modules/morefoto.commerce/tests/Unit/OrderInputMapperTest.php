@@ -9,6 +9,7 @@ use Morefoto\Commerce\Presentation\Order\OrderInputMapper;
 use Morefoto\Commerce\Presentation\Storefront\StorefrontMapper;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Rebit\Share\Presentation\Consent\AcceptedDocumentInputMapper;
 use Rebit\Share\Shared\Exception\HttpException;
 
 require_once __DIR__ . '/../bootstrap.php';
@@ -20,7 +21,7 @@ final class OrderInputMapperTest extends TestCase
 {
     public function testEmptyFiltersAreAbsentAndValidOnesPassThrough(): void
     {
-        $input = (new OrderInputMapper(new StorefrontMapper()))->search(new StaffOrderListRequestDto(
+        $input = (new OrderInputMapper(new StorefrontMapper(), new AcceptedDocumentInputMapper()))->search(new StaffOrderListRequestDto(
             q: '  MF-0001 ',
             institutionId: '',
             groupId: '11111111-1111-4111-8111-111111111111',
@@ -41,7 +42,7 @@ final class OrderInputMapperTest extends TestCase
 
     public function testLatePaymentFilterIsAvailableSinceG1(): void
     {
-        $mapper = new OrderInputMapper(new StorefrontMapper());
+        $mapper = new OrderInputMapper(new StorefrontMapper(), new AcceptedDocumentInputMapper());
 
         self::assertTrue($mapper->search(new StaffOrderListRequestDto(late: 'true'))->latePayment);
         self::assertFalse($mapper->search(new StaffOrderListRequestDto(late: 'false'))->latePayment);
@@ -52,7 +53,7 @@ final class OrderInputMapperTest extends TestCase
     {
         $this->expectException(HttpException::class);
         $this->expectExceptionMessage($code);
-        (new OrderInputMapper(new StorefrontMapper()))->search($request);
+        (new OrderInputMapper(new StorefrontMapper(), new AcceptedDocumentInputMapper()))->search($request);
     }
 
     public static function invalid(): iterable

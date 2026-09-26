@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { GallerySnapshot } from '../../gallery/types';
 import { money } from '../../commerce/money';
 import CartSummary from '../../commerce/components/CartSummary.vue';
@@ -6,11 +7,13 @@ import { useCheckout } from '../composables/useCheckout';
 import OrderComposition from './OrderComposition.vue';
 import CheckoutTerms from './CheckoutTerms.vue';
 import CheckoutContacts from './CheckoutContacts.vue';
+import ConsentField from '../../legal/components/ConsentField.vue';
+import { findDocument } from '../../legal/rules';
 const props = defineProps<{ gallery: GallerySnapshot; token: string }>();
-const { quote, catalog, draft, busy, error, errors, oldTotal, capabilities, previous, canSubmit, recovering, submit } = useCheckout(
-  props.gallery,
-  props.token
-);
+const { quote, catalog, draft, busy, error, errors, oldTotal, capabilities, previous, canSubmit, recovering, submit, consents, legal } =
+  useCheckout(props.gallery, props.token);
+const consentDocument = computed(() => findDocument(legal.value, 'buyer-consent'));
+const offerDocument = computed(() => findDocument(legal.value, 'offer'));
 </script>
 <template>
   <section v-if="recovering" class="mf-panel mf-empty" data-testid="checkout-recovery">
@@ -53,18 +56,38 @@ const { quote, catalog, draft, busy, error, errors, oldTotal, capabilities, prev
         />
         <OrderComposition :quote="quote" />
         <RouterLink :to="'/g/' + token + '/cart'" class="mf-back">Изменить выбор в корзине</RouterLink>
-        <CheckoutTerms :gallery="gallery" />
+        <CheckoutTerms :gallery="gallery" :seller="legal?.seller ?? null" :offer="offerDocument" />
       </div>
       <CartSummary :quote="quote" :catalog="catalog" :staff="gallery.audience === 'staff'">
         <v-checkbox
           v-model="draft.reviewed"
           name="buyer-reviewed"
-          label="Состав и демонстрационные условия проверены"
+          :label="consents ? 'Состав заказа проверен' : 'Состав и демонстрационные условия проверены'"
           color="primary"
           :disabled="busy"
           :error-messages="errors.reviewed"
           class="checkout-review"
         />
+        <template v-if="consents && consentDocument && offerDocument">
+          <ConsentField
+            v-model="consents.consent"
+            :document="consentDocument"
+            name="buyer-consent"
+            before="Даю"
+            link="согласие на обработку персональных данных"
+            :error-messages="errors.consent"
+            :disabled="busy"
+          />
+          <ConsentField
+            v-model="consents.offer"
+            :document="offerDocument"
+            name="buyer-offer"
+            before="Принимаю условия"
+            link="публичной оферты"
+            :error-messages="errors.offer"
+            :disabled="busy"
+          />
+        </template>
         <v-btn type="submit" color="primary" block :loading="busy" :disabled="busy || !canSubmit" data-testid="create-order"
           >Создать тестовый заказ</v-btn
         >

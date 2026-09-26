@@ -34,7 +34,18 @@ export default defineConfig({
     ['json', { outputFile: 'reports/e2e-live/results.json' }]
   ],
   outputDir: 'reports/e2e-live/artifacts',
-  use: { baseURL, trace: 'retain-on-failure', screenshot: 'only-on-failure', video: 'retain-on-failure' },
+  use: {
+    baseURL,
+    // A returning visitor: the in-flow cookie notice is already closed, so it does not shift the pages under test.
+    // legal.spec.ts opens a clean browser and checks the notice itself.
+    storageState: {
+      cookies: [],
+      origins: [{ origin: new URL(baseURL).origin, localStorage: [{ name: 'morefoto:cookie-notice:v1', value: 'e2e' }] }]
+    },
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure'
+  },
   projects: Object.entries(groups).map(([name, files]) => ({
     name,
     testMatch: files.map((file) => `**/${file}.spec.ts`),
