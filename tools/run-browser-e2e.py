@@ -73,6 +73,9 @@ PHP_ENV = ["--env", "XDEBUG_MODE=off"]
 # DS-12: a test-only organizer contact for the «Помощь» section of the profile; K3: a fake MAX group ID and webhook secret (no real bot).
 SUPPORT = ["--env", "MOREFOTO_SUPPORT_NAME=Организатор E2E", "--env", "MOREFOTO_SUPPORT_EMAIL=support@example.invalid", "--env", "MOREFOTO_SUPPORT_PHONE=+7 900 000-00-00", "--env", "MOREFOTO_SUPPORT_MAX_CHAT_ID=-72000000001",
            "--env", "MOREFOTO_SUPPORT_MAX_WEBHOOK_SECRET=e2e_webhook_secret_0123456789abcdef"]
+# OPS legal: test-only requisites of the individual entrepreneur shown in the footer, pages and documents.
+SELLER = ["--env", "MOREFOTO_SELLER_NAME=ИП Тестов Тест Тестович", "--env", "MOREFOTO_SELLER_INN=000000000000", "--env", "MOREFOTO_SELLER_OGRNIP=000000000000000",
+          "--env", "MOREFOTO_SELLER_ADDRESS=Воронеж, тестовый адрес", "--env", "MOREFOTO_SELLER_EMAIL=pd@example.invalid"]
 # G1: the YooKassa test shop keys stay outside the repository; without them payment runs in its disabled mode.
 YOOKASSA_ENV = Path(os.environ.get("E2E_YOOKASSA_ENV", Path.home() / ".config/morefoto/yookassa-test.env"))
 LOCK = threading.RLock()
@@ -376,7 +379,7 @@ def open_stand(state, args, stand, notification):
     def serve():
         service(state, name + "-fpm", *network, "--network-alias", "api-php-fpm", "--user", "0", *PHP_ENV, "--entrypoint", "php-fpm",
                 *php_mounts(state, stand), "--env", "APP_ENV=test", "--env", "APP_DEBUG=0", "--env", "REBIT_GEETEST_ENABLED=0",
-                "--env", "REBIT_GEETEST_BYPASS=1", *amqp, *media, "--env", "MOREFOTO_CHECKOUT_ENABLED=1", *SUPPORT, *payment_env(), args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
+                "--env", "REBIT_GEETEST_BYPASS=1", *amqp, *media, "--env", "MOREFOTO_CHECKOUT_ENABLED=1", *SUPPORT, *SELLER, *payment_env(), args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
         if YOOKASSA_ENV.is_file():
             # Only php-fpm and the browser reach the provider; MySQL and RabbitMQ stay on the internal network.
             docker("network", "connect", state["browserNetwork"], name + "-fpm")

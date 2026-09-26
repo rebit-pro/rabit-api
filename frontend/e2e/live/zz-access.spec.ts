@@ -42,6 +42,20 @@ test('B4: приглашение по ссылке — пароль, вход и
   await setNewPassword(page, 'short', 'Задать пароль и войти');
   await expect(page.getByText('Не меньше 10 символов', { exact: true })).toBeVisible();
 
+  // OPS legal: without the separate staff consent nothing is sent; its text opens from the checkbox.
+  let sent = false;
+  page.on('request', (request) => {
+    if (request.url().endsWith('/accept')) sent = true;
+  });
+  await setNewPassword(page, invitedPassword, 'Задать пароль и войти');
+  await expect(page.getByText('Отметьте согласие на обработку персональных данных.', { exact: true })).toBeVisible();
+  expect(sent).toBe(false);
+  await expect(page.getByRole('link', { name: 'согласие на обработку персональных данных', exact: true })).toHaveAttribute(
+    'href',
+    /^\/legal\/staff-consent\/v\/\d{4}-\d{2}-\d{2}$/
+  );
+  await page.getByLabel('Даю согласие на обработку персональных данных').check();
+
   const weak = page.waitForResponse((r) => r.url().endsWith('/accept'));
   await setNewPassword(page, 'b4-invited@example.invalid', 'Задать пароль и войти');
   expect((await weak).status()).toBe(422);

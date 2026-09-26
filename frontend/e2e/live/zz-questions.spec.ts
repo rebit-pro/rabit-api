@@ -196,3 +196,71 @@ test('the question screens fit desktop and mobile', async ({ page }) => {
     await page.screenshot({ path: test.info().outputPath('k3-gallery-question-' + name + '.png') });
   }
 });
+
+test('a guest writes from the login page to the same curator group and sees the request number', async ({ page }) => {
+  await page.goto('/login');
+  await expect(page.getByTestId('login-about')).toContainText('Родителям вход не нужен');
+  await page.getByTestId('login-feedback-open').click();
+  const dialog = page.getByTestId('login-feedback');
+  await expect(dialog.getByRole('heading', { name: 'Написать нам', exact: true })).toBeVisible();
+  await expect(dialog).toContainText('в мессенджере MAX');
+
+  const posts: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().endsWith('/api/v1/public/feedback')) posts.push(request.headers()['idempotency-key'] ?? '');
+  });
+  await dialog.getByTestId('feedback-send').click();
+  await expect(dialog).toContainText('Укажите, как к вам обращаться');
+  await expect(dialog).toContainText('Напишите, чем помочь');
+  await dialog.getByLabel('Как к вам обращаться', { exact: true }).fill('K3 Гость');
+  await dialog.getByLabel('Телефон или email', { exact: true }).fill('12345');
+  await dialog.getByLabel('Сообщение', { exact: true }).fill('Не пришло приглашение в кабинет.');
+  await dialog.getByTestId('feedback-send').click();
+  await expect(dialog).toContainText('Проверьте телефон или email');
+  expect(posts).toHaveLength(0);
+
+  // A lost answer is repeated with the same Idempotency-Key: the server keeps one request.
+  let lost = true;
+  await page.route('**/api/v1/public/feedback', async (route) => {
+    const response = await route.fetch();
+    if (lost) {
+      lost = false;
+      await route.abort('connectionreset');
+    } else {
+      await route.fulfill({ response });
+    }
+  });
+  await dialog.getByLabel('Телефон или email', { exact: true }).fill('k3-guest@example.invalid');
+  await dialog.getByTestId('feedback-send').click();
+  await expect(dialog.getByTestId('feedback-problem')).toContainText('Нет связи с сервером');
+  const accepted = page.waitForResponse((r) => r.url().endsWith('/api/v1/public/feedback'));
+  await dialog.getByTestId('feedback-send').click();
+  const response = await accepted;
+  expect(response.status()).toBe(202);
+  const { number } = ((await response.json()) as { data: { number: number } }).data;
+  expect(posts).toHaveLength(2);
+  expect(posts[1]).toBe(posts[0]);
+  await expect(dialog.getByTestId('feedback-sent')).toContainText('Обращение №' + number + ' отправлено');
+  await expect(dialog.getByTestId('feedback-sent')).toContainText('k3-guest@example.invalid');
+  // The support verifier gets one file per spec: the guest request joins the parent question key.
+  const recorded = JSON.parse(readFileSync('var/k3-questions.json', 'utf8')) as Record<string, unknown>;
+  writeFileSync('var/k3-questions.json', JSON.stringify({ ...recorded, feedbackNumber: number, feedbackKey: posts[0] }));
+  await page.unroute('**/api/v1/public/feedback');
+});
+
+test('the login page with its information and feedback form fits desktop and mobile', async ({ page }) => {
+  for (const [name, size] of [
+    ['desktop', { width: 1440, height: 900 }],
+    ['mobile', { width: 390, height: 844 }]
+  ] as const) {
+    await page.setViewportSize(size);
+    await page.goto('/login');
+    await expect(page.getByTestId('login-about')).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(size.width);
+    await page.screenshot({ path: test.info().outputPath('login-' + name + '.png'), fullPage: true });
+    await page.getByTestId('login-feedback-open').click();
+    await expect(page.getByTestId('login-feedback')).toBeVisible();
+    await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== 'running'));
+    await page.screenshot({ path: test.info().outputPath('login-feedback-' + name + '.png') });
+  }
+});

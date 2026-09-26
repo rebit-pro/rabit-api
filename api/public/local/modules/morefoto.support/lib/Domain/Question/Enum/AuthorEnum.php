@@ -9,4 +9,6 @@ enum AuthorEnum: string
     case PARENT = 'parent';
     case STAFF = 'staff';
     case CURATOR = 'curator';
+    /** Обращение без аккаунта со страницы входа: ответ идёт по указанному контакту, не через сайт. */
+    case GUEST = 'guest';
 }

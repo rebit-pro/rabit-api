@@ -24,6 +24,7 @@ use Morefoto\Support\Application\Question\UseCase\DeliverQuestionMessageUseCase;
 use Morefoto\Support\Application\Question\UseCase\DispatchPendingQuestionMessagesUseCase;
 use Morefoto\Support\Application\Question\UseCase\GetGalleryQuestionUseCase;
 use Morefoto\Support\Application\Question\UseCase\GetStaffQuestionUseCase;
+use Morefoto\Support\Application\Question\UseCase\SendGuestFeedbackUseCase;
 use Morefoto\Support\Domain\Question\Repository\MaxChatRepositoryInterface;
 use Morefoto\Support\Domain\Question\Repository\QuestionDeliveryRepositoryInterface;
 use Morefoto\Support\Domain\Question\Repository\QuestionRepositoryInterface;
@@ -43,8 +44,10 @@ use Morefoto\Support\Presentation\Command\DispatchPendingQuestionMessagesCommand
 use Morefoto\Support\Presentation\Command\MaxStatusCommand;
 use Morefoto\Support\Presentation\Command\MaxSubscribeCommand;
 use Morefoto\Support\Presentation\Controller\GalleryQuestionController;
+use Morefoto\Support\Presentation\Controller\GuestFeedbackController;
 use Morefoto\Support\Presentation\Controller\MaxWebhookController;
 use Morefoto\Support\Presentation\Controller\StaffQuestionController;
+use Morefoto\Support\Presentation\Feedback\FeedbackMapper;
 use Morefoto\Support\Presentation\Max\MaxUpdateMapper;
 use Morefoto\Support\Presentation\Question\QuestionInputMapper;
 use Morefoto\Support\Presentation\Question\QuestionResultMapper;
@@ -107,6 +110,7 @@ $services = [
     QuestionInputMapper::class => ['className' => QuestionInputMapper::class],
     QuestionResultMapper::class => ['className' => QuestionResultMapper::class],
     MaxUpdateMapper::class => ['className' => MaxUpdateMapper::class],
+    FeedbackMapper::class => ['className' => FeedbackMapper::class],
     DeliverQuestionMessageUseCase::class => [
         'className' => DeliverQuestionMessageUseCase::class,
         'constructorParams' => static fn(): array => [
@@ -167,10 +171,13 @@ $dependencies = [
     GetStaffQuestionUseCase::class => [StaffQuestionContextInterface::class, QuestionRepositoryInterface::class, QuestionHistory::class],
     AddStaffQuestionMessageUseCase::class => [StaffQuestionContextInterface::class, SupportTransactionInterface::class, QuestionRepositoryInterface::class, QuestionMessageRecorder::class,
         QuestionTextPolicy::class, MaxQuestionTextBuilder::class, QuestionHistory::class, QuestionDeliveryPublisherInterface::class, ClockInterface::class],
+    SendGuestFeedbackUseCase::class => [SupportTransactionInterface::class, QuestionRepositoryInterface::class, QuestionMessageRecorder::class, QuestionTextPolicy::class,
+        MaxQuestionTextBuilder::class, QuestionDeliveryPublisherInterface::class, ClockInterface::class],
     DispatchPendingQuestionMessagesUseCase::class => [SupportTransactionInterface::class, QuestionDeliveryRepositoryInterface::class, QuestionDeliveryPublisherInterface::class, ClockInterface::class],
     DeliverQuestionMessageHandler::class => [DeliverQuestionMessageUseCase::class],
     GalleryQuestionController::class => [AskGalleryQuestionUseCase::class, GetGalleryQuestionUseCase::class, AddGalleryQuestionMessageUseCase::class, QuestionInputMapper::class, QuestionResultMapper::class],
     StaffQuestionController::class => [GetStaffQuestionUseCase::class, AddStaffQuestionMessageUseCase::class, QuestionInputMapper::class, QuestionResultMapper::class],
+    GuestFeedbackController::class => [SendGuestFeedbackUseCase::class, FeedbackMapper::class],
     MaxWebhookController::class => [HandleMaxUpdateUseCase::class, MaxUpdateMapper::class],
     ConsumeQuestionMessagesCommand::class => [ConsumeQuestionMessagesUseCase::class],
     DispatchPendingQuestionMessagesCommand::class => [DispatchPendingQuestionMessagesUseCase::class],

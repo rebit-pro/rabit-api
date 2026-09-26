@@ -20,6 +20,9 @@ use Morefoto\Media\Application\Gallery\Service\GalleryCapabilityLifecycle;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 use Sprint\Migration\Version20260922120001;
+use Morefoto\Legal\Domain\Document\Enum\LegalDocumentEnum;
+use Morefoto\Legal\Domain\Document\Repository\LegalDocumentCatalogInterface;
+use Rebit\Share\Application\Contract\Consent\Dto\AcceptedDocumentDto;
 
 if ('test' !== getenv('APP_ENV') || !is_file('/runtime/e5-orders.json') || !is_file('/runtime/e4-fixture.json')) {
     throw new RuntimeException('Order verification requires the disposable fixture and browser results.');
@@ -82,6 +85,13 @@ if (0 !== $scalar('SELECT COUNT(*) FROM (SELECT QUOTE_HASH FROM mf_order GROUP B
 }
 $proof[] = 'one order per quote and receipt';
 
+// OPS legal: every order carries exactly the buyer consent and the offer; rejected checkouts left no consent behind.
+if (0 !== $scalar("SELECT COUNT(*) FROM mf_order o WHERE 2 <> (SELECT COUNT(DISTINCT c.DOCUMENT_CODE) FROM mf_legal_consent c WHERE c.CONTEXT='order' AND c.SUBJECT_ID=o.ID AND c.DOCUMENT_CODE IN ('buyer-consent','offer'))")
+    || 0 !== $scalar("SELECT COUNT(*) FROM mf_legal_consent c LEFT JOIN mf_order o ON o.ID=c.SUBJECT_ID WHERE c.CONTEXT='order' AND o.ID IS NULL")) {
+    throw new RuntimeException('Every order must keep its accepted consent and offer, and nothing else.');
+}
+$proof[] = 'consent and offer recorded per order';
+
 // 3. Personal key lifecycle: revoke, expiry, reissue and independence from the gallery link.
 $buyer = $services->get(GetBuyerOrderUseCase::class);
 $keys = $services->get(OrderAccessKeys::class);
@@ -128,7 +138,12 @@ $gallery = $services->get(GalleryAccessInterface::class)->resolve($fixture['open
 $product = $connection->query("SELECT PRODUCT_PUBLIC_ID FROM mf_order_line WHERE PRODUCT_KIND='physical' LIMIT 1")->fetch();
 $lines = [new QuoteLineInputDto($gallery->assignments[0]->assignmentId, (string)$product['PRODUCT_PUBLIC_ID'], 5)];
 $quote = $services->get(CreateQuoteUseCase::class)->execute($fixture['open']['token'], $lines);
-$input = new CreateOrderInputDto($quote->quoteToken, $lines, new OrderBuyerInputDto('Проверка повтора', '+79005550909', 'replay.e5@example.test', '', null, true));
+$legal = $services->get(LegalDocumentCatalogInterface::class);
+$consents = [];
+foreach ([LegalDocumentEnum::BUYER_CONSENT, LegalDocumentEnum::OFFER] as $document) {
+    $consents[] = new AcceptedDocumentDto($document->value, $legal->current($document)->version);
+}
+$input = new CreateOrderInputDto($quote->quoteToken, $lines, new OrderBuyerInputDto('Проверка повтора', '+79005550909', 'replay.e5@example.test', '', null, true), $consents);
 $replayKey = new IdempotencyKey(bin2hex(random_bytes(16)));
 $checkout = $services->get(CreateOrderUseCase::class);
 $created = $checkout->execute($fixture['open']['token'], $replayKey, $input);
@@ -150,7 +165,7 @@ $connection->queryExecute("UPDATE mf_cart_quote SET EXPIRES_AT=UTC_TIMESTAMP()-I
 $expect('QUOTE_EXPIRED', static fn() => $checkout->execute(
     $fixture['open']['token'],
     new IdempotencyKey(bin2hex(random_bytes(16))),
-    new CreateOrderInputDto($expired->quoteToken, $lines, $input->buyer),
+    new CreateOrderInputDto($expired->quoteToken, $lines, $input->buyer, $consents),
 ));
 $proof[] = 'replay after closure, closed group and expired quote';
 

@@ -176,4 +176,34 @@ try {
 }
 $check(!$accepted, 'CHECK accepted a curator reply without mid');
 
+// 5. OPS-login-feedback: the guest request from the login page is one pending reply in the same outbox, with the contact
+// for curators; a repeat keeps the number, curators see a guest text, and a MAX reply to it is not stored as history.
+$feedbackNumber = (int)($secrets['feedbackNumber'] ?? 0);
+$feedbackKey = (string)($secrets['feedbackKey'] ?? '');
+$guest = $connection->query("SELECT ID,AUTHOR_NAME,CONTEXT,KEY_HASH,GROUP_ID,STAFF_USER_ID FROM mf_support_question WHERE AUTHOR='guest' AND ID={$feedbackNumber}")->fetch();
+$check(false !== $guest && 'K3 Гость' === $guest['AUTHOR_NAME'] && null === $guest['KEY_HASH'] && null === $guest['GROUP_ID'] && null === $guest['STAFF_USER_ID'], 'guest request');
+$check('Страница входа в кабинет · контакт: k3-guest@example.invalid' === $guest['CONTEXT'], 'guest contact for curators');
+$check(['guest|Не пришло приглашение в кабинет.|pending'] === $column("SELECT CONCAT(AUTHOR,'|',BODY,'|',DELIVERY_STATUS) FROM mf_support_message WHERE QUESTION_ID={$feedbackNumber}"), 'one pending guest reply after a lost answer');
+$feedback = ['name' => 'K3 Гость', 'contact' => 'k3-guest@example.invalid', 'message' => 'Не пришло приглашение в кабинет.'];
+[$status, $body] = $http('POST', '/api/v1/public/feedback', $feedback, ['Idempotency-Key: ' . $feedbackKey]);
+$check(202 === $status && $feedbackNumber === ($body['data']['number'] ?? null), 'repeat keeps the number');
+[$status, $body] = $http('POST', '/api/v1/public/feedback', ['message' => 'Другой текст'] + $feedback, ['Idempotency-Key: ' . $feedbackKey]);
+$check(409 === $status && 'IDEMPOTENCY_CONFLICT' === ($body['error']['code'] ?? null), 'another body with the same key conflicts');
+[$status, $body] = $http('POST', '/api/v1/public/feedback', ['contact' => 'Ольга'] + $feedback, ['Idempotency-Key: ' . str_repeat('c', 32)]);
+$check(422 === $status && 'INVALID_FEEDBACK_CONTACT' === ($body['error']['code'] ?? null), 'contact is required to answer');
+$check(['1'] === $column("SELECT COUNT(*) FROM mf_support_message WHERE QUESTION_ID={$feedbackNumber}"), 'HTTP repeats added nothing');
+$guestMessageId = (int)$column("SELECT ID FROM mf_support_message WHERE QUESTION_ID={$feedbackNumber}")[0];
+$max->outcomes = [new MaxChatSendOutputDto(MaxSendStatusEnum::DELIVERED, 'mid.k3.guest')];
+$deliver->execute($guestMessageId);
+$check(str_starts_with($max->sent[3]->text, 'Обращение №' . $feedbackNumber . ' · гость «K3 Гость»') && str_contains($max->sent[3]->text, 'k3-guest@example.invalid'), 'guest text for curators');
+[$status] = $http('POST', '/api/v1/webhooks/max/updates', $reply('mid.k3.guest-reply', 'mid.k3.guest', $chatId), ['X-Max-Bot-Api-Secret: ' . $secret]);
+$check(200 === $status && ['0'] === $column("SELECT COUNT(*) FROM mf_support_message WHERE QUESTION_ID={$feedbackNumber} AND AUTHOR='curator'"), 'reply to a guest is not stored');
+$accepted = true;
+try {
+    $connection->queryExecute("INSERT INTO mf_support_question(AUTHOR,GROUP_ID,AUTHOR_NAME,CONTEXT,CREATED_AT,LAST_MESSAGE_AT) VALUES('guest'," . (int)$parent['GROUP_ID'] . ",'X','Y',UTC_TIMESTAMP(),UTC_TIMESTAMP())");
+} catch (Throwable) {
+    $accepted = false;
+}
+$check(!$accepted, 'CHECK accepted a guest request bound to a group');
+
 echo 'K3 support integration passed' . PHP_EOL;

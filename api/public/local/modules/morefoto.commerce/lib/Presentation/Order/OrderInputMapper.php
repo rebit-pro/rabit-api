@@ -13,13 +13,14 @@ use Morefoto\Commerce\Domain\Order\ValueObject\IdempotencyKey;
 use Morefoto\Commerce\Presentation\Order\Dto\CreateOrderRequestDto;
 use Morefoto\Commerce\Presentation\Order\Dto\StaffOrderListRequestDto;
 use Morefoto\Commerce\Presentation\Storefront\StorefrontMapper;
+use Rebit\Share\Presentation\Consent\AcceptedDocumentInputMapper;
 use Rebit\Share\Shared\Exception\HttpException;
 
 final readonly class OrderInputMapper
 {
     private const string UUID = '/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/D';
 
-    public function __construct(private StorefrontMapper $storefront) {}
+    public function __construct(private StorefrontMapper $storefront, private AcceptedDocumentInputMapper $consents) {}
 
     public function key(CreateOrderRequestDto $request): IdempotencyKey
     {
@@ -34,6 +35,7 @@ final readonly class OrderInputMapper
             $request->quoteToken,
             $this->storefront->lines($request->lines),
             new OrderBuyerInputDto($buyer->name, $buyer->phone, $buyer->email, $buyer->comment, $buyer->receiptChannel, $buyer->reviewed),
+            $this->consents->documents($request->consents),
         );
     }
 

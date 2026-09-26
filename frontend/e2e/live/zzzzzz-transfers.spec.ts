@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { crc32, deflateSync } from 'node:zlib';
 import { test, expect, type APIResponse, type Browser, type Page, type Response, type Route } from '@playwright/test';
-import { login, token } from './helpers.js';
+import { login, orderConsents, token } from './helpers.js';
 
 type Media = {
   items: { id: string; status: string; groupId: string; assignments: { childCode: string; sequence: number; code: string }[] }[];
@@ -398,7 +398,7 @@ test('D3: куратор переносит детей сотрудника по
     const created = await body(
       await page.request.post(path + '/orders', {
         headers: { 'Idempotency-Key': idempotencyKey },
-        data: { lines, buyer, quoteToken: priced.quoteToken }
+        data: { lines, buyer, quoteToken: priced.quoteToken, consents: await orderConsents(page) }
       }),
       201
     );
@@ -542,7 +542,7 @@ test('D3: куратор переносит детей сотрудника по
     ]);
     const staleCart = await page.request.post(gallery + '/orders', {
       headers: { 'Idempotency-Key': key() },
-      data: { lines: cartLines, buyer, quoteToken: cart.quoteToken }
+      data: { lines: cartLines, buyer, quoteToken: cart.quoteToken, consents: await orderConsents(page) }
     });
     expect([409, 422]).toContain(staleCart.status());
     expect(['INVALID_CART', 'QUOTE_STALE']).toContain((await staleCart.json()).error.code);

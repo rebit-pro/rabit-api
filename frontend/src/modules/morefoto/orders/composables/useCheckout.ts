@@ -74,5 +74,21 @@ function useDemoCheckout(gallery: GallerySnapshot, token: string) {
       busy.value = false;
     }
   }
-  return { quote, catalog, draft, busy, error, errors, oldTotal, capabilities, previous, canSubmit, recovering: shallowRef(false), submit };
+  // The demo has no published documents, so its checkout shows no consent checkboxes.
+  return {
+    quote,
+    catalog,
+    draft,
+    busy,
+    error,
+    errors,
+    oldTotal,
+    capabilities,
+    previous,
+    canSubmit,
+    recovering: shallowRef(false),
+    submit,
+    consents: null,
+    legal: shallowRef(null)
+  };
 }

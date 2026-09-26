@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { test, expect, type APIResponse, type Browser, type Page } from '@playwright/test';
-import { login, password, token } from './helpers.js';
+import { login, orderConsents, password, token } from './helpers.js';
 
 type Fixture = Record<'open' | 'preparing' | 'closed' | 'revoked', { token: string; groupId: string; photoId: string }>;
 type Product = {
@@ -199,7 +199,7 @@ test('E6: расходы на оплату меняют цену витрины,
   const changed = await body(
     await page.request.post(gallery + '/orders', {
       headers: { 'Idempotency-Key': orderKey },
-      data: { lines, buyer, quoteToken: stale.quoteToken }
+      data: { lines, buyer, quoteToken: stale.quoteToken, consents: await orderConsents(page) }
     }),
     409
   );
@@ -211,7 +211,7 @@ test('E6: расходы на оплату меняют цену витрины,
     await body(
       await page.request.post(gallery + '/orders', {
         headers: { 'Idempotency-Key': createKey },
-        data: { lines, buyer, quoteToken: changed.error.details.quoteToken }
+        data: { lines, buyer, quoteToken: changed.error.details.quoteToken, consents: await orderConsents(page) }
       }),
       201
     )

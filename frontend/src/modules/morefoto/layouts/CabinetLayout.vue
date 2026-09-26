@@ -12,6 +12,8 @@ import MfLogo from '@/components/brand/MfLogo.vue';
 import MfAvatar from '@/components/avatar/MfAvatar.vue';
 import { avatarSeed } from '@/components/avatar/avatar';
 import MfUserMenu from '@/components/shell/MfUserMenu.vue';
+import StaffConsentDialog from '@/modules/morefoto/legal/components/StaffConsentDialog.vue';
+import CookieNotice from '@/modules/morefoto/legal/components/CookieNotice.vue';
 
 const auth = useAuthStore();
 const route = useRoute();
@@ -126,6 +128,7 @@ watch(
       </nav>
     </v-navigation-drawer>
     <v-main>
+      <CookieNotice />
       <main id="cabinet-main" class="mf-main" tabindex="-1">
         <div v-if="isMockApiEnabled" class="mf-demo-note" role="note">
           <v-icon icon="mdi-flask-outline" size="18" />
@@ -134,6 +137,7 @@ watch(
         <RouterView />
       </main>
     </v-main>
+    <StaffConsentDialog />
   </v-app>
 </template>
 

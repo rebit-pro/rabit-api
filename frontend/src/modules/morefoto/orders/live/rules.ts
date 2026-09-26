@@ -15,7 +15,9 @@ const fieldCodes: Record<string, [keyof BuyerErrors, string]> = {
   INVALID_BUYER_EMAIL: ['email', 'Укажите email в формате name@example.ru.'],
   INVALID_BUYER_COMMENT: ['comment', 'Комментарий — не более 1000 символов.'],
   REVIEW_REQUIRED: ['reviewed', 'Подтвердите, что проверили состав заказа.'],
-  RECEIPT_CHANNEL_UNAVAILABLE: ['receiptChannel', 'Этот канал чека сейчас не подключён.']
+  RECEIPT_CHANNEL_UNAVAILABLE: ['receiptChannel', 'Этот канал чека сейчас не подключён.'],
+  // The server rolls the order back, so the key stays unused; the documents are reloaded for a fresh acceptance.
+  CONSENT_REQUIRED: ['consent', 'Документы обновились. Откройте их и подтвердите согласие и оферту ещё раз.']
 };
 
 /**

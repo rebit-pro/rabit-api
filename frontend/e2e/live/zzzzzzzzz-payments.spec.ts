@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { test, expect, type APIResponse, type Browser, type Page } from '@playwright/test';
-import { login, token } from './helpers.js';
+import { login, orderConsents, token } from './helpers.js';
 
 // G1: payment of an existing order through the YooKassa test shop. The runner passes E2E_YOOKASSA=1 only when the
 // test shop keys are present; without them the same spec proves the honest disabled state.
@@ -65,7 +65,7 @@ async function placeOrder(page: Page): Promise<Created> {
     await body(
       await page.request.post(gallery + '/orders', {
         headers: { 'Idempotency-Key': idempotencyKey },
-        data: { lines, buyer, quoteToken: priced.quoteToken }
+        data: { lines, buyer, quoteToken: priced.quoteToken, consents: await orderConsents(page) }
       }),
       201
     )

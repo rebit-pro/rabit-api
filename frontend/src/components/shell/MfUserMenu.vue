@@ -25,6 +25,9 @@ defineEmits<{ logout: [] }>();
       <v-btn :to="profileTo" variant="text" color="secondary" block prepend-icon="mdi-account-outline" class="mf-user-menu__action"
         >Профиль</v-btn
       >
+      <v-btn to="/legal" variant="text" color="secondary" block prepend-icon="mdi-file-document-outline" class="mf-user-menu__action"
+        >Документы</v-btn
+      >
       <v-btn variant="text" color="secondary" block prepend-icon="mdi-logout" class="mf-user-menu__action" @click="$emit('logout')"
         >Выйти</v-btn
       >

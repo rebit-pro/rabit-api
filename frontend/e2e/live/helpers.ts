@@ -45,6 +45,22 @@ export async function saveProduct(page: Page, method: 'POST' | 'PATCH' = 'POST',
   expect((await response).status()).toBe(status);
   if (status < 300) await expect(page.getByTestId('admin-dialog')).not.toBeVisible();
 }
+/** Current versions of the buyer consent and the offer that every order must carry (OPS legal). */
+export async function orderConsents(page: Page): Promise<{ code: string; version: string }[]> {
+  const response = await page.request.get('/api/v1/public/legal/documents');
+  expect(response.status()).toBe(200);
+  const documents = (await response.json()).data.documents as { code: string; version: string }[];
+  return ['buyer-consent', 'offer'].map((code) => {
+    const document = documents.find((item) => item.code === code);
+    if (!document) throw new Error('Legal document is not published: ' + code);
+    return { code, version: document.version };
+  });
+}
+/** Ticks the separate consent and offer checkboxes of a live checkout. */
+export async function acceptCheckoutDocuments(page: Page): Promise<void> {
+  await page.getByLabel('Даю согласие на обработку персональных данных').check();
+  await page.getByLabel('Принимаю условия публичной оферты').check();
+}
 export async function token(page: Page): Promise<string> {
   const value = await page.evaluate(() => localStorage.getItem('morefoto:live:auth:token'));
   expect(value).toBeTruthy();

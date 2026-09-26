@@ -23,6 +23,9 @@ use Rebit\Auth\Domain\Access\Service\EmailMask;
 use Rebit\Auth\Domain\Access\Service\PasswordPolicy;
 use Rebit\Auth\Tests\Support\FrozenClock;
 use Rebit\Auth\Tests\Support\ImmediateTransaction;
+use Rebit\Auth\Tests\Support\RecordingConsents;
+use Rebit\Share\Application\Contract\Consent\Dto\AcceptedDocumentDto;
+use Rebit\Share\Application\Contract\Consent\Enum\ConsentContextEnum;
 use Rebit\Share\Shared\Exception\HttpException;
 
 require_once __DIR__ . '/AccessFakes.php';
@@ -39,6 +42,7 @@ final class AccessUseCasesTest extends TestCase
     private RecordingAccessMailer $mailer;
     private RecordingSessions $sessions;
     private IssueAccessInvitationUseCase $issue;
+    private RecordingConsents $consents;
 
     protected function setUp(): void
     {
@@ -46,6 +50,7 @@ final class AccessUseCasesTest extends TestCase
         $this->links = new InMemoryAccessLinks();
         $this->mailer = new RecordingAccessMailer();
         $this->sessions = new RecordingSessions();
+        $this->consents = new RecordingConsents();
         $this->issue = new IssueAccessInvitationUseCase(
             $this->accounts,
             $this->links,
@@ -124,18 +129,30 @@ final class AccessUseCasesTest extends TestCase
         $token = $this->mailer->sent[0][1]->token;
         $accept = $this->accept();
 
-        $this->assertHttpError('PASSWORD_WEAK', 422, fn() => $accept->execute(new AcceptInvitationInputDto($token, 'short')));
-        $this->assertHttpError('PASSWORD_WEAK', 422, fn() => $accept->execute(new AcceptInvitationInputDto($token, 'anna@example.invalid')));
+        $this->assertHttpError('PASSWORD_WEAK', 422, fn() => $accept->execute(new AcceptInvitationInputDto($token, 'short', self::consents())));
+        $this->assertHttpError('PASSWORD_WEAK', 422, fn() => $accept->execute(new AcceptInvitationInputDto($token, 'anna@example.invalid', self::consents())));
         self::assertFalse($this->accounts->accounts[7]->active);
 
-        $login = $accept->execute(new AcceptInvitationInputDto($token, 'correct horse battery'));
+        $login = $accept->execute(new AcceptInvitationInputDto($token, 'correct horse battery', self::consents()));
 
         self::assertTrue($this->accounts->accounts[7]->active);
         self::assertFalse($this->accounts->accounts[7]->pending);
         self::assertTrue(password_verify('correct horse battery', $this->accounts->accounts[7]->passwordHash));
         self::assertSame($login->token, $this->sessions->tokens[7]);
         self::assertNotNull($this->links->links['7:invite']->usedAt);
-        $this->assertHttpError('LINK_USED', 410, fn() => $accept->execute(new AcceptInvitationInputDto($token, 'another good password')));
+        self::assertSame([[ConsentContextEnum::STAFF, 7, 1]], $this->consents->records);
+        $this->assertHttpError('LINK_USED', 410, fn() => $accept->execute(new AcceptInvitationInputDto($token, 'another good password', self::consents())));
+    }
+
+    public function testAcceptWithoutConsentKeepsTheInvitationPending(): void
+    {
+        $this->issue->execute(7, 1);
+        $token = $this->mailer->sent[0][1]->token;
+
+        $this->assertHttpError('CONSENT_REQUIRED', 422, fn() => $this->accept()->execute(new AcceptInvitationInputDto($token, 'correct horse battery', [])));
+
+        self::assertFalse($this->accounts->accounts[7]->active);
+        self::assertNull($this->links->links['7:invite']->usedAt);
     }
 
     public function testResetAnswersTheSameForUnknownAddressAndSendsOnlyToKnown(): void
@@ -214,7 +231,14 @@ final class AccessUseCasesTest extends TestCase
             $this->sessionIssuer(),
             new FrozenClock(self::NOW),
             new ImmediateTransaction(),
+            $this->consents,
         );
+    }
+
+    /** @return list<AcceptedDocumentDto> */
+    private static function consents(): array
+    {
+        return [new AcceptedDocumentDto('staff-consent', '2026-09-25')];
     }
 
     private function requestReset(): RequestPasswordResetUseCase

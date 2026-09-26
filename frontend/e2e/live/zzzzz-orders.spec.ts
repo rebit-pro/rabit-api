@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { test, expect, type APIResponse, type Browser, type Page } from '@playwright/test';
-import { login, password, token } from './helpers.js';
+import { acceptCheckoutDocuments, login, orderConsents, password, token } from './helpers.js';
 
 type Fixture = Record<'open' | 'preparing' | 'closed' | 'revoked', { token: string; groupId: string; photoId: string }>;
 type Line = { assignmentId: string; productId: string; quantity: number };
@@ -122,7 +122,7 @@ test.beforeAll(async ({ browser }) => {
 test('E5: checkout is idempotent, keeps one order per quote and hides secrets', async ({ page }) => {
   const lines = [{ assignmentId: assignment, productId: printId, quantity: 1 }];
   const priced = await quote(page, lines);
-  const data = { lines, buyer, quoteToken: priced.quoteToken };
+  const data = { lines, buyer, quoteToken: priced.quoteToken, consents: await orderConsents(page) };
   await body(await page.request.post(gallery() + '/orders', { data }), 422);
   const replayKey = key();
   const response = await order(page, data, replayKey);
@@ -173,7 +173,7 @@ test('E5: checkout is idempotent, keeps one order per quote and hides secrets', 
 test('E5: checkout rejects closed, unready, revoked, invalid and repriced requests', async ({ page }) => {
   const lines = [{ assignmentId: assignment, productId: printId, quantity: 2 }];
   const priced = await quote(page, lines);
-  const data = { lines, buyer, quoteToken: priced.quoteToken };
+  const data = { lines, buyer, quoteToken: priced.quoteToken, consents: await orderConsents(page) };
   expect((await body(await order(page, data, key(), 'closed'), 409)).error.code).toBe('GALLERY_CLOSED');
   expect((await body(await order(page, data, key(), 'preparing'), 409)).error.code).toBe('GALLERY_NOT_READY');
   expect((await body(await order(page, data, key(), 'revoked'), 404)).error.code).toBe('GALLERY_NOT_FOUND');
@@ -181,6 +181,9 @@ test('E5: checkout rejects closed, unready, revoked, invalid and repriced reques
     [{ buyer: { ...buyer, email: 'broken' } }, 'INVALID_BUYER_EMAIL'],
     [{ buyer: { ...buyer, reviewed: false } }, 'REVIEW_REQUIRED'],
     [{ buyer: { ...buyer, receiptChannel: 'email' } }, 'RECEIPT_CHANNEL_UNAVAILABLE'],
+    // OPS legal: without the separate consent and offer, or with an outdated version, nothing is stored.
+    [{ consents: [] }, 'CONSENT_REQUIRED'],
+    [{ consents: data.consents.map((consent) => ({ ...consent, version: '2000-01-01' })) }, 'CONSENT_REQUIRED'],
     [{ buyer: { ...buyer, discount: 100 } }, 'UNKNOWN_FIELD'],
     [{ total: 1 }, 'UNKNOWN_FIELD']
   ] as const)
@@ -436,7 +439,8 @@ for (const viewport of [
     await page.getByRole('textbox', { name: 'Имя покупателя', exact: true }).fill('Мария ' + viewport.name);
     await page.locator('[name="buyer-phone"]').fill('+7 900 555-03-04');
     await page.getByRole('textbox', { name: 'Email', exact: true }).fill(viewport.name + '.e5@example.test');
-    await page.getByLabel('Состав и демонстрационные условия проверены').check();
+    await page.getByLabel('Состав заказа проверен').check();
+    await acceptCheckoutDocuments(page);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: info.outputPath('e5-' + viewport.name + '-checkout.png'), fullPage: true, animations: 'disabled' });
     const created = page.waitForResponse((r) => r.url().endsWith('/orders') && r.request().method() === 'POST');
@@ -498,7 +502,8 @@ async function fillCheckout(page: Page, name: string, email: string, quantity: n
   await page.getByRole('textbox', { name: 'Имя покупателя', exact: true }).fill(name);
   await page.locator('[name="buyer-phone"]').fill('+7 900 555-05-06');
   await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
-  await page.getByLabel('Состав и демонстрационные условия проверены').check();
+  await page.getByLabel('Состав заказа проверен').check();
+  await acceptCheckoutDocuments(page);
 }
 /**
  * Recovers an unconfirmed attempt on its own screen and proves the server replayed the one stored order. `whilePending`
@@ -634,7 +639,8 @@ test('E5: changed price at checkout asks the buyer to confirm the new total', as
   await page.getByRole('textbox', { name: 'Имя покупателя', exact: true }).fill('Новая цена');
   await page.locator('[name="buyer-phone"]').fill('+7 900 555-07-08');
   await page.getByRole('textbox', { name: 'Email', exact: true }).fill('price.e5@example.test');
-  await page.getByLabel('Состав и демонстрационные условия проверены').check();
+  await page.getByLabel('Состав заказа проверен').check();
+  await acceptCheckoutDocuments(page);
   const context = await browser.newContext({ baseURL });
   const organizer = await context.newPage();
   await login(organizer);
@@ -643,8 +649,8 @@ test('E5: changed price at checkout asks the buyer to confirm the new total', as
     await page.getByTestId('create-order').click();
     await expect(page.locator('#checkout-error')).toContainText('Цена изменилась');
     await expect(page.locator('#checkout-error')).toContainText('Новый итог');
-    await expect(page.getByLabel('Состав и демонстрационные условия проверены')).not.toBeChecked();
-    await page.getByLabel('Состав и демонстрационные условия проверены').check();
+    await expect(page.getByLabel('Состав заказа проверен')).not.toBeChecked();
+    await page.getByLabel('Состав заказа проверен').check();
     const created = page.waitForResponse((r) => r.url().endsWith('/orders') && r.request().method() === 'POST');
     await page.getByTestId('create-order').click();
     const payload = await (await created).json();
