@@ -18,16 +18,19 @@ final readonly class ZipArchiveBuilder implements ArchiveBuilderInterface
         }
         $temporary = $target . '.' . bin2hex(random_bytes(8)) . '.tmp';
         $zip = new \ZipArchive();
+        $open = false;
         try {
             if (true !== $zip->open($temporary, \ZipArchive::CREATE | \ZipArchive::EXCL)) {
                 throw new FilesStorageException('Cannot open archive.');
             }
+            $open = true;
             foreach ($files as $file) {
                 if (!is_file($file->absolutePath) || !$zip->addFile($file->absolutePath, $file->filename)
                     || !$zip->setCompressionName($file->filename, \ZipArchive::CM_STORE)) {
                     throw new FilesStorageException('Cannot add original to archive.');
                 }
             }
+            $open = false;
             if (!$zip->close()) {
                 throw new FilesStorageException('Cannot write archive.');
             }
@@ -39,6 +42,11 @@ final readonly class ZipArchiveBuilder implements ArchiveBuilderInterface
 
             return $bytes;
         } finally {
+            if ($open) {
+                // Otherwise the ZipArchive destructor would still write the partial archive to disk.
+                $zip->unchangeAll();
+                $zip->close();
+            }
             if (is_file($temporary)) {
                 @unlink($temporary);
             }
