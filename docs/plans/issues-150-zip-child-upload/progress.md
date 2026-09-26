@@ -3,7 +3,7 @@
 ## Точка продолжения
 
 - Ветка: `codex/issues-150-zip-child-upload`, base main `41b1146eaa7525febb5d5143d30b1dc393cd3d44`.
-- Issue: https://github.com/rebit-pro/rabit-api/issues/150. PR: плановый, draft (ссылка — в описании ветки на GitHub).
+- Issue: https://github.com/rebit-pro/rabit-api/issues/150. PR: https://github.com/rebit-pro/rabit-api/pull/151 (draft, только план).
 - Документация: `docs/plans/issues-150-zip-child-upload/plan.md`.
 - Завершено: разбор текущего потока загрузки/разметки, issue, план с решениями ZIP-DEC-01…06.
 - Сейчас: ожидание ответа пользователя по ZIP-DEC-02 (кириллица) и ZIP-DEC-03 (`АА`/`ББ`), архив пользователя
