@@ -7,9 +7,11 @@ import AdminDialog from '../../management/components/AdminDialog.vue';
 import { groupStateSegments } from '../../ui/groupStates';
 import StructureFields from './StructureFields.vue';
 import StructureList from './StructureList.vue';
+import StructureRemoveDialog from './StructureRemoveDialog.vue';
 import ShootTabs from './ShootTabs.vue';
 import { useStructurePage } from '../useStructurePage';
 import { useStructureEditor } from '../useStructureEditor';
+import { structureApi, structureRemovalError } from '../api';
 import type { StructureItem, StructureScope } from '../model';
 const props = defineProps<{ scope: StructureScope }>();
 const auth = useAuthStore();
@@ -82,10 +84,37 @@ const emptyText = computed(() =>
         }[props.scope.kind]
       : 'Организатор ещё не добавил записи или не назначил вам учреждения.'
 );
+// The institution list removes one institution at a time (#92 DEC-05); shoots and groups are removed on the institution page.
+const removable = computed(() => canManage.value && props.scope.kind === 'institution');
+const removal = shallowRef<StructureItem | null>(null);
+const removing = shallowRef(false);
+const removeError = shallowRef('');
 function edit(item?: StructureItem): void {
   if (canManage.value && !disabled.value) {
     notice.value = '';
+    removeError.value = '';
     editor.open(props.scope.kind, item);
+  }
+}
+function askRemove(item: StructureItem): void {
+  if (!removable.value || disabled.value) return;
+  notice.value = '';
+  removeError.value = '';
+  removal.value = item;
+}
+async function confirmRemove(): Promise<void> {
+  const item = removal.value;
+  if (!item) return;
+  removing.value = true;
+  try {
+    await structureApi.remove('institution', item.id);
+    notice.value = 'Учреждение «' + item.name + '» удалено.';
+    await reload();
+  } catch (cause) {
+    removeError.value = item.name + ': ' + structureRemovalError(cause);
+  } finally {
+    removing.value = false;
+    removal.value = null;
   }
 }
 function editShoot(): void {
@@ -126,6 +155,7 @@ function editShoot(): void {
   </form>
   <v-progress-linear v-if="loading" indeterminate aria-label="Загрузка структуры" class="mb-5" />
   <v-alert v-if="error" type="error" variant="tonal" role="alert" class="mb-5">{{ error }}</v-alert>
+  <v-alert v-if="removeError" type="error" variant="tonal" role="alert" class="mb-5">{{ removeError }}</v-alert>
   <v-alert v-if="notice" type="success" variant="tonal" role="status" class="mb-5">{{ notice }}</v-alert>
   <section v-if="snapshot && !error" aria-label="Записи структуры">
     <h2 v-if="scope.kind === 'group'" class="mb-4">Группы</h2>
@@ -141,8 +171,10 @@ function editShoot(): void {
       :empty-title="emptyTitle"
       :empty-text="emptyText"
       :create-label="canManage && !query.trim() ? createLabel : ''"
+      :removable="removable"
       @edit="edit"
       @create="edit()"
+      @remove="askRemove"
     />
     <nav v-if="pages > 1" class="mf-actions mt-5" aria-label="Страницы структуры">
       <v-btn variant="outlined" :disabled="loading || page === 1" @click="reload(page - 1)">Предыдущая</v-btn>
@@ -150,6 +182,13 @@ function editShoot(): void {
       <v-btn variant="outlined" :disabled="loading || page === pages" @click="reload(page + 1)">Следующая</v-btn>
     </nav>
   </section>
+  <StructureRemoveDialog
+    :kind="removal ? 'institution' : null"
+    :names="removal ? [removal.name] : []"
+    :busy="removing"
+    @confirm="confirmRemove"
+    @close="removal = null"
+  />
   <AdminDialog
     :open="!!draft"
     :title="title"

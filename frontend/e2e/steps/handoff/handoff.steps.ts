@@ -86,6 +86,13 @@ async function login(p: Page, base: string, role = 'organizer') {
   await p.getByTestId('login-submit').click();
   await expect(p).toHaveURL(/cabinet/);
 }
+/** A row of the links table; the desktop row and the mobile card share the ID, only the shown one counts. */
+const row = (p: Page, id: string) => p.locator('[data-row-id="' + id + '"]').filter({ visible: true });
+const rows = (p: Page) => p.locator('[data-row-id]').filter({ visible: true });
+async function menu(p: Page, group: string, action: string) {
+  await p.getByRole('button', { name: 'Действия: ' + group, exact: true }).click();
+  await p.getByRole('button', { name: action, exact: true }).click();
+}
 async function go(p: Page, base: string, path = linkPath) {
   await p.goto(base + path, { waitUntil: 'networkidle' });
 }
@@ -101,7 +108,7 @@ async function save(p: Page, label: string) {
 }
 async function ready(p: Page, base: string) {
   await go(p, base);
-  await p.getByRole('button', { name: 'Проверить ссылку', exact: true }).click();
+  await p.getByRole('button', { name: /^Проверить ссылку: / }).click();
   for (const name of [
     'Фотографии и коды проверены',
     'Продукция, цены и условия группы проверены',
@@ -109,10 +116,10 @@ async function ready(p: Page, base: string) {
   ])
     await p.getByLabel(name, { exact: true }).check();
   await save(p, 'Проверить ссылку');
-  await expect(p.getByRole('button', { name: 'Отметить передачу', exact: true })).toBeVisible();
+  await expect(p.getByRole('button', { name: /^Передать ссылку: / })).toBeVisible();
 }
 async function transmit(p: Page) {
-  await p.getByRole('button', { name: 'Отметить передачу', exact: true }).click();
+  await p.getByRole('button', { name: /^Передать ссылку: / }).click();
   await p.getByLabel('Дата и время передачи (МСК)', { exact: true }).fill('2026-09-07T10:15');
   await p.getByLabel('Подтверждаю факт передачи и указанные сроки', { exact: true }).check();
   await save(p, 'Отметить передачу ссылки');
@@ -180,8 +187,8 @@ Then('R10 проверяет {string}', async function (this: CustomWorld, name:
   } else if (name === 'копирование не запускает срок') {
     await this.context!.grantPermissions(['clipboard-read', 'clipboard-write']);
     const before = await org(p);
-    await p.getByRole('button', { name: 'Копировать ссылку', exact: true }).click();
-    await expect(p.getByRole('status')).toContainText('Дата передачи не изменена');
+    await menu(p, 'Звёздочки', 'Копировать ссылку');
+    await expect(p.getByRole('status').filter({ hasText: 'Дата передачи не изменена' })).toBeVisible();
     expect(await org(p)).toEqual(before);
     expect(await p.evaluate(() => navigator.clipboard.readText())).toBe(base + '/g/' + token);
   } else if (name === 'исправление сохраняет историю') {
@@ -189,13 +196,13 @@ Then('R10 проверяет {string}', async function (this: CustomWorld, name:
     await transmit(p);
     await login(p, base, 'curator');
     await go(p, base);
-    await p.getByRole('button', { name: 'Исправить дату', exact: true }).click();
+    await menu(p, 'Звёздочки', 'Исправить дату передачи');
     await p.getByLabel('Дата и время передачи (МСК)').fill('2026-08-30T09:00');
     await p.getByLabel('Причина исправления').fill('Уточнено время передачи родителям');
     await p.getByLabel('Подтверждаю факт передачи и указанные сроки').check();
     await expect(p.getByRole('dialog')).toContainText('До исправления');
     await save(p, 'Исправить дату передачи');
-    await expect(p.getByTestId('link-sun-stars')).toContainText('Приём завершён');
+    await expect(row(p, 'sun-stars')).toContainText('Приём завершён');
     const g = (await org(p)).groups[0]!;
     expect(g.linkHistory![g.linkHistory!.length - 1]!.previousClosesAt).toBe('2026-09-14T07:15:00.000Z');
     expect(g.closesAt).toBe('2026-09-06T06:00:00.000Z');
@@ -204,7 +211,7 @@ Then('R10 проверяет {string}', async function (this: CustomWorld, name:
     await expect(p.getByTestId('add-to-cart')).toHaveCount(0);
   } else if (name === 'будущая дата и подтверждение') {
     await ready(p, base);
-    await p.getByRole('button', { name: 'Отметить передачу', exact: true }).click();
+    await p.getByRole('button', { name: /^Передать ссылку: / }).click();
     await p.getByLabel('Дата и время передачи (МСК)').fill('2026-09-08T12:00');
     await p.getByRole('button', { name: 'Отметить передачу ссылки', exact: true }).click();
     await expect(p.getByLabel('Дата и время передачи (МСК)')).toBeFocused();
@@ -212,7 +219,7 @@ Then('R10 проверяет {string}', async function (this: CustomWorld, name:
     expect((await org(p)).groups[0]!.sentAt).toBeUndefined();
   } else if (name === 'черновик и повтор после ошибки') {
     await ready(p, base);
-    const opener = p.getByRole('button', { name: 'Отметить передачу', exact: true });
+    const opener = p.getByRole('button', { name: /^Передать ссылку: / });
     await opener.click();
     await p.getByLabel('Дата и время передачи (МСК)').fill('2026-09-06T08:00');
     await p.getByRole('button', { name: 'Отмена', exact: true }).click();
@@ -235,13 +242,13 @@ Then('R10 проверяет {string}', async function (this: CustomWorld, name:
     await p.getByLabel('Цена, ₽', { exact: true }).fill('275');
     await save(p, 'Сохранить');
     await go(p, base);
-    await expect(p.getByRole('button', { name: 'Отметить передачу', exact: true })).toHaveCount(0);
-    await expect(p.getByTestId('link-sun-stars')).toContainText('Требует проверки');
+    await expect(p.getByRole('button', { name: /^Передать ссылку: / })).toHaveCount(0);
+    await expect(row(p, 'sun-stars')).toContainText('Требует проверки');
   } else if (name === 'устаревшая передача не перезапускает срок') {
     await ready(p, base);
     const other = await this.context!.newPage();
     await go(other, base);
-    await other.getByRole('button', { name: 'Отметить передачу', exact: true }).click();
+    await other.getByRole('button', { name: /^Передать ссылку: / }).click();
     await other.getByLabel('Дата и время передачи (МСК)').fill('2026-09-06T08:00');
     await other.getByLabel('Подтверждаю факт передачи и указанные сроки').check();
     await transmit(p);
@@ -252,30 +259,30 @@ Then('R10 проверяет {string}', async function (this: CustomWorld, name:
   } else if (name === 'руководитель только читает') {
     await login(p, base, 'head');
     await go(p, base, '/cabinet/links');
-    await expect(p.locator('[data-testid^="link-"]')).toHaveCount(2);
-    await expect(p.getByRole('button', { name: 'Проверить ссылку', exact: true })).toHaveCount(0);
-    await expect(p.getByRole('button', { name: 'Отметить передачу', exact: true })).toHaveCount(0);
+    await expect(rows(p)).toHaveCount(2);
+    await expect(p.getByRole('button', { name: /^Проверить ссылку: / })).toHaveCount(0);
+    await expect(p.getByRole('button', { name: /^Передать ссылку: / })).toHaveCount(0);
     await go(p, base, '/cabinet/staff-requests');
     await expect(p.getByRole('button', { name: 'Новый список', exact: true })).toHaveCount(0);
   } else if (name === 'ответственный видит свои группы') {
     await login(p, base, 'teacher');
     await go(p, base, '/cabinet/links');
-    await expect(p.locator('[data-testid^="link-"]')).toHaveCount(1);
-    await expect(p.getByTestId('link-sun-stars')).toBeVisible();
+    await expect(rows(p)).toHaveCount(1);
+    await expect(row(p, 'sun-stars')).toBeVisible();
     await newRequest(p, base);
     await expect(p.getByRole('dialog')).not.toContainText('Чужой класс');
   } else if (name === 'куратор видит своё учреждение') {
     await login(p, base, 'curator');
     await go(p, base, '/cabinet/links');
-    await expect(p.locator('[data-testid^="link-"]')).toHaveCount(2);
-    await expect(p.getByTestId('link-school-1a')).toHaveCount(0);
+    await expect(rows(p)).toHaveCount(2);
+    await expect(row(p, 'school-1a')).toHaveCount(0);
     await go(p, base, '/cabinet/staff-requests');
     await expect(p.getByRole('button', { name: 'Новый список', exact: true })).toHaveCount(0);
   } else if (name === 'пустой куратор и чужой список') {
     const path = await submit(p, base);
     await login(p, base, 'empty');
     await go(p, base, '/cabinet/links');
-    await expect(p.locator('[data-testid^="link-"]')).toHaveCount(0);
+    await expect(rows(p)).toHaveCount(0);
     await go(p, base, path);
     await expect(p.getByText('Список не найден или недоступен в вашей области.', { exact: true })).toBeVisible();
     await expect(p.getByRole('button', { name: 'Проверить и перенести', exact: true })).toHaveCount(0);
@@ -391,13 +398,13 @@ Then('R10 проверяет {string}', async function (this: CustomWorld, name:
   } else if (name === 'незавершённый список блокирует подготовку') {
     await submit(p, base);
     await go(p, base);
-    await expect(p.getByRole('button', { name: 'Проверить ссылку', exact: true })).toBeDisabled();
-    await expect(p.getByTestId('link-sun-stars')).toContainText('завершите проверку списков');
+    await expect(p.getByRole('button', { name: /^Проверить ссылку: / })).toBeDisabled();
+    await expect(row(p, 'sun-stars')).toContainText('завершите проверку списков');
   } else if (name === 'смена ответственного отбирает действие') {
     await ready(p, base);
     await login(p, base, 'teacher');
     await go(p, base);
-    await p.getByRole('button', { name: 'Отметить передачу', exact: true }).click();
+    await p.getByRole('button', { name: /^Передать ссылку: / }).click();
     await p.getByLabel('Подтверждаю факт передачи и указанные сроки').check();
     const state = await org(p);
     state.groups[0]!.teacherId = null;
@@ -426,7 +433,7 @@ Then('R10 проверяет экран {string} шириной {int}', async fu
   await p.setViewportSize({ width, height: 900 });
   if (screen === 'передача') {
     await ready(p, base);
-    await p.getByRole('button', { name: 'Отметить передачу', exact: true }).click();
+    await p.getByRole('button', { name: /^Передать ссылку: / }).click();
   }
   if (screen === 'список') await newRequest(p, base);
   if (screen === 'проверка' || screen === 'масштаб') {

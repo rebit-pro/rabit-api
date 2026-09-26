@@ -262,8 +262,8 @@ Then('R11 проверяет {string}', async function (this: CustomWorld, name:
     for (const role of ['curator', 'teacher', 'head', 'organizer']) {
       await login(p, base, role);
       await go(p, base, '/cabinet/links?group=sun-stars');
-      await expect(p.getByTestId('link-sun-stars')).toContainText('20 сентября');
-      await expect(p.getByTestId('link-sun-stars')).toContainText('27 сентября');
+      await expect(p.locator('[data-row-id="sun-stars"]').filter({ visible: true })).toContainText('20 сент.');
+      await expect(p.locator('[data-row-id="sun-stars"]').filter({ visible: true })).toContainText('27 сент.');
     }
     await go(p, base, '/orders/access/' + baseOrder.accessKey);
     await expect(p.getByTestId('order-period')).toContainText('20 сентября');
@@ -302,7 +302,8 @@ Then('R11 проверяет {string}', async function (this: CustomWorld, name:
     await casePage(p, base);
     await extend(p);
     await go(p, base, '/cabinet/links?group=sun-stars');
-    await p.getByRole('button', { name: 'Исправить дату', exact: true }).click();
+    await p.getByRole('button', { name: 'Действия: Звёздочки', exact: true }).click();
+    await p.getByRole('button', { name: 'Исправить дату передачи', exact: true }).click();
     await p.getByLabel('Дата и время передачи (МСК)').fill('2026-09-01T10:00');
     await p.getByLabel('Причина исправления').fill('Уточнена первоначальная дата передачи');
     await p.getByLabel('Подтверждаю факт передачи и указанные сроки').check();

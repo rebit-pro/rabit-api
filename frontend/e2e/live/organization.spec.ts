@@ -11,6 +11,10 @@ const edit = (page: Page, name: string) =>
     name: `Редактировать «${name}»`,
     exact: true
   });
+/** Shoots of the institution page (#92): a compact table whose desktop row and mobile card share the ID. */
+const shootRows = (page: Page) => page.getByTestId('institution-shoots').locator('[data-row-id]').filter({ visible: true });
+const editShoot = (page: Page, name: string) =>
+  page.getByTestId('institution-shoots').getByRole('button', { name: 'Изменить ' + name, exact: true });
 const shootPage = (institutionId: string, shootId: string) => `${institutionsPage}/${institutionId}/shoots/${shootId}`;
 
 type Mutation = { id: string; revision: number; assignmentSignature: string };
@@ -124,7 +128,7 @@ test('C3: учреждение, две съёмки и группы сохран
     path: testInfo.outputPath('desktop-shoots.png'),
     fullPage: true
   });
-  await row(page, 'C3 Осень').getByRole('link').click();
+  await page.getByTestId('institution-shoots').getByRole('link', { name: 'C3 Осень', exact: true }).click();
   await openGroup(page, 'C3 Ромашки');
   const regular = await save(page, 'POST', `/api/v1/shoots/${first.id}/groups`);
   await openGroup(page, 'C3 Сотрудники');
@@ -176,7 +180,7 @@ test('C3: очистка даты сохраняет null, переименов�
     date: '2028-02-29'
   });
   await page.goto(`${institutionsPage}/${parent.id}`);
-  await edit(page, 'C3 Дата').click();
+  await editShoot(page, 'C3 Дата').click();
   await page.getByLabel('Дата съёмки', { exact: true }).fill('');
   await save(page, 'PATCH', `/api/v1/shoots/${event.id}`);
   expect(
@@ -206,7 +210,7 @@ test('C3: очистка даты сохраняет null, переименов�
   const persisted = await body(await page.request.get(`/api/v1/shoots/${event.id}`, { headers: await headers(page) }));
   expect(persisted.data.date).toBe('2028-02-29');
   await page.reload();
-  await edit(page, 'C3 Дата после переименования').click();
+  await editShoot(page, 'C3 Дата после переименования').click();
   await expect(page.getByLabel('Дата съёмки', { exact: true })).toHaveValue('2028-02-29');
 });
 
@@ -278,29 +282,29 @@ test('C3: конфликт двух редакторов группы сохра
   }
 });
 
-test('C3: пагинация съёмок и групп читает независимые страницы сервера', async ({ page }) => {
+test('C3: съёмки учреждения листаются в виджете, группы съёмки — страницами сервера', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await login(page);
   const parent = await institution(page, 'C3 Пагинация');
   const events: Mutation[] = [];
   for (let i = 0; i < 26; i++) events.push(await shoot(page, parent.id, `C3 Съёмка ${String(i).padStart(2, '0')}`));
+  const loaded = page.waitForResponse((response) => new URL(response.url()).pathname === `/api/v1/institutions/${parent.id}`);
   await page.goto(`${institutionsPage}/${parent.id}`);
-  await expect(page.getByTestId('structure-row')).toHaveCount(25);
-  let pending = page.waitForResponse(
-    (response) =>
-      new URL(response.url()).pathname === `/api/v1/institutions/${parent.id}` &&
-      new URL(response.url()).searchParams.get('shootsPage') === '2'
-  );
-  await page.getByTestId('institution-shoots').getByRole('button', { name: 'Следующая', exact: true }).click();
-  const shots = (await body(await pending)).data.shoots;
-  expect(shots.meta.page).toBe(2);
-  expect(shots.meta.total).toBe(26);
-  await expect(page.getByTestId('structure-row')).toHaveCount(1);
-  await expect(row(page, shots.items[0].name)).toBeVisible();
+  const shots = (await body(await loaded)).data.shoots;
+  expect(shots.meta).toMatchObject({ page: 1, pageSize: 100, total: 26 });
+  // #92 DEC-06: the widget pages the loaded shoots itself.
+  const range = page.getByTestId('institution-shoots').getByTestId('ui-table-range');
+  await expect(shootRows(page)).toHaveCount(10);
+  await expect(range).toHaveText('1–10 из 26');
+  for (let i = 0; i < 2; i++)
+    await page.getByTestId('institution-shoots').getByRole('button', { name: 'Следующая страница', exact: true }).click();
+  await expect(range).toHaveText('21–26 из 26');
+  await expect(shootRows(page)).toHaveCount(6);
   const event = events[0]!;
   for (let i = 0; i < 26; i++) await group(page, event.id, `C3 Группа ${String(i).padStart(2, '0')}`);
   await page.goto(shootPage(parent.id, event.id));
   await expect(page.getByTestId('structure-row')).toHaveCount(25);
-  pending = page.waitForResponse((response) => response.url().includes(`/shoots/${event.id}?page=2`));
+  const pending = page.waitForResponse((response) => response.url().includes(`/shoots/${event.id}?page=2`));
   await page.getByRole('button', { name: 'Следующая', exact: true }).click();
   const groups = await body(await pending);
   expect(groups.data.groups.meta.page).toBe(2);
@@ -431,9 +435,9 @@ test('C3: куратор и руководитель видят только н�
       await expect(row(viewer, 'C3 Чужая область')).toHaveCount(0);
       await expect(viewer.getByRole('button', { name: 'Новое учреждение', exact: true })).toHaveCount(0);
       await row(viewer, 'C3 Назначенная область').getByRole('link').click();
-      await expect(row(viewer, 'C3 Доступная съёмка')).toBeVisible();
+      await expect(shootRows(viewer).filter({ hasText: 'C3 Доступная съёмка' })).toBeVisible();
       await expect(viewer.getByRole('button', { name: 'Новая съёмка', exact: true })).toHaveCount(0);
-      await expect(edit(viewer, 'C3 Доступная съёмка')).toHaveCount(0);
+      await expect(editShoot(viewer, 'C3 Доступная съёмка')).toHaveCount(0);
       const own = await body(
         await viewer.request.get(`${institutionsApi}/${parent.id}/shoots`, {
           headers: await headers(viewer)

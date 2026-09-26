@@ -9,6 +9,7 @@ use Morefoto\Media\Application\Photo\Contract\OriginalFileLockInterface;
 use Morefoto\Media\Application\Photo\Contract\PreviewRendererInterface;
 use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
 use Morefoto\Media\Application\Photo\Message\Handler\ProcessPhotoMessageHandler;
+use Morefoto\Media\Application\Photo\Service\PhotoFileCleaner;
 use Morefoto\Media\Application\Photo\Service\PhotoRowMapper;
 use Morefoto\Media\Application\Photo\UseCase\AssignPhotosUseCase;
 use Morefoto\Media\Application\Photo\UseCase\ConsumeMediaUseCase;
@@ -26,6 +27,8 @@ use Morefoto\Media\Infrastructure\File\GdPreviewRenderer;
 use Morefoto\Media\Infrastructure\File\LocalPrivatePhotoStorage;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
 use Morefoto\Media\Infrastructure\Handoff\StaffChildReference;
+use Morefoto\Media\Infrastructure\Organization\StructureMediaRemoval;
+use Rebit\Share\Contracts\Media\StructureMediaRemovalInterface;
 use Morefoto\Media\Infrastructure\Messenger\MediaMessengerFactory;
 use Morefoto\Media\Infrastructure\Messenger\MediaPublisher;
 use Morefoto\Media\Presentation\Command\DispatchPendingMediaCommand;
@@ -154,15 +157,26 @@ return [
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(MediaTransactionInterface::class),
             ServiceLocator::getInstance()->get(MediaMutationRepository::class),
-            ServiceLocator::getInstance()->get(PhotoRepository::class),
             ServiceLocator::getInstance()->get(GroupReferenceInterface::class),
             ServiceLocator::getInstance()->get(MediaScopeInterface::class),
             ServiceLocator::getInstance()->get(AccessGuardInterface::class),
+            ServiceLocator::getInstance()->get(PhotoFileCleaner::class),
+        ],
+    ],
+    PhotoFileCleaner::class => [
+        'className' => PhotoFileCleaner::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(PhotoRepository::class),
             ServiceLocator::getInstance()->get(PrivatePhotoStorageInterface::class),
             ServiceLocator::getInstance()->get(OriginalFileLockInterface::class),
             ServiceLocator::getInstance()->get(PreviewRendererInterface::class),
             Log::channel(LogChannelEnum::media),
         ],
+    ],
+    StructureMediaRemovalInterface::class => [
+        'constructor' => static fn(): StructureMediaRemovalInterface => new StructureMediaRemoval(
+            ServiceLocator::getInstance()->get(PhotoFileCleaner::class),
+        ),
     ],
     GetPhotoUseCase::class => [
         'className' => GetPhotoUseCase::class,

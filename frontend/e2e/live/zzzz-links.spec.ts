@@ -1,7 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { login, password } from './helpers.js';
 import { auth, body, command, key, link, moscow, preparedLinkPath, type PreparedLink } from './f2-links.js';
+
+/** A row of the links table (#92); the desktop row and the mobile card share the group ID, only the shown one counts. */
+const row = (page: Page, groupId: string) => page.locator('[data-row-id="' + groupId + '"]').filter({ visible: true });
 
 test('F2: воспитатель отмечает передачу, куратор исправляет дату на минуту подготовки', async ({ page, browser, baseURL }, testInfo) => {
   test.setTimeout(180000);
@@ -24,16 +27,16 @@ test('F2: воспитатель отмечает передачу, курато
     await login(head, 'head');
     expect((await command(head, groupId, 'link-transmissions', { ...later, revision: 3, signature }, 403)).error.code).toBe('FORBIDDEN');
     await head.goto('/cabinet/links');
-    await expect(head.getByTestId('link-' + groupId)).toBeVisible();
+    await expect(row(head, groupId)).toBeVisible();
     await expect(head.getByText('Только просмотр', { exact: true })).toBeVisible();
-    await expect(head.getByRole('button', { name: 'Отметить передачу', exact: true })).toHaveCount(0);
+    await expect(head.getByRole('button', { name: /^(Передать|Проверить) ссылку: / })).toHaveCount(0);
 
     const teacher = await teacherContext.newPage();
     await teacher.setViewportSize({ width: 390, height: 844 });
     await login(teacher, 'teacher');
     await teacher.goto('/cabinet/links');
-    const teacherCard = teacher.getByTestId('link-' + groupId);
-    await teacherCard.getByRole('button', { name: 'Отметить передачу', exact: true }).click();
+    const teacherCard = row(teacher, groupId);
+    await teacherCard.getByRole('button', { name: /^Передать ссылку: / }).click();
     // The delivery cannot be reported before the link existed, and the correction below goes back to that minute.
     // The preparation ran first in the group, so the minute is normally over already; the poll only guards it.
     await expect.poll(() => moscow(Date.now()) > prepareMinute, { timeout: 65000, intervals: [1000] }).toBe(true);
