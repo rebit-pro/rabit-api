@@ -18,7 +18,7 @@ final readonly class CreateDownloadRequestDto implements RequestDtoInterface
         public string $kind,
         #[RequestHeader('Idempotency-Key')]
         public string $idempotencyKey,
-        /** @var null|mixed[] */
+        /** @var mixed[] nullable из нативного типа: парсер метаданных DTO читает только форму тип[] */
         public ?array $photoIds = null,
         #[RequestHeader('X-Order-Key', required: false)]
         public ?string $orderKey = null,
