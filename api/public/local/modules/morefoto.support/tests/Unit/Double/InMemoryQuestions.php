@@ -69,6 +69,14 @@ final class InMemoryQuestions implements QuestionRepositoryInterface, QuestionDe
         return $id;
     }
 
+    public function createGuest(string $authorName, string $context, \DateTimeImmutable $now): int
+    {
+        $id = 100 + count($this->questions);
+        $this->questions[$id] = ['author' => 'guest', 'keyHash' => null, 'groupId' => null, 'staffUserId' => null, 'authorName' => $authorName, 'context' => $context, 'createdAt' => $now];
+
+        return $id;
+    }
+
     public function refreshStaff(int $questionId, string $authorName, string $context): void
     {
         $this->questions[$questionId]['authorName'] = $authorName;
@@ -100,7 +108,7 @@ final class InMemoryQuestions implements QuestionRepositoryInterface, QuestionDe
     public function questionByOutgoingMid(string $mid): ?int
     {
         foreach ($this->messages as $message) {
-            if ($mid === $message['mid'] && 'curator' !== $message['author']) {
+            if ($mid === $message['mid'] && in_array($message['author'], ['parent', 'staff'], true)) {
                 return $message['questionId'];
             }
         }
@@ -124,6 +132,11 @@ final class InMemoryQuestions implements QuestionRepositoryInterface, QuestionDe
     public function countParentQuestions(int $groupId, \DateTimeImmutable $since): int
     {
         return count(array_filter($this->questions, static fn(array $question): bool => $groupId === $question['groupId'] && $question['createdAt'] >= $since));
+    }
+
+    public function countGuestQuestions(\DateTimeImmutable $since): int
+    {
+        return count(array_filter($this->questions, static fn(array $question): bool => 'guest' === $question['author'] && $question['createdAt'] >= $since));
     }
 
     public function countOwnMessages(int $questionId, \DateTimeImmutable $since): int

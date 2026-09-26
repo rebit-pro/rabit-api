@@ -46,6 +46,13 @@ final readonly class BitrixQuestionRepository implements QuestionRepositoryInter
             . $this->sql->quote($context) . ',' . $this->sql->moment($now) . ',' . $this->sql->moment($now) . ')');
     }
 
+    public function createGuest(string $authorName, string $context, \DateTimeImmutable $now): int
+    {
+        return $this->sql->insert('INSERT INTO mf_support_question(AUTHOR,KEY_HASH,GROUP_ID,STAFF_USER_ID,AUTHOR_NAME,CONTEXT,CREATED_AT,LAST_MESSAGE_AT) VALUES('
+            . "'guest',NULL,NULL,NULL," . $this->sql->quote($authorName) . ',' . $this->sql->quote($context) . ','
+            . $this->sql->moment($now) . ',' . $this->sql->moment($now) . ')');
+    }
+
     public function refreshStaff(int $questionId, string $authorName, string $context): void
     {
         $this->sql->execute('UPDATE mf_support_question SET AUTHOR_NAME=' . $this->sql->quote($authorName) . ',CONTEXT=' . $this->sql->quote($context)
@@ -105,6 +112,12 @@ final readonly class BitrixQuestionRepository implements QuestionRepositoryInter
     {
         return $this->count("SELECT COUNT(*) AS TOTAL FROM mf_support_question WHERE AUTHOR='parent' AND GROUP_ID=" . $this->sql->id($groupId)
             . ' AND CREATED_AT>=' . $this->sql->moment($since));
+    }
+
+    public function countGuestQuestions(\DateTimeImmutable $since): int
+    {
+        // Covered by ix_mf_support_question_group: guest rows share GROUP_ID NULL.
+        return $this->count("SELECT COUNT(*) AS TOTAL FROM mf_support_question WHERE AUTHOR='guest' AND GROUP_ID IS NULL AND CREATED_AT>=" . $this->sql->moment($since));
     }
 
     public function countOwnMessages(int $questionId, \DateTimeImmutable $since): int

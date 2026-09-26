@@ -1,5 +1,6 @@
 import { isAxiosError } from 'axios';
 import api from '@/api/http';
+import type { FeedbackDraft } from './feedback';
 import type { CreatedQuestion, Question, QuestionProblem } from './types';
 
 export const questionsApi = {
@@ -23,6 +24,10 @@ export const questionsApi = {
         { headers: { 'X-Question-Key': questionKey, 'Idempotency-Key': requestId } }
       )
     ).data;
+  },
+  /** Login page feedback: goes to the curators' MAX group, the answer comes to the given contact. */
+  async feedback(draft: FeedbackDraft, requestId: string): Promise<{ number: number }> {
+    return (await api.post<{ number: number }>('/api/v1/public/feedback', draft, { headers: { 'Idempotency-Key': requestId } })).data;
   },
   async mine(): Promise<Question> {
     return (await api.get<Question>('/api/v1/questions/mine')).data;

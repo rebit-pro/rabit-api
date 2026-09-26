@@ -19,7 +19,7 @@ final class SupportArchitectureTest extends TestCase
     public function testControllersUseTypedRequestsAndSharedInfrastructureOnly(): void
     {
         $files = glob(self::MODULE . '/Presentation/Controller/*.php') ?: [];
-        self::assertCount(3, $files);
+        self::assertCount(4, $files);
         foreach ($files as $file) {
             $source = (string)file_get_contents($file);
             foreach (['use Bitrix\\', 'HttpRequest', 'ServiceLocator', 'getCurrentRoute', 'LoggerFilter', 'Filter(', 'getenv', 'json_decode', 'getRequest()',
@@ -57,7 +57,7 @@ final class SupportArchitectureTest extends TestCase
             glob(self::MODULE . '/Application/*/Service/*.php') ?: [],
             glob(self::MODULE . '/Domain/*/Service/*.php') ?: [],
         );
-        self::assertCount(16, $files);
+        self::assertCount(17, $files);
         foreach ($files as $file) {
             $source = (string)file_get_contents($file);
             self::assertMatchesRegularExpression('/\/\*\*(?:(?!\*\/)[\s\S])*[А-Яа-яЁё](?:(?!\*\/)[\s\S])*\*\/\s*(?:final\s+)?(?:readonly\s+)?class\s/u', $source, $file);
