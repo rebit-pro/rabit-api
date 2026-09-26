@@ -75,7 +75,12 @@ import {
   mdiTextBoxSearchOutline,
   mdiTimerSand,
   mdiTruckDeliveryOutline,
-  mdiViewDashboardOutline
+  mdiViewDashboardOutline,
+  mdiStar,
+  mdiStarOutline,
+  mdiCheckboxMultipleMarkedOutline,
+  mdiSelectionRemove,
+  mdiAccountQuestionOutline
 } from '@mdi/js';
 
 export const MF_ICONS: Readonly<Record<string, string>> = {
@@ -153,5 +158,10 @@ export const MF_ICONS: Readonly<Record<string, string>> = {
   'mdi-text-box-search-outline': mdiTextBoxSearchOutline,
   'mdi-timer-sand': mdiTimerSand,
   'mdi-truck-delivery-outline': mdiTruckDeliveryOutline,
-  'mdi-view-dashboard-outline': mdiViewDashboardOutline
+  'mdi-view-dashboard-outline': mdiViewDashboardOutline,
+  'mdi-star': mdiStar,
+  'mdi-star-outline': mdiStarOutline,
+  'mdi-checkbox-multiple-marked-outline': mdiCheckboxMultipleMarkedOutline,
+  'mdi-selection-remove': mdiSelectionRemove,
+  'mdi-account-question-outline': mdiAccountQuestionOutline
 };

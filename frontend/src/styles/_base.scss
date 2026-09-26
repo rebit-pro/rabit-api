@@ -2,8 +2,14 @@
 // Vuetify component CSS is loaded lazily with route chunks, after this file; `:root` raises specificity so the
 // overrides do not depend on load order.
 html {
-  // No permanent scrollbar on short pages.
+  // No permanent scrollbar on short pages; its place stays reserved so the layout never changes width.
   overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+// A dialog hides the page scrollbar; the reserved gutter already keeps the width, so Vuetify's padding would shift it back.
+:root.v-overlay-scroll-blocked {
+  padding-inline-end: 0 !important;
 }
 
 body {
@@ -127,4 +133,10 @@ time {
   body {
     background: var(--mf-color-surface);
   }
+}
+
+// Vuetify tints the current page with --v-border-opacity, which the theme sets to 1 for solid borders: the tint covered
+// the number. The active page uses the regular activated tint instead (#147).
+:root .v-pagination .v-pagination__item--is-active .v-btn__overlay {
+  opacity: var(--v-activated-opacity);
 }
