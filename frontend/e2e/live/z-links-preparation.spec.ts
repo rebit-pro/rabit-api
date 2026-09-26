@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { login, token } from './helpers.js';
 import { auth, body, command, link, moscow, preparedLinkPath, type PreparedLink } from './f2-links.js';
@@ -188,4 +188,98 @@ test('F2: организатор проверяет ссылку группы и
   };
   mkdirSync('var', { recursive: true });
   writeFileSync(preparedLinkPath, JSON.stringify(record));
+});
+
+test('#127: путь к галерее ведёт от кадров до передачи ссылки', async ({ page }, testInfo) => {
+  test.setTimeout(120000);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await login(page);
+  const suffix = crypto.randomUUID().slice(0, 8);
+  const create = async (path: string, data: Record<string, unknown>) =>
+    (await body(await page.request.post(path, { headers: await auth(page), data }), 201)).data;
+  const institution = await create('/api/v1/institutions', { name: 'I127 Детский сад ' + suffix, address: 'Москва' });
+  const shoot = await create('/api/v1/institutions/' + institution.id + '/shoots', { name: 'I127 Съёмка', date: '2026-10-22' });
+  const group = await create('/api/v1/shoots/' + shoot.id + '/groups', { name: 'I127 Ромашки ' + suffix, groupKind: 'regular' });
+  await create('/api/v1/catalog/products', {
+    name: 'I127 Печать ' + suffix,
+    description: '',
+    kind: 'physical',
+    price: 15000,
+    printCount: 1,
+    format: '10×15',
+    unit: 'шт.',
+    staffDiscount: false,
+    active: true
+  });
+  const step = (scope: Locator, key: string) => scope.getByTestId('gallery-path').locator('[data-step="' + key + '"]');
+
+  // Without frames the links card starts the path at the upload and leads to the photos of the group.
+  await page.goto('/cabinet/links?group=' + group.id);
+  const card = page.getByTestId('link-' + group.id);
+  await expect(step(card, 'photos')).toHaveAttribute('aria-current', 'step');
+  await expect(step(card, 'photos')).toContainText('нет готовых кадров');
+  await step(card, 'photos').getByRole('link', { name: 'К фотографиям', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp('/shoots/' + shoot.id + '/photos\\?group=' + group.id));
+  const photoPath = page.getByTestId('photo-gallery-path');
+  await expect(step(photoPath, 'photos')).toHaveAttribute('aria-current', 'step');
+
+  const upload = await body(
+    await page.request.post('/api/v1/shoots/' + shoot.id + '/photos', {
+      headers: { Authorization: 'Bearer ' + (await token(page)) },
+      multipart: { groupId: group.id, file: { name: 'i127-child.png', mimeType: 'image/png', buffer: png } }
+    }),
+    202
+  );
+  await expect
+    .poll(
+      async () => {
+        const media = await body(await page.request.get('/api/v1/shoots/' + shoot.id + '/photos', { headers: await auth(page) }));
+        return media.data.items.find((item: { id: string }) => item.id === upload.data.id)?.status;
+      },
+      { timeout: 30000 }
+    )
+    .toBe('ready');
+  await page.reload();
+  await expect(step(photoPath, 'photos')).toHaveClass(/gallery-path__step--done/);
+  await expect(step(photoPath, 'assign')).toHaveAttribute('aria-current', 'step');
+  await expect(step(photoPath, 'assign')).toContainText('Есть кадры без ребёнка');
+
+  // Labelling on the page moves the path to the link check on «Ссылки и сроки».
+  await page.getByTestId('photo-card').getByRole('checkbox').check();
+  await page.getByLabel('Код ребёнка', { exact: true }).fill('A');
+  await page.getByRole('button', { name: 'Назначить ребёнку', exact: true }).click();
+  await expect(step(photoPath, 'prepare')).toHaveAttribute('aria-current', 'step');
+  await expect(step(photoPath, 'prepare').getByRole('link', { name: 'К ссылкам и срокам', exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('i127-desktop-photos-path.png'), fullPage: true, animations: 'disabled' });
+
+  const initial = await link(page, group.id);
+  await command(page, group.id, 'link-preparations', {
+    photosReviewed: true,
+    conditionsReviewed: true,
+    staffReviewed: true,
+    confirmed: true,
+    revision: initial.revision,
+    signature: initial.signature
+  });
+  await step(photoPath, 'prepare').getByRole('link', { name: 'К ссылкам и срокам', exact: true }).click();
+  await expect(step(card, 'transmit')).toHaveAttribute('aria-current', 'step');
+  await expect(step(card, 'transmit')).toContainText('Родители увидят кадры только после этой отметки');
+  await expect(card.getByText(/До отметки передачи родители видят «Фотографии ещё готовятся»/)).toBeVisible();
+  await expect(card.getByRole('button', { name: 'Посмотреть страницу родителей', exact: true })).toBeVisible();
+  await expect(card.getByRole('button', { name: 'Отметить передачу', exact: true })).toBeVisible();
+  await card.screenshot({ path: testInfo.outputPath('i127-desktop-links-card.png'), animations: 'disabled' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await card.scrollIntoViewIfNeeded();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('i127-mobile-links-card.png'), animations: 'disabled' });
+
+  // The parent page of a prepared, not transmitted group explains the wait instead of inviting to pick a child code.
+  const prepared = await link(page, group.id);
+  await page.goto('/g/' + prepared.galleryToken);
+  await expect(page.getByRole('heading', { name: 'Фотографии ещё готовятся', exact: true })).toBeVisible();
+  await expect(page.getByText('Фотографии появятся на этой странице, как только их подготовят.', { exact: true })).toBeVisible();
+  await expect(page.getByText(/новую ссылку просить не нужно/)).toBeVisible();
+  await expect(page.getByText('Выберите код ребёнка и откройте понравившийся кадр.')).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('i127-mobile-gallery-preparing.png'), fullPage: true, animations: 'disabled' });
 });

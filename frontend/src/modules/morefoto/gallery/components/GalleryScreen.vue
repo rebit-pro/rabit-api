@@ -109,7 +109,10 @@ function askCurator(): void {
         <section v-if="gallery.state === 'preparing'" class="mf-panel gallery-empty">
           <v-icon icon="mdi-timer-sand" size="40" color="primary" />
           <h2>Фотографии ещё готовятся</h2>
-          <p class="mf-muted">Ответственный сообщит, когда галерея будет открыта.</p>
+          <p class="mf-muted">
+            Фотограф готовит и проверяет снимки. Сохраните эту ссылку: фотографии появятся по ней же, новую ссылку просить не нужно.
+            Ответственный группы сообщит, когда галерея откроется.
+          </p>
         </section>
         <section v-else-if="!allPhotos.length" class="mf-panel gallery-empty">
           <v-icon icon="mdi-image-multiple-outline" size="40" color="primary" />
