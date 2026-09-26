@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, shallowRef, useTemplateRef } from 'vue';
 import { isMockApiEnabled } from '@/mocks/config';
-import { questionProblem, questionsApi } from '../api';
+import { questionsApi } from '../api';
+import { questionProblem } from '../problem';
 import { CONTACT_MAX, feedbackFieldProblems, feedbackPayloadKey, feedbackProblemMessage, type FeedbackDraft } from '../feedback';
 import { MESSAGE_MAX, NAME_MAX, newRequestId } from '../rules';
 

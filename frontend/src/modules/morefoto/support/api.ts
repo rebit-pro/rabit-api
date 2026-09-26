@@ -1,7 +1,6 @@
-import { isAxiosError } from 'axios';
 import api from '@/api/http';
 import type { FeedbackDraft } from './feedback';
-import type { CreatedQuestion, Question, QuestionProblem } from './types';
+import type { CreatedQuestion, Question } from './types';
 
 export const questionsApi = {
   async ask(galleryToken: string, name: string, message: string, requestId: string): Promise<CreatedQuestion> {
@@ -36,9 +35,3 @@ export const questionsApi = {
     return (await api.post<Question>('/api/v1/questions/mine/messages', { message }, { headers: { 'Idempotency-Key': requestId } })).data;
   }
 };
-
-export function questionProblem(cause: unknown): QuestionProblem {
-  if (!isAxiosError(cause)) return { status: null, code: '', network: false };
-  const code = (cause.response?.data as { error?: { code?: string } } | undefined)?.error?.code ?? '';
-  return { status: cause.response?.status ?? null, code, network: cause.response === undefined };
-}
