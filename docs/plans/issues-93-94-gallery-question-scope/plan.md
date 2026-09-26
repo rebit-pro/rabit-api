@@ -82,7 +82,7 @@
 - [x] `submitDraft` в `rules.ts`, `QuestionThread.vue`.
 - [x] Unit-тесты T03–T08.
 - [x] Быстрые проверки: `npm run check`, `npm run test:commerce` (в `check` входит `test:ui`).
-- [ ] Commit, push, PR в `main` без merge.
+- [x] Commit, push, PR в `main` без merge (#119).
 - [ ] После review без блокеров: `make test-e2e`.
 
 ## Критерии приёмки

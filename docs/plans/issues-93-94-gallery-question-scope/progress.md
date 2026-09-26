@@ -9,7 +9,7 @@
 - Base: `origin/main` `23642d4`. После него в `main` пришёл только `00c507f` (документы OPS-legal), пересечений нет,
   merge base не требуется. План: `e4fcbd4`. Код: `98c6f03` (#94), `8b992ad` (#93).
 - Issues: [#93](https://github.com/rebit-pro/rabit-api/issues/93), [#94](https://github.com/rebit-pro/rabit-api/issues/94).
-  PR: создаётся в `main`, без merge.
+  PR: [#119](https://github.com/rebit-pro/rabit-api/pull/119) в `main`, без merge. Журнал перед PR: `8c2ea44`.
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md).
 - Завершено: реализация, unit-тесты, мутационная проверка тестов, быстрые проверки (T01–T09 PASS).
 - Сейчас: PR ждёт review. Merge не выполняется.
@@ -110,3 +110,8 @@
   Предупреждений `[Vue warn]` в выводе нет.
 - Дубли: `gh pr list --state all --search "93 in:title"` и `"94 in:title"` — пусто; веток с #93/#94 нет.
 - Браузерные кейсы T10, T11 — PENDING: полный gate после review (`make test-e2e`, `make e2e-up` не запускались).
+
+### 2026-09-26 — PR
+
+- Push `codex/issues-93-94-gallery-question-scope`, PR [#119](https://github.com/rebit-pro/rabit-api/pull/119) в `main`
+  (`Closes #93`, `Closes #94`). Merge не выполняется, ждёт review.
