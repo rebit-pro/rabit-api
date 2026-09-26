@@ -12,8 +12,8 @@
   PR: [#119](https://github.com/rebit-pro/rabit-api/pull/119) в `main`, без merge. Журнал перед PR: `8c2ea44`.
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md).
 - Завершено: реализация, unit-тесты, мутационная проверка тестов, быстрые проверки (T01–T09 PASS).
-- Сейчас: PR ждёт review. Merge не выполняется.
-- Следующий шаг: после review без блокеров — `make test-e2e` (T10) и ручная проверка перехода между галереями (T11).
+- Сейчас: self-review без блокеров (комментарий в PR #119), полный gate PASS (T10). Merge не выполняется.
+- Следующий шаг: ручная проверка перехода между галереями на стенде (T11) — по решению пользователя; затем merge и деплой только frontend.
 - Блокеров нет. Открытых решений нет.
 - Рабочее дерево: чистое после коммита журнала. Логи проверок — вне репозитория (scratchpad сессии).
 - Следующая проверка после изменения base: команда из раздела «Команды» плана (том `rabit-issues9394-node`).
@@ -31,7 +31,7 @@
 | T07 | PASS | 2026-09-26 | то же | «a next question typed while…» ok |
 | T08 | PASS | 2026-09-26 | то же | «a failed send keeps the text…» ok |
 | T09 | PASS | 2026-09-26 | `git diff --stat origin/main...HEAD` | только `frontend/src/modules/morefoto/{support,gallery}`, `frontend/tests/support`, документы задачи |
-| T10 | PENDING | — | `make test-e2e` | gate после review без блокеров |
+| T10 | PASS | 2026-09-26 | `make test-e2e` | прогон `rabit-e2e-e075b48ea512` на head `98302ee`: exit 0, Total 386.4 s, 123 браузерных сценария (a 76, b 47), включая `zz-questions`, verify-support passed |
 | T11 | PENDING | — | ручная проверка на стенде | после review |
 
 ## Хронология
@@ -115,3 +115,10 @@
 
 - Push `codex/issues-93-94-gallery-question-scope`, PR [#119](https://github.com/rebit-pro/rabit-api/pull/119) в `main`
   (`Closes #93`, `Closes #94`). Merge не выполняется, ждёт review.
+
+### 2026-09-26 — ревью и полный gate
+
+- Self-review PR #119: блокирующих замечаний нет (комментарий в PR).
+- `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`
+  — прогон `rabit-e2e-e075b48ea512`: exit 0, Total 386.4 s, 123 сценария. T10 PASS.
+- T11 (ручной SPA-переход A→B на стенде) остаётся PENDING: браузерного сценария перехода между галереями в наборе нет.
