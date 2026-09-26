@@ -75,7 +75,7 @@
 - [x] #124: условие удаления ключа в `load()`.
 - [x] #124: unit-тесты T06–T08.
 - [x] Быстрые проверки: `npm run check`, `npm run test:commerce` (в `check` входит `test:ui`).
-- [ ] Commit, push, PR в `main` без merge.
+- [x] Commit, push, PR в `main` без merge (#133).
 - [ ] После review без блокеров: `make test-e2e`, ручная проверка диалогов.
 
 ## Критерии приёмки

@@ -9,10 +9,10 @@
 - Base: `origin/main` `4fc9dce` (на момент проверок `main` не сдвинулся). План: `5f1b5ae`. Код: `76daf79` (#122),
   `d165c06` (#124).
 - Issues: [#122](https://github.com/rebit-pro/rabit-api/issues/122), [#124](https://github.com/rebit-pro/rabit-api/issues/124).
-  PR: создаётся в `main` после push, без merge. Номер фиксируется в описании PR и в следующем обновлении журнала.
+  PR: [#133](https://github.com/rebit-pro/rabit-api/pull/133) в `main`, без merge. Журнал перед PR: `4eab928`.
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md), [PR #119](../issues-93-94-gallery-question-scope/plan.md).
 - Завершено: реализация, unit-тесты, мутационная проверка тестов, быстрые проверки (T01–T09 PASS).
-- Сейчас: push и PR.
+- Сейчас: PR #133 ждёт review.
 - Следующий шаг: review PR. После review без блокеров — `make test-e2e` (T10) и ручная проверка диалогов (T11).
 - Блокеров нет. Открытых решений нет. Ограничение R1 (ключ другой вкладки не подхватывается в ref) — в плане.
 - Рабочее дерево: чистое после коммита журнала. Логи проверок — вне репозитория (scratchpad сессии).
