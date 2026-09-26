@@ -6,8 +6,8 @@
   создана от `bf3dfd8`, затем fast-forward до origin/main `6d034b3` (merge PR #135). Issue #141, PR https://github.com/rebit-pro/rabit-api/pull/144 (не слит, не выкачен).
 - Завершено: реализация, проверка удаления превью в `verify-photo-deletion.php` возвращена, быстрые проверки,
   локальная проверка прав в контейнерах (T01–T14, T17).
-- Сейчас: PR #144 ждёт ревью.
-- Следующий шаг: ревью PR; затем полный `make test-e2e` (запускает пользователь) — T15, T16, T18.
+- Сейчас: независимое ревью без блокеров, полный gate PASS на ветке с main `e847e87` (T15, T16, T18). PR сливается.
+- Следующий шаг: выкатка с разовой сменой владельца превью (`deploy/media-previews-owner.sh`) и обновлением `morefoto_stage_media_consumer` — только с отдельного согласия пользователя; выкатку ведёт соседняя сессия.
 - Блокеры: нет. Открыто: выкатка stage/prod с разовой сменой владельца превью — только с отдельного согласия.
 - Рабочее дерево: всё закоммичено (игнорируемые `api/var/`).
 - Следующая проверка:
@@ -102,13 +102,20 @@
 | T12 | PASS | 2026-09-26 | `py_compile`, `sh -n`, `bash -n`, shellcheck | без новых замечаний |
 | T13 | PASS | 2026-09-26 | `docker compose … config` prod/dev | exit 0, переменная только у медиа-воркера |
 | T14 | PASS | 2026-09-26 | `php -l`, php-cs-fixer | без ошибок |
-| T15 | PENDING | — | `make test-e2e …` | после ревью |
-| T16 | PENDING | — | `make test-e2e …` (`verify-photo-deletion.php`) | после ревью |
+| T15 | PASS | 2026-09-26 | `make test-e2e …` | `rabit-e2e-cff0a32b6aa4`: «FPM, media worker and nginx» passed на обоих стендах (раннер падает, если PID 1 воркера не `www-data`); exit 0, 127 браузерных сценариев |
+| T16 | PASS | 2026-09-26 | `make test-e2e …` (`verify-photo-deletion.php`) | `rabit-e2e-cff0a32b6aa4`: passed вместе с возвращённой проверкой удаления превью; маркер `#116 photo deletion integration passed` |
 | T17 | PASS | 2026-09-26 | реальный `GdPreviewRenderer` в томе | render `www-data`, remove OK, 0 файлов |
-| T18 | PENDING | — | `make test-e2e …` (фикстура E4) | после ревью |
+| T18 | PASS | 2026-09-26 | `make test-e2e …` (фикстура E4) | `rabit-e2e-cff0a32b6aa4`: «E4 gallery fixture through internal lifecycle» passed на обоих стендах от `www-data` |
 
 ### 2026-09-26 — PR
 
 - Коммиты `31e9834` (код) и docs, `git push -u origin codex/issues-141-media-worker-user`.
   Дублей по `gh pr list --state all --search "141 in:title"` нет. Открыт PR #144 в main (`Closes #141`) с порядком
   выкатки stage/prod и разовой командой. Не слит.
+
+### 2026-09-26 — ревью и полный gate
+
+- Независимое ревью PR #144 (head `647d597`): блокирующих нет.
+- Ветка обновлена от main `e847e87` (merge `c714c38`).
+- `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`
+  — `rabit-e2e-cff0a32b6aa4`: exit 0, Total 368.8 s, 127 браузерных сценариев (a 79, b 48), все verify-*.php passed. T15, T16, T18 PASS.
