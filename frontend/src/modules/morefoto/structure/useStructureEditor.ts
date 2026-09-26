@@ -6,6 +6,7 @@ import {
   createAttempt,
   fieldsFrom,
   refreshDraft,
+  restorableDraft,
   validateFields,
   type FieldErrors,
   type StructureDraft,
@@ -43,57 +44,49 @@ export function useStructureEditor(scope: StructureScope, saved: () => Promise<u
     const parentId = kind === 'institution' ? null : kind === 'shoot' ? (scope.institutionId ?? null) : (parent ?? scope.shootId ?? null);
     storageKey = keyFor(kind, parentId, item?.id ?? null);
     const fields = fieldsFrom(item);
-    let stored: StructureDraft | null = null;
-    try {
-      stored = JSON.parse(localStorage.getItem(storageKey) ?? 'null') as StructureDraft | null;
-    } catch {
-      /* Invalid local drafts are ignored. */
-    }
-    const valid =
-      stored &&
-      stored.kind === kind &&
-      stored.parentId === parentId &&
-      stored.id === (item?.id ?? null) &&
-      /^[a-f0-9]{32}$/.test(stored.key) &&
-      [stored.fields, stored.base].every(
-        (value) =>
-          value &&
-          typeof value.name === 'string' &&
-          typeof value.date === 'string' &&
-          typeof value.address === 'string' &&
-          ['regular', 'staff'].includes(value.groupKind)
-      ) &&
-      (!stored.id || (Number.isInteger(stored.revision) && (stored.revision ?? 0) > 0)) &&
-      (!stored.pending ||
-        (stored.pending.key === stored.key &&
-          stored.pending.path === createAttempt(stored).path &&
-          stored.pending.method === createAttempt(stored).method));
-    draft.value =
-      valid && stored
-        ? stored
-        : {
-            kind,
-            parentId,
-            id: item?.id ?? null,
-            revision: item?.revision ?? null,
-            fields,
-            base: { ...fields },
-            key: newKey(),
-            pending: null
-          };
-    restored.value = !!valid;
+    const stored = storedDraft(storageKey, kind, parentId, item?.id ?? null);
+    draft.value = stored ?? {
+      kind,
+      parentId,
+      id: item?.id ?? null,
+      revision: item?.revision ?? null,
+      fields,
+      base: { ...fields },
+      key: newKey(),
+      pending: null
+    };
+    restored.value = !!stored;
     error.value = draft.value.pending ? uncertainMessage : '';
     errors.value = {};
     persist();
   }
-  /** Moves a new, not yet sent group to another shoot; its local draft follows under the new key. */
+  function storedDraft(key: string, kind: StructureKind, parentId: string | null, id: string | null): StructureDraft | null {
+    try {
+      return restorableDraft(JSON.parse(localStorage.getItem(key) ?? 'null'), kind, parentId, id);
+    } catch {
+      return null; // Invalid local drafts are ignored.
+    }
+  }
+  /**
+   * Moves a new group to another shoot. A draft already kept for that shoot is restored with its pending attempt and
+   * key, and the current one stays under its own shoot; without one the current draft moves to the chosen shoot.
+   */
   function setParent(parentId: string): void {
     const current = draft.value;
     if (!current || busy.value || current.id || current.pending || current.parentId === parentId) return;
-    localStorage.removeItem(storageKey);
+    const target = keyFor(current.kind, parentId, null);
+    const stored = storedDraft(target, current.kind, parentId, null);
+    if (!stored) localStorage.removeItem(storageKey);
     // The key changes first: the synchronous draft watcher persists the change under it.
-    storageKey = keyFor(current.kind, parentId, null);
-    current.parentId = parentId;
+    storageKey = target;
+    if (!stored) {
+      current.parentId = parentId;
+      return;
+    }
+    draft.value = stored;
+    restored.value = true;
+    error.value = stored.pending ? uncertainMessage : '';
+    errors.value = {};
   }
   function close(): void {
     if (!busy.value) draft.value = null;

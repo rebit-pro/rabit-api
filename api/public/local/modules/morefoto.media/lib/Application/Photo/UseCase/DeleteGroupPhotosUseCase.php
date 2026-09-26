@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Morefoto\Media\Application\Photo\UseCase;
 
 use Morefoto\Media\Application\Photo\Contract\MediaTransactionInterface;
+use Morefoto\Media\Application\Photo\Contract\OriginalFileLockInterface;
 use Morefoto\Media\Application\Photo\Contract\PreviewRendererInterface;
 use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
 use Morefoto\Media\Application\Photo\Dto\DeletePhotosInputDto;
@@ -33,6 +34,7 @@ final readonly class DeleteGroupPhotosUseCase
         private MediaScopeInterface $scopes,
         private AccessGuardInterface $access,
         private PrivatePhotoStorageInterface $storage,
+        private OriginalFileLockInterface $originals,
         private PreviewRendererInterface $previews,
         private LoggerInterface $logger,
     ) {}
@@ -90,8 +92,13 @@ final readonly class DeleteGroupPhotosUseCase
     {
         try {
             $this->previews->remove($photoId);
-            if (null !== $originalPath && !$this->photos->originalPathInUse($originalPath)) {
-                $this->storage->delete($originalPath);
+            if (null !== $originalPath) {
+                // An upload of the same content reuses this path: it either registers first and keeps the file, or stores it anew after us.
+                $this->originals->synchronized($originalPath, function() use ($originalPath): void {
+                    if (!$this->photos->originalPathInUse($originalPath)) {
+                        $this->storage->delete($originalPath);
+                    }
+                });
             }
         } catch (\Throwable $error) {
             $this->logger->warning('Deleted photo files remain on disk.', [

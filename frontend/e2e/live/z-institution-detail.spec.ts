@@ -156,10 +156,21 @@ test('#105: организатор создаёт и изменяет групп
   const dialog = page.getByTestId('admin-dialog');
   await expect(dialog.getByRole('heading', { name: 'Новая группа', exact: true })).toBeVisible();
   await expect(dialog.getByTestId('group-shoot')).toContainText('I105 Зима');
-  await dialog.getByRole('combobox', { name: 'Съёмка' }).press('Enter');
-  await page.getByRole('option', { name: /I105 Осень/ }).click();
+  const chooseShoot = async (name: RegExp) => {
+    await dialog.getByRole('combobox', { name: 'Съёмка' }).press('Enter');
+    await page.getByRole('option', { name }).click();
+  };
+  await chooseShoot(/I105 Осень/);
   await expect(dialog.getByTestId('group-shoot')).toContainText('I105 Осень');
   await dialog.getByLabel('Название группы', { exact: true }).fill('I105 Ромашки');
+  // A closed dialog keeps the draft of its shoot: choosing that shoot again from a fresh dialog restores it, not blanks it.
+  await dialog.getByRole('button', { name: 'Отмена', exact: true }).click();
+  await expect(dialog).not.toBeVisible();
+  await groups(page).getByRole('button', { name: 'Новая группа', exact: true }).click();
+  await expect(dialog.getByTestId('group-shoot')).toContainText('I105 Зима');
+  await expect(dialog.getByLabel('Название группы', { exact: true })).toHaveValue('');
+  await chooseShoot(/I105 Осень/);
+  await expect(dialog.getByLabel('Название группы', { exact: true })).toHaveValue('I105 Ромашки');
   await screenshot(page, testInfo.outputPath('i105-desktop-new-group.png'), false);
   const created = page.waitForResponse(
     (r) => new URL(r.url()).pathname === `/api/v1/shoots/${autumn.id}/groups` && r.request().method() === 'POST'

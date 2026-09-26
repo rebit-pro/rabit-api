@@ -12,7 +12,7 @@ final readonly class LocalPrivatePhotoStorage implements PrivatePhotoStorageInte
 {
     public function __construct(private string $root) {}
 
-    public function store(string $shootId, InspectedPhoto $photo): string
+    public function path(string $shootId, InspectedPhoto $photo): string
     {
         if (1 !== preg_match('/^[a-f0-9-]{36}$/D', $shootId)) {
             throw new MediaStorageException('Invalid private media scope.');
@@ -23,7 +23,13 @@ final readonly class LocalPrivatePhotoStorage implements PrivatePhotoStorageInte
             'image/webp' => 'webp',
             default => throw new MediaStorageException('Unsupported private media type.'),
         };
-        $relative = $shootId . '/' . substr($photo->fingerprint, 0, 2) . '/' . $photo->fingerprint . '.' . $extension;
+
+        return $shootId . '/' . substr($photo->fingerprint, 0, 2) . '/' . $photo->fingerprint . '.' . $extension;
+    }
+
+    public function store(string $shootId, InspectedPhoto $photo): string
+    {
+        $relative = $this->path($shootId, $photo);
         $target = $this->absolutePath($relative);
         if (is_file($target)) {
             return $relative;

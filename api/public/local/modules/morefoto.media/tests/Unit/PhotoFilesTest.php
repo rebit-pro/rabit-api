@@ -72,6 +72,7 @@ final class PhotoFilesTest extends TestCase
         self::assertFileExists($storage->absolutePath($relative));
         self::assertSame(0600, fileperms($storage->absolutePath($relative)) & 0777);
         self::assertSame($relative, $storage->store('12345678-abcd-4abc-8abc-123456789abc', $photo));
+        self::assertSame($relative, $storage->path('12345678-abcd-4abc-8abc-123456789abc', $photo));
     }
 
     public function testRendererWritesOnlyWatermarkedWebpVariants(): void

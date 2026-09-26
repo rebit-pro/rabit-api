@@ -6,6 +6,7 @@ namespace Morefoto\Media\Tests\Unit;
 
 use Bitrix\Main\DB\Result;
 use Morefoto\Media\Application\Photo\Contract\MediaTransactionInterface;
+use Morefoto\Media\Application\Photo\Contract\OriginalFileLockInterface;
 use Morefoto\Media\Application\Photo\Contract\PreviewRendererInterface;
 use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
 use Morefoto\Media\Application\Photo\Dto\DeletePhotosInputDto;
@@ -36,6 +37,9 @@ final class DeleteGroupPhotosUseCaseTest extends TestCase
 
     private bool $committed = false;
 
+    /** @var list<string> paths whose original lock is held right now */
+    private array $locked = [];
+
     public function testDeletesPhotosAndRemovesTheirFilesOnlyAfterTheCommit(): void
     {
         $media = $this->prepared(4);
@@ -51,7 +55,12 @@ final class DeleteGroupPhotosUseCaseTest extends TestCase
             ->with(4, '/groups/' . self::GROUP . '/photo-deletions', self::anything(), self::anything(), '{"deleted":2,"revision":5}')
         ;
         $photos = $this->createStub(PhotoRepository::class);
-        $photos->method('originalPathInUse')->willReturnMap([['shoot/aa/own.jpg', false], ['shoot/bb/shared.jpg', true]]);
+        // The check runs under the lock of its path, where an upload of the same content registers its row.
+        $photos->method('originalPathInUse')->willReturnCallback(function(string $path): bool {
+            self::assertSame([$path], $this->locked);
+
+            return 'shoot/bb/shared.jpg' === $path;
+        });
         $previews = $this->createMock(PreviewRendererInterface::class);
         $removed = [];
         $previews->expects(self::exactly(2))->method('remove')->willReturnCallback(function(string $photoId) use (&$removed): void {
@@ -59,7 +68,9 @@ final class DeleteGroupPhotosUseCaseTest extends TestCase
             $removed[] = $photoId;
         });
         $storage = $this->createMock(PrivatePhotoStorageInterface::class);
-        $storage->expects(self::once())->method('delete')->with('shoot/aa/own.jpg');
+        $storage->expects(self::once())->method('delete')->with('shoot/aa/own.jpg')
+            ->willReturnCallback(fn() => self::assertSame(['shoot/aa/own.jpg'], $this->locked))
+        ;
 
         $output = $this->useCase($media, $photos, $storage, $previews)->execute(4, self::GROUP, $this->key(), new DeletePhotosInputDto(4, [self::PHOTO, self::OTHER]));
 
@@ -172,6 +183,7 @@ final class DeleteGroupPhotosUseCaseTest extends TestCase
             $scopes ?? $this->scopes(true),
             $this->createStub(AccessGuardInterface::class),
             $storage ?? $this->createStub(PrivatePhotoStorageInterface::class),
+            $this->originals(),
             $previews ?? $this->createStub(PreviewRendererInterface::class),
             $logger ?? $this->createStub(LoggerInterface::class),
         );
@@ -213,6 +225,25 @@ final class DeleteGroupPhotosUseCaseTest extends TestCase
                 ($this->commit)();
 
                 return $result;
+            }
+        };
+    }
+
+    private function originals(): OriginalFileLockInterface
+    {
+        return new class(function(?string $path): void {
+            $this->locked = null === $path ? [] : [$path];
+        }) implements OriginalFileLockInterface {
+            public function __construct(private readonly \Closure $hold) {}
+
+            public function synchronized(string $originalPath, callable $operation): mixed
+            {
+                ($this->hold)($originalPath);
+                try {
+                    return $operation();
+                } finally {
+                    ($this->hold)(null);
+                }
             }
         };
     }

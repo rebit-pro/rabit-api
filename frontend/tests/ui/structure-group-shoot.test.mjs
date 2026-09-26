@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createAttempt, defaultShootId, fieldsFrom } from '../../src/modules/morefoto/structure/model.ts';
+import { createAttempt, defaultShootId, fieldsFrom, restorableDraft } from '../../src/modules/morefoto/structure/model.ts';
 
 const shoot = (id, date) => ({
   id,
@@ -35,4 +35,24 @@ test('the chosen shoot becomes the collection of the new group', () => {
     name: 'Средняя группа',
     groupKind: 'regular'
   });
+});
+
+test('a kept draft of a shoot is restored only for that shoot and with its own pending attempt', () => {
+  const fields = { ...fieldsFrom(), name: 'Группа B' };
+  const draft = {
+    kind: 'group',
+    parentId: 'b',
+    id: null,
+    revision: null,
+    fields,
+    base: { ...fieldsFrom() },
+    key: 'a'.repeat(32),
+    pending: null
+  };
+  const pending = { ...draft, pending: createAttempt(draft) };
+  assert.equal(restorableDraft(draft, 'group', 'b', null), draft);
+  assert.equal(restorableDraft(pending, 'group', 'b', null), pending);
+  assert.equal(restorableDraft(draft, 'group', 'a', null), null);
+  assert.equal(restorableDraft({ ...pending, pending: { ...pending.pending, key: 'b'.repeat(32) } }, 'group', 'b', null), null);
+  assert.equal(restorableDraft(null, 'group', 'b', null), null);
 });

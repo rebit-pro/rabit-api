@@ -156,6 +156,30 @@ export function createAttempt(draft: StructureDraft): StructureAttempt {
     body
   };
 }
+/** A draft kept in the browser is restored only for the same record and with a pending attempt that matches it. */
+export function restorableDraft(value: unknown, kind: StructureKind, parentId: string | null, id: string | null): StructureDraft | null {
+  const stored = value as StructureDraft | null;
+  const valid =
+    !!stored &&
+    stored.kind === kind &&
+    stored.parentId === parentId &&
+    stored.id === id &&
+    /^[a-f0-9]{32}$/.test(stored.key) &&
+    [stored.fields, stored.base].every(
+      (fields) =>
+        fields &&
+        typeof fields.name === 'string' &&
+        typeof fields.date === 'string' &&
+        typeof fields.address === 'string' &&
+        ['regular', 'staff'].includes(fields.groupKind)
+    ) &&
+    (!stored.id || (Number.isInteger(stored.revision) && (stored.revision ?? 0) > 0)) &&
+    (!stored.pending ||
+      (stored.pending.key === stored.key &&
+        stored.pending.path === createAttempt(stored).path &&
+        stored.pending.method === createAttempt(stored).method));
+  return valid ? stored : null;
+}
 /** Explicit reload replaces the editor with the current server fields and revision. */
 export function refreshDraft(draft: StructureDraft, item: StructureItem, key: string): StructureDraft {
   const fields = fieldsFrom(item);
