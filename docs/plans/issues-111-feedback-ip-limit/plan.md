@@ -101,7 +101,7 @@
 - [x] S5. Unit-тесты UseCase и хешера.
 - [x] S6. E2E: env стенда, `verify-support.php`.
 - [x] S7. Быстрые проверки: PHPUnit, PHPStan, php-cs-fixer по изменённым файлам.
-- [ ] S8. Commit, push, PR (`Refs #111`).
+- [x] S8. Commit, push, PR #121 (`Refs #111`).
 - [ ] S9. (после ревью) полный `make test-e2e`.
 
 ## Критерии приёмки

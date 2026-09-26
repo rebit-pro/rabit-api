@@ -3,7 +3,8 @@
 ## Точка продолжения
 
 - Ветка `codex/issues-111-feedback-ip-limit` (worktree `/home/user/rabit-api-worktrees/issues-111-feedback-ip-limit`),
-  base `23642d4` (origin/main). Issue #111, PR — см. журнал ниже (`Refs #111`: п. 2 закрыт только для лимита адреса,
+  base `23642d4` (origin/main; далее в main только docs OPS-legal). Issue #111,
+  PR https://github.com/rebit-pro/rabit-api/pull/121 (`Refs #111`: п. 2 закрыт только для лимита адреса,
   п. 3 не нужен новому запросу).
 - Завершено: реализация, unit-тесты, быстрые проверки (PHPUnit, PHPStan, php-cs-fixer).
 - Сейчас: ревью PR пользователем.
@@ -50,6 +51,8 @@
   - `php -l tools/e2e/verify-support.php` → без ошибок; `python3 -m py_compile tools/run-browser-e2e.py` → ok.
   - Frontend не менялся — фронтовые проверки не требуются.
 - Полный `make test-e2e` / `make e2e-up` не запускались: по правилу пользователя gate — после ревью.
+- Commit `e97ca11` (код) и `e88c45a` (docs), push, PR #121 в main. Дублей по
+  `gh pr list --state all --search "111 in:title"` не было. Не слит, не выкачен.
 
 ## Тест-кейсы
 
