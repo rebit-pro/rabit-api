@@ -2,7 +2,7 @@
 
 ## Точка продолжения
 
-- Ветка `codex/j1-order-files`, base `main` `09597fd` (слит в ветку), head `01edcc5` и последующий docs-коммит. PR — см. ниже в хронологии.
+- Ветка `codex/j1-order-files`, base `main` `09597fd` (слит в ветку), head `01edcc5` и последующий docs-коммит. PR https://github.com/rebit-pro/rabit-api/pull/143, issue #142.
 - Рабочая копия `/home/user/rabit-api-worktrees/j1-order-files`.
 - Документы: `plan.md` этой папки, граф `docs/waves/graph.json` (J1), канонический `MoreFoto/docs/05-rest-api/endpoints.json` (FIL-01…04), решения `docs/waves/w05/decisions.md` (D07, D10, D12).
 - Завершено: S0–S6, S8 — графы, контракты, модуль `morefoto.files`, docker/nginx/cron, frontend-блок, unit/architecture-тесты, E2E-спецификация `zzzzzzzzzz-files` и `verify-files.php` (написаны, не запускались), документы волны, issue #142.
@@ -44,3 +44,4 @@
 - 2026-09-26. Проверки: `php.sh` (docker `rabit-api-php-cli:d1-local`, volume `rabit-j1-vendor`) — phplint OK 1347; PHPStan `tools/e2e/phpstan.neon` — No errors; PHPUnit — OK 1019 тестов / 46734 проверки; php-cs-fixer по изменённым файлам — исправлено 5, повтор 0. `tools/tests/test_run_browser_e2e.py` — 22 OK. `docker compose -f docker-compose-production.yml config` с подставными переменными — OK, 4 монтирования private-files.
 - 2026-09-26. S5–S8: блок «Электронные фотографии» на странице заказа; E2E-спецификация `zzzzzzzzzz-files` (группа b): неоплаченный заказ, оплата картой на странице ЮKassa, файл и ZIP со сверкой sha256 оригинала, Range, подпись, идемпотентность, desktop/mobile; `verify-files.php`. Фикстура E4 передаёт оригиналы `www-data` (docker exec работает от root) и отдаёт sha256. `payOnProvider` перенесён в `helpers.ts`. Контракт FIL-01…04 обновлён в каноническом `build.py`, patch `docs/waves/j1/morefoto-contract.patch` (8 файлов, reverse-check OK). Неблокирующее — issue #142 (удаление купленных кадров).
 - 2026-09-26. Слит `origin/main` `09597fd`: конфликт `prepare.php` (#117 перенёс миграцию legal после загрузки init.php) — оставлен цикл main, добавлены `20260926180001` и DoInstall files. Повтор: граф 52/118, ready [J1]; runner tests 22 OK; PHPStan — No errors; PHPUnit — OK 1029 / 46768; frontend check — exit 0, commerce 214/214, build OK.
+- 2026-09-26. Открыт PR #143. Объём: 112 файлов, ~4,9 тыс. строк без patch и графа (в пределах одной волны).
