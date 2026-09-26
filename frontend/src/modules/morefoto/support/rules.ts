@@ -1,5 +1,8 @@
 import type { PendingAsk, QuestionDelivery, QuestionMessage, QuestionProblem } from './types';
 
+// The shared unknown-outcome rule: a question is replayed with its key while the server could have stored it.
+export { mayHaveBeenStored } from '../../../api/outcome.ts';
+
 export const NAME_MAX = 60;
 export const MESSAGE_MAX = 2000;
 /** Replies are polled only while the thread is visible on screen. */
@@ -81,11 +84,6 @@ export function deliveryLabel(delivery: QuestionDelivery | null): string {
   if (delivery === 'sending') return 'Отправляется куратору';
   if (delivery === 'unknown') return 'Не удалось подтвердить доставку. Если куратор не ответит, напишите ещё раз';
   return '';
-}
-
-/** A repeat may keep the same Idempotency-Key only while the server could have stored the message. */
-export function mayHaveBeenStored(problem: QuestionProblem): boolean {
-  return problem.network || problem.status === null || problem.status >= 500;
 }
 
 export function questionProblemMessage(problem: QuestionProblem): string {

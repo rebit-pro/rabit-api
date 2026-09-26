@@ -1,6 +1,7 @@
 import { isAxiosError } from 'axios';
 import api from '@/api/http';
 import { childTransferErrorText } from './rules';
+import type { PhotoDeletionAttempt } from './deletion';
 
 export type ServerPhotoStatus = 'processing' | 'ready' | 'failed' | 'duplicate';
 export interface ServerPhotoAssignment {
@@ -106,7 +107,7 @@ export interface ChildTransferResult {
 }
 // Matches PHP max_execution_time: the shared 15 s timeout cuts large originals on slow uplinks.
 const uploadTimeout = 300_000;
-function idempotencyKey(): string {
+export function idempotencyKey(): string {
   return crypto.randomUUID().replace(/-/g, '');
 }
 
@@ -142,12 +143,13 @@ export const photosApi = {
       )
     ).data;
   },
-  async remove(groupId: string, revision: number, photoIds: string[]): Promise<PhotoDeletionResult> {
+  /** The key comes with the attempt: a repeat after a lost answer must send the same one. */
+  async remove(attempt: PhotoDeletionAttempt): Promise<PhotoDeletionResult> {
     return (
       await api.post<PhotoDeletionResult>(
-        '/api/v1/groups/' + encodeURIComponent(groupId) + '/photo-deletions',
-        { revision, photoIds },
-        { headers: { 'Idempotency-Key': idempotencyKey() } }
+        '/api/v1/groups/' + encodeURIComponent(attempt.groupId) + '/photo-deletions',
+        { revision: attempt.revision, photoIds: attempt.photoIds },
+        { headers: { 'Idempotency-Key': attempt.key } }
       )
     ).data;
   },
