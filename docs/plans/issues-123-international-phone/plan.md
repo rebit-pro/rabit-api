@@ -51,7 +51,7 @@
 - [x] S3. Backend `BuyerPolicy` + PHPUnit.
 - [x] S4. Frontend `field-values.ts`, demo-нормализация + node-тесты.
 - [x] S5. Быстрые проверки backend (PHPUnit unit/functional, PHPStan, php-cs-fixer) и frontend (`npm run check`, `npm run test:commerce`).
-- [ ] S6. Commit, push, PR.
+- [x] S6. Commit, push, PR #131.
 
 ## Критерии приёмки
 

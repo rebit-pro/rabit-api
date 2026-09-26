@@ -3,13 +3,13 @@
 ## Точка продолжения
 
 - Ветка `codex/issues-123-international-phone` (worktree `/home/user/rabit-api-worktrees/issues-123-international-phone`),
-  base `4fc9dce` (origin/main). Issue #123, PR — создаётся.
+  base `4fc9dce` (origin/main). Issue #123, PR https://github.com/rebit-pro/rabit-api/pull/131 (`Closes #123`).
 - Завершено: реализация backend и frontend, unit-тесты, быстрые проверки (T01–T09 PASS).
-- Сейчас: commit, push, PR.
+- Сейчас: PR #131 ждёт ревью; не слит, не выкачен.
 - Следующий шаг: ревью PR, затем полный gate `make test-e2e` (запускает координатор).
 - Блокеры: нет. Открыто: `rebit.share` `Shared/ValueObject/Phone` содержит тот же приём `8`→`7` после удаления `+`
   (вне scope, отдельный issue по решению пользователя).
-- Рабочее дерево: изменения закоммичены в ветку (после commit); игнорируемые `api/var/`, пустой `api/vendor/`
+- Рабочее дерево: всё закоммичено и запушено; игнорируемые `api/var/`, пустой `api/vendor/`
   от docker-монтирования.
 - Следующая проверка:
   `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`
@@ -43,6 +43,9 @@
     → exit 0: lint, stylelint, typecheck, typecheck:e2e, `test:ui` 56/56, `test:commerce` 211/211.
     Первый прогон упал на prettier (2 переноса строк) — исправлено вручную, повтор зелёный.
 - `make test-e2e` / `make e2e-up` не запускались: gate после ревью запускает координатор.
+- Commit `7d59f1e` (код) и `cb70bc8` (docs), push. Дублей по `gh pr list --state all --search "123 in:title"` нет
+  (найден только слитый #118). Создан PR #131 в main: решение, проверки, ограничения, порядок деплоя
+  (backend + frontend вместе), поведение уже искажённых номеров (не мигрируются). Не слит, не выкачен.
 
 ## Тест-кейсы
 
