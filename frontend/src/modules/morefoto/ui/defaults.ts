@@ -28,6 +28,8 @@ export const morefotoUiDefaults = {
     inset: true
   },
   VTooltip: { location: 'top' },
+  // The current page reads as a filled primary button; without it the number disappears on a dark square (#147).
+  VPagination: { activeColor: 'primary', density: 'comfortable' },
   // Cold scrim on the base of sea-900 (design plan 7.3).
   VDialog: { scrim: MF_SEA[900], opacity: 0.48 }
 };
