@@ -7,8 +7,8 @@
   Общий checkout `/home/user/rabit-api` не трогать.
 - Base: `origin/main` `4fc9dce` (merge PR #121). Issues #125, #126. PR: https://github.com/rebit-pro/rabit-api/pull/132 (не слит, не выкачен).
 - Завершено: реализация (S2–S6), быстрые проверки (S7), unit-тесты гонки подтверждены красными на старом коде.
-- Сейчас: PR #132 ждёт ревью.
-- Следующий шаг: ревью PR; после ревью без блокеров координатор запускает полный `make test-e2e` (T14, T15).
+- Сейчас: независимое ревью без блокеров (неблокирующее → #136), полный gate PASS на ветке с main `1be46fe` (T14, T15). PR сливается.
+- Следующий шаг: деплой только backend (`rebit.share`, `morefoto.support`), smoke гостевой формы на `/login`.
 - Блокеры: нет. Открыто:
   - R4: одновременные запросы с одним ключом с разных адресов — второй получает `503 SUPPORT_UNAVAILABLE` без дубля
     (как до PR #121). Закрытие требует резерва ключа и миграции `QUESTION_ID NULL`, на решение пользователя.
@@ -88,5 +88,12 @@
 | T11 | PASS | 2026-09-26 | PHPUnit `morefoto.support/tests/Unit` | `SupportArchitectureTest` |
 | T12 | PASS | 2026-09-26 | `phpstan analyse --configuration=phpstan.neon` | `[OK] No errors` |
 | T13 | PASS | 2026-09-26 | php-cs-fixer `--dry-run` | 0 of 6 |
-| T14 | PENDING | 2026-09-26 | `make test-e2e` (`verify-support.php` раздел 7) | gate после ревью |
-| T15 | PENDING | 2026-09-26 | `make test-e2e` (`verify-support.php` раздел 7) | gate после ревью |
+| T14 | PASS | 2026-09-26 | `make test-e2e` (`verify-support.php` раздел 7) | `rabit-e2e-46f2372acbc1`: `verify-support.php` passed (1.1 s), 126 браузерных сценариев |
+| T15 | PASS | 2026-09-26 | `make test-e2e` (`verify-support.php` раздел 7) | `rabit-e2e-46f2372acbc1`: `verify-support.php` passed (1.1 s), 126 браузерных сценариев |
+
+### 2026-09-26 — ревью и полный gate
+
+- Независимое ревью PR #132: блокирующих нет; неблокирующее — #136 (конкурентный повтор с разных IP → 503).
+- Ветка обновлена от main `1be46fe` (merge `fc9374f`).
+- `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`
+  — `rabit-e2e-46f2372acbc1`: exit 0, Total 407.9 s, 126 браузерных сценариев (a 78, b 48), все verify-*.php passed. T14, T15 PASS.
