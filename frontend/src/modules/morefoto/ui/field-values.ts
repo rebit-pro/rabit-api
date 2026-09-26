@@ -5,11 +5,25 @@ export function quantityValue(value: string | number | null | undefined, min = 1
   return Number.isSafeInteger(number) && number >= min && number <= max ? number : null;
 }
 
-export function displayPhone(value: string): string {
-  if (!/^[+\d\s().-]+$/.test(value)) return value;
+/** Digits of a Russian number (11 digits after +7 or 8); null keeps anything else as entered. */
+function russianPhoneDigits(value: string): string | null {
+  if (!/^[+\d\s().-]+$/.test(value)) return null;
   const digits = value.replace(/\D/g, '');
-  if (digits.length !== 11 || !/^[78]/.test(digits)) return value;
+  return digits.length === 11 && /^[78]/.test(digits) ? digits : null;
+}
+
+/** Input mask of the phone field: +7 (900) 123-45-67. */
+export function displayPhone(value: string): string {
+  const digits = russianPhoneDigits(value);
+  if (digits === null) return value;
   return '+7 (' + digits.slice(1, 4) + ') ' + digits.slice(4, 7) + '-' + digits.slice(7, 9) + '-' + digits.slice(9);
+}
+
+/** Read-only display of a stored phone for buyers and staff: +7 900 123-45-67. */
+export function formatPhone(value: string): string {
+  const digits = russianPhoneDigits(value);
+  if (digits === null) return value;
+  return '+7 ' + digits.slice(1, 4) + ' ' + digits.slice(4, 7) + '-' + digits.slice(7, 9) + '-' + digits.slice(9);
 }
 
 export function moneyInputValue(value: string): number | null {

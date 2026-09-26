@@ -439,10 +439,11 @@ for (const viewport of [
     await page.getByRole('textbox', { name: 'Имя покупателя', exact: true }).fill('Мария ' + viewport.name);
     await page.locator('[name="buyer-phone"]').fill('+7 900 555-03-04');
     await page.getByRole('textbox', { name: 'Email', exact: true }).fill(viewport.name + '.e5@example.test');
-    await page.getByLabel('Состав заказа проверен').check();
+    await page.getByLabel('Состав и условия проверены').check();
     await acceptCheckoutDocuments(page);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: info.outputPath('e5-' + viewport.name + '-checkout.png'), fullPage: true, animations: 'disabled' });
+    await expect(page.getByTestId('create-order')).toHaveText('Оформить заказ');
     const created = page.waitForResponse((r) => r.url().endsWith('/orders') && r.request().method() === 'POST');
     await page.getByTestId('create-order').click();
     const payload = await (await created).json();
@@ -452,6 +453,7 @@ for (const viewport of [
     await expect(page.getByTestId('order-payment-status')).toHaveText('Не оплачено');
     await expect(page.getByTestId('order-key-expiry')).toContainText('действует до');
     await expect(page.getByTestId('order-line')).toHaveCount(1);
+    await expect(page.getByTestId('order-contacts')).toContainText('+7 900 555-03-04');
     expect(await page.evaluate((groupId) => localStorage.getItem('morefoto:cart:v1:' + groupId), fixture.open.groupId)).toBeNull();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: info.outputPath('e5-' + viewport.name + '-order.png'), fullPage: true, animations: 'disabled' });
@@ -466,12 +468,14 @@ for (const viewport of [
       await staff.getByRole('textbox', { name: 'Номер, имя, email или телефон', exact: true }).fill(payload.data.number);
       await staff.getByRole('button', { name: 'Найти', exact: true }).click();
       await expect(staff.getByTestId('staff-order')).toHaveCount(1);
+      await expect(staff.getByTestId('staff-order')).toContainText('+7 900 555-03-04');
       expect(await staff.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await staff.screenshot({ path: info.outputPath('e5-' + viewport.name + '-staff-list.png'), fullPage: true, animations: 'disabled' });
       await staff.getByRole('link', { name: payload.data.number, exact: true }).click();
       await expect(staff.getByTestId('staff-order-number')).toHaveText(payload.data.number);
       await expect(staff.getByTestId('correction-photos')).toContainText('A001');
       await expect(staff.getByTestId('order-contacts')).toContainText(viewport.name + '.e5@example.test');
+      await expect(staff.getByTestId('order-contacts')).toContainText('+7 900 555-03-04');
       expect(await staff.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await staff.screenshot({ path: info.outputPath('e5-' + viewport.name + '-staff-card.png'), fullPage: true, animations: 'disabled' });
       await staff.getByRole('link', { name: 'Все заказы', exact: true }).click();
@@ -502,7 +506,7 @@ async function fillCheckout(page: Page, name: string, email: string, quantity: n
   await page.getByRole('textbox', { name: 'Имя покупателя', exact: true }).fill(name);
   await page.locator('[name="buyer-phone"]').fill('+7 900 555-05-06');
   await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
-  await page.getByLabel('Состав заказа проверен').check();
+  await page.getByLabel('Состав и условия проверены').check();
   await acceptCheckoutDocuments(page);
 }
 /**
@@ -639,7 +643,7 @@ test('E5: changed price at checkout asks the buyer to confirm the new total', as
   await page.getByRole('textbox', { name: 'Имя покупателя', exact: true }).fill('Новая цена');
   await page.locator('[name="buyer-phone"]').fill('+7 900 555-07-08');
   await page.getByRole('textbox', { name: 'Email', exact: true }).fill('price.e5@example.test');
-  await page.getByLabel('Состав заказа проверен').check();
+  await page.getByLabel('Состав и условия проверены').check();
   await acceptCheckoutDocuments(page);
   const context = await browser.newContext({ baseURL });
   const organizer = await context.newPage();
@@ -649,8 +653,8 @@ test('E5: changed price at checkout asks the buyer to confirm the new total', as
     await page.getByTestId('create-order').click();
     await expect(page.locator('#checkout-error')).toContainText('Цена изменилась');
     await expect(page.locator('#checkout-error')).toContainText('Новый итог');
-    await expect(page.getByLabel('Состав заказа проверен')).not.toBeChecked();
-    await page.getByLabel('Состав заказа проверен').check();
+    await expect(page.getByLabel('Состав и условия проверены')).not.toBeChecked();
+    await page.getByLabel('Состав и условия проверены').check();
     const created = page.waitForResponse((r) => r.url().endsWith('/orders') && r.request().method() === 'POST');
     await page.getByTestId('create-order').click();
     const payload = await (await created).json();

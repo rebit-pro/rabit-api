@@ -7,6 +7,7 @@ import OrderComposition from '../../orders/components/OrderComposition.vue';
 import OrderLiveFacts from '../../orders/components/OrderLiveFacts.vue';
 import { formatMoment, livePaymentLabels as paymentLabels, productionLabels } from '../../orders/formatters';
 import { hasStaffFilters, orderQuoteAsCart } from '../../orders/live/rules';
+import { formatPhone } from '../../ui/field-values';
 import { useStaffOrders } from '../useStaffOrders';
 import { useStaffOrderScope } from '../useStaffOrderScope';
 import MfStatus from '@/components/status/MfStatus.vue';
@@ -108,7 +109,6 @@ function lastDays(days: number): void {
         :unit="plural(summary.total, ['заказ', 'заказа', 'заказов'])"
         :pastel="CHART_CATEGORY.orders"
         icon="mdi-receipt-text-outline"
-        hint="Оплата появится после подключения платёжного провайдера"
       />
       <div class="mf-panel">
         <MfDistribution title="Изготовление" :segments="productionSegments" :unit-forms="['заказа', 'заказов', 'заказов']" />
@@ -191,7 +191,7 @@ function lastDays(days: number): void {
               order.number
             }}</RouterLink>
             <p class="mf-muted">{{ order.institutionName }} · {{ order.groupName }}</p>
-            <p>{{ order.buyer.name }} · {{ order.buyer.phone }}</p>
+            <p>{{ order.buyer.name }} · {{ formatPhone(order.buyer.phone) }}</p>
           </div>
           <div class="staff-orders__side">
             <strong>{{ money(order.quote.total) }}</strong>

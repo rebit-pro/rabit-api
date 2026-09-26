@@ -10,7 +10,7 @@ export function validateBuyer(value: BuyerFields, maxAvailable: boolean): BuyerE
   if (value.comment.length > 1000) errors.comment = 'Комментарий — не более 1000 символов.';
   if (value.receiptChannel !== 'email' && (value.receiptChannel !== 'max' || !maxAvailable))
     errors.receiptChannel = 'MAX сейчас недоступен. Выберите получение чека по email.';
-  if (!value.reviewed) errors.reviewed = 'Проверьте состав и демонстрационные условия заказа.';
+  if (!value.reviewed) errors.reviewed = 'Проверьте состав и условия заказа.';
   return errors;
 }
 export function normalizeBuyer(value: BuyerFields): Omit<BuyerFields, 'reviewed'> {

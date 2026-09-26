@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { formatMoment } from '../formatters';
+import { formatPhone } from '../../ui/field-values';
 import type { LiveBuyer, OrderPeriod } from '../live/types';
 defineProps<{ period: OrderPeriod; buyer: LiveBuyer }>();
 const states = { preparing: 'Ещё не открыт', open: 'Идёт приём заказов', closed: 'Приём закрыт' };
@@ -29,7 +30,7 @@ const states = { preparing: 'Ещё не открыт', open: 'Идёт приё
       </div>
       <div>
         <dt>Телефон</dt>
-        <dd>{{ buyer.phone }}</dd>
+        <dd>{{ formatPhone(buyer.phone) }}</dd>
       </div>
       <div>
         <dt>Email</dt>
