@@ -5,8 +5,8 @@
 - Ветка `codex/issues-123-international-phone` (worktree `/home/user/rabit-api-worktrees/issues-123-international-phone`),
   base `4fc9dce` (origin/main). Issue #123, PR https://github.com/rebit-pro/rabit-api/pull/131 (`Closes #123`).
 - Завершено: реализация backend и frontend, unit-тесты, быстрые проверки (T01–T09 PASS).
-- Сейчас: PR #131 ждёт ревью; не слит, не выкачен.
-- Следующий шаг: ревью PR, затем полный gate `make test-e2e` (запускает координатор).
+- Сейчас: независимое ревью без блокеров, полный gate PASS на ветке с main `bf3dfd8` (регрессия T10). PR сливается. Пользователь решил: `+8 9xx…` остаётся международным; `Phone.php` вынесен в #140.
+- Следующий шаг: деплой backend и frontend вместе; после него ручная проверка на stage с `+852 9123 4567` (вторая часть T10).
 - Блокеры: нет. Открыто: `rebit.share` `Shared/ValueObject/Phone` содержит тот же приём `8`→`7` после удаления `+`
   (вне scope, отдельный issue по решению пользователя).
 - Рабочее дерево: всё закоммичено и запушено; игнорируемые `api/var/`, пустой `api/vendor/`
@@ -60,4 +60,11 @@
 | T07 | PASS | 2026-09-26 | то же | `checkout.test.mjs`: `buyer accepts formatted phones and normalizes contacts…` |
 | T08 | PASS | 2026-09-26 | PHPUnit unit/functional, PHPStan, php-cs-fixer | 775 + 212 OK, `[OK] No errors`, 0 of 2 |
 | T09 | PASS | 2026-09-26 | `npm run check` | exit 0 |
-| T10 | PENDING | 2026-09-26 | `make test-e2e` после ревью + ручная проверка на stage | не запускалось |
+| T10 | PASS (регрессия) / PENDING (stage) | 2026-09-26 | `make test-e2e` + ручная проверка на stage | `rabit-e2e-ba174d2d32a4`: exit 0, 126 браузерных сценариев, checkout/staff orders без регрессий; сценария с `+852` в E2E нет — правило покрыто unit-тестами, ручная проверка на stage после деплоя |
+
+### 2026-09-26 — ревью и полный gate
+
+- Независимое ревью PR #131: блокирующих нет. Решения пользователя: `+8 9xx…` — международный (без исключения); `rebit.share` `Phone` VO — отдельный #140.
+- Ветка обновлена от main `bf3dfd8` (merge `eceadc0`).
+- `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`
+  — `rabit-e2e-ba174d2d32a4`: exit 0, Total 397.3 s, 126 браузерных сценариев (a 78, b 48). Регрессия T10 PASS; ручная проверка `+852` на stage — после деплоя.
