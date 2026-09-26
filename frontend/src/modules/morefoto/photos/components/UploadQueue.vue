@@ -22,6 +22,9 @@ const labels: Record<QueueStatus, string> = {
         <p class="mf-muted">
           {{ groups.find((item) => item.id === job.groupId)?.name ?? 'Группа недоступна' }} · {{ (job.bytes / 1024 / 1024).toFixed(2) }} МБ
         </p>
+        <p v-if="job.childCodes?.length" class="mf-muted" data-testid="upload-codes">
+          {{ job.shared ? 'Групповой кадр · детей: ' + job.childCodes.length : 'Ребёнок ' + job.childCodes[0] }}
+        </p>
       </div>
       <div class="upload-result">
         <span :class="{ 'text-error': job.status === 'error' }">{{ labels[job.status] }}</span>

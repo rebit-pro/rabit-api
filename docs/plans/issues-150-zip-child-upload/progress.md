@@ -8,11 +8,11 @@
 - Завершено: разбор текущего потока загрузки/разметки, issue, план с решениями ZIP-DEC-01…06.
 - Сейчас: ZIP-DEC-02/03 приняты; архив пользователя готовится. Решения ZIP-DEC-01/04/05/06 — рекомендации,
   без возражений пользователя считаются принятыми.
-- Готово: backend (шаг 4) — `childCodes` в загрузке, `UploadChildAssignment`, `MediaMutationRepository::groupPhoto`,
-  ответ `childCodes`, `assignMs` в журнале. Следующий шаг: frontend (шаг 5).
+- Готово: backend (шаг 4) и frontend (шаг 5). Следующий шаг: live E2E-сценарий ZIP (шаг 7) и визуальная проверка
+  desktop/mobile.
 - Блокеры: нет. ZIP-DEC-03 пересмотрено по съёмке 158: групповые папки — префикс `GROUP`, кадры всем детям
   группы. Скрипту подготовки архивов пользователя нужно называть групповые папки `GROUP-…`.
-- Рабочее дерево: backend закоммичен, frontend не начат.
+- Рабочее дерево: backend и frontend закоммичены; E2E не начат.
 - Следующая проверка после реализации: backend unit `morefoto.media`, `npm run check`, `node --test tests/photos/*.test.mjs`.
 
 ## Тест-кейсы
@@ -24,7 +24,16 @@
 | T03 | PASS | 2026-09-26 | то же | `testRepeatedUploadWithKnownCodesKeepsTheRevision`, `testDuplicateUploadLabelsThePhotoThatOwnsTheContent` |
 | T04 | PASS | 2026-09-26 | то же | `testPhotoOutsideTheUploadGroupIsNotLabeled` |
 | T05 | PASS | 2026-09-26 | то же + `PhotoWorkflowTest` | `testGroupHandedOverWhileWaitingForTheLockRejectsTheLabels`, прежний `testUploadRejectsPublishedGroup…` |
-| T06–T22 | PENDING | 2026-09-26 | — | frontend и E2E не начаты |
+| T06 | PASS | 2026-09-26 | `node --test tests/photos/archive.test.mjs` | обёртка, `__MACOSX`, служебные, вложенные, вне папок, пустые, > 25 МБ |
+| T07 | PASS | 2026-09-26 | то же | коды, `GROUP…`, ручная отметка, кириллица с подсказкой, `ABCD` |
+| T08 | PASS | 2026-09-26 | `node --test tests/photos/zip-reader.test.mjs` | CP866 без флага и UTF-8 дают одинаковые имена |
+| T11 | PASS | 2026-09-26 | `tests/photos/upload-retry.test.mjs` | `sessionTooShort` для 4,4 ГБ при 1 МБ/с |
+| T12 | PASS | 2026-09-26 | `tests/photos/archive.test.mjs` | > 2000 файлов, групповые без детей, архив без фото |
+| T17 | PASS (структура) | 2026-09-26 | `tests/photos/zip-reader.test.mjs` | каталог Zip64 через локатор; архива > 4 ГБ под рукой нет — браузерная проверка памяти остаётся PENDING |
+| T18 | PASS (unit) | 2026-09-26 | `tests/photos/archive.test.mjs` | ребёнок из двух частей — один, тома отклоняются; live-часть — PENDING |
+| T20 | PASS | 2026-09-26 | `tests/photos/upload-retry.test.mjs` | классификация и паузы 2→120 с |
+| T22 | PASS (unit) | 2026-09-26 | `tests/photos/upload-retry.test.mjs` | прогресс переживает перезагрузку, сломанное хранилище не ломает загрузку; live-часть — PENDING |
+| T09, T10, T13, T14, T15, T16, T19, T21 | PENDING | 2026-09-26 | — | live E2E, визуальная проверка, stage |
 
 ## Журнал
 
@@ -70,3 +79,15 @@
 - Проверки (образ `rabit-api-php-cli:d1-local`, vendor основного checkout, `--network none`):
   `phpunit --testsuite=unit` → OK 855 тестов; `php-cs-fixer --dry-run` по 15 файлам → 0 правок;
   `phpstan analyse` по 15 файлам → No errors.
+- Frontend: `zip-reader.ts` (свой читатель вместо `@zip.js/zip.js`, план ZIP-DEC-01 обновлён), `archive.ts` (план
+  загрузки), `upload-retry.ts`, `archive-progress.ts` (`localStorage`), `useArchivePlan.ts`, `ArchivePlan.vue`,
+  `ArchiveProgress.vue`; `usePhotoQueue`: `addArchive`, ленивое извлечение записи, автоповтор/офлайн/401/409,
+  пропуск принятых ранее, Wake Lock; `PhotoUpload.vue`: переключатель «По фото / ZIP по детям»; иконка
+  `mdi-folder-zip-outline` в реестре.
+- Реальная съёмка 158 через читатель и планировщик (node 22, `openAsBlob`, архивы и оригиналы read-only):
+  оглавление 11 частей за 55 мс; план 591 фото / 4,73 ГБ / 59 детей / групповые `F:9, L:1, U:2, AX:3` при ручной
+  отметке, получателей 59, проблем 0, пропусков 0; первая запись каждой части побайтно совпала с оригиналом
+  (SHA-256) по `158_соответствие.csv` — 11 из 11.
+- Проверки frontend (образ `mcr.microsoft.com/playwright:v1.52.0-jammy`, volume `rabit-issues92-node`, `--network none`):
+  `npm run check` → exit 0, `test:ui` 81 pass / 0 fail (в т. ч. 14 новых в `tests/photos`); `npm run build-only` →
+  собрано, `PhotoWorkspacePage` 86,18 КБ (gzip 29,43 КБ).
