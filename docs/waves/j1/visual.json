@@ -1,0 +1,24 @@
+{
+  "wave": "J1",
+  "date": "2026-09-26",
+  "fixture": "rabit-e2e-3eb7b0053335",
+  "head": "3249760d524673759a1ae9fe6e737cb2107ec049",
+  "reviewed": "viewed by the agent after gate 2: layout, texts and states match the scenario; no overflow on mobile",
+  "screenshots": [
+    {
+      "file": "screenshots/j1-desktop-files-unpaid.png",
+      "sha256": "28057f46a3454573d03d439f27baaaf2a22afff0b5cee9b1f1f9c73ae20c6bb9",
+      "check": "Неоплаченный заказ: блок «Ваши файлы» обещает оригиналы после оплаты, панель оплаты активна (desktop 1440)"
+    },
+    {
+      "file": "screenshots/j1-desktop-files-available.png",
+      "sha256": "17d0da986f53d38da1cb132cf6bfbb81016abbf5a8752c87d812c22d56c517c6",
+      "check": "Оплаченный комплект: срок до 26.10 16:10 мск, 1 файл 7 КБ, «Скачать всё архивом» и «Скачать»; ключ продлён до конца срока (desktop 1440)"
+    },
+    {
+      "file": "screenshots/j1-mobile-files-available.png",
+      "sha256": "d1207269b02a37d5fbef66141c951f55c9f0de3be055afa333e22d466b45b04c",
+      "check": "Тот же заказ на mobile 390: блок файлов после итога, кнопки не переполняют строку"
+    }
+  ]
+}

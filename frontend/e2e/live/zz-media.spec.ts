@@ -816,6 +816,12 @@ test('#106: организатор удаляет лишние кадры гру
   await expect(dialog).not.toBeVisible();
   await expect(page.getByTestId('photo-card')).toHaveCount(3);
 
+  // #147: the whole page is selected and cleared in one action; the frame checkbox is named after the frame.
+  await page.getByTestId('photo-select-all').click();
+  await expect(page.getByTestId('photo-selection-count')).toHaveText('3');
+  await expect(page.getByRole('checkbox', { name: 'Выбрать кадр i106-second.png', exact: true })).toBeChecked();
+  await page.getByTestId('photo-select-none').click();
+  await expect(page.getByTestId('photo-selection-count')).toHaveText('0');
   await card(first).getByRole('checkbox').check();
   await card(second).getByRole('checkbox').check();
   await page.getByTestId('photo-remove-selected').click();

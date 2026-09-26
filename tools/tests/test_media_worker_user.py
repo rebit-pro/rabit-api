@@ -17,9 +17,10 @@ def service(compose, name):
 
 class MediaWorkerUser(unittest.TestCase):
     def test_production_and_dev_workers_drop_to_www_data(self):
-        for compose in ["docker-compose-production.yml", "docker-compose.yml"]:
-            with self.subTest(compose=compose):
-                worker = service(compose, "api-media-consumer")
+        # J1: the files worker writes archives that nginx (uid 1000) serves, so it drops to www-data as well.
+        for compose, name in [(c, n) for c in ["docker-compose-production.yml", "docker-compose.yml"] for n in ["api-media-consumer", "api-files-consumer"]]:
+            with self.subTest(compose=compose, service=name):
+                worker = service(compose, name)
                 self.assertEqual("www-data", worker["environment"]["APP_RUN_AS_USER"])
                 self.assertNotIn("user", worker, "root preparation of the entrypoint needs root; it drops privileges itself")
 
@@ -51,7 +52,9 @@ class MediaWorkerUser(unittest.TestCase):
     def test_e2e_worker_runs_as_www_data_and_is_checked(self):
         runner = (ROOT / "tools/run-browser-e2e.py").read_text()
         self.assertIn('service(state, name + "-media", *network, "--user", "www-data", *cli,', runner)
-        self.assertIn('"www-data" != docker("exec", name + "-media", "stat", "-c", "%U", "/proc/1")', runner)
+        self.assertIn('service(state, name + "-files", *network, "--user", "www-data", *cli,', runner)
+        self.assertIn('for worker in ["media", "files"]:', runner)
+        self.assertIn('"www-data" != docker("exec", name + "-" + worker, "stat", "-c", "%U", "/proc/1")', runner)
         # The E4 fixture renders previews through the same handler; a root-owned <xx> directory would block the worker.
         self.assertIn('docker("exec", "--user", "www-data", fpm, "php", "/app/tools/e2e/prepare-storefront.php"', runner)
 

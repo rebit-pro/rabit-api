@@ -80,7 +80,8 @@ foreach (['open', 'preparing', 'closed', 'revoked'] as $index => $state) {
     if ('revoked' === $state) {
         $lifecycle->revoke($key->token, $key->revision);
     }
-    $output[$state] = ['token' => $key->token, 'groupId' => $groupUuid, 'photoId' => $photoId];
+    // J1: the browser compares downloaded originals with this digest.
+    $output[$state] = ['token' => $key->token, 'groupId' => $groupUuid, 'photoId' => $photoId, 'sha256' => $photo->fingerprint];
 }
 file_put_contents('/runtime/e4-fixture.json', json_encode($output, JSON_THROW_ON_ERROR));
 echo "E4 real media and capability fixture prepared.\n";

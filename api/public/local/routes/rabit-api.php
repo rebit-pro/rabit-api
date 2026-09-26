@@ -19,6 +19,8 @@ return static function(RoutingConfigurator $routes): void {
     $configureCommerce($routes);
     $configurePayment = require __DIR__ . '/../modules/morefoto.payment/routes.php';
     $configurePayment($routes);
+    $configureFiles = require __DIR__ . '/../modules/morefoto.files/routes.php';
+    $configureFiles($routes);
     $configureSupport = require __DIR__ . '/../modules/morefoto.support/routes.php';
     $configureSupport($routes);
     $configureLegal = require __DIR__ . '/../modules/morefoto.legal/routes.php';
