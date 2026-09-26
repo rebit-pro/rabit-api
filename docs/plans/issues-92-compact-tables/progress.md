@@ -3,7 +3,7 @@
 ## Точка продолжения
 
 - Ветка `codex/issues-92-compact-tables`, worktree `/home/user/rabit-api-worktrees/issues-92-compact-tables`,
-  base `origin/main` `41b1146e`. Issue [#92](https://github.com/rebit-pro/rabit-api/issues/92). PR [#152](https://github.com/rebit-pro/rabit-api/pull/152).
+  base `origin/main` `2104016` (слит в `09bceb4`). Issue [#92](https://github.com/rebit-pro/rabit-api/issues/92). PR [#152](https://github.com/rebit-pro/rabit-api/pull/152).
 - Завершено: backend, frontend, unit/архитектурные тесты, live E2E группами a (79/79) и b (53/53), визуальная проверка.
 - Сейчас: PR передан на review.
 - Следующий шаг: review; после review без блокеров — полный `make test-e2e` (гейт), затем merge и выкатка отдельными действиями.
@@ -93,3 +93,8 @@
 - Визуальная проверка desktop 1440 / mobile 390 на стенде заглушек по итоговому коду: `screens/impl/` (11 снимков),
   совпадает с одобренными `screens/after/`; отличие — номер шага подготовки в строке ссылки (текущий шаг, а не число
   выполненных) и сноска про «Фотографии ещё готовятся» под таблицей.
+- Слит `origin/main` `2104016` (J1 #143, #149) — merge `09bceb4`. Конфликты: импорты `commerce/di/orders.php`
+  (объединены) и группа b в `groups.json` (`cabinet-tables` + `zzzzzzzzzz-files`). Новая миграция J1
+  `Version20260926180001` ссылается только на `mf_order` — каскад не затрагивает (заказ запрещает удаление).
+  Повтор после merge: phpunit unit OK (849), PHPStan No errors, `npm run check` exit 0, `test:commerce` 223/223.
+  Live E2E после merge не перезапускались — это сделает полный гейт после review.
