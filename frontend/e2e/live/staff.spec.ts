@@ -351,8 +351,12 @@ test('#91: организатор сортирует, выбирает и уда
   await expect(page.locator('[data-row-id]:visible').first()).toContainText(boris);
   await expect(page.getByRole('columnheader', { name: /Сотрудник/ })).toHaveAttribute('aria-sort', 'descending');
 
+  const table = page.locator('.ui-table-desktop table');
+  const topBefore = (await table.boundingBox())?.y;
   for (const name of names) await page.getByRole('checkbox', { name: 'Выбрать ' + name, exact: true }).check();
   await expect(page.getByTestId('staff-bulk')).toContainText('Выбрано: 2');
+  // #103: the selection bar keeps the height of the summary bar, so the table does not jump.
+  expect((await table.boundingBox())?.y).toBe(topBefore);
   await page.getByRole('button', { name: 'Удалить выбранных', exact: true }).click();
   const dialog = page.getByTestId('staff-remove-dialog');
   for (const name of names) await expect(dialog).toContainText(name);

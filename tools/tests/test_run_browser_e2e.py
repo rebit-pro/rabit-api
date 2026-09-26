@@ -1,10 +1,12 @@
-"""Unit checks of the E2E runner logic that needs no Docker: prune decisions, owner check, labels and timeouts.
+"""Unit checks of the E2E runner logic that needs no Docker: prune decisions and inventory, owner check, labels and timeouts.
 Run: python3 -m unittest discover -s tools/tests -v
 """
 import datetime
 import importlib.util
+import json
 import os
 from pathlib import Path
+import subprocess
 import unittest
 from unittest import mock
 
@@ -113,6 +115,94 @@ class Prune(unittest.TestCase):
                 mock.patch.object(runner, "docker") as docker, mock.patch("builtins.print"):
             runner.prune(False, 2)
         docker.assert_not_called()
+
+
+LIVE = "rabit-e2e-aaaaaaaaaaaa"
+# Docker 29 messages for a resource that no longer exists, one stderr line per id.
+MISSING = {
+    "container": "Error response from daemon: No such container: {}",
+    "network": "Error response from daemon: network {} not found",
+    "volume": "Error response from daemon: get {}: no such volume",
+}
+
+
+def docker_data(kind, run, suffix, status="exited", created="2020-01-01T00:00:00Z"):
+    labels = {runner.LABEL: run}
+    if "container" == kind:
+        return {"Name": "/" + run + "-" + suffix, "State": {"Status": status}, "Created": created, "Config": {"Labels": labels}}
+    return {"Name": run + "-" + suffix, "CreatedAt": created, "Labels": labels}
+
+
+class FakeDocker:
+    """Answers `docker` listings and inspects like the daemon; ids in `gone` are removed right after the listing."""
+
+    def __init__(self, resources, gone=()):
+        self.resources, self.gone, self.calls = resources, set(gone), []
+
+    def __call__(self, args, **kwargs):
+        self.calls.append(tuple(args[1:]))
+        kind = "container" if "ps" == args[1] else args[1]
+        if "inspect" == args[2]:
+            ids = args[3:]
+            found = [self.resources[kind][id] for id in ids if id not in self.gone]
+            stderr = "".join(MISSING[kind].format(id) + "\n" for id in ids if id in self.gone)
+            return subprocess.CompletedProcess(args, 1 if stderr else 0, json.dumps(found), stderr)
+        if "ls" == args[2] or "ps" == args[1]:
+            rows = [id + "\t" + (data.get("Config", {}).get("Labels") or data.get("Labels"))[runner.LABEL]
+                    for id, data in self.resources.get(kind, {}).items()]
+            return subprocess.CompletedProcess(args, 0, "\n".join(rows) + "\n", "")
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+
+class Inventory(unittest.TestCase):
+    RESOURCES = {
+        "container": {
+            "c1": docker_data("container", LIVE, "mysql", "running", "2026-09-25T11:00:00Z"),
+            "c2": docker_data("container", LIVE, "job", "running", "2026-09-25T11:30:00Z"),
+            "c3": docker_data("container", RUN, "mysql"),
+        },
+        "network": {"n1": docker_data("network", RUN, "private")},
+        "volume": {RUN + "-runtime": docker_data("volume", RUN, "runtime")},
+    }
+
+    def prune(self, apply, fake):
+        with mock.patch.object(runner.subprocess, "run", side_effect=fake), mock.patch("builtins.print") as output:
+            runner.prune(apply, 2)
+        return "\n".join(call.args[0] for call in output.call_args_list)
+
+    def test_rm_container_gone_before_inspect_keeps_its_run_and_dry_run_removes_nothing(self):
+        fake = FakeDocker(self.RESOURCES, gone={"c2"})
+        report = self.prune(False, fake)
+        self.assertIn(f"keep {LIVE} (report path not labelled): disappeared during the check, run prune again: container c2", report)
+        self.assertIn(f"would remove {RUN}", report)
+        self.assertEqual([], [call for call in fake.calls if "rm" in call])
+
+    def test_apply_removes_only_the_run_checked_completely(self):
+        fake = FakeDocker(self.RESOURCES, gone={"c2"})
+        self.prune(True, fake)
+        self.assertEqual([("rm", RUN + "-mysql"), ("network", "rm", RUN + "-private"), ("volume", "rm", RUN + "-runtime")],
+                         [call for call in fake.calls if "rm" in call])
+
+    def test_gone_network_and_volume_are_skipped(self):
+        resources = {"network": {"n1": docker_data("network", RUN, "private"), "n2": docker_data("network", RUN, "browser")},
+                     "volume": {"v1": docker_data("volume", RUN, "runtime"), "v2": docker_data("volume", RUN, "node")}}
+        with mock.patch.object(runner.subprocess, "run", side_effect=FakeDocker(resources, gone={"n2", "v2"})):
+            self.assertEqual(([resources["network"]["n1"]], {"n2"}), runner.inspect("network", ["n1", "n2"]))
+            self.assertEqual(([resources["volume"]["v1"]], {"v2"}), runner.inspect("volume", ["v1", "v2"]))
+
+    def test_real_docker_errors_still_fail(self):
+        found = json.dumps([self.RESOURCES["container"]["c1"]])
+        failures = {
+            "daemon unavailable": ("", "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?\n"),
+            "not found and another error": (found, MISSING["container"].format("c2") + "\nError response from daemon: permission denied\n"),
+            "id that was not listed": (found, MISSING["container"].format("c9") + "\n"),
+            "resource missing without a message": ("[]", MISSING["container"].format("c2") + "\n"),
+            "network message for a container": (found, MISSING["network"].format("c2") + "\n"),
+        }
+        for name, (stdout, stderr) in failures.items():
+            with self.subTest(name), mock.patch.object(runner.subprocess, "run", return_value=subprocess.CompletedProcess([], 1, stdout, stderr)):
+                with self.assertRaises(RuntimeError):
+                    runner.inspect("container", ["c1", "c2"])
 
 
 class BrowserTimeout(unittest.TestCase):

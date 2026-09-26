@@ -29,6 +29,12 @@ OWNER_LABEL = LABEL + ".owner"
 RUN_ID = re.compile(r"rabit-e2e-[0-9a-f]{12}")
 # A container in any other state (running, restarting, paused, removing) still belongs to a live stand.
 STOPPED = {"created", "exited", "dead"}
+# #88: how `docker <kind> inspect` reports a resource removed after the listing, e.g. a `--rm` job of a parallel run.
+GONE = {
+    "container": re.compile(r"Error response from daemon: No such container: (\S+)"),
+    "network": re.compile(r"Error response from daemon: network (\S+) not found"),
+    "volume": re.compile(r"Error response from daemon: get (\S+): no such volume"),
+}
 # Kept between runs: npm checks every tarball against the lockfile, PHPStan validates its result cache itself.
 NPM_CACHE = "rabit-e2e-npm-cache"
 PHPSTAN_CACHE = "rabit-e2e-phpstan-cache"
@@ -587,12 +593,35 @@ def created_at(text):
     return datetime.datetime.fromisoformat(match[1] + ("+00:00" if "Z" == match[2] else match[2])) if match else None
 
 
+def inspect(kind, ids):
+    """Inspect data of the listed resources and the ids removed since the listing; any other Docker error fails."""
+    result = subprocess.run(["docker", kind, "inspect", *ids], capture_output=True, text=True, timeout=900)
+    if not result.returncode:
+        return json.loads(result.stdout), set()
+    matches = [GONE[kind].fullmatch(line.strip()) for line in result.stderr.splitlines() if line.strip()]
+    gone = {match[1] for match in matches if match}
+    try:
+        data = json.loads(result.stdout)
+    except ValueError:
+        data = None
+    # Accepted only when every error line is "not found" for a listed id and all the other ids came back.
+    if not matches or not all(matches) or not gone <= set(ids) or data is None or len(data) + len(gone) != len(ids):
+        raise RuntimeError(f"Command failed ({result.returncode}): docker {kind} inspect; {result.stderr[-2000:]}")
+    return data, gone
+
+
 def inventory():
-    """Every container, network and volume with the run label, grouped by the run id in that label."""
+    """Every container, network and volume with the run label, grouped by the run id in that label.
+    A resource removed between the listing and inspect stays in its run as `gone`, so that run is kept this time."""
     runs = {}
-    for kind, listing in [("container", ["ps", "--all"]), ("network", ["network", "ls"]), ("volume", ["volume", "ls"])]:
-        ids = docker(*listing, "--quiet", "--filter", "label=" + LABEL).split()
-        for data in json.loads(docker(kind, "inspect", *ids)) if ids else []:
+    for kind, listing, key in [("container", ["ps", "--all"], "ID"), ("network", ["network", "ls"], "ID"), ("volume", ["volume", "ls"], "Name")]:
+        output = docker(*listing, "--filter", "label=" + LABEL, "--format", "{{." + key + "}}\t{{.Label \"" + LABEL + "\"}}")
+        listed = dict(line.partition("\t")[::2] for line in output.splitlines() if line.strip())
+        found, gone = inspect(kind, list(listed)) if listed else ([], set())
+        for name in sorted(gone):
+            runs.setdefault(listed[name], []).append(
+                {"kind": kind, "name": name, "running": False, "created": None, "owner": None, "report": None, "gone": True})
+        for data in found:
             values = (data.get("Config", {}).get("Labels") if "container" == kind else data.get("Labels")) or {}
             runs.setdefault(values.get(LABEL, ""), []).append({
                 "kind": kind,
@@ -607,6 +636,9 @@ def inventory():
 
 def verdict(run, resources, now, min_age, alive=owner_alive):
     """Why an E2E run must stay, or None when it is abandoned: nothing runs, its owner is gone and it is old enough."""
+    gone = sorted(resource["kind"] + " " + resource["name"] for resource in resources if resource.get("gone"))
+    if gone:
+        return "disappeared during the check, run prune again: " + ", ".join(gone)
     if not RUN_ID.fullmatch(run) or any(not resource["name"].startswith(run + "-") for resource in resources):
         return "label or names do not belong to one E2E run"
     running = [resource["name"] for resource in resources if resource["running"]]

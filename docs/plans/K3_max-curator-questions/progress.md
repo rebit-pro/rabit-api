@@ -3,12 +3,12 @@
 ## Точка продолжения
 
 - Ветка `codex/k3-max-curator-questions`, worktree `/home/user/rabit-api-worktrees/k3-max-curator-questions`,
-  base `94502a1` (origin/main с G1 #80, #86, #87; слит merge-коммитами 25.09.2026). PR [#89](https://github.com/rebit-pro/rabit-api/pull/89) на ревью; неблокирующий issue [#90](https://github.com/rebit-pro/rabit-api/issues/90).
+  PR [#89](https://github.com/rebit-pro/rabit-api/pull/89) слит в `main` как `caa37b6` (25.09.2026) и выкачен на stage https://app.morefoto36.ru, релиз `/srv/morefoto/releases/k3-20260925204828-caa37b6`; issue #90 закрыт PR #100.
 - Связанное: [план K3](plan.md), [план PR #48](../max-support-chat-plan/plan.md), `docs/waves/graph.json`,
   канон `../MoreFoto/docs/04-bitrix-modules/backend-waves.json` (не git, изменения — патчем в `docs/waves/k3/`).
 - Завершено: merge PR #48; граф синхронизирован (E6 merged, K3 inProgress).
-- Сейчас: второй круг ревью #89 — остался 1 блокер (R2 частично); исправлен (`4585beb`), полный gate PASS; PR на третьем круге.
-- Следующий шаг: третий круг ревью; после него — merge по решению пользователя, stage и живая проверка MAX-12.
+- Сейчас: K3 работает на stage; живой цикл сайт → группа MAX → «Ответить» → сайт подтверждён через API.
+- Следующий шаг: проверить путь из UI галереи и кабинета воспитателя, когда на stage появится подтверждённая ссылка группы или воспитатель; перед production — решение MAX-D06.
 - Пользователь: бот прошёл модерацию; группа создана; токен кладёт в `~/.config/morefoto/max-bot.env`, бот
   добавляется в группу администратором.
 - Блокеры: нет. Открыто MAX-D06 (срок хранения) — только для production.
@@ -114,6 +114,20 @@
 - `make test-e2e …` (прогон `rabit-e2e-678deb166dd0`) — **full gate PASS**: браузер 117 (a 71, b 46), все верификаторы включая `verify-support.php` и `verify-payments.php`; phpunit и phpstan внутри гейта — PASS.
 - Пользователь: «сливать в main и деплоить на stage».
 
+### 25.09.2026 — merge и выкатка на stage
+
+- Пользователь: «сливать в main и деплоить». Перед merge — полный gate на актуальном main (`rabit-e2e-678deb166dd0`, 117 PASS). `gh pr merge 89 --merge --match-head-commit ba4a4c3…` → `caa37b6`; дерево равно проверенному.
+- Артефакты: `git archive caa37b6 api` (2238 файлов) и образ `morefoto-frontend:k3-20260925204828-caa37b6` (`VITE_API_MOCKS_ENABLED=false`, тексты K3 в 4 чанках, `question-pending` в `QuestionThread`). Скрипты — по образцу G1/#96 (генератор в scratchpad сессии): маркер `GalleryQuestionController.php`, миграция `Version20260925150001`, `install-module.sh` для `morefoto.support`, DI-smoke K3 и соседних модулей; `sha256sum --check` и `bash -n` на сервере — PASS.
+- Сверка: шесть backend-сервисов на релизе #96, `payment_reconciler` — на релизе G1 (переключён вместе со всеми); `composer.lock` не менялся — vendor из #96.
+- `prepare-release.sh`; `backup.sh` — 65 167 байт; `restore-check.sh` — одноразовая MySQL, 164 таблицы — PASS.
+- `migrate.sh up Version20260925150001` — success; `install-module.sh` — `morefoto.support installed`.
+- FPM первым: DI-smoke через `prolog_before.php` 18/18; HTTP: webhook без секрета — 401, чужой ключ беседы — 404 `QUESTION_NOT_FOUND`, `/questions/mine` без токена — 401. Затем backend, media ×2, notification ×2, payment_reconciler — код виден. Frontend 2/2; `index.html` на проде = образ по SHA-256; `/`, `/login`, `/cabinet/questions`, `/cabinet/overview`, `/guide/` — 200.
+- MAX: секреты `rebit_max_bot_token_20260925` (из локального файла через stdin, не выводился) и `morefoto_support_max_webhook_secret_20260925` (`openssl rand` на сервере); FPM `--secret-add` webhook-секрета; сервисы `morefoto_stage_support_consumer` и `morefoto_stage_support_dispatcher` (клон спецификации notification consumer, entrypoint образа сохранён; `create-support-services.py` в релизе). `app:support:max-status` из воркера — бот `@se14459249_bot` виден (токен, выход в интернет и CA Минцифры работают). `app:support:max-subscribe --url=https://app.morefoto36.ru/api/v1/webhooks/max/updates` — OK.
+- ID группы: сообщение пользователя «тест» дошло по webhook, `mf_support_max_chat` — `-79405667396906`; `MOREFOTO_SUPPORT_MAX_CHAT_ID` задан у FPM, воркера и диспетчера.
+- Живая проверка (MAX-12): на stage нет ссылок галерей и сотрудников head/teacher, поэтому тестовая беседа №1 «Тест разработчика» создана прикладными сервисами для «Средней группы»; сигнал из `docker exec` не ушёл (пароль RabbitMQ подставляет entrypoint), диспетчер опубликовал реплику за минуту, воркер доставил — `delivered`. Пользователь ответил в MAX через «Ответить»; `GET /api/v1/public/questions/current` с ключом беседы вернул реплику родителя (`delivered`) и реплику `curator` «Тестирую ответ для Средней группы» от «Александр Евгеньевич Тарасов».
+- Откат: `docker service rollback` семи backend-сервисов (прежний `/app` — `issues91-20260925165859-d8caca4`, у reconciler — G1) и `morefoto_frontend`; `docker service rm morefoto_stage_support_consumer morefoto_stage_support_dispatcher`; миграция только добавляет таблицы.
+- Не проверено на stage: кнопка в галерее и раздел кабинета воспитателя (нет подтверждённой ссылки и воспитателей); тестовая беседа №1 остаётся в БД stage.
+
 ## Результаты проверок
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -133,5 +147,5 @@
 | MAX-09 | PASS (unit) | 25.09.2026 | Retry/unknown/stale/без группы — `MaxDeliveryAndWebhookTest`; RabbitMQ-сбой — не моделировался |
 | MAX-10 | PASS (unit+E2E) | 25.09.2026 | `TextPolicyAndSealTest`; сетевой сбой с повтором тем же ключом — `zz-questions` |
 | MAX-11 | PASS | 25.09.2026 | `grep` логов стенда `7bd431fabcd6`: ключ, тексты, имена, секрет — 0 совпадений |
-| MAX-12 | PENDING | 25.09.2026 | Живая проверка на stage после деплоя |
+| MAX-12 | PASS (API) | 25.09.2026 | Stage: вопрос через сервисы приложения → бот в группе → «Ответить» пользователя → SUP-08 вернул ответ куратора; UI галереи — после появления ссылки |
 | MAX-13 | PASS (снимки) / PENDING (stage) | 25.09.2026 | Полный gate `rabit-e2e-5f610803f8f9`: снимки 1440 и 390 после окончания анимации, без горизонтального скролла; визуальная проверка на stage — вместе с MAX-12 |
