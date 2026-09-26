@@ -9,7 +9,9 @@ use Bitrix\Main\Response;
 use Rebit\Share\Infrastructure\Bitrix\ControllerJson;
 use Rebit\Share\Infrastructure\Controller\Responses\ApiJsonExceptionResponse;
 use Rebit\Share\Application\Contract\File\Dto\PreviewContentOutputDto;
+use Rebit\Share\Application\Contract\File\Dto\ProtectedFileOutputDto;
 use Rebit\Share\Infrastructure\Controller\Responses\PreviewResponse;
+use Rebit\Share\Infrastructure\Controller\Responses\ProtectedFileResponse;
 
 /** Централизует ошибки и запрет кеширования API с приватной ссылкой вместо Bearer-сессии. */
 abstract class PrivateApiJsonController extends BaseJsonController
@@ -36,5 +38,10 @@ abstract class PrivateApiJsonController extends BaseJsonController
         PreviewContentOutputDto $content,
     ): PreviewResponse {
         return new PreviewResponse($content);
+    }
+
+    final protected function protectedFile(ProtectedFileOutputDto $file): ProtectedFileResponse
+    {
+        return new ProtectedFileResponse($file);
     }
 }

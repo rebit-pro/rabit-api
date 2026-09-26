@@ -7,6 +7,7 @@ namespace Morefoto\Commerce\Tests\Unit;
 use Bitrix\Main\DB\Result;
 use Morefoto\Commerce\Domain\Order\Repository\OrderAccessKeyRepository;
 use Morefoto\Commerce\Domain\Order\Repository\OrderRepository;
+use Morefoto\Commerce\Domain\Order\Service\OrderCalendarPolicy;
 use Morefoto\Commerce\Infrastructure\Payment\OrderPayments;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -48,6 +49,27 @@ final class OrderPaymentsTest extends TestCase
         yield 'paid is not paid twice' => ['paid', new OrderPaymentInputDto(7, 'paid', '2026-09-26 12:00:00'), false];
     }
 
+    public function testConfirmedPaymentExtendsTheKeyToTheEndOfTheFilesMonth(): void
+    {
+        $orders = $this->createStub(OrderRepository::class);
+        $orders->method('find')->willReturn($this->rows(['PAYMENT_STATUS' => 'pending', 'PAID_AT' => null]));
+        $keys = $this->createMock(OrderAccessKeyRepository::class);
+        // 31.01.2027 10:00 МСК → 28.02.2027 10:00 МСК (D10), в UTC на 3 часа раньше.
+        $keys->expects(self::once())->method('extendUntil')->with(7, '2027-02-28 07:00:00');
+
+        $this->payments($orders, null, $keys)->applyPayment(new OrderPaymentInputDto(7, 'paid', '2027-01-31 07:00:00'));
+    }
+
+    public function testPendingDoesNotTouchTheKey(): void
+    {
+        $orders = $this->createStub(OrderRepository::class);
+        $orders->method('find')->willReturn($this->rows(['PAYMENT_STATUS' => 'unpaid', 'PAID_AT' => null]));
+        $keys = $this->createMock(OrderAccessKeyRepository::class);
+        $keys->expects(self::never())->method('extendUntil');
+
+        $this->payments($orders, null, $keys)->applyPayment(new OrderPaymentInputDto(7, 'pending'));
+    }
+
     public function testPaidNeedsItsMomentAndUnpaidIsNotAPaymentStatus(): void
     {
         $orders = $this->createMock(OrderRepository::class);
@@ -82,7 +104,7 @@ final class OrderPaymentsTest extends TestCase
     {
         $keys = $this->createStub(OrderAccessKeyRepository::class);
         $keys->method('findActive')->willReturn(false);
-        $payments = new OrderPayments($keys, $this->createStub(OrderRepository::class), $this->createStub(GroupCalendarInterface::class), $this->clock());
+        $payments = new OrderPayments($keys, $this->createStub(OrderRepository::class), $this->createStub(GroupCalendarInterface::class), $this->clock(), new OrderCalendarPolicy());
 
         foreach ([null, 'short', str_repeat('a', 64)] as $key) {
             try {
@@ -94,12 +116,12 @@ final class OrderPaymentsTest extends TestCase
         }
     }
 
-    private function payments(OrderRepository $orders, ?string $closesAt = null): OrderPayments
+    private function payments(OrderRepository $orders, ?string $closesAt = null, ?OrderAccessKeyRepository $keys = null): OrderPayments
     {
         $calendars = $this->createStub(GroupCalendarInterface::class);
         $calendars->method('get')->willReturn(new CalendarMutationOutputDto('g-1', 1, new GroupCalendarOutputDto('Europe/Moscow', null, $closesAt, null, 'open')));
 
-        return new OrderPayments($this->createStub(OrderAccessKeyRepository::class), $orders, $calendars, $this->clock());
+        return new OrderPayments($keys ?? $this->createStub(OrderAccessKeyRepository::class), $orders, $calendars, $this->clock(), new OrderCalendarPolicy());
     }
 
     private function clock(): ClockInterface

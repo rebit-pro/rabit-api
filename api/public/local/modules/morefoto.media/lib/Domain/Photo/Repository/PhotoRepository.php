@@ -243,6 +243,17 @@ final readonly class PhotoRepository
             . $this->quote($publicId) . " AND UF_STATUS='processing'");
     }
 
+    /**
+     * Приватные оригиналы готовых кадров; дубликаты и незавершённая обработка не попадают.
+     *
+     * @param non-empty-list<string> $publicIds
+     */
+    public function originals(array $publicIds): Result
+    {
+        return $this->query('SELECT UF_PUBLIC_ID,UF_MIME_TYPE,UF_BYTES,UF_ORIGINAL_PATH FROM b_hlbd_mf_photo WHERE UF_PUBLIC_ID IN ('
+            . implode(',', array_map($this->quote(...), $publicIds)) . ") AND UF_STATUS='ready' AND UF_ORIGINAL_PATH IS NOT NULL");
+    }
+
     public function originalPathInUse(string $path): bool
     {
         return false !== $this->query('SELECT ID FROM b_hlbd_mf_photo WHERE UF_ORIGINAL_PATH=' . $this->quote($path) . ' LIMIT 1')->fetch();

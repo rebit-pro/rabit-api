@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { test, expect, type APIResponse, type Browser, type Page } from '@playwright/test';
-import { login, orderConsents, token } from './helpers.js';
+import { login, orderConsents, payOnProvider, token } from './helpers.js';
 
 // G1: payment of an existing order through the YooKassa test shop. The runner passes E2E_YOOKASSA=1 only when the
 // test shop keys are present; without them the same spec proves the honest disabled state.
@@ -92,23 +92,6 @@ async function staff(browser: Browser, baseURL: string | undefined, account: str
   await login(page, account);
   return { page, headers: { Authorization: 'Bearer ' + (await token(page)) }, close: () => context.close() };
 }
-/** Language-independent: the provider page may open in Russian or English (review #80). */
-async function payOnProvider(page: Page, number: string) {
-  const fields: [string, string][] = [
-    ['card-number', number],
-    ['expiry-month', '12'],
-    ['expiry-year', '30'],
-    ['security-code', '123']
-  ];
-  // The provider page masks its inputs: typed characters, not a pasted value.
-  for (const [name, value] of fields) {
-    const input = page.locator(`input[name="${name}"]`);
-    await input.fill('');
-    await input.pressSequentially(value, { delay: 30 });
-  }
-  await page.locator('button[type="submit"]').first().click();
-}
-
 test.describe.configure({ mode: 'serial' });
 test.use({ locale: 'ru-RU' });
 

@@ -8,6 +8,7 @@ use Bitrix\Main\DB\Result;
 use Morefoto\Commerce\Domain\Order\Enum\PaymentStatusEnum;
 use Morefoto\Commerce\Domain\Order\Repository\OrderAccessKeyRepository;
 use Morefoto\Commerce\Domain\Order\Repository\OrderRepository;
+use Morefoto\Commerce\Domain\Order\Service\OrderCalendarPolicy;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
 use Rebit\Share\Contracts\Commerce\Dto\OrderPaymentInputDto;
 use Rebit\Share\Contracts\Commerce\Dto\PayableOrderOutputDto;
@@ -22,6 +23,7 @@ final readonly class OrderPayments implements OrderPaymentInterface
         private OrderRepository $orders,
         private GroupCalendarInterface $calendars,
         private ClockInterface $clock,
+        private OrderCalendarPolicy $calendar,
     ) {}
 
     public function byKey(?string $orderKey): PayableOrderOutputDto
@@ -59,6 +61,10 @@ final readonly class OrderPayments implements OrderPaymentInterface
             return;
         }
         $this->orders->applyPayment($input->orderId, $status->value, $input->paidAt, $input->latePayment);
+        if (null !== $input->paidAt) {
+            $until = $this->calendar->filesAvailableUntil(new \DateTimeImmutable($input->paidAt, new \DateTimeZone('UTC')));
+            $this->keys->extendUntil($input->orderId, $until->format('Y-m-d H:i:s'));
+        }
     }
 
     private function order(Result $result): PayableOrderOutputDto

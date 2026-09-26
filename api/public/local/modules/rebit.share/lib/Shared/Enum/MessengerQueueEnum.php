@@ -10,6 +10,7 @@ enum MessengerQueueEnum: string
     case NOTIFICATION_EMAIL = 'notificationEmail';
     case MEDIA_PROCESSING = 'mediaProcessing';
     case SUPPORT_MAX = 'supportMax';
+    case FILES_ARCHIVE = 'filesArchive';
     case FAILED = 'messengerFailed';
 
     /**
