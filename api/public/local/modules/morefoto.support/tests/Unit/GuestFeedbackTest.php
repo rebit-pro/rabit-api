@@ -13,6 +13,7 @@ use Morefoto\Support\Application\Question\UseCase\DeliverQuestionMessageUseCase;
 use Morefoto\Support\Application\Question\UseCase\SendGuestFeedbackUseCase;
 use Morefoto\Support\Domain\Question\Service\QuestionTextPolicy;
 use Morefoto\Support\Domain\Question\ValueObject\IdempotencyKey;
+use Morefoto\Support\Infrastructure\Crypto\GuestAddressHasher;
 use Morefoto\Support\Tests\Unit\Double\FixedClock;
 use Morefoto\Support\Tests\Unit\Double\ImmediateTransaction;
 use Morefoto\Support\Tests\Unit\Double\InMemoryQuestions;
@@ -32,6 +33,8 @@ final class GuestFeedbackTest extends TestCase
 {
     private const string KEY = '0123456789abcdef0123456789abcdef';
     private const int CHAT = -72000000001;
+    private const string ADDRESS = '203.0.113.7';
+    private const string SECRET = 'unit-test-secret-0123456789abcdef0123';
 
     private InMemoryQuestions $questions;
     private RecordingPublisher $publisher;
@@ -46,7 +49,7 @@ final class GuestFeedbackTest extends TestCase
 
     public function testGuestFeedbackBecomesPendingReplyWithContact(): void
     {
-        $number = $this->send()->execute(new SendGuestFeedbackInputDto(' Ольга ', ' +7 (900) 123-45-67 ', " Не приходит письмо\r\n "), new IdempotencyKey(self::KEY));
+        $number = $this->send()->execute(new SendGuestFeedbackInputDto(' Ольга ', ' +7 (900) 123-45-67 ', " Не приходит письмо\r\n ", self::ADDRESS), new IdempotencyKey(self::KEY));
 
         self::assertSame(100, $number);
         self::assertSame(['guest', null, null, null, 'Ольга', 'Страница входа в кабинет · контакт: +7 (900) 123-45-67'], [
@@ -59,7 +62,7 @@ final class GuestFeedbackTest extends TestCase
 
     public function testRepeatReturnsTheSameNumberAndAnotherBodyConflicts(): void
     {
-        $input = new SendGuestFeedbackInputDto('Ольга', 'olga@example.com', 'Не могу войти');
+        $input = new SendGuestFeedbackInputDto('Ольга', 'olga@example.com', 'Не могу войти', self::ADDRESS);
         $first = $this->send()->execute($input, new IdempotencyKey(self::KEY));
         $second = $this->send()->execute($input, new IdempotencyKey(strtoupper(self::KEY)));
 
@@ -68,23 +71,71 @@ final class GuestFeedbackTest extends TestCase
         self::assertSame([1], $this->publisher->published);
 
         $this->expectExceptionObject(new HttpException('IDEMPOTENCY_CONFLICT', 409));
-        $this->send()->execute(new SendGuestFeedbackInputDto('Ольга', 'olga@example.com', 'Другой текст'), new IdempotencyKey(self::KEY));
+        $this->send()->execute(new SendGuestFeedbackInputDto('Ольга', 'olga@example.com', 'Другой текст', self::ADDRESS), new IdempotencyKey(self::KEY));
     }
 
     public function testGuestFeedbackIsLimitedPerHourForTheWholeSite(): void
     {
         for ($index = 0; $index < SendGuestFeedbackUseCase::GUEST_QUESTIONS_PER_HOUR; ++$index) {
-            $this->send()->execute(new SendGuestFeedbackInputDto('Гость', 'guest@example.com', 'Обращение ' . $index), new IdempotencyKey(sprintf('%032x', $index + 1)));
+            $this->feedback('Обращение ' . $index, '198.51.100.' . ($index + 1), $index + 1);
         }
 
-        try {
-            $this->send()->execute(new SendGuestFeedbackInputDto('Гость', 'guest@example.com', 'Лишнее'), new IdempotencyKey(sprintf('%032x', 999)));
-            self::fail('The limit was not applied.');
-        } catch (HttpException $error) {
-            self::assertSame([429, 'RATE_LIMITED'], [$error->getCode(), $error->getMessage()]);
-        }
+        $this->assertRateLimited('Лишнее', '192.0.2.1', 999);
         $this->clock->now = $this->clock->now->modify('+61 minutes');
-        self::assertGreaterThan(0, $this->send()->execute(new SendGuestFeedbackInputDto('Гость', 'guest@example.com', 'Через час'), new IdempotencyKey(sprintf('%032x', 1000))));
+        self::assertGreaterThan(0, $this->feedback('Через час', '192.0.2.1', 1000));
+    }
+
+    public function testOneAddressCannotTakeTheWholeSiteLimit(): void
+    {
+        for ($index = 0; $index < SendGuestFeedbackUseCase::GUEST_QUESTIONS_PER_ADDRESS_PER_HOUR; ++$index) {
+            $this->feedback('Обращение ' . $index, self::ADDRESS, $index + 1);
+        }
+
+        $this->assertRateLimited('Лишнее', self::ADDRESS, 999);
+        self::assertCount(SendGuestFeedbackUseCase::GUEST_QUESTIONS_PER_ADDRESS_PER_HOUR, $this->questions->questions);
+        self::assertGreaterThan(0, $this->feedback('Другой гость', '198.51.100.20', 1000));
+        // The same /64 of an IPv6 subscriber is one address.
+        for ($index = 0; $index < SendGuestFeedbackUseCase::GUEST_QUESTIONS_PER_ADDRESS_PER_HOUR; ++$index) {
+            $this->feedback('IPv6 ' . $index, '2001:db8:1:2::' . dechex($index + 1), 2000 + $index);
+        }
+        $this->assertRateLimited('IPv6 лишнее', '2001:db8:1:2:ffff::1', 2999);
+    }
+
+    public function testAddressWindowRestartsAfterAnHourAndStoresOnlyTheHash(): void
+    {
+        for ($index = 0; $index < SendGuestFeedbackUseCase::GUEST_QUESTIONS_PER_ADDRESS_PER_HOUR; ++$index) {
+            $this->feedback('Обращение ' . $index, self::ADDRESS, $index + 1);
+        }
+        self::assertSame([(new GuestAddressHasher(self::SECRET))->hash(self::ADDRESS)], array_keys($this->questions->guestAddresses));
+        self::assertStringNotContainsString(self::ADDRESS, serialize($this->questions->guestAddresses));
+
+        $this->clock->now = $this->clock->now->modify('+61 minutes');
+        $this->feedback('Другой гость', '198.51.100.20', 100);
+        self::assertCount(1, $this->questions->guestAddresses, 'the stale window is deleted');
+        self::assertGreaterThan(0, $this->feedback('Через час', self::ADDRESS, 101));
+        self::assertSame(1, $this->questions->guestAddresses[(new GuestAddressHasher(self::SECRET))->hash(self::ADDRESS)]['questions']);
+    }
+
+    public function testRepeatIsNotLimitedByTheAddress(): void
+    {
+        $first = $this->feedback('Обращение 0', self::ADDRESS, 1);
+        for ($index = 1; $index < SendGuestFeedbackUseCase::GUEST_QUESTIONS_PER_ADDRESS_PER_HOUR; ++$index) {
+            $this->feedback('Обращение ' . $index, self::ADDRESS, $index + 1);
+        }
+
+        self::assertSame($first, $this->feedback('Обращение 0', self::ADDRESS, 1));
+    }
+
+    public function testWithoutTheServerSecretNothingIsStored(): void
+    {
+        $refusal = '';
+        try {
+            $this->send('')->execute(new SendGuestFeedbackInputDto('Ольга', 'olga@example.com', 'Не могу войти', self::ADDRESS), new IdempotencyKey(self::KEY));
+        } catch (\RuntimeException $error) {
+            $refusal = $error->getMessage();
+        }
+        self::assertStringContainsString('REBIT_ENCRYPTION_KEY', $refusal);
+        self::assertSame([[], [], []], [$this->questions->questions, $this->questions->guestAddresses, $this->publisher->published]);
     }
 
     public function testContactMustLeadBackToTheGuest(): void
@@ -106,7 +157,7 @@ final class GuestFeedbackTest extends TestCase
     public function testInvalidTextIsRejectedBeforeStorage(): void
     {
         try {
-            $this->send()->execute(new SendGuestFeedbackInputDto('Ольга', 'olga@example.com', '   '), new IdempotencyKey(self::KEY));
+            $this->send()->execute(new SendGuestFeedbackInputDto('Ольга', 'olga@example.com', '   ', self::ADDRESS), new IdempotencyKey(self::KEY));
             self::fail('Empty message accepted.');
         } catch (HttpException $error) {
             self::assertSame('INVALID_QUESTION_MESSAGE', $error->getMessage());
@@ -117,7 +168,7 @@ final class GuestFeedbackTest extends TestCase
 
     public function testCuratorsSeeTheContactAndRepliesInMaxAreNotStored(): void
     {
-        $this->send()->execute(new SendGuestFeedbackInputDto('Ольга', 'olga@example.com', 'Не могу войти'), new IdempotencyKey(self::KEY));
+        $this->send()->execute(new SendGuestFeedbackInputDto('Ольга', 'olga@example.com', 'Не могу войти', self::ADDRESS), new IdempotencyKey(self::KEY));
         $max = new ScriptedMaxMessenger([new MaxChatSendOutputDto(MaxSendStatusEnum::DELIVERED, 'mid.guest')]);
         (new DeliverQuestionMessageUseCase(new ImmediateTransaction(), $this->questions, $max, new MaxQuestionTextBuilder(), $this->publisher, $this->clock, self::CHAT))->execute(1);
 
@@ -131,7 +182,24 @@ final class GuestFeedbackTest extends TestCase
         self::assertCount(1, $this->questions->messages);
     }
 
-    private function send(): SendGuestFeedbackUseCase
+    private function feedback(string $message, string $address, int $key): int
+    {
+        return $this->send()->execute(new SendGuestFeedbackInputDto('Гость', 'guest@example.com', $message, $address), new IdempotencyKey(sprintf('%032x', $key)));
+    }
+
+    private function assertRateLimited(string $message, string $address, int $key): void
+    {
+        $before = count($this->questions->questions);
+        try {
+            $this->feedback($message, $address, $key);
+            self::fail('The limit was not applied.');
+        } catch (HttpException $error) {
+            self::assertSame([429, 'RATE_LIMITED'], [$error->getCode(), $error->getMessage()]);
+        }
+        self::assertCount($before, $this->questions->questions);
+    }
+
+    private function send(string $secret = self::SECRET): SendGuestFeedbackUseCase
     {
         return new SendGuestFeedbackUseCase(
             new ImmediateTransaction(),
@@ -140,6 +208,7 @@ final class GuestFeedbackTest extends TestCase
             new QuestionTextPolicy(),
             new MaxQuestionTextBuilder(),
             $this->publisher,
+            new GuestAddressHasher($secret),
             $this->clock,
         );
     }

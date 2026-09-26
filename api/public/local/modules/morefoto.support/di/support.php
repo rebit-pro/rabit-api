@@ -7,6 +7,7 @@ use Morefoto\Support\Application\Max\UseCase\GetMaxStatusUseCase;
 use Morefoto\Support\Application\Max\UseCase\HandleMaxUpdateUseCase;
 use Morefoto\Support\Application\Max\UseCase\SubscribeMaxWebhookUseCase;
 use Morefoto\Support\Application\Question\Contract\GalleryQuestionContextInterface;
+use Morefoto\Support\Application\Question\Contract\GuestAddressHasherInterface;
 use Morefoto\Support\Application\Question\Contract\QuestionDeliveryPublisherInterface;
 use Morefoto\Support\Application\Question\Contract\QuestionKeySealInterface;
 use Morefoto\Support\Application\Question\Contract\StaffQuestionContextInterface;
@@ -31,6 +32,7 @@ use Morefoto\Support\Domain\Question\Repository\QuestionRepositoryInterface;
 use Morefoto\Support\Domain\Question\Service\QuestionTextPolicy;
 use Morefoto\Support\Infrastructure\Context\GalleryQuestionContext;
 use Morefoto\Support\Infrastructure\Context\StaffQuestionContext;
+use Morefoto\Support\Infrastructure\Crypto\GuestAddressHasher;
 use Morefoto\Support\Infrastructure\Crypto\QuestionKeySeal;
 use Morefoto\Support\Infrastructure\Database\BitrixMaxChatRepository;
 use Morefoto\Support\Infrastructure\Database\BitrixQuestionDeliveryRepository;
@@ -83,6 +85,10 @@ $services = [
         'constructor' => static fn(): MaxChatRepositoryInterface => new BitrixMaxChatRepository($get(SupportSql::class)),
     ],
     QuestionKeySealInterface::class => ['constructor' => static fn(): QuestionKeySealInterface => new QuestionKeySeal()],
+    // The server secret of the platform; without it guest feedback answers 503 instead of storing a guessable IP hash.
+    GuestAddressHasherInterface::class => [
+        'constructor' => static fn(): GuestAddressHasherInterface => new GuestAddressHasher((string)(getenv('REBIT_ENCRYPTION_KEY') ?: '')),
+    ],
     GalleryQuestionContextInterface::class => [
         'constructor' => static fn(): GalleryQuestionContextInterface => new GalleryQuestionContext(
             $get(GalleryAccessInterface::class),
@@ -172,7 +178,7 @@ $dependencies = [
     AddStaffQuestionMessageUseCase::class => [StaffQuestionContextInterface::class, SupportTransactionInterface::class, QuestionRepositoryInterface::class, QuestionMessageRecorder::class,
         QuestionTextPolicy::class, MaxQuestionTextBuilder::class, QuestionHistory::class, QuestionDeliveryPublisherInterface::class, ClockInterface::class],
     SendGuestFeedbackUseCase::class => [SupportTransactionInterface::class, QuestionRepositoryInterface::class, QuestionMessageRecorder::class, QuestionTextPolicy::class,
-        MaxQuestionTextBuilder::class, QuestionDeliveryPublisherInterface::class, ClockInterface::class],
+        MaxQuestionTextBuilder::class, QuestionDeliveryPublisherInterface::class, GuestAddressHasherInterface::class, ClockInterface::class],
     DispatchPendingQuestionMessagesUseCase::class => [SupportTransactionInterface::class, QuestionDeliveryRepositoryInterface::class, QuestionDeliveryPublisherInterface::class, ClockInterface::class],
     DeliverQuestionMessageHandler::class => [DeliverQuestionMessageUseCase::class],
     GalleryQuestionController::class => [AskGalleryQuestionUseCase::class, GetGalleryQuestionUseCase::class, AddGalleryQuestionMessageUseCase::class, QuestionInputMapper::class, QuestionResultMapper::class],

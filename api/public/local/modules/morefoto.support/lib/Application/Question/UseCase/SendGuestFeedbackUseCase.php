@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Support\Application\Question\UseCase;
 
+use Morefoto\Support\Application\Question\Contract\GuestAddressHasherInterface;
 use Morefoto\Support\Application\Question\Contract\QuestionDeliveryPublisherInterface;
 use Morefoto\Support\Application\Question\Contract\SupportTransactionInterface;
 use Morefoto\Support\Application\Question\Dto\SendGuestFeedbackInputDto;
@@ -18,11 +19,13 @@ use Rebit\Share\Shared\Exception\HttpException;
 
 /**
  * Гость без аккаунта пишет со страницы входа: обращение с его контактом ставится в ту же очередь доставки в группу
- * кураторов MAX, что и вопросы K3. Повтор с тем же Idempotency-Key возвращает тот же номер, общий поток ограничен в час.
+ * кураторов MAX, что и вопросы K3. Повтор с тем же Idempotency-Key возвращает тот же номер; поток ограничен в час
+ * на хеш IP гостя, чтобы один источник не занял общий лимит сайта, который остаётся предохранителем.
  */
 final readonly class SendGuestFeedbackUseCase
 {
     public const int GUEST_QUESTIONS_PER_HOUR = 30;
+    public const int GUEST_QUESTIONS_PER_ADDRESS_PER_HOUR = 5;
     private const string SCOPE = 'guest:login';
 
     public function __construct(
@@ -32,6 +35,7 @@ final readonly class SendGuestFeedbackUseCase
         private QuestionTextPolicy $policy,
         private MaxQuestionTextBuilder $texts,
         private QuestionDeliveryPublisherInterface $publisher,
+        private GuestAddressHasherInterface $addresses,
         private ClockInterface $clock,
     ) {}
 
@@ -45,7 +49,7 @@ final readonly class SendGuestFeedbackUseCase
         $payloadHash = hash('sha256', json_encode([$name, $contact, $message], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
         $now = $this->clock->now();
 
-        [$questionId, $messageId] = $this->transaction->execute(function() use ($keyHash, $payloadHash, $name, $contact, $message, $now): array {
+        [$questionId, $messageId] = $this->transaction->execute(function() use ($input, $keyHash, $payloadHash, $name, $contact, $message, $now): array {
             $stored = $this->questions->idempotency(self::SCOPE, $keyHash);
             if (null !== $stored) {
                 if (!hash_equals($stored['payloadHash'], $payloadHash)) {
@@ -54,11 +58,16 @@ final readonly class SendGuestFeedbackUseCase
 
                 return [$stored['questionId'], null];
             }
-            if (self::GUEST_QUESTIONS_PER_HOUR <= $this->questions->countGuestQuestions($now->modify('-1 hour'))) {
+            $hourAgo = $now->modify('-1 hour');
+            $addressHash = $this->addresses->hash($input->clientAddress);
+            $this->questions->forgetGuestAddresses($hourAgo);
+            if (self::GUEST_QUESTIONS_PER_ADDRESS_PER_HOUR <= $this->questions->lockGuestAddress($addressHash, $now)
+                || self::GUEST_QUESTIONS_PER_HOUR <= $this->questions->countGuestQuestions($hourAgo)) {
                 throw new HttpException('RATE_LIMITED', 429);
             }
             $questionId = $this->questions->createGuest($name, $this->texts->guestContext($contact), $now);
             $messageId = $this->questions->addMessage($questionId, AuthorEnum::GUEST, $name, $message, $now);
+            $this->questions->addGuestAddressQuestion($addressHash);
             $this->questions->remember(self::SCOPE, $keyHash, $payloadHash, $questionId, null, $now);
 
             return [$questionId, $messageId];

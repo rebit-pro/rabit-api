@@ -14,7 +14,7 @@ final readonly class FeedbackMapper
 {
     public function input(SendFeedbackRequestDto $request): SendGuestFeedbackInputDto
     {
-        return new SendGuestFeedbackInputDto($request->name, $request->contact, $request->message);
+        return new SendGuestFeedbackInputDto($request->name, $request->contact, $request->message, $request->clientAddress);
     }
 
     public function key(SendFeedbackRequestDto $request): IdempotencyKey

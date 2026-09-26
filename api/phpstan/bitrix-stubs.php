@@ -41,6 +41,7 @@ namespace Bitrix\Main {
     class HttpRequest
     {
         public function getHeader(string $name): ?string {}
+        public function getRemoteAddress(): ?string {}
         /** @return array<string, mixed>|null */
         public function getFile(string $name): ?array {}
         public function getPost(string $name): mixed {}

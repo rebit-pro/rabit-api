@@ -53,6 +53,15 @@ interface QuestionRepositoryInterface
 
     public function countGuestQuestions(\DateTimeImmutable $since): int;
 
+    /** Удаляет счётчики адресов гостей с окном, начатым раньше момента: хеш адреса не хранится дольше окна. */
+    public function forgetGuestAddresses(\DateTimeImmutable $before): void;
+
+    /** Блокирует счётчик адреса до конца транзакции (новое окно начинается с $now) и возвращает обращения в окне. */
+    public function lockGuestAddress(string $addressHash, \DateTimeImmutable $now): int;
+
+    /** Засчитывает принятое обращение в окно заблокированного адреса. */
+    public function addGuestAddressQuestion(string $addressHash): void;
+
     /** Реплики автора беседы (без ответов куратора) начиная с момента. */
     public function countOwnMessages(int $questionId, \DateTimeImmutable $since): int;
 
