@@ -8,7 +8,8 @@ use Morefoto\Support\Application\Question\Contract\GuestAddressHasherInterface;
 
 /**
  * HMAC-SHA256 адреса по ключу, выведенному HKDF из серверного секрета: без секрета хеш не перебрать по всем IPv4.
- * IPv6 сводится к префиксу /64 — абонент не обходит лимит сменой адреса внутри своей сети.
+ * IPv6 сводится к префиксу /64 — абонент не обходит лимит сменой адреса внутри своей сети. IPv4-mapped IPv6 сводится
+ * к IPv4 независимо от того, кто выбрал адрес: иначе все такие гости делили бы одно окно `::/64`.
  */
 final readonly class GuestAddressHasher implements GuestAddressHasherInterface
 {

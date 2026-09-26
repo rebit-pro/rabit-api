@@ -227,4 +227,49 @@ $check(['0'] === $column("SELECT (SELECT COUNT(*) FROM mf_support_question WHERE
     . " + (SELECT COUNT(*) FROM mf_support_message WHERE BODY LIKE '%203.0.113.11%')"
     . " + (SELECT COUNT(*) FROM mf_support_guest_address WHERE ADDRESS_HASH LIKE '%203.0.113.11%')"), 'no plain guest IP is stored');
 
+// 7. Issues #125 and #126: a mapped public hop is the same address; parallel repeats at the last place share one result.
+[$status] = $guestFeedback('Mapped', 0x125001, '198.51.100.1, ::ffff:203.0.113.111');
+$check(429 === $status, 'a mapped public hop keeps the real address');
+for ($index = 1; $index <= 4; ++$index) {
+    [$status] = $guestFeedback('Гонка ' . $index, 0x126000 + $index, '203.0.113.113');
+    $check(202 === $status, 'guest feedback before the last place');
+}
+$parallel = curl_multi_init();
+$handles = [];
+for ($index = 0; $index < 4; ++$index) {
+    $handle = curl_init('http://backend/api/v1/public/feedback');
+    curl_setopt_array($handle, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_TIMEOUT => 20,
+        CURLOPT_HTTPHEADER => ['Accept: application/json', 'Content-Type: application/json', 'Idempotency-Key: ' . sprintf('%032x', 0x126005), 'X-Forwarded-For: 203.0.113.113'],
+        CURLOPT_POSTFIELDS => json_encode(['message' => 'Гонка 5'] + $feedback, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+    ]);
+    curl_multi_add_handle($parallel, $handle);
+    $handles[] = $handle;
+}
+do {
+    $state = curl_multi_exec($parallel, $running);
+    if ($running > 0) {
+        curl_multi_select($parallel);
+    }
+} while ($running > 0 && CURLM_OK === $state);
+$answers = [];
+foreach ($handles as $handle) {
+    $raw = (string)curl_multi_getcontent($handle);
+    $answer = '' === $raw ? [] : (array)json_decode($raw, true, 32, JSON_THROW_ON_ERROR);
+    $answers[] = curl_getinfo($handle, CURLINFO_RESPONSE_CODE) . ':' . ($answer['data']['number'] ?? '');
+    curl_multi_remove_handle($parallel, $handle);
+    curl_close($handle);
+}
+curl_multi_close($parallel);
+$raceNumber = (int)$column("SELECT QUESTION_ID FROM mf_support_message WHERE BODY='Гонка 5'")[0];
+$check(array_fill(0, 4, '202:' . $raceNumber) === $answers, 'parallel repeats at the last place share one number: ' . implode(', ', $answers));
+$check(['1'] === $column("SELECT COUNT(*) FROM mf_support_message WHERE BODY='Гонка 5'"), 'parallel repeats store one guest request');
+$check(['2', '0'] === [$column('SELECT COUNT(*) FROM mf_support_guest_address WHERE QUESTIONS=5')[0], $column('SELECT COUNT(*) FROM mf_support_guest_address WHERE QUESTIONS>5')[0]], 'parallel repeats count once');
+[$status, $body] = $guestFeedback('Гонка другое', 0x126005, '203.0.113.113');
+$check(409 === $status && 'IDEMPOTENCY_CONFLICT' === ($body['error']['code'] ?? null), 'another body with the raced key conflicts');
+[$status, $body] = $guestFeedback('Гонка 6', 0x126006, '203.0.113.113');
+$check(429 === $status && 'RATE_LIMITED' === ($body['error']['code'] ?? null), 'a new key after the last place is limited');
+
 echo 'K3 support integration passed' . PHP_EOL;
