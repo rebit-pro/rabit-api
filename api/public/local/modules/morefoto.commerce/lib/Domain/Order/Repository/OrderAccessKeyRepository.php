@@ -44,6 +44,17 @@ final readonly class OrderAccessKeyRepository
         return false === $row ? null : (string)$row['EXPIRES_AT'];
     }
 
+    /** D07: ключ оплаченного заказа не истекает раньше срока файлов; отозванный ключ не оживает. */
+    public function extendUntil(int $orderId, string $until): void
+    {
+        try {
+            Application::getConnection()->queryExecute("UPDATE mf_order_access_key SET EXPIRES_AT=GREATEST(EXPIRES_AT,'{$until}')
+                WHERE ORDER_ID={$orderId} AND REVOKED_AT IS NULL");
+        } catch (\Throwable $error) {
+            throw new OrderStorageException('Cannot extend order key.', 0, $error);
+        }
+    }
+
     public function revokeActive(int $orderId, string $now, string $reason, ?int $actorId): int
     {
         $actor = null === $actorId ? 'NULL' : (string)$actorId;

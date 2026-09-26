@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Commerce\Domain\Order\Service;
 
-/** Задаёт бизнес-время заказа по Москве: срок личного ключа и границы календарных дней для поиска.
+/** Задаёт бизнес-время заказа по Москве: срок личного ключа, срок файлов D10 и границы календарных дней для поиска.
  * Моменты хранятся в UTC, а календарные правила D07/D10 считаются в Europe/Moscow.
  */
 final readonly class OrderCalendarPolicy
@@ -15,6 +15,16 @@ final readonly class OrderCalendarPolicy
     public function keyExpiresAt(\DateTimeImmutable $issuedAt): \DateTimeImmutable
     {
         return $issuedAt->setTimezone(new \DateTimeZone(self::TIMEZONE))->modify(self::KEY_LIFETIME)->setTimezone(new \DateTimeZone('UTC'));
+    }
+
+    /** D10: файлы доступны календарный месяц от первой оплаты по Москве; 31-е число переходит на последний день короткого месяца. */
+    public function filesAvailableUntil(\DateTimeImmutable $paidAt): \DateTimeImmutable
+    {
+        $local = $paidAt->setTimezone(new \DateTimeZone(self::TIMEZONE));
+        $next = $local->modify('first day of next month');
+        $day = min((int)$local->format('j'), (int)$next->format('t'));
+
+        return $next->setDate((int)$next->format('Y'), (int)$next->format('n'), $day)->setTimezone(new \DateTimeZone('UTC'));
     }
 
     /** Начало календарного дня YYYY-MM-DD по Москве в UTC; с $nextDay — начало следующего дня. */

@@ -45,6 +45,8 @@ use Rebit\Share\Contracts\Organization\GroupReferenceInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 use Rebit\Share\Contracts\Media\StaffChildReferenceInterface;
 use Rebit\Share\Infrastructure\Messenger\AmqpConnectionFactory;
+use Morefoto\Media\Application\Photo\Service\OriginalFiles;
+use Rebit\Share\Contracts\Media\OriginalFilesInterface;
 use Rebit\Share\Shared\Enum\LogChannelEnum;
 use Rebit\Share\Shared\Enum\MessengerQueueEnum;
 use Rebit\Share\Shared\Facade\Log;
@@ -68,6 +70,12 @@ return [
 
             return new LocalPrivatePhotoStorage('' === $root ? dirname(__DIR__, 5) . '/var/private/media' : $root);
         },
+    ],
+    OriginalFilesInterface::class => [
+        'constructor' => static fn(): OriginalFilesInterface => new OriginalFiles(
+            ServiceLocator::getInstance()->get(PhotoRepository::class),
+            ServiceLocator::getInstance()->get(PrivatePhotoStorageInterface::class),
+        ),
     ],
     PreviewRendererInterface::class => [
         'constructor' => static function(): PreviewRendererInterface {
