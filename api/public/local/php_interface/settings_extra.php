@@ -43,7 +43,8 @@ return [
                     filename: dirname(__DIR__, 3) . '/logs/logstash/' . $channel->value . '.log',
                     maxFiles: 5,
                     level: Logger::INFO,
-                    filePermission: 0644,
+                    // #141: суточный файл канала может создать root (cron), а дописывать — www-data (FPM, медиа-воркер).
+                    filePermission: 0664,
                 ),
                 'formatter' => static fn(LogChannelEnum $channel) => new LogstashFormatter($channel->value),
             ],

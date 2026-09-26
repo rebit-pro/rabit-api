@@ -179,6 +179,9 @@ services:
     api-media-consumer:
         image: ${REGISTRY}/rabit-api-php-cli:${IMAGE_TAG}
         command: ["php", "public/local/bin/bitrix-console", "app:media:consume"]
+        environment:
+          # #141: превью пишутся от www-data, как у PHP-FPM, чтобы FPM мог их удалить.
+          APP_RUN_AS_USER: www-data
         configs:
           - source: rebit_backend_env
             target: /app/public/.env
@@ -213,6 +216,9 @@ services:
     api-files-consumer:
         image: ${REGISTRY}/rabit-api-php-cli:${IMAGE_TAG}
         command: ["php", "public/local/bin/bitrix-console", "app:files:consume"]
+        environment:
+          # J1: archives are written as www-data, like the originals of PHP-FPM, and nginx (uid 1000) serves them.
+          APP_RUN_AS_USER: www-data
         configs:
           - source: rebit_backend_env
             target: /app/public/.env

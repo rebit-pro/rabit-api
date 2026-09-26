@@ -83,13 +83,5 @@ foreach (['open', 'preparing', 'closed', 'revoked'] as $index => $state) {
     // J1: the browser compares downloaded originals with this digest.
     $output[$state] = ['token' => $key->token, 'groupId' => $groupUuid, 'photoId' => $photoId, 'sha256' => $photo->fingerprint];
 }
-// docker exec runs as root, while FPM writes originals as www-data and nginx reads them as uid 1000 (J1 X-Accel-Redirect).
-$runtimeUser = posix_getpwnam('www-data');
-$items = new RecursiveIteratorIterator(new RecursiveDirectoryIterator('/runtime/private/media', FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST);
-foreach ([new SplFileInfo('/runtime/private/media'), ...$items] as $item) {
-    if (!is_array($runtimeUser) || !chown($item->getPathname(), $runtimeUser['uid']) || !chgrp($item->getPathname(), $runtimeUser['gid'])) {
-        throw new RuntimeException('Cannot hand fixture originals over to www-data.');
-    }
-}
 file_put_contents('/runtime/e4-fixture.json', json_encode($output, JSON_THROW_ON_ERROR));
 echo "E4 real media and capability fixture prepared.\n";

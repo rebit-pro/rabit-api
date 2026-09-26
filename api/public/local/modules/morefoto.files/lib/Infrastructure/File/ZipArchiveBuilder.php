@@ -8,7 +8,8 @@ use Morefoto\Files\Application\Files\Contract\ArchiveBuilderInterface;
 use Morefoto\Files\Domain\Download\Exception\FilesStorageException;
 
 /** JPEG уже сжат, поэтому архив собирается без сжатия: быстрее и без лишней нагрузки на CPU.
- * Consumer в production работает от root, а nginx читает архивы как www-data: созданные каталоги и файл наследуют владельца корня хранилища.
+ * Воркер штатно работает от www-data (APP_RUN_AS_USER); если его запустили от root, созданные каталоги и файл всё равно
+ * наследуют владельца корня хранилища, чтобы nginx (uid 1000) мог их отдать.
  */
 final readonly class ZipArchiveBuilder implements ArchiveBuilderInterface
 {

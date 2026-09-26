@@ -94,8 +94,30 @@ fix_log_permissions() {
     fi
 }
 
+# Процесс с APP_RUN_AS_USER (медиа-воркер, #141) после root-подготовки работает от этого пользователя:
+# его файлы (превью) должен удалять PHP-FPM (www-data). Без переменной команда остаётся от root.
+run_command() {
+    run_as_user="${APP_RUN_AS_USER:-}"
+
+    if [ -z "$run_as_user" ]; then
+        exec "$@"
+    fi
+
+    if [ "$(id -u)" != "0" ]; then
+        if [ "$(id -un)" != "$run_as_user" ]; then
+            echo "[entrypoint] Cannot switch from $(id -un) to APP_RUN_AS_USER=$run_as_user" >&2
+            exit 1
+        fi
+        exec "$@"
+    fi
+
+    HOME="$(getent passwd "$run_as_user" | cut -d: -f6)"
+    export HOME
+    exec setpriv --reuid="$run_as_user" --regid="$run_as_user" --init-groups "$@"
+}
+
 load_runtime_env
 configure_msmtp
 fix_log_permissions
 
-exec "$@"
+run_command "$@"
