@@ -6,7 +6,7 @@
 - Рабочая копия `/home/user/rabit-api-worktrees/j1-order-files`.
 - Документы: `plan.md` этой папки, граф `docs/waves/graph.json` (J1), канонический `MoreFoto/docs/05-rest-api/endpoints.json` (FIL-01…04), решения `docs/waves/w05/decisions.md` (D07, D10, D12).
 - Завершено: S0–S6, S8 — графы, контракты, модуль `morefoto.files`, docker/nginx/cron, frontend-блок, unit/architecture-тесты, E2E-спецификация `zzzzzzzzzz-files` и `verify-files.php` (написаны, не запускались), документы волны, issue #142.
-- Сейчас: второй круг ревью PR #143 после исправления R1–R3.
+- Сейчас: gate PASS, PR #143 сливается в main.
 - Следующий шаг: после ревью без блокеров — полный `make test-e2e` (с ключами тестового магазина), визуальная проверка скриншотов, `visual.json`, затем выкладка на stage по `docs/waves/j1/README.md`.
 - Блокеры: нет. Открытых решений нет.
 - Рабочее дерево: всё закоммичено в `codex/j1-order-files`.
@@ -23,7 +23,7 @@
 | J1-T10 | PASS | 2026-09-26 | PHPUnit `FilesArchitectureTest` | контроллер, границы Commerce/Media, phpDoc |
 | J1-T09 | PASS (unit) | 2026-09-26 | PHPUnit `OrderPaymentsTest` | paid продлевает ключ, pending — нет; миграция — в E2E verifier |
 | J1-T12 | PASS | 2026-09-26 | docker Playwright-образ, volume `rabit-j1-node`: `npm run check`, `npm run test:commerce`, `npm run build-only` | check exit 0 (UI unit 56), commerce 214/214 (5 новых J1-T12), сборка OK |
-| J1-T13, T14, T15 | PENDING | — | `make test-e2e` после ревью | спецификация `zzzzzzzzzz-files`, `verify-files.php` |
+| J1-T13, T14, T15 | PASS | 2026-09-26 | `make test-e2e` (стенд `rabit-e2e-3eb7b0053335`, 509,9 с) | 130 сценариев (a 79, b 51), full gate, ЮKassa test shop on; 3 сценария J1; `verify-files.php` и остальные 11 verifier PASS; скриншоты просмотрены — `docs/waves/j1/visual.json` |
 
 ## Хронология
 
@@ -49,3 +49,4 @@
 - 2026-09-26. Слит `origin/main` `e847e87` (#135): конфликт `VERIFIERS` — оставлены `verify-photo-deletion.php` и `verify-files.php`. Повтор: граф 52/118 ready [J1]; runner tests 22 OK; php-cs-fixer 0 из 87; phplint OK 1358; PHPStan — No errors; PHPUnit — OK 1050 / 46841; frontend check exit 0 (UI 67), commerce 220/220, build OK. Браузерный E2E по-прежнему после ревью без блокеров.
 - 2026-09-26. Второй круг ревью — без новых замечаний. Слит `origin/main` `41b1146` (#141, медиа-воркер от www-data): конфликт в `tools/run-browser-e2e.py` — files-воркер тоже запускается `--user www-data`, проверка «не root» распространена на оба воркера; `api-files-consumer` в обоих compose получил `APP_RUN_AS_USER: www-data`; фикстура E4 теперь сама работает от www-data, поэтому J1-блок chown в `prepare-storefront.php` удалён; `test_media_worker_user.py` покрывает files-воркер. Проверки на `2cf5f8d`: tools tests 26 OK; граф 52/118 ready [J1]; cs-fixer 0/87; PHPStan — No errors; PHPUnit — OK 1050 / 46841; frontend check exit 0, commerce 220/220. Запущен полный `make test-e2e`.
 - 2026-09-26. Gate 1 (`rabit-e2e-5434bc206fae`, 304,6 с) — FAIL. Все быстрые стадии PASS. Группа b: 48 PASS, `J1-T04/T13` — FAIL: FIL-02 `{kind:"zip"}` получил 422 `VALIDATION_FAILED`. Причина: `DtoMetadataService` понимает только `@var тип[]`, а у `CreateDownloadRequestDto::$photoIds` стояло `@var null|mixed[]`, поэтому метаданные DTO не строились (unit-тесты создавали DTO напрямую и этого не видели). Исправлено на `@var mixed[]`, nullable берётся из `?array`. Добавлен `FilesRequestContractTest`: тела FIL-02 и query FIL-04 проходят через `StrictRequestValues` + `ArrayToDtoMapper`, как в HTTP. Группа a отменена раннером после падения b.
+- 2026-09-26. Gate 2 на `3249760` (`rabit-e2e-3eb7b0053335`, 509,9 с) — PASS: 130 браузерных сценариев (a 79, b 51), full gate, тестовый магазин ЮKassa включён; J1: неоплаченный заказ, оплата картой → файл (sha256 = фикстура) и ZIP с теми же байтами, идемпотентность/подпись/Range; 12 verifier PASS, включая `verify-files.php`. Скриншоты desktop/mobile просмотрены, сохранены в `docs/waves/j1/screenshots` с sha256 в `visual.json`. Следующий шаг: merge PR #143, затем выкладка на stage по `docs/waves/j1/README.md` (пользователь сделает позже).

@@ -1,17 +1,17 @@
 {
   "wave": "J1",
-  "status": "pending-e2e",
+  "status": "verified",
   "date": "2026-09-26",
   "branch": "codex/j1-order-files",
-  "base": "4fc9dce",
-  "head": "see PR",
+  "base": "41b1146 (main merged)",
+  "head": "3249760d524673759a1ae9fe6e737cb2107ec049",
   "decisions": "J1-GRAPH and J1-DEC-01..05 accepted by the user on 2026-09-26",
   "checks": {
     "backend": {
       "status": "passed",
       "phplint": "OK 1347 files",
       "phpstan": 0,
-      "phpunit": "OK 1019 tests / 46734 assertions",
+      "phpunit": "OK in gate",
       "csFixer": "clean on changed files"
     },
     "frontend": {
@@ -40,14 +40,36 @@
       "note": "X-Accel-Redirect checked on nginx 1.25 with uid 1000: 0600 file served, Content-Disposition passed through, Range 206, direct /_protected/ 404"
     },
     "browser": {
-      "status": "pending",
-      "spec": "zzzzzzzzzz-files (group b)",
-      "runAfter": "review without blockers"
+      "status": "passed",
+      "scenarios": 130,
+      "groups": {
+        "a": 79,
+        "b": 51
+      },
+      "scope": "full gate",
+      "yookassaTestShop": "on",
+      "durationSeconds": 509.9,
+      "j1": [
+        "J1-T04/T13 unpaid order: no originals, FIL-02 409 FILES_UNAVAILABLE, 404 without key",
+        "J1-T13 paid bundle via YooKassa test card: single original sha256 equals the fixture, ZIP stored without compression carries the exact bytes, desktop/mobile",
+        "J1-T05/T08 idempotency replay and conflict, PHOTO_NOT_ENTITLED, INVALID_DOWNLOAD, reused ZIP, contentUrl signature, Content-Disposition, Range 206, tampered/foreign/absent token 403, foreign key 404"
+      ]
     },
     "verifiers": {
-      "status": "pending",
+      "status": "passed",
       "scripts": [
-        "verify-files.php"
+        "verify-storefront.php",
+        "verify-handoff.php",
+        "verify-orders.php",
+        "verify-links.php",
+        "verify-transfers.php",
+        "verify-avatar.php",
+        "verify-payment-costs.php",
+        "verify-payments.php",
+        "verify-files.php",
+        "verify-access.php",
+        "verify-support.php",
+        "verify-photo-deletion.php"
       ]
     }
   },
@@ -56,5 +78,7 @@
     "e-mail with the link — J2",
     "recovery — J3",
     "deletion of purchased photos by staff — separate issue"
-  ]
+  ],
+  "fixture": "rabit-e2e-3eb7b0053335",
+  "review": "PR #143: round 1 — 3 blockers (R1 frontend nginx log, R2 key of a reused download, R3 orphan ZIP) fixed in b9adac2; round 2 — no remarks. Gate 1 found FIL-02 422 (@var null|mixed[]), fixed with FilesRequestContractTest"
 }
