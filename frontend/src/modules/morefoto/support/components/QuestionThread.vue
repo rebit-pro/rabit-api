@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, ref, shallowRef, watch } from 'vue';
-import { deliveryLabel, formatMoment, MESSAGE_MAX, NAME_MAX, textProblem } from '../rules';
+import { deliveryLabel, formatMoment, MESSAGE_MAX, NAME_MAX, submitDraft, textProblem } from '../rules';
 import type { QuestionAuthor, QuestionMessage } from '../types';
 
 const props = defineProps<{
@@ -23,7 +23,7 @@ const list = shallowRef<HTMLElement | null>(null);
 async function send(): Promise<void> {
   problem.value = textProblem(props.nameRequired ? name.value : null, draft.value) ?? '';
   if (problem.value) return;
-  if (await props.submit(draft.value)) draft.value = '';
+  await submitDraft(draft, props.submit);
 }
 
 function authorLabel(message: QuestionMessage): string {

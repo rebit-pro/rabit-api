@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Morefoto\Media\Presentation\Controller;
 
 use Morefoto\Media\Application\Photo\UseCase\AssignPhotosUseCase;
+use Morefoto\Media\Application\Photo\UseCase\DeleteGroupPhotosUseCase;
 use Morefoto\Media\Application\Photo\UseCase\SetGroupCoverUseCase;
 use Morefoto\Media\Presentation\Photo\Dto\AssignPhotosRequestDto;
+use Morefoto\Media\Presentation\Photo\Dto\DeleteGroupPhotosRequestDto;
 use Morefoto\Media\Presentation\Photo\Dto\SetGroupCoverRequestDto;
 use Morefoto\Media\Presentation\Photo\PhotoInputMapper;
 use Morefoto\Media\Presentation\Photo\PhotoResultMapper;
@@ -18,6 +20,7 @@ final class GroupMediaController extends AuthenticatedApiJsonController
     public function __construct(
         private readonly AssignPhotosUseCase $assignments,
         private readonly SetGroupCoverUseCase $covers,
+        private readonly DeleteGroupPhotosUseCase $deletions,
         private readonly PhotoInputMapper $inputMapper,
         private readonly PhotoResultMapper $resultMapper,
     ) {
@@ -42,6 +45,18 @@ final class GroupMediaController extends AuthenticatedApiJsonController
         $input = $this->inputMapper->cover($request);
 
         return $this->json($this->resultMapper->cover($this->covers->execute(
+            $this->getAuthUserId(),
+            $request->groupId,
+            $this->inputMapper->key($request->idempotencyKey),
+            $input,
+        )));
+    }
+
+    public function deletionAction(DeleteGroupPhotosRequestDto $request): ControllerJson
+    {
+        $input = $this->inputMapper->deletion($request);
+
+        return $this->json($this->resultMapper->deletion($this->deletions->execute(
             $this->getAuthUserId(),
             $request->groupId,
             $this->inputMapper->key($request->idempotencyKey),

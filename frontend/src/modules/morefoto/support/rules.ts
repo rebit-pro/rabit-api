@@ -58,6 +58,15 @@ export function textProblem(name: string | null, message: string): string | null
   return null;
 }
 
+/**
+ * Sends the typed text; success clears the field only while it still holds that text, so a next question typed during
+ * the wait survives. A failed send keeps the text for a retry.
+ */
+export async function submitDraft(draft: { value: string }, submit: (text: string) => Promise<boolean>): Promise<void> {
+  const text = draft.value;
+  if ((await submit(text)) && draft.value === text) draft.value = '';
+}
+
 export function lastCuratorReplyId(messages: readonly QuestionMessage[]): number {
   return messages.reduce((last, message) => (message.author === 'curator' && message.id > last ? message.id : last), 0);
 }

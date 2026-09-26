@@ -10,9 +10,12 @@
 - Завершено: контракт `Consent` в `rebit.share`, модуль `morefoto.legal` (реестр, черновики 4 документов, продавец из
   окружения, журнал `mf_legal_consent`, API), согласия в заказе и приглашении, страницы `/legal`, футер, плашка о cookie,
   диалог согласия в кабинете, TTL черновика контактов, E2E.
-- Выполняется: PR на review (полный `make test-e2e` №3 PASS).
-- Следующий шаг: PR на review; после merge — переменные `MOREFOTO_SELLER_*` на stage, миграция и symlink модуля при
-  выкладке (решение пользователя).
+- **Выкачено на stage** https://app.morefoto36.ru 26.09.2026: PR #112 слит как `23642d4`, релиз
+  `/srv/morefoto/releases/legal-20260926110349-23642d4` (вместе с уже слитыми #102, #95, #108). Реквизиты ИП не заданы — ИП
+  не открыт.
+- Выполняется: ничего; ждём регистрации ИП.
+- Следующий шаг: после регистрации ИП — раздел плана «После регистрации ИП — только реквизиты» (одна команда
+  `docker service update --env-add MOREFOTO_SELLER_*` для `morefoto_stage_fpm` и проверка). Follow-up: issue #117.
 - Открытые решения: LEG-DEC-03, 04, 06, 07, 08; проверка черновиков юристом; организационные шаги O1–O9.
 - **ИП ещё не открыт (26.09.2026).** ФИО будущего ИП получено от пользователя и хранится вне репозитория (память
   сессии → переменная `MOREFOTO_SELLER_NAME` при выкладке). ИНН, ОГРНИП, адрес и email появятся после регистрации ИП.
@@ -96,3 +99,25 @@
   группа b 47/47, все верификаторы MySQL. Самопроверка diff без блокеров; известный край: попытка заказа с неизвестным
   исходом, начатая до выкладки и повторённая после, получит `IDEMPOTENCY_CONFLICT` (хеш теперь включает документы) —
   на stage только тестовые покупатели.
+- Merge: `gh pr merge 112 --merge --match-head-commit d95b25a` → `23642d4`; дерево равно проверенному в прогоне №5.
+- Артефакты: `git archive 23642d4:api` (2356 файлов, маркер `LegalDocumentController.php`, миграции 210001 и 230001),
+  образ `morefoto-frontend:legal-20260926110349-23642d4` (`VITE_API_MOCKS_ENABLED=false`, `/guide/` внутри). Скрипты —
+  генератор в scratchpad сессии по образцу K3; `sha256sum --check` и `bash -n` на сервере — PASS.
+- `prepare-release.sh` (vendor из K3, `composer.lock` не менялся); `backup.sh` — 67 876 байт; `restore-check.sh` —
+  одноразовая MySQL, 168 таблиц — PASS.
+- `migrate.sh up` на новом коде не стартовал: `morefoto.commerce/include.php` требует установленный `morefoto.legal`,
+  а регистрирует его сама миграция. Работающие сервисы не затронуты. Модуль зарегистрирован через
+  `ModuleManager::registerModule` на коде K3 (symlink в runtime создан); живой сайт после этого — `/login`, `/health`
+  200, login 401 `INVALID_CREDENTIALS`. Затем `Version20260925210001` (#108) и `Version20260925230001` — success;
+  `install-module.sh` — `morefoto.legal installed`. Issue #117 — убрать жёсткую зависимость.
+- DI-smoke в одноразовом контейнере — 6/11: нет `MESSENGER_TRANSPORT_DSN`, это окружение, а не код. FPM переключён
+  первым; DI-smoke внутри FPM — 11/11, документов 4, продавец не опубликован. Затем backend, media ×2, notification ×2,
+  payment_reconciler, support ×2 — код виден; frontend 2/2 (прежний образ `guide-kb-20260926071636-e69ee57-d4fe5a1`),
+  `index-BRmGl2T4.js` на проде совпадает с образом.
+- Живая проверка: `/legal`, `/legal/offer`, `/legal/privacy`, `/legal/buyer-consent`, `/legal/staff-consent`,
+  `/login`, `/cabinet/overview`, `/guide/`, `/health` — 200; API документов — 4 версии `2026-09-25`,
+  `seller.published=false`; `/legal/consents/pending` без токена — 401. Playwright по живому сайту desktop 1280 и
+  mobile 390: `/legal`, `/legal/offer`, `/login` без горизонтальной прокрутки и ошибок JS, плашка и футер на месте.
+- Откат: `docker service rollback` девяти backend-сервисов (прежний `/app` — `k3-20260925204828-caa37b6`) и
+  `morefoto_frontend`; миграции только добавляют таблицы; модуль можно оставить зарегистрированным.
+- Уже работающие сотрудники при следующем входе в кабинет увидят окно согласия — это ожидаемо.

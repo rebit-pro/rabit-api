@@ -6,6 +6,7 @@ namespace Morefoto\Media\Tests\Unit;
 
 use Bitrix\Main\DB\Result;
 use Morefoto\Media\Application\Photo\Contract\MediaPublisherInterface;
+use Morefoto\Media\Application\Photo\Contract\OriginalFileLockInterface;
 use Morefoto\Media\Application\Photo\Contract\PreviewRendererInterface;
 use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
 use Morefoto\Media\Application\Photo\Dto\PhotoRegistration;
@@ -243,6 +244,7 @@ final class PhotoPipelineDiagnosticsTest extends TestCase
             $this->createStub(AccessGuardInterface::class),
             new PhotoFileInspector(),
             $storage,
+            $this->originals(),
             $photos,
             $publisher,
             $logger,
@@ -254,6 +256,16 @@ final class PhotoPipelineDiagnosticsTest extends TestCase
             bytes: (int)filesize($this->file),
             clientFingerprint: null,
         ));
+    }
+
+    private function originals(): OriginalFileLockInterface
+    {
+        return new class implements OriginalFileLockInterface {
+            public function synchronized(string $originalPath, callable $operation): mixed
+            {
+                return $operation();
+            }
+        };
     }
 
     private function handler(

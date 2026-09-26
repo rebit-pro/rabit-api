@@ -1,4 +1,4 @@
-import { test, expect, type Page, type APIResponse } from '@playwright/test';
+import { test, expect, type Page, type APIResponse, type Response } from '@playwright/test';
 import { login, password, token } from './helpers.js';
 
 const api = '/api/v1/institutions';
@@ -13,7 +13,7 @@ async function headers(page: Page) {
     'Idempotency-Key': crypto.randomUUID().replace(/-/g, '')
   };
 }
-async function response(response: APIResponse, status = 200) {
+async function response(response: APIResponse | Response, status = 200) {
   expect(response.status(), await response.text()).toBe(status);
   return response.json();
 }
@@ -141,6 +141,72 @@ test('C4: полная карточка показывает сохранённ�
   await expect(groups(page).getByTestId('structure-row')).toHaveCount(2);
 });
 
+test('#105: организатор создаёт и изменяет группу на странице учреждения, выбрав съёмку', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await login(page);
+  const parent = await institution(page, 'I105 Детский сад');
+  await page.goto(`${cabinet}/${parent.id}`);
+  await expect(groups(page)).toContainText('Сначала добавьте съёмку — группа создаётся внутри неё.');
+  await expect(groups(page).getByRole('button', { name: 'Новая группа', exact: true })).toHaveCount(0);
+  const autumn = await create(page, `${api}/${parent.id}/shoots`, { name: 'I105 Осень', date: '2026-10-01' });
+  const winter = await create(page, `${api}/${parent.id}/shoots`, { name: 'I105 Зима', date: '2026-12-10' });
+  await page.reload();
+
+  await groups(page).getByRole('button', { name: 'Новая группа', exact: true }).click();
+  const dialog = page.getByTestId('admin-dialog');
+  await expect(dialog.getByRole('heading', { name: 'Новая группа', exact: true })).toBeVisible();
+  await expect(dialog.getByTestId('group-shoot')).toContainText('I105 Зима');
+  const chooseShoot = async (name: RegExp) => {
+    await dialog.getByRole('combobox', { name: 'Съёмка' }).press('Enter');
+    await page.getByRole('option', { name }).click();
+  };
+  await chooseShoot(/I105 Осень/);
+  await expect(dialog.getByTestId('group-shoot')).toContainText('I105 Осень');
+  await dialog.getByLabel('Название группы', { exact: true }).fill('I105 Ромашки');
+  // A closed dialog keeps the draft of its shoot: choosing that shoot again from a fresh dialog restores it, not blanks it.
+  await dialog.getByRole('button', { name: 'Отмена', exact: true }).click();
+  await expect(dialog).not.toBeVisible();
+  await groups(page).getByRole('button', { name: 'Новая группа', exact: true }).click();
+  await expect(dialog.getByTestId('group-shoot')).toContainText('I105 Зима');
+  await expect(dialog.getByLabel('Название группы', { exact: true })).toHaveValue('');
+  await chooseShoot(/I105 Осень/);
+  await expect(dialog.getByLabel('Название группы', { exact: true })).toHaveValue('I105 Ромашки');
+  await screenshot(page, testInfo.outputPath('i105-desktop-new-group.png'), false);
+  const created = page.waitForResponse(
+    (r) => new URL(r.url()).pathname === `/api/v1/shoots/${autumn.id}/groups` && r.request().method() === 'POST'
+  );
+  await dialog.getByRole('button', { name: 'Сохранить', exact: true }).click();
+  const group = (await response(await created, 201)).data;
+  await expect(dialog).not.toBeVisible();
+  await expect(row(page, 'I105 Ромашки')).toBeVisible();
+  const autumnGroups = (await response(await page.request.get(`/api/v1/shoots/${autumn.id}`, { headers: await headers(page) }))).data
+    .groups;
+  expect(autumnGroups.items.map((item: { id: string }) => item.id)).toEqual([group.id]);
+  const winterGroups = (await response(await page.request.get(`/api/v1/shoots/${winter.id}`, { headers: await headers(page) }))).data
+    .groups;
+  expect(winterGroups.meta.total).toBe(0);
+
+  await row(page, 'I105 Ромашки').getByRole('button', { name: 'Редактировать «I105 Ромашки»', exact: true }).click();
+  await expect(dialog.getByRole('heading', { name: 'Редактирование группы', exact: true })).toBeVisible();
+  await expect(dialog.getByTestId('group-shoot')).toContainText('I105 Осень');
+  await expect(dialog.getByRole('combobox', { name: 'Съёмка' })).toBeDisabled();
+  await expect(dialog.getByRole('combobox', { name: 'Тип группы' })).toBeDisabled();
+  await dialog.getByLabel('Название группы', { exact: true }).fill('I105 Васильки');
+  const updated = page.waitForResponse(
+    (r) => new URL(r.url()).pathname === `/api/v1/groups/${group.id}` && r.request().method() === 'PATCH'
+  );
+  await dialog.getByRole('button', { name: 'Сохранить', exact: true }).click();
+  await response(await updated);
+  await expect(row(page, 'I105 Васильки')).toBeVisible();
+  await expect(row(page, 'I105 Ромашки')).toHaveCount(0);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await groups(page).getByRole('button', { name: 'Новая группа', exact: true }).click();
+  await expect(dialog.getByTestId('group-shoot')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await screenshot(page, testInfo.outputPath('i105-mobile-new-group.png'), false);
+});
+
 test('C4: две страницы переключаются независимо и используют реальные totals', async ({ page }) => {
   await login(page);
   const parent = await institution(page, 'C4 Независимые страницы');
@@ -224,6 +290,7 @@ test('C4: куратор и руководитель читают только �
       await expect(shoots(viewer).getByTestId('structure-row')).toHaveCount(1);
       await expect(groups(viewer).getByTestId('structure-row')).toHaveCount(1);
       await expect(viewer.getByRole('button', { name: 'Новая съёмка', exact: true })).toHaveCount(0);
+      await expect(viewer.getByRole('button', { name: 'Новая группа', exact: true })).toHaveCount(0);
       await expect(groups(viewer).getByRole('link')).toHaveCount(0);
       await expect(viewer.getByRole('button', { name: /Редактировать «/ })).toHaveCount(0);
       if (name === 'c4-curator') await screenshot(viewer, testInfo.outputPath('c4-desktop-curator.png'));

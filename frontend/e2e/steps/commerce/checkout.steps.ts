@@ -19,7 +19,7 @@ When('заполняет контакты покупателя', async function 
   await fillBuyer(page(this));
 });
 When('подтверждает состав заказа', async function (this: CustomWorld) {
-  await page(this).getByRole('checkbox', { name: 'Состав и демонстрационные условия проверены', exact: true }).check();
+  await page(this).getByRole('checkbox', { name: 'Состав и условия проверены', exact: true }).check();
 });
 When('создаёт тестовый заказ', async function (this: CustomWorld) {
   await page(this).getByTestId('create-order').click();
@@ -39,7 +39,7 @@ Then('заказы ещё не созданы', async function (this: CustomWorl
 });
 Then('контакты покупателя показаны в заказе', async function (this: CustomWorld) {
   await expect(page(this).getByText('parent@example.test', { exact: true })).toBeVisible();
-  await expect(page(this).getByText('+79001234567', { exact: true })).toBeVisible();
+  await expect(page(this).getByText('+7 900 123-45-67', { exact: true })).toBeVisible();
 });
 Then('форма оформления показывает обязательные ошибки', async function (this: CustomWorld) {
   await expect(page(this).getByText('Укажите имя: от 2 до 100 символов.', { exact: true })).toBeVisible();
@@ -82,7 +82,7 @@ When('демонстрационная цена отпечатка меняет�
   }, price);
 });
 Then('подтверждение состава сброшено', async function (this: CustomWorld) {
-  await expect(page(this).getByRole('checkbox', { name: 'Состав и демонстрационные условия проверены', exact: true })).not.toBeChecked();
+  await expect(page(this).getByRole('checkbox', { name: 'Состав и условия проверены', exact: true })).not.toBeChecked();
 });
 When('отправляет оформление одновременно из двух вкладок', async function (this: CustomWorld) {
   const p = page(this);
@@ -90,7 +90,7 @@ When('отправляет оформление одновременно из д
   try {
     await second.goto(p.url(), { waitUntil: 'networkidle' });
     await fillBuyer(second);
-    await second.getByRole('checkbox', { name: 'Состав и демонстрационные условия проверены', exact: true }).check();
+    await second.getByRole('checkbox', { name: 'Состав и условия проверены', exact: true }).check();
     await Promise.all([p.getByTestId('create-order').click(), second.getByTestId('create-order').click()]);
     await expect(p).toHaveURL(/\/orders\/access\/[a-f0-9]{32}$/);
     await expect(second).toHaveURL(p.url());

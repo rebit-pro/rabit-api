@@ -19,6 +19,7 @@ return static function(RoutingConfigurator $routes): void {
     $routes->post('/api/v1/shoots/{shoot_id}/photos', [PhotoUploadController::class, 'uploadAction']);
     $routes->get('/api/v1/photos/{photo_id}', [PhotoDetailController::class, 'detailAction']);
     $routes->post('/api/v1/groups/{group_id}/photo-assignments', [GroupMediaController::class, 'assignmentAction']);
+    $routes->post('/api/v1/groups/{group_id}/photo-deletions', [GroupMediaController::class, 'deletionAction']);
     $routes->put('/api/v1/groups/{group_id}/cover', [GroupMediaController::class, 'coverAction']);
     $routes->post('/api/v1/shoots/{shoot_id}/child-transfers', [ChildTransferController::class, 'transferAction']);
 };

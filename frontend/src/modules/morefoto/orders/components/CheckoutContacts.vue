@@ -2,6 +2,7 @@
 import type { BuyerFields, BuyerErrors } from '../types';
 import UiPhoneField from '../../ui/components/UiPhoneField.vue';
 import UiClearButton from '../../ui/components/UiClearButton.vue';
+import { isMockApiEnabled } from '@/mocks/config';
 defineProps<{ draft: BuyerFields; errors: BuyerErrors; busy: boolean; maxAvailable: boolean; receiptAvailable: boolean }>();
 const emit = defineEmits<{ change: [patch: Partial<BuyerFields>] }>();
 function text(field: 'name' | 'email' | 'comment' | 'phone', value: string | null) {
@@ -14,7 +15,9 @@ function channel(value: unknown) {
 <template>
   <section class="mf-panel checkout-contacts">
     <h2>Контакты покупателя</h2>
-    <p class="mf-muted checkout-contacts__intro">Укажите тестовые данные. Они сохранятся при обновлении страницы и ошибке отправки.</p>
+    <p class="mf-muted checkout-contacts__intro">
+      {{ isMockApiEnabled ? 'Укажите тестовые данные. ' : '' }}Заполненные поля сохранятся при обновлении страницы и ошибке отправки.
+    </p>
     <fieldset :disabled="busy">
       <legend class="visually-hidden">Контакты и получение чека</legend>
       <v-text-field
@@ -80,7 +83,7 @@ function channel(value: unknown) {
         @update:model-value="text('comment', $event)"
       />
       <p v-if="!receiptAvailable" class="mf-muted contact-channel-note" data-testid="receipt-unavailable">
-        Способ получения чека появится вместе с оплатой. Сейчас заказ сохраняется без списания денег.
+        Выбор канала для чека появится позже. Оплата — на странице заказа после оформления.
       </p>
       <div v-else class="contact-receipt">
         <v-radio-group

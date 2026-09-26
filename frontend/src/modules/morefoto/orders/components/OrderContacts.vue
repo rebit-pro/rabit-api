@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { currentBuyer } from '../../settlement/rules';
+import { formatPhone } from '../../ui/field-values';
 import type { OrderSnapshot } from '../types';
 const props = defineProps<{ order: Pick<OrderSnapshot, 'buyer' | 'settlement'> }>();
 const buyer = computed(() => currentBuyer(props.order));
@@ -15,7 +16,7 @@ const buyer = computed(() => currentBuyer(props.order));
       </div>
       <div class="order-contacts__row">
         <dt>Телефон</dt>
-        <dd>{{ buyer.phone }}</dd>
+        <dd>{{ formatPhone(buyer.phone) }}</dd>
       </div>
       <div class="order-contacts__row">
         <dt>Email</dt>

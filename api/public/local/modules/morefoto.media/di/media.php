@@ -5,12 +5,14 @@ declare(strict_types=1);
 use Bitrix\Main\DI\ServiceLocator;
 use Morefoto\Media\Application\Photo\Contract\MediaPublisherInterface;
 use Morefoto\Media\Application\Photo\Contract\MediaTransactionInterface;
+use Morefoto\Media\Application\Photo\Contract\OriginalFileLockInterface;
 use Morefoto\Media\Application\Photo\Contract\PreviewRendererInterface;
 use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
 use Morefoto\Media\Application\Photo\Message\Handler\ProcessPhotoMessageHandler;
 use Morefoto\Media\Application\Photo\Service\PhotoRowMapper;
 use Morefoto\Media\Application\Photo\UseCase\AssignPhotosUseCase;
 use Morefoto\Media\Application\Photo\UseCase\ConsumeMediaUseCase;
+use Morefoto\Media\Application\Photo\UseCase\DeleteGroupPhotosUseCase;
 use Morefoto\Media\Application\Photo\UseCase\DispatchPendingPhotoJobsUseCase;
 use Morefoto\Media\Application\Photo\UseCase\GetPhotoUseCase;
 use Morefoto\Media\Application\Photo\UseCase\ListPhotosUseCase;
@@ -19,6 +21,7 @@ use Morefoto\Media\Application\Photo\UseCase\UploadPhotoUseCase;
 use Morefoto\Media\Domain\Photo\Repository\MediaMutationRepository;
 use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Morefoto\Media\Infrastructure\Database\BitrixMediaTransaction;
+use Morefoto\Media\Infrastructure\Database\MysqlOriginalFileLock;
 use Morefoto\Media\Infrastructure\File\GdPreviewRenderer;
 use Morefoto\Media\Infrastructure\File\LocalPrivatePhotoStorage;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
@@ -52,6 +55,7 @@ return [
     PhotoRepository::class => ['className' => PhotoRepository::class],
     MediaMutationRepository::class => ['className' => MediaMutationRepository::class],
     MediaTransactionInterface::class => ['className' => BitrixMediaTransaction::class],
+    OriginalFileLockInterface::class => ['className' => MysqlOriginalFileLock::class],
     PhotoFileInspector::class => ['className' => PhotoFileInspector::class],
     PhotoRowMapper::class => ['className' => PhotoRowMapper::class],
     PhotoListInputMapper::class => ['className' => PhotoListInputMapper::class],
@@ -102,6 +106,7 @@ return [
             ServiceLocator::getInstance()->get(AccessGuardInterface::class),
             ServiceLocator::getInstance()->get(PhotoFileInspector::class),
             ServiceLocator::getInstance()->get(PrivatePhotoStorageInterface::class),
+            ServiceLocator::getInstance()->get(OriginalFileLockInterface::class),
             ServiceLocator::getInstance()->get(PhotoRepository::class),
             ServiceLocator::getInstance()->get(MediaPublisherInterface::class),
             Log::channel(LogChannelEnum::media),
@@ -134,6 +139,21 @@ return [
             ServiceLocator::getInstance()->get(GroupReferenceInterface::class),
             ServiceLocator::getInstance()->get(MediaScopeInterface::class),
             ServiceLocator::getInstance()->get(AccessGuardInterface::class),
+        ],
+    ],
+    DeleteGroupPhotosUseCase::class => [
+        'className' => DeleteGroupPhotosUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(MediaTransactionInterface::class),
+            ServiceLocator::getInstance()->get(MediaMutationRepository::class),
+            ServiceLocator::getInstance()->get(PhotoRepository::class),
+            ServiceLocator::getInstance()->get(GroupReferenceInterface::class),
+            ServiceLocator::getInstance()->get(MediaScopeInterface::class),
+            ServiceLocator::getInstance()->get(AccessGuardInterface::class),
+            ServiceLocator::getInstance()->get(PrivatePhotoStorageInterface::class),
+            ServiceLocator::getInstance()->get(OriginalFileLockInterface::class),
+            ServiceLocator::getInstance()->get(PreviewRendererInterface::class),
+            Log::channel(LogChannelEnum::media),
         ],
     ],
     GetPhotoUseCase::class => [
@@ -190,6 +210,7 @@ return [
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(AssignPhotosUseCase::class),
             ServiceLocator::getInstance()->get(SetGroupCoverUseCase::class),
+            ServiceLocator::getInstance()->get(DeleteGroupPhotosUseCase::class),
             ServiceLocator::getInstance()->get(PhotoInputMapper::class),
             ServiceLocator::getInstance()->get(PhotoResultMapper::class),
         ],

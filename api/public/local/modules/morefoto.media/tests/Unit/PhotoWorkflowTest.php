@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Morefoto\Media\Tests\Unit;
 
 use Morefoto\Media\Application\Photo\Contract\MediaPublisherInterface;
+use Morefoto\Media\Application\Photo\Contract\OriginalFileLockInterface;
 use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
 use Morefoto\Media\Application\Photo\Dto\PhotoAssignmentOutputDto;
+use Morefoto\Media\Application\Photo\Dto\PhotoRegistration;
 use Morefoto\Media\Application\Photo\Message\ProcessPhotoMessage;
 use Morefoto\Media\Application\Photo\Service\PhotoRowMapper;
 use Morefoto\Media\Application\Photo\Dto\UploadPhotoInputDto;
@@ -93,6 +95,7 @@ final class PhotoWorkflowTest extends TestCase
             $access,
             new PhotoFileInspector(),
             $storage,
+            $this->originals(),
             new PhotoRepository(),
             $publisher,
             new NullLogger(),
@@ -108,5 +111,64 @@ final class PhotoWorkflowTest extends TestCase
             bytes: 100,
             clientFingerprint: null,
         ));
+    }
+
+    public function testUploadStoresAndRegistersTheOriginalUnderTheLockOfItsPath(): void
+    {
+        $file = (string)tempnam(sys_get_temp_dir(), 'mf-lock');
+        $image = imagecreatetruecolor(2, 2);
+        self::assertInstanceOf(\GdImage::class, $image);
+        imagepng($image, $file);
+        $scopes = $this->createStub(MediaScopeInterface::class);
+        $scopes->method('resolve')->willReturn(new MediaScopeOutputDto(1, 2, '12345678-abcd-4abc-8abc-123456789abc', 3, '22345678-abcd-4abc-8abc-123456789abc', true));
+        $held = null;
+        $lock = new class(function(?string $path) use (&$held): void {
+            $held = $path;
+        }) implements OriginalFileLockInterface {
+            public function __construct(private readonly \Closure $hold) {}
+
+            public function synchronized(string $originalPath, callable $operation): mixed
+            {
+                ($this->hold)($originalPath);
+                try {
+                    return $operation();
+                } finally {
+                    ($this->hold)(null);
+                }
+            }
+        };
+        $storage = $this->createStub(PrivatePhotoStorageInterface::class);
+        $storage->method('path')->willReturn('shoot/ab/original.png');
+        $storage->method('store')->willReturnCallback(static function() use (&$held): string {
+            self::assertSame('shoot/ab/original.png', $held);
+
+            return 'shoot/ab/original.png';
+        });
+        $photos = $this->createMock(PhotoRepository::class);
+        $photos->expects(self::once())->method('register')->willReturnCallback(static function() use (&$held): PhotoRegistration {
+            self::assertSame('shoot/ab/original.png', $held);
+
+            return new PhotoRegistration('32345678-abcd-4abc-8abc-123456789abc', 'duplicate', 1, false, '42345678-abcd-4abc-8abc-123456789abc');
+        });
+        try {
+            $output = (new UploadPhotoUseCase($scopes, $this->createStub(AccessGuardInterface::class), new PhotoFileInspector(), $storage, $lock, $photos, $this->createStub(MediaPublisherInterface::class), new NullLogger()))
+                ->execute(4, new UploadPhotoInputDto('12345678-abcd-4abc-8abc-123456789abc', '22345678-abcd-4abc-8abc-123456789abc', $file, 'photo.png', (int)filesize($file), null))
+            ;
+        } finally {
+            unlink($file);
+        }
+
+        self::assertSame('duplicate', $output->status);
+        self::assertNull($held);
+    }
+
+    private function originals(): OriginalFileLockInterface
+    {
+        return new class implements OriginalFileLockInterface {
+            public function synchronized(string $originalPath, callable $operation): mixed
+            {
+                return $operation();
+            }
+        };
     }
 }

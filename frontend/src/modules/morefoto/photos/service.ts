@@ -123,6 +123,23 @@ export async function chooseCover(token: string, shootId: string, groupId: strin
     writePhotos(state);
   });
 }
+export async function deletePhotos(token: string, shootId: string, groupId: string, ids: string[]) {
+  await simulateRequest();
+  return lock(() => {
+    editableGroup(token, shootId, groupId);
+    const state = readPhotos();
+    const chosen = new Set(ids);
+    if (!ids.length || state.photos.filter((item) => chosen.has(item.id) && item.groupId === groupId).length !== chosen.size)
+      throw new Error('Один из кадров уже удалён или относится к другой группе. Обновите список.');
+    state.photos = state.photos.filter((item) => !chosen.has(item.id));
+    if (chosen.has(state.covers[groupId] ?? '')) {
+      const next = state.photos.find((item) => item.groupId === groupId && item.assignments.length);
+      if (next) state.covers[groupId] = next.id;
+      else delete state.covers[groupId];
+    }
+    writePhotos(state);
+  });
+}
 export async function moveChild(
   token: string,
   shootId: string,

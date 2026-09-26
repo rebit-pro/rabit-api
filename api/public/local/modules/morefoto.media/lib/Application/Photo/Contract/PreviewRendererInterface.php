@@ -9,4 +9,6 @@ use Morefoto\Media\Application\Photo\Dto\PreviewOutputDto;
 interface PreviewRendererInterface
 {
     public function render(string $originalPath, string $mimeType, string $photoId): PreviewOutputDto;
+
+    public function remove(string $photoId): void;
 }

@@ -138,6 +138,64 @@ final readonly class MediaMutationRepository
         return $covers;
     }
 
+    /**
+     * Locks the photos to delete; processing ones are refused so a late render cannot leave orphaned previews.
+     *
+     * @param non-empty-list<string> $publicIds
+     *
+     * @return non-empty-list<array{id: int, publicId: string, originalPath: null|string}>
+     */
+    public function deletablePhotos(int $shootId, int $groupId, array $publicIds): array
+    {
+        $quoted = implode(',', array_map($this->quote(...), $publicIds));
+        $result = $this->query("SELECT ID,UF_PUBLIC_ID,UF_STATUS,UF_ORIGINAL_PATH FROM b_hlbd_mf_photo WHERE UF_SHOOT_ID={$shootId} AND UF_GROUP_ID={$groupId} AND UF_PUBLIC_ID IN ({$quoted}) FOR UPDATE");
+        $photos = [];
+        $processing = false;
+        while (false !== ($row = $result->fetch())) {
+            $processing = $processing || 'processing' === $row['UF_STATUS'];
+            $photos[] = [
+                'id' => (int)$row['ID'],
+                'publicId' => (string)$row['UF_PUBLIC_ID'],
+                'originalPath' => null === $row['UF_ORIGINAL_PATH'] ? null : (string)$row['UF_ORIGINAL_PATH'],
+            ];
+        }
+        if ([] === $photos || count($photos) !== count($publicIds)) {
+            throw new HttpException('PHOTO_NOT_DELETABLE', 409);
+        }
+        if ($processing) {
+            throw new HttpException('PHOTO_PROCESSING', 409);
+        }
+
+        return $photos;
+    }
+
+    /**
+     * Removes the photos with their duplicate records and child assignments; a lost cover falls back to the next labeled photo.
+     *
+     * @param non-empty-list<int> $photoIds
+     */
+    public function deletePhotos(array $photoIds): void
+    {
+        $ids = implode(',', $photoIds);
+        $result = $this->query('SELECT GROUP_ID FROM mf_media_group_cover WHERE PHOTO_ID IN (' . $ids . ') FOR UPDATE');
+        $groups = [];
+        while (false !== ($row = $result->fetch())) {
+            $groups[] = (int)$row['GROUP_ID'];
+        }
+        $this->execute('DELETE FROM b_hlbd_mf_photo WHERE UF_EXISTING_PHOTO_ID IN (' . $ids . ')');
+        $this->execute('DELETE FROM mf_photo_assignment WHERE PHOTO_ID IN (' . $ids . ')');
+        foreach ($groups as $groupId) {
+            $candidate = $this->query("SELECT p.ID FROM mf_photo_assignment a INNER JOIN mf_media_child c ON c.ID=a.CHILD_ID
+                INNER JOIN b_hlbd_mf_photo p ON p.ID=a.PHOTO_ID
+                WHERE c.GROUP_ID={$groupId} AND p.UF_GROUP_ID={$groupId} AND p.UF_STATUS='ready'
+                ORDER BY CHAR_LENGTH(c.CODE),c.CODE,a.SEQUENCE_NO,p.ID LIMIT 1")->fetch();
+            $this->execute(false === $candidate
+                ? 'DELETE FROM mf_media_group_cover WHERE GROUP_ID=' . $groupId
+                : 'UPDATE mf_media_group_cover SET PHOTO_ID=' . (int)$candidate['ID'] . ',UPDATED_AT=UTC_TIMESTAMP() WHERE GROUP_ID=' . $groupId);
+        }
+        $this->execute('DELETE FROM b_hlbd_mf_photo WHERE ID IN (' . $ids . ')');
+    }
+
     public function idempotency(int $actorId, string $resource, IdempotencyKey $key): Result
     {
         return $this->query('SELECT PAYLOAD_HASH,RESULT_JSON FROM mf_media_idempotency WHERE ACTOR_ID=' . $actorId

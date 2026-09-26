@@ -13,6 +13,7 @@ import {
   pendingStorageKey,
   questionProblemMessage,
   questionStorageKey,
+  submitDraft,
   textProblem
 } from '../../src/modules/morefoto/support/rules.ts';
 
@@ -91,4 +92,44 @@ test('an unfinished first question is replayed only when intact', () => {
 test('an unknown delivery is not shown as still sending', () => {
   assert.match(deliveryLabel('unknown'), /Не удалось подтвердить доставку/);
   assert.notEqual(deliveryLabel('unknown'), deliveryLabel('sending'));
+});
+
+/** A submit whose answer the test releases by hand, like a slow server. */
+function slowSubmit() {
+  const sent = [];
+  let answer;
+  const submit = (text) => {
+    sent.push(text);
+    return new Promise((resolve) => (answer = resolve));
+  };
+  return { submit, sent, answer: (ok) => answer(ok) };
+}
+
+test('a successful send clears the draft the parent did not touch', async () => {
+  const draft = { value: 'Когда будут фото?' };
+  const { submit, sent, answer } = slowSubmit();
+  const sending = submitDraft(draft, submit);
+  answer(true);
+  await sending;
+  assert.deepEqual(sent, ['Когда будут фото?']);
+  assert.equal(draft.value, '');
+});
+
+test('a next question typed while the previous one is sending survives its success', async () => {
+  const draft = { value: 'Когда будут фото?' };
+  const { submit, answer } = slowSubmit();
+  const sending = submitDraft(draft, submit);
+  draft.value = 'И можно крупнее?';
+  answer(true);
+  await sending;
+  assert.equal(draft.value, 'И можно крупнее?');
+});
+
+test('a failed send keeps the text for a retry', async () => {
+  const draft = { value: 'Когда будут фото?' };
+  const { submit, answer } = slowSubmit();
+  const sending = submitDraft(draft, submit);
+  answer(false);
+  await sending;
+  assert.equal(draft.value, 'Когда будут фото?');
 });

@@ -11,6 +11,7 @@ import GalleryGrid from './GalleryGrid.vue';
 import PhotoViewer from './PhotoViewer.vue';
 import GalleryHelp from './GalleryHelp.vue';
 import GalleryQuestionDialog from './GalleryQuestionDialog.vue';
+import { questionsApi } from '../../support/api';
 import { useGalleryQuestion } from '../../support/composables/useGalleryQuestion';
 const {
   gallery,
@@ -34,7 +35,7 @@ const helpOpen = shallowRef(false);
 const questionOpen = shallowRef(false);
 const token = computed(() => String(route.params.token));
 // Demo mode has no server conversation: the curator channel exists only against the real API.
-const questions = isMockApiEnabled ? null : useGalleryQuestion(token, questionOpen);
+const questions = isMockApiEnabled ? null : useGalleryQuestion(token, questionOpen, questionsApi);
 
 function askCurator(): void {
   helpOpen.value = false;
@@ -142,6 +143,7 @@ function askCurator(): void {
         <GalleryHelp v-model="helpOpen" :gallery="gallery" :can-ask="questions !== null" @ask="askCurator" />
         <GalleryQuestionDialog
           v-if="questions"
+          :key="token"
           v-model="questionOpen"
           v-model:name="questions.name.value"
           :gallery="gallery"
