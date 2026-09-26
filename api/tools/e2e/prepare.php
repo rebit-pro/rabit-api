@@ -28,10 +28,13 @@ if (!ModuleManager::isModuleInstalled('rebit.notification')) {
 }
 ob_start();
 try {
-    foreach (['20260323120001', '20260326120008', '20260911120001', '20260911200001', '20260911210001', '20260911220001', '20260912210001', '20260912220001', '20260913010001', '20260913010002', '20260919090001', '20260919100001', '20260919130001', '20260920100001', '20260920110001', '20260920120001', '20260921130001', '20260921140001', '20260922120001', '20260922150001', '20260922180001', '20260923120001', '20260923120002', '20260923120003', '20260925120001', '20260925150001', '20260925190001', '20260925210001', '20260925230001', '20260926120001'] as $id) {
+    $migrate = static function(string $id): void {
         require_once '/app/public/local/php_interface/migrations.foundation/Version' . $id . '.php';
         $class = 'Sprint\Migration\Version' . $id;
         (new $class())->up();
+    };
+    foreach (['20260323120001', '20260326120008', '20260911120001', '20260911200001', '20260911210001', '20260911220001', '20260912210001', '20260912220001', '20260913010001', '20260913010002', '20260919090001', '20260919100001', '20260919130001', '20260920100001', '20260920110001', '20260920120001', '20260921130001', '20260921140001', '20260922120001', '20260922150001', '20260922180001', '20260923120001', '20260923120002', '20260923120003', '20260925120001', '20260925150001', '20260925190001', '20260925210001', '20260926120001'] as $id) {
+        $migrate($id);
     }
     require '/app/public/local/modules/morefoto.commerce/install/index.php';
     (new Morefoto_Commerce())->DoInstall();
@@ -43,6 +46,19 @@ try {
     (new Morefoto_Payment())->DoInstall();
     require '/app/public/local/modules/morefoto.support/install/index.php';
     (new Morefoto_Support())->DoInstall();
+    // Issue #117: the state before the legal release — Commerce is installed, Legal is not in b_module. migrate.sh
+    // boots init.php before the Legal migration registers the module, so load modules in init.php order first.
+    if (ModuleManager::isModuleInstalled('morefoto.legal')) {
+        throw new RuntimeException('The legal bootstrap check needs morefoto.legal to be unregistered.');
+    }
+    preg_match_all("/Loader::includeModule\\('([a-z.]+)'\\)/", (string)file_get_contents('/app/public/local/php_interface/init.php'), $bootstrap);
+    if (!in_array('morefoto.commerce', $bootstrap[1], true)) {
+        throw new RuntimeException('Cannot read the module order of init.php.');
+    }
+    foreach ($bootstrap[1] as $module) {
+        Loader::includeModule($module);
+    }
+    $migrate('20260925230001');
     require '/app/public/local/modules/morefoto.legal/install/index.php';
     (new Morefoto_Legal())->DoInstall();
 } finally {
