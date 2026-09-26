@@ -19,8 +19,9 @@ use Rebit\Share\Shared\Exception\HttpException;
 
 /**
  * Гость без аккаунта пишет со страницы входа: обращение с его контактом ставится в ту же очередь доставки в группу
- * кураторов MAX, что и вопросы K3. Повтор с тем же Idempotency-Key возвращает тот же номер; поток ограничен в час
- * на хеш IP гостя, чтобы один источник не занял общий лимит сайта, который остаётся предохранителем.
+ * кураторов MAX, что и вопросы K3. Повтор с тем же Idempotency-Key возвращает тот же номер и не расходует лимит, даже
+ * если параллельный запрос того же адреса только что занял последнее место; поток ограничен в час на хеш IP гостя,
+ * чтобы один источник не занял общий лимит сайта, который остаётся предохранителем.
  */
 final readonly class SendGuestFeedbackUseCase
 {
@@ -50,6 +51,11 @@ final readonly class SendGuestFeedbackUseCase
         $now = $this->clock->now();
 
         [$questionId, $messageId] = $this->transaction->execute(function() use ($input, $keyHash, $payloadHash, $name, $contact, $message, $now): array {
+            $hourAgo = $now->modify('-1 hour');
+            $addressHash = $this->addresses->hash($input->clientAddress);
+            $this->questions->forgetGuestAddresses($hourAgo);
+            $addressQuestions = $this->questions->lockGuestAddress($addressHash, $now);
+            // Read under the address lock: a parallel request with this key from the same address has already committed.
             $stored = $this->questions->idempotency(self::SCOPE, $keyHash);
             if (null !== $stored) {
                 if (!hash_equals($stored['payloadHash'], $payloadHash)) {
@@ -58,10 +64,7 @@ final readonly class SendGuestFeedbackUseCase
 
                 return [$stored['questionId'], null];
             }
-            $hourAgo = $now->modify('-1 hour');
-            $addressHash = $this->addresses->hash($input->clientAddress);
-            $this->questions->forgetGuestAddresses($hourAgo);
-            if (self::GUEST_QUESTIONS_PER_ADDRESS_PER_HOUR <= $this->questions->lockGuestAddress($addressHash, $now)
+            if (self::GUEST_QUESTIONS_PER_ADDRESS_PER_HOUR <= $addressQuestions
                 || self::GUEST_QUESTIONS_PER_HOUR <= $this->questions->countGuestQuestions($hourAgo)) {
                 throw new HttpException('RATE_LIMITED', 429);
             }
