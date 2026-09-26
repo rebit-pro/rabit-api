@@ -1,3 +1,5 @@
+import type { RequestProblem } from '../../../api/outcome.ts';
+
 export type QuestionAuthor = 'parent' | 'staff' | 'curator';
 export type QuestionDelivery = 'sending' | 'delivered' | 'failed' | 'unknown';
 
@@ -23,11 +25,7 @@ export interface CreatedQuestion extends Question {
   questionKey: string;
 }
 
-export interface QuestionProblem {
-  status: number | null;
-  code: string;
-  network: boolean;
-}
+export type QuestionProblem = RequestProblem;
 
 /** The first question sent but not yet confirmed: kept until the server returns its questionKey. */
 export interface PendingAsk {

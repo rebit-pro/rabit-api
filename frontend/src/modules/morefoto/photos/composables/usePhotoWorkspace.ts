@@ -9,8 +9,10 @@ import { assignPhotos, chooseCover, deletePhotos, moveChild } from '../service';
 import { freeChildCode, validChildCode } from '../rules';
 import { localPhotoPage, photoFilter, photoPage, photoPages, photoPageSize, type PhotoGroupSummary } from '../paging';
 import { managedPreviewSource } from '../previews';
+import { createPhotoDeletion, unknownDeletionMessage } from '../deletion';
 import {
   childTransferError,
+  idempotencyKey,
   photoApiError,
   photoApiErrorCode,
   photosApi,
@@ -94,6 +96,9 @@ export function usePhotoWorkspace() {
   const busy = shallowRef(false);
   const error = shallowRef('');
   const notice = shallowRef('');
+  // A deletion whose answer was lost is repeated with the same key; the dialog then offers exactly that repeat.
+  const deletion = createPhotoDeletion({ send: (attempt) => photosApi.remove(attempt), newKey: idempotencyKey });
+  const removalUnknown = shallowRef(false);
   let alive = true;
   const routeInstitutionId = String(route.params.institutionId);
   const routeShootId = String(route.params.shootId);
@@ -400,13 +405,26 @@ export function usePhotoWorkspace() {
       async (token) => {
         if (isMockApiEnabled) {
           await deletePhotos(token, routeShootId, groupId, ids);
-        } else {
-          const result = await photosApi.remove(groupId, mediaRevision.value, ids);
+          return;
+        }
+        try {
+          const result = await deletion.run(groupId, mediaRevision.value, ids);
           mediaRevision.value = result.revision;
+        } finally {
+          removalUnknown.value = deletion.pending();
         }
       },
-      'Удалено кадров: ' + ids.length + '.'
+      'Удалено кадров: ' + ids.length + '.',
+      '',
+      (cause) => (deletion.pending() ? unknownDeletionMessage : photoApiError(cause))
     );
+  }
+  /** Closing the dialog after an unknown outcome drops the attempt; the reloaded list shows whether it was applied. */
+  function cancelRemoval() {
+    if (!deletion.pending()) return;
+    deletion.forget();
+    removalUnknown.value = false;
+    void refreshPhotos();
   }
   /** The source group is fixed by the caller when the set was loaded, not read from the current selection. */
   function transfer(groupId: string, child: string, toId: string, value: string, ids: string[]) {
@@ -470,6 +488,8 @@ export function usePhotoWorkspace() {
     assign,
     setCover,
     removePhotos,
+    removalUnknown,
+    cancelRemoval,
     transfer
   };
 }

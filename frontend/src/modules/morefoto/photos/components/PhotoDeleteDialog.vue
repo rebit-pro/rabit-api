@@ -10,6 +10,8 @@ const props = defineProps<{
   photos: ManagedPhoto[];
   busy: boolean;
   error: string;
+  /** The previous answer was lost: confirming repeats that same request. */
+  retry: boolean;
 }>();
 defineEmits<{ close: []; confirm: [] }>();
 watch(
@@ -44,7 +46,9 @@ function label(photo: ManagedPhoto): string {
       <p>Кадры и их назначения детям будут удалены без возможности восстановления. Коды остальных кадров не изменятся.</p>
       <v-alert v-if="error" role="alert" type="error" variant="tonal" class="mt-4">{{ error }}</v-alert>
       <div class="mf-actions mt-6">
-        <v-btn color="error" :loading="busy" data-testid="photo-delete-confirm" @click="$emit('confirm')">Удалить</v-btn>
+        <v-btn color="error" :loading="busy" data-testid="photo-delete-confirm" @click="$emit('confirm')">
+          {{ retry ? 'Повторить удаление' : 'Удалить' }}
+        </v-btn>
         <v-btn variant="outlined" :disabled="busy" @click="$emit('close')">Отмена</v-btn>
       </div>
     </v-card>
