@@ -200,17 +200,8 @@ test('#127: путь к галерее ведёт от кадров до пер�
   const institution = await create('/api/v1/institutions', { name: 'I127 Детский сад ' + suffix, address: 'Москва' });
   const shoot = await create('/api/v1/institutions/' + institution.id + '/shoots', { name: 'I127 Съёмка', date: '2026-10-22' });
   const group = await create('/api/v1/shoots/' + shoot.id + '/groups', { name: 'I127 Ромашки ' + suffix, groupKind: 'regular' });
-  await create('/api/v1/catalog/products', {
-    name: 'I127 Печать ' + suffix,
-    description: '',
-    kind: 'physical',
-    price: 15000,
-    printCount: 1,
-    format: '10×15',
-    unit: 'шт.',
-    staffDiscount: false,
-    active: true
-  });
+  // No new product here: the catalog is shared, a new one would change the sales signature of the F2 group that
+  // zzzz-links expects to stay prepared. The F2 test above has already published an active product.
   const step = (scope: Locator, key: string) => scope.getByTestId('gallery-path').locator('[data-step="' + key + '"]');
 
   // Without frames the links card starts the path at the upload and leads to the photos of the group.
