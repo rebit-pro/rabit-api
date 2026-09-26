@@ -66,6 +66,8 @@ VERIFIERS = [
     ("verify-payments.php", "g1-payments.json", "G1 payment integration passed", ["zzzzzzzzz-payments"]),
     # #116: the browser deleted a frame with a duplicate record; the verifier holds another frame in processing for PHOTO_PROCESSING.
     ("verify-photo-deletion.php", "i116-deletion.json", "#116 photo deletion integration passed", ["zz-media"]),
+    # J1: downloads agree with archives on disk, the paid key lasts the files month, expired archives are purged.
+    ("verify-files.php", "j1-files.json", "J1 files integration passed", ["zzzzzzzzzz-files"]),
 ]
 # The browser stage of a group; the opt-in media bench sets itself 45 minutes on top of the other files of its group.
 BROWSER_TIMEOUT = 900
@@ -364,7 +366,7 @@ def open_stand(state, args, stand, notification):
     php = ["--user", "0", *cli]
     amqp = ["--env", "MESSENGER_TRANSPORT_DSN=amqp://rebit:rebit@rabbitmq:5672/rebit"]
     media = ["--env", "MOREFOTO_PRIVATE_MEDIA_PATH=/runtime/private/media", "--env", "MOREFOTO_PUBLIC_PREVIEW_PATH=/runtime/public/upload/morefoto/previews",
-             "--env", "MOREFOTO_PUBLIC_PREVIEW_URL=/upload/morefoto/previews"]
+             "--env", "MOREFOTO_PUBLIC_PREVIEW_URL=/upload/morefoto/previews", "--env", "MOREFOTO_PRIVATE_FILES_PATH=/runtime/private/files"]
 
     def fixture():
         output = job(state, stand["name"] + "-prepare", *network, *php, args.php_cli, "-d", "short_open_tag=1", "-d", "date.timezone=UTC",
@@ -390,6 +392,8 @@ def open_stand(state, args, stand, notification):
             docker("network", "connect", state["browserNetwork"], name + "-fpm")
         # #141: the worker runs as www-data, like PHP-FPM, so that FPM can delete the previews it writes.
         service(state, name + "-media", *network, "--user", "www-data", *cli, *amqp, *media, args.php_cli, "tools/e2e/consume-media.php")
+        # J1: builds ZIP archives as www-data too, so nginx (uid 1000) serves them; SUPPORT carries the link signing secret.
+        service(state, name + "-files", *network, "--user", "www-data", *cli, *amqp, *media, *SUPPORT, args.php_cli, "tools/e2e/consume-files.php")
         service(state, name + "-backend", *network, "--network-alias", "backend", *php_mounts(state, stand),
                 "--mount", f"type=bind,source={Path(state['report'], 'backend.conf')},target=/etc/nginx/conf.d/default.conf,readonly",
                 "--mount", f"type=bind,source={ROOT / 'api/docker/common/nginx/auth.conf'},target=/etc/nginx/auth.conf,readonly", args.nginx)
@@ -400,10 +404,11 @@ def open_stand(state, args, stand, notification):
         docker("network", "connect", "--alias", "frontend", stand["network"], frontend)
         docker("start", frontend)
         time.sleep(1)
-        if not json.loads(docker("container", "inspect", name + "-media"))[0]["State"]["Running"]:
-            raise RuntimeError("Disposable media worker did not stay running")
-        if "www-data" != docker("exec", name + "-media", "stat", "-c", "%U", "/proc/1"):
-            raise RuntimeError("Disposable media worker must run as www-data, not as root (#141)")
+        for worker in ["media", "files"]:
+            if not json.loads(docker("container", "inspect", name + "-" + worker))[0]["State"]["Running"]:
+                raise RuntimeError(f"Disposable {worker} worker did not stay running")
+            if "www-data" != docker("exec", name + "-" + worker, "stat", "-c", "%U", "/proc/1"):
+                raise RuntimeError(f"Disposable {worker} worker must run as www-data, not as root (#141)")
         for _ in range(10):
             ports = json.loads(docker("container", "inspect", frontend))[0]["NetworkSettings"]["Ports"].get("80/tcp")
             if ports:
@@ -413,7 +418,7 @@ def open_stand(state, args, stand, notification):
             raise RuntimeError("Frontend port was not published")
         with LOCK:
             stand["url"] = "http://localhost:" + ports[0]["HostPort"]
-    stage(state, stand["name"] + ": FPM, media worker and nginx", serve)
+    stage(state, stand["name"] + ": FPM, media and files workers and nginx", serve)
 
 
 def environment(images):
@@ -452,7 +457,8 @@ def abort(state):
 def start(state, args, stands):
     identity, report = state["id"], Path(state["report"])
     builds = []
-    for role, option in [("php-cli", "php_cli"), ("php-fpm", "php_fpm")]:
+    # J1: the checkout nginx image runs its worker as uid 1000 to read private originals and archives for X-Accel-Redirect.
+    for role, option in [("php-cli", "php_cli"), ("php-fpm", "php_fpm"), ("nginx", "nginx")]:
         if getattr(args, option) is None:
             setattr(args, option, f"rabit-api-e2e-{role}:local")
             builds.append(lambda role=role, tag=getattr(args, option): stage(state, f"build checkout {role} image", lambda: docker(
@@ -487,7 +493,8 @@ def start(state, args, stands):
     state["nodeArgs"] = ["--cpus", "2", "--memory", "3g", "--memory-swap", "3g", "--mount", f"type=bind,source={frontend},target=/app",
                          "--mount", f"type=volume,source={state['node']},target=/app/node_modules", "--workdir", "/app"]
     # Reuse the application's actual nginx routing and header forwarding configuration.
-    (report / "backend.conf").write_text((ROOT / "api/docker/common/nginx/conf.d/default.conf").read_text().replace("root /app/public;", "root /runtime/public;"))
+    (report / "backend.conf").write_text((ROOT / "api/docker/common/nginx/conf.d/default.conf").read_text()
+                                     .replace("root /app/public;", "root /runtime/public;").replace("alias /app/var/private/", "alias /runtime/private/"))
     frontend_config = (frontend / "docker/production/nginx/conf.d/default.conf").read_text()
     frontend_config = frontend_config.replace("${API_UPSTREAM}", "http://backend").replace("${API_HOST}", "backend")
     frontend_config = frontend_config.replace("    location = /health {", '''    location = /__e2e {
@@ -702,7 +709,7 @@ def main():
     parser.add_argument("--vendor", default=os.environ.get("E2E_VENDOR_ROOT", "/home/user/rebit-p2p/api/vendor"))
     parser.add_argument("--php-cli", default=os.environ.get("E2E_PHP_CLI_IMAGE"))
     parser.add_argument("--php-fpm", default=os.environ.get("E2E_PHP_FPM_IMAGE"))
-    parser.add_argument("--nginx", default=os.environ.get("E2E_NGINX_IMAGE", "rabit-api-nginx:20260911-074507"))
+    parser.add_argument("--nginx", default=os.environ.get("E2E_NGINX_IMAGE"))
     parser.add_argument("--mysql", default=os.environ.get("E2E_MYSQL_IMAGE", "mysql:8.0"))
     parser.add_argument("--groups", default=os.environ.get("E2E_GROUPS") or ",".join(GROUPS), help="browser groups; a subset is not a full gate")
     parser.add_argument("--single-stand", action="store_true", default="1" == os.environ.get("E2E_STANDS"),

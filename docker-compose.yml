@@ -144,6 +144,15 @@ services:
         <<: *api-consumer-service
         command: ["php", "public/local/bin/bitrix-console", "app:notification:consume"]
 
+    api-files-consumer:
+        profiles: [files]
+        <<: *api-consumer-service
+        command: ["php", "public/local/bin/bitrix-console", "app:files:consume"]
+        environment:
+            <<: *api-cli-environment
+            # J1: archives are written as www-data, like the originals of PHP-FPM, and nginx (uid 1000) serves them.
+            APP_RUN_AS_USER: www-data
+
     api-support-consumer:
         profiles: [support]
         <<: *api-consumer-service

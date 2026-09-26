@@ -114,3 +114,20 @@ export async function uploadSpans(page: Page, path: string): Promise<Span[]> {
     path
   );
 }
+
+/** Language-independent: the provider page may open in Russian or English (review #80). */
+export async function payOnProvider(page: Page, number: string) {
+  const fields: [string, string][] = [
+    ['card-number', number],
+    ['expiry-month', '12'],
+    ['expiry-year', '30'],
+    ['security-code', '123']
+  ];
+  // The provider page masks its inputs: typed characters, not a pasted value.
+  for (const [name, value] of fields) {
+    const input = page.locator(`input[name="${name}"]`);
+    await input.fill('');
+    await input.pressSequentially(value, { delay: 30 });
+  }
+  await page.locator('button[type="submit"]').first().click();
+}

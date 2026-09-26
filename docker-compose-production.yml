@@ -11,6 +11,14 @@ services:
           - type: bind
             source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/upload
             target: /app/public/upload
+          - type: bind
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/private-media
+            target: /app/var/private/media
+            read_only: true
+          - type: bind
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/private-files
+            target: /app/var/private/files
+            read_only: true
         deploy:
           labels:
             - traefik.enable=true
@@ -72,6 +80,9 @@ services:
           - type: bind
             source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/private-media
             target: /app/var/private/media
+          - type: bind
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/private-files
+            target: /app/var/private/files
         deploy:
           mode: replicated
           replicas: 2
@@ -120,6 +131,9 @@ services:
           - type: bind
             source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/logs
             target: /app/logs
+          - type: bind
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/private-files
+            target: /app/var/private/files
         deploy:
           mode: replicated
           replicas: 1
@@ -192,6 +206,46 @@ services:
         deploy:
           mode: replicated
           replicas: ${MEDIA_CONSUMER_REPLICAS:-1}
+          update_config:
+            parallelism: 1
+            delay: 10s
+            order: stop-first
+          restart_policy:
+            condition: any
+            delay: 5s
+    api-files-consumer:
+        image: ${REGISTRY}/rabit-api-php-cli:${IMAGE_TAG}
+        command: ["php", "public/local/bin/bitrix-console", "app:files:consume"]
+        environment:
+          # J1: archives are written as www-data, like the originals of PHP-FPM, and nginx (uid 1000) serves them.
+          APP_RUN_AS_USER: www-data
+        configs:
+          - source: rebit_backend_env
+            target: /app/public/.env
+        secrets:
+          - source: rebit_encryption_key
+            target: rebit_encryption_key
+          - source: rebit_rabbitmq_password
+            target: rebit_rabbitmq_password
+        volumes:
+          - type: bind
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/bitrix
+            target: /app/public/bitrix
+          - type: bind
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/upload
+            target: /app/public/upload
+          - type: bind
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/private-media
+            target: /app/var/private/media
+          - type: bind
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/private-files
+            target: /app/var/private/files
+          - type: bind
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/logs
+            target: /app/logs
+        deploy:
+          mode: replicated
+          replicas: ${FILES_CONSUMER_REPLICAS:-1}
           update_config:
             parallelism: 1
             delay: 10s
