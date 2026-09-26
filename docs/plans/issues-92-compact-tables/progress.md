@@ -98,3 +98,7 @@
   `Version20260926180001` ссылается только на `mf_order` — каскад не затрагивает (заказ запрещает удаление).
   Повтор после merge: phpunit unit OK (849), PHPStan No errors, `npm run check` exit 0, `test:commerce` 223/223.
   Live E2E после merge не перезапускались — это сделает полный гейт после review.
+- Review PR #152 (head `c9739c2`) — блокирующих замечаний нет; пользователь 2026-09-26: «можно делать деплой».
+- **Полный гейт PASS** на head `c9739c2` (main `2104016`): `make test-e2e …` (`rabit-e2e-26f111ec89ea`) — 135 браузерных
+  сценариев (a 79, b 56), все verifier (storefront, handoff, orders, links, transfers, avatar, payment-costs, payments,
+  files, access, support, photo-deletion) — passed.
