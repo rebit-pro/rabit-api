@@ -28,6 +28,7 @@ const emit = defineEmits<{
   cover: [id: string];
   preview: [code: string];
   move: [code: string];
+  remove: [ids: string[]];
 }>();
 const code = shallowRef(props.suggestedCode);
 const codeError = computed(() =>
@@ -81,7 +82,8 @@ function changePage(value: number) {
     </div>
     <div v-if="!disabled" class="collection-assignment mt-4">
       <p>
-        Выбрано кадров: <strong data-testid="photo-selection-count">{{ selected.length }}</strong>
+        Выбрано кадров:
+        <strong data-testid="photo-selection-count">{{ selected.length }}</strong>
       </p>
       <div class="collection-code">
         <v-text-field
@@ -95,13 +97,24 @@ function changePage(value: number) {
           data-testid="child-code"
           :disabled="busy"
         />
-        <p v-if="codeError" class="collection-code__error" role="alert">{{ codeError }}</p>
+        <p v-if="codeError" class="collection-code__error" role="alert">
+          {{ codeError }}
+        </p>
       </div>
       <v-btn
         :disabled="!selected.length || busy || !validChildCode(code.trim().toUpperCase())"
         :loading="busy"
         @click="$emit('assign', code)"
         >Назначить ребёнку</v-btn
+      >
+      <v-btn
+        color="error"
+        variant="outlined"
+        prepend-icon="mdi-delete-outline"
+        :disabled="!selected.length || busy"
+        data-testid="photo-remove-selected"
+        @click="$emit('remove', [...selected])"
+        >Удалить выбранные</v-btn
       >
     </div>
     <p v-if="failedPreviews" class="collection-retry mt-4" role="status">
@@ -115,7 +128,10 @@ function changePage(value: number) {
       <article v-for="photo in photos" :key="photo.id" class="photo-card" :data-photo-id="photo.id" data-testid="photo-card">
         <GalleryImage :src="photo.thumbSrc" :alt="'Кадр ' + (photo.code || photo.filename)" :width="photo.width" :height="photo.height" />
         <div class="photo-card-body">
-          <p class="photo-code">{{ photoCodes(photo) }} <span v-if="coverId === photo.id" class="photo-cover">Обложка</span></p>
+          <p class="photo-code">
+            {{ photoCodes(photo) }}
+            <span v-if="coverId === photo.id" class="photo-cover">Обложка</span>
+          </p>
           <p class="photo-filename">{{ photo.filename }}</p>
           <v-checkbox
             v-if="!disabled"
@@ -125,13 +141,20 @@ function changePage(value: number) {
             hide-details
             @update:model-value="toggle(photo.id)"
           />
-          <v-btn
-            v-if="!disabled && photo.assignments.length"
-            variant="text"
-            :disabled="busy || coverId === photo.id"
-            @click="$emit('cover', photo.id)"
-            >Сделать обложкой</v-btn
-          >
+          <div v-if="!disabled" class="photo-card-actions">
+            <v-btn v-if="photo.assignments.length" variant="text" :disabled="busy || coverId === photo.id" @click="$emit('cover', photo.id)"
+              >Сделать обложкой</v-btn
+            >
+            <v-btn
+              icon="mdi-delete-outline"
+              variant="text"
+              color="error"
+              density="comfortable"
+              :aria-label="'Удалить кадр ' + (photo.code || photo.filename)"
+              :disabled="busy"
+              @click="$emit('remove', [photo.id])"
+            />
+          </div>
         </div>
       </article>
     </div>
@@ -213,6 +236,15 @@ function changePage(value: number) {
 }
 .photo-code {
   font-weight: 600;
+}
+.photo-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.photo-card-actions > :only-child {
+  margin-left: auto;
 }
 .photo-filename {
   color: var(--mf-color-text-secondary);

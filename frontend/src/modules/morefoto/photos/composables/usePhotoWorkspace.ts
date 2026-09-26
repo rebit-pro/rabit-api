@@ -5,7 +5,7 @@ import { isMockApiEnabled } from '@/mocks/config';
 import { useOrganization } from '../../organization/composables/useOrganization';
 import { structureApi, structureError } from '../../structure/api';
 import { photosChangedEvent, photoStateKey, readPhotos } from '../repository';
-import { assignPhotos, chooseCover, moveChild } from '../service';
+import { assignPhotos, chooseCover, deletePhotos, moveChild } from '../service';
 import { freeChildCode, validChildCode } from '../rules';
 import { localPhotoPage, photoFilter, photoPage, photoPages, photoPageSize, type PhotoGroupSummary } from '../paging';
 import { managedPreviewSource } from '../previews';
@@ -30,7 +30,11 @@ interface PageData {
   covers: Record<string, string>;
   stats?: ServerPhotoStats | null;
 }
-const emptySummary: PhotoGroupSummary = { photos: 0, unassigned: 0, children: [] };
+const emptySummary: PhotoGroupSummary = {
+  photos: 0,
+  unassigned: 0,
+  children: []
+};
 function isReady(item: ServerPhoto): item is ReadyPhoto {
   return item.status === 'ready' && !!item.thumbSrc && !!item.previewSrc;
 }
@@ -153,7 +157,10 @@ export function usePhotoWorkspace() {
     }
     if (isMockApiEnabled) {
       const state = readPhotos();
-      applyPage(groupId, { ...localPhotoPage(state.photos, groupId, filter.value, page.value), covers: state.covers });
+      applyPage(groupId, {
+        ...localPhotoPage(state.photos, groupId, filter.value, page.value),
+        covers: state.covers
+      });
       return true;
     }
     const ticket = ++mediaRequest;
@@ -194,7 +201,13 @@ export function usePhotoWorkspace() {
       );
     const photos: ManagedPhoto[] = [];
     for (let next = 1; ; next++) {
-      const result = await photosApi.list(routeShootId, { groupId, childCode: code, status: 'ready', page: next, pageSize: 100 });
+      const result = await photosApi.list(routeShootId, {
+        groupId,
+        childCode: code,
+        status: 'ready',
+        page: next,
+        pageSize: 100
+      });
       photos.push(...result.items.filter(isReady).map(managedPhoto));
       if (!result.items.length || photos.length >= result.meta.total) return photos;
     }
@@ -246,7 +259,15 @@ export function usePhotoWorkspace() {
     try {
       const [parent, structure] = await Promise.all([
         structureApi.institution(routeInstitutionId, { shootsPage: 1, groupsPage: 1 }, 1),
-        structureApi.list({ kind: 'group', institutionId: routeInstitutionId, shootId: routeShootId }, 1, 100)
+        structureApi.list(
+          {
+            kind: 'group',
+            institutionId: routeInstitutionId,
+            shootId: routeShootId
+          },
+          1,
+          100
+        )
       ]);
       if (!structure.shoot || structure.shoot.id !== routeShootId || structure.shoot.institutionId !== routeInstitutionId)
         throw new Error('Съёмка не относится к этому учреждению.');
@@ -373,6 +394,20 @@ export function usePhotoWorkspace() {
       }
     }, 'Обложка группы сохранена.');
   }
+  function removePhotos(ids: string[]) {
+    const groupId = group.value?.id ?? '';
+    return act(
+      async (token) => {
+        if (isMockApiEnabled) {
+          await deletePhotos(token, routeShootId, groupId, ids);
+        } else {
+          const result = await photosApi.remove(groupId, mediaRevision.value, ids);
+          mediaRevision.value = result.revision;
+        }
+      },
+      'Удалено кадров: ' + ids.length + '.'
+    );
+  }
   /** The source group is fixed by the caller when the set was loaded, not read from the current selection. */
   function transfer(groupId: string, child: string, toId: string, value: string, ids: string[]) {
     const code = value.trim().toUpperCase();
@@ -434,6 +469,7 @@ export function usePhotoWorkspace() {
     notice,
     assign,
     setCover,
+    removePhotos,
     transfer
   };
 }

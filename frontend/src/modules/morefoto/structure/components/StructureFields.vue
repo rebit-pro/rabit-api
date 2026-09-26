@@ -2,10 +2,13 @@
 import { computed } from 'vue';
 import type { FieldErrors, StructureFields, StructureKind } from '../model';
 const model = defineModel<StructureFields>({ required: true });
+/** Shoot of a group chosen on the institution page; the shoot page passes no shoots and keeps its own. */
+const parentId = defineModel<string | null>('parentId', { default: null });
 const props = defineProps<{
   kind: StructureKind;
   existing: boolean;
   errors: FieldErrors;
+  shoots?: { title: string; value: string }[];
 }>();
 const nameLabel = computed(
   () =>
@@ -21,6 +24,18 @@ const kinds = [
 ];
 </script>
 <template>
+  <v-select
+    v-if="kind === 'group' && shoots"
+    v-model="parentId"
+    :items="shoots"
+    label="Съёмка"
+    aria-label="Съёмка"
+    :disabled="existing"
+    :hint="existing ? 'Группа остаётся в своей съёмке.' : 'Группа появится в выбранной съёмке.'"
+    persistent-hint
+    class="mb-4"
+    data-testid="group-shoot"
+  />
   <v-text-field
     v-model="model.name"
     :label="nameLabel"

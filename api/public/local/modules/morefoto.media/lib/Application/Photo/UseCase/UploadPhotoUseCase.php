@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Morefoto\Media\Application\Photo\UseCase;
 
 use Morefoto\Media\Application\Photo\Contract\MediaPublisherInterface;
+use Morefoto\Media\Application\Photo\Contract\OriginalFileLockInterface;
 use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
+use Morefoto\Media\Application\Photo\Dto\PhotoRegistration;
 use Morefoto\Media\Application\Photo\Dto\UploadPhotoInputDto;
 use Morefoto\Media\Application\Photo\Dto\UploadPhotoOutputDto;
 use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
@@ -21,6 +23,7 @@ use Rebit\Share\Shared\Exception\HttpException;
  *
  * Сразу ставит подготовку превью в очередь; при сбое публикации оставляет задание pending для dispatcher и пишет
  * в журнал этап и класс ошибки, а длительности приёма позволяют отличить задержку сервера от задержки очереди.
+ * Запись оригинала и регистрация идут под блокировкой его пути, чтобы удаление кадра с тем же содержимым не стёрло файл.
  */
 final readonly class UploadPhotoUseCase
 {
@@ -29,6 +32,7 @@ final readonly class UploadPhotoUseCase
         private AccessGuardInterface $access,
         private PhotoFileInspector $inspector,
         private PrivatePhotoStorageInterface $storage,
+        private OriginalFileLockInterface $originals,
         private PhotoRepository $photos,
         private MediaPublisherInterface $publisher,
         private LoggerInterface $logger,
@@ -47,22 +51,30 @@ final readonly class UploadPhotoUseCase
         $started = hrtime(true);
         $photo = $this->inspector->inspect($input->tmpName, $input->filename, $input->bytes, $input->clientFingerprint);
         $inspected = hrtime(true);
-        $originalPath = $this->storage->store($scope->shootPublicId, $photo);
-        $stored = hrtime(true);
-        try {
-            $registration = $this->photos->register(
-                publicId: Uuid::uuid4()->toString(),
-                shootId: $scope->shootId,
-                groupId: $scope->groupId,
-                photo: $photo,
-                originalPath: $originalPath,
-            );
-        } catch (\Throwable $error) {
-            if (!$this->photos->originalPathInUse($originalPath)) {
-                $this->storage->delete($originalPath);
-            }
-            throw $error;
-        }
+        $stored = $inspected;
+        $groupId = $scope->groupId;
+        // A deletion of the photo that owned this path removes the file under the same lock, never between store and register.
+        $registration = $this->originals->synchronized(
+            $this->storage->path($scope->shootPublicId, $photo),
+            function() use ($scope, $groupId, $photo, &$stored): PhotoRegistration {
+                $originalPath = $this->storage->store($scope->shootPublicId, $photo);
+                $stored = hrtime(true);
+                try {
+                    return $this->photos->register(
+                        publicId: Uuid::uuid4()->toString(),
+                        shootId: $scope->shootId,
+                        groupId: $groupId,
+                        photo: $photo,
+                        originalPath: $originalPath,
+                    );
+                } catch (\Throwable $error) {
+                    if (!$this->photos->originalPathInUse($originalPath)) {
+                        $this->storage->delete($originalPath);
+                    }
+                    throw $error;
+                }
+            },
+        );
         $registered = hrtime(true);
         $published = $registration->processingRequired && $this->publish($registration->publicId, $registration->revision);
         $this->logger->info('Photo upload accepted.', [
