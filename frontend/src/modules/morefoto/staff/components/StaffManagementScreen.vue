@@ -78,6 +78,7 @@ const removing = shallowRef(false);
 const removal = shallowRef<{ tone: 'success' | 'warning'; text: string; failures: string[] } | null>(null);
 const removeTargets = computed(() => staff(removeIds.value));
 const removeSkipsSelf = computed(() => selection.value.includes(selfId.value));
+const skippedSelf = shallowRef(false);
 const showRemove = computed({
   get: () => removeIds.value.length > 0,
   set: (open: boolean) => {
@@ -86,6 +87,7 @@ const showRemove = computed({
 });
 function askRemove(ids: string[]): void {
   removal.value = null;
+  skippedSelf.value = ids.includes(selfId.value);
   removeIds.value = ids.filter((id) => id !== selfId.value);
 }
 async function confirmRemove(): Promise<void> {
@@ -225,19 +227,6 @@ function edit(item?: StaffSummary): void {
       <li v-for="failure in removal.failures" :key="failure">{{ failure }}</li>
     </ul>
   </v-alert>
-  <div v-if="selection.length" class="staff-bulk mb-4" data-testid="staff-bulk">
-    <p>Выбрано: {{ selection.length }}<template v-if="removeSkipsSelf"> · свою учётку удалить нельзя, она будет пропущена</template></p>
-    <v-btn
-      color="error"
-      variant="outlined"
-      density="compact"
-      prepend-icon="mdi-delete-outline"
-      :disabled="loading || removing || (removeSkipsSelf && selection.length === 1)"
-      @click="askRemove(selection)"
-      >Удалить выбранных</v-btn
-    >
-    <v-btn variant="text" density="compact" @click="selection = []">Снять выбор</v-btn>
-  </div>
   <section aria-label="Список сотрудников">
     <UiDataTable
       ref="table"
@@ -260,6 +249,24 @@ function edit(item?: StaffSummary): void {
       @select="selection = $event"
       @retry="reload()"
     >
+      <template #selection>
+        <div class="staff-bulk" data-testid="staff-bulk">
+          <p>Выбрано: {{ selection.length }}</p>
+          <v-btn
+            color="error"
+            variant="outlined"
+            density="compact"
+            prepend-icon="mdi-delete-outline"
+            aria-label="Удалить выбранных"
+            :disabled="loading || removing || (removeSkipsSelf && selection.length === 1)"
+            @click="askRemove(selection)"
+            ><span class="staff-bulk__wide">Удалить выбранных</span><span class="staff-bulk__narrow">Удалить</span></v-btn
+          >
+          <v-btn variant="text" density="compact" aria-label="Снять выбор" @click="selection = []"
+            ><span class="staff-bulk__wide">Снять выбор</span><v-icon class="staff-bulk__narrow" icon="mdi-close"
+          /></v-btn>
+        </div>
+      </template>
       <template #cell-name="{ row }">
         <StaffPerson v-if="byId.get(row.id)" :item="byId.get(row.id)!" @open="edit" />
       </template>
@@ -295,6 +302,7 @@ function edit(item?: StaffSummary): void {
         <li v-for="item in removeTargets.slice(0, 10)" :key="item.id">{{ item.name }} · {{ item.email }}</li>
         <li v-if="removeTargets.length > 10">и ещё {{ removeTargets.length - 10 }}</li>
       </ul>
+      <p v-if="skippedSelf" class="staff-remove-self">Вашу учётку удалить нельзя, она не входит в список.</p>
       <p>
         Доступ к кабинету закроется сразу, назначения на учреждения и группы будут сняты. История действий сохранится. Вернуть сотрудника
         можно, добавив его заново по тому же email: он получит новое приглашение.
@@ -385,13 +393,14 @@ function edit(item?: StaffSummary): void {
 }
 .staff-bulk {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: var(--mf-radius-sm);
-  background: var(--mf-color-selected);
-  font-size: var(--mf-text-small);
+  gap: var(--mf-space-3);
+}
+.staff-bulk__narrow {
+  display: none;
+}
+.staff-remove-self {
+  color: var(--mf-color-text-secondary);
 }
 .staff-removal-failures {
   margin: var(--mf-space-2) 0 0 var(--mf-space-5);
@@ -413,6 +422,15 @@ function edit(item?: StaffSummary): void {
 @media (max-width: 760px) {
   .staff-filters {
     grid-template-columns: 1fr;
+  }
+  .staff-bulk {
+    gap: var(--mf-space-2);
+  }
+  .staff-bulk__wide {
+    display: none;
+  }
+  .staff-bulk__narrow {
+    display: inline;
   }
   .staff-remove-dialog {
     padding: 16px;
