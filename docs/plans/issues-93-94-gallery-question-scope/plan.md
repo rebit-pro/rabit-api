@@ -76,12 +76,12 @@
 
 - [x] Прочитать `AGENTS.md`, `CLAUDE.md`, issues #93, #94.
 - [x] План и журнал до изменения кода.
-- [ ] `problem.ts`, импорты `.ts`, `reset()` в `useQuestionThread`.
-- [ ] `useGalleryQuestion`: смена `token`, порты с `token` запроса, внедрение API.
-- [ ] `GalleryScreen.vue`: `questionsApi`, `:key="token"` у диалога.
-- [ ] `submitDraft` в `rules.ts`, `QuestionThread.vue`.
-- [ ] Unit-тесты T03–T08.
-- [ ] Быстрые проверки: `npm run check`, `npm run test:commerce` (в `check` входит `test:ui`).
+- [x] `problem.ts`, импорты `.ts`, `reset()` в `useQuestionThread`.
+- [x] `useGalleryQuestion`: смена `token`, порты с `token` запроса, внедрение API.
+- [x] `GalleryScreen.vue`: `questionsApi`, `:key="token"` у диалога.
+- [x] `submitDraft` в `rules.ts`, `QuestionThread.vue`.
+- [x] Unit-тесты T03–T08.
+- [x] Быстрые проверки: `npm run check`, `npm run test:commerce` (в `check` входит `test:ui`).
 - [ ] Commit, push, PR в `main` без merge.
 - [ ] После review без блокеров: `make test-e2e`.
 
