@@ -70,11 +70,11 @@
 
 - [x] Прочитать `AGENTS.md`, `CLAUDE.md`, issues #122, #124, план PR #119.
 - [x] План и журнал до изменения кода.
-- [ ] #122: `hasDraftChanges`, `restorableDraft`, `persist()`.
-- [ ] #122: unit-тесты T03–T05.
-- [ ] #124: условие удаления ключа в `load()`.
-- [ ] #124: unit-тесты T06–T08.
-- [ ] Быстрые проверки: `npm run check`, `npm run test:commerce` (в `check` входит `test:ui`).
+- [x] #122: `hasDraftChanges`, `restorableDraft`, `persist()`.
+- [x] #122: unit-тесты T03–T05.
+- [x] #124: условие удаления ключа в `load()`.
+- [x] #124: unit-тесты T06–T08.
+- [x] Быстрые проверки: `npm run check`, `npm run test:commerce` (в `check` входит `test:ui`).
 - [ ] Commit, push, PR в `main` без merge.
 - [ ] После review без блокеров: `make test-e2e`, ручная проверка диалогов.
 
@@ -98,7 +98,7 @@
 | T03 | Черновик с `fields` = `base`, `pending = null` | `hasDraftChanges`, `restorableDraft` | `false`, `null`: нечего восстанавливать | `node --experimental-strip-types --test tests/ui/structure-group-shoot.test.mjs` |
 | T04 | Черновик с изменённым полем (любым из четырёх) | То же | `true`, черновик восстанавливается | то же |
 | T05 | Черновик с `fields` = `base` и валидным `pending` | То же | `true`, черновик восстанавливается | то же |
-| T06 | У A сохранён keyA, первый `current(keyA)` висит | A → B → A, второй `current(keyA)` → 404, новый вопрос A → keyB, затем первый `current(keyA)` → 404 | В хранилище и ref остаётся keyB, `needsName = false`, `pending`/`seen` A и ключ B не тронуты | `node --experimental-strip-types --test tests/support/gallery-question.test.mjs` |
+| T06 | У A сохранён keyA и `seen`, у B — свой ключ; первый `current(keyA)` висит | A → B → A, второй `current(keyA)` → 404, новый вопрос A → новый ключ (в тесте keyC: keyB занят галереей B), затем первый `current(keyA)` → 404 | В хранилище и ref остаётся новый ключ, `needsName = false`, следующая отправка — `add` с новым ключом; `pending`/`seen` A и ключ B не тронуты | `node --experimental-strip-types --test tests/support/gallery-question.test.mjs` |
 | T07 | У A сохранён keyA, `current(keyA)` висит | Другая вкладка пишет keyC, затем `current(keyA)` → 404 | В хранилище keyC | то же |
 | T08 | У A сохранён keyA | `current(keyA)` → 404 | Ключ удалён, `needsName = true`, следующий вопрос — `ask(A)` | то же |
 | T09 | Ветка | Diff | Только `structure/model.ts`, `useStructureEditor.ts`, `useGalleryQuestion.ts`, два теста и документы задачи | `git diff --stat origin/main...HEAD` |
