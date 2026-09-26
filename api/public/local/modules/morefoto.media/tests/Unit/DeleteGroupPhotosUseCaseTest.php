@@ -12,6 +12,7 @@ use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
 use Morefoto\Media\Application\Photo\Dto\DeletePhotosInputDto;
 use Morefoto\Media\Application\Photo\Dto\DeletionMutationOutputDto;
 use Morefoto\Media\Application\Photo\UseCase\DeleteGroupPhotosUseCase;
+use Morefoto\Media\Domain\Photo\Exception\MediaStorageException;
 use Morefoto\Media\Domain\Photo\Repository\MediaMutationRepository;
 use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Morefoto\Media\Domain\Photo\ValueObject\IdempotencyKey;
@@ -143,11 +144,44 @@ final class DeleteGroupPhotosUseCaseTest extends TestCase
         $previews = $this->createStub(PreviewRendererInterface::class);
         $previews->method('remove')->willThrowException(new \RuntimeException('disk'));
         $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('warning')->with('Deleted photo files remain on disk.', ['photoId' => self::PHOTO, 'exception' => \RuntimeException::class]);
+        $logger->expects(self::once())->method('warning')->with('Deleted photo files remain on disk.', ['photoId' => self::PHOTO, 'files' => 'previews', 'exception' => \RuntimeException::class]);
 
         $output = $this->useCase($media, previews: $previews, logger: $logger)->execute(4, self::GROUP, $this->key(), new DeletePhotosInputDto(4, [self::PHOTO]));
 
         self::assertSame(1, $output->deleted);
+    }
+
+    /** #116: previews rendered by the worker under another OS user refuse unlink; the private original must not stay behind. */
+    public function testOriginalIsRemovedEvenWhenThePreviewsCannotBe(): void
+    {
+        $media = $this->prepared(4);
+        $media->method('deletablePhotos')->willReturn([['id' => 10, 'publicId' => self::PHOTO, 'originalPath' => 'shoot/aa/own.png']]);
+        $media->method('advanceRevision')->willReturn(5);
+        $previews = $this->createStub(PreviewRendererInterface::class);
+        $previews->method('remove')->willThrowException(new MediaStorageException('Cannot delete protected preview.'));
+        $storage = $this->createMock(PrivatePhotoStorageInterface::class);
+        $storage->expects(self::once())->method('delete')->with('shoot/aa/own.png');
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('warning')->with('Deleted photo files remain on disk.', ['photoId' => self::PHOTO, 'files' => 'previews', 'exception' => MediaStorageException::class]);
+
+        $output = $this->useCase($media, storage: $storage, previews: $previews, logger: $logger)->execute(4, self::GROUP, $this->key(), new DeletePhotosInputDto(4, [self::PHOTO]));
+
+        self::assertSame(1, $output->deleted);
+    }
+
+    public function testPreviewsAreRemovedEvenWhenTheOriginalCannotBe(): void
+    {
+        $media = $this->prepared(4);
+        $media->method('deletablePhotos')->willReturn([['id' => 10, 'publicId' => self::PHOTO, 'originalPath' => 'shoot/aa/own.png']]);
+        $media->method('advanceRevision')->willReturn(5);
+        $storage = $this->createStub(PrivatePhotoStorageInterface::class);
+        $storage->method('delete')->willThrowException(new MediaStorageException('Cannot delete unused private original.'));
+        $previews = $this->createMock(PreviewRendererInterface::class);
+        $previews->expects(self::once())->method('remove')->with(self::PHOTO);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('warning')->with('Deleted photo files remain on disk.', ['photoId' => self::PHOTO, 'files' => 'original', 'exception' => MediaStorageException::class]);
+
+        $this->useCase($media, storage: $storage, previews: $previews, logger: $logger)->execute(4, self::GROUP, $this->key(), new DeletePhotosInputDto(4, [self::PHOTO]));
     }
 
     /** @param array{PAYLOAD_HASH: string, RESULT_JSON: string}|false $stored */

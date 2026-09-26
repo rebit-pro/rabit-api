@@ -5,12 +5,12 @@
 - Ветка `codex/issues-115-116-photo-delete-followups`, worktree
   `/home/user/rabit-api-worktrees/issues-115-116-photo-delete-followups`, base `origin/main` `4fc9dce`.
   Issues: #115, #116 (follow-up ревью PR #107). PR [#135](https://github.com/rebit-pro/rabit-api/pull/135).
-- Завершено: реализация #115 и #116, быстрые проверки frontend и backend (PASS).
-- Сейчас: PR #135 ждёт ревью; не слит.
-- Следующий шаг: ревью PR; после ревью без блокеров — полный `make test-e2e` (координатор). Он впервые выполнит
-  новый сценарий `#115/#116` в `zz-media.spec.ts` и верификатор `verify-photo-deletion.php`.
-- Блокеров нет. Открытых решений нет.
-- Рабочее дерево чистое; код в `bf47cc0` (#115) и `fcfce47` (#116).
+- Завершено: реализация #115 и #116; gate `rabit-e2e-939944822035` (head `8ce962b`) — браузер PASS, верификатор FAIL
+  (оригинал удалённого кадра остался); причина в продукте исправлена (DEC-6), быстрые проверки PASS.
+- Сейчас: PR #135, исправление запушено; не слит.
+- Следующий шаг: повторный полный `make test-e2e` (координатор) — T08/T09 по верификатору.
+- Блокеров нет. Открытое решение: способ удалять превью (#141) — вне этого PR.
+- Рабочее дерево чистое после коммита исправления.
 - Команды:
   - Frontend: `docker run --rm -v $PWD/frontend:/app -v rabit-issues115116-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy npm ci`,
     затем с `--network none`: `sh -c "npm run check && npm run test:commerce"`.
@@ -31,10 +31,11 @@
 | T04 | PASS | 2026-09-26 | `npm run test:commerce` | «ответ 5xx…»: `key-1` дважды, одно удаление |
 | T05 | PASS | 2026-09-26 | `npm run test:commerce` | тот же тест: другой набор/группа → `key-3`, `key-4` |
 | T06 | PASS | 2026-09-26 | `npm run check` | `tests/support/*` без изменений: все 56 node-тестов `test:ui` PASS |
-| T07 | PENDING | 2026-09-26 | `make test-e2e` (группа a) | сценарий `#115/#116` в `zz-media.spec.ts`: `route.fetch()` + `route.abort('connectionreset')`; ещё не запускался |
-| T08 | PENDING | 2026-09-26 | `make test-e2e` (группа a) | тот же сценарий (HTTP) + раздел 1 `verify-photo-deletion.php` (строки, FK, обложка, файлы); ещё не запускался |
-| T09 | PENDING | 2026-09-26 | `make test-e2e` (группа a) | раздел 2 `verify-photo-deletion.php`: реальный `DeleteGroupPhotosUseCase` → `PHOTO_PROCESSING`; ещё не запускался |
+| T07 | PASS | 2026-09-26 | `make test-e2e`, прогон `rabit-e2e-939944822035` (координатор) | группа a целиком зелёная, включая `#115/#116` |
+| T08 | FAIL → исправлено, PENDING повтор | 2026-09-26 | `make test-e2e`, прогон `rabit-e2e-939944822035`, head `8ce962b` | браузерная часть PASS; `verify-photo-deletion.php:107` FAIL «the unused original of the deleted frame is removed»: превью (root, воркер) не удалились FPM (`www-data`), исключение в том же `try` пропустило удаление оригинала. Исправлено DEC-6; проверка превью отложена до #141 |
+| T09 | PENDING | 2026-09-26 | `make test-e2e` (группа a) | раздел 2 `verify-photo-deletion.php` не дошёл: верификатор упал раньше (T08) |
 | T10 | PASS | 2026-09-26 | PHPUnit | `MediaMutationDeletionSqlTest` (4 теста): порядок duplicate → назначения → обложка → строки; `processing` → 409 без записей; шпион SQL, не реальная БД |
+| T13 | PASS | 2026-09-26 | PHPUnit | `DeleteGroupPhotosUseCaseTest::testOriginalIsRemovedEvenWhenThePreviewsCannotBe`, `testPreviewsAreRemovedEvenWhenTheOriginalCannotBe` |
 | T11 | PASS | 2026-09-26 | см. «Команды» | `npm run check` + `test:commerce` (213); PHPUnit 980/980; PHPStan OK; php-cs-fixer 0 из 2 |
 | T12 | PENDING | — | `make test-e2e` | gate после ревью (координатор) |
 
@@ -80,3 +81,21 @@
   `i115-desktop-unknown-outcome.png` снимет live-сценарий.
 - Коммиты `bf47cc0` (fix #115), `fcfce47` (test #116), `3b96e0e` (docs); push. Дублей по
   `gh pr list --state all --search "115 in:title"` / `"116 in:title"` нет. Создан PR #135 в main, не слит.
+
+### 2026-09-26, gate `rabit-e2e-939944822035`
+
+- Координатор прогнал `make test-e2e` на `8ce962b` (ветка + `origin/main` `1be46fe`; подтянул `git pull`). Группа a
+  PASS целиком, включая `#115/#116`. `verify-photo-deletion.log`: `RuntimeException: #116 verification failed: the
+  unused original of the deleted frame is removed` — `<privateRoot>/<shoot>/d3/<fingerprint>.png` на месте.
+- Причина (продукт, #106): `DeleteGroupPhotosUseCase::removeFiles` удалял превью и оригинал в одном `try`, превью —
+  первыми. Превью пишет медиа-воркер от root (стенд `--user 0`; prod `rabit-api-php-cli` без `USER`) в каталог
+  `previews/<xx>/` с 0755, а удаление идёт в FPM-пуле `www-data` → `unlink(): Permission denied` →
+  `MediaStorageException` → warning, оригинал не удалялся. Воспроизведено в `rabit-api-php-cli:d1-local`: root создаёт
+  каталог 0755 и файл, `su www-data -c "php -r unlink(...)"` → `false`, `Permission denied`.
+- Исправление: оригинал и превью удаляются независимо, каждый сбой — warning с `files: original|previews`
+  (оригинал первым: это приватные данные). Unit: два новых теста, обновлён тест warning.
+- Превью по-прежнему остаются на диске — отдельный баг #141 (варианты: воркер от `www-data` + chown при выкатке,
+  удаление превью воркером по сообщению, общий GID). В верификаторе проверка удаления превью заменена комментарием
+  со ссылкой на #141; оригинал проверяется строго.
+- Проверки: PHPUnit `DeleteGroupPhotosUseCaseTest` 9/9, весь PHPUnit 982/982, PHPStan OK, php-cs-fixer 0 из 2
+  (intersection) и 0 из 1 (override, верификатор), `php -l` верификатора — ok. Frontend не менялся.
