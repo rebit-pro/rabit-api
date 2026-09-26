@@ -12,8 +12,8 @@
   PR: [#133](https://github.com/rebit-pro/rabit-api/pull/133) в `main`, без merge. Журнал перед PR: `4eab928`.
 - Документация: [план](plan.md), [A8](../../waves/a8/README.md), [PR #119](../issues-93-94-gallery-question-scope/plan.md).
 - Завершено: реализация, unit-тесты, мутационная проверка тестов, быстрые проверки (T01–T09 PASS).
-- Сейчас: PR #133 ждёт review.
-- Следующий шаг: review PR. После review без блокеров — `make test-e2e` (T10) и ручная проверка диалогов (T11).
+- Сейчас: self-review PR #133 без блокеров (комментарий в PR), полный gate PASS (T10), визуальная проверка по скриншотам PASS (T11).
+- Следующий шаг: merge по решению пользователя, затем деплой только frontend.
 - Блокеров нет. Открытых решений нет. Ограничение R1 (ключ другой вкладки не подхватывается в ref) — в плане.
 - Рабочее дерево: чистое после коммита журнала. Логи проверок — вне репозитория (scratchpad сессии).
 - Следующая проверка после изменения base: команды из раздела «Команды» плана (том `rabit-issues122124-node`).
@@ -31,8 +31,8 @@
 | T07 | PASS | 2026-09-26 | то же | «a 404 for the old key keeps a key another tab stored meanwhile» ok |
 | T08 | PASS | 2026-09-26 | то же | «a 404 for the stored key forgets it…» ok |
 | T09 | PASS | 2026-09-26 | `git diff --stat origin/main...HEAD` | только `structure/model.ts`, `useStructureEditor.ts`, `useGalleryQuestion.ts`, два теста и документы задачи |
-| T10 | PENDING | — | `make test-e2e` | после review |
-| T11 | PENDING | — | ручная проверка на стенде, desktop/mobile | после review |
+| T10 | PASS | 2026-09-26 | `make test-e2e` | прогон `rabit-e2e-de9b36ebdef4` на head `7bb262f`: exit 0, Total 400.7 s, 125 браузерных сценариев (a 78, b 47) |
+| T11 | PASS | 2026-09-26 | скриншоты `rabit-e2e-de9b36ebdef4` `z-institution-detail` #105 | `i105-mobile-new-group.png`: пустой диалог «Новая группа» без «Восстановлен несохранённый черновик»; `i105-desktop-new-group.png`: плашка только у изменённого черновика («I105 Ромашки» — сценарий спека) |
 
 ## Хронология
 
@@ -79,3 +79,11 @@
 - `docker run --rm --network none … bash -c 'npm run check && npm run test:commerce'` — exit 0: `test:ui` 60/60,
   `test:commerce` 209/209.
 - `git fetch origin main`: новых коммитов после `4fc9dce` нет.
+
+### 2026-09-26 — ревью и полный gate
+
+- Self-review PR #133: блокирующих нет (поля `StructureFields` примитивные, сравнение `!==` корректно).
+- `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`
+  — `rabit-e2e-de9b36ebdef4`: exit 0, 400.7 s, 125 сценариев. T10 PASS.
+- Визуально: на mobile пустой диалог больше не помечен восстановленным (исходное наблюдение #122); на desktop плашка
+  показана для черновика с введённым названием — ожидаемо. T11 PASS.
