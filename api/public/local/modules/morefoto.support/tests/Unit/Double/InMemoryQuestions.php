@@ -20,6 +20,8 @@ final class InMemoryQuestions implements QuestionRepositoryInterface, QuestionDe
     public array $keys = [];
     /** @var array<int, array{chatId: int, lastEvent: string, botPresent: bool, seenAt: string}> */
     public array $chats = [];
+    /** @var array<string, array{windowStartedAt: \DateTimeImmutable, questions: int}> */
+    public array $guestAddresses = [];
 
     public function findParent(string $keyHash): ?array
     {
@@ -137,6 +139,23 @@ final class InMemoryQuestions implements QuestionRepositoryInterface, QuestionDe
     public function countGuestQuestions(\DateTimeImmutable $since): int
     {
         return count(array_filter($this->questions, static fn(array $question): bool => 'guest' === $question['author'] && $question['createdAt'] >= $since));
+    }
+
+    public function forgetGuestAddresses(\DateTimeImmutable $before): void
+    {
+        $this->guestAddresses = array_filter($this->guestAddresses, static fn(array $window): bool => $window['windowStartedAt'] >= $before);
+    }
+
+    public function lockGuestAddress(string $addressHash, \DateTimeImmutable $now): int
+    {
+        $this->guestAddresses[$addressHash] ??= ['windowStartedAt' => $now, 'questions' => 0];
+
+        return $this->guestAddresses[$addressHash]['questions'];
+    }
+
+    public function addGuestAddressQuestion(string $addressHash): void
+    {
+        ++$this->guestAddresses[$addressHash]['questions'];
     }
 
     public function countOwnMessages(int $questionId, \DateTimeImmutable $since): int

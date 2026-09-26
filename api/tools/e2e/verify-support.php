@@ -206,4 +206,25 @@ try {
 }
 $check(!$accepted, 'CHECK accepted a guest request bound to a group');
 
+// 6. Issue #111: a guest is limited per keyed hash of the address behind the proxies; the IP itself is stored nowhere.
+$guestFeedback = static function(string $message, int $key, string $forwardedFor) use ($http, $feedback): array {
+    return $http('POST', '/api/v1/public/feedback', ['message' => $message] + $feedback, ['Idempotency-Key: ' . sprintf('%032x', $key), 'X-Forwarded-For: ' . $forwardedFor]);
+};
+for ($index = 1; $index <= 5; ++$index) {
+    [$status] = $guestFeedback('Лимит адреса ' . $index, 0x111000 + $index, '203.0.113.111');
+    $check(202 === $status, 'guest feedback within the address limit');
+}
+[$status, $body] = $guestFeedback('Лимит адреса 6', 0x111006, '203.0.113.111');
+$check(429 === $status && 'RATE_LIMITED' === ($body['error']['code'] ?? null), 'sixth guest feedback from one address');
+[$status] = $guestFeedback('Подделка', 0x111007, '198.51.100.1, 203.0.113.111');
+$check(429 === $status, 'a spoofed left hop keeps the real address');
+[$status] = $guestFeedback('Другой адрес', 0x111008, '203.0.113.112');
+$check(202 === $status, 'another address is accepted');
+// The browser's own guest request has its window too, so only the exhausted one and the hash format are checked.
+$check(['1'] === $column('SELECT COUNT(*) FROM mf_support_guest_address WHERE QUESTIONS=5'), 'one exhausted address window');
+$check(['0'] === $column("SELECT COUNT(*) FROM mf_support_guest_address WHERE ADDRESS_HASH NOT REGEXP '^[0-9a-f]{64}$'"), 'address windows keep only a hash');
+$check(['0'] === $column("SELECT (SELECT COUNT(*) FROM mf_support_question WHERE CONTEXT LIKE '%203.0.113.11%')"
+    . " + (SELECT COUNT(*) FROM mf_support_message WHERE BODY LIKE '%203.0.113.11%')"
+    . " + (SELECT COUNT(*) FROM mf_support_guest_address WHERE ADDRESS_HASH LIKE '%203.0.113.11%')"), 'no plain guest IP is stored');
+
 echo 'K3 support integration passed' . PHP_EOL;

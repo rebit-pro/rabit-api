@@ -6,12 +6,13 @@ namespace Rebit\Share\Infrastructure\Controller\Request;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\HttpRequest;
+use Rebit\Share\Infrastructure\Controller\Request\Attribute\ClientAddress;
 use Rebit\Share\Infrastructure\Controller\Request\Attribute\RequestHeader;
 use Rebit\Share\Infrastructure\Controller\Request\Attribute\RouteParameter;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /**
- * Дополняет данные DTO значениями из HTTP-заголовков и текущего маршрута по атрибутам конструктора.
+ * Дополняет данные DTO значениями из HTTP-заголовков, IP клиента и текущего маршрута по атрибутам конструктора.
  * Запрещает подменять эти поля через body/query и проверяет формат параметров маршрута до гидрации DTO.
  *
  * @internal
@@ -40,8 +41,14 @@ final readonly class RequestTechnicalValues
         foreach ($constructor->getParameters() as $parameter) {
             $header = $parameter->getAttributes(RequestHeader::class)[0] ?? null;
             $route = $parameter->getAttributes(RouteParameter::class)[0] ?? null;
-            if ((null !== $header || null !== $route) && array_key_exists($parameter->getName(), $requestData)) {
+            $client = [] !== $parameter->getAttributes(ClientAddress::class);
+            if ((null !== $header || null !== $route || $client) && array_key_exists($parameter->getName(), $requestData)) {
                 throw new HttpException('UNKNOWN_FIELD', 422);
+            }
+            if ($client) {
+                $requestData[$parameter->getName()] = (new ClientAddressResolver())
+                    ->resolve($this->request->getRemoteAddress(), $this->request->getHeader('X-Forwarded-For'))
+                ;
             }
             if (null !== $header) {
                 $attribute = $header->newInstance();

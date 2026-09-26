@@ -10,5 +10,7 @@ final readonly class SendGuestFeedbackInputDto
         public string $name,
         public string $contact,
         public string $message,
+        /** IP клиента в открытом виде: только для хеша лимита, не сохраняется. */
+        public string $clientAddress,
     ) {}
 }

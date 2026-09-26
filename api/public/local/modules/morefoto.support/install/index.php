@@ -22,7 +22,7 @@ final class Morefoto_Support extends CModule
                 throw new RuntimeException('Required module is unavailable: ' . $dependency);
             }
         }
-        foreach (['mf_support_question', 'mf_support_message', 'mf_support_idempotency', 'mf_support_max_chat'] as $table) {
+        foreach (['mf_support_question', 'mf_support_message', 'mf_support_idempotency', 'mf_support_max_chat', 'mf_support_guest_address'] as $table) {
             if (!Application::getConnection()->isTableExists($table)) {
                 throw new RuntimeException('Apply the K3 support migration first: missing ' . $table);
             }

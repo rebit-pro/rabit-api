@@ -120,6 +120,25 @@ final readonly class BitrixQuestionRepository implements QuestionRepositoryInter
         return $this->count("SELECT COUNT(*) AS TOTAL FROM mf_support_question WHERE AUTHOR='guest' AND GROUP_ID IS NULL AND CREATED_AT>=" . $this->sql->moment($since));
     }
 
+    public function forgetGuestAddresses(\DateTimeImmutable $before): void
+    {
+        $this->sql->execute('DELETE FROM mf_support_guest_address WHERE WINDOW_STARTED_AT<' . $this->sql->moment($before));
+    }
+
+    public function lockGuestAddress(string $addressHash, \DateTimeImmutable $now): int
+    {
+        // The upsert takes the row lock: parallel requests from one address wait for each other until commit.
+        $this->sql->execute('INSERT INTO mf_support_guest_address(ADDRESS_HASH,WINDOW_STARTED_AT,QUESTIONS) VALUES('
+            . $this->sql->quote($addressHash) . ',' . $this->sql->moment($now) . ',0) ON DUPLICATE KEY UPDATE QUESTIONS=QUESTIONS');
+
+        return $this->count('SELECT QUESTIONS AS TOTAL FROM mf_support_guest_address WHERE ADDRESS_HASH=' . $this->sql->quote($addressHash) . ' FOR UPDATE');
+    }
+
+    public function addGuestAddressQuestion(string $addressHash): void
+    {
+        $this->sql->execute('UPDATE mf_support_guest_address SET QUESTIONS=QUESTIONS+1 WHERE ADDRESS_HASH=' . $this->sql->quote($addressHash));
+    }
+
     public function countOwnMessages(int $questionId, \DateTimeImmutable $since): int
     {
         return $this->count('SELECT COUNT(*) AS TOTAL FROM mf_support_message WHERE QUESTION_ID=' . $this->sql->id($questionId)

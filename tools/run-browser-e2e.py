@@ -72,7 +72,9 @@ BENCH_TIMEOUT = 45 * 60
 PHP_ENV = ["--env", "XDEBUG_MODE=off"]
 # DS-12: a test-only organizer contact for the «Помощь» section of the profile; K3: a fake MAX group ID and webhook secret (no real bot).
 SUPPORT = ["--env", "MOREFOTO_SUPPORT_NAME=Организатор E2E", "--env", "MOREFOTO_SUPPORT_EMAIL=support@example.invalid", "--env", "MOREFOTO_SUPPORT_PHONE=+7 900 000-00-00", "--env", "MOREFOTO_SUPPORT_MAX_CHAT_ID=-72000000001",
-           "--env", "MOREFOTO_SUPPORT_MAX_WEBHOOK_SECRET=e2e_webhook_secret_0123456789abcdef"]
+           "--env", "MOREFOTO_SUPPORT_MAX_WEBHOOK_SECRET=e2e_webhook_secret_0123456789abcdef",
+           # Issue #111: the server secret that keys the hash of a guest's IP for the feedback limit.
+           "--env", "REBIT_ENCRYPTION_KEY=e2e_encryption_key_0123456789abcdef0123456789"]
 # OPS legal: test-only requisites of the individual entrepreneur shown in the footer, pages and documents.
 SELLER = ["--env", "MOREFOTO_SELLER_NAME=ИП Тестов Тест Тестович", "--env", "MOREFOTO_SELLER_INN=000000000000", "--env", "MOREFOTO_SELLER_OGRNIP=000000000000000",
           "--env", "MOREFOTO_SELLER_ADDRESS=Воронеж, тестовый адрес", "--env", "MOREFOTO_SELLER_EMAIL=pd@example.invalid"]
