@@ -2,11 +2,11 @@
 
 ## Точка продолжения
 
-- Ветка `codex/j1-order-files`, base `main` `09597fd` (слит в ветку), head `01edcc5` и последующий docs-коммит. PR https://github.com/rebit-pro/rabit-api/pull/143, issue #142.
+- Ветка `codex/j1-order-files`, base `main` `e847e87` (слит в ветку), head `3b1246c` и последующий docs-коммит. PR https://github.com/rebit-pro/rabit-api/pull/143, issue #142.
 - Рабочая копия `/home/user/rabit-api-worktrees/j1-order-files`.
 - Документы: `plan.md` этой папки, граф `docs/waves/graph.json` (J1), канонический `MoreFoto/docs/05-rest-api/endpoints.json` (FIL-01…04), решения `docs/waves/w05/decisions.md` (D07, D10, D12).
 - Завершено: S0–S6, S8 — графы, контракты, модуль `morefoto.files`, docker/nginx/cron, frontend-блок, unit/architecture-тесты, E2E-спецификация `zzzzzzzzzz-files` и `verify-files.php` (написаны, не запускались), документы волны, issue #142.
-- Сейчас: ожидание ревью PR.
+- Сейчас: второй круг ревью PR #143 после исправления R1–R3.
 - Следующий шаг: после ревью без блокеров — полный `make test-e2e` (с ключами тестового магазина), визуальная проверка скриншотов, `visual.json`, затем выкладка на stage по `docs/waves/j1/README.md`.
 - Блокеры: нет. Открытых решений нет.
 - Рабочее дерево: всё закоммичено в `codex/j1-order-files`.
@@ -45,3 +45,5 @@
 - 2026-09-26. S5–S8: блок «Электронные фотографии» на странице заказа; E2E-спецификация `zzzzzzzzzz-files` (группа b): неоплаченный заказ, оплата картой на странице ЮKassa, файл и ZIP со сверкой sha256 оригинала, Range, подпись, идемпотентность, desktop/mobile; `verify-files.php`. Фикстура E4 передаёт оригиналы `www-data` (docker exec работает от root) и отдаёт sha256. `payOnProvider` перенесён в `helpers.ts`. Контракт FIL-01…04 обновлён в каноническом `build.py`, patch `docs/waves/j1/morefoto-contract.patch` (8 файлов, reverse-check OK). Неблокирующее — issue #142 (удаление купленных кадров).
 - 2026-09-26. Слит `origin/main` `09597fd`: конфликт `prepare.php` (#117 перенёс миграцию legal после загрузки init.php) — оставлен цикл main, добавлены `20260926180001` и DoInstall files. Повтор: граф 52/118, ready [J1]; runner tests 22 OK; PHPStan — No errors; PHPUnit — OK 1029 / 46768; frontend check — exit 0, commerce 214/214, build OK.
 - 2026-09-26. Открыт PR #143. Объём: 112 файлов, ~4,9 тыс. строк без patch и графа (в пределах одной волны).
+- 2026-09-26. Ревью PR #143, первый круг: 3 блокера (R1 лог frontend nginx, R2 ключ переиспользованной загрузки, R3 архив без пути после сбоя). Исправлено: исключение из лога frontend nginx; таблица `mf_file_download_request` и `OrderDownloadGuardInterface` (GET_LOCK + транзакция); путь ZIP в строке при создании, purge убирает `.tmp`. Новые тесты: `testReusedArchiveBindsTheNewKeyToItsBody`, `testKeyKeepsItsDownloadWhenTheSetChanges`, `testArchiveIsPurgedAfterItsStatusWasNeverSaved`, проверки конфигов nginx (PHP и `tests/ui/private-links-log.test.mjs`). `verify-files.php` проверяет привязку ключей и пути живых архивов. Миграция `20260926180001` изменена до merge (не выкладывалась).
+- 2026-09-26. Слит `origin/main` `e847e87` (#135): конфликт `VERIFIERS` — оставлены `verify-photo-deletion.php` и `verify-files.php`. Повтор: граф 52/118 ready [J1]; runner tests 22 OK; php-cs-fixer 0 из 87; phplint OK 1358; PHPStan — No errors; PHPUnit — OK 1050 / 46841; frontend check exit 0 (UI 67), commerce 220/220, build OK. Браузерный E2E по-прежнему после ревью без блокеров.
