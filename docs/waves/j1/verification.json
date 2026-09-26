@@ -1,0 +1,60 @@
+{
+  "wave": "J1",
+  "status": "pending-e2e",
+  "date": "2026-09-26",
+  "branch": "codex/j1-order-files",
+  "base": "4fc9dce",
+  "head": "see PR",
+  "decisions": "J1-GRAPH and J1-DEC-01..05 accepted by the user on 2026-09-26",
+  "checks": {
+    "backend": {
+      "status": "passed",
+      "phplint": "OK 1347 files",
+      "phpstan": 0,
+      "phpunit": "OK 1019 tests / 46734 assertions",
+      "csFixer": "clean on changed files"
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "stylelint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "UI unit 56",
+        "commerce unit 214",
+        "production build"
+      ]
+    },
+    "graph": {
+      "status": "passed",
+      "waves": 52,
+      "apiIds": 118,
+      "readyFromMain": [
+        "J1"
+      ],
+      "canonical": "wave_graph.py, build.py, validate.py, validate-postman.cjs passed; patch reverse-check OK"
+    },
+    "nginx": {
+      "status": "passed",
+      "note": "X-Accel-Redirect checked on nginx 1.25 with uid 1000: 0600 file served, Content-Disposition passed through, Range 206, direct /_protected/ 404"
+    },
+    "browser": {
+      "status": "pending",
+      "spec": "zzzzzzzzzz-files (group b)",
+      "runAfter": "review without blockers"
+    },
+    "verifiers": {
+      "status": "pending",
+      "scripts": [
+        "verify-files.php"
+      ]
+    }
+  },
+  "limits": [
+    "refund/revoked states and revocation — I2/I3",
+    "e-mail with the link — J2",
+    "recovery — J3",
+    "deletion of purchased photos by staff — separate issue"
+  ]
+}
