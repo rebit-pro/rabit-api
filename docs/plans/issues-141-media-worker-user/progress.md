@@ -3,13 +3,13 @@
 ## Точка продолжения
 
 - Ветка `codex/issues-141-media-worker-user` (worktree `/home/user/rabit-api-worktrees/issues-141-media-worker-user`),
-  создана от `bf3dfd8`, затем fast-forward до origin/main `6d034b3` (merge PR #135). Issue #141. PR — см. журнал.
+  создана от `bf3dfd8`, затем fast-forward до origin/main `6d034b3` (merge PR #135). Issue #141, PR https://github.com/rebit-pro/rabit-api/pull/144 (не слит, не выкачен).
 - Завершено: реализация, проверка удаления превью в `verify-photo-deletion.php` возвращена, быстрые проверки,
   локальная проверка прав в контейнерах (T01–T14, T17).
-- Сейчас: коммит, push, PR.
+- Сейчас: PR #144 ждёт ревью.
 - Следующий шаг: ревью PR; затем полный `make test-e2e` (запускает пользователь) — T15, T16, T18.
 - Блокеры: нет. Открыто: выкатка stage/prod с разовой сменой владельца превью — только с отдельного согласия.
-- Рабочее дерево: изменения ветки (см. `git status`), игнорируемые `api/var/`.
+- Рабочее дерево: всё закоммичено (игнорируемые `api/var/`).
 - Следующая проверка:
   `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`
 
@@ -106,3 +106,9 @@
 | T16 | PENDING | — | `make test-e2e …` (`verify-photo-deletion.php`) | после ревью |
 | T17 | PASS | 2026-09-26 | реальный `GdPreviewRenderer` в томе | render `www-data`, remove OK, 0 файлов |
 | T18 | PENDING | — | `make test-e2e …` (фикстура E4) | после ревью |
+
+### 2026-09-26 — PR
+
+- Коммиты `31e9834` (код) и docs, `git push -u origin codex/issues-141-media-worker-user`.
+  Дублей по `gh pr list --state all --search "141 in:title"` нет. Открыт PR #144 в main (`Closes #141`) с порядком
+  выкатки stage/prod и разовой командой. Не слит.
