@@ -91,7 +91,7 @@ async function clearRequests(p: Page) {
 async function prepare(p: Page, base: string) {
   await login(p, base, 'organizer');
   await go(p, base, '/cabinet/links?group=sun-ready');
-  await p.getByRole('button', { name: 'Проверить ссылку', exact: true }).click();
+  await p.getByRole('button', { name: /^Проверить ссылку: / }).click();
   for (const label of [
     'Фотографии и коды проверены',
     'Продукция, цены и условия группы проверены',
@@ -340,7 +340,7 @@ Then('R13 проверяет {string}', async function (this: CustomWorld, name:
     await expect(card(p, 'sun-ready')).toContainText('Готова к передаче');
     await card(p, 'sun-ready').getByRole('link', { name: 'Открыть группу Лучики' }).click();
     await p.getByRole('link', { name: 'Отметить передачу ссылки', exact: true }).click();
-    await p.getByRole('button', { name: 'Отметить передачу', exact: true }).click();
+    await p.getByRole('button', { name: /^Передать ссылку: / }).click();
     await p.getByLabel('Дата и время передачи (МСК)').fill('2026-09-08T11:00');
     await p.getByLabel('Подтверждаю факт передачи и указанные сроки').check();
     await p.getByRole('dialog').getByRole('button', { name: 'Отметить передачу ссылки', exact: true }).click();
@@ -350,7 +350,7 @@ Then('R13 проверяет {string}', async function (this: CustomWorld, name:
     await expect(card(p, 'sun-ready')).toContainText('22 сентября 2026');
     const before = await read(p, 'organization:v1');
     await p.getByRole('link', { name: 'Ссылка и сроки', exact: true }).click();
-    await expect(p.getByRole('button', { name: 'Отметить передачу', exact: true })).toHaveCount(0);
+    await expect(p.getByRole('button', { name: /^Передать ссылку: / })).toHaveCount(0);
     expect(await read(p, 'organization:v1')).toEqual(before);
   } else if (name === 'изменение подготовки снимает готовность') {
     await prepare(p, base);

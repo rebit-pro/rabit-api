@@ -178,8 +178,8 @@ Then('R16 проходит путь {string}', { timeout: 240000 }, async functi
     for (const role of ['teacher', 'head', 'organizer']) {
       await h.login(p, base, role);
       await h.go(p, base, '/cabinet/links?group=sun-stars');
-      await expect(p.getByTestId('link-sun-stars')).toContainText('20 сентября');
-      await expect(p.getByTestId('link-sun-stars')).toContainText('27 сентября');
+      await expect(p.locator('[data-row-id="sun-stars"]').filter({ visible: true })).toContainText('20 сент.');
+      await expect(p.locator('[data-row-id="sun-stars"]').filter({ visible: true })).toContainText('27 сент.');
     }
   } else if (name === 'исправление возврат и учтённая печать') {
     await h.openGroup(p, base);
@@ -483,7 +483,7 @@ Then('R16 проверяет состояние {string}', { timeout: 180000 }, 
   } else if (name === 'пустая съёмка и недоступное действие') {
     await h.login(p, base);
     await h.go(p, base, '/cabinet/links?group=sun-bees');
-    await expect(p.getByRole('button', { name: 'Отметить передачу', exact: true })).toHaveCount(0);
+    await expect(p.getByRole('button', { name: /^Передать ссылку: / })).toHaveCount(0);
     await h.go(p, base, '/g/review-bees');
     await expect(p.getByRole('button', { name: /Открыть кадр/ })).toHaveCount(0);
     await h.go(p, base, '/cabinet/orders');

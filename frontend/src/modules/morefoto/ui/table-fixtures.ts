@@ -12,7 +12,7 @@ const orderStatuses = {
 export function tableColumns(kind: UiTableKind): UiTableColumn[] {
   return kind === 'institutions'
     ? [
-        { key: 'name', label: 'Учреждение', sortable: true, primary: true, mobile: true },
+        { key: 'name', label: 'Учреждение', sortable: true, primary: true, mobile: true, width: '26%' },
         { key: 'code', label: 'Код', sortable: true },
         { key: 'date', label: 'Дата съёмки', type: 'date', sortable: true, mobile: true },
         { key: 'count', label: 'Участников', type: 'number', sortable: true, mobile: true },

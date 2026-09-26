@@ -6,11 +6,13 @@ import type {
   ShootDetail,
   StructureAttempt,
   StructurePage,
+  StructureKind,
   StructureScope,
   PageMeta,
   InstitutionDetail,
   InstitutionPages
 } from './model';
+const resources: Record<StructureKind, string> = { institution: 'institutions', shoot: 'shoots', group: 'groups' };
 export const structureApi = {
   async institution(institutionId: string, pages: InstitutionPages, pageSize = 25): Promise<InstitutionDetail> {
     const result = await api.get<InstitutionDetail>('/api/v1/institutions/' + encodeURIComponent(institutionId), {
@@ -57,6 +59,14 @@ export const structureApi = {
       if (page >= result.meta.totalPages || !result.items.length) return shoots;
     }
   },
+  /** Removes the record with everything that belongs to it; an already removed one counts as done (#92). */
+  async remove(kind: StructureKind, id: string): Promise<void> {
+    try {
+      await api.delete('/api/v1/' + resources[kind] + '/' + encodeURIComponent(id));
+    } catch (cause) {
+      if (!isAxiosError(cause) || cause.response?.status !== 404) throw cause;
+    }
+  },
   async save(attempt: StructureAttempt): Promise<{ id: string; revision: number }> {
     const options = { headers: { 'Idempotency-Key': attempt.key } };
     return (
@@ -80,4 +90,12 @@ export function structureError(cause: unknown): string {
     default:
       return 'Не удалось получить ответ сервера. Проверьте соединение и повторите запрос.';
   }
+}
+/** Refusal of one removed record (#92 DEC-01): records with orders stay for the history of orders and payments. */
+export function structureRemovalError(cause: unknown): string {
+  const code = isAxiosError(cause) ? (cause.response?.data as { error?: { code?: string } } | undefined)?.error?.code : undefined;
+  if (code === 'STRUCTURE_HAS_ORDERS') return 'По ней уже есть заказы — удалить нельзя, данные сохраняются для истории заказов и оплат.';
+  if (code === 'PHOTO_PROCESSING') return 'Часть кадров ещё обрабатывается — повторите через минуту.';
+  if (isAxiosError(cause) && cause.response?.status === 409) return 'Данные изменились. Обновите страницу и повторите.';
+  return structureError(cause);
 }

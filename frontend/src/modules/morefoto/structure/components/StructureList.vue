@@ -17,10 +17,12 @@ const props = withDefaults(
     emptyText?: string;
     /** Action of the empty list for the organizer; empty — no action. */
     createLabel?: string;
+    /** The organizer may remove a record from the list (#92 DEC-05). */
+    removable?: boolean;
   }>(),
-  { linkGroupsToShoots: false, emptyTitle: 'Пока нет записей', emptyText: '', createLabel: '' }
+  { linkGroupsToShoots: false, emptyTitle: 'Пока нет записей', emptyText: '', createLabel: '', removable: false }
 );
-const emit = defineEmits<{ edit: [item: StructureItem]; create: [] }>();
+const emit = defineEmits<{ edit: [item: StructureItem]; create: []; remove: [item: StructureItem] }>();
 // Counting from the page's own clock: the structure answer has no server moment, the state itself comes from the server.
 const now = new Date().toISOString();
 function destination(item: StructureItem): string | null {
@@ -93,14 +95,20 @@ function counters(item: Institution): string | null {
           <p v-else-if="group(item)!.closesAt" class="mf-muted mt-3">Закрытие приёма: {{ deadline(group(item)!.closesAt!) }} МСК</p>
         </template>
       </div>
-      <v-btn
-        v-if="canManage"
-        variant="outlined"
-        :disabled="disabled"
-        :aria-label="'Редактировать «' + item.name + '»'"
-        @click="emit('edit', item)"
-        >Редактировать</v-btn
-      >
+      <div v-if="canManage" class="structure-card-actions">
+        <v-btn variant="outlined" :disabled="disabled" :aria-label="'Редактировать «' + item.name + '»'" @click="emit('edit', item)"
+          >Редактировать</v-btn
+        >
+        <v-btn
+          v-if="removable"
+          icon="mdi-delete-outline"
+          variant="text"
+          color="error"
+          :disabled="disabled"
+          :aria-label="'Удалить «' + item.name + '»'"
+          @click="emit('remove', item)"
+        />
+      </div>
     </article>
   </div>
 </template>
@@ -147,6 +155,12 @@ function counters(item: Institution): string | null {
   color: var(--mf-color-text-secondary);
   font-size: var(--mf-text-sm);
 }
+.structure-card-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--mf-space-1);
+}
 .structure-timeline {
   max-width: 560px;
   margin-top: var(--mf-space-4);
@@ -157,7 +171,7 @@ function counters(item: Institution): string | null {
     gap: var(--mf-space-4);
     padding: var(--mf-space-5);
   }
-  .structure-card > .v-btn {
+  .structure-card-actions {
     align-self: flex-end;
   }
 }

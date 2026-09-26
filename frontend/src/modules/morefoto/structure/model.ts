@@ -20,10 +20,14 @@ export interface Shoot {
   name: string;
   date: string | null;
   revision: number;
+  /** Groups of the shoot, in the institution page answer only (#92). */
+  groupCount?: number;
 }
 export interface Group {
   id: string;
   shootId: string;
+  /** Name of the group's shoot, in the institution page answer only (#92): a group may belong to a shoot of another page. */
+  shootName?: string;
   name: string;
   groupKind: 'regular' | 'staff';
   revision: number;
