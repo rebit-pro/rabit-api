@@ -121,7 +121,7 @@
 - [x] R4: `CommerceBootstrapTest` + негативный контроль (тест падает на старом `include.php`).
 - [x] R3: шаг в `prepare.php`.
 - [x] Быстрые проверки: PHPUnit unit/functional, PHPStan, php-cs-fixer, `php -l`.
-- [ ] Commit, push, проверка дублей, PR `Closes #117`.
+- [x] Commit, push, проверка дублей, PR `Closes #117` — #134.
 
 ## Критерии приёмки
 

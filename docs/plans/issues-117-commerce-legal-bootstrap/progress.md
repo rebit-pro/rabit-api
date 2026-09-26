@@ -3,10 +3,11 @@
 ## Точка продолжения
 
 - Ветка `codex/issues-117-commerce-legal-bootstrap` (worktree
-  `/home/user/rabit-api-worktrees/issues-117-commerce-legal-bootstrap`), base `4fc9dce` (origin/main). Issue #117.
+  `/home/user/rabit-api-worktrees/issues-117-commerce-legal-bootstrap`), base `4fc9dce` (origin/main). Issue #117,
+  PR https://github.com/rebit-pro/rabit-api/pull/134 (`Closes #117`), код — `76899d0`.
 - Завершено: анализ, план, R1 (`include.php`), R3 (шаг в `prepare.php`), R4 (`CommerceBootstrapTest`),
   быстрые проверки T01–T07 PASS.
-- Сейчас: commit, push, PR `Closes #117`.
+- Сейчас: PR #134 открыт, ждёт ревью. Не слит, не выкачен.
 - Следующий шаг: ревью PR, затем полный gate (T08) — запускает координатор.
 - Блокеры: нет. Открыто: риск порядка установки `morefoto.support` → `morefoto.media` (plan.md) — предложить
   отдельным issue.
@@ -51,6 +52,8 @@
   - `php -l tools/e2e/prepare.php`, `php -l …/morefoto.commerce/include.php` → без ошибок; регулярка по `init.php`
     возвращает 9 модулей в порядке `init.php`, включая `morefoto.commerce`.
 - `make test-e2e` / `make e2e-up` не запускались: по правилу gate — после ревью, запускает координатор.
+- Commit `76899d0` (код) и `1aa7718` (docs), push. Дублей по `gh pr list --state all --search "117 in:title"` нет.
+  PR #134 в main. Не слит, не выкачен.
 
 ## Тест-кейсы
 
