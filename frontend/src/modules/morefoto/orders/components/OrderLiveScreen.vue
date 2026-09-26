@@ -5,6 +5,7 @@ import { useLiveOrder } from '../composables/useLiveOrder';
 import { orderQuoteAsCart } from '../live/rules';
 import OrderComposition from './OrderComposition.vue';
 import OrderLiveFacts from './OrderLiveFacts.vue';
+import OrderLiveFiles from './OrderLiveFiles.vue';
 import OrderPaymentPanel from './OrderPaymentPanel.vue';
 import { useRoute } from 'vue-router';
 const { order, loading, error, missing, copied, reload, copyLink } = useLiveOrder();
@@ -22,34 +23,45 @@ const route = useRoute();
       <header class="mf-page-heading">
         <p class="mf-eyebrow">ВАШ ЗАКАЗ</p>
         <h1 data-testid="order-number">Заказ {{ order.number }}</h1>
-        <p class="mf-muted">{{ order.institutionName }} · {{ order.groupName }} · {{ order.shootName }}</p>
+        <p class="mf-muted">
+          {{ order.institutionName }} · {{ order.groupName }} ·
+          {{ order.shootName }}
+        </p>
         <p class="order-created">Создан {{ formatMoment(order.createdAt) }} мск</p>
       </header>
       <v-alert type="info" variant="tonal" class="mb-6"
-        >Деньги списываются только после оплаты на странице ЮKassa. Электронные файлы и печать подключаются отдельными этапами.</v-alert
+        >Деньги списываются только после оплаты на странице ЮKassa. Электронные фотографии появятся на этой странице сразу после
+        подтверждённой оплаты; печать подключается отдельным этапом.</v-alert
       >
       <div class="order-layout">
         <div class="order-sections">
+          <OrderLiveFiles :order-key="String(route.params.orderKey ?? '')" />
           <OrderComposition :quote="orderQuoteAsCart(order.quote)" />
           <OrderLiveFacts :period="order.period" :buyer="order.buyer" />
         </div>
         <aside class="mf-panel order-summary">
           <p class="mf-eyebrow">ИТОГ ЗАКАЗА</p>
-          <p class="order-total" data-testid="order-total">{{ money(order.quote.total) }}</p>
+          <p class="order-total" data-testid="order-total">
+            {{ money(order.quote.total) }}
+          </p>
           <dl class="order-state">
             <div>
               <dt>Оплата</dt>
-              <dd data-testid="order-payment-status">{{ paymentLabels[order.paymentStatus] }}</dd>
+              <dd data-testid="order-payment-status">
+                {{ paymentLabels[order.paymentStatus] }}
+              </dd>
             </div>
             <div>
               <dt>Изготовление</dt>
-              <dd data-testid="order-production-status">{{ productionLabels[order.productionStatus] }}</dd>
+              <dd data-testid="order-production-status">
+                {{ productionLabels[order.productionStatus] }}
+              </dd>
             </div>
           </dl>
           <OrderPaymentPanel :order="order" :order-key="String(route.params.orderKey ?? '')" />
           <p class="order-note" data-testid="order-key-expiry">
-            Личная ссылка открывает только этот заказ и действует до {{ formatMoment(order.accessKeyExpiresAt) }} мск. Номер заказа доступа
-            не даёт.
+            Личная ссылка открывает только этот заказ и действует до
+            {{ formatMoment(order.accessKeyExpiresAt) }} мск. Номер заказа доступа не даёт.
           </p>
           <v-btn block variant="outlined" prepend-icon="mdi-content-copy" @click="copyLink">{{
             copied ? 'Ссылка скопирована' : 'Скопировать личную ссылку'
