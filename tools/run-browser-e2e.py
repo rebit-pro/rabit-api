@@ -64,6 +64,8 @@ VERIFIERS = [
     ("verify-support.php", "k3-questions.json", "K3 support integration passed", ["zz-questions"]),
     # G1: attempts, money facts and order statuses agree; no buyer secret reaches the payment tables.
     ("verify-payments.php", "g1-payments.json", "G1 payment integration passed", ["zzzzzzzzz-payments"]),
+    # J1: downloads agree with archives on disk, the paid key lasts the files month, expired archives are purged.
+    ("verify-files.php", "j1-files.json", "J1 files integration passed", ["zzzzzzzzzz-files"]),
 ]
 # The browser stage of a group; the opt-in media bench sets itself 45 minutes on top of the other files of its group.
 BROWSER_TIMEOUT = 900
