@@ -18,6 +18,8 @@ use Rebit\Share\Shared\Exception\HttpException;
 /** Проверяет и нормализует запросы MED-03, MED-05, MED-06 и удаления кадров до входа сценариев с прежними кодами ошибок. */
 final readonly class PhotoInputMapper
 {
+    /** Коды детей через запятую: один для кадра ребёнка, все дети группы для группового кадра. */
+    public const string CHILD_CODES_PATTERN = '/^[A-Z]{1,3}(,[A-Z]{1,3}){0,99}$/D';
     private const int MAX_PHOTOS_PER_REQUEST = 100;
 
     public function upload(UploadPhotoRequestDto $request): UploadPhotoInputDto
@@ -29,6 +31,7 @@ final readonly class PhotoInputMapper
             filename: $request->filename,
             bytes: $request->bytes,
             clientFingerprint: null === $request->fingerprint || '' === $request->fingerprint ? null : strtolower($request->fingerprint),
+            childCodes: null === $request->childCodes ? [] : array_values(array_unique(explode(',', $request->childCodes))),
         );
     }
 

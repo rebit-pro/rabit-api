@@ -2,23 +2,29 @@
 
 ## Точка продолжения
 
-- Ветка: `codex/issues-150-zip-child-upload`, base main `41b1146eaa7525febb5d5143d30b1dc393cd3d44`.
+- Ветка: `codex/issues-150-zip-child-upload`, base main `591d698` (слит в ветку 26.09.2026, J1 #143).
 - Issue: https://github.com/rebit-pro/rabit-api/issues/150. PR: https://github.com/rebit-pro/rabit-api/pull/151 (draft, только план).
 - Документация: `docs/plans/issues-150-zip-child-upload/plan.md`.
 - Завершено: разбор текущего потока загрузки/разметки, issue, план с решениями ZIP-DEC-01…06.
 - Сейчас: ZIP-DEC-02/03 приняты; архив пользователя готовится. Решения ZIP-DEC-01/04/05/06 — рекомендации,
   без возражений пользователя считаются принятыми.
-- Следующий шаг: реализация backend (шаг 4 плана: `childCodes` в загрузке); съёмка 158 — для T15.
+- Готово: backend (шаг 4) — `childCodes` в загрузке, `UploadChildAssignment`, `MediaMutationRepository::groupPhoto`,
+  ответ `childCodes`, `assignMs` в журнале. Следующий шаг: frontend (шаг 5).
 - Блокеры: нет. ZIP-DEC-03 пересмотрено по съёмке 158: групповые папки — префикс `GROUP`, кадры всем детям
   группы. Скрипту подготовки архивов пользователя нужно называть групповые папки `GROUP-…`.
-- Рабочее дерево: только план и прогресс, код не менялся.
+- Рабочее дерево: backend закоммичен, frontend не начат.
 - Следующая проверка после реализации: backend unit `morefoto.media`, `npm run check`, `node --test tests/photos/*.test.mjs`.
 
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда | Доказательство |
 |---|---|---|---|---|
-| T01–T15 | PENDING | 2026-09-26 | — | реализация не начата |
+| T01 | PASS | 2026-09-26 | phpunit `--filter UploadChildAssignmentTest` | `testCodesPattern` 12 случаев, `testMapperSplitsCodesAndDropsRepeats` |
+| T02 | PASS | 2026-09-26 | то же | `testGroupPhotoIsAssignedToEveryCodeUnderOneRevision` |
+| T03 | PASS | 2026-09-26 | то же | `testRepeatedUploadWithKnownCodesKeepsTheRevision`, `testDuplicateUploadLabelsThePhotoThatOwnsTheContent` |
+| T04 | PASS | 2026-09-26 | то же | `testPhotoOutsideTheUploadGroupIsNotLabeled` |
+| T05 | PASS | 2026-09-26 | то же + `PhotoWorkflowTest` | `testGroupHandedOverWhileWaitingForTheLockRejectsTheLabels`, прежний `testUploadRejectsPublishedGroup…` |
+| T06–T22 | PENDING | 2026-09-26 | — | frontend и E2E не начаты |
 
 ## Журнал
 
@@ -55,3 +61,12 @@
     обычные дети. Групповую папку по имени отличить нельзя; нужен явный признак.
 - Ответ пользователя: групповые папки отмечаются префиксом `GROUP` (`GROUP-1`, `GROUP-F`), на сверке есть
   ручной переключатель; групповой кадр получают все дети группы. ZIP-DEC-03 переписано, T07/T09/T15/T18 обновлены.
+- Backend: необязательное multipart-поле `childCodes` (`^[A-Z]{1,3}(,[A-Z]{1,3}){0,99}$`, 422 `INVALID_CHILD_CODES`),
+  Application Service `UploadChildAssignment` (транзакция, `lockRevision`, повторная проверка редактируемости →
+  409 `GROUP_MEDIA_LOCKED`, `groupPhoto` без условия `ready`, `child` + `assign` на каждый код, одно продвижение
+  revision). Дубль размечает кадр-владелец содержимого (`existingPhotoId`), кадр другой группы не размечается.
+  Разметка идёт после постановки превью в очередь, чтобы сбой разметки не задерживал превью. `LogSanitizer`
+  пропускает `assignMs`; число кодов пишется в существующий `added`.
+- Проверки (образ `rabit-api-php-cli:d1-local`, vendor основного checkout, `--network none`):
+  `phpunit --testsuite=unit` → OK 855 тестов; `php-cs-fixer --dry-run` по 15 файлам → 0 правок;
+  `phpstan analyse` по 15 файлам → No errors.
