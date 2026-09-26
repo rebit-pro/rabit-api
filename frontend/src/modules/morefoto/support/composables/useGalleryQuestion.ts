@@ -91,7 +91,8 @@ export function useGalleryQuestion(token: Ref<string>, open: Ref<boolean>, api: 
           return await api.current(key);
         } catch (cause) {
           if (questionProblem(cause).status === 404) {
-            write(questionStorageKey(galleryToken), null);
+            // A late answer must not erase a key that replaced this one meanwhile (a new question, another tab).
+            if (read(questionStorageKey(galleryToken)) === key) write(questionStorageKey(galleryToken), null);
             if (galleryToken === token.value && key === questionKey.value) questionKey.value = null;
             return null;
           }
