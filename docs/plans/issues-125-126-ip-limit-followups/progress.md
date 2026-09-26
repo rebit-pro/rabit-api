@@ -5,9 +5,9 @@
 - Дата: 2026-09-26.
 - Ветка `codex/issues-125-126-ip-limit-followups`, worktree `/home/user/rabit-api-worktrees/issues-125-126-ip-limit-followups`.
   Общий checkout `/home/user/rabit-api` не трогать.
-- Base: `origin/main` `4fc9dce` (merge PR #121). Issues #125, #126. PR: создаётся после push (номер — в журнале ниже).
+- Base: `origin/main` `4fc9dce` (merge PR #121). Issues #125, #126. PR: https://github.com/rebit-pro/rabit-api/pull/132 (не слит, не выкачен).
 - Завершено: реализация (S2–S6), быстрые проверки (S7), unit-тесты гонки подтверждены красными на старом коде.
-- Сейчас: commit, push, PR.
+- Сейчас: PR #132 ждёт ревью.
 - Следующий шаг: ревью PR; после ревью без блокеров координатор запускает полный `make test-e2e` (T14, T15).
 - Блокеры: нет. Открыто:
   - R4: одновременные запросы с одним ключом с разных адресов — второй получает `503 SUPPORT_UNAVAILABLE` без дубля
@@ -44,6 +44,12 @@
   границе 4/5; повтор с другого исчерпанного адреса (T09).
 - E2E-verifier `verify-support.php` раздел 7: mapped публичный hop (T14), 4 параллельных одинаковых запроса через
   `curl_multi` на границе 4/5, затем 409 и 429 (T15).
+
+### 2026-09-26 — commit и PR
+
+- Commit `a972d5a` (код), `1e54b36` (docs), push `origin/codex/issues-125-126-ip-limit-followups`.
+- Дубли: `gh pr list --state all --search "125 in:title"` и `"126 in:title"` → пусто. Создан PR #132 в main
+  (`Closes #125`, `Closes #126`). Не слит, не выкачен.
 
 ### 2026-09-26 — проверки
 

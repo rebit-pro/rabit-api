@@ -92,7 +92,7 @@ IPv4-compatible `::a.b.c.d`, SIIT `::ffff:0:a.b.c.d` — PHP тоже счита
 - [x] S5. #126: double с управляемой фиксацией, unit-тесты гонки и разных адресов.
 - [x] S6. E2E-verifier раздел 7.
 - [x] S7. Быстрые проверки: PHPUnit unit + functional, PHPStan, php-cs-fixer по изменённым файлам.
-- [ ] S8. Commit, push, PR (`Closes #125`, `Closes #126`).
+- [x] S8. Commit, push, PR #132 (`Closes #125`, `Closes #126`).
 - [ ] S9. (координатор, после ревью) полный `make test-e2e`.
 
 ## Критерии приёмки
