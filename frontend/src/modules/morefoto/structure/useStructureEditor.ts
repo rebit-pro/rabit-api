@@ -5,6 +5,7 @@ import { structureApi, structureError } from './api';
 import {
   createAttempt,
   fieldsFrom,
+  hasDraftChanges,
   refreshDraft,
   restorableDraft,
   validateFields,
@@ -25,10 +26,12 @@ export function useStructureEditor(scope: StructureScope, saved: () => Promise<u
     errors = shallowRef<FieldErrors>({});
   let storageKey = '',
     alive = true;
+  /** An untouched draft is not kept: it would be offered as restored on the next opening while holding nothing. */
   function persist(): boolean {
     if (!draft.value || !storageKey) return true;
     try {
-      localStorage.setItem(storageKey, JSON.stringify(draft.value));
+      if (hasDraftChanges(draft.value)) localStorage.setItem(storageKey, JSON.stringify(draft.value));
+      else localStorage.removeItem(storageKey);
       return true;
     } catch {
       error.value = 'Не удалось сохранить черновик в браузере. Освободите место и повторите попытку.';

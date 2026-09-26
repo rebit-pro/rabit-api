@@ -22,6 +22,8 @@ final class InMemoryQuestions implements QuestionRepositoryInterface, QuestionDe
     public array $chats = [];
     /** @var array<string, array{windowStartedAt: \DateTimeImmutable, questions: int}> */
     public array $guestAddresses = [];
+    /** A parallel transaction that commits while this one waits for the address lock; runs once. */
+    public ?\Closure $whileWaitingForAddress = null;
 
     public function findParent(string $keyHash): ?array
     {
@@ -148,6 +150,10 @@ final class InMemoryQuestions implements QuestionRepositoryInterface, QuestionDe
 
     public function lockGuestAddress(string $addressHash, \DateTimeImmutable $now): int
     {
+        if (null !== $parallel = $this->whileWaitingForAddress) {
+            $this->whileWaitingForAddress = null;
+            $parallel();
+        }
         $this->guestAddresses[$addressHash] ??= ['windowStartedAt' => $now, 'questions' => 0];
 
         return $this->guestAddresses[$addressHash]['questions'];

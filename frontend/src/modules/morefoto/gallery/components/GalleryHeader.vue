@@ -32,7 +32,13 @@ const remaining = computed(() => {
         {{ gallery.groupName }}
       </p>
       <h1>{{ gallery.shootName }}</h1>
-      <p class="mf-muted">Выберите код ребёнка и откройте понравившийся кадр.</p>
+      <p class="mf-muted">
+        {{
+          gallery.state === 'preparing'
+            ? 'Фотографии появятся на этой странице, как только их подготовят.'
+            : 'Выберите код ребёнка и откройте понравившийся кадр.'
+        }}
+      </p>
     </div>
     <aside class="gallery-conditions" aria-label="Условия съёмки">
       <div class="gallery-conditions__title">

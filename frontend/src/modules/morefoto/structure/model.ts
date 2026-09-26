@@ -156,7 +156,17 @@ export function createAttempt(draft: StructureDraft): StructureAttempt {
     body
   };
 }
-/** A draft kept in the browser is restored only for the same record and with a pending attempt that matches it. */
+/** A draft holds something to keep only after an edit of its fields or while a sent attempt awaits its outcome. */
+export function hasDraftChanges(draft: StructureDraft): boolean {
+  return (
+    draft.pending !== null ||
+    (Object.keys(draft.fields) as (keyof StructureFields)[]).some((name) => draft.fields[name] !== draft.base[name])
+  );
+}
+/**
+ * A draft kept in the browser is restored only for the same record, with changes and with a pending attempt that
+ * matches it: an untouched one has nothing to restore.
+ */
 export function restorableDraft(value: unknown, kind: StructureKind, parentId: string | null, id: string | null): StructureDraft | null {
   const stored = value as StructureDraft | null;
   const valid =
@@ -177,7 +187,8 @@ export function restorableDraft(value: unknown, kind: StructureKind, parentId: s
     (!stored.pending ||
       (stored.pending.key === stored.key &&
         stored.pending.path === createAttempt(stored).path &&
-        stored.pending.method === createAttempt(stored).method));
+        stored.pending.method === createAttempt(stored).method)) &&
+    hasDraftChanges(stored);
   return valid ? stored : null;
 }
 /** Explicit reload replaces the editor with the current server fields and revision. */
