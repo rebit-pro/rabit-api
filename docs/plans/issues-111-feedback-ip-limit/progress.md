@@ -7,8 +7,8 @@
   PR https://github.com/rebit-pro/rabit-api/pull/121 (`Refs #111`: п. 2 закрыт только для лимита адреса,
   п. 3 не нужен новому запросу).
 - Завершено: реализация, unit-тесты, быстрые проверки (PHPUnit, PHPStan, php-cs-fixer).
-- Сейчас: ревью PR пользователем.
-- Следующий шаг: после ревью без блокеров — полный gate (T11–T13).
+- Сейчас: ревью без блокеров (независимое ревью в PR #121; неблокирующие → #125, #126), полный gate PASS на ветке с main `71cd0f4` (T11–T13). PR сливается.
+- Следующий шаг: деплой backend — проверить `REBIT_ENCRYPTION_KEY` (≥32 символов) на stage/prod → миграция → переключение backend → smoke формы.
 - Блокеры: нет. Открыто:
   - значение лимита на адрес (5 в час) — на подтверждение пользователя;
   - у php-fpm stage/prod должен быть `REBIT_ENCRYPTION_KEY` ≥ 32 символов, иначе гостевая форма → 503.
@@ -68,6 +68,13 @@
 | T08 | PASS | 2026-09-26 | то же | `SupportArchitectureTest` |
 | T09 | PASS | 2026-09-26 | `phpstan analyse --configuration=phpstan.neon` | `[OK] No errors` |
 | T10 | PASS | 2026-09-26 | php-cs-fixer `--dry-run` по изменённым | 0 of 18 |
-| T11 | PENDING | 2026-09-26 | `make test-e2e` (`verify-support.php`) | пост-ревью gate |
-| T12 | PENDING | 2026-09-26 | `make test-e2e` (`zz-questions.spec.ts`) | пост-ревью gate |
-| T13 | PENDING | 2026-09-26 | `make test-e2e` (миграция на стенде) | пост-ревью gate |
+| T11 | PASS | 2026-09-26 | `make test-e2e` (`verify-support.php`) | `rabit-e2e-1a728898caec`: `verify-support.php` passed (0.7 s) |
+| T12 | PASS | 2026-09-26 | `make test-e2e` (`zz-questions.spec.ts`) | `rabit-e2e-1a728898caec`: `zz-questions.spec.ts` в группе a, 125 браузерных сценариев (a 78, b 47) |
+| T13 | PASS | 2026-09-26 | `make test-e2e` (миграция на стенде) | `rabit-e2e-1a728898caec`: миграция `Version20260926120001` применена стендом через `prepare.php`, verify по таблице passed |
+
+### 2026-09-26 — ревью и полный gate
+
+- Независимое ревью PR #121: блокирующих нет; неблокирующие вынесены в #125 (IPv4-mapped как доверенный proxy) и #126 (конкурентный replay на границе лимита).
+- Ветка обновлена от main `71cd0f4` (merge `8e7f20c`), совместная проверка с #118/#119/#107.
+- `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`
+  — прогон `rabit-e2e-1a728898caec`: exit 0, Total 362.0 s, 125 браузерных сценариев, все verify-*.php passed. T11–T13 PASS.
