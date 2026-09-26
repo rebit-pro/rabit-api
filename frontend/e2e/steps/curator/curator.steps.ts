@@ -462,7 +462,7 @@ Then('R11 проверяет {string}', async function (this: CustomWorld, name:
     await p.getByLabel('Имя покупателя', { exact: true }).fill('Новый покупатель R11');
     await p.getByLabel('Телефон', { exact: true }).fill('+7 (900) 123-45-67');
     await p.getByLabel('Email', { exact: true }).fill('new-r11@example.test');
-    await p.getByLabel('Состав и демонстрационные условия проверены', { exact: true }).check();
+    await p.getByLabel('Состав и условия проверены', { exact: true }).check();
     await p.getByTestId('create-order').click();
     await expect(p).toHaveURL(/orders\/access\/[a-f0-9]{32}$/);
     await p.getByRole('link', { name: 'Перейти к тестовой оплате', exact: true }).click();

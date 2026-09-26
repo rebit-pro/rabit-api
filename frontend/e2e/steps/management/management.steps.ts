@@ -93,7 +93,7 @@ async function order(p: Page, base: string) {
   await p.getByLabel('Имя покупателя', { exact: true }).fill('Покупатель R09');
   await p.getByLabel('Телефон', { exact: true }).fill('+7 (900) 123-45-67');
   await p.getByLabel('Email', { exact: true }).fill('buyer@example.test');
-  await p.getByLabel('Состав и демонстрационные условия проверены', { exact: true }).check();
+  await p.getByLabel('Состав и условия проверены', { exact: true }).check();
   await p.getByTestId('create-order').click();
   await expect(p).toHaveURL(/orders\/access\/[a-f0-9]{32}$/);
   return p.url();

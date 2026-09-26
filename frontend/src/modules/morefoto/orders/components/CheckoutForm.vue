@@ -62,7 +62,7 @@ const offerDocument = computed(() => findDocument(legal.value, 'offer'));
         <v-checkbox
           v-model="draft.reviewed"
           name="buyer-reviewed"
-          :label="consents ? 'Состав заказа проверен' : 'Состав и демонстрационные условия проверены'"
+          label="Состав и условия проверены"
           color="primary"
           :disabled="busy"
           :error-messages="errors.reviewed"
@@ -89,9 +89,11 @@ const offerDocument = computed(() => findDocument(legal.value, 'offer'));
           />
         </template>
         <v-btn type="submit" color="primary" block :loading="busy" :disabled="busy || !canSubmit" data-testid="create-order"
-          >Создать тестовый заказ</v-btn
+          >Оформить заказ</v-btn
         >
-        <p class="mf-muted checkout-submit-note">Деньги не списываются. Для заказа создаётся отдельная личная ссылка.</p>
+        <p class="mf-muted checkout-submit-note">
+          Оплата — на странице заказа после оформления. Для заказа создаётся отдельная личная ссылка.
+        </p>
       </CartSummary>
     </div>
   </form>

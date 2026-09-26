@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { quantityValue, displayPhone, moneyInputValue, dateInputValid } from '../../src/modules/morefoto/ui/field-values.ts';
+import { quantityValue, displayPhone, formatPhone, moneyInputValue, dateInputValid } from '../../src/modules/morefoto/ui/field-values.ts';
 
 test('quantity keeps empty and invalid edits out of a committed cart value', () => {
   for (const value of ['', null, '0', '-1', '1.5', '1e2', '100', 'abc']) assert.equal(quantityValue(value), null);
@@ -14,6 +14,14 @@ test('Russian formatting preserves digits and existing buyer normalization', () 
 });
 test('formatting never hides invalid symbols or truncates international numbers', () => {
   for (const value of ['', '+49 30 123456', '+123456789012345', 'телефон 79001234567', '+7900']) assert.equal(displayPhone(value), value);
+});
+test('stored phones read as +7 900 123-45-67 on order pages and in staff orders', () => {
+  for (const value of ['+79001234567', '89001234567', '8 (900) 123 45 67', '+7 (900) 123-45-67']) {
+    assert.equal(formatPhone(value), '+7 900 123-45-67');
+  }
+});
+test('display formatting leaves non-standard and foreign phones as stored', () => {
+  for (const value of ['', '+49 30 123456', '+123456789012345', 'телефон 79001234567', '+7900']) assert.equal(formatPhone(value), value);
 });
 test('money parses decimal rubles into exact integer kopecks', () => {
   assert.equal(moneyInputValue('1 234,56'), 123456);

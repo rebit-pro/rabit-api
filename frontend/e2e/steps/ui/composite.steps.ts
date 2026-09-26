@@ -142,7 +142,7 @@ Then('телефон и очистка контактов сохраняют ч�
   await expect(name).toHaveValue('Тестовый покупатель');
   await expect(phone).toHaveValue('+7 (900) 123-45-67');
   await expect(p.getByRole('textbox', { name: 'Комментарий — необязательно', exact: true })).toHaveValue('Тестовый комментарий');
-  await p.getByRole('checkbox', { name: 'Состав и демонстрационные условия проверены', exact: true }).check();
+  await p.getByRole('checkbox', { name: 'Состав и условия проверены', exact: true }).check();
   await p.getByTestId('create-order').click();
   await expect(p).toHaveURL(/\/orders\/access\/[a-f0-9]{32}$/);
   expect(await p.evaluate(() => JSON.parse(localStorage.getItem('morefoto:demo:orders:v1') || '[]')[0].buyer.phone)).toBe('+79001234567');

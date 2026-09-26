@@ -22,7 +22,7 @@ Given('покупатель оформил заказ R06 {string}', async funct
   await p.getByRole('textbox', { name: 'Имя покупателя', exact: true }).fill('Тестовый покупатель');
   await p.getByRole('textbox', { name: 'Телефон', exact: true }).fill('+79001234567');
   await p.getByRole('textbox', { name: 'Email', exact: true }).fill('parent@example.test');
-  await p.getByRole('checkbox', { name: 'Состав и демонстрационные условия проверены', exact: true }).check();
+  await p.getByRole('checkbox', { name: 'Состав и условия проверены', exact: true }).check();
   await p.getByTestId('create-order').click();
   await expect(p.getByRole('heading', { name: 'Заказ MF-000001', exact: true })).toBeVisible();
 });

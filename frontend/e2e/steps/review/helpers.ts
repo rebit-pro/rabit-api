@@ -97,7 +97,7 @@ export async function fillBuyer(p: Page) {
   await p
     .getByLabel('Комментарий — необязательно', { exact: true })
     .fill('Проверка общего пути: от выбора фотографий до передачи в учреждение.');
-  await p.getByLabel('Состав и демонстрационные условия проверены', { exact: true }).check();
+  await p.getByLabel('Состав и условия проверены', { exact: true }).check();
 }
 export async function create(p: Page) {
   await checkout(p);
