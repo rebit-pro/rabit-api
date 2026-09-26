@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Files\Tests\Unit\Support;
 
+use Morefoto\Files\Application\Files\Contract\OrderDownloadGuardInterface;
 use Morefoto\Files\Application\Files\Service\OrderFileAccess;
 use Morefoto\Files\Domain\Download\Service\FileAccessPolicy;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
@@ -44,6 +45,17 @@ final class FilesFixture
             public function now(): \DateTimeImmutable
             {
                 return new \DateTimeImmutable($this->fixture->now ?? FilesFixture::NOW, new \DateTimeZone('UTC'));
+            }
+        };
+    }
+
+    /** Однопоточный тест: блокировка и транзакция сводятся к вызову; откат проверяет BitrixDownloadRepository на MySQL в E2E. */
+    public function guard(): OrderDownloadGuardInterface
+    {
+        return new class implements OrderDownloadGuardInterface {
+            public function atomically(int $orderId, callable $operation): mixed
+            {
+                return $operation();
             }
         };
     }

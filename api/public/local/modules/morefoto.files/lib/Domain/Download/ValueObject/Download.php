@@ -11,7 +11,8 @@ use Morefoto\Files\Domain\Download\Enum\DownloadStatusEnum;
 final readonly class Download
 {
     /**
-     * @param list<string> $photoIds состав в каноническом порядке
+     * @param list<string> $photoIds    состав в каноническом порядке
+     * @param null|string  $archivePath путь ZIP закрепляется при создании, чтобы purge убрал архив после любого сбоя сборки
      */
     public function __construct(
         public int $id,
@@ -21,7 +22,6 @@ final readonly class Download
         public DownloadStatusEnum $status,
         public array $photoIds,
         public string $compositionHash,
-        public string $requestHash,
         public string $filename,
         public ?string $archivePath,
         public ?int $bytes,

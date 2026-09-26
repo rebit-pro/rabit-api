@@ -6,6 +6,8 @@ namespace Morefoto\Files\Application\Files\UseCase;
 
 use Morefoto\Files\Application\Files\Contract\DownloadIdGeneratorInterface;
 use Morefoto\Files\Application\Files\Contract\FilesPublisherInterface;
+use Morefoto\Files\Application\Files\Contract\OrderDownloadGuardInterface;
+use Morefoto\Files\Application\Files\Contract\ProtectedStorageInterface;
 use Morefoto\Files\Application\Files\Dto\DownloadOutputDto;
 use Morefoto\Files\Application\Files\Dto\FileAccessOutputDto;
 use Morefoto\Files\Application\Files\Dto\RequestDownloadInputDto;
@@ -18,19 +20,23 @@ use Morefoto\Files\Domain\Download\Exception\DuplicateDownloadException;
 use Morefoto\Files\Domain\Download\Repository\DownloadRepositoryInterface;
 use Morefoto\Files\Domain\Download\Service\FileAccessPolicy;
 use Morefoto\Files\Domain\Download\ValueObject\Download;
+use Morefoto\Files\Domain\Download\ValueObject\DownloadRequest;
 use Psr\Log\LoggerInterface;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /** FIL-02: принимает запрос покупателя на одиночный оригинал или архив из разрешённых файлов оплаченного заказа.
  * Одиночный файл готов сразу; архив ставится в фоновую сборку, причём у заказа одновременно собирается только один ZIP,
- * а готовый архив того же состава переиспользуется. Повтор с тем же ключом идемпотентности возвращает ту же загрузку.
+ * а готовый архив того же состава переиспользуется. Каждый принятый ключ идемпотентности закрепляется за телом запроса
+ * и выданной загрузкой, поэтому повтор возвращает её же, даже если с тех пор изменился состав комплекта.
  */
 final readonly class RequestDownloadUseCase
 {
     public function __construct(
         private OrderFileAccess $access,
         private DownloadRepositoryInterface $downloads,
+        private OrderDownloadGuardInterface $guard,
+        private ProtectedStorageInterface $storage,
         private FileAccessPolicy $policy,
         private DownloadView $view,
         private DownloadIdGeneratorInterface $ids,
@@ -48,36 +54,24 @@ final readonly class RequestDownloadUseCase
         $now = $this->clock->now();
         $idempotencyHash = hash('sha256', $input->idempotencyKey);
         $requestHash = hash('sha256', $input->kind->value . '|' . (null === $input->photoIds ? '*' : implode(',', $input->photoIds)));
-        $replay = $this->replay($access, $idempotencyHash, $requestHash, $now);
-        if (null !== $replay) {
-            return $replay;
-        }
-        $photoIds = $this->composition($input, $access);
-        $compositionHash = hash('sha256', implode(',', $photoIds));
-        if (DownloadKindEnum::ZIP === $input->kind) {
-            $bytes = 0;
-            foreach ($photoIds as $photoId) {
-                $bytes += $access->files[$photoId]->bytes;
-            }
-            $this->policy->assertArchiveFits(count($photoIds), $bytes);
-            $existing = $this->downloads->reusableArchive($access->orderId, $compositionHash, $now) ?? $this->pending($access->orderId, $compositionHash);
-            if (null !== $existing) {
-                return $this->view->output($existing, $access, $now);
-            }
-        }
-        $download = $this->download($access, $input->kind, $photoIds, $compositionHash, $requestHash, $now);
-        try {
-            $this->downloads->insert($download, $idempotencyHash, $now);
-        } catch (DuplicateDownloadException) {
-            // A concurrent request won the idempotency key or the order's single archive build.
-            $raced = $this->replay($access, $idempotencyHash, $requestHash, $now) ?? $this->pending($access->orderId, $compositionHash);
-            if (null === $raced) {
-                throw new HttpException('ARCHIVE_IN_PROGRESS', 409);
-            }
+        /** @var array{0: Download, 1: bool} $outcome */
+        $outcome = $this->guard->atomically($access->orderId, function() use ($access, $input, $idempotencyHash, $requestHash, $now): array {
+            $known = $this->downloads->request($access->orderId, $idempotencyHash);
+            if (null !== $known) {
+                if ($known->requestHash !== $requestHash) {
+                    throw new HttpException('IDEMPOTENCY_CONFLICT', 409);
+                }
+                $download = $this->downloads->find($known->downloadId) ?? throw new HttpException('DOWNLOAD_NOT_FOUND', 404);
 
-            return $raced instanceof Download ? $this->view->output($raced, $access, $now) : $raced;
-        }
-        if (DownloadKindEnum::ZIP === $download->kind) {
+                return [$download, false];
+            }
+            [$download, $created] = $this->choose($access, $input, $now);
+            $this->downloads->rememberRequest($access->orderId, $idempotencyHash, new DownloadRequest($requestHash, $download->publicId), $now);
+
+            return [$download, $created];
+        });
+        [$download, $created] = $outcome;
+        if ($created && DownloadKindEnum::ZIP === $download->kind) {
             try {
                 $this->publisher->build($download->publicId, 0);
             } catch (\Throwable $error) {
@@ -89,17 +83,30 @@ final readonly class RequestDownloadUseCase
         return $this->view->output($download, $access, $now);
     }
 
-    private function replay(FileAccessOutputDto $access, string $idempotencyHash, string $requestHash, \DateTimeImmutable $now): ?DownloadOutputDto
+    /** @return array{0: Download, 1: bool} загрузка и признак, что она создана этим запросом */
+    private function choose(FileAccessOutputDto $access, RequestDownloadInputDto $input, \DateTimeImmutable $now): array
     {
-        $previous = $this->downloads->byIdempotency($access->orderId, $idempotencyHash);
-        if (null === $previous) {
-            return null;
+        $photoIds = $this->composition($input, $access);
+        $compositionHash = hash('sha256', implode(',', $photoIds));
+        if (DownloadKindEnum::ZIP === $input->kind) {
+            $bytes = 0;
+            foreach ($photoIds as $photoId) {
+                $bytes += $access->files[$photoId]->bytes;
+            }
+            $this->policy->assertArchiveFits(count($photoIds), $bytes);
+            $existing = $this->downloads->reusableArchive($access->orderId, $compositionHash, $now) ?? $this->pending($access->orderId, $compositionHash);
+            if (null !== $existing) {
+                return [$existing, false];
+            }
         }
-        if ($previous->requestHash !== $requestHash) {
-            throw new HttpException('IDEMPOTENCY_CONFLICT', 409);
+        $download = $this->download($access, $input->kind, $photoIds, $compositionHash, $now);
+        try {
+            $this->downloads->insert($download, $now);
+        } catch (DuplicateDownloadException) {
+            throw new HttpException('ARCHIVE_IN_PROGRESS', 409);
         }
 
-        return $this->view->output($previous, $access, $now);
+        return [$download, true];
     }
 
     /** Та же сборка возвращается; сборка другого состава блокирует новую до завершения. */
@@ -137,22 +144,22 @@ final readonly class RequestDownloadUseCase
     }
 
     /** @param non-empty-list<string> $photoIds */
-    private function download(FileAccessOutputDto $access, DownloadKindEnum $kind, array $photoIds, string $compositionHash, string $requestHash, \DateTimeImmutable $now): Download
+    private function download(FileAccessOutputDto $access, DownloadKindEnum $kind, array $photoIds, string $compositionHash, \DateTimeImmutable $now): Download
     {
         $number = preg_replace('/[^A-Za-z0-9_-]+/', '_', $access->orderNumber) ?: 'order';
         $file = DownloadKindEnum::FILE === $kind ? $access->files[$photoIds[0]] : null;
+        $id = $this->ids->uuid();
 
         return new Download(
             id: 0,
-            publicId: $this->ids->uuid(),
+            publicId: $id,
             orderId: $access->orderId,
             kind: $kind,
             status: null === $file ? DownloadStatusEnum::PENDING : DownloadStatusEnum::READY,
             photoIds: $photoIds,
             compositionHash: $compositionHash,
-            requestHash: $requestHash,
             filename: 'morefoto-' . $number . (null === $file ? '.zip' : '-' . $file->filename),
-            archivePath: null,
+            archivePath: null === $file ? $this->storage->archivePath($access->orderPublicId, $id) : null,
             bytes: $file?->bytes,
             errorCode: null,
             attempts: 0,

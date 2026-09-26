@@ -17,6 +17,7 @@ use Rebit\Share\Application\Contract\Clock\ClockInterface;
 /**
  * Собирает архив загрузки из текущих разрешённых оригиналов под арендой строки, чтобы дубль сообщения не строил архив дважды.
  * Потеря права или изменение состава завершают сборку без повторов; технический сбой повторяется до трёх попыток.
+ * Архив пишется по пути, заранее сохранённому в строке, поэтому после любого сбоя его находит повтор или уборка.
  */
 final readonly class BuildArchiveMessageHandler
 {
@@ -57,15 +58,16 @@ final readonly class BuildArchiveMessageHandler
                 }
                 $files[] = $access->files[$photoId];
             }
-            if ([] === $files) {
-                $this->fail($download->publicId, 'COMPOSITION_CHANGED', $now);
+            if ([] === $files || null === $download->archivePath) {
+                $this->fail($download->publicId, [] === $files ? 'COMPOSITION_CHANGED' : 'ARCHIVE_FAILED', $now);
 
                 return;
             }
-            $path = $this->storage->archivePath($access->orderPublicId, $download->publicId);
-            $bytes = $this->builder->build($files, $this->storage->absoluteArchivePath($path));
+            // The path is stored with the row before the build: a failed status write or a crash after rename leaves
+            // a pending or failed row that points at the archive, so dispatch rebuilds it or purge removes it.
+            $bytes = $this->builder->build($files, $this->storage->absoluteArchivePath($download->archivePath));
             $finished = $this->clock->now();
-            $this->downloads->markReady($download->publicId, $path, $bytes, $this->policy->downloadExpiresAt($finished, $access->availableUntil));
+            $this->downloads->markReady($download->publicId, $bytes, $this->policy->downloadExpiresAt($finished, $access->availableUntil));
             $this->logger->info('Archive ready.', [
                 'downloadId' => $download->publicId,
                 'attempt' => $download->attempts,

@@ -33,8 +33,6 @@ CREATE TABLE IF NOT EXISTS mf_file_download (
     STATUS VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     PHOTO_IDS JSON NOT NULL,
     COMPOSITION_HASH CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    IDEMPOTENCY_HASH CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-    REQUEST_HASH CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     ACTIVE_ORDER_ID BIGINT UNSIGNED NULL,
     FILENAME VARCHAR(160) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     ARCHIVE_PATH VARCHAR(255) CHARACTER SET ascii COLLATE ascii_bin NULL,
@@ -48,7 +46,6 @@ CREATE TABLE IF NOT EXISTS mf_file_download (
     UPDATED_AT DATETIME NOT NULL,
     PRIMARY KEY (ID),
     UNIQUE KEY ux_mf_file_download_public (PUBLIC_ID),
-    UNIQUE KEY ux_mf_file_download_idempotency (ORDER_ID, IDEMPOTENCY_HASH),
     UNIQUE KEY ux_mf_file_download_active (ACTIVE_ORDER_ID),
     KEY ix_mf_file_download_reuse (ORDER_ID, KIND, STATUS, COMPOSITION_HASH),
     KEY ix_mf_file_download_due (STATUS, NEXT_ATTEMPT_AT),
@@ -58,8 +55,25 @@ CREATE TABLE IF NOT EXISTS mf_file_download (
         KIND IN ('file', 'zip')
         AND STATUS IN ('pending', 'ready', 'failed', 'expired')
         AND (ACTIVE_ORDER_ID IS NULL OR (ACTIVE_ORDER_ID = ORDER_ID AND KIND = 'zip' AND STATUS = 'pending'))
-        AND (STATUS <> 'ready' OR (EXPIRES_AT IS NOT NULL AND BYTES IS NOT NULL AND (KIND = 'file' OR ARCHIVE_PATH IS NOT NULL)))
+        AND (STATUS <> 'ready' OR (EXPIRES_AT IS NOT NULL AND BYTES IS NOT NULL))
+        AND (KIND = 'zip' OR ARCHIVE_PATH IS NULL)
+        AND (KIND = 'file' OR STATUS = 'expired' OR ARCHIVE_PATH IS NOT NULL)
     )
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL);
+        // Every accepted Idempotency-Key is bound to its request body and the download it returned, also a reused one.
+        $connection->queryExecute(<<<'SQL'
+CREATE TABLE IF NOT EXISTS mf_file_download_request (
+    ID BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    ORDER_ID BIGINT UNSIGNED NOT NULL,
+    IDEMPOTENCY_HASH CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    REQUEST_HASH CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    DOWNLOAD_ID BIGINT UNSIGNED NOT NULL,
+    CREATED_AT DATETIME NOT NULL,
+    PRIMARY KEY (ID),
+    UNIQUE KEY ux_mf_file_download_request_key (ORDER_ID, IDEMPOTENCY_HASH),
+    KEY ix_mf_file_download_request_download (DOWNLOAD_ID),
+    CONSTRAINT fk_mf_file_download_request_download FOREIGN KEY (DOWNLOAD_ID) REFERENCES mf_file_download(ID) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 SQL);
         // D07/D10: a paid order's key lasts until the end of the files month. Moscow is UTC+3 without DST, and MySQL clamps
@@ -77,6 +91,7 @@ SQL);
     public function down(): void
     {
         // Downloads are temporary archives: dropping the journal is safe; extended keys stay valid until their new deadline.
+        Application::getConnection()->queryExecute('DROP TABLE IF EXISTS mf_file_download_request');
         Application::getConnection()->queryExecute('DROP TABLE IF EXISTS mf_file_download');
         if (ModuleManager::isModuleInstalled('morefoto.files')) {
             ModuleManager::unRegisterModule('morefoto.files');

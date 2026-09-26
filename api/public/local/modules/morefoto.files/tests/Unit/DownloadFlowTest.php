@@ -141,6 +141,52 @@ final class DownloadFlowTest extends TestCase
         self::assertCount(1, $this->published);
     }
 
+    public function testReusedArchiveBindsTheNewKeyToItsBody(): void
+    {
+        // Review #143 (2): a key that received a reused ready or pending archive is bound to that body and result.
+        $pending = $this->request(DownloadKindEnum::ZIP, null, 'a');
+        self::assertSame($pending->id, $this->request(DownloadKindEnum::ZIP, null, 'b')->id);
+        $this->expectRefusal('IDEMPOTENCY_CONFLICT', 409, fn() => $this->request(DownloadKindEnum::FILE, [FilesFixture::P1], 'b'));
+
+        $this->handler()(new BuildArchiveMessage($pending->id, 0));
+        self::assertSame($pending->id, $this->request(DownloadKindEnum::ZIP, null, 'c')->id);
+        $this->expectRefusal('IDEMPOTENCY_CONFLICT', 409, fn() => $this->request(DownloadKindEnum::FILE, [FilesFixture::P1], 'c'));
+        self::assertCount(1, $this->downloads->rows);
+    }
+
+    public function testKeyKeepsItsDownloadWhenTheSetChanges(): void
+    {
+        $first = $this->request(DownloadKindEnum::ZIP, null, 'b');
+        $this->handler()(new BuildArchiveMessage($first->id, 0));
+        // A photo of the bundle disappears: the same key still answers with the download it already returned.
+        unset($this->fixture->paths[FilesFixture::P3]);
+
+        self::assertSame($first->id, $this->request(DownloadKindEnum::ZIP, null, 'b')->id);
+        self::assertCount(1, $this->downloads->rows);
+    }
+
+    public function testArchiveIsPurgedAfterItsStatusWasNeverSaved(): void
+    {
+        // Review #143 (3): the archive is renamed into place, then every status write fails.
+        $pending = $this->request(DownloadKindEnum::ZIP, null);
+        $archive = $this->root . '/files/archives/' . FilesFixture::ORDER . '/' . $pending->id . '.zip';
+        $this->downloads->failReady = 3;
+        foreach (['09:00:00', '09:01:00', '09:02:00'] as $time) {
+            $this->fixture->now = '2027-02-10 ' . $time;
+            $this->handler()(new BuildArchiveMessage($pending->id, 0));
+        }
+        self::assertFileExists($archive);
+        self::assertSame('failed', $this->downloads->find($pending->id)?->status->value);
+        // A worker killed during a build leaves a temporary file next to the target.
+        file_put_contents($archive . '.0123456789abcdef.tmp', 'partial');
+
+        $this->fixture->now = '2027-02-11 09:03:00';
+        self::assertSame(1, $this->purge()->execute(10)->processed);
+
+        self::assertSame([], glob($this->root . '/files/archives/*/*') ?: []);
+        self::assertSame('expired', $this->downloads->find($pending->id)?->status->value);
+    }
+
     public function testRequestValidation(): void
     {
         $this->expectRefusal('INVALID_DOWNLOAD', 422, fn() => $this->request(DownloadKindEnum::FILE, null));
@@ -226,6 +272,8 @@ final class DownloadFlowTest extends TestCase
         return new RequestDownloadUseCase(
             $this->fixture->access(),
             $this->downloads,
+            $this->fixture->guard(),
+            $this->storage(),
             new FileAccessPolicy(),
             $this->view(),
             $this->idGenerator(),

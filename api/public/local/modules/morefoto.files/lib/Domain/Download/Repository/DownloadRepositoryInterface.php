@@ -6,6 +6,7 @@ namespace Morefoto\Files\Domain\Download\Repository;
 
 use Morefoto\Files\Domain\Download\Exception\DuplicateDownloadException;
 use Morefoto\Files\Domain\Download\ValueObject\Download;
+use Morefoto\Files\Domain\Download\ValueObject\DownloadRequest;
 
 interface DownloadRepositoryInterface
 {
@@ -14,11 +15,14 @@ interface DownloadRepositoryInterface
      *
      * @throws DuplicateDownloadException
      */
-    public function insert(Download $download, string $idempotencyHash, \DateTimeImmutable $now): void;
+    public function insert(Download $download, \DateTimeImmutable $now): void;
+
+    public function request(int $orderId, string $idempotencyHash): ?DownloadRequest;
+
+    /** Закрепляет принятый ключ за телом запроса и выданной загрузкой, в том числе переиспользованной. */
+    public function rememberRequest(int $orderId, string $idempotencyHash, DownloadRequest $request, \DateTimeImmutable $now): void;
 
     public function find(string $publicId): ?Download;
-
-    public function byIdempotency(int $orderId, string $idempotencyHash): ?Download;
 
     public function pendingArchive(int $orderId): ?Download;
 
@@ -27,7 +31,7 @@ interface DownloadRepositoryInterface
     /** Забирает pending-сборку на срок аренды; false — её уже строит другой обработчик или попытки исчерпаны. */
     public function claim(string $publicId, int $maxAttempts, \DateTimeImmutable $now, \DateTimeImmutable $leaseUntil): bool;
 
-    public function markReady(string $publicId, string $archivePath, int $bytes, \DateTimeImmutable $expiresAt): void;
+    public function markReady(string $publicId, int $bytes, \DateTimeImmutable $expiresAt): void;
 
     public function markRetry(string $publicId, \DateTimeImmutable $nextAttemptAt): void;
 
@@ -38,6 +42,6 @@ interface DownloadRepositoryInterface
     /** @return list<Download> pending-сборки, чья аренда или пауза повтора истекла */
     public function due(\DateTimeImmutable $now, int $limit): array;
 
-    /** @return list<Download> готовые и неудачные загрузки с наступившим сроком */
+    /** @return list<Download> готовые и неудачные загрузки с наступившим сроком; их архив по сохранённому пути удаляет purge */
     public function stale(\DateTimeImmutable $now, int $limit): array;
 }

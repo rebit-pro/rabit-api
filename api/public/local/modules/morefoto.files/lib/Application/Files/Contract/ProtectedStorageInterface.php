@@ -11,6 +11,7 @@ interface ProtectedStorageInterface
 
     public function absoluteArchivePath(string $relativePath): string;
 
+    /** Удаляет архив и недописанные временные файлы его сборки. */
     public function deleteArchive(string $relativePath): void;
 
     public function archiveUri(string $relativePath): string;

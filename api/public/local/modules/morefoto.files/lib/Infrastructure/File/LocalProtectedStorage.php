@@ -33,8 +33,11 @@ final readonly class LocalProtectedStorage implements ProtectedStorageInterface
     public function deleteArchive(string $relativePath): void
     {
         $path = $this->absoluteArchivePath($relativePath);
-        if (is_file($path) && !unlink($path)) {
-            throw new FilesStorageException('Cannot delete archive.');
+        // ZipArchiveBuilder writes `<archive>.<random>.tmp` next to the target; a killed worker may leave one behind.
+        foreach ([$path, ...(glob($path . '.*.tmp') ?: [])] as $file) {
+            if (is_file($file) && !unlink($file)) {
+                throw new FilesStorageException('Cannot delete archive.');
+            }
         }
         $directory = dirname($path);
         if (is_dir($directory) && [] === array_diff(scandir($directory) ?: [], ['.', '..'])) {

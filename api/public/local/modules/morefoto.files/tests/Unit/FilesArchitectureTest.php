@@ -48,6 +48,14 @@ final class FilesArchitectureTest extends TestCase
         self::assertSame(LogChannelEnum::files, LogChannelEnum::resolveFromClassName('Morefoto\Files\Presentation\Controller\PublicFileController'));
     }
 
+    public function testBackendNginxServesPrivateRootsOnlyInternallyAndKeepsTokensOutOfTheLog(): void
+    {
+        $config = (string)file_get_contents(dirname(__DIR__, 6) . '/docker/common/nginx/conf.d/default.conf');
+
+        self::assertStringContainsString('~^/api/v1/public/orders/current/downloads/ 0;', $config);
+        self::assertSame(2, preg_match_all('#location \^~ /_protected/(media|files)/ \{\s+internal;#', $config));
+    }
+
     public function testFilesUseOnlyTheCommerceAndMediaContracts(): void
     {
         foreach ($this->sources() as $path => $source) {

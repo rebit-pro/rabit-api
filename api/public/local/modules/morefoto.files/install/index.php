@@ -22,8 +22,10 @@ final class Morefoto_Files extends CModule
                 throw new RuntimeException('Required module is unavailable: ' . $dependency);
             }
         }
-        if (!Application::getConnection()->isTableExists('mf_file_download')) {
-            throw new RuntimeException('Apply the J1 files migration first: missing mf_file_download');
+        foreach (['mf_file_download', 'mf_file_download_request'] as $table) {
+            if (!Application::getConnection()->isTableExists($table)) {
+                throw new RuntimeException('Apply the J1 files migration first: missing ' . $table);
+            }
         }
         if (!ModuleManager::isModuleInstalled($this->MODULE_ID)) {
             ModuleManager::registerModule($this->MODULE_ID);

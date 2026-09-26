@@ -7,6 +7,7 @@ use Morefoto\Files\Application\Files\Contract\ArchiveBuilderInterface;
 use Morefoto\Files\Application\Files\Contract\DownloadIdGeneratorInterface;
 use Morefoto\Files\Application\Files\Contract\DownloadTokenInterface;
 use Morefoto\Files\Application\Files\Contract\FilesPublisherInterface;
+use Morefoto\Files\Application\Files\Contract\OrderDownloadGuardInterface;
 use Morefoto\Files\Application\Files\Contract\ProtectedStorageInterface;
 use Morefoto\Files\Application\Files\Message\Handler\BuildArchiveMessageHandler;
 use Morefoto\Files\Application\Files\Service\DownloadView;
@@ -21,6 +22,7 @@ use Morefoto\Files\Application\Files\UseCase\RequestDownloadUseCase;
 use Morefoto\Files\Domain\Download\Repository\DownloadRepositoryInterface;
 use Morefoto\Files\Domain\Download\Service\FileAccessPolicy;
 use Morefoto\Files\Infrastructure\Database\BitrixDownloadRepository;
+use Morefoto\Files\Infrastructure\Database\MysqlOrderDownloadGuard;
 use Morefoto\Files\Infrastructure\File\LocalProtectedStorage;
 use Morefoto\Files\Infrastructure\File\ZipArchiveBuilder;
 use Morefoto\Files\Infrastructure\Id\DownloadIdGenerator;
@@ -48,6 +50,7 @@ use Symfony\Component\Messenger\Transport\TransportInterface;
 return [
     FileAccessPolicy::class => ['className' => FileAccessPolicy::class],
     DownloadRepositoryInterface::class => ['className' => BitrixDownloadRepository::class],
+    OrderDownloadGuardInterface::class => ['className' => MysqlOrderDownloadGuard::class],
     ArchiveBuilderInterface::class => ['className' => ZipArchiveBuilder::class],
     DownloadIdGeneratorInterface::class => ['className' => DownloadIdGenerator::class],
     ProtectedStorageInterface::class => [
@@ -99,6 +102,8 @@ return [
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(OrderFileAccess::class),
             ServiceLocator::getInstance()->get(DownloadRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(OrderDownloadGuardInterface::class),
+            ServiceLocator::getInstance()->get(ProtectedStorageInterface::class),
             ServiceLocator::getInstance()->get(FileAccessPolicy::class),
             ServiceLocator::getInstance()->get(DownloadView::class),
             ServiceLocator::getInstance()->get(DownloadIdGeneratorInterface::class),

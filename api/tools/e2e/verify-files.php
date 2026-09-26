@@ -41,10 +41,15 @@ $check(ModuleManager::isModuleInstalled('morefoto.files'), 'the module is regist
 $check(0 === $scalar("SELECT COUNT(*) FROM mf_file_download WHERE ACTIVE_ORDER_ID IS NOT NULL AND STATUS<>'pending'"), 'an archive lock outlived its build');
 $check(0 === $scalar("SELECT COUNT(*) FROM mf_file_download WHERE STATUS='pending'"), 'an archive build stayed pending');
 $dump = '';
-$result = $connection->query('SELECT * FROM mf_file_download');
-while (false !== ($row = $result->fetchRaw())) {
-    $dump .= json_encode($row, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+foreach (['mf_file_download', 'mf_file_download_request'] as $table) {
+    $result = $connection->query('SELECT * FROM ' . $table);
+    while (false !== ($row = $result->fetchRaw())) {
+        $dump .= json_encode($row, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+    }
 }
+// Review #143 (2): every accepted key points at a download of its own order; the ZIP rows keep their path until purge.
+$check(0 === $scalar('SELECT COUNT(*) FROM mf_file_download_request r JOIN mf_file_download d ON d.ID=r.DOWNLOAD_ID WHERE d.ORDER_ID<>r.ORDER_ID'), 'a key points at a foreign download');
+$check(0 === $scalar("SELECT COUNT(*) FROM mf_file_download WHERE KIND='zip' AND STATUS<>'expired' AND ARCHIVE_PATH IS NULL"), 'a live archive row lost its path');
 $check('' === $record['accessKey'] || !str_contains($dump, (string)$record['accessKey']), 'a raw order key is stored');
 
 if ($record['sandbox']) {
@@ -66,6 +71,7 @@ if ($record['sandbox']) {
     $check(is_file($path) && filesize($path) === (int)$archive['BYTES'] && (int)$record['archiveBytes'] === (int)$archive['BYTES'], 'the archive on disk matches the journal and the browser');
     $check(1000 === fileowner($path) && 0600 === (fileperms($path) & 0777), 'the archive is private and readable by the web server user');
     $check(1 === $scalar("SELECT COUNT(*) FROM mf_file_download WHERE ORDER_ID={$orderId} AND KIND='zip'"), 'the same composition reused one archive');
+    $check(2 <= $scalar("SELECT COUNT(*) FROM mf_file_download_request r JOIN mf_file_download d ON d.ID=r.DOWNLOAD_ID WHERE d.PUBLIC_ID='" . $sql->forSql((string)$record['archiveDownloadId']) . "'"), 'the browser and the API keys are both bound to the reused archive');
 
     // 4. Expired archives leave the disk.
     $connection->queryExecute("UPDATE mf_file_download SET EXPIRES_AT=UTC_TIMESTAMP()-INTERVAL 1 MINUTE WHERE PUBLIC_ID='" . $sql->forSql((string)$record['archiveDownloadId']) . "'");
@@ -79,8 +85,8 @@ if ($record['sandbox']) {
 // 5. The migration replays without touching the journal.
 Loader::includeModule('sprint.migration');
 require_once '/app/public/local/php_interface/migrations.foundation/Version20260926180001.php';
-$before = $scalar('SELECT COUNT(*) FROM mf_file_download');
+$before = [$scalar('SELECT COUNT(*) FROM mf_file_download'), $scalar('SELECT COUNT(*) FROM mf_file_download_request')];
 (new Version20260926180001())->up();
-$check($before === $scalar('SELECT COUNT(*) FROM mf_file_download'), 'the migration replay changed downloads');
+$check($before === [$scalar('SELECT COUNT(*) FROM mf_file_download'), $scalar('SELECT COUNT(*) FROM mf_file_download_request')], 'the migration replay changed downloads');
 
 echo "J1 files integration passed\n";

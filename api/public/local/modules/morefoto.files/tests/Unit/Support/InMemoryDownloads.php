@@ -9,6 +9,7 @@ use Morefoto\Files\Domain\Download\Enum\DownloadStatusEnum;
 use Morefoto\Files\Domain\Download\Exception\DuplicateDownloadException;
 use Morefoto\Files\Domain\Download\Repository\DownloadRepositoryInterface;
 use Morefoto\Files\Domain\Download\ValueObject\Download;
+use Morefoto\Files\Domain\Download\ValueObject\DownloadRequest;
 
 /** Повторяет уникальные ключи и переходы BitrixDownloadRepository в памяти. */
 final class InMemoryDownloads implements DownloadRepositoryInterface
@@ -16,30 +17,37 @@ final class InMemoryDownloads implements DownloadRepositoryInterface
     /** @var array<string, Download> */
     public array $rows = [];
 
-    /** @var array<string, string> ключ «заказ:хеш» → ID загрузки */
-    private array $keys = [];
+    /** @var array<string, DownloadRequest> ключ «заказ:хеш» → принятый запрос */
+    public array $requests = [];
 
-    public function insert(Download $download, string $idempotencyHash, \DateTimeImmutable $now): void
+    /** Сколько следующих вызовов markReady() завершатся сбоем записи. */
+    public int $failReady = 0;
+
+    public function insert(Download $download, \DateTimeImmutable $now): void
     {
-        $key = $download->orderId . ':' . $idempotencyHash;
         $locked = DownloadKindEnum::ZIP === $download->kind && DownloadStatusEnum::PENDING === $download->status;
-        if (isset($this->keys[$key]) || ($locked && null !== $this->pendingArchive($download->orderId))) {
+        if ($locked && null !== $this->pendingArchive($download->orderId)) {
             throw new DuplicateDownloadException('taken');
         }
-        $this->keys[$key] = $download->publicId;
         $this->rows[$download->publicId] = $download;
+    }
+
+    public function request(int $orderId, string $idempotencyHash): ?DownloadRequest
+    {
+        return $this->requests[$orderId . ':' . $idempotencyHash] ?? null;
+    }
+
+    public function rememberRequest(int $orderId, string $idempotencyHash, DownloadRequest $request, \DateTimeImmutable $now): void
+    {
+        if (isset($this->requests[$orderId . ':' . $idempotencyHash]) || ($this->rows[$request->downloadId] ?? null)?->orderId !== $orderId) {
+            throw new \RuntimeException('duplicate key or foreign download');
+        }
+        $this->requests[$orderId . ':' . $idempotencyHash] = $request;
     }
 
     public function find(string $publicId): ?Download
     {
         return $this->rows[$publicId] ?? null;
-    }
-
-    public function byIdempotency(int $orderId, string $idempotencyHash): ?Download
-    {
-        $id = $this->keys[$orderId . ':' . $idempotencyHash] ?? null;
-
-        return null === $id ? null : $this->rows[$id];
     }
 
     public function pendingArchive(int $orderId): ?Download
@@ -77,9 +85,14 @@ final class InMemoryDownloads implements DownloadRepositoryInterface
         return true;
     }
 
-    public function markReady(string $publicId, string $archivePath, int $bytes, \DateTimeImmutable $expiresAt): void
+    public function markReady(string $publicId, int $bytes, \DateTimeImmutable $expiresAt): void
     {
-        $this->replace($this->rows[$publicId], status: DownloadStatusEnum::READY, archivePath: $archivePath, bytes: $bytes, expiresAt: $expiresAt, nextAttemptAt: null);
+        if (0 < $this->failReady) {
+            --$this->failReady;
+
+            throw new \RuntimeException('database went away');
+        }
+        $this->replace($this->rows[$publicId], status: DownloadStatusEnum::READY, bytes: $bytes, expiresAt: $expiresAt, nextAttemptAt: null);
     }
 
     public function markRetry(string $publicId, \DateTimeImmutable $nextAttemptAt): void
@@ -128,7 +141,6 @@ final class InMemoryDownloads implements DownloadRepositoryInterface
             $status ?? $row->status,
             $row->photoIds,
             $row->compositionHash,
-            $row->requestHash,
             $row->filename,
             '' === $archivePath ? $row->archivePath : $archivePath,
             -1 === $bytes ? $row->bytes : $bytes,

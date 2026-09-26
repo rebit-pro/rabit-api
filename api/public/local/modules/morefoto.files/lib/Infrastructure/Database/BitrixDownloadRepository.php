@@ -12,6 +12,7 @@ use Morefoto\Files\Domain\Download\Exception\DuplicateDownloadException;
 use Morefoto\Files\Domain\Download\Exception\FilesStorageException;
 use Morefoto\Files\Domain\Download\Repository\DownloadRepositoryInterface;
 use Morefoto\Files\Domain\Download\ValueObject\Download;
+use Morefoto\Files\Domain\Download\ValueObject\DownloadRequest;
 
 /**
  * Моменты хранятся в UTC; ACTIVE_ORDER_ID — замок единственной pending-сборки ZIP заказа.
@@ -24,7 +25,6 @@ use Morefoto\Files\Domain\Download\ValueObject\Download;
  *     STATUS: string,
  *     PHOTO_IDS: string,
  *     COMPOSITION_HASH: string,
- *     REQUEST_HASH: string,
  *     FILENAME: string,
  *     ARCHIVE_PATH: null|string,
  *     BYTES: null|int|string,
@@ -36,20 +36,21 @@ use Morefoto\Files\Domain\Download\ValueObject\Download;
  */
 final readonly class BitrixDownloadRepository implements DownloadRepositoryInterface
 {
-    private const string COLUMNS = "ID,PUBLIC_ID,ORDER_ID,KIND,STATUS,PHOTO_IDS,COMPOSITION_HASH,REQUEST_HASH,FILENAME,ARCHIVE_PATH,BYTES,ERROR_CODE,ATTEMPTS,
+    private const string COLUMNS = "ID,PUBLIC_ID,ORDER_ID,KIND,STATUS,PHOTO_IDS,COMPOSITION_HASH,FILENAME,ARCHIVE_PATH,BYTES,ERROR_CODE,ATTEMPTS,
         DATE_FORMAT(NEXT_ATTEMPT_AT,'%Y-%m-%d %H:%i:%s') AS NEXT_ATTEMPT_AT,DATE_FORMAT(EXPIRES_AT,'%Y-%m-%d %H:%i:%s') AS EXPIRES_AT";
 
-    public function insert(Download $download, string $idempotencyHash, \DateTimeImmutable $now): void
+    public function insert(Download $download, \DateTimeImmutable $now): void
     {
         $connection = Application::getConnection();
         $text = $this->text(...);
         $locked = DownloadKindEnum::ZIP === $download->kind && DownloadStatusEnum::PENDING === $download->status;
         try {
-            $connection->queryExecute('INSERT IGNORE INTO mf_file_download(PUBLIC_ID,ORDER_ID,KIND,STATUS,PHOTO_IDS,COMPOSITION_HASH,IDEMPOTENCY_HASH,
-                REQUEST_HASH,ACTIVE_ORDER_ID,FILENAME,BYTES,ATTEMPTS,NEXT_ATTEMPT_AT,EXPIRES_AT,READY_AT,CREATED_AT,UPDATED_AT) VALUES(' . implode(',', [
+            $connection->queryExecute('INSERT IGNORE INTO mf_file_download(PUBLIC_ID,ORDER_ID,KIND,STATUS,PHOTO_IDS,COMPOSITION_HASH,
+                ACTIVE_ORDER_ID,FILENAME,ARCHIVE_PATH,BYTES,ATTEMPTS,NEXT_ATTEMPT_AT,EXPIRES_AT,READY_AT,CREATED_AT,UPDATED_AT) VALUES(' . implode(',', [
                 $text($download->publicId), $download->orderId, $text($download->kind->value), $text($download->status->value),
-                $text(json_encode($download->photoIds, JSON_THROW_ON_ERROR)), $text($download->compositionHash), $text($idempotencyHash),
-                $text($download->requestHash), $locked ? (string)$download->orderId : 'NULL', $text($download->filename),
+                $text(json_encode($download->photoIds, JSON_THROW_ON_ERROR)), $text($download->compositionHash),
+                $locked ? (string)$download->orderId : 'NULL', $text($download->filename),
+                null === $download->archivePath ? 'NULL' : $text($download->archivePath),
                 null === $download->bytes ? 'NULL' : (string)$download->bytes, '0', $this->moment($download->nextAttemptAt),
                 $this->moment($download->expiresAt), DownloadStatusEnum::READY === $download->status ? $this->moment($now) : 'NULL',
                 $this->moment($now), $this->moment($now),
@@ -59,7 +60,7 @@ final readonly class BitrixDownloadRepository implements DownloadRepositoryInter
             throw new FilesStorageException('Cannot persist download.', 0, $error);
         }
         if (!$inserted) {
-            throw new DuplicateDownloadException('Idempotency key or archive lock is already taken.');
+            throw new DuplicateDownloadException('The archive lock of the order is already taken.');
         }
     }
 
@@ -68,9 +69,27 @@ final readonly class BitrixDownloadRepository implements DownloadRepositoryInter
         return $this->one('PUBLIC_ID=' . $this->text($publicId));
     }
 
-    public function byIdempotency(int $orderId, string $idempotencyHash): ?Download
+    public function request(int $orderId, string $idempotencyHash): ?DownloadRequest
     {
-        return $this->one("ORDER_ID={$orderId} AND IDEMPOTENCY_HASH=" . $this->text($idempotencyHash));
+        try {
+            /** @var array{REQUEST_HASH: string, DOWNLOAD_ID: string}|false $row */
+            $row = Application::getConnection()->query("SELECT r.REQUEST_HASH,d.PUBLIC_ID AS DOWNLOAD_ID FROM mf_file_download_request r
+                INNER JOIN mf_file_download d ON d.ID=r.DOWNLOAD_ID WHERE r.ORDER_ID={$orderId} AND r.IDEMPOTENCY_HASH=" . $this->text($idempotencyHash))->fetch();
+        } catch (\Throwable $error) {
+            throw new FilesStorageException('Cannot read download request.', 0, $error);
+        }
+
+        return false === $row ? null : new DownloadRequest($row['REQUEST_HASH'], $row['DOWNLOAD_ID']);
+    }
+
+    public function rememberRequest(int $orderId, string $idempotencyHash, DownloadRequest $request, \DateTimeImmutable $now): void
+    {
+        $inserted = $this->execute('INSERT INTO mf_file_download_request(ORDER_ID,IDEMPOTENCY_HASH,REQUEST_HASH,DOWNLOAD_ID,CREATED_AT)
+            SELECT ' . $orderId . ',' . $this->text($idempotencyHash) . ',' . $this->text($request->requestHash) . ',ID,' . $this->moment($now)
+            . ' FROM mf_file_download WHERE PUBLIC_ID=' . $this->text($request->downloadId) . " AND ORDER_ID={$orderId}");
+        if (1 !== $inserted) {
+            throw new FilesStorageException('Cannot remember download request.');
+        }
     }
 
     public function pendingArchive(int $orderId): ?Download
@@ -91,9 +110,9 @@ final readonly class BitrixDownloadRepository implements DownloadRepositoryInter
             . " AND ATTEMPTS<{$maxAttempts} AND (ATTEMPTS=0 OR NEXT_ATTEMPT_AT<=" . $this->moment($now) . ')');
     }
 
-    public function markReady(string $publicId, string $archivePath, int $bytes, \DateTimeImmutable $expiresAt): void
+    public function markReady(string $publicId, int $bytes, \DateTimeImmutable $expiresAt): void
     {
-        $this->execute("UPDATE mf_file_download SET STATUS='ready',ACTIVE_ORDER_ID=NULL,ARCHIVE_PATH=" . $this->text($archivePath)
+        $this->execute("UPDATE mf_file_download SET STATUS='ready',ACTIVE_ORDER_ID=NULL"
             . ",BYTES={$bytes},NEXT_ATTEMPT_AT=NULL,EXPIRES_AT=" . $this->moment($expiresAt) . ',READY_AT=UTC_TIMESTAMP(),UPDATED_AT=UTC_TIMESTAMP()'
             . ' WHERE PUBLIC_ID=' . $this->text($publicId) . " AND STATUS='pending'");
     }
@@ -159,7 +178,6 @@ final readonly class BitrixDownloadRepository implements DownloadRepositoryInter
                 status: DownloadStatusEnum::from($row['STATUS']),
                 photoIds: $photoIds,
                 compositionHash: $row['COMPOSITION_HASH'],
-                requestHash: $row['REQUEST_HASH'],
                 filename: $row['FILENAME'],
                 archivePath: $row['ARCHIVE_PATH'],
                 bytes: null === $row['BYTES'] ? null : (int)$row['BYTES'],
