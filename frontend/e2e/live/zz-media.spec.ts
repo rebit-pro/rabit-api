@@ -880,7 +880,8 @@ test('#106: организатор удаляет лишние кадры гру
   expect(replayed.data).toEqual(removed.data);
   const empty = await result(await page.request.get('/api/v1/shoots/' + shoot.id + '/photos?groupId=' + group.id, { headers: auth }), 200);
   expect(empty.data.items).toEqual([]);
-  expect(empty.data.covers).toEqual({});
+  // PHP serializes an empty cover map as []: only the absence of this group's cover matters.
+  expect(empty.data.covers[group.id]).toBeUndefined();
   expect(empty.data.revision).toBe(removed.data.revision);
 
   await page.setViewportSize({ width: 390, height: 844 });
