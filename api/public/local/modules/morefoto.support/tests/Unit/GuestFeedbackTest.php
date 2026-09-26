@@ -126,6 +126,46 @@ final class GuestFeedbackTest extends TestCase
         self::assertSame($first, $this->feedback('Обращение 0', self::ADDRESS, 1));
     }
 
+    public function testParallelRepeatAtTheAddressLimitGetsTheStoredNumber(): void
+    {
+        $this->useAddressUpToTheLastPlace();
+        // Both requests missed the key; the parallel one takes the last place while this one waits for the address lock.
+        $this->questions->whileWaitingForAddress = fn(): int => $this->feedback('Пятое', self::ADDRESS, 5);
+
+        self::assertSame(104, $this->feedback('Пятое', self::ADDRESS, 5));
+        self::assertCount(5, $this->questions->questions);
+        self::assertSame([1, 2, 3, 4, 5], $this->publisher->published);
+        self::assertSame(5, $this->addressQuestions(self::ADDRESS));
+    }
+
+    public function testParallelRequestWithAnotherBodyConflicts(): void
+    {
+        $this->useAddressUpToTheLastPlace();
+        $this->questions->whileWaitingForAddress = fn(): int => $this->feedback('Пятое', self::ADDRESS, 5);
+
+        $this->assertRefused(409, 'IDEMPOTENCY_CONFLICT', 'Другой текст', 5);
+    }
+
+    public function testParallelRequestWithAnotherKeyIsLimited(): void
+    {
+        $this->useAddressUpToTheLastPlace();
+        $this->questions->whileWaitingForAddress = fn(): int => $this->feedback('Пятое', self::ADDRESS, 5);
+
+        $this->assertRefused(429, 'RATE_LIMITED', 'Шестое', 6);
+    }
+
+    public function testRepeatFromAnotherAddressIsNotLimitedThere(): void
+    {
+        $first = $this->feedback('Обращение', self::ADDRESS, 1);
+        for ($index = 0; $index < SendGuestFeedbackUseCase::GUEST_QUESTIONS_PER_ADDRESS_PER_HOUR; ++$index) {
+            $this->feedback('Другой гость ' . $index, '198.51.100.20', 10 + $index);
+        }
+
+        self::assertSame($first, $this->feedback('Обращение', '198.51.100.20', 1));
+        self::assertCount(1 + SendGuestFeedbackUseCase::GUEST_QUESTIONS_PER_ADDRESS_PER_HOUR, $this->questions->questions);
+        self::assertSame([1, 5], [$this->addressQuestions(self::ADDRESS), $this->addressQuestions('198.51.100.20')]);
+    }
+
     public function testWithoutTheServerSecretNothingIsStored(): void
     {
         $refusal = '';
@@ -180,6 +220,32 @@ final class GuestFeedbackTest extends TestCase
             ->execute(new MaxUpdateInputDto('message_created', self::CHAT, 'chat', 'mid.reply', 'mid.guest', 'Перезвоню', 'Рита', false))
         ;
         self::assertCount(1, $this->questions->messages);
+    }
+
+    private function useAddressUpToTheLastPlace(): void
+    {
+        for ($index = 1; $index < SendGuestFeedbackUseCase::GUEST_QUESTIONS_PER_ADDRESS_PER_HOUR; ++$index) {
+            $this->feedback('Обращение ' . $index, self::ADDRESS, $index);
+        }
+    }
+
+    /** The parallel request took the last place of the address: nothing else is stored. */
+    private function assertRefused(int $status, string $code, string $message, int $key): void
+    {
+        try {
+            $this->feedback($message, self::ADDRESS, $key);
+            self::fail('The request was accepted.');
+        } catch (HttpException $error) {
+            self::assertSame([$status, $code], [$error->getCode(), $error->getMessage()]);
+        }
+        self::assertCount(5, $this->questions->questions);
+        self::assertSame([1, 2, 3, 4, 5], $this->publisher->published);
+        self::assertSame(5, $this->addressQuestions(self::ADDRESS));
+    }
+
+    private function addressQuestions(string $address): int
+    {
+        return $this->questions->guestAddresses[(new GuestAddressHasher(self::SECRET))->hash($address)]['questions'];
     }
 
     private function feedback(string $message, string $address, int $key): int
