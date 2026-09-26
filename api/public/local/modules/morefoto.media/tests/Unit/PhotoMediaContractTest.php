@@ -218,7 +218,7 @@ final class PhotoMediaContractTest extends TestCase
         self::assertSame($this->json($assigned), $this->json($mapper->assignment($assigned)));
         self::assertSame($this->json($cover), $this->json($mapper->cover($cover)));
         self::assertSame(['deleted' => 2, 'revision' => 5], $this->json($mapper->deletion($deleted)));
-        self::assertSame(['id', 'status', 'revision', 'existingPhotoId'], array_keys($this->json($mapper->upload($uploaded))));
+        self::assertSame(['id', 'status', 'revision', 'existingPhotoId', 'childCodes'], array_keys($this->json($mapper->upload($uploaded))));
     }
 
     /** @param list<string> $useCases */

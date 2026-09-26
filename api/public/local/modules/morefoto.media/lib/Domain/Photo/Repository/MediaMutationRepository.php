@@ -58,6 +58,15 @@ final readonly class MediaMutationRepository
         return $photos;
     }
 
+    /** Native ID of a registered photo of the group whatever its preview state; duplicates carry no own original. */
+    public function groupPhoto(int $shootId, int $groupId, string $publicId): ?int
+    {
+        $row = $this->query("SELECT ID FROM b_hlbd_mf_photo WHERE UF_SHOOT_ID={$shootId} AND UF_GROUP_ID={$groupId}"
+            . " AND UF_STATUS IN ('processing','ready','failed') AND UF_PUBLIC_ID=" . $this->quote($publicId) . ' FOR UPDATE')->fetch();
+
+        return false === $row ? null : (int)$row['ID'];
+    }
+
     /** @return array{id:int,publicId:string} */
     public function child(int $shootId, int $groupId, string $code): array
     {

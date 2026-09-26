@@ -21,7 +21,7 @@ final readonly class LogSanitizer
         'attempts', 'added', 'index', 'unknownFields', 'requestId', 'method', 'result',
         'source', 'operation', 'controller', 'class', 'dependency', 'parameter', 'file',
         'photoId', 'operationId', 'photoStatus', 'stage', 'exception', 'previous', 'event', 'published',
-        'bytes', 'revision', 'attempt', 'inspectMs', 'storeMs', 'registerMs', 'publishMs',
+        'bytes', 'revision', 'attempt', 'inspectMs', 'storeMs', 'registerMs', 'publishMs', 'assignMs',
         'decodeMs', 'thumbMs', 'previewMs', 'sinceAcceptedSeconds', 'sinceQueuedSeconds', 'pendingSeconds',
         'megapixels', 'redacted', 'truncated',
     ];
@@ -111,7 +111,7 @@ final readonly class LogSanitizer
                     ? (is_finite((float)$value) && 0 <= $value ? round((float)$value, 1) : null)
                     : null,
                 'line', 'exceptionCode', 'leadId', 'userId', 'attempts', 'added', 'index', 'unknownFields' => is_int($value) ? $value : null,
-                'bytes', 'revision', 'attempt', 'inspectMs', 'storeMs', 'registerMs', 'publishMs', 'decodeMs', 'thumbMs',
+                'bytes', 'revision', 'attempt', 'inspectMs', 'storeMs', 'registerMs', 'publishMs', 'assignMs', 'decodeMs', 'thumbMs',
                 'previewMs', 'sinceAcceptedSeconds', 'sinceQueuedSeconds', 'pendingSeconds' => is_int($value) && 0 <= $value ? $value : null,
                 'requestId' => is_string($value) && 1 === preg_match('/\A[a-f0-9]{14}\.[0-9]{8}\z/D', $value) ? $value : null,
                 'photoId', 'operationId' => is_string($value) && 1 === preg_match(self::UUID_PATTERN, $value) ? $value : null,

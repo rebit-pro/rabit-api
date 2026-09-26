@@ -12,6 +12,7 @@ use Morefoto\Media\Application\Photo\Dto\PhotoRegistration;
 use Morefoto\Media\Application\Photo\Message\ProcessPhotoMessage;
 use Morefoto\Media\Application\Photo\Service\PhotoRowMapper;
 use Morefoto\Media\Application\Photo\Dto\UploadPhotoInputDto;
+use Morefoto\Media\Application\Photo\Service\UploadChildAssignment;
 use Morefoto\Media\Application\Photo\UseCase\UploadPhotoUseCase;
 use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
@@ -99,6 +100,7 @@ final class PhotoWorkflowTest extends TestCase
             new PhotoRepository(),
             $publisher,
             new NullLogger(),
+            $this->createStub(UploadChildAssignment::class),
         );
 
         $this->expectException(HttpException::class);
@@ -151,7 +153,7 @@ final class PhotoWorkflowTest extends TestCase
             return new PhotoRegistration('32345678-abcd-4abc-8abc-123456789abc', 'duplicate', 1, false, '42345678-abcd-4abc-8abc-123456789abc');
         });
         try {
-            $output = (new UploadPhotoUseCase($scopes, $this->createStub(AccessGuardInterface::class), new PhotoFileInspector(), $storage, $lock, $photos, $this->createStub(MediaPublisherInterface::class), new NullLogger()))
+            $output = (new UploadPhotoUseCase($scopes, $this->createStub(AccessGuardInterface::class), new PhotoFileInspector(), $storage, $lock, $photos, $this->createStub(MediaPublisherInterface::class), new NullLogger(), $this->createStub(UploadChildAssignment::class)))
                 ->execute(4, new UploadPhotoInputDto('12345678-abcd-4abc-8abc-123456789abc', '22345678-abcd-4abc-8abc-123456789abc', $file, 'photo.png', (int)filesize($file), null))
             ;
         } finally {

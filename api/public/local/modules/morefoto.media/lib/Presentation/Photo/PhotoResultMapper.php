@@ -24,6 +24,7 @@ final readonly class PhotoResultMapper
             status: $output->status,
             revision: $output->revision,
             existingPhotoId: $output->existingPhotoId,
+            childCodes: $output->childCodes,
         );
     }
 

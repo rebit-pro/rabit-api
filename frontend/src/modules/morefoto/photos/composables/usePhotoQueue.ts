@@ -6,11 +6,16 @@ import { isMockApiEnabled } from '@/mocks/config';
 import { fileProblem, photoLimits } from '../rules';
 import { preparePhoto } from '../prepare';
 import { acceptPhoto, editableGroup } from '../service';
-import { photoApiError, photosApi } from '../api';
+import { photoApiError, photoApiErrorCode, photosApi } from '../api';
 import { photosChangedEvent } from '../repository';
+import { folderCodes, mimeType, type ArchivePlan, type ArchiveSource } from '../archive';
+import { ArchiveProgress, browserStorage } from '../archive-progress';
+import { maxRetries, retryDelay, uploadFailure } from '../upload-retry';
+import { zipEntryBlob, type ZipEntry } from '../zip-reader';
 import type { UploadJob } from '../types';
 
 const duplicateMessage = 'Такой файл уже есть в этой съёмке. Второй кадр не создан.';
+const archiveInterrupted = 'Отправка прервана. Выберите те же архивы снова — отправленные файлы повторно не уйдут.';
 const acceptedMessage = 'Файл принят. Сервер готовит защищённые превью';
 // Accepted photos share one status budget per queue instead of polling each of a thousand files.
 const checksPerTick = 2;
@@ -37,12 +42,16 @@ export function usePhotoQueue(shootId: string) {
             ...job,
             status: 'interrupted',
             progress: 0,
-            message: 'Отправка прервана. Выберите исходный файл снова.'
+            message: job.archive ? archiveInterrupted : 'Отправка прервана. Выберите исходный файл снова.'
           }
         : job
     )
   );
   const files = new Map<string, File>();
+  const archives = new Map<string, { file: File; entries: Map<string, ZipEntry> }>();
+  const progress = new ArchiveProgress(browserStorage(), 'morefoto:archive-progress:' + auth.user?.id + ':' + shootId);
+  /** Archive files accepted before a reload: they are skipped, not sent again. */
+  const previous = shallowRef(0);
   const busy = shallowRef(false);
   const paused = shallowRef(false);
   const error = shallowRef('');
@@ -52,6 +61,8 @@ export function usePhotoQueue(shootId: string) {
   let trackTimer = 0;
   let refreshTimer = 0;
   let refreshedAt = 0;
+  let offline = false;
+  let wakeUps: (() => void)[] = [];
   const queued = computed(() => jobs.value.filter((job) => job.status === 'queued').length);
   const accepted = computed(() => jobs.value.filter((job) => job.status === 'done').length);
   const waiting = computed(() => jobs.value.filter((job) => job.status === 'uploading' || job.status === 'processing').length);
@@ -136,6 +147,55 @@ export function usePhotoQueue(shootId: string) {
     jobs.value = [...jobs.value.map((job) => replaced.get(job.id) ?? job), ...added];
     persist(true);
   }
+  /** Queues the files of the checked plan: children first, group frames last, so they close every child's set. */
+  function addArchive(plan: ArchivePlan, chosen: { file: File; source: ArchiveSource }[], groupId: string) {
+    error.value = '';
+    for (const item of chosen)
+      archives.set(item.source.key, { file: item.file, entries: new Map(item.source.entries.map((entry) => [entry.path, entry])) });
+    const keys = new Set(chosen.map((item) => item.source.key));
+    // Group frames are sent again every time: the server keeps one photo and only adds children labelled since.
+    const kept = jobs.value.filter(
+      (job) =>
+        !(
+          job.groupId === groupId &&
+          job.archive &&
+          keys.has(job.archive) &&
+          (job.shared || !['processing', 'done', 'duplicate'].includes(job.status))
+        )
+    );
+    const listed = new Set(kept.filter((job) => job.groupId === groupId && job.archive).map((job) => job.archive + '\n' + job.entry));
+    const added: UploadJob[] = [];
+    let skipped = 0;
+    for (const folder of plan.folders) {
+      const childCodes = folderCodes(folder, plan);
+      for (const file of folder.files) {
+        if (listed.has(file.archive + '\n' + file.path)) continue;
+        if (folder.kind === 'child' && progress.has(groupId + ' ' + file.archive, file.path)) {
+          skipped++;
+          continue;
+        }
+        added.push({
+          id: crypto.randomUUID(),
+          shootId,
+          groupId,
+          filename: file.name,
+          bytes: file.bytes,
+          modified: 0,
+          progress: 0,
+          status: 'queued',
+          message: 'Готов к отправке',
+          childCodes,
+          archive: file.archive,
+          entry: file.path,
+          folder: folder.code ?? folder.folder,
+          shared: folder.kind === 'group'
+        });
+      }
+    }
+    previous.value += skipped;
+    jobs.value = [...kept, ...added];
+    persist(true);
+  }
   async function check(job: UploadJob) {
     const checks = (job.checks ?? 0) + 1;
     const later = { checks, checkAt: Date.now() + checkDelay(checks) };
@@ -183,10 +243,23 @@ export function usePhotoQueue(shootId: string) {
   }
   async function uploadLive(job: UploadJob, file: File) {
     update(job.id, { status: 'uploading', progress: 0, message: 'Отправляем приватный оригинал' });
-    const result = await photosApi.upload(shootId, job.groupId, file, controller.signal, (progress) => uploadProgress(job.id, progress));
+    const result = await photosApi.upload(
+      shootId,
+      job.groupId,
+      file,
+      controller.signal,
+      (value) => uploadProgress(job.id, value),
+      job.childCodes
+    );
     files.delete(job.id);
+    if (job.archive && job.entry) progress.mark(job.groupId + ' ' + job.archive, job.entry);
     if (result.status === 'duplicate') {
-      update(job.id, { serverId: result.id, status: 'duplicate', progress: 100, message: duplicateMessage });
+      const message = !job.childCodes?.length
+        ? duplicateMessage
+        : result.childCodes?.length
+          ? 'Файл уже был загружен. Разметка проверена, второй кадр не создан.'
+          : 'Такой файл уже есть в другой группе съёмки. Буква не присвоена.';
+      update(job.id, { serverId: result.id, status: 'duplicate', progress: 100, message });
       return;
     }
     const now = Date.now();
@@ -217,32 +290,124 @@ export function usePhotoQueue(shootId: string) {
     });
     files.delete(job.id);
   }
+  function sleep(milliseconds: number): Promise<void> {
+    return new Promise((resolve) => {
+      const timer = window.setTimeout(resolve, milliseconds);
+      wakeUps.push(() => {
+        window.clearTimeout(timer);
+        resolve();
+      });
+    });
+  }
+  function wake() {
+    const pending = wakeUps;
+    wakeUps = [];
+    pending.forEach((resolve) => resolve());
+  }
+  /** An archive entry is cut out of the chosen archive only now, so memory holds no more files than workers. */
+  async function source(job: UploadJob, key: string): Promise<File | undefined> {
+    const archive = archives.get(key);
+    const entry = archive?.entries.get(job.entry ?? '');
+    if (!archive || !entry) return undefined;
+    update(job.id, { status: 'uploading', progress: 0, message: 'Достаём файл из архива' });
+    return new File([await zipEntryBlob(archive.file, entry)], job.filename, { type: mimeType(job.filename) });
+  }
+  /** Transient failures repeat on their own; the queue stops only when every next file would fail the same way. */
+  function fail(job: UploadJob, cause: unknown) {
+    const kind = isAxiosError(cause) ? uploadFailure(cause.response?.status, photoApiErrorCode(cause), navigator.onLine) : 'fail';
+    const attempts = (job.attempts ?? 0) + 1;
+    const delay = kind === 'retry' ? retryDelay(attempts) : null;
+    if (delay !== null) {
+      update(job.id, {
+        status: 'queued',
+        progress: 0,
+        attempts,
+        retryAt: Date.now() + delay,
+        message:
+          'Сервер не ответил. Повторим через ' +
+          Math.round(delay / 1000) +
+          ' с, попытка ' +
+          (attempts + 1) +
+          ' из ' +
+          (maxRetries + 1) +
+          '.'
+      });
+    } else if (kind === 'offline') {
+      offline = true;
+      paused.value = true;
+      update(job.id, { status: 'queued', progress: 0, message: 'Нет подключения к интернету. Продолжим сами, когда связь появится.' });
+    } else if (kind === 'session') {
+      paused.value = true;
+      error.value = 'Сессия завершилась. Войдите снова и выберите те же файлы: отправленные повторно не уйдут.';
+      update(job.id, { status: 'queued', progress: 0, message: 'Ждёт входа в кабинет.' });
+    } else {
+      if (kind === 'locked') {
+        paused.value = true;
+        error.value = 'Группа уже передана. Загрузка в неё остановлена.';
+      }
+      update(job.id, { status: 'error', progress: 0, message: photoApiError(cause) });
+    }
+  }
+  /**
+   * The server numbers a frame when it accepts it, so the frames of one child go one after another in archive order
+   * (A001.jpg becomes A001) while different children go in parallel. Group frames follow all own frames of the group.
+   */
+  function inOrder(job: UploadJob): boolean {
+    if (!job.archive) return true;
+    const pending = (item: UploadJob) =>
+      item.archive !== undefined && item.groupId === job.groupId && ['queued', 'uploading'].includes(item.status);
+    if (job.shared && jobs.value.some((item) => pending(item) && !item.shared)) return false;
+    const first = jobs.value.find(
+      (item) => pending(item) && (job.shared ? item.shared === true : !item.shared && item.folder === job.folder)
+    );
+
+    return first?.id === job.id;
+  }
   async function worker() {
     while (alive && !controller.signal.aborted && !paused.value) {
-      const job = jobs.value.find((item) => item.status === 'queued');
-      if (!job) return;
-      const file = files.get(job.id);
-      if (!file) {
-        update(job.id, { status: 'interrupted', message: 'Выберите исходный файл снова.' });
+      const waitingJobs = jobs.value.filter((item) => item.status === 'queued');
+      if (!waitingJobs.length) return;
+      const now = Date.now();
+      const job = waitingJobs.find((item) => (item.retryAt ?? 0) <= now && inOrder(item));
+      if (!job) {
+        // Either a repeat is due later or a folder waits for its previous frame: check again shortly.
+        await sleep(Math.max(300, Math.min(...waitingJobs.map((item) => (item.retryAt ?? 0) - now))));
         continue;
       }
       try {
+        // The status changes before the first await, so a parallel worker never takes the same job.
+        const file = job.archive ? await source(job, job.archive) : files.get(job.id);
+        if (!file) {
+          update(job.id, { status: 'interrupted', message: job.archive ? archiveInterrupted : 'Выберите исходный файл снова.' });
+          continue;
+        }
         if (isMockApiEnabled) await prepareMock(job, file);
         else await uploadLive(job, file);
       } catch (cause) {
-        if (!controller.signal.aborted) update(job.id, { status: 'error', progress: 0, message: photoApiError(cause) });
+        if (!controller.signal.aborted) fail(job, cause);
       }
+    }
+  }
+  async function keepAwake(): Promise<WakeLockSentinel | null> {
+    try {
+      return 'wakeLock' in navigator ? await navigator.wakeLock.request('screen') : null;
+    } catch {
+      return null;
     }
   }
   async function start() {
     if (busy.value) return;
     busy.value = true;
     paused.value = false;
+    offline = false;
     error.value = '';
+    // A sleeping laptop drops the connection: an upload of a whole shoot keeps the screen on while it runs.
+    const awake = await keepAwake();
     try {
       // Browser-side demo preparation is CPU bound, so it stays sequential.
       await Promise.all(Array.from({ length: isMockApiEnabled ? 1 : photoLimits.parallel }, worker));
     } finally {
+      void awake?.release().catch(() => undefined);
       if (alive) {
         busy.value = false;
         persist(true);
@@ -250,20 +415,28 @@ export function usePhotoQueue(shootId: string) {
     }
   }
   function pause() {
-    if (busy.value) paused.value = true;
+    if (busy.value) {
+      paused.value = true;
+      wake();
+    }
+  }
+  function online() {
+    if (offline && !busy.value) void start();
   }
   function retry(id: string) {
     if (busy.value) return;
-    if (!files.has(id)) {
-      error.value = 'Выберите исходный файл снова: он не сохраняется после обновления страницы.';
+    const job = jobs.value.find((item) => item.id === id);
+    if (!job || (job.archive ? !archives.has(job.archive) : !files.has(id))) {
+      error.value = job?.archive ? archiveInterrupted : 'Выберите исходный файл снова: он не сохраняется после обновления страницы.';
       return;
     }
-    update(id, { status: 'queued', progress: 0, message: 'Готов к повтору', serverId: undefined });
+    update(id, { status: 'queued', progress: 0, message: 'Готов к повтору', serverId: undefined, attempts: 0, retryAt: undefined });
     void start();
   }
   function clear() {
     if (!busy.value) {
       jobs.value = jobs.value.filter((job) => !['done', 'duplicate'].includes(job.status));
+      previous.value = 0;
       persist(true);
     }
   }
@@ -281,6 +454,7 @@ export function usePhotoQueue(shootId: string) {
     }
   }
   window.addEventListener('beforeunload', beforeUnload);
+  window.addEventListener('online', online);
   onBeforeRouteLeave(
     () =>
       !busy.value ||
@@ -289,13 +463,16 @@ export function usePhotoQueue(shootId: string) {
   onScopeDispose(() => {
     alive = false;
     controller.abort();
+    wake();
     files.clear();
+    archives.clear();
     window.clearTimeout(trackTimer);
     window.clearTimeout(refreshTimer);
     window.clearTimeout(persistTimer);
     write();
     window.removeEventListener('beforeunload', beforeUnload);
+    window.removeEventListener('online', online);
   });
   if (jobs.value.some((job) => job.status === 'processing' && job.serverId)) track();
-  return { jobs, busy, paused, error, queued, accepted, waiting, failed, add, start, pause, retry, clear, remove };
+  return { jobs, busy, paused, error, queued, accepted, waiting, failed, previous, add, addArchive, start, pause, retry, clear, remove };
 }

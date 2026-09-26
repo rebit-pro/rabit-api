@@ -3,6 +3,8 @@ import { computed, shallowRef } from 'vue';
 import { useRoute } from 'vue-router';
 import { usePhotoWorkspace } from '../composables/usePhotoWorkspace';
 import { usePhotoQueue } from '../composables/usePhotoQueue';
+import type { ChosenArchive } from '../composables/useArchivePlan';
+import type { ArchivePlan as ArchivePlanData } from '../archive';
 import { photoApiError } from '../api';
 import type { ManagedPhoto } from '../types';
 import OrganizationLoadState from '../../organization/components/OrganizationLoadState.vue';
@@ -59,7 +61,12 @@ const {
   transfer
 } = workspace;
 const queue = usePhotoQueue(String(route.params.shootId));
-const { jobs, busy: uploading, paused, error: uploadError, queued, accepted, waiting, failed } = queue;
+const { jobs, busy: uploading, paused, error: uploadError, queued, accepted, waiting, failed, previous } = queue;
+function startArchive(plan: ArchivePlanData, chosen: ChosenArchive[]) {
+  if (!group.value) return;
+  queue.addArchive(plan, chosen, group.value.id);
+  void queue.start();
+}
 const groupItems = computed(() =>
   groups.value.map((item) => ({
     title: item.name + (item.state === 'preparing' ? ' · Подготовка' : ' · Подборка опубликована'),
@@ -252,7 +259,10 @@ async function confirmMove(toId: string, code: string) {
         :failed="failed"
         :error="uploadError"
         :group-name="group.name"
+        :child-codes="childCodes"
+        :previous="previous"
         @files="queue.add($event, group.id)"
+        @archive="startArchive"
         @start="queue.start"
         @pause="queue.pause"
         @retry="queue.retry"

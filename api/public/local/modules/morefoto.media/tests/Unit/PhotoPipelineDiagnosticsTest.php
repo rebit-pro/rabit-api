@@ -16,6 +16,7 @@ use Morefoto\Media\Application\Photo\Message\Handler\ProcessPhotoMessageHandler;
 use Morefoto\Media\Application\Photo\Message\ProcessPhotoMessage;
 use Morefoto\Media\Application\Photo\UseCase\DispatchPendingPhotoJobsUseCase;
 use Morefoto\Media\Application\Photo\Dto\UploadPhotoInputDto;
+use Morefoto\Media\Application\Photo\Service\UploadChildAssignment;
 use Morefoto\Media\Application\Photo\UseCase\UploadPhotoUseCase;
 use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
@@ -248,6 +249,7 @@ final class PhotoPipelineDiagnosticsTest extends TestCase
             $photos,
             $publisher,
             $logger,
+            $this->createStub(UploadChildAssignment::class),
         ))->execute(4, new UploadPhotoInputDto(
             shootId: '22345678-abcd-4abc-8abc-123456789abc',
             groupId: '32345678-abcd-4abc-8abc-123456789abc',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Media\Presentation\Photo\Dto;
 
+use Morefoto\Media\Presentation\Photo\PhotoInputMapper;
 use Morefoto\Media\Presentation\Photo\PhotoListInputMapper;
 use Rebit\Share\Infrastructure\Controller\Request\Attribute\FormField;
 use Rebit\Share\Infrastructure\Controller\Request\Attribute\MultipartFile;
@@ -23,5 +24,7 @@ final readonly class UploadPhotoRequestDto implements RequestUploadDtoInterface
         public string $groupId,
         #[FormField(errorCode: 'INVALID_FINGERPRINT')]
         public ?string $fingerprint,
+        #[FormField(errorCode: 'INVALID_CHILD_CODES', pattern: PhotoInputMapper::CHILD_CODES_PATTERN)]
+        public ?string $childCodes = null,
     ) {}
 }
