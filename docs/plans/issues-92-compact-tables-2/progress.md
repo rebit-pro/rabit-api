@@ -3,8 +3,8 @@
 ## Точка продолжения
 
 - Ветка `codex/issues-92-compact-tables-2`, worktree `/home/user/rabit-api-worktrees/issues-92-compact-tables-2`,
-  base `origin/main` `9e00856c`. Issue [#92](https://github.com/rebit-pro/rabit-api/issues/92). PR — draft, ссылка
-  появится после открытия.
+  base `origin/main` `9e00856c`. Issue [#92](https://github.com/rebit-pro/rabit-api/issues/92). Draft PR
+  [#160](https://github.com/rebit-pro/rabit-api/pull/160), head `8da11c3` + этот журнал.
 - Завершено: разбор, решения DEC-01…04 с пользователем, прототип фронтенда, скриншоты «было/стало».
 - Сейчас: draft PR с планом и макетами ждёт одобрения пользователя.
 - Следующий шаг: после одобрения макетов и DEC-05…09 — backend: серверная сортировка трёх списков (checklist 5).
@@ -47,3 +47,4 @@
   `rabit-issues92-node`).
 - Стенд: `pageerror Cannot read properties of undefined (reading 'length')` есть и на main (заглушка отдаёт пустой
   ответ на `/api/v1/group-links` и `/legal/consents/pending`) — артефакт стенда, не прототипа.
+- Открыт draft PR [#160](https://github.com/rebit-pro/rabit-api/pull/160) (план `b2617ce`, прототип `8da11c3`).
