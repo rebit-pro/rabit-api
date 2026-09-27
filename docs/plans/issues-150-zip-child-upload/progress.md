@@ -2,19 +2,16 @@
 
 ## Точка продолжения
 
-- Ветка: `codex/issues-150-zip-child-upload`, base main `2104016` (слит после ревью); последний код — `11c7915`.
-- Issue: https://github.com/rebit-pro/rabit-api/issues/150 и #153 (из ревью). PR: https://github.com/rebit-pro/rabit-api/pull/151.
+- Ветка: `codex/issues-150-zip-child-upload`, base main `b5e8c20` (слит 27.09.2026 вместе с #152); head перед merge — этот коммит.
+- Issue: https://github.com/rebit-pro/rabit-api/issues/150 и #153. PR: https://github.com/rebit-pro/rabit-api/pull/151.
 - Документация: `docs/plans/issues-150-zip-child-upload/plan.md`.
-- Готово: backend (шаг 4), frontend (шаг 5), быстрые проверки и self-review (шаг 6), live E2E-спек и визуальная
-  проверка desktop/mobile на частичном прогоне группы `a` (шаг 7).
-- Сейчас: исправлены блокер ревью #151 (кадр с неудачным превью) и неблокирующий #153; нужен повторный раунд
-  ревью. После ревью без блокеров — полный `make test-e2e` (шаг 8), затем реальная загрузка съёмки 158 на stage
-  (T15, T19) с проверкой места на диске (шаг 3a).
-- Блокеры: нет. Для съёмки 158 групповые папки `F`, `L`, `U`, `AX` отмечаются переключателем на сверке (или
-  скрипт подготовки переименовывает их в `GROUP-…`).
+- Готово: все шаги плана; раунд 1 ревью исправлен, нового ревью по `a363993` нет; пользователь 27.09.2026 разрешил
+  merge; полный gate PASS.
+- Следующий шаг: merge PR #151; выкатка на stage — отдельное действие по решению пользователя; после неё — реальная
+  загрузка съёмки 158 (T15, T19) с проверкой места на диске (шаг 3a), групповые `F`, `L`, `U`, `AX` отмечаются
+  переключателем.
+- Блокеры: нет.
 - Рабочее дерево: всё закоммичено и отправлено.
-- Следующая проверка: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local
-  E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
 
 ## Тест-кейсы
 
@@ -134,3 +131,14 @@
   86 pass; `test:commerce` → 220 pass.
 - E2E, частичный прогон группы `a` после исправлений (`rabit-e2e-c660dbc6e261`, head `dfccee5`): 81 passed, exit 0;
   `zz-media-archive` и прежние `zz-media` зелёные. Полный gate — после повторного ревью.
+
+### 2026-09-27, merge
+
+- Нового ревью по head `a363993` на GitHub нет (последняя запись — ответ на блокер раунда 1); артефакты ревьюера
+  `/tmp/rabit-review-151-152` относятся к `4e0e1f7`. Пользователь разрешил merge.
+- Слит main `b5e8c20` (#152 compact tables): конфликт только в `frontend/e2e/live/groups.json` — объединены
+  `zz-media-archive` (группа a) и `cabinet-tables` (группа b); `di/media.php`, `helpers.ts`, `icons.ts` слились
+  автоматически без дублей.
+- Проверки на `8581e94`: phpunit unit → 868 OK; `npm run check` → exit 0, 86 pass; `test:commerce` → 223 pass.
+- Полный gate `make test-e2e …` (run `rabit-e2e-8d058259a66a`, 441 с): группа a — 81 passed, группа b — 56 passed,
+  все verify-*.php passed, exit 0.

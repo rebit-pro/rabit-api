@@ -254,7 +254,7 @@ backend, но разметка теряется при закрытии вкла
 - [x] 6. Быстрые проверки backend/frontend, self-review.
 - [x] 7. Live E2E-сценарий ZIP в `e2e/live` + регистрация в `groups.json`; визуальная проверка desktop/mobile
   (частичный прогон группы `a`; полный gate — шаг 8).
-- [ ] 8. Полный `make test-e2e` после ревью без блокеров; обновить progress, PR готов к merge.
+- [x] 8. Полный `make test-e2e` после ревью без блокеров; обновить progress, PR готов к merge.
 
 ## Критерии приёмки
 
