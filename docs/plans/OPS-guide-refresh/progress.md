@@ -5,7 +5,8 @@
 - Ветка `codex/ops-guide-refresh` от `main` `173035e`. Worktree `/home/user/rabit-api-worktrees/ops-guide-refresh`.
 - Завершено: просмотрщик скриншотов, пересъёмка 49 снимков и 4 новых (53 WebP, 2,2 МБ), тексты всех статей,
   проверки KB-T01, KB-T03…T05, KBR-T01…T04. Issues вне scope: #156, #157.
-- Следующий шаг: PR → review и merge пользователем → frontend-only выкладка (образ от живого frontend в момент
+- PR https://github.com/rebit-pro/rabit-api/pull/158 (head `628516e`).
+- Следующий шаг: review и merge пользователем → frontend-only выкладка (образ от живого frontend в момент
   выкладки + `frontend/public/guide/` из merge-коммита), KB-T02 и KB-T06.
 - Стенд остановлен. Скрипты съёмки — scratchpad сессии `shots/` (`lib.mjs`, `p1…p9-redo.mjs`, `run.sh`); повтор
   требует нового `make e2e-up` и обновления имени контейнера в `run.sh`.
