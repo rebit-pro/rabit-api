@@ -34,11 +34,30 @@ test('a transmitted group has every step done', () => {
   assert.ok(path({ prepared: true, sentAt: '2026-09-26T10:00:00Z' }).every((step) => step.state === 'done' && !step.hint));
 });
 
-test('only a staff group has the staff lists step', () => {
+test('a group without pending lists has no staff lists step; a staff group always has it', () => {
   assert.equal(
     path({}).some((step) => step.key === 'staff'),
     false
   );
   const staff = galleryPath({ kind: 'staff', problems: ['staffRequestsPending'], prepared: false, sentAt: null });
   assert.equal(staff.find((step) => step.state === 'current')?.key, 'staff');
+});
+
+test('#154: a regular group held by an unreviewed staff list shows the staff lists step', () => {
+  const steps = path({ problems: ['staffRequestsPending'] });
+  assert.deepEqual(states(steps), {
+    photos: 'done',
+    assign: 'done',
+    conditions: 'done',
+    staff: 'current',
+    prepare: 'todo',
+    transmit: 'todo'
+  });
+  assert.match(steps[3].hint, /Списках сотрудников/);
+});
+
+test('#154: a problem this screen does not know still blocks the link check with a reason', () => {
+  const current = path({ problems: ['somethingNew'] }).find((step) => step.state === 'current');
+  assert.equal(current?.key, 'prepare');
+  assert.match(current.hint, /somethingNew/);
 });
