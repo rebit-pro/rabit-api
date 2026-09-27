@@ -22,7 +22,7 @@ import StaffRequestTable from './StaffRequestTable.vue';
 import UiRemoveDialog from '../../ui/components/UiRemoveDialog.vue';
 import UiBulkNotice from '../../ui/components/UiBulkNotice.vue';
 import { bulkNotice, runEach, type BulkNotice } from '../../ui/removal';
-import { staffRequestsApi } from '../api';
+import { staffRequestRemovalError, staffRequestsApi } from '../api';
 import type { UiTableSort } from '../../ui/table-types';
 type RequestState = keyof typeof requestStatus;
 const route = useRoute(),
@@ -141,7 +141,7 @@ async function confirmRemove(): Promise<void> {
       removal.value,
       (request) => placeName(request) + ' · ' + (request.createdByName ?? ''),
       (request) => staffRequestsApi.remove(request.id),
-      () => 'список уже перенесён или недоступен'
+      staffRequestRemovalError
     );
     bulk.value = bulkNotice('Удалено', result);
     selectedIds.value = [];

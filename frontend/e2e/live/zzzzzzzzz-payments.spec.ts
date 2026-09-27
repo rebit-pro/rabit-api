@@ -271,9 +271,10 @@ if (sandbox) {
       // Registry screens: desktop list and card, mobile card.
       await organizer.page.setViewportSize({ width: 1440, height: 1000 });
       await organizer.page.goto('/cabinet/payments?orderNumber=' + encodeURIComponent(order.number));
-      await expect(organizer.page.getByTestId('payment-row')).toHaveCount(2);
+      const rows = organizer.page.locator('[data-row-id]').filter({ visible: true });
+      await expect(rows).toHaveCount(2);
       await organizer.page.screenshot({ path: testInfo.outputPath('g1-desktop-registry.png'), fullPage: true, animations: 'disabled' });
-      await organizer.page.getByTestId('payment-row').first().getByRole('link').click();
+      await rows.first().getByRole('link').first().click();
       await expect(organizer.page.getByTestId('payment-card-status')).toHaveText('Оплачено');
       await expect(organizer.page.getByTestId('payment-facts')).toContainText('после возврата покупателя');
       // The layout picks the mobile navigation on load: reload after resizing.

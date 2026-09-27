@@ -111,7 +111,8 @@ export function staffPaymentError(problem: ApiProblem): string {
   if (problem.code === 'FORBIDDEN' || problem.status === 403) return 'Платежи доступны организатору и куратору своей области.';
   if (problem.code === 'PAYMENT_ATTEMPT_NOT_FOUND' || problem.status === 404) return 'Платёж не найден в вашей области.';
   if (problem.code === 'ACCESS_CHANGED') return 'Ваши права изменились во время загрузки. Обновите страницу.';
-  if (problem.code === 'INVALID_FILTER' || problem.code === 'INVALID_PAGE') return 'Проверьте значения фильтров.';
+  if (problem.code === 'INVALID_FILTER' || problem.code === 'INVALID_PAGE' || problem.code === 'INVALID_SORT')
+    return 'Проверьте значения фильтров.';
   return 'Сервер не вернул платежи. Повторите попытку.';
 }
 

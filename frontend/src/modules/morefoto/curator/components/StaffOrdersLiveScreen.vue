@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, shallowRef } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { money } from '../../commerce/money';
 import OrderComposition from '../../orders/components/OrderComposition.vue';
@@ -22,9 +22,11 @@ import UiRemoveDialog from '../../ui/components/UiRemoveDialog.vue';
 import UiBulkNotice from '../../ui/components/UiBulkNotice.vue';
 import { bulkNotice, runEach, type BulkNotice } from '../../ui/removal';
 import { csvText, downloadCsv } from '../../ui/csv';
-import { liveOrdersApi } from '../../orders/live/api';
+import { apiProblem, liveOrdersApi } from '../../orders/live/api';
+import { orderRemovalError } from '../../orders/live/rules';
 import type { StaffOrder } from '../../orders/live/types';
 const route = useRoute();
+const router = useRouter();
 const auth = useAuthStore();
 const { orderId, filters, view, page, card, loading, error, reload, apply, reset, selectScope } = useStaffOrders();
 const {
@@ -92,12 +94,13 @@ async function confirmRemove(): Promise<void> {
       removal.value,
       (order) => order.number,
       (order) => liveOrdersApi.remove(order.id),
-      () => 'заказ оплачен или оплата ещё идёт'
+      (cause) => orderRemovalError(apiProblem(cause))
     );
     notice.value = bulkNotice('Удалено', result);
     select([]);
     removal.value = null;
-    await reload();
+    if (orderId.value && result.done) await router.push(listLink.value);
+    else await reload();
   } finally {
     removing.value = false;
   }
@@ -198,6 +201,16 @@ function lastDays(days: number): void {
           <span v-if="card.paidAt" class="mf-muted" data-testid="staff-order-paid-at">Оплачен {{ formatMoment(card.paidAt) }} мск</span>
           <MfStatus v-if="card.latePayment" tone="warning" data-testid="staff-order-late">Поздняя оплата</MfStatus>
           <RouterLink :to="{ path: '/cabinet/payments', query: { orderNumber: card.number } }" class="mf-muted">Платежи заказа</RouterLink>
+          <v-btn
+            v-if="canRemove && (card.paymentStatus === 'unpaid' || card.paymentStatus === 'declined')"
+            color="error"
+            variant="text"
+            density="compact"
+            prepend-icon="mdi-delete-outline"
+            data-testid="staff-order-remove"
+            @click="askRemove([card])"
+            >Удалить заказ</v-btn
+          >
           <MfStatus :tone="toneOf(productionTone, card.productionStatus)">{{ productionLabels[card.productionStatus] }}</MfStatus>
         </div>
       </header>
@@ -224,7 +237,7 @@ function lastDays(days: number): void {
         <MfDistribution title="Изготовление" :segments="productionSegments" :unit-forms="['заказа', 'заказов', 'заказов']" />
       </div>
     </section>
-    <form class="mf-panel staff-orders__filters" role="search" @submit.prevent="apply()">
+    <form class="mf-panel staff-orders__filters" role="search" data-testid="order-scope-filters" @submit.prevent="apply()">
       <!-- Vuetify sets null on clear; keep the filter a string for apply() and the URL. -->
       <v-text-field
         v-model="filters.q"
@@ -261,7 +274,7 @@ function lastDays(days: number): void {
         >
         <v-btn variant="text" density="compact" :disabled="!hasFilters" @click="reset">Сбросить</v-btn>
       </div>
-      <div v-if="more" class="staff-orders__more" data-testid="order-scope-filters">
+      <div v-if="more" class="staff-orders__more">
         <v-select
           :model-value="filters.shootId"
           :items="scopeOptions.shootId"

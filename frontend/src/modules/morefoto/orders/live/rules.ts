@@ -227,8 +227,19 @@ export function staffOrderError(problem: ApiProblem): string {
   if (problem.code === 'FORBIDDEN' || problem.status === 403) return 'Заказы доступны организатору и куратору своей области.';
   if (problem.code === 'ORDER_NOT_FOUND' || problem.status === 404) return 'Заказ не найден в вашей области.';
   if (problem.code === 'ACCESS_CHANGED') return 'Ваши права изменились во время загрузки. Обновите страницу.';
-  if (problem.code === 'INVALID_FILTER' || problem.code === 'INVALID_PAGE') return 'Проверьте значения фильтров.';
+  if (problem.code === 'INVALID_FILTER' || problem.code === 'INVALID_PAGE' || problem.code === 'INVALID_SORT')
+    return 'Проверьте значения фильтров.';
   return 'Сервер не вернул заказы. Повторите попытку.';
+}
+
+/** Why an order stayed after «Удалить» (#92 DEC-02): money received or still possible keeps it. */
+export function orderRemovalError(problem: ApiProblem): string {
+  if (problem.network) return 'нет ответа сервера — обновите список';
+  if (problem.code === 'ORDER_PAID') return 'заказ оплачен';
+  if (problem.code === 'PAYMENT_IN_PROGRESS') return 'оплата ещё идёт — дождитесь её результата';
+  if (problem.code === 'ORDER_NOT_FOUND' || problem.status === 404) return 'заказ уже удалён';
+  if (problem.status === 403) return 'удалять заказы может только организатор';
+  return 'сервер не удалил заказ, повторите позже';
 }
 
 export function newRequestId(random: () => string = () => crypto.randomUUID()): string {

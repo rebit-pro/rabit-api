@@ -100,6 +100,16 @@ export const staffRequestsApi = {
   }
 };
 
+/** Why a staff list stayed after «Удалить» (#92 DEC-01). */
+export function staffRequestRemovalError(cause: unknown): string {
+  if (!isAxiosError(cause) || !cause.response) return 'нет ответа сервера — обновите список';
+  const code = (cause.response.data as { error?: { code?: string } } | undefined)?.error?.code;
+  if (code === 'REQUEST_TRANSFERRED') return 'список уже перенесён';
+  if (code === 'AUTHOR_REQUIRED' || cause.response.status === 403) return 'удалить может автор списка или организатор';
+  if (cause.response.status === 404) return 'список уже удалён или недоступен';
+  return 'сервер не удалил список, повторите позже';
+}
+
 export function staffRequestError(cause: unknown, action: StaffCommand['action'] = 'submit'): string {
   if (!isAxiosError(cause)) return cause instanceof Error ? cause.message : 'Не удалось сохранить список.';
   // No HTTP answer: the server may have applied the command. The unchanged form repeats with the same key safely.

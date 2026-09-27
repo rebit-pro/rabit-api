@@ -49,7 +49,7 @@ VERIFIERS = [
     # #26: HND-06 on 1000 staff requests keeps a fixed SQL count; the set is rolled back after the measurement.
     ("verify-handoff.php", None, "F1 list integration passed", ["zzz-handoff"]),
     # The browser records the secrets it received so the verifier can prove none of them is stored in clear text.
-    ("verify-orders.php", "e5-orders.json", "E5 integration passed", ["zzzzz-orders", "zzzzzz-transfers", "zzzzzzzz-payment-costs"]),
+    ("verify-orders.php", "e5-orders.json", "E5 integration passed", ["zzzzz-orders", "zzzzzz-transfers", "zzzzzzzz-payment-costs", "zzzzzzzzzzz-tables"]),
     # F2 prepares the link first in its group and reports the delivery after the minute of preparation is over.
     ("verify-links.php", None, "F2 integration passed", ["z-links-preparation", "zzzz-links"]),
     # D3: the browser leaves one untransferred staff request for the injected-failure check on MySQL.
