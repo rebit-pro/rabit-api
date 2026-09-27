@@ -33,3 +33,4 @@
 - Визуально: обёртка сначала переносила «Проверить» — добавлен `.links-check` (inline-flex, nowrap).
 - Проверки: `npm run check` exit 0 (`test:ui` 88/88), `npm run test:commerce` 223/223.
 - PR #155 открыт; самопроверка — блокеров нет (оба потребителя `galleryPath` уже дают «К спискам» для шага `staff`).
+- **Полный гейт PASS** `rabit-e2e-8eed13352eb0`: 137 браузерных сценариев (a 81, b 56), все verifier passed (445 с).
