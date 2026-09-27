@@ -102,3 +102,21 @@
 - **Полный гейт PASS** на head `c9739c2` (main `2104016`): `make test-e2e …` (`rabit-e2e-26f111ec89ea`) — 135 браузерных
   сценариев (a 79, b 56), все verifier (storefront, handoff, orders, links, transfers, avatar, payment-costs, payments,
   files, access, support, photo-deletion) — passed.
+
+### 2026-09-27, выкатка main b5e8c20 (#152) на app.morefoto36.ru
+
+- PR #152 слит в `main` как `b5e8c20` (дерево = гейт `rabit-e2e-26f111ec89ea`, 135 сценариев, все verifier PASS).
+- **Релиз** `/srv/morefoto/releases/main-20260926195618-b5e8c20` по команде пользователя: `git archive b5e8c20 api`
+  (2526 файлов) и образ `morefoto-frontend:main-20260926195618-b5e8c20` (`VITE_API_MOCKS_ENABLED=false`, в чанках есть
+  `STRUCTURE_HAS_ORDERS` и «Скопировать ссылки»). `vendor` и `backend.conf` — из `main-20260926163307-591d698`
+  (`composer.lock` и конфиг nginx не менялись). Миграций и новых модулей нет.
+- `sha256sum --check`, `bash -n` — PASS; `backup.sh` — 71 275 байт; `restore-check.sh` — 175 таблиц: PASS.
+- FPM первым; DI-smoke 17/17 (`StructureRemovalController`, `DeleteStructureUseCase`, `CatalogRemovalController`,
+  `DeleteProductUseCase`, четыре контракта удаления, соседние контроллеры). Затем backend и все воркеры — 11 сервисов,
+  включая `morefoto_stage_files_consumer`/`files_dispatcher`; frontend 2/2.
+- Живая проверка: `/`, `/login`, `/cabinet/catalog`, `/cabinet/links` — 200; `DELETE` групп, съёмок, учреждений и
+  продукции без токена — 401 `UNAUTHORIZED`; все сервисы в состоянии 1/1 и 2/2.
+- Не проверено вживую: удаление под организатором на стенде и визуальный вид экранов — проверка пользователя.
+- Откат: `docker service rollback` для 11 backend-сервисов (прежний `/app` — `main-20260926163307-591d698`, спецификации
+  в `services-before.json`) и `morefoto_frontend` (прежний образ в `frontend-before.txt` —
+  `morefoto-frontend:main-20260926163307-591d698`).
