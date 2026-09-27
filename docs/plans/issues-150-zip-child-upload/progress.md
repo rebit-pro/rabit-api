@@ -142,3 +142,26 @@
 - Проверки на `8581e94`: phpunit unit → 868 OK; `npm run check` → exit 0, 86 pass; `test:commerce` → 223 pass.
 - Полный gate `make test-e2e …` (run `rabit-e2e-8d058259a66a`, 441 с): группа a — 81 passed, группа b — 56 passed,
   все verify-*.php passed, exit 0.
+
+### 2026-09-27, выкатка main 9a4cce6 (#151) на app.morefoto36.ru
+
+- PR #151 слит как `022c4e2` (полный gate `rabit-e2e-8d058259a66a`: a 81, b 56, verifier PASS); выкатывался main
+  `9a4cce6` (= `022c4e2` + запись выкатки #152), по команде пользователя.
+- **Релиз** `/srv/morefoto/releases/main-20260927092151-9a4cce6`: `git archive 9a4cce6 api` (2528 файлов) и образ
+  `morefoto-frontend:main-20260927092151-9a4cce6` (`VITE_API_MOCKS_ENABLED=false`, в чанке `PhotoWorkspacePage` есть
+  «ZIP по детям» и `childCodes`). `vendor` и `backend.conf` — из `main-20260926195618-b5e8c20` (`composer.lock` и конфиг
+  nginx не менялись). Миграций и новых модулей нет.
+- `sha256sum --check` — PASS; `prepare-release.sh` проверил `UploadChildAssignment.php`, `CHILD_CODES_PATTERN`,
+  `assignMs` в `LogSanitizer`; `backup.sh` — 74 249 байт; `restore-check.sh` — 175 таблиц: PASS.
+- FPM первым; DI-smoke 21/21 (`PhotoUploadController`, `UploadPhotoUseCase`, `UploadChildAssignment`,
+  `AssignPhotosUseCase` и прежние 17). Затем backend и 9 воркеров/диспетчеров (всего 11 backend-сервисов), frontend 2/2.
+  Переключение backend/воркеров сначала было заблокировано auto mode Claude Code; пользователь разрешил,
+  добавлено локальное правило `Bash(ssh -o BatchMode=yes rebit-pro:*)` в `.claude/settings.local.json` (не в git).
+- Живая проверка: `/`, `/login`, `/cabinet/institutions`, `/health` — 200; `POST /api/v1/shoots/{id}/photos` без токена
+  — 401; все 12 сервисов 1/1 и 2/2. Свободно на `/` 22 ГБ — для съёмки 158 (4,73 ГБ × 2,5 ≈ 12 ГБ) достаточно.
+- Не проверено вживую: загрузка ZIP под организатором — реальная загрузка съёмки 158 пользователем (T15, T19);
+  групповые папки `F`, `L`, `U`, `AX` отмечаются переключателем на сверке.
+- Откат: `docker service rollback` для 11 backend-сервисов (прежний `/app` — `main-20260926195618-b5e8c20`,
+  спецификации в `services-before.json`) и `morefoto_frontend` (прежний образ в `frontend-before.txt` —
+  `morefoto-frontend:main-20260926195618-b5e8c20`).
+
