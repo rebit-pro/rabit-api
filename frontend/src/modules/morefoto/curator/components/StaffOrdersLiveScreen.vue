@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, shallowRef } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { money } from '../../commerce/money';
@@ -17,9 +17,16 @@ import MfStatTile from '@/components/viz/MfStatTile.vue';
 import MfDistribution from '@/components/viz/MfDistribution.vue';
 import { plural } from '@/components/viz/measures';
 import { CHART_CATEGORY } from '../../ui/chartPalette';
+import StaffOrderTable from './StaffOrderTable.vue';
+import UiRemoveDialog from '../../ui/components/UiRemoveDialog.vue';
+import UiBulkNotice from '../../ui/components/UiBulkNotice.vue';
+import { bulkNotice, runEach, type BulkNotice } from '../../ui/removal';
+import { csvText, downloadCsv } from '../../ui/csv';
+import { liveOrdersApi } from '../../orders/live/api';
+import type { StaffOrder } from '../../orders/live/types';
 const route = useRoute();
 const auth = useAuthStore();
-const { orderId, filters, page, card, loading, error, reload, apply, reset, selectScope } = useStaffOrders();
+const { orderId, filters, view, page, card, loading, error, reload, apply, reset, selectScope } = useStaffOrders();
 const {
   institutionId: scopeInstitution,
   options: scopeOptions,
@@ -57,6 +64,98 @@ const photoCodes = computed(() => card.value?.correctionPhotos.map((photo) => ph
 function moscowDate(offsetDays: number): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(new Date(Date.now() - offsetDays * 86400000));
 }
+// Selection survives paging: the chosen orders are kept whole, so CSV and removal need no second read.
+const selected = shallowRef<string[]>([]);
+const picked = new Map<string, StaffOrder>();
+function select(ids: string[]): void {
+  for (const order of page.value?.items ?? []) if (ids.includes(order.id)) picked.set(order.id, order);
+  for (const id of [...picked.keys()]) if (!ids.includes(id)) picked.delete(id);
+  selected.value = ids;
+}
+const more = shallowRef(!!(filters.shootId || filters.groupId || filters.dateFrom || filters.dateTo));
+const canRemove = computed(() => !!auth.user?.permissions?.includes('organization.manage'));
+const removal = shallowRef<StaffOrder[] | null>(null);
+const skipped = shallowRef(0);
+const removing = shallowRef(false);
+const notice = shallowRef<BulkNotice | null>(null);
+function askRemove(orders: StaffOrder[]): void {
+  const unpaid = orders.filter((order) => order.paymentStatus === 'unpaid' || order.paymentStatus === 'declined');
+  skipped.value = orders.length - unpaid.length;
+  if (unpaid.length) removal.value = unpaid;
+  else notice.value = { tone: 'warning', text: 'Выбранные заказы оплачены или оплачиваются — удалять нечего.', failures: [] };
+}
+async function confirmRemove(): Promise<void> {
+  if (!removal.value) return;
+  removing.value = true;
+  try {
+    const result = await runEach(
+      removal.value,
+      (order) => order.number,
+      (order) => liveOrdersApi.remove(order.id),
+      () => 'заказ оплачен или оплата ещё идёт'
+    );
+    notice.value = bulkNotice('Удалено', result);
+    select([]);
+    removal.value = null;
+    await reload();
+  } finally {
+    removing.value = false;
+  }
+}
+const csvHeader = [
+  'Номер',
+  'Создан (мск)',
+  'Учреждение',
+  'Съёмка',
+  'Группа',
+  'Покупатель',
+  'Телефон',
+  'Email',
+  'Сумма, ₽',
+  'Оплата',
+  'Изготовление'
+];
+function exportRows(orders: StaffOrder[]): void {
+  const rows = orders.map((order) => [
+    order.number,
+    formatMoment(order.createdAt),
+    order.institutionName,
+    order.shootName,
+    order.groupName,
+    order.buyer.name,
+    formatPhone(order.buyer.phone),
+    order.buyer.email,
+    (order.quote.total / 100).toFixed(2).replace('.', ','),
+    paymentLabels[order.paymentStatus],
+    productionLabels[order.productionStatus]
+  ]);
+  downloadCsv('orders-' + moscowDate(0) + '.csv', csvText(csvHeader, rows));
+}
+/** Everything the filter finds, page by page up to the limit (#92 DEC-07); a larger set asks for a narrower filter. */
+const EXPORT_LIMIT = 1000;
+const exporting = shallowRef(false);
+async function exportAll(): Promise<void> {
+  if ((page.value?.meta.total ?? 0) > EXPORT_LIMIT) {
+    notice.value = {
+      tone: 'warning',
+      text: 'Выгрузка — не больше ' + EXPORT_LIMIT + ' заказов. Уточните фильтр или период.',
+      failures: []
+    };
+    return;
+  }
+  exporting.value = true;
+  try {
+    const orders: StaffOrder[] = [];
+    for (let number = 1, pages = 1; number <= pages; number++) {
+      const result = await liveOrdersApi.search(filters, { ...view.value, page: number, pageSize: 100 });
+      orders.push(...result.items);
+      pages = result.meta.totalPages;
+    }
+    exportRows(orders);
+  } finally {
+    exporting.value = false;
+  }
+}
 function lastDays(days: number): void {
   filters.dateFrom = moscowDate(days - 1);
   filters.dateTo = moscowDate(0);
@@ -65,9 +164,20 @@ function lastDays(days: number): void {
 </script>
 <template>
   <header class="staff-orders__heading">
-    <p class="mf-eyebrow">РАБОТА С УЧРЕЖДЕНИЕМ</p>
-    <h1>{{ orderId ? 'Заказ' : 'Заказы' }}</h1>
-    <p class="mf-muted">Заказы покупателей в вашей области. Ключи доступа покупателей здесь не показываются.</p>
+    <div>
+      <p class="mf-eyebrow">РАБОТА С УЧРЕЖДЕНИЕМ</p>
+      <h1>{{ orderId ? 'Заказ' : 'Заказы' }}</h1>
+      <p class="mf-muted">Заказы покупателей в вашей области. Ключи доступа покупателей здесь не показываются.</p>
+    </div>
+    <v-btn
+      v-if="!orderId && page?.meta.total"
+      variant="outlined"
+      prepend-icon="mdi-download-outline"
+      :loading="exporting"
+      data-testid="order-export-all"
+      @click="exportAll"
+      >Выгрузить всё · CSV</v-btn
+    >
   </header>
   <v-alert v-if="error" type="error" variant="tonal" class="mb-5" role="alert"
     >{{ error }}<v-btn variant="text" @click="reload">Повторить</v-btn></v-alert
@@ -127,21 +237,31 @@ function lastDays(days: number): void {
         hide-details="auto"
         @click:clear="filters.q = ''"
       />
-      <div class="mf-actions">
+      <v-select
+        :model-value="filters.institutionId"
+        :items="scopeOptions.institutionId"
+        label="Учреждение"
+        aria-label="Учреждение"
+        density="compact"
+        hide-details
+        :loading="scopeListing"
+        @update:model-value="selectScope('institutionId', $event)"
+      />
+      <v-select v-model="filters.paymentStatus" :items="paymentOptions" label="Оплата" density="compact" hide-details />
+      <v-select v-model="filters.productionStatus" :items="productionOptions" label="Изготовление" density="compact" hide-details />
+      <div class="mf-actions staff-orders__buttons">
         <v-btn type="submit" color="primary" density="compact" :loading="loading">Найти</v-btn>
+        <v-btn
+          variant="text"
+          density="compact"
+          :prepend-icon="more ? 'mdi-chevron-up' : 'mdi-tune-variant'"
+          :aria-expanded="more"
+          @click="more = !more"
+          >{{ more ? 'Меньше' : 'Фильтры' }}</v-btn
+        >
         <v-btn variant="text" density="compact" :disabled="!hasFilters" @click="reset">Сбросить</v-btn>
       </div>
-      <div class="staff-orders__scope" data-testid="order-scope-filters">
-        <v-select
-          :model-value="filters.institutionId"
-          :items="scopeOptions.institutionId"
-          label="Учреждение"
-          aria-label="Учреждение"
-          density="compact"
-          hide-details
-          :loading="scopeListing"
-          @update:model-value="selectScope('institutionId', $event)"
-        />
+      <div v-if="more" class="staff-orders__more" data-testid="order-scope-filters">
         <v-select
           :model-value="filters.shootId"
           :items="scopeOptions.shootId"
@@ -164,14 +284,6 @@ function lastDays(days: number): void {
           :disabled="groupDisabled"
           @update:model-value="selectScope('groupId', $event)"
         />
-        <div v-if="scopeError" class="staff-orders__scope-error">
-          <p class="mf-muted" role="alert">{{ scopeError }}</p>
-          <v-btn variant="text" density="compact" @click="retryScope">Повторить</v-btn>
-        </div>
-      </div>
-      <div class="staff-orders__refine">
-        <v-select v-model="filters.paymentStatus" :items="paymentOptions" label="Оплата" density="compact" hide-details />
-        <v-select v-model="filters.productionStatus" :items="productionOptions" label="Изготовление" density="compact" hide-details />
         <v-text-field v-model="filters.dateFrom" type="date" label="Создан с" aria-label="Создан с" density="compact" hide-details />
         <v-text-field v-model="filters.dateTo" type="date" label="Создан по" aria-label="Создан по" density="compact" hide-details />
         <div class="mf-actions staff-orders__presets" aria-label="Быстрый период">
@@ -179,60 +291,86 @@ function lastDays(days: number): void {
           <v-btn variant="outlined" density="compact" @click="lastDays(30)">30 дней</v-btn>
         </div>
       </div>
+      <div v-if="scopeError" class="staff-orders__scope-error">
+        <p class="mf-muted" role="alert">{{ scopeError }}</p>
+        <v-btn variant="text" density="compact" @click="retryScope">Повторить</v-btn>
+      </div>
     </form>
+    <UiBulkNotice v-if="notice" :notice="notice" class="mb-4" />
     <p v-if="loading && !page" role="status">Загружаем заказы…</p>
-    <template v-if="page">
-      <p class="staff-orders__total" role="status">Найдено заказов: {{ page.meta.total }}</p>
-      <p v-if="!page.items.length" class="mf-panel mf-muted">Заказов по этим условиям нет.</p>
-      <ul v-else class="staff-orders__list">
-        <li v-for="order in page.items" :key="order.id" class="mf-panel" data-testid="staff-order">
-          <div class="staff-orders__main">
-            <RouterLink :to="{ path: '/cabinet/orders/' + order.id, query: route.query }" class="staff-orders__number">{{
-              order.number
-            }}</RouterLink>
-            <p class="mf-muted">{{ order.institutionName }} · {{ order.groupName }}</p>
-            <p>{{ order.buyer.name }} · {{ formatPhone(order.buyer.phone) }}</p>
-          </div>
-          <div class="staff-orders__side">
-            <strong>{{ money(order.quote.total) }}</strong>
-            <span class="mf-muted">{{ formatMoment(order.createdAt) }}</span>
-            <MfStatus :tone="toneOf(paymentTone, order.paymentStatus)">{{ paymentLabels[order.paymentStatus] }}</MfStatus>
-          </div>
-        </li>
-      </ul>
-      <v-pagination
-        v-if="page.meta.totalPages > 1"
-        :model-value="page.meta.page"
-        :length="page.meta.totalPages"
-        total-visible="5"
-        @update:model-value="apply"
-      />
-    </template>
+    <StaffOrderTable
+      v-if="page"
+      :selected="selected"
+      :orders="page.items"
+      :total="page.meta.total"
+      :page="page.meta.page"
+      :page-size="view.pageSize"
+      :sort="view.sort"
+      :loading="loading"
+      :can-remove="canRemove"
+      :query="route.query"
+      @update:selected="select"
+      @sort="apply(1, { sort: $event })"
+      @page="apply($event)"
+      @page-size="apply(1, { pageSize: $event })"
+      @remove="askRemove"
+      @export="exportRows([...picked.values()])"
+    />
   </template>
+  <UiRemoveDialog
+    :open="!!removal"
+    :title="removal?.length === 1 ? 'Удалить заказ ' + removal[0]?.number + '?' : 'Удалить заказы: ' + (removal?.length ?? 0) + '?'"
+    :names="removal?.map((order) => order.number + ' · ' + order.buyer.name + ' · ' + money(order.quote.total)) ?? []"
+    :busy="removing"
+    testid="order-remove-dialog"
+    @close="removal = null"
+    @confirm="confirmRemove"
+  >
+    Заказ исчезнет из кабинета вместе с отменёнными попытками оплаты. Ссылка покупателя на заказ перестанет открываться.
+    <template v-if="skipped" #warning>
+      <v-alert type="info" variant="tonal" density="compact"
+        >Оплаченные и оплачиваемые заказы не удаляются — пропущено: {{ skipped }}.</v-alert
+      >
+    </template>
+  </UiRemoveDialog>
 </template>
 <style scoped>
 .staff-orders__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--mf-space-3);
   margin-bottom: 24px;
 }
 .staff-orders__summary {
   display: grid;
   grid-template-columns: minmax(200px, 1fr) minmax(0, 3fr);
   gap: var(--mf-space-4);
-  margin-bottom: var(--mf-space-5);
+  margin-bottom: var(--mf-space-4);
 }
 .staff-orders__filters {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(200px, 1.6fr) repeat(3, minmax(160px, 1fr)) auto;
   gap: 12px;
   align-items: center;
-  padding: 16px;
-  margin-bottom: 24px;
+  padding: 12px;
+  margin-bottom: var(--mf-space-4);
 }
-.staff-orders__scope {
+.staff-orders__buttons {
+  flex-wrap: nowrap;
+  gap: var(--mf-space-1);
+}
+.staff-orders__more {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
   gap: 12px;
+  align-items: center;
+}
+.staff-orders__presets {
+  flex-wrap: nowrap;
+  gap: var(--mf-space-2);
 }
 .staff-orders__scope-error {
   grid-column: 1 / -1;
@@ -242,69 +380,25 @@ function lastDays(days: number): void {
   gap: var(--mf-space-2);
   font-size: 14px;
 }
-@media (min-width: 768px) {
-  .staff-orders__scope {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+@media (max-width: 1100px) {
+  .staff-orders__filters,
+  .staff-orders__more {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-}
-.staff-orders__refine {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-.staff-orders__presets {
-  grid-column: 1 / -1;
-  gap: var(--mf-space-2);
-}
-@media (min-width: 1280px) {
-  .staff-orders__refine {
-    grid-template-columns: repeat(2, minmax(0, 4fr)) repeat(2, minmax(0, 3fr));
-  }
-}
-@media (max-width: 600px) {
-  .staff-orders__summary {
-    grid-template-columns: 1fr;
-  }
-  .staff-orders__filters {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .staff-orders__filters .v-btn[type='submit'] {
-    flex: 1;
-  }
-  .staff-orders__refine > .v-select {
+  .staff-orders__filters > :first-child,
+  .staff-orders__buttons {
     grid-column: 1 / -1;
   }
 }
-.staff-orders__total {
-  margin-bottom: 12px;
-  color: var(--mf-color-text-secondary);
-}
-.staff-orders__list {
-  list-style: none;
-  padding: 0;
-  display: grid;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-.staff-orders__list li {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-.staff-orders__main {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.staff-orders__number {
-  font-size: 18px;
-  font-weight: 600;
-}
-.staff-orders__side {
-  display: grid;
-  justify-items: end;
-  gap: 6px;
+@media (max-width: 600px) {
+  .staff-orders__summary,
+  .staff-orders__filters,
+  .staff-orders__more {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .staff-orders__buttons {
+    flex-wrap: wrap;
+  }
 }
 .staff-order {
   display: grid;
@@ -329,7 +423,6 @@ function lastDays(days: number): void {
   margin-bottom: 12px;
 }
 @media (max-width: 600px) {
-  .staff-orders__side,
   .staff-order__state {
     justify-items: start;
   }

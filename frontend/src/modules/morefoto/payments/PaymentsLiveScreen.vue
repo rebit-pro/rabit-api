@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, shallowRef } from 'vue';
 import { useRoute } from 'vue-router';
 import { money } from '../commerce/money';
 import { formatMoment } from '../orders/formatters';
@@ -8,8 +8,12 @@ import type { AttemptStatus } from '../orders/live/payment-types';
 import MfStatus from '@/components/status/MfStatus.vue';
 import type { StatusTone } from '@/components/status/tones';
 import { usePaymentRegistry } from './usePaymentRegistry';
+import PaymentTable from './PaymentTable.vue';
+import { csvText, downloadCsv } from '../ui/csv';
+import { livePaymentsApi } from '../orders/live/payments-api';
+import type { StaffPayment } from '../orders/live/payment-types';
 const route = useRoute();
-const { attemptId, filters, page, card, loading, error, reload, apply, reset } = usePaymentRegistry();
+const { attemptId, filters, view, page, card, loading, error, reload, apply, reset } = usePaymentRegistry();
 const tone: Record<AttemptStatus, StatusTone> = { unknown: 'warning', pending: 'pending', succeeded: 'success', canceled: 'neutral' };
 const statusOptions = [
   { title: 'Любой статус', value: '' },
@@ -22,15 +26,74 @@ const lateOptions = [
 ];
 const hasFilters = computed(() => (['status', 'orderNumber', 'dateFrom', 'dateTo', 'late'] as const).some((key) => filters[key] !== ''));
 const listLink = computed(() => ({ path: '/cabinet/payments', query: route.query }));
+// Selection survives paging: the chosen payments are kept whole for the CSV.
+const selected = shallowRef<string[]>([]);
+const picked = new Map<string, StaffPayment>();
+function select(ids: string[]): void {
+  for (const payment of page.value?.items ?? []) if (ids.includes(payment.id)) picked.set(payment.id, payment);
+  for (const id of [...picked.keys()]) if (!ids.includes(id)) picked.delete(id);
+  selected.value = ids;
+}
+const csvHeader = ['Заказ', 'Учреждение', 'Группа', 'Способ', 'Сумма, ₽', 'Статус', 'Поздняя', 'Начат (мск)', 'Оплачен (мск)'];
+function exportRows(payments: StaffPayment[]): void {
+  const rows = payments.map((payment) => [
+    payment.orderNumber,
+    payment.institutionName,
+    payment.groupName,
+    paymentMethodLabels[payment.paymentMethod],
+    (payment.amount / 100).toFixed(2).replace('.', ','),
+    attemptStatusLabels[payment.status],
+    payment.latePayment ? 'да' : '',
+    formatMoment(payment.createdAt),
+    payment.paidAt ? formatMoment(payment.paidAt) : ''
+  ]);
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(new Date());
+  downloadCsv('payments-' + today + '.csv', csvText(csvHeader, rows));
+}
+/** Everything the filter finds, page by page up to the limit (#92 DEC-07). */
+const EXPORT_LIMIT = 1000;
+const exporting = shallowRef(false);
+const exportError = shallowRef('');
+async function exportAll(): Promise<void> {
+  exportError.value = '';
+  if ((page.value?.meta.total ?? 0) > EXPORT_LIMIT) {
+    exportError.value = 'Выгрузка — не больше ' + EXPORT_LIMIT + ' платежей. Уточните фильтр или период.';
+    return;
+  }
+  exporting.value = true;
+  try {
+    const payments: StaffPayment[] = [];
+    for (let number = 1, pages = 1; number <= pages; number++) {
+      const result = await livePaymentsApi.search(filters, { ...view.value, page: number, pageSize: 100 });
+      payments.push(...result.items);
+      pages = result.meta.totalPages;
+    }
+    exportRows(payments);
+  } finally {
+    exporting.value = false;
+  }
+}
 </script>
 <template>
   <header class="payments__heading">
-    <p class="mf-eyebrow">ДЕНЬГИ</p>
-    <h1>{{ attemptId ? 'Платёж' : 'Платежи' }}</h1>
-    <p class="mf-muted">
-      Попытки оплаты заказов вашей области. Оплату подтверждает только ЮKassa; ключи покупателей здесь не показываются.
-    </p>
+    <div>
+      <p class="mf-eyebrow">ДЕНЬГИ</p>
+      <h1>{{ attemptId ? 'Платёж' : 'Платежи' }}</h1>
+      <p class="mf-muted">
+        Попытки оплаты заказов вашей области. Оплату подтверждает только ЮKassa; ключи покупателей здесь не показываются.
+      </p>
+    </div>
+    <v-btn
+      v-if="!attemptId && page?.meta.total"
+      variant="outlined"
+      prepend-icon="mdi-download-outline"
+      :loading="exporting"
+      data-testid="payment-export-all"
+      @click="exportAll"
+      >Выгрузить всё · CSV</v-btn
+    >
   </header>
+  <v-alert v-if="exportError" type="warning" variant="tonal" class="mb-5" role="status">{{ exportError }}</v-alert>
   <v-alert v-if="error" type="error" variant="tonal" class="mb-5" role="alert"
     >{{ error }}<v-btn variant="text" @click="reload">Повторить</v-btn></v-alert
   >
@@ -113,91 +176,68 @@ const listLink = computed(() => ({ path: '/cabinet/payments', query: route.query
         hide-details="auto"
         @click:clear="filters.orderNumber = ''"
       />
-      <div class="mf-actions">
+      <v-select
+        v-model="filters.status"
+        :items="statusOptions"
+        label="Статус"
+        density="compact"
+        hide-details
+        data-testid="payment-status-filter"
+      />
+      <v-select v-model="filters.late" :items="lateOptions" label="Срок оплаты" density="compact" hide-details />
+      <v-text-field v-model="filters.dateFrom" type="date" label="Начат с" aria-label="Начат с" density="compact" hide-details />
+      <v-text-field v-model="filters.dateTo" type="date" label="Начат по" aria-label="Начат по" density="compact" hide-details />
+      <div class="mf-actions payments__buttons">
         <v-btn type="submit" color="primary" density="compact" :loading="loading">Найти</v-btn>
         <v-btn variant="text" density="compact" :disabled="!hasFilters" @click="reset">Сбросить</v-btn>
       </div>
-      <div class="payments__refine">
-        <v-select
-          v-model="filters.status"
-          :items="statusOptions"
-          label="Статус"
-          density="compact"
-          hide-details
-          data-testid="payment-status-filter"
-        />
-        <v-select v-model="filters.late" :items="lateOptions" label="Срок оплаты" density="compact" hide-details />
-        <v-text-field v-model="filters.dateFrom" type="date" label="Начат с" aria-label="Начат с" density="compact" hide-details />
-        <v-text-field v-model="filters.dateTo" type="date" label="Начат по" aria-label="Начат по" density="compact" hide-details />
-      </div>
     </form>
     <p v-if="loading && !page" role="status">Загружаем платежи…</p>
-    <template v-if="page">
-      <p class="payments__total" role="status">Найдено платежей: {{ page.meta.total }}</p>
-      <p v-if="!page.items.length" class="mf-panel mf-muted">Платежей по этим условиям нет.</p>
-      <ul v-else class="payments__list">
-        <li v-for="payment in page.items" :key="payment.id" class="mf-panel" data-testid="payment-row">
-          <div>
-            <RouterLink :to="{ path: '/cabinet/payments/' + payment.id, query: route.query }" class="payments__number">{{
-              payment.orderNumber
-            }}</RouterLink>
-            <p class="mf-muted">{{ payment.institutionName }} · {{ payment.groupName }}</p>
-            <p class="mf-muted">{{ paymentMethodLabels[payment.paymentMethod] }} · {{ formatMoment(payment.createdAt) }}</p>
-          </div>
-          <div class="payments__side">
-            <strong>{{ money(payment.amount) }}</strong>
-            <MfStatus :tone="tone[payment.status]">{{ attemptStatusLabels[payment.status] }}</MfStatus>
-            <MfStatus v-if="payment.latePayment" tone="warning">Поздняя</MfStatus>
-          </div>
-        </li>
-      </ul>
-      <v-pagination
-        v-if="page.meta.totalPages > 1"
-        :model-value="page.meta.page"
-        :length="page.meta.totalPages"
-        total-visible="5"
-        @update:model-value="apply"
-      />
-    </template>
+    <PaymentTable
+      v-if="page"
+      :selected="selected"
+      :payments="page.items"
+      :total="page.meta.total"
+      :page="page.meta.page"
+      :page-size="view.pageSize"
+      :sort="view.sort"
+      :loading="loading"
+      :query="route.query"
+      @update:selected="select"
+      @sort="apply(1, { sort: $event })"
+      @page="apply($event)"
+      @page-size="apply(1, { pageSize: $event })"
+      @export="exportRows([...picked.values()])"
+    />
   </template>
 </template>
 <style scoped>
 .payments__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--mf-space-3);
   margin-bottom: 24px;
 }
 .payments__filters {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(180px, 1.5fr) repeat(4, minmax(130px, 1fr)) auto;
   gap: 12px;
   align-items: center;
-  padding: 16px;
-  margin-bottom: 24px;
+  padding: 12px;
+  margin-bottom: var(--mf-space-4);
 }
-.payments__refine {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+.payments__buttons {
+  flex-wrap: nowrap;
+  gap: var(--mf-space-1);
 }
-.payments__total {
-  margin-bottom: 12px;
-}
-.payments__list,
 .payments__plain {
   display: grid;
   gap: 12px;
   padding: 0;
   list-style: none;
 }
-.payments__list li {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-}
-.payments__number {
-  font-weight: 600;
-}
-.payments__side,
 .payments__state {
   display: grid;
   justify-items: end;
@@ -234,22 +274,23 @@ const listLink = computed(() => ({ path: '/cabinet/payments', query: route.query
   margin: 0;
   overflow-wrap: anywhere;
 }
-@media (max-width: 900px) {
-  .payments__refine {
+@media (max-width: 1100px) {
+  .payments__filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .payments__filters > :first-child,
+  .payments__buttons {
+    grid-column: 1 / -1;
   }
 }
 @media (max-width: 600px) {
   .payments__filters,
-  .payments__refine,
   .payments__facts > div {
     grid-template-columns: minmax(0, 1fr);
   }
-  .payments__list li,
   .payments__card-header {
     flex-direction: column;
   }
-  .payments__side,
   .payments__state {
     justify-items: start;
   }

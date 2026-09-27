@@ -9,6 +9,7 @@ import type {
   StartPaymentBody
 } from './payment-types';
 import { paymentParams } from './payment-rules';
+import { tableViewParams, type TableView } from '../../ui/table-query';
 
 const buyer = (orderKey: string) => ({ headers: { 'X-Order-Key': orderKey } });
 
@@ -28,9 +29,9 @@ export const livePaymentsApi = {
       await api.get<PaymentAttempt>('/api/v1/public/orders/current/payment-attempts/' + encodeURIComponent(attemptId), buyer(orderKey))
     ).data;
   },
-  async search(filters: PaymentFilters): Promise<PaymentPage> {
+  async search(filters: PaymentFilters, view?: TableView): Promise<PaymentPage> {
     const response = await api.get<{ data: { items: StaffPayment[] }; meta: PaymentPage['meta'] }>('/api/v1/payments', {
-      params: paymentParams(filters),
+      params: { ...paymentParams(filters), ...(view ? tableViewParams(view) : {}) },
       unwrapEnvelope: false
     });
     return { items: response.data.data.items, meta: response.data.meta };

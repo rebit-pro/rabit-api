@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, shallowRef, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import AdminDialog from '../../management/components/AdminDialog.vue';
 import RequestFields from './RequestFields.vue';
 import RequestReview from './RequestReview.vue';
@@ -18,17 +18,31 @@ import { plural } from '@/components/viz/measures';
 import { CHART_CATEGORY } from '../../ui/chartPalette';
 import { toneOf } from '@/components/status/tones';
 import { staffRequestTone } from '../../ui/statusTone';
+import StaffRequestTable from './StaffRequestTable.vue';
+import UiRemoveDialog from '../../ui/components/UiRemoveDialog.vue';
+import UiBulkNotice from '../../ui/components/UiBulkNotice.vue';
+import { bulkNotice, runEach, type BulkNotice } from '../../ui/removal';
+import { staffRequestsApi } from '../api';
+import type { UiTableSort } from '../../ui/table-types';
 type RequestState = keyof typeof requestStatus;
 const route = useRoute(),
   statusFilter = shallowRef<RequestState | null>(null),
   page = shallowRef(1),
+  pageSize = shallowRef(25),
+  sort = shallowRef<UiTableSort>({ key: 'updatedAt', direction: 'desc' }),
   shootFilter = computed(() => (typeof route.query.shoot === 'string' ? route.query.shoot : null)),
   { auth, data, loading, error, reload } = useHandoff((token, requestId) =>
-    loadHandoff(token, requestId, { page: page.value, status: statusFilter.value, shootId: shootFilter.value })
+    loadHandoff(token, requestId, {
+      page: page.value,
+      pageSize: pageSize.value,
+      sort: sort.value,
+      status: statusFilter.value,
+      shootId: shootFilter.value
+    })
   ),
   notice = shallowRef('');
 // Live mode reads one filtered page (#26): a new card, filter or shoot starts again from the first page.
-watch([() => route.params.requestId, shootFilter, statusFilter], () => {
+watch([() => route.params.requestId, shootFilter, statusFilter, sort, pageSize], () => {
   if (page.value === 1) void reload();
   else page.value = 1;
 });
@@ -112,6 +126,32 @@ function open(action: StaffCommand['action'], request?: StaffRequest) {
     (request?.id ?? 'new') + ':' + action
   );
 }
+const router = useRouter();
+const selectedIds = shallowRef<string[]>([]);
+const removal = shallowRef<StaffRequest[] | null>(null);
+const removing = shallowRef(false);
+const bulk = shallowRef<BulkNotice | null>(null);
+const placeName = (request: StaffRequest) => data.value?.scope.shoots.find((s) => s.id === request.shootId)?.name ?? 'Список';
+async function confirmRemove(): Promise<void> {
+  if (!removal.value) return;
+  removing.value = true;
+  try {
+    const single = !!route.params.requestId;
+    const result = await runEach(
+      removal.value,
+      (request) => placeName(request) + ' · ' + (request.createdByName ?? ''),
+      (request) => staffRequestsApi.remove(request.id),
+      () => 'список уже перенесён или недоступен'
+    );
+    bulk.value = bulkNotice('Удалено', result);
+    selectedIds.value = [];
+    removal.value = null;
+    if (single && result.done) await router.push('/cabinet/staff-requests');
+    else await reload();
+  } finally {
+    removing.value = false;
+  }
+}
 function change(value: Partial<StaffCommand>) {
   if (command.value?.kind === 'request') Object.assign(command.value, value);
 }
@@ -176,6 +216,14 @@ function change(value: Partial<StaffCommand>) {
           <v-btn v-if="reviewing && selected.status === 'submitted'" :disabled="!preview" @click="open('confirm', selected)"
             >Проверить и перенести</v-btn
           >
+          <v-btn
+            v-if="selected.createdBy === auth.user?.id || data.role === 'organizer'"
+            color="error"
+            variant="text"
+            prepend-icon="mdi-delete-outline"
+            @click="removal = [selected]"
+            >Удалить список</v-btn
+          >
         </div>
         <details class="handoff-history">
           <summary>История списка · {{ selected.history.length }}</summary>
@@ -211,33 +259,36 @@ function change(value: Partial<StaffCommand>) {
           >{{ label }}: {{ statusCounts[status] }}</MfStatus
         >
       </p>
-      <p v-if="!requests.length" class="handoff-empty">
-        Списков пока нет.
-        {{ createAllowed ? 'Добавьте детей сотрудников по кодам из галереи.' : 'Здесь появятся списки от ответственных ваших учреждений.' }}
-      </p>
-      <article v-for="request in requests" :key="request.id" class="handoff-card" data-testid="staff-request">
-        <header>
-          <div>
-            <p class="mf-muted">{{ data.scope.institutions.find((i) => i.id === request.institutionId)?.name }}</p>
-            <h2>{{ data.scope.shoots.find((s) => s.id === request.shootId)?.name }}</h2>
-            <p>{{ request.rows.length }} детей · {{ formatMoment(request.createdAt) }}</p>
-          </div>
-          <MfStatus :tone="toneOf(staffRequestTone, request.status)">{{ requestStatus[request.status] }}</MfStatus>
-        </header>
-        <v-btn :to="'/cabinet/staff-requests/' + request.id" variant="outlined">Открыть список</v-btn>
-      </article>
-      <v-pagination
-        v-if="data.requestPage && data.requestPage.totalPages > 1"
-        v-model="page"
-        class="mt-6"
-        :length="data.requestPage.totalPages"
-        total-visible="5"
-        density="comfortable"
-        :disabled="loading"
-        data-testid="request-pagination"
+      <UiBulkNotice v-if="bulk" :notice="bulk" class="mb-4" />
+      <StaffRequestTable
+        v-model:selected="selectedIds"
+        :data="data"
+        :requests="requests"
+        :total="data.requestPage?.total ?? requests.length"
+        :page="page"
+        :page-size="pageSize"
+        :sort="sort"
+        :loading="loading"
+        :actor-id="auth.user?.id ?? null"
+        @sort="sort = $event"
+        @page="page = $event"
+        @page-size="pageSize = $event"
+        @edit="open('submit', $event)"
+        @remove="removal = $event.filter((request) => request.status !== 'transferred')"
       />
     </template>
   </template>
+  <UiRemoveDialog
+    :open="!!removal"
+    :title="removal?.length === 1 ? 'Удалить список сотрудников?' : 'Удалить списки: ' + (removal?.length ?? 0) + '?'"
+    :names="removal?.map((request) => placeName(request) + ' · ' + request.rows.length + ' дет. · ' + requestStatus[request.status]) ?? []"
+    :busy="removing"
+    testid="request-remove-dialog"
+    @close="removal = null"
+    @confirm="confirmRemove"
+  >
+    Список, его строки и история проверки удалятся. Кадры детей сотрудников не меняются: перенос по этому списку ещё не выполнялся.
+  </UiRemoveDialog>
   <AdminDialog
     :open="!!command"
     :focus-heading="command?.kind === 'request' && command.action === 'confirm'"
