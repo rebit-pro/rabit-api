@@ -41,6 +41,16 @@ export interface UploadJob {
   acceptedAt?: number;
   checkAt?: number;
   checks?: number;
+  /** Archive upload: codes sent with the file, the archive identity and the entry path inside it. */
+  childCodes?: string[];
+  archive?: string;
+  entry?: string;
+  /** Archive folder the file comes from: a child code or a group folder name. */
+  folder?: string;
+  shared?: boolean;
+  /** Automatic repeats after transient failures and the time of the next one. */
+  attempts?: number;
+  retryAt?: number;
 }
 export interface PreparedPhoto {
   fingerprint: string;

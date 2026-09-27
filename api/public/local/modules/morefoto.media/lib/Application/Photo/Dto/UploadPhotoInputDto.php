@@ -6,6 +6,7 @@ namespace Morefoto\Media\Application\Photo\Dto;
 
 final readonly class UploadPhotoInputDto
 {
+    /** @param list<string> $childCodes коды детей, к которым привязать кадр при приёме; пустой — без разметки */
     public function __construct(
         public string $shootId,
         public string $groupId,
@@ -13,5 +14,6 @@ final readonly class UploadPhotoInputDto
         public string $filename,
         public int $bytes,
         public ?string $clientFingerprint,
+        public array $childCodes = [],
     ) {}
 }

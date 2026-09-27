@@ -10,6 +10,7 @@ use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
 use Morefoto\Media\Application\Photo\Dto\PhotoRegistration;
 use Morefoto\Media\Application\Photo\Dto\UploadPhotoInputDto;
 use Morefoto\Media\Application\Photo\Dto\UploadPhotoOutputDto;
+use Morefoto\Media\Application\Photo\Service\UploadChildAssignment;
 use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
 use Psr\Log\LoggerInterface;
@@ -21,6 +22,7 @@ use Rebit\Share\Shared\Exception\HttpException;
 /**
  * Принимает приватный оригинал в редактируемую группу и регистрирует его без дубля по содержимому в съёмке.
  *
+ * Переданные коды детей размечают кадр при приёме — так загрузка архива по папкам обходится без ручной разметки.
  * Сразу ставит подготовку превью в очередь; при сбое публикации оставляет задание pending для dispatcher и пишет
  * в журнал этап и класс ошибки, а длительности приёма позволяют отличить задержку сервера от задержки очереди.
  * Запись оригинала и регистрация идут под блокировкой его пути, чтобы удаление кадра с тем же содержимым не стёрло файл.
@@ -36,6 +38,7 @@ final readonly class UploadPhotoUseCase
         private PhotoRepository $photos,
         private MediaPublisherInterface $publisher,
         private LoggerInterface $logger,
+        private UploadChildAssignment $assignment,
     ) {}
 
     public function execute(int $userId, UploadPhotoInputDto $input): UploadPhotoOutputDto
@@ -77,6 +80,13 @@ final readonly class UploadPhotoUseCase
         );
         $registered = hrtime(true);
         $published = $registration->processingRequired && $this->publish($registration->publicId, $registration->revision);
+        $queued = hrtime(true);
+        // A duplicate adds the codes to the photo that owns the content, so a repeated archive completes its labels.
+        $childCodes = [] === $input->childCodes ? [] : $this->assignment->assign(
+            $scope,
+            $registration->existingPhotoId ?? $registration->publicId,
+            $input->childCodes,
+        );
         $this->logger->info('Photo upload accepted.', [
             'photoId' => $registration->publicId,
             'photoStatus' => $registration->status,
@@ -84,8 +94,10 @@ final readonly class UploadPhotoUseCase
             'published' => $published,
             'inspectMs' => self::milliseconds($started, $inspected),
             'storeMs' => self::milliseconds($inspected, $stored),
+            'added' => count($childCodes),
             'registerMs' => self::milliseconds($stored, $registered),
-            'publishMs' => self::milliseconds($registered, hrtime(true)),
+            'publishMs' => self::milliseconds($registered, $queued),
+            'assignMs' => self::milliseconds($queued, hrtime(true)),
         ]);
 
         return new UploadPhotoOutputDto(
@@ -93,6 +105,7 @@ final readonly class UploadPhotoUseCase
             status: $registration->status,
             revision: $registration->revision,
             existingPhotoId: $registration->existingPhotoId,
+            childCodes: $childCodes,
         );
     }
 

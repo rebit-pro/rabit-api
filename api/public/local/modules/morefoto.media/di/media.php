@@ -11,6 +11,7 @@ use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
 use Morefoto\Media\Application\Photo\Message\Handler\ProcessPhotoMessageHandler;
 use Morefoto\Media\Application\Photo\Service\PhotoFileCleaner;
 use Morefoto\Media\Application\Photo\Service\PhotoRowMapper;
+use Morefoto\Media\Application\Photo\Service\UploadChildAssignment;
 use Morefoto\Media\Application\Photo\UseCase\AssignPhotosUseCase;
 use Morefoto\Media\Application\Photo\UseCase\ConsumeMediaUseCase;
 use Morefoto\Media\Application\Photo\UseCase\DeleteGroupPhotosUseCase;
@@ -121,6 +122,15 @@ return [
             ServiceLocator::getInstance()->get(PhotoRepository::class),
             ServiceLocator::getInstance()->get(MediaPublisherInterface::class),
             Log::channel(LogChannelEnum::media),
+            ServiceLocator::getInstance()->get(UploadChildAssignment::class),
+        ],
+    ],
+    UploadChildAssignment::class => [
+        'className' => UploadChildAssignment::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(MediaTransactionInterface::class),
+            ServiceLocator::getInstance()->get(MediaMutationRepository::class),
+            ServiceLocator::getInstance()->get(MediaScopeInterface::class),
         ],
     ],
     ListPhotosUseCase::class => [

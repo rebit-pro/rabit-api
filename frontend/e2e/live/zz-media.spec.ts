@@ -1,33 +1,8 @@
 import { writeFileSync } from 'node:fs';
 import { test, expect, type APIResponse, type Page, type Request, type Response, type Route } from '@playwright/test';
-import { login, logout, peakOverlap, token, uploadSpans } from './helpers.js';
+import { login, logout, peakOverlap, png, pngVariant, token, uploadSpans } from './helpers.js';
 
-const png = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAUAAAADICAIAAAAWZq/8AAABvElEQVR42u3TQQ0AMAgAsTE1CEMiAhHBi6SVcMlFVj/gpi8BGBgwMGBgMDBgYMDAgIHBwICBAQODgQEDAwYGDAwGBgwMGBgwMBgYMDBgYDAwYGDAwICBwcCAgQEDAwYGAwMGBgwMBgYMDBgYMDAYGDAwYGAwMGBgwMCAgcHAgIEBAwMGBgMDBgYMDAYGDAwYGDAwGBgwMGBgwMBgYMDAgIHBwICBAQMDBgYDAwYGDAwYGAwMGBgwMBgYMDBgYMDAYGDAwICBwcCAgQEDAwYGAwMGBgwMGBgMDBgYMDAYGDAwYGDAwGBgwMCAgQEDg4EBAwMGBgMDBgYMDBgYDAwYGDAwYGAwMGBgwMBgYMDAgIEBA4OBAQMDBgYDAwYGDAwYGAwMGBgwMGBgMDBgYMDAYGDAwICBAQODgQEDAwYGDAwGBgwMGBgMDBgYMDBgYDAwYGDAwGBgwMCAgQEDg4EBAwMGBgwMBgYMDBgYDAwYGDAwYGAwMGBgwMCAgcHAgIEBA4OBAQMDBgYMDAYGDAwYGDAwGBgwMGBgMDBgYMDAgIHBwICBAQODgQEDAwYGDAwGBgwMGBgwMBgYMDCwMUuEAtA7HouzAAAAAElFTkSuQmCC',
-  'base64'
-);
 const problems = new WeakMap<Page, string[]>();
-
-function crc32(bytes: Buffer): number {
-  let crc = 0xffffffff;
-  for (const byte of bytes) {
-    crc ^= byte;
-    for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
-  }
-  return (crc ^ 0xffffffff) >>> 0;
-}
-
-// A tEXt chunk before IEND gives a valid PNG with its own SHA-256, so the server does not treat it as a duplicate.
-function pngVariant(label: string): Buffer {
-  const type = Buffer.from('tEXt', 'latin1');
-  const text = Buffer.from('Comment\0' + label, 'latin1');
-  const length = Buffer.alloc(4);
-  length.writeUInt32BE(text.length);
-  const checksum = Buffer.alloc(4);
-  checksum.writeUInt32BE(crc32(Buffer.concat([type, text])));
-  const end = png.length - 12;
-  return Buffer.concat([png.subarray(0, end), length, type, text, checksum, png.subarray(end)]);
-}
 
 async function result(response: APIResponse | Response, status: number) {
   expect(response.status(), await response.text()).toBe(status);

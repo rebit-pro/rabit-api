@@ -75,6 +75,8 @@ export interface UploadPhotoResult {
   status: ServerPhotoStatus;
   revision: number;
   existingPhotoId: string | null;
+  /** Codes the photo is labelled with after the upload; empty without codes or for a photo of another group. */
+  childCodes?: string[];
 }
 export interface AssignmentResult {
   photoIds: string[];
@@ -165,10 +167,12 @@ export const photosApi = {
     groupId: string,
     file: File,
     signal: AbortSignal,
-    onProgress: (progress: number) => void
+    onProgress: (progress: number) => void,
+    childCodes: string[] = []
   ): Promise<UploadPhotoResult> {
     const body = new FormData();
     body.append('groupId', groupId);
+    if (childCodes.length) body.append('childCodes', childCodes.join(','));
     body.append('file', file, file.name);
     return (
       await api.post('/api/v1/shoots/' + encodeURIComponent(shootId) + '/photos', body, {
@@ -202,7 +206,8 @@ export function photoApiError(cause: unknown): string {
   if (code === 'PHOTO_NOT_COVER_ELIGIBLE') return 'Сначала назначьте кадр ребёнку в этой группе.';
   if (code === 'PHOTO_NOT_DELETABLE') return 'Один из кадров уже удалён или относится к другой группе. Обновите список.';
   if (code === 'PHOTO_PROCESSING') return 'Один из кадров ещё обрабатывается. Дождитесь окончания и повторите удаление.';
-  if (code === 'GROUP_LOCKED') return 'Подборка уже опубликована и недоступна для изменений.';
+  if (code === 'GROUP_LOCKED' || code === 'GROUP_MEDIA_LOCKED') return 'Подборка уже опубликована и недоступна для изменений.';
+  if (code === 'INVALID_CHILD_CODES') return 'Сервер не принял коды детей. Проверьте имена папок в архиве.';
   if (cause.response?.status === 403) return 'Недостаточно прав для работы с фотографиями.';
   if (cause.response?.status === 404) return 'Съёмка, группа или фотография больше недоступна.';
   if (cause.response?.status === 413 || cause.response?.status === 422)
