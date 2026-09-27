@@ -3,7 +3,7 @@
 ## Точка продолжения
 
 - Ветка `codex/issues-154-staff-step`, worktree `/home/user/rabit-api-worktrees/issues-154-staff-step`, base `main` `173035e`.
-  Issue [#154](https://github.com/rebit-pro/rabit-api/issues/154). PR — см. журнал.
+  Issue [#154](https://github.com/rebit-pro/rabit-api/issues/154). PR [#155](https://github.com/rebit-pro/rabit-api/pull/155).
 - Завершено: исправление, unit, быстрые проверки, визуальная проверка на стенде заглушек.
 - Следующий шаг: самопроверка PR → полный `make test-e2e` → merge и выкатка по команде пользователя.
 - Блокеров нет. Рабочее дерево чистое после коммита.
@@ -32,3 +32,4 @@
   заново, форматирование только через `eslint --fix` проекта.
 - Визуально: обёртка сначала переносила «Проверить» — добавлен `.links-check` (inline-flex, nowrap).
 - Проверки: `npm run check` exit 0 (`test:ui` 88/88), `npm run test:commerce` 223/223.
+- PR #155 открыт; самопроверка — блокеров нет (оба потребителя `galleryPath` уже дают «К спискам» для шага `staff`).
