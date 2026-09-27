@@ -12,6 +12,8 @@ export interface UiTableColumn {
   primary?: boolean;
   mobile?: boolean;
   statuses?: Record<string, { label: string; tone: UiTableTone }>;
+  /** Desktop column width, e.g. '30%' or '120px'; the rest share the remaining space. */
+  width?: string;
 }
 export interface UiTableSort {
   key: string;

@@ -10,6 +10,13 @@ use Morefoto\Organization\Application\Structure\UseCase\ListShootsUseCase;
 use Morefoto\Organization\Application\Structure\UseCase\GetShootUseCase;
 use Morefoto\Organization\Application\Structure\UseCase\SaveShootUseCase;
 use Morefoto\Organization\Application\Structure\UseCase\SaveGroupUseCase;
+use Morefoto\Organization\Application\Structure\UseCase\DeleteStructureUseCase;
+use Morefoto\Organization\Presentation\Controller\StructureRemovalController;
+use Morefoto\Organization\Presentation\Structure\StructureRemovalInputMapper;
+use Rebit\Share\Contracts\Commerce\StructureSalesRemovalInterface;
+use Rebit\Share\Contracts\Handoff\StructureHandoffRemovalInterface;
+use Rebit\Share\Contracts\Media\StructureMediaRemovalInterface;
+use Rebit\Share\Contracts\Support\StructureSupportRemovalInterface;
 use Morefoto\Organization\Domain\Institution\Repository\InstitutionOperationRepository;
 use Morefoto\Organization\Infrastructure\Media\OrganizationMediaScope;
 use Morefoto\Organization\Domain\Structure\Repository\StructureRepository;
@@ -31,6 +38,7 @@ $services = [
     StructureRepository::class => ['className' => StructureRepository::class],
     StructureRequestFactory::class => ['className' => StructureRequestFactory::class],
     StructureRouteParameters::class => ['className' => StructureRouteParameters::class],
+    StructureRemovalInputMapper::class => ['className' => StructureRemovalInputMapper::class],
     GroupReferenceInterface::class => [
         'constructor' => static fn(): GroupReferenceInterface => new GroupReference(ServiceLocator::getInstance()->get(StructureRepository::class)),
     ],
@@ -45,6 +53,9 @@ $dependencies = [
     GetShootUseCase::class => [StructureRepository::class, InstitutionAccessInterface::class, GroupAccessInterface::class, TokenResolverInterface::class, CalendarClockInterface::class],
     SaveShootUseCase::class => [StructureRepository::class, InstitutionOperationRepository::class, InstitutionAccessInterface::class, InstitutionTransactionInterface::class],
     SaveGroupUseCase::class => [StructureRepository::class, InstitutionOperationRepository::class, InstitutionAccessInterface::class, GroupAccessInterface::class, InstitutionTransactionInterface::class],
+    DeleteStructureUseCase::class => [StructureRepository::class, InstitutionOperationRepository::class, InstitutionAccessInterface::class, GroupAccessInterface::class,
+        StructureSalesRemovalInterface::class, StructureHandoffRemovalInterface::class, StructureSupportRemovalInterface::class, StructureMediaRemovalInterface::class, InstitutionTransactionInterface::class],
+    StructureRemovalController::class => [DeleteStructureUseCase::class, StructureRemovalInputMapper::class],
     StructureController::class => [ListShootsUseCase::class, GetShootUseCase::class, SaveShootUseCase::class, SaveGroupUseCase::class, StructureRequestFactory::class, StructureRouteParameters::class, TokenResolverInterface::class],
 ];
 foreach ($dependencies as $class => $arguments) {

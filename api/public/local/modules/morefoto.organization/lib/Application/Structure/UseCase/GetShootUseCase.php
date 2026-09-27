@@ -55,7 +55,7 @@ final readonly class GetShootUseCase
         $items = [];
         foreach ($rows as $row) {
             $assignment = $assignments[(int)$row['ID']] ?? new GroupAssignmentOutputDto();
-            $items[] = GroupOutputDto::fromRow($row, $shootId->value, $assignment->teacherId, $now);
+            $items[] = GroupOutputDto::fromRow($row, $shootId->value, (string)$shoot['UF_NAME'], $assignment->teacherId, $now);
         }
         $current = $this->access->scope($actor);
         if ($actor !== $this->tokens->resolveUserId($bearer)) {

@@ -35,7 +35,7 @@ final readonly class ListShootsUseCase
         while (false !== ($row = $result->fetch())) {
             $total = (int)$row['TOTAL'];
             if (null !== $row['ID']) {
-                $items[] = new ShootOutputDto((string)$row['UF_PUBLIC_ID'], $institutionId->value, (string)$row['UF_NAME'], null === $row['UF_DATE'] ? null : (string)$row['UF_DATE'], (int)$row['UF_REVISION']);
+                $items[] = new ShootOutputDto((string)$row['UF_PUBLIC_ID'], $institutionId->value, (string)$row['UF_NAME'], null === $row['UF_DATE'] ? null : (string)$row['UF_DATE'], (int)$row['UF_REVISION'], (int)$row['GROUP_COUNT']);
             }
         }
         $current = $this->access->scope($actor);

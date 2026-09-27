@@ -32,7 +32,8 @@ test('неверный пароль отклонён сервером; роль 
   expect(await page.evaluate(() => localStorage.getItem('morefoto:live:auth:token'))).toBeNull();
   await login(page);
   await expect(page.getByRole('banner').getByText('Организатор', { exact: true })).toBeVisible();
-  await expect(page.getByText('Ассортимент пуст. Добавьте первую продукцию.')).toBeVisible();
+  await expect(page.getByText('Ассортимент пуст', { exact: true })).toBeVisible();
+  await expect(page.getByText('Добавьте первую продукцию.', { exact: true })).toBeVisible();
   const me = await page.request.get('/api/v1/me', {
     headers: { Authorization: 'Bearer ' + (await token(page)) }
   });
@@ -69,18 +70,18 @@ test('создание и изменение сохраняются в БД и �
   await login(page);
   await fillProduct(page, 'A8 Портрет');
   await saveProduct(page);
-  await expect(productRow(page, 'A8 Портрет')).toContainText(/125,5\s*₽/);
-  await productRow(page, 'A8 Портрет').getByRole('button', { name: 'Редактировать A8 Портрет' }).click();
+  await expect(await productRow(page, 'A8 Портрет')).toContainText(/125,5\s*₽/);
+  await (await productRow(page, 'A8 Портрет')).getByRole('button', { name: 'Изменить A8 Портрет', exact: true }).click();
   await page.getByLabel('Цена, ₽', { exact: true }).fill('0');
   await page.getByLabel('Доступно для покупки', { exact: true }).uncheck();
   await saveProduct(page, 'PATCH', 200);
-  await expect(productRow(page, 'A8 Портрет')).toContainText('Отключено');
+  await expect(await productRow(page, 'A8 Портрет')).toContainText('Отключено');
   const fresh = await browser.newContext({ baseURL });
   try {
     const second = await fresh.newPage();
     await login(second);
-    await expect(productRow(second, 'A8 Портрет')).toContainText('Отключено');
-    await expect(productRow(second, 'A8 Портрет')).toContainText('0 ₽');
+    await expect(await productRow(second, 'A8 Портрет')).toContainText('Отключено');
+    await expect(await productRow(second, 'A8 Портрет')).toContainText('0 ₽');
     expect(await second.evaluate(() => Object.keys(localStorage).some((key) => key.startsWith('morefoto:demo:')))).toBe(false);
   } finally {
     await fresh.close();
@@ -127,7 +128,7 @@ test('PATCH принимает ID пути, но отклоняет настоя
   });
   expect(rejected.status()).toBe(422);
   await page.getByRole('button', { name: 'Обновить каталог' }).click();
-  await expect(productRow(page, 'A8 Query')).toBeVisible();
+  await expect(await productRow(page, 'A8 Query')).toBeVisible();
 });
 
 test('воспитатель не может открыть или изменить каталог, включая прямой запрос', async ({ page }) => {
@@ -222,7 +223,8 @@ test('конфликт двух редакторов не перезаписыв
   try {
     const second = await other.newPage();
     await login(second, 'another-organizer');
-    for (const actor of [page, second]) await productRow(actor, 'A8 Конфликт').getByRole('button').click();
+    for (const actor of [page, second])
+      await (await productRow(actor, 'A8 Конфликт')).getByRole('button', { name: 'Изменить A8 Конфликт', exact: true }).click();
     await page.getByLabel('Цена, ₽', { exact: true }).fill('200');
     await saveProduct(page, 'PATCH', 200);
     await second.getByLabel('Цена, ₽', { exact: true }).fill('300');
@@ -234,7 +236,7 @@ test('конфликт двух редакторов не перезаписыв
     await second.getByLabel('Цена, ₽', { exact: true }).fill('300');
     await saveProduct(second, 'PATCH', 200);
     await page.getByRole('button', { name: 'Обновить каталог' }).click();
-    await expect(productRow(page, 'A8 Конфликт')).toContainText('300 ₽');
+    await expect(await productRow(page, 'A8 Конфликт')).toContainText('300 ₽');
   } finally {
     await other.close();
   }
@@ -267,22 +269,29 @@ test('потеря ответа после commit и повтор не созд�
   await saveProduct(page);
   expect(keys).toHaveLength(2);
   expect(keys[0]).toBe(keys[1]);
-  await expect(page.getByRole('heading', { name: 'A8 Потерянный ответ', exact: true })).toHaveCount(1);
+  await expect(await productRow(page, 'A8 Потерянный ответ')).toHaveCount(1);
 });
 
-test('пагинация загружает следующую страницу с сервера', async ({ page }) => {
+test('#92: каталог загружается одной страницей до 100 позиций и листается без запросов', async ({ page }) => {
   await login(page);
   for (let i = 0; i < 26; i++) await createViaApi(page, 'Я Пагинация ' + String(i).padStart(2, '0'));
+  const loaded = page.waitForResponse((r) => r.url().includes('/catalog/products?page=1&pageSize=100'));
   await page.getByRole('button', { name: 'Обновить каталог', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Следующая' })).toBeEnabled();
-  const next = page.waitForResponse((r) => r.url().includes('/catalog/products?page=2&pageSize=25'));
-  await page.getByRole('button', { name: 'Следующая' }).click();
-  const response = await next;
-  expect(response.status()).toBe(200);
-  const body = await response.json();
-  expect(body.meta.page).toBe(2);
-  await expect(page.getByRole('heading', { name: 'Я Пагинация 25', exact: true })).toBeVisible();
-  await expect(page.getByRole('article')).toHaveCount(body.data.items.length);
+  const body = await (await loaded).json();
+  expect(body.meta.total).toBe(body.data.items.length);
+  const range = page.getByTestId('ui-table-range');
+  await expect(range).toHaveText('1–10 из ' + body.meta.total);
+  const requests: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/catalog/products')) requests.push(request.url());
+  });
+  await page.getByRole('button', { name: 'Следующая страница', exact: true }).click();
+  await expect(range).toHaveText('11–20 из ' + body.meta.total);
+  await page.getByRole('textbox', { name: 'Название', exact: true }).fill('Я Пагинация 2');
+  await expect(range).toHaveText('1–6 из 6');
+  await page.getByRole('button', { name: 'Сортировать: Продукция', exact: true }).click();
+  await expect(page.locator('tbody tr').first()).toContainText('Я Пагинация 25');
+  expect(requests).toEqual([]);
 });
 
 test('мобильный редактор доступен, текст товара безопасно отображается', async ({ page }, testInfo) => {
@@ -291,7 +300,7 @@ test('мобильный редактор доступен, текст това�
   await fillProduct(page, 'A8 Мобильный <img onerror=alert(1)>');
   await page.getByLabel('Описание', { exact: true }).fill('<script>window.e2eUnexpected = true</script>');
   await saveProduct(page);
-  await expect(productRow(page, 'A8 Мобильный <img onerror=alert(1)>')).toContainText('<script>');
+  await expect(await productRow(page, 'A8 Мобильный <img onerror=alert(1)>')).toContainText('<script>');
   expect(await page.evaluate(() => 'e2eUnexpected' in window)).toBe(false);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({

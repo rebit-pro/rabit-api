@@ -39,6 +39,7 @@ use Morefoto\Support\Infrastructure\Database\BitrixQuestionDeliveryRepository;
 use Morefoto\Support\Infrastructure\Database\BitrixQuestionRepository;
 use Morefoto\Support\Infrastructure\Database\BitrixSupportTransaction;
 use Morefoto\Support\Infrastructure\Database\SupportSql;
+use Morefoto\Support\Infrastructure\Organization\StructureSupportRemoval;
 use Morefoto\Support\Infrastructure\Messenger\QuestionDeliveryPublisher;
 use Morefoto\Support\Infrastructure\Messenger\SupportMessengerFactory;
 use Morefoto\Support\Presentation\Command\ConsumeQuestionMessagesCommand;
@@ -54,6 +55,7 @@ use Morefoto\Support\Presentation\Max\MaxUpdateMapper;
 use Morefoto\Support\Presentation\Question\QuestionInputMapper;
 use Morefoto\Support\Presentation\Question\QuestionResultMapper;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
+use Rebit\Share\Contracts\Support\StructureSupportRemovalInterface;
 use Rebit\Share\Application\Contract\Messenger\MessageConsumerRunnerInterface;
 use Rebit\Share\Application\Contract\Messenger\MessageTransportFactoryInterface;
 use Rebit\Share\Application\Contract\Notification\MaxBotAdminInterface;
@@ -75,6 +77,7 @@ $chatId = static fn(): int => (int)(getenv('MOREFOTO_SUPPORT_MAX_CHAT_ID') ?: 0)
 $services = [
     SupportSql::class => ['className' => SupportSql::class],
     SupportTransactionInterface::class => ['constructor' => static fn(): SupportTransactionInterface => new BitrixSupportTransaction()],
+    StructureSupportRemovalInterface::class => ['constructor' => static fn(): StructureSupportRemovalInterface => new StructureSupportRemoval()],
     QuestionRepositoryInterface::class => [
         'constructor' => static fn(): QuestionRepositoryInterface => new BitrixQuestionRepository($get(SupportSql::class)),
     ],

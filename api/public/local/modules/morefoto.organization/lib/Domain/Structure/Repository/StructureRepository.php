@@ -63,7 +63,40 @@ final readonly class StructureRepository
 
     public function lockInstitution(int $id): Result
     {
-        return $this->query("SELECT ID,UF_PUBLIC_ID FROM b_hlbd_mf_institution WHERE ID={$id} FOR UPDATE");
+        return $this->query("SELECT ID,UF_PUBLIC_ID,UF_NAME,UF_REVISION FROM b_hlbd_mf_institution WHERE ID={$id} FOR UPDATE");
+    }
+
+    /** Shoots being removed, locked after their institution: one shoot or all of them. Rows: ID, UF_NAME, UF_REVISION. */
+    public function lockRemovedShoots(int $institutionId, ?int $shootId): Result
+    {
+        $shoot = null === $shootId ? '' : ' AND ID=' . $shootId;
+
+        return $this->query("SELECT ID,UF_NAME,UF_REVISION FROM b_hlbd_mf_shoot WHERE UF_INSTITUTION_ID={$institutionId}{$shoot} ORDER BY ID FOR UPDATE");
+    }
+
+    /** Groups being removed, locked after their shoots: one group, a shoot's groups or the institution's. Rows: ID, UF_NAME, UF_REVISION. */
+    public function lockRemovedGroups(int $institutionId, ?int $shootId, ?int $groupId): Result
+    {
+        $shoot = null === $shootId ? '' : ' AND g.UF_SHOOT_ID=' . $shootId;
+        $group = null === $groupId ? '' : ' AND g.ID=' . $groupId;
+
+        return $this->query("SELECT g.ID,g.UF_NAME,g.UF_REVISION FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot s ON s.ID=g.UF_SHOOT_ID WHERE s.UF_INSTITUTION_ID={$institutionId}{$shoot}{$group} ORDER BY g.ID FOR UPDATE");
+    }
+
+    /**
+     * Children first: every other module has already removed its rows of these groups and shoots.
+     *
+     * @param list<int> $groupIds
+     * @param list<int> $shootIds
+     * @param list<int> $institutionIds
+     */
+    public function delete(array $groupIds, array $shootIds, array $institutionIds): void
+    {
+        foreach (['b_hlbd_mf_group' => $groupIds, 'b_hlbd_mf_shoot' => $shootIds, 'b_hlbd_mf_institution' => $institutionIds] as $table => $ids) {
+            if ([] !== $ids) {
+                $this->execute('DELETE FROM ' . $table . ' WHERE ID IN (' . implode(',', $ids) . ')');
+            }
+        }
     }
 
     public function lockShoot(int $id): Result
@@ -83,10 +116,10 @@ final readonly class StructureRepository
         $condition = 'UF_INSTITUTION_ID=' . $institutionId . $this->scope($institutionIds, 'UF_INSTITUTION_ID');
 
         return $this->query(<<<SQL
-SELECT page.ID,page.UF_PUBLIC_ID,page.UF_NAME,DATE_FORMAT(page.UF_DATE,'%Y-%m-%d') AS UF_DATE,page.UF_REVISION,totals.TOTAL
+SELECT page.ID,page.UF_PUBLIC_ID,page.UF_NAME,DATE_FORMAT(page.UF_DATE,'%Y-%m-%d') AS UF_DATE,page.UF_REVISION,page.GROUP_COUNT,totals.TOTAL
 FROM (SELECT COUNT(*) AS TOTAL FROM b_hlbd_mf_shoot WHERE {$condition}) totals
 LEFT JOIN (
-    SELECT ID,UF_PUBLIC_ID,UF_NAME,UF_DATE,UF_REVISION,UF_CREATED_AT FROM b_hlbd_mf_shoot
+    SELECT ID,UF_PUBLIC_ID,UF_NAME,UF_DATE,UF_REVISION,UF_CREATED_AT,(SELECT COUNT(*) FROM b_hlbd_mf_group g WHERE g.UF_SHOOT_ID=b_hlbd_mf_shoot.ID) AS GROUP_COUNT FROM b_hlbd_mf_shoot
     WHERE {$condition} ORDER BY UF_CREATED_AT DESC,ID DESC LIMIT {$limit} OFFSET {$offset}
 ) page ON 1=1 ORDER BY page.UF_CREATED_AT DESC,page.ID DESC
 SQL);
@@ -115,7 +148,7 @@ SQL);
      *
      * Each Result row has this shape (nullable page fields represent an empty page with a real total):
      * array{
-     *     ID: int|string|null, UF_PUBLIC_ID: string|null, SHOOT_PUBLIC_ID: string|null,
+     *     ID: int|string|null, UF_PUBLIC_ID: string|null, SHOOT_PUBLIC_ID: string|null, SHOOT_NAME: string|null,
      *     UF_NAME: string|null, UF_KIND: string|null, UF_REVISION: int|string|null,
      *     UF_TIMEZONE: string|null, UF_SENT_AT: string|null, UF_CLOSES_AT: string|null,
      *     UF_DELIVERY_DUE_AT: string|null, TOTAL: int|string,
@@ -128,11 +161,11 @@ SQL);
         $counters = GroupStateSql::counters($nowUtc);
 
         return $this->query(<<<SQL
-SELECT page.ID,page.UF_PUBLIC_ID,page.SHOOT_PUBLIC_ID,page.UF_NAME,page.UF_KIND,page.UF_REVISION,page.UF_TIMEZONE,
+SELECT page.ID,page.UF_PUBLIC_ID,page.SHOOT_PUBLIC_ID,page.SHOOT_NAME,page.UF_NAME,page.UF_KIND,page.UF_REVISION,page.UF_TIMEZONE,
 DATE_FORMAT(page.UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS UF_SENT_AT,DATE_FORMAT(page.UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS UF_CLOSES_AT,DATE_FORMAT(page.UF_DELIVERY_DUE_AT,'%Y-%m-%d %H:%i:%s') AS UF_DELIVERY_DUE_AT,totals.TOTAL,totals.STATE_PREPARING,totals.STATE_OPEN,totals.STATE_CLOSED
 FROM (SELECT COUNT(*) AS TOTAL,{$counters} FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot s ON s.ID=g.UF_SHOOT_ID WHERE {$condition}) totals
 LEFT JOIN (
-    SELECT g.ID,g.UF_PUBLIC_ID,s.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID,g.UF_NAME,g.UF_KIND,g.UF_REVISION,g.UF_TIMEZONE,g.UF_SENT_AT,g.UF_CLOSES_AT,g.UF_DELIVERY_DUE_AT,g.UF_CREATED_AT
+    SELECT g.ID,g.UF_PUBLIC_ID,s.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID,s.UF_NAME AS SHOOT_NAME,g.UF_NAME,g.UF_KIND,g.UF_REVISION,g.UF_TIMEZONE,g.UF_SENT_AT,g.UF_CLOSES_AT,g.UF_DELIVERY_DUE_AT,g.UF_CREATED_AT
     FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot s ON s.ID=g.UF_SHOOT_ID WHERE {$condition}
     ORDER BY g.UF_CREATED_AT DESC,g.ID DESC LIMIT {$limit} OFFSET {$offset}
 ) page ON 1=1 ORDER BY page.UF_CREATED_AT DESC,page.ID DESC

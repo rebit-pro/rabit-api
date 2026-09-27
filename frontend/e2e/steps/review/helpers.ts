@@ -55,7 +55,10 @@ export async function controls(p: Page, base: string, date = '2026-09-08T12:00',
 export async function checkGroup(p: Page, base: string, id = 'sun-stars') {
   await login(p, base);
   await go(p, base, '/cabinet/links?group=' + id);
-  await p.getByRole('button', { name: 'Проверить ссылку', exact: true }).first().click();
+  await p
+    .getByRole('button', { name: /^Проверить ссылку: / })
+    .first()
+    .click();
   for (const label of [
     'Фотографии и коды проверены',
     'Продукция, цены и условия группы проверены',
@@ -67,7 +70,7 @@ export async function checkGroup(p: Page, base: string, id = 'sun-stars') {
 export async function transmit(p: Page, base: string, id = 'sun-stars', teacher = false) {
   if (teacher) await login(p, base, 'teacher');
   await go(p, base, '/cabinet/links?group=' + id);
-  await p.getByRole('button', { name: 'Отметить передачу', exact: true }).click();
+  await p.getByRole('button', { name: /^Передать ссылку: / }).click();
   await p.getByLabel('Дата и время передачи (МСК)', { exact: true }).fill('2026-09-08T12:00');
   await p.getByLabel('Подтверждаю факт передачи и указанные сроки', { exact: true }).check();
   await save(p, 'Отметить передачу ссылки');

@@ -53,6 +53,20 @@ final readonly class CatalogRepository
         Application::getConnection()->queryExecute('UPDATE b_hlbd_mf_product SET ' . $this->fields($details) . ", UF_UPDATED_AT = UTC_TIMESTAMP() WHERE UF_UUID = '" . $id->value . "'");
     }
 
+    public function purchased(ProductId $id): bool
+    {
+        return false !== Application::getConnection()->query("SELECT 1 FROM mf_order_line WHERE PRODUCT_PUBLIC_ID = '" . $id->value . "' LIMIT 1")->fetch();
+    }
+
+    /** Group conditions that offered the product lose it; their revision moves so open editors reload. */
+    public function delete(ProductId $id): void
+    {
+        $connection = Application::getConnection();
+        $connection->queryExecute("UPDATE mf_group_sales_conditions c INNER JOIN mf_group_product_condition p ON p.GROUP_ID = c.GROUP_ID SET c.REVISION = c.REVISION + 1, c.UPDATED_AT = UTC_TIMESTAMP() WHERE p.PRODUCT_UUID = '" . $id->value . "'");
+        $connection->queryExecute("DELETE FROM mf_group_product_condition WHERE PRODUCT_UUID = '" . $id->value . "'");
+        $connection->queryExecute("DELETE FROM b_hlbd_mf_product WHERE UF_UUID = '" . $id->value . "'");
+    }
+
     public function advanceRevision(int $current): int
     {
         if (PHP_INT_MAX === $current) {

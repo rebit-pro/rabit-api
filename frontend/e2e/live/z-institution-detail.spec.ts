@@ -1,4 +1,4 @@
-import { test, expect, type Page, type APIResponse, type Response } from '@playwright/test';
+import { test, expect, type Locator, type Page, type APIResponse, type Response } from '@playwright/test';
 import { login, password, token } from './helpers.js';
 
 const api = '/api/v1/institutions';
@@ -6,7 +6,11 @@ const cabinet = '/cabinet/institutions';
 const problems = new WeakMap<Page, string[]>();
 const shoots = (page: Page) => page.getByTestId('institution-shoots');
 const groups = (page: Page) => page.getByTestId('institution-groups');
+/** A card of the shoot page list. */
 const row = (page: Page, name: string) => page.getByTestId('structure-row').filter({ hasText: name });
+/** Rows of a widget table of the institution page (#92): the desktop row and the mobile card share the ID. */
+const rows = (widget: Locator) => widget.locator('[data-row-id]').filter({ visible: true });
+const widgetRow = (widget: Locator, name: string) => rows(widget).filter({ hasText: name });
 async function headers(page: Page) {
   return {
     Authorization: 'Bearer ' + (await token(page)),
@@ -104,7 +108,15 @@ test('C4: полная карточка показывает сохранённ�
   await group(page, second.id, 'C4 Васильки');
   const pending = page.waitForResponse((r) => new URL(r.url()).pathname === `${api}/${parent.id}`);
   await page.goto(`${cabinet}/${parent.id}`);
-  const data = (await (await pending).json()).data;
+  const loaded = await pending;
+  // #92 DEC-06: both widgets get up to 100 rows at once and sort, filter and page them in the browser.
+  expect(new URL(loaded.url()).searchParams.get('pageSize')).toBe('100');
+  const data = (await loaded.json()).data;
+  expect(data.shoots.items.map((item: { groupCount: number }) => item.groupCount)).toEqual([1, 1]);
+  expect(data.groups.items.map((item: { shootName: string }) => item.shootName).sort()).toEqual([
+    'C4 Зимние портреты',
+    'C4 Осенние портреты'
+  ]);
   expect(data.summary).toEqual({
     availability: 'unavailable',
     reason: 'dependenciesNotReady'
@@ -120,7 +132,7 @@ test('C4: полная карточка показывает сохранённ�
     })
   ).toBeVisible();
   await expect(page.getByText('Москва, Садовая улица, 12', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Редактировать учреждение', exact: true }).click();
+  await page.getByRole('button', { name: 'Изменить учреждение', exact: true }).click();
   await page.getByLabel('Адрес', { exact: true }).fill('Москва, Садовая улица, 14');
   const saved = page.waitForResponse((r) => new URL(r.url()).pathname === `${api}/${parent.id}` && r.request().method() === 'PATCH');
   await page.getByTestId('admin-dialog').getByRole('button', { name: 'Сохранить', exact: true }).click();
@@ -128,17 +140,18 @@ test('C4: полная карточка показывает сохранённ�
   await expect(page.getByTestId('admin-dialog')).not.toBeVisible();
   await expect(page.getByTestId('institution-overview')).toContainText('Москва, Садовая улица, 14');
   expect((await detail(page, parent.id)).revision).toBe(2);
-  await expect(shoots(page).getByTestId('structure-row')).toHaveCount(2);
-  await expect(groups(page).getByTestId('structure-row')).toHaveCount(2);
-  await expect(page.getByText('Финансовая сводка пока недоступна.', { exact: true })).toBeVisible();
+  await expect(rows(shoots(page))).toHaveCount(2);
+  await expect(rows(groups(page))).toHaveCount(2);
+  await expect(widgetRow(groups(page), 'C4 Васильки')).toContainText('C4 Зимние портреты');
+  await expect(page.getByTestId('institution-overview')).toContainText('Недоступно до подключения оплаты');
   await screenshot(page, testInfo.outputPath('c4-desktop-institution.png'));
-  await groups(page).getByTestId('structure-row').filter({ hasText: 'C4 Васильки' }).getByRole('link').click();
+  await shoots(page).getByRole('link', { name: 'C4 Зимние портреты', exact: true }).click();
   await expect(page).toHaveURL(`${cabinet}/${parent.id}/shoots/${second.id}`);
   await expect(row(page, 'C4 Васильки')).toBeVisible();
   await expect(row(page, 'C4 Ромашки')).toHaveCount(0);
   await page.goto(`${cabinet}/${parent.id}`);
   await page.reload();
-  await expect(groups(page).getByTestId('structure-row')).toHaveCount(2);
+  await expect(rows(groups(page))).toHaveCount(2);
 });
 
 test('#105: организатор создаёт и изменяет группу на странице учреждения, выбрав съёмку', async ({ page }, testInfo) => {
@@ -178,7 +191,7 @@ test('#105: организатор создаёт и изменяет групп
   await dialog.getByRole('button', { name: 'Сохранить', exact: true }).click();
   const group = (await response(await created, 201)).data;
   await expect(dialog).not.toBeVisible();
-  await expect(row(page, 'I105 Ромашки')).toBeVisible();
+  await expect(widgetRow(groups(page), 'I105 Ромашки')).toBeVisible();
   const autumnGroups = (await response(await page.request.get(`/api/v1/shoots/${autumn.id}`, { headers: await headers(page) }))).data
     .groups;
   expect(autumnGroups.items.map((item: { id: string }) => item.id)).toEqual([group.id]);
@@ -186,7 +199,7 @@ test('#105: организатор создаёт и изменяет групп
     .groups;
   expect(winterGroups.meta.total).toBe(0);
 
-  await row(page, 'I105 Ромашки').getByRole('button', { name: 'Редактировать «I105 Ромашки»', exact: true }).click();
+  await groups(page).getByRole('button', { name: 'Изменить I105 Ромашки', exact: true }).click();
   await expect(dialog.getByRole('heading', { name: 'Редактирование группы', exact: true })).toBeVisible();
   await expect(dialog.getByTestId('group-shoot')).toContainText('I105 Осень');
   await expect(dialog.getByRole('combobox', { name: 'Съёмка' })).toBeDisabled();
@@ -197,8 +210,8 @@ test('#105: организатор создаёт и изменяет групп
   );
   await dialog.getByRole('button', { name: 'Сохранить', exact: true }).click();
   await response(await updated);
-  await expect(row(page, 'I105 Васильки')).toBeVisible();
-  await expect(row(page, 'I105 Ромашки')).toHaveCount(0);
+  await expect(widgetRow(groups(page), 'I105 Васильки')).toBeVisible();
+  await expect(widgetRow(groups(page), 'I105 Ромашки')).toHaveCount(0);
 
   await page.setViewportSize({ width: 390, height: 844 });
   await groups(page).getByRole('button', { name: 'Новая группа', exact: true }).click();
@@ -207,42 +220,42 @@ test('#105: организатор создаёт и изменяет групп
   await screenshot(page, testInfo.outputPath('i105-mobile-new-group.png'), false);
 });
 
-test('C4: две страницы переключаются независимо и используют реальные totals', async ({ page }) => {
+test('C4 #92: виджеты листают съёмки и группы независимо, без запросов к серверу', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await login(page);
   const parent = await institution(page, 'C4 Независимые страницы');
   const events: string[] = [];
   for (let i = 0; i < 26; i++) events.push((await shoot(page, parent.id, `C4 Съёмка ${String(i).padStart(2, '0')}`)).id);
   for (let i = 0; i < 26; i++) await group(page, events[i % 2]!, `C4 Группа ${String(i).padStart(2, '0')}`);
+  const pending = page.waitForResponse((r) => new URL(r.url()).pathname === `${api}/${parent.id}`);
   await page.goto(`${cabinet}/${parent.id}`);
-  await expect(shoots(page).getByTestId('structure-row')).toHaveCount(25);
-  await expect(groups(page).getByTestId('structure-row')).toHaveCount(25);
-  const shootIds = await shoots(page)
-    .getByTestId('structure-row')
-    .evaluateAll((rows) => rows.map((r) => r.getAttribute('data-entity-id')));
-  let pending = page.waitForResponse(
-    (r) => new URL(r.url()).pathname === `${api}/${parent.id}` && new URL(r.url()).searchParams.get('groupsPage') === '2'
-  );
-  await groups(page).getByRole('button', { name: 'Следующая', exact: true }).click();
-  const first = (await (await pending).json()).data;
-  expect(first.shoots.meta).toMatchObject({ page: 1, pageSize: 25, total: 26 });
-  expect(first.groups.meta).toMatchObject({ page: 2, pageSize: 25, total: 26 });
-  await expect(groups(page).getByTestId('structure-row')).toHaveCount(1);
-  expect(
-    await shoots(page)
-      .getByTestId('structure-row')
-      .evaluateAll((rows) => rows.map((r) => r.getAttribute('data-entity-id')))
-  ).toEqual(shootIds);
-  const groupId = first.groups.items[0].id;
-  pending = page.waitForResponse(
-    (r) => new URL(r.url()).pathname === `${api}/${parent.id}` && new URL(r.url()).searchParams.get('shootsPage') === '2'
-  );
-  await shoots(page).getByRole('button', { name: 'Следующая', exact: true }).click();
-  const second = (await (await pending).json()).data;
-  expect(second.shoots.meta.page).toBe(2);
-  expect(second.groups.meta.page).toBe(2);
-  expect(second.groups.items[0].id).toBe(groupId);
-  await expect(shoots(page).getByTestId('structure-row')).toHaveCount(1);
-  await expect(groups(page).getByTestId('structure-row')).toHaveCount(1);
+  const data = (await (await pending).json()).data;
+  expect(data.shoots.meta).toMatchObject({ page: 1, pageSize: 100, total: 26 });
+  expect(data.groups.meta).toMatchObject({ page: 1, pageSize: 100, total: 26 });
+  await expect(rows(shoots(page))).toHaveCount(10);
+  await expect(rows(groups(page))).toHaveCount(10);
+  await expect(shoots(page).getByTestId('ui-table-range')).toHaveText('1–10 из 26');
+  const shootIds = await rows(shoots(page)).evaluateAll((items) => items.map((item) => item.getAttribute('data-row-id')));
+  const requests: string[] = [];
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname.startsWith(api)) requests.push(request.url());
+  });
+  await groups(page).getByRole('button', { name: 'Следующая страница', exact: true }).click();
+  await groups(page).getByRole('button', { name: 'Следующая страница', exact: true }).click();
+  await expect(groups(page).getByTestId('ui-table-range')).toHaveText('21–26 из 26');
+  await expect(rows(groups(page))).toHaveCount(6);
+  expect(await rows(shoots(page)).evaluateAll((items) => items.map((item) => item.getAttribute('data-row-id')))).toEqual(shootIds);
+  await shoots(page).getByRole('button', { name: 'Сортировать: Съёмка', exact: true }).click();
+  await expect(rows(shoots(page)).first()).toContainText('C4 Съёмка 00');
+  await expect(groups(page).getByTestId('ui-table-range')).toHaveText('21–26 из 26');
+  await groups(page).getByRole('combobox', { name: 'Съёмка', exact: true }).press('Enter');
+  await page.getByRole('option', { name: 'C4 Съёмка 01', exact: true }).click();
+  // Groups alternate between the first two shoots: 13 of them belong to «C4 Съёмка 01»; a new filter starts from page 1.
+  await expect(groups(page).getByTestId('ui-table-range')).toHaveText('1–10 из 13');
+  await expect(rows(groups(page))).toHaveCount(10);
+  await expect(widgetRow(groups(page), 'C4 Группа 01')).toBeVisible();
+  await expect(widgetRow(groups(page), 'C4 Группа 00')).toHaveCount(0);
+  expect(requests).toEqual([]);
 });
 
 test('C4: куратор и руководитель читают только свою карточку без mutation signature', async ({ page, browser, baseURL }, testInfo) => {
@@ -287,12 +300,16 @@ test('C4: куратор и руководитель читают только �
       await expect(viewer.getByTestId('institution-curator')).toContainText(curator.name);
       await expect(viewer.getByTestId('institution-head')).toContainText(head.name);
       await expect(viewer.getByTestId('institution-overview')).not.toContainText('Сотрудник №');
-      await expect(shoots(viewer).getByTestId('structure-row')).toHaveCount(1);
-      await expect(groups(viewer).getByTestId('structure-row')).toHaveCount(1);
+      await expect(rows(shoots(viewer))).toHaveCount(1);
+      await expect(rows(groups(viewer))).toHaveCount(1);
       await expect(viewer.getByRole('button', { name: 'Новая съёмка', exact: true })).toHaveCount(0);
       await expect(viewer.getByRole('button', { name: 'Новая группа', exact: true })).toHaveCount(0);
-      await expect(groups(viewer).getByRole('link')).toHaveCount(0);
-      await expect(viewer.getByRole('button', { name: /Редактировать «/ })).toHaveCount(0);
+      // #92: read-only widgets — no selection, editing or removal; a group leads only to its link and dates.
+      await expect(viewer.getByRole('checkbox')).toHaveCount(0);
+      await expect(viewer.getByRole('button', { name: /^(Изменить|Удалить)/ })).toHaveCount(0);
+      await expect(shoots(viewer).getByRole('link')).toHaveCount(0);
+      await expect(groups(viewer).getByRole('link')).toHaveCount(1);
+      await expect(groups(viewer).getByRole('link', { name: 'Ссылка и сроки: C4 Доступная группа', exact: true })).toBeVisible();
       if (name === 'c4-curator') await screenshot(viewer, testInfo.outputPath('c4-desktop-curator.png'));
       await viewer.goto(`${cabinet}/${foreign.id}`);
       await expect(viewer.getByRole('alert')).toBeVisible();
@@ -392,7 +409,7 @@ test('C4: ошибка загрузки не подменяется пустой
   const event = await shoot(page, parent.id, 'C4 Сохранённая съёмка');
   await group(page, event.id, 'C4 Сохранённая группа');
   await page.goto(`${cabinet}/${parent.id}`);
-  await expect(groups(page).getByTestId('structure-row')).toHaveCount(1);
+  await expect(rows(groups(page))).toHaveCount(1);
   let lost = false;
   await page.route(`**${api}/${parent.id}?*`, async (route) => {
     if (!lost) {
@@ -402,12 +419,12 @@ test('C4: ошибка загрузки не подменяется пустой
     }
     return route.continue();
   });
-  await page.getByRole('button', { name: 'Обновить список', exact: true }).click();
+  await page.getByRole('button', { name: 'Обновить', exact: true }).click();
   await expect(page.getByRole('alert')).toBeVisible();
   await expect(groups(page)).toHaveCount(0);
-  await page.getByRole('button', { name: 'Обновить список', exact: true }).click();
-  await expect(groups(page).getByTestId('structure-row')).toHaveCount(1);
-  await expect(row(page, 'C4 Сохранённая группа')).toBeVisible();
+  await page.getByRole('button', { name: 'Обновить', exact: true }).click();
+  await expect(rows(groups(page))).toHaveCount(1);
+  await expect(widgetRow(groups(page), 'C4 Сохранённая группа')).toBeVisible();
 });
 
 test('C4: мобильная карточка безопасно отображает длинный текст и доступные действия', async ({ page }, testInfo) => {
@@ -421,7 +438,7 @@ test('C4: мобильная карточка безопасно отображ�
   await group(page, second.id, 'C4 Подготовительная группа');
   await page.goto(`${cabinet}/${parent.id}`);
   await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
-  await expect(row(page, 'C4 <img onerror=alert(1)>')).toBeVisible();
+  await expect(widgetRow(groups(page), 'C4 <img onerror=alert(1)>')).toBeVisible();
   expect(await page.locator('img[onerror]').count()).toBe(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await screenshot(page, testInfo.outputPath('c4-mobile-institution.png'));
@@ -429,7 +446,7 @@ test('C4: мобильная карточка безопасно отображ�
   await page.getByLabel('Название съёмки', { exact: true }).fill('C4 Новая мобильная съёмка');
   await screenshot(page, testInfo.outputPath('c4-mobile-shoot-editor.png'), false);
   await page.getByRole('button', { name: 'Закрыть редактор', exact: true }).click();
-  await expect(groups(page).getByTestId('structure-row')).toHaveCount(2);
+  await expect(rows(groups(page))).toHaveCount(2);
 });
 
 test('C4: отзыв сессии при обновлении карточки возвращает к входу и обратно', async ({ page, browser, baseURL }) => {
@@ -441,7 +458,7 @@ test('C4: отзыв сессии при обновлении карточки �
   context.on('page', (child) => watchPage(child, problems.get(page)!));
   try {
     await login(await context.newPage());
-    await page.getByRole('button', { name: 'Обновить список', exact: true }).click();
+    await page.getByRole('button', { name: 'Обновить', exact: true }).click();
     await expect(page).toHaveURL(/\/login\?reason=revoked$/);
     await page.getByRole('textbox', { name: 'Email', exact: true }).fill('organizer@example.invalid');
     await page.getByLabel('Пароль', { exact: true }).fill(password);

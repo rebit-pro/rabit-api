@@ -8,6 +8,8 @@ const png = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAUAAAADICAIAAAAWZq/8AAABvElEQVR42u3TQQ0AMAgAsTE1CEMiAhHBi6SVcMlFVj/gpi8BGBgwMGBgMDBgYMDAgIHBwICBAQODgQEDAwYGDAwGBgwMGBgwMBgYMDBgYDAwYGDAwICBwcCAgQEDAwYGAwMGBgwMBgYMDBgYMDAYGDAwYGAwMGBgwMCAgcHAgIEBAwMGBgMDBgYMDAYGDAwYGDAwGBgwMGBgwMBgYMDAgIHBwICBAQMDBgYDAwYGDAwYGAwMGBgwMBgYMDBgYMDAYGDAwICBwcCAgQEDAwYGAwMGBgwMGBgMDBgYMDAYGDAwYGDAwGBgwMCAgQEDg4EBAwMGBgMDBgYMDBgYDAwYGDAwYGAwMGBgwMBgYMDAgIEBA4OBAQMDBgYDAwYGDAwYGAwMGBgwMGBgMDBgYMDAYGDAwICBAQODgQEDAwYGDAwGBgwMGBgMDBgYMDBgYDAwYGDAwGBgwMCAgQEDg4EBAwMGBgwMBgYMDBgYDAwYGDAwYGAwMGBgwMCAgcHAgIEBA4OBAQMDBgYMDAYGDAwYGDAwGBgwMGBgMDBgYMDAgIHBwICBAQODgQEDAwYGDAwGBgwMGBgwMBgYMDCwMUuEAtA7HouzAAAAAElFTkSuQmCC',
   'base64'
 );
+/** A row of the links table (#92); the desktop row and the mobile card share the group ID, only the shown one counts. */
+const row = (page: Page, groupId: string) => page.locator('[data-row-id="' + groupId + '"]').filter({ visible: true });
 async function assign(page: Page, email: string, role: 'teacher' | 'curator' | 'head', institutionId: string, groupId: string) {
   const listing = await body(await page.request.get('/api/v1/users?q=' + encodeURIComponent(email), { headers: await auth(page) }));
   const staff = listing.data.items.find((item: { email: string }) => item.email === email);
@@ -116,9 +118,11 @@ test('F2: организатор проверяет ссылку группы и
 
   // Organizer prepares through the live screen.
   await page.getByLabel('Основная навигация').getByRole('link', { name: 'Ссылки и сроки', exact: true }).click();
-  const card = page.getByTestId('link-' + group.id);
-  await expect(card.getByText('Ссылка появится после проверки группы.')).toBeVisible();
-  await card.getByRole('button', { name: 'Проверить ссылку', exact: true }).click();
+  const card = row(page, group.id);
+  // Until the check there is no link to copy: the row shows the next step of the path instead.
+  await expect(card).toContainText('шаг 4 из 5: проверить ссылку');
+  await expect(card.getByRole('button', { name: /^Копировать ссылку/ })).toHaveCount(0);
+  await card.getByRole('button', { name: /^Проверить ссылку: / }).click();
   const dialog = page.getByTestId('admin-dialog');
   for (const label of [
     'Фотографии и коды проверены',
@@ -203,13 +207,16 @@ test('#127: путь к галерее ведёт от кадров до пер�
   // No new product here: the catalog is shared, a new one would change the sales signature of the F2 group that
   // zzzz-links expects to stay prepared. The F2 test above has already published an active product.
   const step = (scope: Locator, key: string) => scope.getByTestId('gallery-path').locator('[data-step="' + key + '"]');
+  const actions = 'Действия: I127 Ромашки ' + suffix;
 
-  // Without frames the links card starts the path at the upload and leads to the photos of the group.
+  // Without frames the links row starts the path at the upload and its menu leads to the photos of the group (#92).
   await page.goto('/cabinet/links?group=' + group.id);
-  const card = page.getByTestId('link-' + group.id);
-  await expect(step(card, 'photos')).toHaveAttribute('aria-current', 'step');
-  await expect(step(card, 'photos')).toContainText('нет готовых кадров');
-  await step(card, 'photos').getByRole('link', { name: 'К фотографиям', exact: true }).click();
+  const card = row(page, group.id);
+  const note = card.getByText('шаг 1 из 5: загрузить кадры', { exact: true });
+  await expect(note).toBeVisible();
+  await expect(note).toHaveAttribute('title', /нет готовых кадров/);
+  await card.getByRole('button', { name: actions, exact: true }).click();
+  await page.getByRole('link', { name: 'К фотографиям', exact: true }).click();
   await expect(page).toHaveURL(new RegExp('/shoots/' + shoot.id + '/photos\\?group=' + group.id));
   const photoPath = page.getByTestId('photo-gallery-path');
   await expect(step(photoPath, 'photos')).toHaveAttribute('aria-current', 'step');
@@ -253,11 +260,14 @@ test('#127: путь к галерее ведёт от кадров до пер�
     signature: initial.signature
   });
   await step(photoPath, 'prepare').getByRole('link', { name: 'К ссылкам и срокам', exact: true }).click();
-  await expect(step(card, 'transmit')).toHaveAttribute('aria-current', 'step');
-  await expect(step(card, 'transmit')).toContainText('Родители увидят кадры только после этой отметки');
-  await expect(card.getByText(/До отметки передачи родители видят «Фотографии ещё готовятся»/)).toBeVisible();
-  await expect(card.getByRole('button', { name: 'Посмотреть страницу родителей', exact: true })).toBeVisible();
-  await expect(card.getByRole('button', { name: 'Отметить передачу', exact: true })).toBeVisible();
+  const transmitNote = card.getByText('шаг 5 из 5: отметить передачу ссылки', { exact: true });
+  await expect(transmitNote).toBeVisible();
+  await expect(transmitNote).toHaveAttribute('title', /Родители увидят кадры только после этой отметки/);
+  await expect(page.getByText(/До отметки передачи родители видят «Фотографии ещё готовятся»/)).toBeVisible();
+  await expect(card.getByRole('button', { name: /^Передать ссылку: / })).toBeVisible();
+  await card.getByRole('button', { name: actions, exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Страница родителей', exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
   await card.screenshot({ path: testInfo.outputPath('i127-desktop-links-card.png'), animations: 'disabled' });
   await page.setViewportSize({ width: 390, height: 844 });
   await card.scrollIntoViewIfNeeded();

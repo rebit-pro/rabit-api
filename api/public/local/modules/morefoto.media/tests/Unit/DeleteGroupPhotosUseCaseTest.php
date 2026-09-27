@@ -11,6 +11,7 @@ use Morefoto\Media\Application\Photo\Contract\PreviewRendererInterface;
 use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
 use Morefoto\Media\Application\Photo\Dto\DeletePhotosInputDto;
 use Morefoto\Media\Application\Photo\Dto\DeletionMutationOutputDto;
+use Morefoto\Media\Application\Photo\Service\PhotoFileCleaner;
 use Morefoto\Media\Application\Photo\UseCase\DeleteGroupPhotosUseCase;
 use Morefoto\Media\Domain\Photo\Exception\MediaStorageException;
 use Morefoto\Media\Domain\Photo\Repository\MediaMutationRepository;
@@ -212,14 +213,16 @@ final class DeleteGroupPhotosUseCaseTest extends TestCase
         return new DeleteGroupPhotosUseCase(
             $this->transaction(),
             $media,
-            $photos ?? $this->createStub(PhotoRepository::class),
             $groups,
             $scopes ?? $this->scopes(true),
             $this->createStub(AccessGuardInterface::class),
-            $storage ?? $this->createStub(PrivatePhotoStorageInterface::class),
-            $this->originals(),
-            $previews ?? $this->createStub(PreviewRendererInterface::class),
-            $logger ?? $this->createStub(LoggerInterface::class),
+            new PhotoFileCleaner(
+                $photos ?? $this->createStub(PhotoRepository::class),
+                $storage ?? $this->createStub(PrivatePhotoStorageInterface::class),
+                $this->originals(),
+                $previews ?? $this->createStub(PreviewRendererInterface::class),
+                $logger ?? $this->createStub(LoggerInterface::class),
+            ),
         );
     }
 

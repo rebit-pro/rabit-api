@@ -26,8 +26,23 @@ const props = withDefaults(
     emptyDescription?: string;
     /** Column whose value names a row for assistive labels; the row id by default. */
     labelKey?: string;
+    /** A read-only table has no actions column. */
+    actions?: boolean;
+    /** Width of the actions column on desktop. */
+    actionsWidth?: string;
+    /** Hide the pager while every row fits on the smallest page (compact widgets). */
+    autoPager?: boolean;
   }>(),
-  { selectable: true, removable: true, density: 'comfortable', emptyTitle: 'Список пока пуст', emptyDescription: 'Здесь появятся записи.' }
+  {
+    selectable: true,
+    removable: true,
+    density: 'comfortable',
+    emptyTitle: 'Список пока пуст',
+    emptyDescription: 'Здесь появятся записи.',
+    actions: true,
+    actionsWidth: '176px',
+    autoPager: false
+  }
 );
 const emit = defineEmits<{
   sort: [sort: UiTableSort];
@@ -39,6 +54,8 @@ const emit = defineEmits<{
   retry: [];
 }>();
 const root = useTemplateRef<HTMLElement>('root');
+const pageSizes = [10, 25, 50];
+const smallestPage = Math.min(...pageSizes);
 const pages = computed(() => tablePageCount(props.total, props.pageSize));
 const selectedOnPage = computed(() => props.rows.filter((row) => props.selected.includes(row.id)).length);
 const allSelected = computed(() => props.rows.length > 0 && selectedOnPage.value === props.rows.length);
@@ -133,6 +150,11 @@ defineExpose({ focusRow });
               summary
             }}
           </caption>
+          <colgroup>
+            <col v-if="selectable" class="ui-table-check-col" />
+            <col v-for="column in columns" :key="column.key" :style="column.width ? { width: column.width } : undefined" />
+            <col v-if="actions" :style="{ width: actionsWidth }" />
+          </colgroup>
           <thead>
             <tr>
               <th v-if="selectable" class="ui-table-check" scope="col">
@@ -166,7 +188,7 @@ defineExpose({ focusRow });
                 </button>
                 <span v-else>{{ column.label }}</span>
               </th>
-              <th scope="col">Действия</th>
+              <th v-if="actions" scope="col">Действия</th>
             </tr>
           </thead>
           <tbody>
@@ -187,7 +209,7 @@ defineExpose({ focusRow });
               >
                 <slot :name="'cell-' + column.key" :row="row"><UiTableCell :value="row[column.key]" :column="column" /></slot>
               </td>
-              <td>
+              <td v-if="actions">
                 <slot name="actions" :row="row"
                   ><UiTableRowActions :row="row" :removable="removable" @open="$emit('open', row.id)" @remove="$emit('remove', row.id)"
                 /></slot>
@@ -235,16 +257,16 @@ defineExpose({ focusRow });
               </div>
             </dl>
           </details>
-          <slot name="actions" :row="row"
+          <slot v-if="actions" name="actions" :row="row"
             ><UiTableRowActions :row="row" :removable="removable" @open="$emit('open', row.id)" @remove="$emit('remove', row.id)"
           /></slot>
         </article>
       </div>
-      <nav class="ui-table-pagination" :aria-label="'Страницы: ' + title">
+      <nav v-if="!autoPager || total > smallestPage" class="ui-table-pagination" :aria-label="'Страницы: ' + title">
         <p data-testid="ui-table-range" role="status">{{ range }} из {{ total }}</p>
         <v-select
           :model-value="pageSize"
-          :items="[10, 25, 50]"
+          :items="pageSizes"
           label="Строк на странице"
           aria-label="Строк на странице"
           density="compact"
@@ -344,9 +366,8 @@ th {
   width: 52px;
   padding: 4px;
 }
-th:last-child,
-td:last-child {
-  width: 176px;
+.ui-table-check-col {
+  width: 52px;
 }
 .ui-table-primary {
   font-weight: 600;

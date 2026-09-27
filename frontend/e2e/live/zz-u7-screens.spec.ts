@@ -43,7 +43,9 @@ test('U7: учреждение и съёмка — счётчики, хлебн�
   await expect(crumbs.getByRole('link', { name: 'Учреждения', exact: true })).toBeVisible();
   await expect(crumbs.locator('[aria-current="page"]')).toHaveText('U7 Учреждение');
   await expect(page.getByTestId('institution-curator')).toContainText('Не назначен');
-  await expect(page.getByTestId('institution-overview').getByTestId('distribution')).toContainText('Готовятся');
+  // #92: the split of groups by state became tiles next to the details of the institution.
+  await expect(page.getByTestId('institution-overview')).toContainText('Группы готовятся');
+  await expect(page.getByTestId('institution-overview')).toContainText('из 1');
 
   await page.getByTestId('institution-shoots').getByRole('link', { name: 'U7 Съёмка', exact: true }).click();
   const tabs = page.getByRole('navigation', { name: 'Разделы съёмки' });

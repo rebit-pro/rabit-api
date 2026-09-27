@@ -7,11 +7,15 @@ use Morefoto\Commerce\Application\Catalog\Contract\CatalogTransactionInterface;
 use Morefoto\Commerce\Application\Catalog\Service\AuthorizedCatalog;
 use Morefoto\Commerce\Application\Catalog\Service\CatalogPayloadHash;
 use Morefoto\Commerce\Application\Catalog\UseCase\CreateProductUseCase;
+use Morefoto\Commerce\Application\Catalog\UseCase\DeleteProductUseCase;
 use Morefoto\Commerce\Application\Catalog\UseCase\ListProductsUseCase;
 use Morefoto\Commerce\Application\Catalog\UseCase\UpdateProductUseCase;
 use Morefoto\Commerce\Domain\Catalog\Repository\CatalogIdempotencyRepository;
 use Morefoto\Commerce\Infrastructure\Adapter\CatalogTokenResolver;
+use Morefoto\Commerce\Presentation\Catalog\ProductRemovalInputMapper;
 use Morefoto\Commerce\Presentation\Controller\CatalogController;
+use Morefoto\Commerce\Presentation\Controller\CatalogRemovalController;
+use Morefoto\Commerce\Domain\Catalog\Repository\CatalogRepository;
 use Morefoto\Commerce\Presentation\Mapper\CatalogResponseMapper;
 use Morefoto\Commerce\Presentation\Request\CatalogRequestFactory;
 use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
@@ -45,6 +49,22 @@ return [
             ServiceLocator::getInstance()->get(CatalogRequestFactory::class),
             ServiceLocator::getInstance()->get(CatalogResponseMapper::class),
             ServiceLocator::getInstance()->get(CatalogTokenResolver::class),
+        ],
+    ],
+    DeleteProductUseCase::class => [
+        'className' => DeleteProductUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(CatalogRepository::class),
+            ServiceLocator::getInstance()->get(CatalogAccessGuardInterface::class),
+            ServiceLocator::getInstance()->get(CatalogTransactionInterface::class),
+        ],
+    ],
+    ProductRemovalInputMapper::class => ['className' => ProductRemovalInputMapper::class],
+    CatalogRemovalController::class => [
+        'className' => CatalogRemovalController::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(DeleteProductUseCase::class),
+            ServiceLocator::getInstance()->get(ProductRemovalInputMapper::class),
         ],
     ],
 ];

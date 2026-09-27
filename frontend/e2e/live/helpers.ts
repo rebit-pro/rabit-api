@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 export const password = 'A8-test-only-password!42';
 export const catalogPath = '/api/v1/catalog/products';
 export async function login(page: Page, account = 'organizer'): Promise<void> {
@@ -27,8 +27,13 @@ export async function logout(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Меню пользователя', exact: true }).click();
   await page.getByRole('button', { name: 'Выйти', exact: true }).click();
 }
-export function productRow(page: Page, name: string) {
-  return page.getByRole('article').filter({ has: page.getByRole('heading', { name, exact: true }) });
+/** A row of the catalog table (#92): the table pages its rows, so the name filter brings the product into view first. */
+export async function productRow(page: Page, name: string): Promise<Locator> {
+  await page.getByRole('textbox', { name: 'Название', exact: true }).fill(name);
+  return page
+    .locator('[data-row-id]')
+    .filter({ visible: true })
+    .filter({ has: page.getByText(name, { exact: true }) });
 }
 export async function fillProduct(page: Page, name: string, price = '125,50'): Promise<void> {
   await page.getByRole('button', { name: 'Новая продукция', exact: true }).click();
