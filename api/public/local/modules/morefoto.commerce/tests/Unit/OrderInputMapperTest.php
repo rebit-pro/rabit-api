@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Commerce\Tests\Unit;
 
+use Morefoto\Commerce\Domain\Order\Enum\OrderSortEnum;
 use Morefoto\Commerce\Presentation\Order\Dto\StaffOrderListRequestDto;
 use Morefoto\Commerce\Presentation\Order\OrderInputMapper;
 use Morefoto\Commerce\Presentation\Storefront\StorefrontMapper;
@@ -40,6 +41,18 @@ final class OrderInputMapperTest extends TestCase
         self::assertNull($input->latePayment);
     }
 
+    public function testSortIsWhitelistedAndNewestFirstByDefault(): void
+    {
+        $mapper = new OrderInputMapper(new StorefrontMapper(), new AcceptedDocumentInputMapper());
+        $default = $mapper->search(new StaffOrderListRequestDto());
+        self::assertSame(OrderSortEnum::CREATED_AT, $default->sort);
+        self::assertTrue($default->descending);
+
+        $byTotal = $mapper->search(new StaffOrderListRequestDto(sort: 'total', direction: 'asc'));
+        self::assertSame(OrderSortEnum::TOTAL, $byTotal->sort);
+        self::assertFalse($byTotal->descending);
+    }
+
     public function testLatePaymentFilterIsAvailableSinceG1(): void
     {
         $mapper = new OrderInputMapper(new StorefrontMapper(), new AcceptedDocumentInputMapper());
@@ -68,5 +81,7 @@ final class OrderInputMapperTest extends TestCase
         yield 'bad institution id' => [new StaffOrderListRequestDto(institutionId: 'institution'), 'INVALID_FILTER'];
         yield 'impossible date' => [new StaffOrderListRequestDto(dateFrom: '2026-02-30'), 'INVALID_FILTER'];
         yield 'reversed dates' => [new StaffOrderListRequestDto(dateFrom: '2026-09-30', dateTo: '2026-09-01'), 'INVALID_FILTER'];
+        yield 'unknown sort' => [new StaffOrderListRequestDto(sort: 'BUYER_EMAIL'), 'INVALID_SORT'];
+        yield 'unknown direction' => [new StaffOrderListRequestDto(sort: 'total', direction: 'up'), 'INVALID_SORT'];
     }
 }

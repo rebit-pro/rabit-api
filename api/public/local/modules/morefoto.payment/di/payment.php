@@ -38,6 +38,8 @@ use Morefoto\Payment\Presentation\Command\ReconcilePaymentsCommand;
 use Morefoto\Payment\Presentation\Controller\PaymentWebhookController;
 use Morefoto\Payment\Presentation\Controller\PublicPaymentController;
 use Morefoto\Payment\Presentation\Controller\StaffPaymentController;
+use Morefoto\Payment\Infrastructure\Commerce\OrderPaymentRemoval;
+use Rebit\Share\Contracts\Payment\OrderPaymentRemovalInterface;
 use Morefoto\Payment\Presentation\Payment\PaymentInputMapper;
 use Morefoto\Payment\Presentation\Payment\PaymentResultMapper;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
@@ -235,4 +237,5 @@ return [
             ServiceLocator::getInstance()->get(ReconcilePaymentsUseCase::class),
         ],
     ],
+    OrderPaymentRemovalInterface::class => ['className' => OrderPaymentRemoval::class],
 ];

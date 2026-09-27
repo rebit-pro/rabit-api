@@ -15,6 +15,7 @@ use Morefoto\Handoff\Application\Request\Dto\StaffTransferInputDto;
 use Morefoto\Handoff\Application\Request\Dto\StaffRequestListInputDto;
 use Morefoto\Handoff\Domain\Request\ValueObject\IdempotencyKey;
 use Rebit\Share\Shared\Exception\HttpException;
+use Morefoto\Handoff\Domain\Request\Enum\StaffRequestSortEnum;
 
 final readonly class StaffRequestInputMapper
 {
@@ -74,6 +75,9 @@ final readonly class StaffRequestInputMapper
         if (1 > $request->page || 1000000 < $request->page || 1 > $request->pageSize || 100 < $request->pageSize) {
             throw new HttpException('INVALID_PAGE', 422);
         }
+        if (null !== $request->direction && !in_array($request->direction, ['asc', 'desc'], true)) {
+            throw new HttpException('INVALID_SORT', 422);
+        }
 
         return new StaffRequestListInputDto(
             StaffRequestValidation::optionalUuid($request->institutionId),
@@ -81,6 +85,10 @@ final readonly class StaffRequestInputMapper
             $request->status,
             $request->page,
             $request->pageSize,
+            null === $request->sort
+                ? StaffRequestSortEnum::UPDATED_AT
+                : (StaffRequestSortEnum::tryFrom($request->sort) ?? throw new HttpException('INVALID_SORT', 422)),
+            'asc' !== $request->direction,
         );
     }
 

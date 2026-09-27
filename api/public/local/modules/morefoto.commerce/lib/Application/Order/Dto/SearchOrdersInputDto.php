@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Morefoto\Commerce\Application\Order\Dto;
 
+use Morefoto\Commerce\Domain\Order\Enum\OrderSortEnum;
+
 final readonly class SearchOrdersInputDto
 {
     public function __construct(
@@ -18,5 +20,7 @@ final readonly class SearchOrdersInputDto
         public int $page,
         public int $pageSize,
         public ?bool $latePayment = null,
+        public OrderSortEnum $sort = OrderSortEnum::CREATED_AT,
+        public bool $descending = true,
     ) {}
 }

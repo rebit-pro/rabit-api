@@ -41,7 +41,16 @@ final readonly class StaffRequestWorkflow
     {
         // DS-14: the head of an institution reads its lists; changing them stays with the teacher, curator and organizer.
         $actor = $this->actor($actorId, ['organizer', 'curator', 'head', 'teacher']);
-        $page = $this->requests->page($actor, $input->institutionId, $input->shootId, $input->status, $input->pageSize, ($input->page - 1) * $input->pageSize);
+        $page = $this->requests->page(
+            $actor,
+            $input->institutionId,
+            $input->shootId,
+            $input->status,
+            $input->pageSize,
+            ($input->page - 1) * $input->pageSize,
+            $input->sort,
+            $input->descending,
+        );
         $items = [];
         foreach ($page['items'] as $item) {
             $items[] = StaffRequestOutputMapper::fromView($item);
@@ -182,6 +191,26 @@ final readonly class StaffRequestWorkflow
             $this->remember($actor->id, $resource, $key, $output);
 
             return $output;
+        });
+    }
+
+    /**
+     * The author or the organizer withdraws a list until its sets are moved (#92 DEC-01); the children's frames are not
+     * touched, because only a transfer changes them.
+     */
+    public function remove(int $actorId, string $requestId): void
+    {
+        $actor = $this->actor($actorId, ['organizer', 'teacher']);
+        $this->transaction->execute(function() use ($actor, $requestId): void {
+            $request = $this->required($requestId, true);
+            $this->assertVisible($actor, $request);
+            if ('organizer' !== $actor->role && (int)$request['CREATED_BY'] !== $actor->id) {
+                throw new HttpException('AUTHOR_REQUIRED', 403);
+            }
+            if ('transferred' === $request['STATUS']) {
+                throw new HttpException('REQUEST_TRANSFERRED', 409);
+            }
+            $this->requests->delete((int)$request['ID'], $requestId);
         });
     }
 

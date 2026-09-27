@@ -55,7 +55,7 @@ final readonly class SearchStaffOrdersUseCase
         ));
         /** @var array<int, array<string, mixed>> $rows */
         $rows = [];
-        $result = $this->orders->page($criteria, $input->pageSize, ($input->page - 1) * $input->pageSize);
+        $result = $this->orders->page($criteria, $input->pageSize, ($input->page - 1) * $input->pageSize, $input->sort, $input->descending);
         while (false !== ($row = $result->fetch())) {
             $rows[(int)$row['ID']] = $row;
         }

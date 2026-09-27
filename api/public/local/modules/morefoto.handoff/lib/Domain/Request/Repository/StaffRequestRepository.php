@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Morefoto\Handoff\Domain\Request\Repository;
 
 use Bitrix\Main\Application;
+use Morefoto\Handoff\Domain\Request\Enum\StaffRequestSortEnum;
 use Rebit\Share\Contracts\Access\Dto\StaffRequestActorOutputDto;
 use Rebit\Share\Shared\Exception\HttpException;
 
@@ -18,6 +19,35 @@ final readonly class StaffRequestRepository
         . 's.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID FROM mf_staff_request r '
         . 'INNER JOIN b_hlbd_mf_institution i ON i.ID=r.INSTITUTION_ID '
         . 'INNER JOIN b_hlbd_mf_shoot s ON s.ID=r.SHOOT_ID ';
+
+    /**
+     * Only under request() with a lock and before a transfer: the list, its rows, history and the idempotency keys of
+     * commands on it. A transferred list is never removed, so no transfer result is lost.
+     */
+    public function delete(int $id, string $publicId): void
+    {
+        $connection = Application::getConnection();
+        $connection->queryExecute("DELETE FROM mf_staff_request_row WHERE REQUEST_ID={$id}");
+        $connection->queryExecute("DELETE FROM mf_staff_request_history WHERE REQUEST_ID={$id}");
+        $connection->queryExecute('DELETE FROM mf_staff_request_idempotency WHERE RESOURCE_KEY LIKE ' . $this->quote('/staff-requests/' . $publicId . '%'));
+        $connection->queryExecute("DELETE FROM mf_staff_request WHERE ID={$id}");
+    }
+
+    /** Statuses sort by the review flow, not alphabetically; the latest change first keeps pages stable on ties. */
+    private function order(StaffRequestSortEnum $sort, bool $descending): string
+    {
+        $direction = $descending ? 'DESC' : 'ASC';
+        $column = match ($sort) {
+            StaffRequestSortEnum::UPDATED_AT => null,
+            StaffRequestSortEnum::CREATED_AT => 'r.CREATED_AT',
+            StaffRequestSortEnum::STATUS => "FIELD(r.STATUS,'submitted','clarification','transferred')",
+            StaffRequestSortEnum::CREATED_BY_NAME => 'r.CREATED_BY_NAME',
+        };
+
+        return null === $column
+            ? " ORDER BY r.UPDATED_AT {$direction},r.ID {$direction}"
+            : " ORDER BY {$column} {$direction},r.UPDATED_AT DESC,r.ID DESC";
+    }
 
     /** @return null|array<string,mixed> */
     public function request(string $publicId, bool $lock = false): ?array
@@ -41,8 +71,16 @@ final readonly class StaffRequestRepository
      *     byStatus: array{submitted: int, clarification: int, transferred: int},
      * }
      */
-    public function page(StaffRequestActorOutputDto $actor, ?string $institutionId, ?string $shootId, ?string $status, int $limit, int $offset): array
-    {
+    public function page(
+        StaffRequestActorOutputDto $actor,
+        ?string $institutionId,
+        ?string $shootId,
+        ?string $status,
+        int $limit,
+        int $offset,
+        StaffRequestSortEnum $sort = StaffRequestSortEnum::UPDATED_AT,
+        bool $descending = true,
+    ): array {
         $conditions = [$this->visibility($actor, 'r')];
         if (null !== $institutionId) {
             $conditions[] = 'i.UF_PUBLIC_ID=' . $this->quote($institutionId);
@@ -68,7 +106,7 @@ final readonly class StaffRequestRepository
         // The CHECK constraint keeps STATUS within the three counted values, so the filtered total is one of them.
         $total = null === $status ? array_sum($byStatus) : ($byStatus[$status] ?? 0);
         $result = $connection->query(
-            self::CARD . 'WHERE ' . implode(' AND ', $conditions) . " ORDER BY r.UPDATED_AT DESC,r.ID DESC LIMIT {$limit} OFFSET {$offset}",
+            self::CARD . 'WHERE ' . implode(' AND ', $conditions) . $this->order($sort, $descending) . " LIMIT {$limit} OFFSET {$offset}",
         );
         $cards = [];
         while (false !== ($row = $result->fetch())) {

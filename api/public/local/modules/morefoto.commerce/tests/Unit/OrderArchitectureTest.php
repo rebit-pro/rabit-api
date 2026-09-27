@@ -52,7 +52,7 @@ final class OrderArchitectureTest extends TestCase
             glob(self::MODULE . '/Domain/Order/Service/*.php') ?: [],
             [self::MODULE . '/Application/Storefront/UseCase/ValidateQuoteUseCase.php', self::MODULE . '/Application/Storefront/UseCase/GetStorefrontCatalogUseCase.php'],
         );
-        self::assertCount(15, $files);
+        self::assertCount(16, $files);
         foreach ($files as $file) {
             $source = (string)file_get_contents($file);
             // BypassFinals may strip modifiers on read; the class-level docblock itself must stay right before the class.

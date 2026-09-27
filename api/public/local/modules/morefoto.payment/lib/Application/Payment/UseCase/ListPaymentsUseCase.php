@@ -37,7 +37,7 @@ final readonly class ListPaymentsUseCase
         );
         $total = $this->attempts->count($criteria);
         $items = [];
-        foreach ($this->attempts->page($criteria, $input->pageSize, ($input->page - 1) * $input->pageSize) as $attempt) {
+        foreach ($this->attempts->page($criteria, $input->pageSize, ($input->page - 1) * $input->pageSize, $input->sort, $input->descending) as $attempt) {
             $items[] = $this->mapper->item($attempt);
         }
         $this->access->assertUnchanged($actorId, $scope);

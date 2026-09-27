@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Payment\Domain\Payment\Repository;
 
+use Morefoto\Payment\Domain\Payment\Enum\PaymentSortEnum;
 use Morefoto\Payment\Domain\Payment\ValueObject\AttemptOutcome;
 use Morefoto\Payment\Domain\Payment\ValueObject\PaymentSearchCriteria;
 
@@ -102,8 +103,8 @@ interface PaymentAttemptRepositoryInterface
     /** @return list<int> открытые попытки с наступившим сроком проверки, по возрастанию срока */
     public function due(string $now, int $limit): array;
 
-    /** @return list<AttemptRecord> */
-    public function page(PaymentSearchCriteria $criteria, int $limit, int $offset): array;
+    /** @return list<AttemptRecord> страница в заданном порядке; при равенстве — сначала новые */
+    public function page(PaymentSearchCriteria $criteria, int $limit, int $offset, PaymentSortEnum $sort = PaymentSortEnum::CREATED_AT, bool $descending = true): array;
 
     public function count(PaymentSearchCriteria $criteria): int;
 }

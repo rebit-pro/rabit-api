@@ -18,5 +18,7 @@ final readonly class PaymentListRequestDto implements RequestDtoInterface
         public ?string $late = null,
         public int $page = 1,
         public int $pageSize = 50,
+        public ?string $sort = null,
+        public ?string $direction = null,
     ) {}
 }

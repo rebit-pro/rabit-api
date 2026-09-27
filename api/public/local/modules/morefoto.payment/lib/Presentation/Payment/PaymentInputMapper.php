@@ -8,6 +8,7 @@ use Morefoto\Payment\Application\Payment\Dto\PaymentNotificationInputDto;
 use Morefoto\Payment\Application\Payment\Dto\SearchPaymentsInputDto;
 use Morefoto\Payment\Application\Payment\Dto\StartPaymentInputDto;
 use Morefoto\Payment\Domain\Payment\Enum\AttemptStatusEnum;
+use Morefoto\Payment\Domain\Payment\Enum\PaymentSortEnum;
 use Morefoto\Payment\Domain\Payment\ValueObject\IdempotencyKey;
 use Morefoto\Payment\Presentation\Payment\Request\Dto\PaymentListRequestDto;
 use Morefoto\Payment\Presentation\Payment\Request\Dto\PaymentNotificationRequestDto;
@@ -63,6 +64,11 @@ final readonly class PaymentInputMapper
         if (null !== $dateFrom && null !== $dateTo && $dateFrom > $dateTo) {
             throw new HttpException('INVALID_FILTER', 422);
         }
+        $sort = $this->optional($request->sort);
+        $direction = $this->optional($request->direction);
+        if (null !== $direction && !in_array($direction, ['asc', 'desc'], true)) {
+            throw new HttpException('INVALID_SORT', 422);
+        }
 
         return new SearchPaymentsInputDto(
             status: $status,
@@ -72,6 +78,8 @@ final readonly class PaymentInputMapper
             latePayment: null === $late ? null : 'true' === $late,
             page: $request->page,
             pageSize: $request->pageSize,
+            sort: null === $sort ? PaymentSortEnum::CREATED_AT : (PaymentSortEnum::tryFrom($sort) ?? throw new HttpException('INVALID_SORT', 422)),
+            descending: 'asc' !== $direction,
         );
     }
 
