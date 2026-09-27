@@ -18,7 +18,7 @@ export interface StaffRequestQuery {
   pageSize?: number;
   sort?: UiTableSort;
 }
-export const STAFF_REQUEST_PAGE_SIZE = 20;
+export const STAFF_REQUEST_PAGE_SIZE = 25;
 const FIRST_PAGE: StaffRequestQuery = { page: 1, status: null, shootId: null };
 
 export async function loadHandoff(token: string, requestId?: string, query: StaffRequestQuery = FIRST_PAGE): Promise<HandoffWorkspace> {

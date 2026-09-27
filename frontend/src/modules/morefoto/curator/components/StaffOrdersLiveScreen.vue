@@ -393,13 +393,21 @@ function lastDays(days: number): void {
   gap: var(--mf-space-2);
   font-size: 14px;
 }
+/* Below a wide screen the buttons take their own row so the four fields keep a readable width. */
+@media (max-width: 1439px) {
+  .staff-orders__filters {
+    grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  }
+  .staff-orders__buttons {
+    grid-column: 1 / -1;
+  }
+}
 @media (max-width: 1100px) {
   .staff-orders__filters,
   .staff-orders__more {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .staff-orders__filters > :first-child,
-  .staff-orders__buttons {
+  .staff-orders__filters > :first-child {
     grid-column: 1 / -1;
   }
 }

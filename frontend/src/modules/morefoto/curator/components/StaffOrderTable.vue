@@ -31,12 +31,12 @@ const emit = defineEmits<{
 }>();
 const selected = defineModel<string[]>('selected', { default: () => [] });
 const columns: UiTableColumn[] = [
-  { key: 'createdAt', label: 'Заказ', sortable: true, primary: true, width: '14%' },
-  { key: 'buyerName', label: 'Покупатель', sortable: true, mobile: true, width: '17%' },
-  { key: 'institutionName', label: 'Учреждение и группа', sortable: true, width: '21%' },
-  { key: 'total', label: 'Сумма', type: 'money', sortable: true, mobile: true, width: '9%' },
+  { key: 'createdAt', label: 'Заказ', sortable: true, primary: true, width: '15%' },
+  { key: 'buyerName', label: 'Покупатель', sortable: true, mobile: true, width: '16%' },
+  { key: 'institutionName', label: 'Учреждение и группа', sortable: true, width: '19%' },
+  { key: 'total', label: 'Сумма', type: 'money', sortable: true, mobile: true, width: '10%' },
   { key: 'paymentStatus', label: 'Оплата', sortable: true, mobile: true, width: '18%' },
-  { key: 'productionStatus', label: 'Изготовление', sortable: true, width: '17%' }
+  { key: 'productionStatus', label: 'Изготовление', sortable: true, width: '16%' }
 ];
 const byId = computed(() => new Map(props.orders.map((order) => [order.id, order])));
 const rows = computed<UiTableRow[]>(() =>
@@ -157,6 +157,7 @@ function deletable(id: string): boolean {
   color: var(--mf-color-text-secondary);
   font-size: var(--mf-text-sm);
   font-weight: 400;
+  white-space: nowrap;
 }
 .order-number {
   color: var(--mf-color-primary);

@@ -129,7 +129,7 @@ test('F1: воспитатель подаёт список, куратор ут�
     // #26: the list reads one bounded page, not every page of the history.
     const firstPage = teacher.waitForRequest((request) => {
       const url = new URL(request.url());
-      return url.pathname === '/api/v1/staff-requests' && url.searchParams.get('pageSize') === '20';
+      return url.pathname === '/api/v1/staff-requests' && url.searchParams.get('pageSize') === '25';
     });
     await teacher.getByLabel('Основная навигация').getByRole('link', { name: 'Списки сотрудников', exact: true }).click();
     await expect(teacher.getByRole('heading', { name: 'Заявки на списки сотрудников', exact: true })).toBeVisible();

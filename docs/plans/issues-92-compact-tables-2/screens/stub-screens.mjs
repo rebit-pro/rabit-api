@@ -98,7 +98,7 @@ function reply(url) {
   return null;
 }
 const browser = await chromium.launch();
-const views = [['desktop', { width: 1440, height: 900 }], ['mobile', { width: 390, height: 844 }]];
+const views = [['desktop', { width: 1440, height: 900 }], ['laptop', { width: 1280, height: 900 }], ['mobile', { width: 390, height: 844 }]];
 const screens = [['requests', '/cabinet/staff-requests'], ['orders', '/cabinet/orders'], ['payments', '/cabinet/payments']];
 async function selectRows(pg, rows) {
   const boxes = pg.locator('.ui-table-desktop tbody tr .v-selection-control input');
@@ -106,7 +106,7 @@ async function selectRows(pg, rows) {
   await pg.waitForTimeout(400);
 }
 for (const [view, viewport] of views) {
-  if (TAG === 'before' && view === 'mobile') continue;
+  if (TAG === 'before' && view !== 'desktop') continue;
   const ctx = await browser.newContext({ viewport, locale: 'ru-RU', timezoneId: 'Europe/Moscow', isMobile: view === 'mobile', hasTouch: view === 'mobile' });
   await ctx.addInitScript((u) => {
     localStorage.setItem('morefoto:live:auth:token', 'stub'); localStorage.setItem('morefoto:cookie-notice:v1', '2026-09-27T00:00:00Z');
@@ -126,6 +126,7 @@ for (const [view, viewport] of views) {
     await pg.mouse.move(0, 0);
     await pg.waitForTimeout(2500);
     await pg.screenshot({ path: `${OUT}/${name}-${view}.png`, fullPage: true });
+    if (await pg.evaluate(() => document.documentElement.scrollWidth > innerWidth)) console.log('horizontal scroll', name, view);
     if (TAG !== 'after' || view !== 'desktop') continue;
     await selectRows(pg, name === 'requests' ? [0, 3] : name === 'orders' ? [2, 3, 5] : [0, 1, 2]);
     await pg.screenshot({ path: `${OUT}/${name}-selected-${view}.png`, fullPage: true });

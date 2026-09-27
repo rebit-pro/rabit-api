@@ -274,6 +274,15 @@ async function exportAll(): Promise<void> {
   margin: 0;
   overflow-wrap: anywhere;
 }
+/* Below a wide screen the buttons take their own row so the five fields keep a readable width. */
+@media (max-width: 1439px) {
+  .payments__filters {
+    grid-template-columns: minmax(0, 1.5fr) repeat(4, minmax(0, 1fr));
+  }
+  .payments__buttons {
+    grid-column: 1 / -1;
+  }
+}
 @media (max-width: 1100px) {
   .payments__filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));

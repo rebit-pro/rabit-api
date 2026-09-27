@@ -90,7 +90,7 @@ test('#92 T06 T09 T12 T13 T14 T15: заказы — сортировка сер�
     const sorted = page.waitForRequest(
       (r) => new URL(r.url()).pathname === '/api/v1/orders' && new URL(r.url()).searchParams.get('sort') === 'total'
     );
-    await page.getByRole('button', { name: /^Сумма/ }).click();
+    await page.getByRole('button', { name: 'Сортировать: Сумма', exact: true }).click();
     expect(new URL((await sorted).url()).searchParams.get('direction')).toBe('asc');
     await expect(page).toHaveURL(/sort=total&direction=asc/);
     await expect(rows(page).first()).toContainText(cheap.number);
@@ -149,7 +149,7 @@ test('#92 T10 T11: платежи и списки сотрудников сор�
   const sorted = page.waitForRequest(
     (r) => new URL(r.url()).pathname === '/api/v1/payments' && new URL(r.url()).searchParams.get('sort') === 'amount'
   );
-  await page.getByRole('button', { name: /^Сумма/ }).click();
+  await page.getByRole('button', { name: 'Сортировать: Сумма', exact: true }).click();
   expect(new URL((await sorted).url()).searchParams.get('direction')).toBe('asc');
   await expect(page).toHaveURL(/sort=amount&direction=asc/);
 });
