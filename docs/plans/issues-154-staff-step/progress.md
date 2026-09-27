@@ -34,3 +34,14 @@
 - Проверки: `npm run check` exit 0 (`test:ui` 88/88), `npm run test:commerce` 223/223.
 - PR #155 открыт; самопроверка — блокеров нет (оба потребителя `galleryPath` уже дают «К спискам» для шага `staff`).
 - **Полный гейт PASS** `rabit-e2e-8eed13352eb0`: 137 браузерных сценариев (a 81, b 56), все verifier passed (445 с).
+
+### 2026-09-27, выкатка main 82a6672 (#155) на app.morefoto36.ru
+
+- PR #155 слит в `main` как `82a6672` (дерево = гейт `rabit-e2e-8eed13352eb0`, 137 сценариев), по команде пользователя.
+- Релиз только frontend: `/srv/morefoto/releases/main-20260927104059-82a6672`, образ
+  `morefoto-frontend:main-20260927104059-82a6672` из `git archive 82a6672 frontend` (`VITE_API_MOCKS_ENABLED=false`,
+  в чанке `galleryPath` — новый текст подсказки). Backend не менялся (остаётся релиз #151 `main-20260927092151-9a4cce6`).
+- `sha256sum --check` PASS; frontend 2/2. Живая проверка: `/`, `/login`, `/cabinet/links` — 200, текст подсказки
+  в отдаваемом бандле.
+- Откат: `docker service rollback morefoto_frontend` (прежний образ в `frontend-before.txt` —
+  `morefoto-frontend:main-20260927092151-9a4cce6`).
