@@ -159,6 +159,10 @@ function stateNote(g: LinkGroup): { text: string; hint: string } | null {
   const step = steps[index]!;
   return { text: 'шаг ' + (index + 1) + ' из ' + steps.length + ': ' + step.title.toLowerCase(), hint: step.hint };
 }
+/** Why the organizer cannot check the link yet: the hint of the step that blocks it. */
+function checkBlocker(g: LinkGroup): string | undefined {
+  return g.problems.length ? stateNote(g)?.hint || stateNote(g)?.text : undefined;
+}
 function left(g: LinkGroup): string {
   if (g.state === 'closed' || !data.value) return '';
   const result = countdown(g.sentAt, g.closesAt, data.value.now);
@@ -422,16 +426,19 @@ async function openHistory(group: LinkGroup) {
               @click="openGallery(group(row.id))"
             />
           </template>
-          <v-btn
-            v-if="canCheck(group(row.id))"
-            variant="tonal"
-            density="compact"
-            color="primary"
-            :disabled="!!group(row.id).problems.length"
-            :aria-label="'Проверить ссылку: ' + row.name"
-            @click="open(group(row.id), 'prepare')"
-            >Проверить</v-btn
-          >
+          <!-- A disabled button gets no pointer events: the wrapper carries the reason (#154). -->
+          <span v-if="canCheck(group(row.id))" v-tooltip="checkBlocker(group(row.id))" class="links-check">
+            <v-btn
+              variant="tonal"
+              density="compact"
+              color="primary"
+              :disabled="!!group(row.id).problems.length"
+              :aria-label="'Проверить ссылку: ' + row.name"
+              :aria-description="checkBlocker(group(row.id))"
+              @click="open(group(row.id), 'prepare')"
+              >Проверить</v-btn
+            >
+          </span>
           <v-btn
             v-else-if="canTransmit(group(row.id))"
             variant="tonal"
@@ -580,6 +587,11 @@ async function openHistory(group: LinkGroup) {
 .links-state .links-left {
   color: var(--mf-color-primary);
   font-weight: 600;
+}
+.links-check {
+  display: inline-flex;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .links-actions,
 .links-bulk {
