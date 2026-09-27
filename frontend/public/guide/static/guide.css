@@ -214,3 +214,30 @@ textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
 
 footer.foot { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; }
 @media (prefers-reduced-motion: reduce) { .tile, .bar i { transition: none; } .tile:hover { transform: none; } }
+
+/* Просмотр скриншотов поверх страницы */
+.shot > a { cursor: zoom-in; }
+html.lb-lock { overflow: hidden; }
+.lb { --lb-ink: #ffffff; position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: rgb(8 13 17 / 94%); color: var(--lb-ink); display: none; grid-template-rows: auto minmax(0, 1fr) auto; }
+.lb[open] { display: grid; }
+.lb::backdrop { background: transparent; }
+.lb-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: max(8px, env(safe-area-inset-top)) 12px 8px 16px; }
+.lb-count { font-size: 14px; font-variant-numeric: tabular-nums; opacity: .8; }
+.lb-stage { min-height: 0; display: grid; place-items: center; padding: 0 64px; }
+.lb-img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border-radius: 8px; background: #ffffff; box-shadow: 0 12px 40px rgb(0 0 0 / 45%); cursor: zoom-in; }
+.lb-zoomed .lb-stage { overflow: auto; place-items: start; overscroll-behavior: contain; }
+.lb-zoomed .lb-img { max-width: none; max-height: none; margin: auto; border-radius: 0; cursor: zoom-out; }
+.lb-cap { text-align: center; font-size: 15px; line-height: 1.45; padding: 12px 16px max(14px, env(safe-area-inset-bottom)); max-width: 72ch; margin: 0 auto; }
+.lb button { font: inherit; color: var(--lb-ink); background: rgb(255 255 255 / 12%); border: 0; border-radius: 50%; cursor: pointer; display: grid; place-items: center; line-height: 1; }
+.lb button:hover { background: rgb(255 255 255 / 24%); }
+.lb button:focus-visible { outline: 2px solid var(--lb-ink); outline-offset: 2px; }
+.lb button:disabled { opacity: .25; cursor: default; background: rgb(255 255 255 / 12%); }
+.lb-close { width: 44px; height: 44px; font-size: 30px; }
+.lb-nav { position: absolute; top: 50%; width: 48px; height: 48px; margin-top: -24px; font-size: 34px; padding-bottom: 4px; }
+.lb-prev { left: 8px; }
+.lb-next { right: 8px; }
+@media (max-width: 640px) {
+  .lb-stage { padding: 0 8px; }
+  .lb-nav { top: auto; bottom: max(10px, env(safe-area-inset-bottom)); margin-top: 0; width: 44px; height: 44px; }
+  .lb-cap { padding-inline: 60px; min-height: 64px; }
+}
