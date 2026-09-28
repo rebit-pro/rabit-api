@@ -10,12 +10,19 @@ import {
   type StaffScopeLevel
 } from '../orders/live/rules';
 import type { StaffOrderCard, StaffOrderPage } from '../orders/live/types';
+import { tableViewFromQuery, tableViewQuery, type TableView } from '../ui/table-query';
+import type { UiTableSort } from '../ui/table-types';
+
+/** Columns the server orders by (#92 DEC-05); newest first by default. */
+export const ORDER_SORTS = ['createdAt', 'buyerName', 'institutionName', 'total', 'paymentStatus', 'productionStatus'] as const;
+export const ORDER_SORT: UiTableSort = { key: 'createdAt', direction: 'desc' };
 
 export function useStaffOrders() {
   const route = useRoute();
   const router = useRouter();
   const orderId = computed(() => (route.name === 'WorkOrder' ? String(route.params.orderId ?? '') : ''));
   const filters = reactive(staffFiltersFromQuery(route.query));
+  const view = shallowRef<TableView>(tableViewFromQuery(route.query, ORDER_SORTS, ORDER_SORT));
   const page = shallowRef<StaffOrderPage | null>(null);
   const card = shallowRef<StaffOrderCard | null>(null);
   const loading = shallowRef(false);
@@ -32,7 +39,8 @@ export function useStaffOrders() {
         if (id === request) card.value = result;
       } else {
         Object.assign(filters, staffFiltersFromQuery(route.query));
-        const result = await liveOrdersApi.search(filters);
+        view.value = tableViewFromQuery(route.query, ORDER_SORTS, ORDER_SORT);
+        const result = await liveOrdersApi.search(filters, view.value);
         if (id === request) page.value = result;
       }
     } catch (cause) {
@@ -42,8 +50,9 @@ export function useStaffOrders() {
     }
   }
   // Applying always starts from the first page unless the pager asks for another one.
-  function apply(pageNumber = 1) {
-    void router.replace({ query: staffFilterQuery(filters, pageNumber) });
+  function apply(pageNumber = 1, change: Partial<TableView> = {}) {
+    const next = { ...view.value, page: pageNumber, ...change };
+    void router.replace({ query: { ...staffFilterQuery(filters), ...tableViewQuery(next, ORDER_SORT) } });
   }
   function reset() {
     for (const key of staffFilterKeys) filters[key] = '';
@@ -54,5 +63,5 @@ export function useStaffOrders() {
     Object.assign(filters, staffScopePatch(level, value ?? ''));
   }
   watch(() => [route.name, route.params.orderId, route.fullPath], reload, { immediate: true });
-  return { orderId, filters, page, card, loading, error, reload, apply, reset, selectScope };
+  return { orderId, filters, view, page, card, loading, error, reload, apply, reset, selectScope };
 }

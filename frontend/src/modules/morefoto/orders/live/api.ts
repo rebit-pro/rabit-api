@@ -11,6 +11,7 @@ import type {
   StaffOrderPage
 } from './types';
 import { staffOrderParams } from './rules';
+import { tableViewParams, type TableView } from '../../ui/table-query';
 
 export const liveOrdersApi = {
   async create(token: string, body: CheckoutBody, requestId: string): Promise<CreatedOrder> {
@@ -23,15 +24,18 @@ export const liveOrdersApi = {
   async current(orderKey: string): Promise<BuyerOrder> {
     return (await api.get<BuyerOrder>('/api/v1/public/orders/current', { headers: { 'X-Order-Key': orderKey } })).data;
   },
-  async search(filters: StaffOrderFilters): Promise<StaffOrderPage> {
+  async search(filters: StaffOrderFilters, view?: TableView): Promise<StaffOrderPage> {
     const response = await api.get<{ data: { items: StaffOrder[] }; meta: StaffOrderPage['meta'] }>('/api/v1/orders', {
-      params: staffOrderParams(filters),
+      params: { ...staffOrderParams(filters), ...(view ? tableViewParams(view) : {}) },
       unwrapEnvelope: false
     });
     return { items: response.data.data.items, meta: response.data.meta };
   },
   async detail(orderId: string): Promise<StaffOrderCard> {
     return (await api.get<StaffOrderCard>('/api/v1/orders/' + encodeURIComponent(orderId))).data;
+  },
+  async remove(orderId: string): Promise<void> {
+    await api.delete('/api/v1/orders/' + encodeURIComponent(orderId));
   }
 };
 

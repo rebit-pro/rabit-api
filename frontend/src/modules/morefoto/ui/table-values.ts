@@ -34,3 +34,15 @@ export function tablePageCount(total: number, size: number): number {
 export function clampTablePage(page: number, total: number, size: number): number {
   return Math.min(tablePageCount(total, size), Math.max(1, page));
 }
+const moment = new Intl.DateTimeFormat('ru-RU', {
+  timeZone: 'Europe/Moscow',
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit'
+});
+/** A table cell moment on one line, Moscow time as everywhere in the cabinet: «26.09.2026, 12:15». */
+export function tableMoment(iso: string): string {
+  return moment.format(new Date(iso));
+}

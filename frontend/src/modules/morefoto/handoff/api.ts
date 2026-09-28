@@ -3,6 +3,7 @@ import api from '@/api/http';
 import type { StaffRole } from '../types';
 import { staffTransferErrorText } from './rules';
 import type { ServerTransferPreview, StaffCommand, StaffRequest } from './types';
+import type { UiTableSort } from '../ui/table-types';
 
 interface StaffRequestScope {
   role: StaffRole;
@@ -25,6 +26,7 @@ export interface StaffRequestPage {
 export interface StaffRequestFilters {
   status?: StaffRequest['status'] | null;
   shootId?: string | null;
+  sort?: UiTableSort;
 }
 interface MutationResult {
   id: string;
@@ -43,13 +45,17 @@ export const staffRequestsApi = {
       page,
       pageSize,
       ...(filters.status ? { status: filters.status } : {}),
-      ...(filters.shootId ? { shootId: filters.shootId } : {})
+      ...(filters.shootId ? { shootId: filters.shootId } : {}),
+      ...(filters.sort ? { sort: filters.sort.key, direction: filters.sort.direction } : {})
     };
     const response = await api.get<{ data: { items: StaffRequest[]; scope: StaffRequestScope }; meta: StaffRequestPage['meta'] }>(
       '/api/v1/staff-requests',
       { params, unwrapEnvelope: false }
     );
     return { items: response.data.data.items, scope: response.data.data.scope, meta: response.data.meta };
+  },
+  async remove(id: string): Promise<void> {
+    await api.delete('/api/v1/staff-requests/' + encodeURIComponent(id));
   },
   async detail(id: string): Promise<StaffRequest> {
     return (await api.get<StaffRequest>('/api/v1/staff-requests/' + encodeURIComponent(id))).data;
