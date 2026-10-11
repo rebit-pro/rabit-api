@@ -1,7 +1,8 @@
+import type { SalesLine } from '../../commerce/sales-windows.js';
 import type { CartQuote } from '../../commerce/types.js';
 import type { Group, Institution, Shoot } from '../../structure/model.js';
 import type { BuyerErrors } from '../types.js';
-import type { ApiProblem, CreatedOrder, LiveOrderQuote, StaffOrderFilters } from './types.js';
+import type { ApiProblem, BuyerOrder, CreatedOrder, LiveOrderLine, LiveOrderQuote, StaffOrderFilters } from './types.js';
 
 export type CheckoutOutcome =
   | { kind: 'unknown'; message: string }
@@ -27,6 +28,7 @@ const fieldCodes: Record<string, [keyof BuyerErrors, string]> = {
 const unusedKeyCodes = new Set([
   ...Object.keys(fieldCodes),
   'GALLERY_CLOSED',
+  'PRINT_SALES_CLOSED',
   'PRICE_CHANGED',
   'QUOTE_STALE',
   'QUOTE_EXPIRED',
@@ -69,6 +71,8 @@ export function checkoutOutcome(problem: ApiProblem, recovering: boolean): Check
       };
     case 'GALLERY_CLOSED':
       return { kind: 'message', message: 'Приём заказов закрыт. Новый заказ оформить уже нельзя.' };
+    case 'PRINT_SALES_CLOSED':
+      return { kind: 'message', message: PRINT_CLOSED_MESSAGE };
     case 'GALLERY_NOT_READY':
     case 'GALLERY_NOT_FOUND':
       return { kind: 'message', message: 'Ссылка на группу недействительна или ещё не открыта.' };
@@ -83,6 +87,31 @@ export function checkoutOutcome(problem: ApiProblem, recovering: boolean): Check
       return { kind: 'message', message: 'Сервер отклонил заказ. Заполнение сохранено — проверьте данные и попробуйте ещё раз.' };
   }
 }
+
+/** E7: why an unpaid order can no longer be paid. Print lines are listed; digital ones may go to a new order. */
+export interface OrderSalesBlock {
+  kind: 'print' | 'closed';
+  printLines: LiveOrderLine[];
+  digitalLines: LiveOrderLine[];
+}
+
+export function orderSalesBlock(order: Pick<BuyerOrder, 'paymentStatus' | 'period' | 'quote'>): OrderSalesBlock | null {
+  if (order.paymentStatus === 'paid') return null;
+  const printLines = order.quote.lines.filter((line) => line.product.kind === 'physical');
+  const digitalLines = order.quote.lines.filter((line) => line.product.kind !== 'physical');
+  if (order.period.state === 'closed') return { kind: 'closed', printLines, digitalLines };
+  if (order.period.state === 'digital' && printLines.length > 0) return { kind: 'print', printLines, digitalLines };
+  return null;
+}
+
+/** Cart lines for a new order with the same digital photos; prices are recalculated by the server. */
+export function reorderLines(lines: LiveOrderLine[]): SalesLine[] {
+  return lines.map((line) => ({ assignmentId: line.assignmentId, productId: line.productId, quantity: line.quantity }));
+}
+
+/** E7: print sales closed while the cart still had print; digital photos stay on sale until their own deadline. */
+export const PRINT_CLOSED_MESSAGE =
+  'Приём заказов на печать завершён. Обновите корзину: печатные позиции уберутся, электронные фото можно оформить до окончания их продажи.';
 
 /** What the checkout is sending now: nothing, a fresh attempt from the form or the stored unconfirmed attempt. */
 export type CheckoutSubmission = 'idle' | 'first' | 'recovery';

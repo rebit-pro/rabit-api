@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue';
+import { useRouter } from 'vue-router';
+import { addToStoredCart, rememberedGallery } from '../../commerce/services/storefront';
 import { money } from '../../commerce/money';
 import { formatMoment } from '../formatters';
 import { useLivePayment } from '../composables/useLivePayment';
 import { paymentMethodLabels } from '../live/payment-rules';
+import { orderSalesBlock, reorderLines } from '../live/rules';
 import { documentPath } from '../../legal/rules';
 import type { BuyerOrder } from '../live/types';
 const props = defineProps<{ order: BuyerOrder; orderKey: string }>();
@@ -13,6 +16,15 @@ const { quote, loading, starting, uncertain, error, load, pay, follow } = useLiv
   computed(() => !paid.value)
 );
 const closed = computed(() => props.order.period.state === 'closed');
+// E7: an unpaid order with print cannot be paid after the print close; its digital photos may form a new order.
+const block = computed(() => orderSalesBlock(props.order));
+const galleryToken = computed(() => rememberedGallery(props.order.groupId));
+const router = useRouter();
+async function reorder(): Promise<void> {
+  if (!block.value || !galleryToken.value) return;
+  addToStoredCart(props.order.groupId, reorderLines(block.value.digitalLines));
+  await router.push('/g/' + galleryToken.value + '/cart');
+}
 </script>
 <template>
   <section class="order-payment" data-testid="order-payment" aria-live="polite">
@@ -26,6 +38,41 @@ const closed = computed(() => props.order.period.state === 'closed');
         Оплата поступила после окончания приёма заказов. Организатор свяжется с вами и сообщит, как будет выполнен заказ.
       </p>
     </template>
+    <div v-else-if="block" class="order-payment__blocked" data-testid="order-sales-closed">
+      <template v-if="block.kind === 'print'">
+        <p class="order-payment__note">
+          Приём заказов на печать завершён<template v-if="order.period.closesAt"> {{ formatMoment(order.period.closesAt) }} мск</template>.
+          Этот заказ оплатить уже нельзя: в нём есть печатная продукция.
+        </p>
+        <ul class="order-payment__lines" data-testid="order-print-lines">
+          <li v-for="line in block.printLines" :key="line.id">
+            {{ line.photo ? 'Кадр ' + line.photo.code : 'Ребёнок ' + line.childCode }} — {{ line.product.name }} × {{ line.quantity }}
+          </li>
+        </ul>
+        <template v-if="block.digitalLines.length">
+          <p class="order-payment__note">
+            Электронные фотографии из заказа можно купить новым заказом<template v-if="order.period.digitalSalesUntil">
+              до {{ formatMoment(order.period.digitalSalesUntil) }} мск</template
+            >. Цены пересчитаются, и вы подтвердите новый заказ.
+          </p>
+          <v-btn v-if="galleryToken" block color="primary" data-testid="order-reorder-digital" @click="reorder"
+            >Оформить электронные фото новым заказом</v-btn
+          >
+          <p v-else class="order-payment__note" data-testid="order-reorder-hint">
+            Откройте ссылку на галерею, которую прислал куратор, и выберите эти фотографии снова.
+          </p>
+        </template>
+      </template>
+      <p v-else class="order-payment__note">Приём заказов группы завершён — оплатить заказ уже нельзя.</p>
+      <v-btn
+        v-if="quote?.activeAttemptId"
+        variant="text"
+        color="primary"
+        data-testid="payment-follow"
+        @click="follow(quote.activeAttemptId)"
+        >Проверить начатую оплату</v-btn
+      >
+    </div>
     <v-skeleton-loader v-else-if="loading && !quote" type="text, button" />
     <template v-else-if="quote?.activeAttemptId">
       <p class="order-payment__note">Оплата уже начата. Проверьте её результат или продолжите оплату — второй платёж не создаётся.</p>
@@ -74,6 +121,16 @@ const closed = computed(() => props.order.period.state === 'closed');
   display: grid;
   gap: 12px;
   margin-bottom: 20px;
+}
+.order-payment__blocked {
+  display: grid;
+  gap: 10px;
+}
+.order-payment__lines {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.6;
 }
 .order-payment__methods {
   display: grid;

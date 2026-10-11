@@ -1,4 +1,4 @@
-import type { ScopeSnapshot } from '../types.js';
+import type { Group, ScopeSnapshot } from '../types.js';
 import type { OrderSnapshot } from '../orders/types.js';
 import type { SupportRequest } from '../orders/delivery/types.js';
 export interface GroupExtension {
@@ -30,7 +30,7 @@ export interface OrderPeriod {
   deliveryAt: string | null;
   extensions: GroupExtension[];
   curator: string;
-  state: 'preparing' | 'open' | 'closed';
+  state: Group['state'];
   now: string;
 }
 export type StaffOrder = Omit<OrderSnapshot, 'accessKey' | 'requestId' | 'galleryToken'> & {

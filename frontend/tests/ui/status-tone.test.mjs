@@ -19,7 +19,7 @@ test('every labelled domain status has a tone', () => {
   assert.deepEqual(keys(productionTone), keys(productionLabels));
   assert.deepEqual(keys(staffRequestTone), keys(requestStatus));
   assert.deepEqual(keys(accountStatusTone), ['active', 'blocked', 'pending']);
-  assert.deepEqual(keys(groupStateTone), ['closed', 'open', 'preparing']);
+  assert.deepEqual(keys(groupStateTone), ['closed', 'digital', 'open', 'preparing']);
   for (const map of [paymentTone, productionTone, staffRequestTone, accountStatusTone, groupStateTone]) {
     for (const tone of Object.values(map)) assert.ok(STATUS_TONES.includes(tone), tone);
   }

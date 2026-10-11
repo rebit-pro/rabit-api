@@ -1,3 +1,4 @@
+import type { SalesState } from './commerce/sales-windows.js';
 import type { DashboardData } from './dashboard/types.js';
 import type { FinancialTotals } from './settlement/types.js';
 import type { PhotoShoot } from './organization/types.js';
@@ -16,7 +17,7 @@ export interface Group {
   name: string;
   shootName: string;
   kind: 'regular' | 'staff';
-  state: 'preparing' | 'open' | 'closed';
+  state: SalesState;
   closesAt: string | null;
   shootId?: string;
   galleryToken?: string;

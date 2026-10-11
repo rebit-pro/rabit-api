@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { isMockApiEnabled } from '@/mocks/config';
 import { refreshStorefront } from '../services/storefront';
-import { shallowRef, useTemplateRef } from 'vue';
+import { computed, shallowRef, useTemplateRef } from 'vue';
+import { sellsAnything } from '../sales-windows';
 import type { GallerySnapshot } from '../../gallery/types';
 import { useCart } from '../composables/useCart';
 import { changeCartLine, clearCart } from '../services/cart';
 import CartItems from './CartItems.vue';
 import CartSummary from './CartSummary.vue';
 const props = defineProps<{ gallery: GallerySnapshot; token: string }>();
-const { quote, catalog, calculationError, hasQuote } = useCart(() => props.gallery);
+const { quote, catalog, calculationError, hasQuote, droppedPrint } = useCart(() => props.gallery);
+const selling = computed(() => sellsAnything(props.gallery.state));
 const busy = shallowRef(false);
 const notice = shallowRef('');
 const error = shallowRef('');
@@ -54,8 +56,13 @@ async function clear() {
   <p class="cart-separation">
     <v-icon icon="mdi-information-outline" size="20" /> В каждой группе своя корзина. Выбор в других группах сохраняется отдельно.
   </p>
-  <v-alert v-if="gallery.state !== 'open'" type="info" variant="tonal" class="mb-5"
+  <v-alert v-if="!selling" type="info" variant="tonal" class="mb-5"
     >Приём заказов закрыт. Выбор сохранён; новые заказы сейчас не принимаются.</v-alert
+  >
+  <v-alert v-else-if="gallery.state === 'digital'" type="info" variant="tonal" class="mb-5" data-testid="cart-digital-only"
+    >Приём заказов на печать завершён — в заказ войдут только электронные фотографии.<template v-if="droppedPrint">
+      Печатные позиции убраны из корзины: {{ droppedPrint }}.</template
+    ></v-alert
   >
   <v-alert v-if="error" type="error" variant="tonal" class="mb-5" role="alert">{{ error }}</v-alert>
   <p v-if="notice" class="cart-notice" role="status">{{ notice }}</p>
@@ -70,7 +77,7 @@ async function clear() {
   <template v-if="hasQuote && (quote.lines.length || quote.invalid.length)">
     <div class="cart-layout">
       <div class="cart-items-column">
-        <CartItems :quote="quote" :busy="busy" :closed="gallery.state !== 'open'" @change="change" />
+        <CartItems :quote="quote" :busy="busy" :closed="!selling" @change="change" />
         <v-btn ref="clearButton" class="cart-clear" variant="text" color="secondary" :disabled="busy" @click="openClear"
           >Очистить корзину группы</v-btn
         >
@@ -82,7 +89,7 @@ async function clear() {
           color="primary"
           block
           class="mt-6"
-          :disabled="busy || gallery.state !== 'open' || !!quote.invalid.length"
+          :disabled="busy || !selling || !!quote.invalid.length"
           >Оформить заказ</v-btn
         >
       </CartSummary>

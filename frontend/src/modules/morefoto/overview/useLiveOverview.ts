@@ -10,7 +10,7 @@ export type LiveOverview =
   | { kind: 'scope'; counters: LinkCounters; waiting: number; queue: LiveLinkItem[] }
   | { kind: 'teacher'; referenceNow: string; groups: LiveLinkItem[]; requests: RequestCounts | null };
 
-const EMPTY: LinkCounters = { referenceNow: '', byState: { preparing: 0, open: 0, closed: 0 }, closingSoon: 0, prepared: 0 };
+const EMPTY: LinkCounters = { referenceNow: '', byState: { preparing: 0, open: 0, digital: 0, closed: 0 }, closingSoon: 0, prepared: 0 };
 
 /**
  * The overview reads only server summaries (U5): one request for the scope, two for a teacher. Nothing is counted

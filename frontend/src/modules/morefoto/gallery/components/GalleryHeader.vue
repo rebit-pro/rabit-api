@@ -1,25 +1,22 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { daysLeft, salesStateTitle } from '../../commerce/sales-windows';
 import type { GallerySnapshot } from '../types';
 const props = defineProps<{ gallery: GallerySnapshot }>();
 const emit = defineEmits<{ help: [] }>();
-const deadline = computed(() =>
-  props.gallery.closesAt
-    ? new Intl.DateTimeFormat('ru-RU', {
-        timeZone: 'Europe/Moscow',
-        day: 'numeric',
-        month: 'long',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(new Date(props.gallery.closesAt))
-    : ''
-);
+const format = (moment: string): string =>
+  new Intl.DateTimeFormat('ru-RU', {
+    timeZone: 'Europe/Moscow',
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(new Date(moment));
+// E7: the open window counts down to the print close, the digital window — to the digital close.
 const remaining = computed(() => {
-  if (!props.gallery.closesAt || props.gallery.state !== 'open') return '';
-  const days = Math.max(0, Math.floor((Date.parse(props.gallery.closesAt) - Date.parse(props.gallery.referenceNow)) / 86400000));
-  if (days === 0) return 'Осталось меньше суток';
-  const form = new Intl.PluralRules('ru').select(days);
-  return 'Осталось ' + days + ' ' + ({ zero: 'дней', one: 'день', two: 'дня', few: 'дня', many: 'дней', other: 'дня' }[form] ?? 'дней');
+  const until = { open: props.gallery.closesAt, digital: props.gallery.digitalSalesUntil }[props.gallery.state as 'open' | 'digital'];
+  const left = until === undefined ? null : daysLeft(until, props.gallery.referenceNow);
+  return left ? 'Осталось ' + left : '';
 });
 </script>
 
@@ -43,19 +40,24 @@ const remaining = computed(() => {
     <aside class="gallery-conditions" aria-label="Условия съёмки">
       <div class="gallery-conditions__title">
         <v-icon icon="mdi-calendar-clock-outline" size="22" />
-        <strong>{{
-          gallery.state === 'open' ? 'Приём открыт' : gallery.state === 'closed' ? 'Приём завершён' : 'Готовим фотографии'
-        }}</strong>
+        <strong>{{ salesStateTitle(gallery.state) }}</strong>
       </div>
-      <template v-if="deadline && gallery.state !== 'preparing'">
-        <p>
-          До
-          <time :datetime="gallery.closesAt ?? undefined">{{ deadline }}</time>
-          МСК
-        </p>
-        <p v-if="remaining" class="gallery-remaining">{{ remaining }}</p>
-      </template>
-      <p v-else>Срок появится после передачи ссылки в группу.</p>
+      <dl v-if="gallery.state !== 'preparing' && gallery.closesAt" class="gallery-deadlines" data-testid="gallery-deadlines">
+        <div>
+          <dt>Печать</dt>
+          <dd>
+            до <time :datetime="gallery.closesAt">{{ format(gallery.closesAt) }}</time> МСК
+          </dd>
+        </div>
+        <div v-if="gallery.digitalSalesUntil">
+          <dt>Электронные фото</dt>
+          <dd>
+            до <time :datetime="gallery.digitalSalesUntil">{{ format(gallery.digitalSalesUntil) }}</time> МСК
+          </dd>
+        </div>
+      </dl>
+      <p v-else>Сроки появятся после передачи ссылки в группу.</p>
+      <p v-if="remaining" class="gallery-remaining">{{ remaining }}</p>
       <v-btn variant="text" color="primary" size="small" class="gallery-help" @click="emit('help')"
         >Получение и помощь <v-icon icon="mdi-arrow-top-right" end size="16"
       /></v-btn>
@@ -107,6 +109,25 @@ const remaining = computed(() => {
   align-items: center;
   margin-bottom: 10px;
   color: var(--mf-color-link);
+}
+.gallery-deadlines {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+.gallery-deadlines div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 6px;
+}
+.gallery-deadlines dt {
+  font-weight: 600;
+}
+.gallery-deadlines dt::after {
+  content: ':';
+}
+.gallery-deadlines dd {
+  margin: 0;
 }
 .gallery-remaining {
   margin-top: 4px;

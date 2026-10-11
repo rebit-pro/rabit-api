@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import type { GallerySnapshot } from '../../gallery/types';
 import { money } from '../../commerce/money';
+import { sellsAnything } from '../../commerce/sales-windows';
 import CartSummary from '../../commerce/components/CartSummary.vue';
 import { useCheckout } from '../composables/useCheckout';
 import OrderComposition from './OrderComposition.vue';
@@ -37,7 +38,7 @@ const offerDocument = computed(() => findDocument(legal.value, 'offer'));
     <v-btn :to="'/g/' + token" color="primary">Перейти к фотографиям</v-btn>
   </section>
   <form v-else novalidate @submit.prevent="submit">
-    <v-alert v-if="gallery.state !== 'open'" type="info" variant="tonal" class="mb-5"
+    <v-alert v-if="!sellsAnything(gallery.state)" type="info" variant="tonal" class="mb-5"
       >Приём заказов закрыт. Контакты и состав можно посмотреть, создать новый заказ сейчас нельзя.</v-alert
     >
     <v-alert v-if="error" id="checkout-error" type="warning" variant="tonal" class="mb-5" role="alert" tabindex="-1">

@@ -6,15 +6,21 @@ const props = withDefaults(
   defineProps<{
     sentAt: string | null;
     closesAt: string | null;
+    /** E7: digital photos stay on sale after the print close until this moment. */
+    digitalUntil?: string | null;
     deliveryAt: string | null;
     /** Server time of the answer (`referenceNow`), so every card counts from the same moment. */
     now: string;
     timezone?: string;
   }>(),
-  { timezone: 'Europe/Moscow' }
+  { timezone: 'Europe/Moscow', digitalUntil: null }
 );
 
-const left = computed(() => countdown(props.sentAt, props.closesAt, props.now));
+/** After the print close the countdown follows the digital sales, the last deadline of the group. */
+const digital = computed(
+  () => null !== props.digitalUntil && null !== props.closesAt && Date.parse(props.now) >= Date.parse(props.closesAt)
+);
+const left = computed(() => countdown(props.sentAt, digital.value ? props.digitalUntil : props.closesAt, props.now));
 const format = computed(() => new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: props.timezone }));
 const date = (value: string | null) => (null === value ? '—' : format.value.format(new Date(value)));
 const moment = (value: string | null) => (null === value ? null : Date.parse(value));
@@ -35,7 +41,7 @@ const closing = computed(() => {
 });
 const milestones = computed(() => [
   { key: 'sent', label: 'Ссылка передана', value: props.sentAt, at: 0 },
-  { key: 'closes', label: 'Приём до', value: props.closesAt, at: closing.value },
+  { key: 'closes', label: 'Печать до', value: props.closesAt, at: closing.value },
   { key: 'delivery', label: 'Доставка до', value: props.deliveryAt, at: 100 }
 ]);
 </script>
@@ -61,7 +67,8 @@ const milestones = computed(() => [
     </ol>
     <p class="mf-timeline__countdown" :class="`mf-timeline__countdown--${left.tone}`" data-testid="countdown">
       <template v-if="null === left.days">Ссылка ещё не передана родителям</template>
-      <template v-else><span class="mf-sr-only">До закрытия приёма: </span>{{ left.label }}</template>
+      <template v-else-if="digital && left.days !== null && left.days > 0">Электронные фото: {{ left.label }}</template>
+      <template v-else><span class="mf-sr-only">До закрытия печати: </span>{{ left.label }}</template>
     </p>
   </div>
 </template>

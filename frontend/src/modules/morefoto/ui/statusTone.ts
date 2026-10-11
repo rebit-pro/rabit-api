@@ -6,7 +6,10 @@ import type { StatusTone } from '../../../components/status/tones';
  */
 export const accountStatusTone = { active: 'success', pending: 'pending', blocked: 'danger' } as const satisfies Record<string, StatusTone>;
 
-export const groupStateTone = { preparing: 'neutral', open: 'success', closed: 'neutral' } as const satisfies Record<string, StatusTone>;
+export const groupStateTone = { preparing: 'neutral', open: 'success', digital: 'info', closed: 'neutral' } as const satisfies Record<
+  string,
+  StatusTone
+>;
 
 export const staffRequestTone = { submitted: 'info', clarification: 'warning', transferred: 'success' } as const satisfies Record<
   string,
@@ -32,9 +35,10 @@ export interface LinkStatusInput {
   prepared?: boolean;
 }
 
-/** Link card of a group: closed intake, open intake, ready to hand over or still to be checked. */
+/** Link card of a group: closed intake, digital-only sales (E7), open intake, ready to hand over or still to be checked. */
 export function linkStatus(group: LinkStatusInput): { tone: StatusTone; text: string } {
   if ('closed' === group.state) return { tone: 'neutral', text: 'Приём завершён' };
+  if ('digital' === group.state) return { tone: 'info', text: 'Только электронные' };
   if (group.sentAt) return { tone: 'success', text: 'Приём открыт' };
   if (group.prepared) return { tone: 'info', text: 'Готова к передаче' };
   return { tone: 'warning', text: 'Требует проверки' };
