@@ -9,13 +9,13 @@ use Morefoto\Media\Application\Photo\Dto\CoverMutationOutputDto;
 use Morefoto\Media\Application\Photo\Dto\SetCoverInputDto;
 use Morefoto\Media\Domain\Photo\Repository\MediaMutationRepository;
 use Morefoto\Media\Domain\Photo\ValueObject\IdempotencyKey;
-use Rebit\Share\Contracts\Access\AccessGuardInterface;
+use Morefoto\Media\Application\Photo\Service\GroupMarkupAccess;
 use Rebit\Share\Contracts\Organization\GroupReferenceInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /**
- * Атомарно назначает готовую фотографию обложкой редактируемой группы.
+ * Атомарно назначает готовую фотографию обложкой группы до передачи ссылки или во время исправления разметки (D4).
  *
  * Проверяет доступ, принадлежность фотографии, revision и идемпотентность, затем обновляет media revision.
  */
@@ -26,7 +26,7 @@ final readonly class SetGroupCoverUseCase
         private MediaMutationRepository $media,
         private GroupReferenceInterface $groups,
         private MediaScopeInterface $scopes,
-        private AccessGuardInterface $access,
+        private GroupMarkupAccess $markup,
     ) {}
 
     public function execute(int $actorId, string $groupId, IdempotencyKey $key, SetCoverInputDto $input): CoverMutationOutputDto
@@ -34,13 +34,13 @@ final readonly class SetGroupCoverUseCase
         return $this->transaction->execute(function() use ($actorId, $groupId, $key, $input): CoverMutationOutputDto {
             $group = $this->groups->get($groupId);
             $scope = $this->scopes->resolve($group->shootId, $groupId);
-            $this->access->assertCan($actorId, 'media.manage', $scope->institutionId, $scope->groupId);
-            if (!$scope->groupEditable || null === $scope->groupId) {
+            $this->markup->assertCan($actorId, $scope);
+            if (!$this->markup->editable($scope) || null === $scope->groupId) {
                 throw new HttpException('GROUP_LOCKED', 409);
             }
             $current = $this->media->lockRevision($scope->shootId);
             // Link delivery takes the same lock: re-read after waiting so the cover cannot change in an opened gallery.
-            if (!$this->scopes->resolve($group->shootId, $groupId)->groupEditable) {
+            if (!$this->markup->editable($this->scopes->resolve($group->shootId, $groupId))) {
                 throw new HttpException('GROUP_LOCKED', 409);
             }
             $resource = '/groups/' . $groupId . '/cover';

@@ -18,6 +18,7 @@ use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Morefoto\Media\Application\Photo\Service\GroupMarkupAccess;
 use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Rebit\Share\Contracts\Organization\Dto\MediaScopeOutputDto;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
@@ -93,7 +94,7 @@ final class PhotoWorkflowTest extends TestCase
         $publisher = $this->createStub(MediaPublisherInterface::class);
         $useCase = new UploadPhotoUseCase(
             $scopes,
-            $access,
+            new GroupMarkupAccess($access),
             new PhotoFileInspector(),
             $storage,
             $this->originals(),
@@ -153,7 +154,7 @@ final class PhotoWorkflowTest extends TestCase
             return new PhotoRegistration('32345678-abcd-4abc-8abc-123456789abc', 'duplicate', 1, false, '42345678-abcd-4abc-8abc-123456789abc');
         });
         try {
-            $output = (new UploadPhotoUseCase($scopes, $this->createStub(AccessGuardInterface::class), new PhotoFileInspector(), $storage, $lock, $photos, $this->createStub(MediaPublisherInterface::class), new NullLogger(), $this->createStub(UploadChildAssignment::class)))
+            $output = (new UploadPhotoUseCase($scopes, new GroupMarkupAccess($this->createStub(AccessGuardInterface::class)), new PhotoFileInspector(), $storage, $lock, $photos, $this->createStub(MediaPublisherInterface::class), new NullLogger(), $this->createStub(UploadChildAssignment::class)))
                 ->execute(4, new UploadPhotoInputDto('12345678-abcd-4abc-8abc-123456789abc', '22345678-abcd-4abc-8abc-123456789abc', $file, 'photo.png', (int)filesize($file), null))
             ;
         } finally {

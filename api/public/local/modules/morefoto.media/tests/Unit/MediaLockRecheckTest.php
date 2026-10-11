@@ -12,6 +12,7 @@ use Morefoto\Media\Application\Photo\UseCase\SetGroupCoverUseCase;
 use Morefoto\Media\Domain\Photo\Repository\MediaMutationRepository;
 use Morefoto\Media\Domain\Photo\ValueObject\IdempotencyKey;
 use PHPUnit\Framework\TestCase;
+use Morefoto\Media\Application\Photo\Service\GroupMarkupAccess;
 use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Rebit\Share\Contracts\Organization\Dto\GroupReferenceOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\MediaScopeOutputDto;
@@ -32,7 +33,7 @@ final class MediaLockRecheckTest extends TestCase
         $media = $this->createMock(MediaMutationRepository::class);
         $media->expects(self::once())->method('lockRevision')->with(2)->willReturn(4);
         $media->expects(self::never())->method('assign');
-        $useCase = new AssignPhotosUseCase($this->transaction(), $media, $this->scopes(), $this->createStub(AccessGuardInterface::class));
+        $useCase = new AssignPhotosUseCase($this->transaction(), $media, $this->scopes(), new GroupMarkupAccess($this->createStub(AccessGuardInterface::class)));
 
         $this->expectException(HttpException::class);
         $this->expectExceptionMessage('GROUP_LOCKED');
@@ -46,7 +47,7 @@ final class MediaLockRecheckTest extends TestCase
         $media->expects(self::never())->method('setCover');
         $groups = $this->createStub(GroupReferenceInterface::class);
         $groups->method('get')->willReturn(new GroupReferenceOutputDto(3, self::GROUP, self::SHOOT, 'regular'));
-        $useCase = new SetGroupCoverUseCase($this->transaction(), $media, $groups, $this->scopes(), $this->createStub(AccessGuardInterface::class));
+        $useCase = new SetGroupCoverUseCase($this->transaction(), $media, $groups, $this->scopes(), new GroupMarkupAccess($this->createStub(AccessGuardInterface::class)));
 
         $this->expectException(HttpException::class);
         $this->expectExceptionMessage('GROUP_LOCKED');

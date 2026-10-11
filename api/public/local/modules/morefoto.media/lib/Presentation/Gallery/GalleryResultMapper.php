@@ -37,6 +37,7 @@ final readonly class GalleryResultMapper
             array_values($children),
             '',
             'Срок передачи фотографий уточняйте у куратора.',
+            updating: null !== $group->markupCorrectionAt,
         );
     }
 

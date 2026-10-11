@@ -11,6 +11,7 @@ use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
 use Morefoto\Media\Application\Photo\Message\Handler\ProcessPhotoMessageHandler;
 use Morefoto\Media\Application\Photo\Service\PhotoFileCleaner;
 use Morefoto\Media\Application\Photo\Service\PhotoRowMapper;
+use Morefoto\Media\Application\Photo\Service\GroupMarkupAccess;
 use Morefoto\Media\Application\Photo\Service\UploadChildAssignment;
 use Morefoto\Media\Application\Photo\UseCase\AssignPhotosUseCase;
 use Morefoto\Media\Application\Photo\UseCase\ConsumeMediaUseCase;
@@ -115,7 +116,7 @@ return [
         'className' => UploadPhotoUseCase::class,
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(MediaScopeInterface::class),
-            ServiceLocator::getInstance()->get(AccessGuardInterface::class),
+            ServiceLocator::getInstance()->get(GroupMarkupAccess::class),
             ServiceLocator::getInstance()->get(PhotoFileInspector::class),
             ServiceLocator::getInstance()->get(PrivatePhotoStorageInterface::class),
             ServiceLocator::getInstance()->get(OriginalFileLockInterface::class),
@@ -125,12 +126,19 @@ return [
             ServiceLocator::getInstance()->get(UploadChildAssignment::class),
         ],
     ],
+    GroupMarkupAccess::class => [
+        'className' => GroupMarkupAccess::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(AccessGuardInterface::class),
+        ],
+    ],
     UploadChildAssignment::class => [
         'className' => UploadChildAssignment::class,
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(MediaTransactionInterface::class),
             ServiceLocator::getInstance()->get(MediaMutationRepository::class),
             ServiceLocator::getInstance()->get(MediaScopeInterface::class),
+            ServiceLocator::getInstance()->get(GroupMarkupAccess::class),
         ],
     ],
     ListPhotosUseCase::class => [
@@ -149,7 +157,7 @@ return [
             ServiceLocator::getInstance()->get(MediaTransactionInterface::class),
             ServiceLocator::getInstance()->get(MediaMutationRepository::class),
             ServiceLocator::getInstance()->get(MediaScopeInterface::class),
-            ServiceLocator::getInstance()->get(AccessGuardInterface::class),
+            ServiceLocator::getInstance()->get(GroupMarkupAccess::class),
         ],
     ],
     SetGroupCoverUseCase::class => [
@@ -159,7 +167,7 @@ return [
             ServiceLocator::getInstance()->get(MediaMutationRepository::class),
             ServiceLocator::getInstance()->get(GroupReferenceInterface::class),
             ServiceLocator::getInstance()->get(MediaScopeInterface::class),
-            ServiceLocator::getInstance()->get(AccessGuardInterface::class),
+            ServiceLocator::getInstance()->get(GroupMarkupAccess::class),
         ],
     ],
     DeleteGroupPhotosUseCase::class => [
@@ -169,7 +177,7 @@ return [
             ServiceLocator::getInstance()->get(MediaMutationRepository::class),
             ServiceLocator::getInstance()->get(GroupReferenceInterface::class),
             ServiceLocator::getInstance()->get(MediaScopeInterface::class),
-            ServiceLocator::getInstance()->get(AccessGuardInterface::class),
+            ServiceLocator::getInstance()->get(GroupMarkupAccess::class),
             ServiceLocator::getInstance()->get(PhotoFileCleaner::class),
         ],
     ],

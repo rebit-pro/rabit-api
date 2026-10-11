@@ -11,6 +11,10 @@ use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
+/**
+ * Отдаёт сотруднику карточку одного кадра съёмки для рабочего места разметки: организатору и куратору учреждения,
+ * который исправляет разметку переданной группы (D4).
+ */
 final readonly class GetPhotoUseCase
 {
     public function __construct(
@@ -27,7 +31,8 @@ final readonly class GetPhotoUseCase
             throw new HttpException('PHOTO_NOT_FOUND', 404);
         }
         $scope = $this->scopes->resolve((string)$row['SHOOT_PUBLIC_ID'], (string)$row['GROUP_PUBLIC_ID']);
-        $this->access->assertCan($userId, 'media.manage', $scope->institutionId, $scope->groupId);
+        // The organizer and the curator of the institution (D4 correction) read the photos; others never see them.
+        $this->access->assertCan($userId, 'media.correct', $scope->institutionId, $scope->groupId);
 
         return $this->mapper->map($row);
     }

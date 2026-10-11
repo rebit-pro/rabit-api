@@ -37,7 +37,7 @@ final class PhotoStatsTest extends TestCase
         $media->method('covers')->willReturn([]);
         $media->method('revision')->willReturn(4);
         $access = $this->createMock(AccessGuardInterface::class);
-        $access->expects(self::once())->method('assertCan')->with(21, 'media.manage', 3, 10);
+        $access->expects(self::once())->method('assertCan')->with(21, 'media.correct', 3, 10);
 
         $page = (new ListPhotosUseCase($photos, $media, new PhotoRowMapper(), $scopes, $access))
             ->execute(21, '12345678-abcd-4abc-8abc-123456789abc', new ListPhotosInputDto('22345678-abcd-4abc-8abc-123456789abc', 1, 50, 'A-7', false, 'ready'))

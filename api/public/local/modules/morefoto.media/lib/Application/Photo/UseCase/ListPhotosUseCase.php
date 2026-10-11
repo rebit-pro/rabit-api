@@ -35,7 +35,8 @@ final readonly class ListPhotosUseCase
     public function execute(int $userId, string $shootId, ListPhotosInputDto $input): PhotoPageOutputDto
     {
         $scope = $this->scopes->resolve($shootId, $input->groupId);
-        $this->access->assertCan($userId, 'media.manage', $scope->institutionId, $scope->groupId);
+        // The organizer and the curator of the institution (D4 correction) read the photos; others never see them.
+        $this->access->assertCan($userId, 'media.correct', $scope->institutionId, $scope->groupId);
         $items = [];
         $result = $this->photos->photos(
             $scope->shootId,

@@ -15,12 +15,13 @@ use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
-use Rebit\Share\Contracts\Access\AccessGuardInterface;
+use Morefoto\Media\Application\Photo\Service\GroupMarkupAccess;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /**
- * Принимает приватный оригинал в редактируемую группу и регистрирует его без дубля по содержимому в съёмке.
+ * Принимает приватный оригинал в группу до передачи ссылки или во время исправления разметки (D4) и регистрирует его
+ * без дубля по содержимому в съёмке.
  *
  * Переданные коды детей размечают кадр при приёме — так загрузка архива по папкам обходится без ручной разметки.
  * Сразу ставит подготовку превью в очередь; при сбое публикации оставляет задание pending для dispatcher и пишет
@@ -31,7 +32,7 @@ final readonly class UploadPhotoUseCase
 {
     public function __construct(
         private MediaScopeInterface $scopes,
-        private AccessGuardInterface $access,
+        private GroupMarkupAccess $markup,
         private PhotoFileInspector $inspector,
         private PrivatePhotoStorageInterface $storage,
         private OriginalFileLockInterface $originals,
@@ -44,11 +45,11 @@ final readonly class UploadPhotoUseCase
     public function execute(int $userId, UploadPhotoInputDto $input): UploadPhotoOutputDto
     {
         $scope = $this->scopes->resolve($input->shootId, $input->groupId);
-        $this->access->assertCan($userId, 'media.manage', $scope->institutionId, $scope->groupId);
+        $this->markup->assertCan($userId, $scope);
         if (null === $scope->groupId) {
             throw new \LogicException('Resolved media group is missing.');
         }
-        if (!$scope->groupEditable) {
+        if (!$this->markup->editable($scope)) {
             throw new HttpException('GROUP_MEDIA_LOCKED', 409);
         }
         $started = hrtime(true);
