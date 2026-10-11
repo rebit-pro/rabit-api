@@ -61,7 +61,8 @@ foreach (['open', 'preparing', 'closed', 'revoked', 'digital', 'markup', 'markup
     if (!$image instanceof GdImage) {
         throw new RuntimeException('Cannot create fixture image.');
     }
-    imagefill($image, 0, 0, imagecolorallocate($image, 80 + 30 * $index, 140, 170));
+    // A distinct colour per group keeps the photo digests unique within the shoot.
+    imagefill($image, 0, 0, imagecolorallocate($image, (80 + 30 * $index) % 256, 140, 170));
     imagestring($image, 5, 180, 220, 'MoreFoto E4 test photo', imagecolorallocate($image, 255, 255, 255));
     $path = '/runtime/e4-' . $index . '.jpg';
     imagejpeg($image, $path);
