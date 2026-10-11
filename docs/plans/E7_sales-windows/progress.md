@@ -3,11 +3,11 @@
 ## Точка продолжения
 
 - Дата: 11.10.2026. Ветка `codex/e7-sales-windows` от `origin/main` fd7498a, в неё влит `main` 3194db8 (граф MVP, PR #169); рабочая копия `/home/user/rabit-api-worktrees/e7-sales-windows`. PR #162 (https://github.com/rebit-pro/rabit-api/pull/162).
-- Связанное: граф ускоренного MVP `docs/waves/graph.json` (в `main`), план `docs/plans/OPS-mvp-payment-print-email-plan/`, отчёт волны `docs/waves/e7/README.md`.
+- Связанное: граф ускоренного MVP `docs/waves/graph.json` (в `main`), план `docs/plans/OPS-mvp-payment-print-email-plan/`, отчёт волны `docs/waves/e7/README.md`. Обновлённый состав волн после ручного тестирования — локальная ветка `codex/ops-telemos-feedback-plan` (8ec5c2f, не запушена): после merge E7 — D4.
 - Завершено: план, backend, frontend и подвал, оферта `2026-10-11`, E2E-фикстуры, spec и верификаторы, документация; блокеры первого ревью (b9d0b5d) и повторного ревью (этот шаг); E7 отмечена `review` в графе.
 - Сейчас: ждём ревью без блокеров.
 - Следующий шаг: полный `make test-e2e` и visual desktop/mobile (по графу — пользователь с другой моделью).
-- Блокеры merge: E2E-гейт и visual не запускались (E7-T12, T14–T16 PENDING). Перед merge перенести дату редакции оферты и `effectiveFrom` на дату публикации, если она позже 11.10.2026. Отметку `merged` в графе вносит следующая волна (L1).
+- Блокеры merge: E2E-гейт и visual не запускались (E7-T12, T14–T16 PENDING). Перед merge перенести дату редакции оферты и `effectiveFrom` на дату публикации, если она позже 11.10.2026. Отметку `merged` в графе вносит следующая волна — по решению владельца D4.
 - Открытые решения: нет.
 - Рабочее дерево: всё закоммичено и запушено.
 - Проверки: PHPUnit/PHPStan/cs-fixer — `php.sh` из scratchpad (docker `rabit-api-php-cli:d1-local`, volume `rabit-e7-vendor`); frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'` (от root); граф — `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
@@ -94,6 +94,11 @@
   - `python3 tools/verify-wave-graph.py docs/waves/graph.json` — exit 0, 55 волн, 122 API ID, 35 WNN, readyMvpFromMain=[E7];
   - `python3 -m unittest discover -s tools/tests` — 25/26, известное падение #163 (как на `main`);
   - `git diff --check` — чисто. Backend-код с b9d0b5d не менялся, а `main` принёс только документы и проверку графа, поэтому PHPUnit/PHPStan не перезапускались.
+
+### 11.10.2026 — обновлённый состав волн
+
+- Владелец обновил состав волн после ручного тестирования (ветка `codex/ops-telemos-feedback-plan`, 8ec5c2f, локальная): после merge E7 делаем D4 (коррекция разметки переданной группы без заказов; зависимости D2, D3, F2, E5, E7). E7 этим планом не расширяется; в его графе E7 тоже `review`.
+- Пробное слияние той ветки с E7 (60e684c): `graph.json` сливается автоматически, конфликт только в таблице `docs/waves/README.md` (обе ветки меняли строку E7). Правка таблицы из E7 убрана — статус E7 хранится в графе, план владельца переписывает таблицу целиком. Следующая волна в документах E7 — D4 вместо L1.
 
 ## Тест-кейсы
 

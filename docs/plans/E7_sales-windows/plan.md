@@ -7,7 +7,7 @@
 - Ветка `codex/e7-sales-windows` от `origin/main` fd7498a, 11.10.2026 в неё влит `main` 3194db8 (граф MVP); рабочая копия `/home/user/rabit-api-worktrees/e7-sales-windows`.
 - Источник волны — граф ускоренного MVP (`docs/waves/graph.json`), слит в `main` 11.10.2026 через PR #168/#169 (3194db8). Зависимости E3, E4, E5, F2, G1 и J1 слиты; решения D07/D10 приняты 11.09.2026.
 - Правила MVP 1–4 и 10 из `docs/plans/OPS-mvp-payment-print-email-plan/plan.md`.
-- Порядок владельца от 11.10.2026: E7 → L1 → L3 → G2 → N3. L1 начинается после merge E7.
+- Порядок владельца от 11.10.2026: E7 → L1 → L3 → G2 → N3. Обновлён владельцем в тот же день после ручного тестирования (план `codex/ops-telemos-feedback-plan`, в `main` ещё не слит): после merge E7 берётся D4, затем независимо E8/F3/J4; L1 — после сверки D06. Новые требования E7 не расширяют.
 
 ## Факты инвентаризации (11.10.2026)
 
@@ -81,7 +81,7 @@
 7. **Подвал** «Разработано в ReBit Studio».
 8. **Оферта** — новая редакция (DEC-10), текст согласуется с пользователем.
 9. **Тесты.** PHPUnit (Domain/UseCase/Architecture), frontend `node --test`, E2E-фикстура `digital`, spec/verifier сроков.
-10. **Документация.** `docs/waves/e7/README.md` (runbook предпросмотра, выкладка, откат), `verification.json`; в графе E7 — `review` и запись решений `E7-DEC-01-11`. Отметку `merged` вносит следующая волна (L1).
+10. **Документация.** `docs/waves/e7/README.md` (runbook предпросмотра, выкладка, откат), `verification.json`; в графе E7 — `review` и запись решений `E7-DEC-01-11`. Отметку `merged` вносит следующая волна (D4).
 
 ## Исключено
 
