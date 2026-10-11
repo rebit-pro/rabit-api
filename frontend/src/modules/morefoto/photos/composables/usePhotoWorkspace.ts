@@ -9,6 +9,7 @@ import { assignPhotos, chooseCover, deletePhotos, moveChild } from '../service';
 import { freeChildCode, validChildCode } from '../rules';
 import { localPhotoPage, photoFilter, photoPage, photoPages, photoPageSize, type PhotoGroupSummary } from '../paging';
 import { managedPreviewSource } from '../previews';
+import { useMarkupCorrection } from './useMarkupCorrection';
 import { createPhotoDeletion, unknownDeletionMessage } from '../deletion';
 import {
   childTransferError,
@@ -129,7 +130,10 @@ export function usePhotoWorkspace() {
   const loading = computed(() => (isMockApiEnabled ? organization!.loading.value : contextLoading.value) || mediaLoading.value);
   const loadError = computed(() => (isMockApiEnabled ? organization!.error.value : contextError.value));
   const group = computed(() => groups.value.find((item) => item.id === selectedGroupId.value));
-  const editable = computed(() => group.value?.state === 'preparing');
+  // D4: a transmitted group is edited again only during a markup correction that pauses its sales.
+  const correction = useMarkupCorrection(computed(() => (group.value && group.value.state !== 'preparing' ? group.value.id : undefined)));
+  const canPrepare = computed(() => isMockApiEnabled || !!auth.user?.permissions?.includes('media.manage'));
+  const editable = computed(() => (group.value?.state === 'preparing' && canPrepare.value) || correction.correcting.value);
   const pageReady = computed(() => !!group.value && pageGroupId.value === group.value.id);
   const childCodes = computed(() => summary.value.children);
   const suggestedCode = computed(() => freeChildCode(new Set(summary.value.children)));
@@ -467,6 +471,8 @@ export function usePhotoWorkspace() {
     selectedGroupId,
     changeGroup,
     editable,
+    canPrepare,
+    correction,
     pageReady,
     items,
     total,

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   daysLeft,
+  galleryBuys,
   mergeCartLines,
   quoteErrorMessage,
   salesStateTitle,
@@ -116,6 +117,18 @@ test('E7-T13: server codes of the closed print explain what the buyer can still 
   assert.match(paymentError(problem), /новым заказом/);
   assert.match(quoteErrorMessage('PRINT_SALES_CLOSED') ?? '', /электронные фото останутся/);
   assert.equal(quoteErrorMessage('INVALID_CART'), null);
+});
+
+test('D4-T09: a markup correction pauses buying in an open or digital gallery and keeps the closed one closed', () => {
+  assert.equal(galleryBuys({ state: 'open' }), true);
+  assert.equal(galleryBuys({ state: 'digital', updating: false }), true);
+  assert.equal(galleryBuys({ state: 'open', updating: true }), false);
+  assert.equal(galleryBuys({ state: 'digital', updating: true }), false);
+  assert.equal(galleryBuys({ state: 'closed', updating: false }), false);
+  const paused = { status: 409, code: 'GALLERY_UPDATING', network: false };
+  assert.match(checkoutOutcome(paused, false).message, /обновляются/);
+  assert.equal(checkoutOutcome(paused, true).kind, 'message', 'the pause proves the key unused while recovering');
+  assert.match(quoteErrorMessage('GALLERY_UPDATING') ?? '', /Выбор сохранён/);
 });
 
 test('E7-T13: digital sales last 14 calendar days and never close before print', () => {

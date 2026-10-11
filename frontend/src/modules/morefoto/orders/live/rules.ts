@@ -28,6 +28,7 @@ const fieldCodes: Record<string, [keyof BuyerErrors, string]> = {
 const unusedKeyCodes = new Set([
   ...Object.keys(fieldCodes),
   'GALLERY_CLOSED',
+  'GALLERY_UPDATING',
   'PRINT_SALES_CLOSED',
   'PRICE_CHANGED',
   'QUOTE_STALE',
@@ -73,6 +74,11 @@ export function checkoutOutcome(problem: ApiProblem, recovering: boolean): Check
       return { kind: 'message', message: 'Приём заказов закрыт. Новый заказ оформить уже нельзя.' };
     case 'PRINT_SALES_CLOSED':
       return { kind: 'message', message: PRINT_CLOSED_MESSAGE };
+    case 'GALLERY_UPDATING':
+      return {
+        kind: 'message',
+        message: 'Фотографии группы обновляются, покупка временно приостановлена. Заполнение сохранено — повторите позже.'
+      };
     case 'GALLERY_NOT_READY':
     case 'GALLERY_NOT_FOUND':
       return { kind: 'message', message: 'Ссылка на группу недействительна или ещё не открыта.' };

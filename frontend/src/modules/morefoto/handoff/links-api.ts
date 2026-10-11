@@ -24,6 +24,8 @@ export interface LiveLinkItem {
   deliveryAt: string | null;
   photoCount: number;
   childCount: number;
+  /** D4: start of the markup correction that pauses the sales; null while the group sells normally. */
+  markupCorrectionAt: string | null;
   /** Curator of the group's institution, whom the teacher asks about the group (INF-11); only in the list. */
   curatorName?: string | null;
 }
@@ -44,6 +46,8 @@ export interface LiveLinkDetail extends LiveLinkItem {
   galleryToken: string | null;
   referenceNow: string;
   history: LiveLinkEvent[];
+  /** D4: a transmitted group that still sells and has no orders; the server repeats the check on start. */
+  markupCorrectable: boolean;
 }
 /** U5: counters of the whole visible scope, independent of the state filter and paging. */
 export interface LinkCounters {
@@ -98,6 +102,20 @@ export const linksApi = {
         config
       );
     }
+  }
+};
+
+/** D4 commands of a transmitted group; the key is kept by the caller until the server answers. */
+export const markupCorrectionApi = {
+  async start(groupId: string, revision: number, requestId: string): Promise<void> {
+    await api.post(path(groupId) + '/markup-corrections', { revision }, { headers: { 'Idempotency-Key': key(requestId) } });
+  },
+  async finish(groupId: string, revision: number, signature: string, requestId: string): Promise<void> {
+    await api.post(
+      path(groupId) + '/markup-correction-completions',
+      { revision, signature },
+      { headers: { 'Idempotency-Key': key(requestId) } }
+    );
   }
 };
 

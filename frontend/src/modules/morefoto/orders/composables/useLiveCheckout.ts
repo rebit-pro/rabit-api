@@ -2,7 +2,7 @@ import { computed, nextTick, reactive, shallowRef, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { forgetLiveCart, liveQuote, liveState, refreshStorefront } from '../../commerce/services/storefront';
 import type { GallerySnapshot } from '../../gallery/types';
-import { sellsAnything } from '../../commerce/sales-windows';
+import { galleryBuys } from '../../commerce/sales-windows';
 import { apiProblem, liveOrdersApi } from '../live/api';
 import { checkoutOutcome, isCreatedOrder, newRequestId, showsCheckoutRecovery, type CheckoutSubmission } from '../live/rules';
 import type { CheckoutBody } from '../live/types';
@@ -70,7 +70,7 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
   const canSubmit = computed(
     () =>
       state.catalog.capabilities?.purchaseEnabled === true &&
-      sellsAnything(gallery.state) &&
+      galleryBuys(gallery) &&
       quote.value.lines.length > 0 &&
       !quote.value.invalid.length &&
       state.quoteToken !== null

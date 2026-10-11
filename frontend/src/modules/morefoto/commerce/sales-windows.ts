@@ -17,6 +17,11 @@ export function sellsAnything(state: SalesState): boolean {
   return state === 'open' || state === 'digital';
 }
 
+/** D4: while the markup of a transmitted group is corrected, the gallery is shown but nothing is bought. */
+export function galleryBuys(gallery: { state: SalesState; updating?: boolean }): boolean {
+  return sellsAnything(gallery.state) && !gallery.updating;
+}
+
 /** Lines a buyer can still order; print lines of a stored cart drop out once print sales close. */
 export function sellableLines<T extends SalesLine>(
   lines: T[],
@@ -49,7 +54,8 @@ export function mergeCartLines(current: SalesLine[], added: SalesLine[]): SalesL
 
 const quoteErrors: Record<string, string> = {
   PRINT_SALES_CLOSED: 'Приём заказов на печать завершён. Обновите страницу: печатные позиции уберутся, электронные фото останутся.',
-  GALLERY_CLOSED: 'Приём заказов завершён. Выбор сохранён; новые заказы сейчас не принимаются.'
+  GALLERY_CLOSED: 'Приём заказов завершён. Выбор сохранён; новые заказы сейчас не принимаются.',
+  GALLERY_UPDATING: 'Фотографии группы обновляются, покупка временно приостановлена. Выбор сохранён — вернитесь немного позже.'
 };
 
 /** Text for a refused cart calculation that the buyer can act on; null leaves the generic message. */

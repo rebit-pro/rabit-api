@@ -3,7 +3,7 @@ import { shallowReactive } from 'vue';
 import api from '@/api/http';
 import type { GallerySnapshot } from '../../gallery/types';
 import type { CartQuote, Catalog } from '../types';
-import { mergeCartLines, quoteErrorMessage, sellableLines, sellsAnything, type SalesLine } from '../sales-windows';
+import { galleryBuys, mergeCartLines, quoteErrorMessage, sellableLines, type SalesLine } from '../sales-windows';
 
 type Line = SalesLine;
 interface State {
@@ -175,7 +175,7 @@ export async function loadStorefront(token: string, gallery: GallerySnapshot): P
     droppedPrint: droppedBefore + dropped
   });
   states.set(gallery.groupId, state);
-  if (sellsAnything(gallery.state)) await refreshStorefront(gallery.groupId);
+  if (galleryBuys(gallery)) await refreshStorefront(gallery.groupId);
 }
 export async function refreshStorefront(groupId: string): Promise<void> {
   const state = liveState(groupId);
@@ -266,14 +266,14 @@ export async function changeLive(token: string, id: string, quantity: number): P
 export async function clearLive(token: string): Promise<void> {
   const state = forToken(token);
   if (state.busy) throw new Error('Дождитесь завершения расчёта.');
-  if (sellsAnything(state.gallery.state)) {
+  if (galleryBuys(state.gallery)) {
     await persist(state, []);
   }
   localStorage.removeItem(key(state.gallery.groupId));
   state.lines = [];
   state.error = '';
   state.droppedPrint = 0;
-  if (!sellsAnything(state.gallery.state)) state.quote = null;
+  if (!galleryBuys(state.gallery)) state.quote = null;
 }
 /** Drops the local selection after the server confirmed the order; other groups keep their carts. */
 export function forgetLiveCart(groupId: string): void {

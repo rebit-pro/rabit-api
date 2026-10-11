@@ -259,3 +259,12 @@ test('#81: a lost F2 answer is an unknown outcome; HTTP errors keep their texts 
   assert.equal(linkErrorText({ network: false, status: 422, code: 'VALIDATION_FAILED' }), 'Проверьте заполненные поля формы.');
   assert.equal(linkErrorText({ network: false, status: 503 }), 'Сервер не сохранил изменение. Повторите действие позже.');
 });
+
+test('D4-T09: markup correction refusals tell the staff what blocks the correction', () => {
+  assert.match(linkErrorText({ network: false, status: 409, code: 'GROUP_HAS_ORDERS' }), /уже есть заказы/);
+  assert.match(linkErrorText({ network: false, status: 409, code: 'GALLERY_CLOSED' }), /Продажи группы завершены/);
+  for (const code of ['CORRECTION_IN_PROGRESS', 'CORRECTION_NOT_STARTED']) {
+    assert.match(linkErrorText({ network: false, status: 409, code }), /Загрузите актуальные данные/);
+  }
+  assert.match(linkErrorText({ network: false, status: 409, code: 'LINK_NOT_READY' }), /не готова/);
+});
