@@ -74,10 +74,30 @@ def validate_graph(plan):
         for eid in wave.get("verifiesEndpointIds", []):
             assert eid in assigned, ("Unknown verification endpoint", eid)
             assert wave["id"] not in ancestors[assigned[eid]], ("Verification required before implementation", wave["id"], eid)
+    profile = plan.get("launchProfile")
+    if profile:
+        required = profile["requiredWaves"]
+        deferred = profile["postMvpWaves"]
+        assert len(required) == len(set(required)) and set(required) <= by_id.keys(), "Invalid MVP membership"
+        assert len(deferred) == len(set(deferred)) and set(deferred) <= by_id.keys(), "Invalid post-MVP membership"
+        assert set(required).isdisjoint(deferred), "MVP/backlog overlap"
+        assert {wave["id"] for wave in waves if wave["releaseStage"] == "mvp"} == set(required), "MVP stage mismatch"
+        assert {wave["id"] for wave in waves if wave["releaseStage"] == "postMvp"} == set(deferred), "Post-MVP stage mismatch"
+        assert all(wave["releaseStage"] in {"baseline", "mvp", "postMvp"} for wave in waves), "Unknown release stage"
+        assert {wave["id"] for wave in waves if wave["releaseStage"] == "baseline"} <= merged, "Baseline stage mismatch"
+        acceptance = profile["acceptanceWave"]
+        assert acceptance in required and by_id[acceptance]["kind"] == "acceptance", "Invalid MVP acceptance"
+        assert set(required) - {acceptance} <= ancestors[acceptance], "MVP acceptance misses a required wave"
+        for wid in required:
+            assert not (ancestors[wid] & set(deferred)), ("MVP depends on post-MVP wave", wid)
+        assert profile["rules"]["printSalesDays"] == 7 and profile["rules"]["digitalSalesDays"] == 14, "Wrong MVP sales windows"
+        assert profile["openLaunchDecisions"] and profile["externalPrerequisites"], "Missing external launch conditions"
     ready = [wave["id"] for wave in waves if wave["id"] not in merged
              and set(wave["dependsOn"]) <= merged and set(wave["decisionGates"]) <= accepted]
     return {"waves": len(waves), "endpoints": len(assigned), "legacyWaves": len(legacy), "readyFromMain": ready,
-            "blocked": [wave["id"] for wave in waves if wave["id"] not in merged and wave["id"] not in ready]}
+            "blocked": [wave["id"] for wave in waves if wave["id"] not in merged and wave["id"] not in ready],
+            "readyMvpFromMain": [wid for wid in ready if profile and wid in profile["requiredWaves"]],
+            "readyPostMvpFromMain": [wid for wid in ready if profile and wid in profile["postMvpWaves"]]}
 
 
 def negative_checks(plan):
@@ -130,6 +150,16 @@ def negative_checks(plan):
                 first["deliveryState"] = "merged"
                 data["baseline"]["mergedWaves"].append(first["id"])
         rejects("bundle partially merged", bundle_partial)
+    if plan.get("launchProfile"):
+        def post_mvp_dependency(data):
+            acceptance = wave(data, data["launchProfile"]["acceptanceWave"])
+            acceptance["dependsOn"].append("I2")
+            for item in data["waves"]:
+                item["unlocks"] = [other["id"] for other in data["waves"] if item["id"] in other["dependsOn"]]
+        rejects("MVP depends on deferred refunds", post_mvp_dependency)
+        rejects("MVP membership mismatch", lambda data: data["launchProfile"]["requiredWaves"].remove("G2"))
+        rejects("wrong sales deadline", lambda data: data["launchProfile"]["rules"].update(digitalSalesDays=7))
+        rejects("external gates omitted", lambda data: data["launchProfile"].update(openLaunchDecisions=[]))
     return scenarios
 
 
