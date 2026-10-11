@@ -4,12 +4,12 @@
 
 - Дата: 11.10.2026. Ветка `codex/e7-sales-windows` от `origin/main` fd7498a; рабочая копия `/home/user/rabit-api-worktrees/e7-sales-windows`. PR нет.
 - Связанное: план ускоренного MVP — ветка `codex/ops-mvp-payment-print-email-plan`, локальная, не опубликована, в общем checkout ведётся другой сессией. Граф E7 пока только там.
-- Завершено: инвентаризация backend/frontend, `plan.md` с решениями E7-DEC-01…11.
-- Сейчас: согласование решений с пользователем.
-- Следующий шаг: после ответа обновить решения в плане и начать S2 (Organization).
-- Блокеры: merge PR E7 требует слитого в `main` графа MVP. Реализацию это не блокирует.
-- Рабочее дерево: новые файлы `docs/plans/E7_sales-windows/{plan,progress}.md`, не закоммичены.
-- Проверки следующего шага: `make test` (PHPUnit) в worktree; frontend — docker-команда из памяти (`npm run check && npm run test:commerce`).
+- Завершено: план (de41609), backend (604d435), frontend и подвал (5f61914), оферта `2026-10-11` и E2E (1b33a89), верификатор миграции и правки E2E (c00776d), документация волны.
+- Сейчас: публикация ветки и PR.
+- Следующий шаг: ревью PR; после ревью без блокеров — полный `make test-e2e` и visual (по графу — пользователь с другой моделью).
+- Блокеры merge: граф MVP с волной E7 не в `main`; полный E2E-гейт не запускался. Перед merge перенести дату редакции оферты на дату публикации, если она позже 11.10.2026.
+- Рабочее дерево: всё закоммичено, кроме документации последнего шага до её коммита.
+- Проверки: PHPUnit/PHPStan/cs-fixer — `php.sh` из scratchpad (docker `rabit-api-php-cli:d1-local`, volume `rabit-e7-vendor`, копия `rabit-j1-vendor`: composer.lock не менялся с J1); frontend — docker Playwright-образ с node_modules volume.
 
 ## Журнал
 
@@ -27,8 +27,45 @@
   - формулировки оферты завязаны на единый «приём заказов».
   Подробности — в плане, раздел «Факты инвентаризации».
 
+### 11.10.2026 — решения и backend
+
+- Пользователь выбрал: `closesAt` + `digitalSalesUntil` (DEC-01), запрет коррекции T0 после +7 (DEC-04), новая редакция оферты в E7 (DEC-10), подпись со ссылкой на https://rebit-pro.ru (DEC-11). План обновлён до кода (de41609).
+- Backend (604d435, 70 файлов, +605/−188):
+  - Organization: VO `GroupCalendar` (digital = max(T0+14, print), статус `digital`, `PRINT_SALES_CLOSED` для correct/extend), репозиторий, проекция, `GroupStateSql`, справочник, структура, галерейная группа; миграция `Version20261011120001` и её ID в E2E `prepare.php`;
+  - Media: `GalleryAvailability` с `digital`, `digitalSalesUntil` в ответе галереи;
+  - Commerce: `SalesWindowPolicy` (Domain), quote/order — `PRINT_SALES_CLOSED`, сроки заказа, `PayableOrderOutputDto.salesUntil/containsPrint`;
+  - Payment: срок и `latePayment` по составу; проверка срока до повторного использования открытой попытки;
+  - Handoff: `digitalSalesUntil` в ссылках, ответах и JSON повторов (старые записи → null), фильтр `digital`, счётчики; перенос в группу сотрудников закрыт с +7.
+- E2E: фикстура `digital`, `closed` сдвинута на −15/−8/−1; `verify-links.php` (+14, отказ коррекции, три состояния на границах), `verify-orders.php` (PRINT_SALES_CLOSED, затем GALLERY_CLOSED).
+- Проверки 11.10.2026:
+  - `php.sh php vendor/bin/phpunit` — OK, 1099 тестов / 47053 проверки;
+  - PHPStan `tools/e2e/phpstan.neon` — No errors;
+  - php-cs-fixer по 68 изменённым файлам — исправлено 0;
+  - `php -l` верификаторов и миграции — OK.
+
+### 11.10.2026 — frontend, оферта, E2E
+
+- Frontend (5f61914): чистый модуль `commerce/sales-windows.ts`; галерея, корзина (печать убирается в окне `digital`), оформление, страница заказа (блок смешанного заказа и перенос электронных фото в корзину по запомненной ссылке галереи), кабинет (ссылки, обзор, структура, учреждение, таймлайн), подвал со ссылкой на rebit-pro.ru.
+- Оферта `2026-10-11` (1b33a89): изменены только определение приёма заказов, оплата по составу, передача печати и отказ от печати; registry дополнен, `reconsent=false`.
+- E2E: `zzzz-storefront-windows.spec.ts` (группа b), `verify-sales-windows.php` в `VERIFIERS`, `verify-orders.php` (оплата по составу); правки `z-links-preparation` (byState.digital), `zzzzzzz-overview` (плитка), demo-шаг curator (`time` → `.first()`).
+- Артефакты `vue-tsc --build` (vite.config.js/.d.ts, tsbuildinfo) и `dist/`, созданные моими проверками, удалены; дальше typecheck — только `npm run check` (`--noEmit`).
+- Проверки 11.10.2026:
+  - frontend `npm run check` (docker Playwright 1.52, том `rabit-e7-node`) — exit 0, test:ui 88/88; `test:commerce` — 230/230; `build-only` — OK;
+  - PHPUnit — OK 1099 / 47058 (после оферты); php -l новых верификаторов — OK;
+  - `python3 -m unittest discover -s tools/tests` — 25/26: `test_f2_prepares_first_and_reports_later_in_one_group` падает и на чистом main fd7498a (после #92 `cabinet-tables` сортируется раньше `z-links-preparation`), не регрессия E7.
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
 | --- | --- | --- | --- |
-| E7-T01…T17 | PENDING | 11.10.2026 | Реализация не начата |
+| E7-T01, T02, T03 | PASS | 11.10.2026 | PHPUnit `GroupCalendarTest`, `GroupCalendarDeliveryTest`, `GalleryAvailabilityTest` |
+| E7-T04 | PASS | 11.10.2026 | PHPUnit `GroupStateSqlTest` |
+| E7-T05, T06, T07 | PASS | 11.10.2026 | PHPUnit `StorefrontQuoteTest`, `OrderCheckoutUseCaseTest`, `OrderPaymentsTest` |
+| E7-T08, T09 | PASS (unit) | 11.10.2026 | PHPUnit `PaymentAttemptPolicyTest`, `StartPaymentAttemptTest`; поздний платёж по `salesUntil` |
+| E7-T10 | PASS | 11.10.2026 | PHPUnit `GroupLinkWorkflowTest`, `GroupLinkContractTest`, `StaffTransferPolicyTest` |
+| E7-T11 | PASS | 11.10.2026 | Architecture-тесты модулей входят в PHPUnit 1099 OK |
+| E7-T12 | PENDING | — | `verify-sales-windows.php` написан; запуск в `make test-e2e` |
+| E7-T13 | PASS | 11.10.2026 | `tests/commerce/sales-windows.test.mjs` 7/7, `npm run check`, `test:commerce` 230/230 |
+| E7-T14, T15 | PENDING | — | spec и `verify-orders.php` написаны; HTTP-оплата PRINT_SALES_CLOSED без тестового магазина проверяется на уровне сервисов |
+| E7-T16 | PENDING | — | скриншоты e7-desktop/mobile-gallery/cart появятся в гейте |
+| E7-T17 | BLOCKED | 11.10.2026 | граф MVP с E7 не слит в main |

@@ -1,0 +1,33 @@
+{
+  "wave": "E7",
+  "status": "pending-e2e",
+  "date": "2026-10-11",
+  "branch": "codex/e7-sales-windows",
+  "base": "fd7498a",
+  "decisions": "E7-DEC-01, 04, 10, 11 chosen by the user on 2026-10-11; the other decisions are the recommended options of the plan",
+  "checks": {
+    "backend": {
+      "status": "passed",
+      "phpunit": "OK 1099 tests / 47058 assertions",
+      "phpstan": "No errors (tools/e2e/phpstan.neon)",
+      "csFixer": "0 of 68 changed files fixed",
+      "phplint": "changed verifiers and migration OK"
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": ["ESLint", "stylelint", "Vue typecheck", "E2E TypeScript", "UI unit 88", "commerce unit 230", "production build"]
+    },
+    "runner": {
+      "status": "failed-baseline",
+      "note": "tools/tests: 25 of 26 OK; test_f2_prepares_first_and_reports_later_in_one_group fails on main fd7498a as well (cabinet-tables sorts before z-links-preparation)"
+    },
+    "graph": {
+      "status": "blocked",
+      "note": "E7 is defined only in the unmerged MVP plan branch codex/ops-mvp-payment-print-email-plan; the graph status is recorded after that plan reaches main"
+    },
+    "browser": {
+      "status": "not-run",
+      "note": "make test-e2e and visual desktop/mobile run after a review without blockers; written: zzzz-storefront-windows.spec.ts, verify-sales-windows.php, updated verify-orders.php and verify-links.php"
+    }
+  }
+}

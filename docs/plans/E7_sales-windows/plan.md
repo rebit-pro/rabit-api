@@ -105,14 +105,14 @@
 
 - [x] S0. Инвентаризация, план и progress.
 - [x] S1. Согласование DEC-01…11 (11.10.2026).
-- [ ] S2. Organization: VO, репозиторий, проекции, SQL-состояния, миграция, контракты.
-- [ ] S3. Media и Commerce: состояние галереи, quote/order, сроки заказа, оплачиваемый заказ.
-- [ ] S4. Payment: срок по составу, порядок проверок, поздняя оплата.
-- [ ] S5. Handoff: выдача сроков, фильтр, ограничение коррекции.
-- [ ] S6. Frontend: галерея, корзина, оформление, заказ, кабинет, подвал.
-- [ ] S7. Новая редакция оферты (DEC-10), согласование текста.
-- [ ] S8. PHPUnit, PHPStan, php-cs-fixer, frontend check/test; E2E-фикстуры и spec написаны.
-- [ ] S9. Документация волны, PR (после слияния графа MVP — отметка в графе).
+- [x] S2. Organization: VO, репозиторий, проекции, SQL-состояния, миграция, контракты.
+- [x] S3. Media и Commerce: состояние галереи, quote/order, сроки заказа, оплачиваемый заказ.
+- [x] S4. Payment: срок по составу, порядок проверок, поздняя оплата.
+- [x] S5. Handoff: выдача сроков, фильтр, ограничение коррекции.
+- [x] S6. Frontend: галерея, корзина, оформление, заказ, кабинет, подвал.
+- [x] S7. Новая редакция оферты `2026-10-11` (DEC-10); текст передан пользователю на проверку в PR.
+- [x] S8. PHPUnit, PHPStan, php-cs-fixer, frontend check/test; E2E-фикстуры, spec и верификаторы написаны.
+- [ ] S9. Документация волны (`docs/waves/e7/`) и PR — готово; отметка в графе после слияния графа MVP.
 - [ ] S10. Полный `make test-e2e` и visual desktop/mobile — после ревью без блокеров.
 
 ## Критерии приёмки
@@ -140,7 +140,7 @@
 | E7-T09 | Unit поздний платёж | digital, оплаченный на 10-й день, — не late; смешанный, оплаченный после +7, — late | PHPUnit `PaymentReconcilerTest` |
 | E7-T10 | Unit handoff: transmit/correct/повтор, фильтр digital | `digitalSalesUntil` в ответе и JSON повтора; старый JSON без поля читается | PHPUnit `GroupLinkWorkflowTest`, `GroupLinkContractTest` |
 | E7-T11 | Architecture | UseCase/Service с phpDoc; контроллеры без технологической сборки | PHPUnit Architecture |
-| E7-T12 | Миграция на копии БД | заполняет только переданные группы с пустым digital; extended → max; повторный запуск не меняет данные; CHECK действует | E2E `prepare.php` + verifier `verify-sales-windows.php` |
+| E7-T12 | Миграция на копии БД | заполняет только переданные группы с пустым digital; extended → max; повторный запуск не меняет данные; CHECK действует | `make test-e2e` → `verify-sales-windows.php` |
 | E7-T13 | Frontend unit | правила сроков (+7/+14), состояние digital, исключение печати из quote, тексты ошибок `PRINT_SALES_CLOSED`, перенос digital-строк в корзину, `linkStatus`/`groupStateTone` | `npm run check`, `npm run test:commerce`, `npm run test:ui` |
 | E7-T14 | HTTP/E2E: галерея в digital-фикстуре | quote с печатью → 409; digital-заказ создан и оплачен тестовой картой; файлы доступны | `make test-e2e` (после ревью) |
 | E7-T15 | HTTP/E2E: смешанный заказ после +7 | оплата → 409 `PRINT_SALES_CLOSED`, блок переноса, новый digital-заказ | `make test-e2e` (после ревью) |
