@@ -5,9 +5,9 @@
 - Дата: 11.10.2026. Ветка `codex/e7-sales-windows` от `origin/main` fd7498a, в неё влит `main` 3194db8 (граф MVP, PR #169); рабочая копия `/home/user/rabit-api-worktrees/e7-sales-windows`. PR #162 (https://github.com/rebit-pro/rabit-api/pull/162).
 - Связанное: граф ускоренного MVP `docs/waves/graph.json` (в `main`), план `docs/plans/OPS-mvp-payment-print-email-plan/`, отчёт волны `docs/waves/e7/README.md`. Обновлённый состав волн после ручного тестирования — локальная ветка `codex/ops-telemos-feedback-plan` (8ec5c2f, не запушена): после merge E7 — D4.
 - Завершено: план, backend, frontend и подвал, оферта `2026-10-11`, E2E-фикстуры, spec и верификаторы, документация; блокеры первого ревью (b9d0b5d), повторного (60e684c) и третьего (ссылка к провайдеру после срока, S9a); E7 отмечена `review` в графе.
-- Сейчас: блокер третьего ревью (5483648771) исправлен, ответ в треде. Полный E2E-гейт: прогон 1 — дефект счётчика убранных печатных позиций (исправлен) и внешний таймаут ЮKassa в G1-T14; прогон 2 — колонка продукта в `verify-orders.php` (исправлена); идёт прогон 3.
-- Следующий шаг: полный `make test-e2e` и visual desktop/mobile (по графу — пользователь с другой моделью).
-- Блокеры merge: E2E-гейт и visual не запускались (E7-T12, T14–T16 PENDING). Перед merge перенести дату редакции оферты и `effectiveFrom` на дату публикации, если она позже 11.10.2026. Отметку `merged` в графе вносит следующая волна — по решению владельца D4.
+- Сейчас: полный E2E-гейт PASS (прогон 3 `rabit-e2e-ca3bd75983eb` на ab09bd3: a 81, b 60, 13 верификаторов), visual desktop/mobile PASS (`docs/waves/e7/visual.json`). Пользователь поручил merge PR #162 в `main` и старт следующей волны.
+- Следующий шаг: merge PR #162; затем D4 (план владельца `codex/ops-telemos-feedback-plan` должен попасть в `main` своим PR), D4 отмечает E7 `merged` в графе.
+- Блокеры merge: нет. Перед выкладкой (не merge): если публикация позже 11.10.2026, перенести дату редакции оферты и `effectiveFrom` на дату публикации; выкладка по runbook `docs/waves/e7/README.md` (`migrate up 20261011120001`).
 - Открытые решения: нет.
 - Рабочее дерево: всё закоммичено и запушено.
 - Проверки: PHPUnit/PHPStan/cs-fixer — `php.sh` из scratchpad (docker `rabit-api-php-cli:d1-local`, volume `rabit-e7-vendor`); frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'` (от root); граф — `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
@@ -125,6 +125,13 @@
   - группу a раннер отменил после падения верификатора b.
 - Исправление: две выборки продуктов (bundle и physical) в `verify-orders.php` читают `UF_UUID`; `php -l` — без ошибок.
 
+### 11.10.2026 — полный E2E-гейт, прогон 3 и visual
+
+- Та же команда на ab09bd3, прогон `rabit-e2e-ca3bd75983eb`, 354.7 s — PASS: группа a 81 passed, группа b 60 passed; верификаторы verify-storefront, verify-sales-windows, verify-handoff, verify-orders, verify-links, verify-transfers, verify-avatar, verify-payment-costs, verify-payments, verify-files, verify-access, verify-support, verify-photo-deletion — passed.
+- Visual desktop 1440×1000 и mobile 390×844: скриншоты галереи и корзины E7 перенесены в `docs/waves/e7/screenshots/`, проверки и sha256 — `docs/waves/e7/visual.json`. Оба срока, плашка «Печать закрыта», уведомление «Печатные позиции убраны из корзины: 1», подвал «Разработано в ReBit Studio», без горизонтальной прокрутки.
+- Не E7: на mobile иконка «Помощь» в шапке галереи прижата к правому краю; верхнюю панель E7 не меняла.
+- Граница покрытия: блок неоплаченного заказа с печатью после +7 и кнопка переноса электронных фото проверены frontend-правилами и сервисными проверками `verify-orders.php`, отдельного браузерного спека нет; оплата тестовой картой — G1-T14 на открытой группе.
+
 ### 11.10.2026 — обновлённый состав волн
 
 - Владелец обновил состав волн после ручного тестирования (ветка `codex/ops-telemos-feedback-plan`, 8ec5c2f, локальная): после merge E7 делаем D4 (коррекция разметки переданной группы без заказов; зависимости D2, D3, F2, E5, E7). E7 этим планом не расширяется; в его графе E7 тоже `review`.
@@ -140,9 +147,9 @@
 | E7-T08, T09 | PASS (unit) | 11.10.2026 | PHPUnit `PaymentAttemptPolicyTest`, `StartPaymentAttemptTest`; поздний платёж по `salesUntil` |
 | E7-T10 | PASS | 11.10.2026 | PHPUnit `GroupLinkWorkflowTest`, `GroupLinkContractTest`, `StaffTransferPolicyTest` |
 | E7-T11 | PASS | 11.10.2026 | Architecture-тесты модулей входят в PHPUnit 1099 OK |
-| E7-T12 | PENDING | — | `verify-sales-windows.php` написан; запуск в `make test-e2e` |
+| E7-T12 | PASS | 11.10.2026 | `make test-e2e` прогон `rabit-e2e-ca3bd75983eb` (ab09bd3): `verify-sales-windows.php` passed |
 | E7-T13 | PASS | 11.10.2026 | `tests/commerce/sales-windows.test.mjs` 8/8 (после блокеров ревью), `npm run check`, `test:commerce` 231/231 |
-| E7-T14, T15 | PENDING | — | spec и `verify-orders.php` написаны; HTTP-оплата PRINT_SALES_CLOSED без тестового магазина проверяется на уровне сервисов |
-| E7-T16 | PENDING | — | скриншоты e7-desktop/mobile-gallery/cart появятся в гейте |
+| E7-T14, T15 | PASS (граница) | 11.10.2026 | `rabit-e2e-ca3bd75983eb`: `zzzz-storefront-windows.spec.ts` (quote с печатью → 409, электронный кадр → 200), `verify-orders.php` (смешанный заказ после +7 → `PRINT_SALES_CLOSED` при заказе и оплате, заказ комплекта в окне digital оплачивается до срока электронных). Блок переноса в заказе — frontend-правила без браузерного спека; оплата картой — G1-T14 |
+| E7-T16 | PASS | 11.10.2026 | `docs/waves/e7/visual.json`, скриншоты `docs/waves/e7/screenshots/e7-{desktop,mobile}-{gallery,cart}.png` из `rabit-e2e-ca3bd75983eb` |
 | E7-T17 | PASS | 11.10.2026 | `python3 tools/verify-wave-graph.py docs/waves/graph.json` exit 0 после слияния `main` 3194db8; E7 `review` |
 | E7-T18 | PASS | 11.10.2026 | PHPUnit 1101 OK: `StartPaymentAttemptTest` (повтор ключа после срока без `redirectUrl`), `PaymentReconcilerTest::testReturnPageDoesNotOfferTheProviderPageAfterTheSalesDeadline`, `PaymentAttemptPolicyTest::testSalesAreOpenStrictlyBeforeTheDeadline` |

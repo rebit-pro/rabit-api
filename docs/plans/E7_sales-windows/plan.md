@@ -115,7 +115,7 @@
 - [x] S8. PHPUnit, PHPStan, php-cs-fixer, frontend check/test; E2E-фикстуры, spec и верификаторы написаны.
 - [x] S9. Документация волны (`docs/waves/e7/`), PR и отметка `review` в графе после слияния графа MVP.
 - [x] S9a. Блокер третьего ревью (5483648771): `PaymentAttemptPolicy::salesOpen`, `PaymentOutputMapper::attempt` без `redirectUrl` после срока в `GetPaymentAttemptUseCase` и `StartPaymentAttemptUseCase`; unit-тест E7-T18.
-- [ ] S10. Полный `make test-e2e` и visual desktop/mobile — после ревью без блокеров.
+- [x] S10. Полный `make test-e2e` и visual desktop/mobile — PASS 11.10.2026 (прогон `rabit-e2e-ca3bd75983eb` на ab09bd3).
 
 ## Критерии приёмки
 
