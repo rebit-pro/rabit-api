@@ -2,7 +2,7 @@
 
 ## Точка продолжения
 
-- Дата: 11.10.2026. Ветка codex/ops-mvp-payment-print-email-plan, base fd7498a (origin/main), предыдущий checkpoint 66c0090; итоговый HEAD определяется `git log -1 --format=%h`. Пользователь разрешил push/PR/merge плана в main; PR создаётся отдельно от E7 #162.
+- Дата: 11.10.2026. Ветка codex/ops-mvp-payment-print-email-plan, base fd7498a (origin/main), предыдущий checkpoint 66c0090; итоговый HEAD определяется `git log -1 --format=%h`. Пользователь разрешил push/PR/merge плана в main; PR плана #168 создан отдельно от E7 #162: https://github.com/rebit-pro/rabit-api/pull/168.
 - Завершено: первоначальный ускоренный MVP-план/граф/канонический patch и проверки. В соседних операциях опубликована /legal и создана Gmail issue #161.
 - Сейчас: PLAN-07/08/09 завершены, checkpoint 18416db; выполняется разрешённое владельцем слияние ветки плана в main через отдельный PR. E7 в разработке по сообщению владельца; её объект и API-контракты совпадают с checkpoint 4c8074d, код не менялся.
 - Следующий шаг: проверить финальный docs-only diff, создать/слить PR плана и сверить main. Далее L1 после merge текущей E7 и решений ручной передачи/ссылки/поздних платежей. Обязательный путь E7/L1/G2/N3; L3 дополнительна после L1/H1. Этот коммит не переносить в незамерженную E7 как runtime-зависимость.
@@ -129,3 +129,6 @@
 
 - MERGE-01 PASS: актуальная база origin/main fd7498a, `git diff --check origin/main` exit 0; полный diff ровно семь разрешённых файлов, без application/frontend/runtime и незамерженного кода E7.
 - MERGE-02 PASS: `python3 tools/verify-wave-graph.py docs/waves/graph.json` — 55 волн/122 ID/35 WNN/17 отрицательных fixtures, readyMvpFromMain=[E7]; отдельная Python-сверка 99 исходных ID, E7 против 4c8074d и N3→L1 без L3. `git apply --check` на MoreFoto PASS; предыдущие генерация/паритет 13 файлов/offline Node fixtures действительны, их входы не менялись. Runtime/UI не изменены, E2E не применимы к docs-only diff и не запускались. Собственный review offline-валидатора/границ графа не выявил блокеров.
+
+- Создан и прикреплён PR #168: https://github.com/rebit-pro/rabit-api/pull/168. `gh pr view 168` подтвердил ровно семь разрешённых файлов, base=main, MERGEABLE/CLEAN, draft=false, без review-блокеров. `gh pr checks 168` сообщил no checks (exit 1), а statusCheckRollup=[]: Actions отключены, это отсутствие CI-отчётов, не красная проверка. Все применимые локальные проверки завершены.
+- MERGE-03: push/PR и проверка границ PASS; далее разрешённый владельцем merge через gh с точным head SHA. Результат серверного merge и синхронизация main будут записаны после выполнения; E7 #162 не сливается и не деплоится.
