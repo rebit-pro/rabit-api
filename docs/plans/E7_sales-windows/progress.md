@@ -5,7 +5,7 @@
 - Дата: 11.10.2026. Ветка `codex/e7-sales-windows` от `origin/main` fd7498a, в неё влит `main` 3194db8 (граф MVP, PR #169); рабочая копия `/home/user/rabit-api-worktrees/e7-sales-windows`. PR #162 (https://github.com/rebit-pro/rabit-api/pull/162).
 - Связанное: граф ускоренного MVP `docs/waves/graph.json` (в `main`), план `docs/plans/OPS-mvp-payment-print-email-plan/`, отчёт волны `docs/waves/e7/README.md`. Обновлённый состав волн после ручного тестирования — локальная ветка `codex/ops-telemos-feedback-plan` (8ec5c2f, не запушена): после merge E7 — D4.
 - Завершено: план, backend, frontend и подвал, оферта `2026-10-11`, E2E-фикстуры, spec и верификаторы, документация; блокеры первого ревью (b9d0b5d), повторного (60e684c) и третьего (ссылка к провайдеру после срока, S9a); E7 отмечена `review` в графе.
-- Сейчас: блокер третьего ревью (5483648771) исправлен, ответ в треде; ждём ревью без блокеров.
+- Сейчас: блокер третьего ревью (5483648771) исправлен, ответ в треде. Полный E2E-гейт: прогон 1 упал (дефект счётчика убранных печатных позиций исправлен, G1-T14 — внешний таймаут ЮKassa); идёт прогон 2.
 - Следующий шаг: полный `make test-e2e` и visual desktop/mobile (по графу — пользователь с другой моделью).
 - Блокеры merge: E2E-гейт и visual не запускались (E7-T12, T14–T16 PENDING). Перед merge перенести дату редакции оферты и `effectiveFrom` на дату публикации, если она позже 11.10.2026. Отметку `merged` в графе вносит следующая волна — по решению владельца D4.
 - Открытые решения: нет.
@@ -107,6 +107,15 @@
   - PHPStan `tools/e2e/phpstan.neon` (`XDEBUG_MODE=off`, volume `rabit-e7-phpstan`) — No errors;
   - php-cs-fixer по 7 изменённым файлам — исправлено выравнивание phpDoc в `PaymentOutputMapper`, повторный dry-run чистый;
   - `git diff --check` — чисто.
+
+### 11.10.2026 — полный E2E-гейт, прогон 1
+
+- По просьбе пользователя гейт запущен до повторного ревью: `E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e` на f0c2c1d, прогон `rabit-e2e-030ef2a90e3f`, 343.7 s.
+- Результат FAIL. Все статические шаги, PHPStan, PHPUnit, схема, фикстуры и workers прошли. Группа b — 55 passed, 3 failed, 2 did not run; группа a отменена после падения b.
+  - `zzzz-storefront-windows` desktop: в корзине нет «Печатные позиции убраны из корзины: 1». Это дефект E7: `loadGallery` вызывает `loadStorefront` на каждой странице галереи. Вторая загрузка (переход в корзину) читает уже очищенную корзину, и `droppedPrint` обнуляется.
+  - `zzzz-storefront-windows` mobile: две опции «E7 Электронный кадр». Это следствие первого падения: новый worker повторил `beforeAll` и создал продукты второй раз.
+  - G1-T14: попытка СБП осталась `unknown`. Первый `POST` в тестовый магазин ЮKassa упал по таймауту 8 s (`HTTP Request failed`, `durationMs` 8026), повторы сверки получили 400. Это внешний сбой, не E7; после прогона `api.yookassa.ru` отвечает за 0,06 s.
+- Исправление: `loadStorefront` прибавляет счётчик предыдущего состояния той же группы, `forgetLiveCart` сбрасывает его после заказа, как `clearLive`. Frontend `npm run check` — exit 0, UI 88/88; `test:commerce` — 231/231.
 
 ### 11.10.2026 — обновлённый состав волн
 

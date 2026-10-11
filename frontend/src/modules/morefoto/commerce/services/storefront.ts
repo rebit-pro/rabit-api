@@ -156,6 +156,8 @@ export async function loadStorefront(token: string, gallery: GallerySnapshot): P
   }
   // A closed group keeps the stored selection for viewing; only the digital window drops print it can no longer sell.
   const stored = read(gallery.groupId);
+  // Every gallery page loads the storefront again (gallery → cart): the next load finds nothing to drop, keep the notice.
+  const droppedBefore = states.get(gallery.groupId)?.droppedPrint ?? 0;
   const { kept, dropped } =
     gallery.state === 'digital'
       ? sellableLines(stored, new Map(catalog.products.map((product) => [product.id, product.kind])), gallery.state)
@@ -170,7 +172,7 @@ export async function loadStorefront(token: string, gallery: GallerySnapshot): P
     quoteToken: null,
     busy: false,
     error: '',
-    droppedPrint: dropped
+    droppedPrint: droppedBefore + dropped
   });
   states.set(gallery.groupId, state);
   if (sellsAnything(gallery.state)) await refreshStorefront(gallery.groupId);
@@ -280,4 +282,5 @@ export function forgetLiveCart(groupId: string): void {
   state.lines = [];
   state.quote = empty;
   state.quoteToken = null;
+  state.droppedPrint = 0;
 }
