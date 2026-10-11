@@ -2,13 +2,13 @@
 
 ## Точка продолжения
 
-- Дата: 11.10.2026. Ветка codex/ops-mvp-payment-print-email-plan, base fd7498a (origin/main), предыдущий checkpoint 66c0090; итоговый HEAD определяется `git log -1 --format=%h`. Пользователь разрешил push/PR/merge плана в main; PR плана #168 создан отдельно от E7 #162: https://github.com/rebit-pro/rabit-api/pull/168.
+- Дата: 11.10.2026. Ветка codex/ops-mvp-payment-print-email-plan, base fd7498a (origin/main), предыдущий checkpoint 66c0090; итоговый HEAD определяется `git log -1 --format=%h`. PR плана #168 MERGED, merge 94c98f7, отдельно от E7 #162: https://github.com/rebit-pro/rabit-api/pull/168.
 - Завершено: первоначальный ускоренный MVP-план/граф/канонический patch и проверки. В соседних операциях опубликована /legal и создана Gmail issue #161.
-- Сейчас: PLAN-07/08/09 завершены, checkpoint 18416db; выполняется разрешённое владельцем слияние ветки плана в main через отдельный PR. E7 в разработке по сообщению владельца; её объект и API-контракты совпадают с checkpoint 4c8074d, код не менялся.
-- Следующий шаг: проверить финальный docs-only diff, создать/слить PR плана и сверить main. Далее L1 после merge текущей E7 и решений ручной передачи/ссылки/поздних платежей. Обязательный путь E7/L1/G2/N3; L3 дополнительна после L1/H1. Этот коммит не переносить в незамерженную E7 как runtime-зависимость.
+- Сейчас: PLAN-07/08/09 и MERGE-01/02/03 завершены. PR #168 слит в main; этот checkpoint сохраняет фактический результат слияния в журнале. E7 в разработке по сообщению владельца; её объект и API-контракты совпадают с checkpoint 4c8074d, код не менялся.
+- Следующий шаг реализации: L1 после merge текущей E7 и решений ручной передачи/ссылки/поздних платежей. Обязательный путь E7/L1/G2/N3; L3 дополнительна после L1/H1. Этот коммит не переносить в незамерженную E7 как runtime-зависимость.
 - Открытые условия запуска: договор/боевой магазин/чеки, охват патента и остальные параметры D09, рабочий каталог/ручная передача/срок ссылки, MVP-LATE-01. Email Сивмы обязателен только для дополнительной L3. ПСН подтверждена пользователем, остальные условия не объявлены закрытыми.
-- Рабочее дерево: отдельный коммит после checkpoint 4c8074d содержит ровно шесть файлов документации/графа/sync patch; финальный HEAD — `git log -1 --format=%h`. После commit проверяется чистое дерево. E7/runtime не менялись; push/PR не выполнялись. Предыдущие ветки сохранены отдельно; MoreFoto/read-only источники не меняются.
-- Проверки: `python3 tools/verify-wave-graph.py docs/waves/graph.json`; проверка последовательного merge E7/L1/L3/G2/N3; каноническая генерация и apply/reverse/content parity patch; `git diff --check`.
+- Рабочее дерево: основной PR #168 слит; после него только plan.md/progress.md фиксируют результат. Итоговый HEAD — `git log -1 --format=%h`, серверный статус основного PR — `gh pr view 168 --json state,mergeCommit`. После публикации checkpoint локальный main обновляется fast-forward. E7/worktree и MoreFoto не менялись.
+- Проверки: `python3 tools/verify-wave-graph.py docs/waves/graph.json`; проверка обязательного merge E7/L1/G2/N3 без L3; каноническая генерация и apply/reverse/content parity patch; `git diff --check`.
 
 ## Журнал
 
@@ -132,3 +132,7 @@
 
 - Создан и прикреплён PR #168: https://github.com/rebit-pro/rabit-api/pull/168. `gh pr view 168` подтвердил ровно семь разрешённых файлов, base=main, MERGEABLE/CLEAN, draft=false, без review-блокеров. `gh pr checks 168` сообщил no checks (exit 1), а statusCheckRollup=[]: Actions отключены, это отсутствие CI-отчётов, не красная проверка. Все применимые локальные проверки завершены.
 - MERGE-03: push/PR и проверка границ PASS; далее разрешённый владельцем merge через gh с точным head SHA. Результат серверного merge и синхронизация main будут записаны после выполнения; E7 #162 не сливается и не деплоится.
+
+- MERGE-03 PASS: PR #168 слит через gh с --match-head-commit d4032d73ca28ebffe4b6e5ca5881344ede0683d2; `gh pr view 168 --json state,mergedAt,mergeCommit,url` вернул MERGED, 11.10.2026 08:17:59 UTC (11:17:59 МСК), merge 94c98f7f8e3eec9c5def28cb8354b7f5297ed569. `git fetch origin` и `git merge-base --is-ancestor <merge> origin/main` PASS.
+- Сразу после push GitHub кратко вернул mergeable/mergeStateStatus=UNKNOWN; слияние тогда не выполнялось. Следующее чтение подтвердило MERGEABLE/CLEAN, после чего выполнен точный разрешённый merge без --admin/force.
+- Фактический результат сохранён отдельным checkpoint только plan.md/progress.md, чтобы в main не осталась устаревшая точка продолжения. Runtime/граф/канонический patch не меняются; повторные продуктовые проверки не требуются. PR E7 #162 и его worktree не затрагивались, deployment не выполнялся.
