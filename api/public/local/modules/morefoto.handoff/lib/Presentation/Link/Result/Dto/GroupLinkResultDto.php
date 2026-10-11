@@ -28,6 +28,7 @@ final readonly class GroupLinkResultDto implements ResultDtoInterface
         public string $timezone,
         public ?string $sentAt,
         public ?string $closesAt,
+        public ?string $digitalSalesUntil,
         public ?string $deliveryAt,
         public int $photoCount,
         public int $childCount,

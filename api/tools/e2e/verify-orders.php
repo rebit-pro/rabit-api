@@ -16,6 +16,8 @@ use Morefoto\Commerce\Application\Order\UseCase\SearchStaffOrdersUseCase;
 use Morefoto\Commerce\Application\Storefront\Dto\QuoteLineInputDto;
 use Morefoto\Commerce\Application\Storefront\UseCase\CreateQuoteUseCase;
 use Morefoto\Commerce\Domain\Order\ValueObject\IdempotencyKey;
+use Morefoto\Payment\Domain\Payment\Service\PaymentAttemptPolicy;
+use Rebit\Share\Contracts\Commerce\OrderPaymentInterface;
 use Morefoto\Media\Application\Gallery\Service\GalleryCapabilityLifecycle;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
 use Rebit\Share\Shared\Exception\HttpException;
@@ -34,6 +36,7 @@ set_exception_handler(static function(Throwable $error): never {
     exit(1);
 });
 Loader::includeModule('morefoto.commerce');
+Loader::includeModule('morefoto.payment');
 Loader::includeModule('sprint.migration');
 $services = ServiceLocator::getInstance();
 $connection = Application::getConnection();
@@ -148,16 +151,31 @@ $replayKey = new IdempotencyKey(bin2hex(random_bytes(16)));
 $checkout = $services->get(CreateOrderUseCase::class);
 $created = $checkout->execute($fixture['open']['token'], $replayKey, $input);
 $groupId = $fixture['open']['groupId'];
-$closesAt = (string)$connection->query("SELECT DATE_FORMAT(UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS C FROM b_hlbd_mf_group WHERE UF_PUBLIC_ID='{$groupId}'")->fetch()['C'];
-$connection->queryExecute("UPDATE b_hlbd_mf_group SET UF_CLOSES_AT=UTC_TIMESTAMP()-INTERVAL 1 MINUTE WHERE UF_PUBLIC_ID='{$groupId}'");
+$deadlines = $connection->query("SELECT DATE_FORMAT(UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS C,DATE_FORMAT(UF_DIGITAL_SALES_UNTIL,'%Y-%m-%d %H:%i:%s') AS D FROM b_hlbd_mf_group WHERE UF_PUBLIC_ID='{$groupId}'")->fetch();
+// E7: print closes first; the print order is refused while digital sales go on, then everything closes.
+$connection->queryExecute("UPDATE b_hlbd_mf_group SET UF_CLOSES_AT=UTC_TIMESTAMP()-INTERVAL 2 MINUTE WHERE UF_PUBLIC_ID='{$groupId}'");
 try {
+    $expect('PRINT_SALES_CLOSED', static fn() => $checkout->execute($fixture['open']['token'], new IdempotencyKey(bin2hex(random_bytes(16))), $input));
+    // The unpaid print order lives by the print deadline: payment refuses it while digital sales go on.
+    $payable = $services->get(OrderPaymentInterface::class)->byKey($created->accessKey);
+    if (!$payable->containsPrint || null === $payable->salesUntil || $payable->salesUntil > gmdate('Y-m-d H:i:s')) {
+        throw new RuntimeException('A print order must be payable only until the print deadline.');
+    }
+    $expect('PRINT_SALES_CLOSED', static fn() => new PaymentAttemptPolicy()->assertCanStart(
+        $payable->paymentStatus,
+        $payable->total,
+        $payable->salesUntil,
+        $payable->containsPrint,
+        new DateTimeImmutable('now', new DateTimeZone('UTC')),
+    ));
+    $connection->queryExecute("UPDATE b_hlbd_mf_group SET UF_DIGITAL_SALES_UNTIL=UTC_TIMESTAMP()-INTERVAL 1 MINUTE WHERE UF_PUBLIC_ID='{$groupId}'");
     $replayed = $checkout->execute($fixture['open']['token'], $replayKey, $input);
     if ($replayed->order->id !== $created->order->id || $replayed->accessKey !== $created->accessKey) {
         throw new RuntimeException('Replay after closure must return the original order and key.');
     }
     $expect('GALLERY_CLOSED', static fn() => $checkout->execute($fixture['open']['token'], new IdempotencyKey(bin2hex(random_bytes(16))), $input));
 } finally {
-    $connection->queryExecute("UPDATE b_hlbd_mf_group SET UF_CLOSES_AT='{$closesAt}' WHERE UF_PUBLIC_ID='{$groupId}'");
+    $connection->queryExecute("UPDATE b_hlbd_mf_group SET UF_CLOSES_AT='{$deadlines['C']}',UF_DIGITAL_SALES_UNTIL='{$deadlines['D']}' WHERE UF_PUBLIC_ID='{$groupId}'");
 }
 $expired = $services->get(CreateQuoteUseCase::class)->execute($fixture['open']['token'], $lines);
 $expiredHash = hash('sha256', $expired->quoteToken);
@@ -167,7 +185,36 @@ $expect('QUOTE_EXPIRED', static fn() => $checkout->execute(
     new IdempotencyKey(bin2hex(random_bytes(16))),
     new CreateOrderInputDto($expired->quoteToken, $lines, $input->buyer, $consents),
 ));
-$proof[] = 'replay after closure, closed group and expired quote';
+$proof[] = 'replay after closure, closed print, closed group and expired quote';
+
+// E7: the digital window sells a bundle; such an order is payable until the digital deadline, not the print one.
+$bundle = $connection->query("SELECT UF_UUID FROM b_hlbd_mf_product WHERE UF_KIND='bundle' AND UF_ACTIVE=1 ORDER BY ID LIMIT 1")->fetch();
+$digitalGallery = $services->get(GalleryAccessInterface::class)->resolve($fixture['digital']['token']);
+if (false === $bundle || 'digital' !== $digitalGallery->state) {
+    throw new RuntimeException('The digital window fixture needs an active bundle and the digital state.');
+}
+$digitalLines = [new QuoteLineInputDto($digitalGallery->assignments[0]->assignmentId, (string)$bundle['UF_UUID'], 1)];
+$digitalQuote = $services->get(CreateQuoteUseCase::class)->execute($fixture['digital']['token'], $digitalLines);
+$digitalOrder = $checkout->execute($fixture['digital']['token'], new IdempotencyKey(bin2hex(random_bytes(16))), new CreateOrderInputDto(
+    $digitalQuote->quoteToken,
+    $digitalLines,
+    new OrderBuyerInputDto('Проверка электронных', '+79005551414', 'digital.e7@example.test', '', null, true),
+    $consents,
+));
+$digitalPayable = $services->get(OrderPaymentInterface::class)->byKey($digitalOrder->accessKey);
+$digitalUntil = (string)$connection->query("SELECT DATE_FORMAT(UF_DIGITAL_SALES_UNTIL,'%Y-%m-%d %H:%i:%s') AS D FROM b_hlbd_mf_group WHERE UF_PUBLIC_ID='{$fixture['digital']['groupId']}'")->fetch()['D'];
+if ($digitalPayable->containsPrint || $digitalUntil !== $digitalPayable->salesUntil) {
+    throw new RuntimeException('A digital order must be payable until the digital deadline.');
+}
+new PaymentAttemptPolicy()->assertCanStart($digitalPayable->paymentStatus, $digitalPayable->total, $digitalPayable->salesUntil, false, new DateTimeImmutable('now', new DateTimeZone('UTC')));
+$printLine = $connection->query("SELECT UF_UUID FROM b_hlbd_mf_product WHERE UF_KIND='physical' AND UF_ACTIVE=1 ORDER BY ID LIMIT 1")->fetch();
+if (false !== $printLine) {
+    $expect('PRINT_SALES_CLOSED', static fn() => $services->get(CreateQuoteUseCase::class)->execute(
+        $fixture['digital']['token'],
+        [new QuoteLineInputDto($digitalGallery->assignments[0]->assignmentId, (string)$printLine['UF_UUID'], 1)],
+    ));
+}
+$proof[] = 'E7 digital window: bundle order payable until the digital deadline, print refused';
 
 // 5. A change of the curator's rights during a read is rejected.
 $curator = (int)$connection->query("SELECT ID FROM b_user WHERE LOGIN='curator@example.invalid' OR EMAIL='curator@example.invalid' LIMIT 1")->fetch()['ID'];

@@ -10,6 +10,7 @@ final readonly class LinkCalendarOutputDto
         public int $revision,
         public string $sentAt,
         public string $closesAt,
+        public ?string $digitalSalesUntil,
         public string $deliveryAt,
     ) {}
 }

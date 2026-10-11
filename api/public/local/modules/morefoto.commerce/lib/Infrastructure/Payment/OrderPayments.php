@@ -9,6 +9,7 @@ use Morefoto\Commerce\Domain\Order\Enum\PaymentStatusEnum;
 use Morefoto\Commerce\Domain\Order\Repository\OrderAccessKeyRepository;
 use Morefoto\Commerce\Domain\Order\Repository\OrderRepository;
 use Morefoto\Commerce\Domain\Order\Service\OrderCalendarPolicy;
+use Morefoto\Commerce\Domain\Storefront\Service\SalesWindowPolicy;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
 use Rebit\Share\Contracts\Commerce\Dto\OrderPaymentInputDto;
 use Rebit\Share\Contracts\Commerce\Dto\PayableOrderOutputDto;
@@ -24,6 +25,7 @@ final readonly class OrderPayments implements OrderPaymentInterface
         private GroupCalendarInterface $calendars,
         private ClockInterface $clock,
         private OrderCalendarPolicy $calendar,
+        private SalesWindowPolicy $windows,
     ) {}
 
     public function byKey(?string $orderKey): PayableOrderOutputDto
@@ -74,7 +76,9 @@ final readonly class OrderPayments implements OrderPaymentInterface
         if (false === $row) {
             throw new HttpException('ORDER_NOT_FOUND', 404);
         }
-        $closesAt = $this->calendars->get((string)$row['GROUP_PUBLIC_ID'])->calendar->closesAt;
+        $calendar = $this->calendars->get((string)$row['GROUP_PUBLIC_ID'])->calendar;
+        $containsPrint = $this->orders->containsPrint((int)$row['ID']);
+        $salesUntil = $this->windows->salesUntil($containsPrint, $calendar->closesAt, $calendar->digitalSalesUntil);
 
         return new PayableOrderOutputDto(
             id: (int)$row['ID'],
@@ -91,7 +95,8 @@ final readonly class OrderPayments implements OrderPaymentInterface
             version: (string)$row['VERSION'],
             paidAt: null === $row['PAID_AT'] ? null : (string)$row['PAID_AT'],
             latePayment: 1 === (int)$row['LATE_PAYMENT'],
-            closesAt: null === $closesAt ? null : new \DateTimeImmutable($closesAt)->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'),
+            salesUntil: null === $salesUntil ? null : new \DateTimeImmutable($salesUntil)->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s'),
+            containsPrint: $containsPrint,
         );
     }
 }

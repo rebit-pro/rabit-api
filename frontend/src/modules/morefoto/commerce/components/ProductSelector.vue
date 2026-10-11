@@ -5,6 +5,7 @@ import type { GalleryPhoto, GallerySnapshot } from '../../gallery/types';
 import { useCart } from '../composables/useCart';
 import { addToCart } from '../services/cart';
 import { money } from '../money';
+import { sellsKind } from '../sales-windows';
 import UiQuantityField from '../../ui/components/UiQuantityField.vue';
 import { quantityValue } from '../../ui/field-values';
 const props = defineProps<{
@@ -19,7 +20,8 @@ const quantityField = useTemplateRef<{ validate: () => boolean }>('quantityField
 const busy = shallowRef(false);
 const notice = shallowRef('');
 const error = shallowRef('');
-const products = computed(() => catalog.value.products.filter((product) => product.active));
+// E7: once print sales close only digital products and bundles are offered.
+const products = computed(() => catalog.value.products.filter((product) => product.active && sellsKind(props.gallery.state, product.kind)));
 watch(
   products,
   (items) => {
@@ -88,6 +90,9 @@ async function add() {
   <form class="product-selector" novalidate @submit.prevent="add">
     <h3>Заказать этот кадр</h3>
     <p v-if="isMockApiEnabled" class="product-demo">Демонстрационные цены</p>
+    <p v-if="gallery.state === 'digital'" class="mf-muted" data-testid="selector-digital-only">
+      Печать закрыта — доступны электронные фотографии.
+    </p>
     <v-select
       v-model="productId"
       :items="products"

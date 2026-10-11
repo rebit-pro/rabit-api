@@ -46,6 +46,8 @@ BENCH = "zz-media-bench"
 # MySQL checks after the browser: script, file recorded by the browser, success marker, specs that produce the data.
 VERIFIERS = [
     ("verify-storefront.php", None, "E4 integration passed", ["zzz-handoff", "zzzz-storefront"]),
+    # E7: migration replay on groups sent before the release and the digital window fixture of the browser spec.
+    ("verify-sales-windows.php", None, "E7 sales windows integration passed", ["zzzz-storefront-windows"]),
     # #26: HND-06 on 1000 staff requests keeps a fixed SQL count; the set is rolled back after the measurement.
     ("verify-handoff.php", None, "F1 list integration passed", ["zzz-handoff"]),
     # The browser records the secrets it received so the verifier can prove none of them is stored in clear text.

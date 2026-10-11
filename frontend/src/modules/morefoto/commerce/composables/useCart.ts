@@ -28,5 +28,6 @@ export function useCart(gallery: MaybeRefOrGetter<GallerySnapshot>) {
   });
   const calculationError = computed(() => (isMockApiEnabled ? '' : liveState(toValue(gallery).groupId).error));
   const hasQuote = computed(() => isMockApiEnabled || liveState(toValue(gallery).groupId).quote !== null);
-  return { quote, catalog, calculationError, hasQuote };
+  const droppedPrint = computed(() => (isMockApiEnabled ? 0 : liveState(toValue(gallery).groupId).droppedPrint));
+  return { quote, catalog, calculationError, hasQuote, droppedPrint };
 }

@@ -1,0 +1,42 @@
+{
+  "wave": "E7",
+  "status": "passed",
+  "date": "2026-10-11",
+  "branch": "codex/e7-sales-windows",
+  "base": "fd7498a",
+  "decisions": "E7-DEC-01, 04, 10, 11 chosen by the user on 2026-10-11; the other decisions are the recommended options of the plan",
+  "checks": {
+    "backend": {
+      "status": "passed",
+      "phpunit": "OK 1101 tests / 47068 assertions (after the third review, f0c2c1d)",
+      "phpstan": "No errors (tools/e2e/phpstan.neon)",
+      "csFixer": "clean; after the third review 1 phpDoc alignment fixed in PaymentOutputMapper",
+      "phplint": "changed verifiers and migration OK"
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": ["ESLint", "stylelint", "Vue typecheck", "E2E TypeScript", "UI unit 88", "commerce unit 231", "production build"]
+    },
+    "runner": {
+      "status": "failed-baseline",
+      "note": "tools/tests: 25 of 26 OK; test_f2_prepares_first_and_reports_later_in_one_group fails on main fd7498a as well (cabinet-tables sorts before z-links-preparation), issue #163"
+    },
+    "graph": {
+      "status": "passed",
+      "note": "MVP graph merged to main in PR #169 (3194db8) and merged into the branch; E7 deliveryState review, decision record E7-DEC-01-11; python3 tools/verify-wave-graph.py docs/waves/graph.json exit 0, 55 waves, 122 endpoints, readyMvpFromMain [E7]"
+    },
+    "browser": {
+      "status": "passed",
+      "command": "E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e",
+      "run": "rabit-e2e-ca3bd75983eb on ab09bd3, 354.7 s",
+      "result": "group a 81 passed, group b 60 passed; verifiers passed: verify-storefront, verify-sales-windows, verify-handoff, verify-orders, verify-links, verify-transfers, verify-avatar, verify-payment-costs, verify-payments, verify-files, verify-access, verify-support, verify-photo-deletion",
+      "previousRuns": [
+        "rabit-e2e-030ef2a90e3f on f0c2c1d: E7 cart lost the dropped-print count after gallery -> cart (fixed in fbe8f14); G1-T14 YooKassa sandbox create timed out after 8 s (external)",
+        "rabit-e2e-a388d4ddcecb on fbe8f14: verify-orders.php read a non-existent UF_PUBLIC_ID product column (fixed in ab09bd3)"
+      ],
+      "coverageBoundary": "The order page block for an unpaid print order after +7 and its digital reorder button are covered by frontend unit rules and the service-level verify-orders checks, not by a browser spec; a sandbox payment of a digital-window order is covered by the policy/verifier, the card payment itself by G1-T14 on an open group",
+      "visual": "docs/waves/e7/visual.json"
+    }
+  },
+  "head": "ab09bd378375249a127ae21f02b62900f62c4f58"
+}

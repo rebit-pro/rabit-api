@@ -90,7 +90,7 @@ final class StorefrontQuoteTokenTest extends TestCase
         ]);
         $calculator = $this->createMock(StorefrontQuote::class);
         if (null !== $fingerprint) {
-            $group = new GalleryGroupOutputDto(1, 2, 'group-id', 'Institution', 'Shoot', 'Group', 'regular', null, null, 1);
+            $group = new GalleryGroupOutputDto(1, 2, 'group-id', 'Institution', 'Shoot', 'Group', 'regular', null, null, null, 1);
             $calculator->expects(self::once())->method('calculate')->willReturn([
                 'quote' => $recalculated, 'fingerprint' => $fingerprint,
                 'gallery' => new GalleryAccessOutputDto($group, 'open', '2026-09-21T10:00:00+00:00', 1, []),

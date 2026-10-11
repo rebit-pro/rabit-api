@@ -12,6 +12,7 @@ final readonly class OrderPeriodOutputDto
         public string $timezone,
         public ?string $sentAt,
         public ?string $closesAt,
+        public ?string $digitalSalesUntil,
         public ?string $deliveryDueAt,
         public string $now,
     ) {}

@@ -20,6 +20,7 @@ export interface LiveLinkItem {
   timezone: string;
   sentAt: string | null;
   closesAt: string | null;
+  digitalSalesUntil: string | null;
   deliveryAt: string | null;
   photoCount: number;
   childCount: number;
@@ -47,7 +48,7 @@ export interface LiveLinkDetail extends LiveLinkItem {
 /** U5: counters of the whole visible scope, independent of the state filter and paging. */
 export interface LinkCounters {
   referenceNow: string;
-  byState: { preparing: number; open: number; closed: number };
+  byState: { preparing: number; open: number; digital: number; closed: number };
   closingSoon: number;
   prepared: number;
 }
@@ -113,6 +114,7 @@ export function toLinkGroup(item: LiveLinkItem, detail?: LiveLinkDetail): LinkGr
     state: item.state,
     sentAt: item.sentAt,
     closesAt: item.closesAt,
+    digitalSalesUntil: item.digitalSalesUntil,
     deliveryAt: item.deliveryAt,
     signature: item.signature,
     prepared: item.prepared,

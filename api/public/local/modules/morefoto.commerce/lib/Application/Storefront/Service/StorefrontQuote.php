@@ -13,13 +13,14 @@ use Morefoto\Commerce\Domain\Catalog\Enum\ProductKind;
 use Morefoto\Commerce\Domain\Conditions\Service\SalesPolicy;
 use Morefoto\Commerce\Domain\Conditions\ValueObject\SalesProduct;
 use Morefoto\Commerce\Domain\Conditions\ValueObject\SaleItem;
+use Morefoto\Commerce\Domain\Storefront\Service\SalesWindowPolicy;
 use Rebit\Share\Contracts\Media\Dto\GalleryAccessOutputDto;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
 use Rebit\Share\Contracts\Handoff\StaffEligibilityInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
-/** Проверяет состав корзины по разрешённым назначениям и рассчитывает цены правилами E3 от цены для покупателя (E6).
- * Связывает итог с версиями снимков, условиями группы и серверным подтверждением льготы.
+/** Проверяет состав корзины по разрешённым назначениям и срокам продаж (E7) и рассчитывает цены правилами E3 от цены
+ * для покупателя (E6). Связывает итог с версиями снимков, условиями группы и серверным подтверждением льготы.
  *
  * @phpstan-import-type CartQuote from QuoteOutputDto
  * @phpstan-import-type QuoteLine from QuoteOutputDto
@@ -31,6 +32,7 @@ final readonly class StorefrontQuote
         private GetGroupConditionsUseCase $conditions,
         private StaffEligibilityInterface $staff,
         private PublishedPrices $prices,
+        private SalesWindowPolicy $windows,
     ) {}
 
     /** @param list<QuoteLineInputDto> $lines
@@ -42,9 +44,7 @@ final readonly class StorefrontQuote
             throw new HttpException('INVALID_CART', 422);
         }
         $gallery = $this->gallery->resolve($token);
-        if ('open' !== $gallery->state) {
-            throw new HttpException('GALLERY_CLOSED', 409);
-        }
+        $this->windows->assertSalesOpen($gallery->state);
         $conditions = $this->conditions->executeWithinTransaction($gallery->group->id);
         $photos = [];
         $mediaFingerprint = [];
@@ -69,6 +69,7 @@ final readonly class StorefrontQuote
                 || (ProductKind::PHYSICAL !== $product->kind && 1 !== $line->quantity)) {
                 throw new HttpException('INVALID_CART', 422);
             }
+            $this->windows->assertSellable($gallery->state, $product->kind);
             $id = (ProductKind::BUNDLE === $product->kind ? $photo->childId : $photo->assignmentId) . ':' . $product->id;
             if (isset($selected[$id])) {
                 throw new HttpException('DUPLICATE_CART_LINE', 422);

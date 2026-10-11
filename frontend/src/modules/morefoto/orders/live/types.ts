@@ -1,3 +1,4 @@
+import type { SalesState } from '../../commerce/sales-windows.js';
 import type { Product } from '../../commerce/types.js';
 
 export type PaymentStatus = 'unpaid' | 'pending' | 'declined' | 'paid';
@@ -44,10 +45,13 @@ export interface LiveBuyer {
 }
 export interface OrderPeriod {
   groupId: string;
-  state: 'preparing' | 'open' | 'closed';
+  state: SalesState;
   timezone: string;
   sentAt: string | null;
+  /** Print sales close (T0+7). */
   closesAt: string | null;
+  /** Digital sales close (T0+14). */
+  digitalSalesUntil: string | null;
   deliveryDueAt: string | null;
   now: string;
 }
@@ -75,7 +79,7 @@ export interface BuyerOrder {
   buyer: LiveBuyer;
   quote: LiveOrderQuote;
   paymentStatus: PaymentStatus;
-  /** G1: confirmed payment moment; late — confirmed after the group closed. */
+  /** G1: confirmed payment moment; late — confirmed after the sales deadline of the order composition (E7). */
   paidAt: string | null;
   latePayment: boolean;
   productionStatus: ProductionStatus;

@@ -17,6 +17,7 @@ use Rebit\Share\Shared\Exception\HttpException;
 
 /** Отдаёт покупателю серверный результат его попытки оплаты. Возврат со страницы провайдера запускает сверку
  * незавершённой попытки не чаще раза в 5 секунд, поэтому опрос страницы не превращается в поток запросов к провайдеру.
+ * После срока продаж состава заказа продолжить оплату на странице провайдера уже не предлагается (E7).
  */
 final readonly class GetPaymentAttemptUseCase
 {
@@ -38,13 +39,14 @@ final readonly class GetPaymentAttemptUseCase
         if (null === $attempt || $attempt['ORDER_ID'] !== $order->id) {
             throw new HttpException('PAYMENT_ATTEMPT_NOT_FOUND', 404);
         }
-        $threshold = $this->policy->utc($this->clock->now()->modify('-' . self::CHECK_INTERVAL . ' seconds'));
+        $now = $this->clock->now();
+        $threshold = $this->policy->utc($now->modify('-' . self::CHECK_INTERVAL . ' seconds'));
         if (AttemptStatusEnum::from($attempt['STATUS'])->isOpen() && (null === $attempt['LAST_CHECK_AT'] || $attempt['LAST_CHECK_AT'] <= $threshold)) {
             $this->reconciler->reconcile($attempt['ID'], ConfirmationSourceEnum::RETURN);
             $attempt = $this->attempts->find($attempt['ID']) ?? $attempt;
             $order = $this->orders->byKey($orderKey);
         }
 
-        return $this->mapper->attempt($attempt, $order->version, false);
+        return $this->mapper->attempt($attempt, $order->version, false, $this->policy->salesOpen($order->salesUntil, $now));
     }
 }

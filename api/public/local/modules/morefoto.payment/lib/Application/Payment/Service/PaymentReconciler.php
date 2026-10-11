@@ -87,7 +87,7 @@ final readonly class PaymentReconciler
             return $status;
         }
         // A concurrent check may have stored the provider payment meanwhile: a refusal seen before the lock no longer proves anything.
-        $outcome = $this->outcome($attempt, $payment, $rejected && $this->firstCreation($attempt, $source), $refused, $order->closesAt, $now);
+        $outcome = $this->outcome($attempt, $payment, $rejected && $this->firstCreation($attempt, $source), $refused, $order->salesUntil, $now);
         $this->attempts->saveOutcome($attempt['ID'], $outcome);
         if (AttemptStatusEnum::SUCCEEDED === $outcome->status && null !== $outcome->paidAt && null !== $outcome->providerPaymentId) {
             $this->facts->insert([
@@ -119,7 +119,7 @@ final readonly class PaymentReconciler
     }
 
     /** @param AttemptRecord $attempt */
-    private function outcome(array $attempt, ?ProviderPaymentOutputDto $payment, bool $rejected, bool $refused, ?string $closesAt, \DateTimeImmutable $now): AttemptOutcome
+    private function outcome(array $attempt, ?ProviderPaymentOutputDto $payment, bool $rejected, bool $refused, ?string $salesUntil, \DateTimeImmutable $now): AttemptOutcome
     {
         $checkedAt = $this->policy->utc($now);
         $checks = $attempt['CHECK_COUNT'] + 1;
@@ -164,7 +164,7 @@ final readonly class PaymentReconciler
             cancelReason: AttemptStatusEnum::CANCELED === $status ? ($payment->cancelReason ?? 'canceled') : null,
             paidAt: $paidAt,
             incomeAmount: null === $paidAt ? null : $payment->incomeAmount,
-            latePayment: null !== $paidAt && $this->policy->isLate($closesAt, $paidAt),
+            latePayment: null !== $paidAt && $this->policy->isLate($salesUntil, $paidAt),
         );
     }
 

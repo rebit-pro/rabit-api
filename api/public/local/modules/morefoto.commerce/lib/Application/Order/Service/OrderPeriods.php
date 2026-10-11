@@ -26,6 +26,7 @@ final readonly class OrderPeriods
             timezone: $calendar->timezone,
             sentAt: $calendar->sentAt,
             closesAt: $calendar->closesAt,
+            digitalSalesUntil: $calendar->digitalSalesUntil,
             deliveryDueAt: $calendar->deliveryDueAt,
             now: $this->calendar->display($this->clock->now()),
         );

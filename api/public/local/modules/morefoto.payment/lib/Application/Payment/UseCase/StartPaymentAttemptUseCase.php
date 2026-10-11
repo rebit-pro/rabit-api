@@ -25,8 +25,9 @@ use Rebit\Share\Contracts\Commerce\OrderPaymentInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /** Начинает оплату заказа выбранным способом: резервирует единственную открытую попытку под блокировкой заказа,
- * затем вне транзакции создаёт платёж у провайдера. Повтор, двойной клик и вторая вкладка получают ту же попытку;
- * браузер не может объявить заказ оплаченным.
+ * затем вне транзакции создаёт платёж у провайдера. Двойной клик и вторая вкладка получают ту же попытку только до
+ * срока продаж состава заказа (E7), а точный повтор ключа после срока отдаёт её без страницы провайдера.
+ * Браузер не может объявить заказ оплаченным.
  */
 final readonly class StartPaymentAttemptUseCase
 {
@@ -66,7 +67,9 @@ final readonly class StartPaymentAttemptUseCase
             throw new \LogicException('A reserved payment attempt disappeared.');
         }
 
-        return $this->mapper->attempt($attempt, $this->orders->byKey($orderKey)->version, $created);
+        $order = $this->orders->byKey($orderKey);
+
+        return $this->mapper->attempt($attempt, $order->version, $created, $this->policy->salesOpen($order->salesUntil, $this->clock->now()));
     }
 
     /** @return array{int, bool} ID попытки и признак новой попытки */
@@ -82,12 +85,13 @@ final readonly class StartPaymentAttemptUseCase
 
             return [$replay['ID'], false];
         }
+        $now = $this->clock->now();
+        // An attempt opened before the deadline is not handed out after it: an old order cannot bypass the close (E7).
+        $this->policy->assertCanStart($order->paymentStatus, $order->total, $order->salesUntil, $order->containsPrint, $now);
         $latest = $this->attempts->latest($orderId);
         if (null !== $latest && AttemptStatusEnum::from($latest['STATUS'])->isOpen()) {
             return [$latest['ID'], false];
         }
-        $now = $this->clock->now();
-        $this->policy->assertCanStart($order->paymentStatus, $order->total, $order->closesAt, $now);
         if ($input->orderVersion !== $order->version || $input->quoteToken !== $this->tokens->token($order)) {
             throw new HttpException('QUOTE_CHANGED', 409);
         }

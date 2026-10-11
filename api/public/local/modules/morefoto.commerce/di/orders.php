@@ -33,6 +33,7 @@ use Morefoto\Commerce\Infrastructure\Order\OrderTokenGenerator;
 use Morefoto\Commerce\Infrastructure\Order\OrderTransaction;
 use Morefoto\Commerce\Infrastructure\Files\OrderEntitlements;
 use Morefoto\Commerce\Infrastructure\Payment\OrderPayments;
+use Morefoto\Commerce\Domain\Storefront\Service\SalesWindowPolicy;
 use Morefoto\Commerce\Infrastructure\Transfer\ChildOrders;
 use Morefoto\Commerce\Presentation\Controller\OrderController;
 use Morefoto\Commerce\Presentation\Controller\StaffOrderController;
@@ -75,6 +76,7 @@ return [
             ServiceLocator::getInstance()->get(GroupCalendarInterface::class),
             ServiceLocator::getInstance()->get(ClockInterface::class),
             ServiceLocator::getInstance()->get(OrderCalendarPolicy::class),
+            ServiceLocator::getInstance()->get(SalesWindowPolicy::class),
         ),
     ],
     OrderEntitlementInterface::class => [
@@ -169,6 +171,7 @@ return [
             ServiceLocator::getInstance()->get(OrderPlacement::class),
             ServiceLocator::getInstance()->get(OrderTransactionInterface::class),
             ServiceLocator::getInstance()->get(ConsentRecorderInterface::class),
+            ServiceLocator::getInstance()->get(SalesWindowPolicy::class),
         ],
     ],
     GetBuyerOrderUseCase::class => [

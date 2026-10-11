@@ -97,10 +97,11 @@ const groupColumns: UiTableColumn[] = [
     statuses: {
       preparing: { label: 'Готовится', tone: 'info' },
       open: { label: 'Приём открыт', tone: 'success' },
+      digital: { label: 'Только электронные', tone: 'info' },
       closed: { label: 'Приём завершён', tone: 'neutral' }
     }
   },
-  { key: 'closesAt', label: 'Приём до', type: 'date', sortable: true, mobile: true }
+  { key: 'closesAt', label: 'Печать до', type: 'date', sortable: true, mobile: true }
 ];
 const moscowDate = new Intl.DateTimeFormat('ru-RU', { timeZone: 'Europe/Moscow' });
 const shootNames = computed(() => new Map((snapshot.value?.shoots.items ?? []).map((shoot) => [shoot.id, shoot.name])));
@@ -124,7 +125,8 @@ const groupRows = computed<UiTableRow[]>(() =>
       name: group.name,
       shoot: group.shootName ?? shootNames.value.get(group.shootId) ?? '',
       status: group.status,
-      closesAt: group.closesAt
+      closesAt: group.closesAt,
+      digitalSalesUntil: group.digitalSalesUntil
     }))
 );
 const shootFilterItems = computed(() => [
@@ -320,7 +322,12 @@ async function confirmRemove(): Promise<void> {
             <small v-if="group(row.id)?.groupKind === 'staff'">сотрудники</small>
           </span>
         </template>
-        <template #cell-closesAt="{ row }">{{ row.closesAt ? moscowDate.format(new Date(String(row.closesAt))) : 'Не указано' }}</template>
+        <template #cell-closesAt="{ row }">
+          {{ row.closesAt ? moscowDate.format(new Date(String(row.closesAt))) : 'Не указано' }}
+          <small v-if="row.digitalSalesUntil" class="d-block mf-muted"
+            >электронные до {{ moscowDate.format(new Date(String(row.digitalSalesUntil))) }}</small
+          >
+        </template>
         <template #actions="{ row }">
           <div class="institution-row-actions">
             <v-btn
