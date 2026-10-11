@@ -23,8 +23,9 @@ use Rebit\Share\Shared\Exception\HttpException;
 
 /** Оформляет заказ покупателя из проверенного серверного расчёта одной атомарной операцией.
  * Повтор с тем же Idempotency-Key возвращает исходный заказ даже после закрытия приёма; новый заказ создаётся
- * только в открытом сроке продаж его состава (печать — до +7, электронные — до +14) по актуальному расчёту и с
- * принятыми действующими редакциями согласия и оферты, а изменение цены возвращает новый расчёт для подтверждения.
+ * только в открытом сроке продаж его состава (печать — до +7, электронные — до +14) вне паузы исправления разметки (D4)
+ * по актуальному расчёту и с принятыми действующими редакциями согласия и оферты, а изменение цены возвращает новый
+ * расчёт для подтверждения.
  */
 final readonly class CreateOrderUseCase
 {
@@ -57,7 +58,8 @@ final readonly class CreateOrderUseCase
 
     private function place(string $galleryToken, IdempotencyKey $key, CreateOrderInputDto $input): CreatedOrderOutputDto
     {
-        $state = $this->gallery->context($galleryToken)->state;
+        $context = $this->gallery->context($galleryToken);
+        $state = $context->state;
         if ('preparing' === $state) {
             throw new HttpException('GALLERY_NOT_READY', 409);
         }
@@ -67,6 +69,8 @@ final readonly class CreateOrderUseCase
         }
         // Print lines after the print deadline are refused by the quote check below.
         $this->windows->assertSalesOpen($state);
+        // D4: the group row read here serializes the order with the start of a markup correction.
+        $this->windows->assertNotPaused($context->group->markupCorrectionAt);
         $buyer = $input->buyer;
         $accepted = $this->buyers->accept($buyer->name, $buyer->phone, $buyer->email, $buyer->comment, $buyer->receiptChannel, $buyer->reviewed, $this->availability->receiptChannels());
         $placed = $this->placement->place($this->quotes->executeWithinTransaction($galleryToken, $input->quoteToken, $input->lines), $accepted, $galleryToken, $input->quoteToken);

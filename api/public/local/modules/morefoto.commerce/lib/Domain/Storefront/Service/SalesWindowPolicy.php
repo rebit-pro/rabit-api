@@ -10,7 +10,8 @@ use Rebit\Share\Shared\Exception\HttpException;
 /**
  * Правило двух сроков продаж E7: печать (`physical`) продаётся до закрытия приёма печати, электронные фото
  * (`digital`, комплект `bundle` и подарок-комплект) — до окончания продажи электронных. Классифицирует фактический
- * состав корзины и заказа, а не название товара, и выбирает срок, после которого заказ уже нельзя оплатить.
+ * состав корзины и заказа, а не название товара, и выбирает срок, после которого заказ уже нельзя оплатить. Пока
+ * исправляется разметка переданной группы (D4), продажа на паузе.
  */
 final readonly class SalesWindowPolicy
 {
@@ -19,6 +20,14 @@ final readonly class SalesWindowPolicy
     {
         if ('open' !== $state && 'digital' !== $state) {
             throw new HttpException('GALLERY_CLOSED', 409);
+        }
+    }
+
+    /** D4: пока исправляется разметка, покупатель не рассчитывает корзину и не оформляет заказ по промежуточным кадрам. */
+    public function assertNotPaused(?string $markupCorrectionAt): void
+    {
+        if (null !== $markupCorrectionAt) {
+            throw new HttpException('GALLERY_UPDATING', 409);
         }
     }
 

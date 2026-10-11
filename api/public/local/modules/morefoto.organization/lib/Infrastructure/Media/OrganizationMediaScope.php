@@ -25,6 +25,7 @@ final readonly class OrganizationMediaScope implements MediaScopeInterface
         $groupPublicId = null;
         $groupEditable = false;
         $groupKind = null;
+        $groupCorrecting = false;
         if (null !== $groupId) {
             $group = $this->structures->group(new StructureId($groupId))->fetch();
             if (!is_array($group) || (int)$group['UF_SHOOT_ID'] !== (int)$shoot['ID']) {
@@ -33,6 +34,8 @@ final readonly class OrganizationMediaScope implements MediaScopeInterface
             $groupInternalId = (int)$group['ID'];
             $groupPublicId = (string)$group['UF_PUBLIC_ID'];
             $groupEditable = null === $group['UF_SENT_AT'];
+            // D4: a transmitted group is edited again only while its sales are paused for a markup correction.
+            $groupCorrecting = null !== $group['UF_MARKUP_CORRECTION_AT'];
             $groupKind = (string)$group['UF_KIND'];
         }
 
@@ -45,6 +48,7 @@ final readonly class OrganizationMediaScope implements MediaScopeInterface
             groupEditable: $groupEditable,
             institutionPublicId: (string)$shoot['INSTITUTION_PUBLIC_ID'],
             groupKind: $groupKind,
+            groupCorrecting: $groupCorrecting,
         );
     }
 
