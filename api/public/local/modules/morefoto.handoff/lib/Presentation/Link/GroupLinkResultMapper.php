@@ -35,7 +35,7 @@ final readonly class GroupLinkResultMapper
             'totalPages' => $output->totalPages,
             'summary' => new GroupLinkCountersResultDto(
                 referenceNow: $output->summary->referenceNow,
-                byState: ['preparing' => $output->summary->preparing, 'open' => $output->summary->open, 'closed' => $output->summary->closed],
+                byState: ['preparing' => $output->summary->preparing, 'open' => $output->summary->open, 'digital' => $output->summary->digital, 'closed' => $output->summary->closed],
                 closingSoon: $output->summary->closingSoon,
                 prepared: $output->summary->prepared,
             ),
@@ -60,6 +60,7 @@ final readonly class GroupLinkResultMapper
             timezone: $output->timezone,
             sentAt: $output->sentAt,
             closesAt: $output->closesAt,
+            digitalSalesUntil: $output->digitalSalesUntil,
             deliveryAt: $output->deliveryAt,
             photoCount: $output->photoCount,
             childCount: $output->childCount,
@@ -76,7 +77,7 @@ final readonly class GroupLinkResultMapper
 
     public function calendar(LinkCalendarOutputDto $output): LinkCalendarResultDto
     {
-        return new LinkCalendarResultDto($output->revision, $output->sentAt, $output->closesAt, $output->deliveryAt);
+        return new LinkCalendarResultDto($output->revision, $output->sentAt, $output->closesAt, $output->digitalSalesUntil, $output->deliveryAt);
     }
 
     private function summary(GroupLinkSummaryOutputDto $output): GroupLinkSummaryResultDto
@@ -97,6 +98,7 @@ final readonly class GroupLinkResultMapper
             timezone: $output->timezone,
             sentAt: $output->sentAt,
             closesAt: $output->closesAt,
+            digitalSalesUntil: $output->digitalSalesUntil,
             deliveryAt: $output->deliveryAt,
             photoCount: $output->photoCount,
             childCount: $output->childCount,

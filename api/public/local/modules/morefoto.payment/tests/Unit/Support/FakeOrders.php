@@ -22,7 +22,7 @@ final class FakeOrders implements OrderPaymentInterface
     private ?string $paidAt = null;
     private bool $late = false;
 
-    public function __construct(public int $total = 105000, public ?string $closesAt = '2026-10-01 00:00:00') {}
+    public function __construct(public int $total = 105000, public ?string $salesUntil = '2026-10-01 00:00:00', public bool $containsPrint = true) {}
 
     public function byKey(?string $orderKey): PayableOrderOutputDto
     {
@@ -69,7 +69,8 @@ final class FakeOrders implements OrderPaymentInterface
             version: (string)$this->version,
             paidAt: $this->paidAt,
             latePayment: $this->late,
-            closesAt: $this->closesAt,
+            salesUntil: $this->salesUntil,
+            containsPrint: $this->containsPrint,
         );
     }
 }

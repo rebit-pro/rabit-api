@@ -166,6 +166,6 @@ final readonly class OrderResultMapper
 
     private function period(OrderPeriodOutputDto $period): OrderPeriodResultDto
     {
-        return new OrderPeriodResultDto($period->groupId, $period->state, $period->timezone, $period->sentAt, $period->closesAt, $period->deliveryDueAt, $period->now);
+        return new OrderPeriodResultDto($period->groupId, $period->state, $period->timezone, $period->sentAt, $period->closesAt, $period->digitalSalesUntil, $period->deliveryDueAt, $period->now);
     }
 }

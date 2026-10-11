@@ -59,7 +59,7 @@ final class PaymentReconcilerTest extends TestCase
 
     public function testPaymentConfirmedAfterCloseIsLateButStillAMoneyFact(): void
     {
-        $scenario = $this->pending(new FakeOrders(closesAt: '2026-09-25 12:02:00'));
+        $scenario = $this->pending(new FakeOrders(salesUntil: '2026-09-25 12:02:00'));
         $scenario->provider->answer(FakeProvider::payment(self::ATTEMPT, 'succeeded', paidAt: '2026-09-25 12:02:30'));
 
         $scenario->reconciler()->reconcile(1, ConfirmationSourceEnum::RECONCILE);

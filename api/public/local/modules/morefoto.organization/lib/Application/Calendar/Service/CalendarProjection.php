@@ -17,6 +17,7 @@ final readonly class CalendarProjection
             timezone: $calendar->timezone,
             sentAt: $calendar->sentAt?->setTimezone($zone)->format(\DateTimeInterface::ATOM),
             closesAt: $calendar->closesAt?->setTimezone($zone)->format(\DateTimeInterface::ATOM),
+            digitalSalesUntil: $calendar->digitalSalesUntil?->setTimezone($zone)->format(\DateTimeInterface::ATOM),
             deliveryDueAt: $calendar->deliveryDueAt?->setTimezone($zone)->format(\DateTimeInterface::ATOM),
             status: $calendar->status($now),
         );

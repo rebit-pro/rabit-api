@@ -74,7 +74,7 @@ final readonly class GetInstitutionDetailUseCase
         /** @var list<array{
          *     ID: int|string, UF_PUBLIC_ID: string, SHOOT_PUBLIC_ID: string, SHOOT_NAME: string, UF_NAME: string, UF_KIND: string,
          *     UF_REVISION: int|string, UF_TIMEZONE: string, UF_SENT_AT: null|string,
-         *     UF_CLOSES_AT: null|string, UF_DELIVERY_DUE_AT: null|string, TOTAL: int|string,
+         *     UF_CLOSES_AT: null|string, UF_DIGITAL_SALES_UNTIL: null|string, UF_DELIVERY_DUE_AT: null|string, TOTAL: int|string,
          * }> $groupRows */
         $groupRows = [];
         /** @var list<int> $groupIds */

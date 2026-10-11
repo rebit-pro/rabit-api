@@ -25,8 +25,8 @@ use Rebit\Share\Contracts\Commerce\OrderPaymentInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /** Начинает оплату заказа выбранным способом: резервирует единственную открытую попытку под блокировкой заказа,
- * затем вне транзакции создаёт платёж у провайдера. Повтор, двойной клик и вторая вкладка получают ту же попытку;
- * браузер не может объявить заказ оплаченным.
+ * затем вне транзакции создаёт платёж у провайдера. Повтор, двойной клик и вторая вкладка получают ту же попытку,
+ * но только до срока продаж состава заказа (E7); браузер не может объявить заказ оплаченным.
  */
 final readonly class StartPaymentAttemptUseCase
 {
@@ -82,12 +82,13 @@ final readonly class StartPaymentAttemptUseCase
 
             return [$replay['ID'], false];
         }
+        $now = $this->clock->now();
+        // An attempt opened before the deadline is not handed out after it: an old order cannot bypass the close (E7).
+        $this->policy->assertCanStart($order->paymentStatus, $order->total, $order->salesUntil, $order->containsPrint, $now);
         $latest = $this->attempts->latest($orderId);
         if (null !== $latest && AttemptStatusEnum::from($latest['STATUS'])->isOpen()) {
             return [$latest['ID'], false];
         }
-        $now = $this->clock->now();
-        $this->policy->assertCanStart($order->paymentStatus, $order->total, $order->closesAt, $now);
         if ($input->orderVersion !== $order->version || $input->quoteToken !== $this->tokens->token($order)) {
             throw new HttpException('QUOTE_CHANGED', 409);
         }

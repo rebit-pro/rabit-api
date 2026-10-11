@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Morefoto\Organization\Domain\Calendar\Repository;
 
 /**
- * SQL form of GroupCalendar::status(): preparing until the link is sent, closed from the closing moment, open in
- * between. Filters, pages and counters of group states all use it, so a list and its summary never disagree.
+ * SQL form of GroupCalendar::status(): preparing until the link is sent, open until print sales close, digital until
+ * digital sales close, closed afterwards. Filters, pages and counters of group states all use it, so a list and its
+ * summary never disagree.
  */
 final readonly class GroupStateSql
 {
-    public const array STATES = ['preparing', 'open', 'closed'];
+    public const array STATES = ['preparing', 'open', 'digital', 'closed'];
 
     /** @param string $nowUtc server time as `Y-m-d H:i:s` in UTC, the storage zone of group moments */
     public static function condition(string $state, string $nowUtc, string $alias = 'g'): string
@@ -20,12 +21,13 @@ final readonly class GroupStateSql
         return match ($state) {
             'preparing' => "{$alias}.UF_SENT_AT IS NULL",
             'open' => "{$alias}.UF_SENT_AT IS NOT NULL AND {$alias}.UF_CLOSES_AT>'{$now}'",
-            'closed' => "{$alias}.UF_SENT_AT IS NOT NULL AND {$alias}.UF_CLOSES_AT<='{$now}'",
+            'digital' => "{$alias}.UF_SENT_AT IS NOT NULL AND {$alias}.UF_CLOSES_AT<='{$now}' AND {$alias}.UF_DIGITAL_SALES_UNTIL>'{$now}'",
+            'closed' => "{$alias}.UF_SENT_AT IS NOT NULL AND {$alias}.UF_DIGITAL_SALES_UNTIL<='{$now}'",
             default => throw new \InvalidArgumentException('Unsupported group state.'),
         };
     }
 
-    /** Conditional sums STATE_PREPARING, STATE_OPEN and STATE_CLOSED for an aggregate over groups. */
+    /** Conditional sums STATE_PREPARING, STATE_OPEN, STATE_DIGITAL and STATE_CLOSED for an aggregate over groups. */
     public static function counters(string $nowUtc, string $alias = 'g'): string
     {
         $sums = [];
@@ -39,13 +41,14 @@ final readonly class GroupStateSql
     /**
      * @param array<string, mixed> $row a row with the counters() columns
      *
-     * @return array{preparing: int, open: int, closed: int}
+     * @return array{preparing: int, open: int, digital: int, closed: int}
      */
     public static function byState(array $row): array
     {
         return [
             'preparing' => (int)($row['STATE_PREPARING'] ?? 0),
             'open' => (int)($row['STATE_OPEN'] ?? 0),
+            'digital' => (int)($row['STATE_DIGITAL'] ?? 0),
             'closed' => (int)($row['STATE_CLOSED'] ?? 0),
         ];
     }

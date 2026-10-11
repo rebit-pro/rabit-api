@@ -83,14 +83,20 @@ final readonly class GroupLinkOutputMapper
         return ['revision' => $revision, 'signature' => $signature, 'prepared' => true];
     }
 
-    /** @return array{revision: int, sentAt: string, closesAt: string, deliveryAt: string} */
+    /** @return array{revision: int, sentAt: string, closesAt: string, digitalSalesUntil: ?string, deliveryAt: string} */
     public function calendarResult(int $revision, GroupCalendarOutputDto $dates): array
     {
         if (null === $dates->sentAt || null === $dates->closesAt || null === $dates->deliveryDueAt) {
             throw new \UnexpectedValueException('A delivered link must have a complete calendar.');
         }
 
-        return ['revision' => $revision, 'sentAt' => $dates->sentAt, 'closesAt' => $dates->closesAt, 'deliveryAt' => $dates->deliveryDueAt];
+        return [
+            'revision' => $revision,
+            'sentAt' => $dates->sentAt,
+            'closesAt' => $dates->closesAt,
+            'digitalSalesUntil' => $dates->digitalSalesUntil,
+            'deliveryAt' => $dates->deliveryDueAt,
+        ];
     }
 
     /** @param array<string, bool|int|string> $result */
@@ -99,10 +105,19 @@ final readonly class GroupLinkOutputMapper
         return new LinkPreparationOutputDto((int)$result['revision'], (string)$result['signature'], (bool)$result['prepared']);
     }
 
-    /** @param array<string, bool|int|string> $result */
+    /** @param array<string, null|bool|int|string> $result */
     public function calendar(array $result): LinkCalendarOutputDto
     {
-        return new LinkCalendarOutputDto((int)$result['revision'], (string)$result['sentAt'], (string)$result['closesAt'], (string)$result['deliveryAt']);
+        // Replays stored before E7 have no digital deadline.
+        $digital = $result['digitalSalesUntil'] ?? null;
+
+        return new LinkCalendarOutputDto(
+            (int)$result['revision'],
+            (string)$result['sentAt'],
+            (string)$result['closesAt'],
+            null === $digital ? null : (string)$digital,
+            (string)$result['deliveryAt'],
+        );
     }
 
     /**
@@ -110,7 +125,7 @@ final readonly class GroupLinkOutputMapper
      *     groupId: string, name: string, kind: string, institutionId: string, institutionName: string,
      *     shootId: string, shootName: string, revision: int, signature: string, prepared: bool,
      *     problems: list<string>, state: string, timezone: string, sentAt: ?string, closesAt: ?string,
-     *     deliveryAt: ?string, photoCount: int, childCount: int,
+     *     digitalSalesUntil: ?string, deliveryAt: ?string, photoCount: int, childCount: int,
      * }
      */
     private function fields(GroupDirectoryItemOutputDto $group, LinkAssessmentOutputDto $assessment, int $revision, bool $prepared): array
@@ -131,6 +146,7 @@ final readonly class GroupLinkOutputMapper
             'timezone' => $group->calendar->timezone,
             'sentAt' => $group->calendar->sentAt,
             'closesAt' => $group->calendar->closesAt,
+            'digitalSalesUntil' => $group->calendar->digitalSalesUntil,
             'deliveryAt' => $group->calendar->deliveryDueAt,
             'photoCount' => $assessment->photoCount,
             'childCount' => $assessment->childCount,

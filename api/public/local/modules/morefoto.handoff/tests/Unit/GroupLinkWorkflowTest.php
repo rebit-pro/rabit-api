@@ -122,7 +122,10 @@ final class GroupLinkWorkflowTest extends TestCase
         self::assertTrue($card->prepared);
 
         $sent = $this->transmit->execute(self::TEACHER, self::GROUP, $this->key('b'), new LinkTransmissionInputDto(2, $card->signature, new \DateTimeImmutable('2026-09-22T10:15:00+03:00')));
-        self::assertSame([3, '2026-09-22T10:15:00+03:00', '2026-09-29T10:15:00+03:00', '2026-10-06T10:15:00+03:00'], [$sent->revision, $sent->sentAt, $sent->closesAt, $sent->deliveryAt]);
+        self::assertSame(
+            [3, '2026-09-22T10:15:00+03:00', '2026-09-29T10:15:00+03:00', '2026-10-06T10:15:00+03:00', '2026-10-06T10:15:00+03:00'],
+            [$sent->revision, $sent->sentAt, $sent->closesAt, $sent->digitalSalesUntil, $sent->deliveryAt],
+        );
         self::assertCount(1, $this->calendar->delivered);
         self::assertSame(self::TEACHER, $this->calendar->delivered[0]->actorUserId);
 
@@ -142,8 +145,8 @@ final class GroupLinkWorkflowTest extends TestCase
         $page = $this->list->execute(self::CURATOR, new GroupLinkListInputDto(null, null, 'open', 1, 25));
 
         self::assertSame(
-            ['2026-09-22T08:00:00+00:00', 1, 0, 0, 0, 1],
-            [$page->summary->referenceNow, $page->summary->preparing, $page->summary->open, $page->summary->closed, $page->summary->closingSoon, $page->summary->prepared],
+            ['2026-09-22T08:00:00+00:00', 1, 0, 0, 0, 0, 1],
+            [$page->summary->referenceNow, $page->summary->preparing, $page->summary->open, $page->summary->digital, $page->summary->closed, $page->summary->closingSoon, $page->summary->prepared],
         );
         // Counters keep the curator's institutions and drop the state filter; prepared counts only preparing groups.
         [$counters, $preparing] = array_slice($this->directory->queries, $seen);
@@ -265,14 +268,14 @@ final class GroupLinkWorkflowTest extends TestCase
 
             public function __construct()
             {
-                $this->calendar = new GroupCalendarOutputDto('Europe/Moscow', null, null, null, 'preparing');
+                $this->calendar = new GroupCalendarOutputDto('Europe/Moscow', null, null, null, null, 'preparing');
             }
 
             public function summary(GroupDirectoryQueryInputDto $query, int $closingWithinHours): GroupDirectorySummaryOutputDto
             {
                 $this->queries[] = $query;
 
-                return new GroupDirectorySummaryOutputDto(1, 0, 0, 0, '2026-09-22T08:00:00+00:00');
+                return new GroupDirectorySummaryOutputDto(1, 0, 0, 0, 0, '2026-09-22T08:00:00+00:00');
             }
 
             public function nativeIds(GroupDirectoryQueryInputDto $query): array
@@ -341,7 +344,14 @@ final class GroupLinkWorkflowTest extends TestCase
             {
                 $this->delivered[] = $input;
                 $sent = $input->sentAt->setTimezone(new \DateTimeZone('Europe/Moscow'));
-                $calendar = new GroupCalendarOutputDto('Europe/Moscow', $sent->format(\DateTimeInterface::ATOM), $sent->modify('+7 days')->format(\DateTimeInterface::ATOM), $sent->modify('+14 days')->format(\DateTimeInterface::ATOM), 'open');
+                $calendar = new GroupCalendarOutputDto(
+                    'Europe/Moscow',
+                    $sent->format(\DateTimeInterface::ATOM),
+                    $sent->modify('+7 days')->format(\DateTimeInterface::ATOM),
+                    $sent->modify('+14 days')->format(\DateTimeInterface::ATOM),
+                    $sent->modify('+14 days')->format(\DateTimeInterface::ATOM),
+                    'open',
+                );
                 $this->directory->calendar = $calendar;
 
                 return new CalendarMutationOutputDto($input->groupId, 9, $calendar);

@@ -148,16 +148,19 @@ $replayKey = new IdempotencyKey(bin2hex(random_bytes(16)));
 $checkout = $services->get(CreateOrderUseCase::class);
 $created = $checkout->execute($fixture['open']['token'], $replayKey, $input);
 $groupId = $fixture['open']['groupId'];
-$closesAt = (string)$connection->query("SELECT DATE_FORMAT(UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS C FROM b_hlbd_mf_group WHERE UF_PUBLIC_ID='{$groupId}'")->fetch()['C'];
-$connection->queryExecute("UPDATE b_hlbd_mf_group SET UF_CLOSES_AT=UTC_TIMESTAMP()-INTERVAL 1 MINUTE WHERE UF_PUBLIC_ID='{$groupId}'");
+$deadlines = $connection->query("SELECT DATE_FORMAT(UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS C,DATE_FORMAT(UF_DIGITAL_SALES_UNTIL,'%Y-%m-%d %H:%i:%s') AS D FROM b_hlbd_mf_group WHERE UF_PUBLIC_ID='{$groupId}'")->fetch();
+// E7: print closes first; the print order is refused while digital sales go on, then everything closes.
+$connection->queryExecute("UPDATE b_hlbd_mf_group SET UF_CLOSES_AT=UTC_TIMESTAMP()-INTERVAL 2 MINUTE WHERE UF_PUBLIC_ID='{$groupId}'");
 try {
+    $expect('PRINT_SALES_CLOSED', static fn() => $checkout->execute($fixture['open']['token'], new IdempotencyKey(bin2hex(random_bytes(16))), $input));
+    $connection->queryExecute("UPDATE b_hlbd_mf_group SET UF_DIGITAL_SALES_UNTIL=UTC_TIMESTAMP()-INTERVAL 1 MINUTE WHERE UF_PUBLIC_ID='{$groupId}'");
     $replayed = $checkout->execute($fixture['open']['token'], $replayKey, $input);
     if ($replayed->order->id !== $created->order->id || $replayed->accessKey !== $created->accessKey) {
         throw new RuntimeException('Replay after closure must return the original order and key.');
     }
     $expect('GALLERY_CLOSED', static fn() => $checkout->execute($fixture['open']['token'], new IdempotencyKey(bin2hex(random_bytes(16))), $input));
 } finally {
-    $connection->queryExecute("UPDATE b_hlbd_mf_group SET UF_CLOSES_AT='{$closesAt}' WHERE UF_PUBLIC_ID='{$groupId}'");
+    $connection->queryExecute("UPDATE b_hlbd_mf_group SET UF_CLOSES_AT='{$deadlines['C']}',UF_DIGITAL_SALES_UNTIL='{$deadlines['D']}' WHERE UF_PUBLIC_ID='{$groupId}'");
 }
 $expired = $services->get(CreateQuoteUseCase::class)->execute($fixture['open']['token'], $lines);
 $expiredHash = hash('sha256', $expired->quoteToken);
@@ -167,7 +170,7 @@ $expect('QUOTE_EXPIRED', static fn() => $checkout->execute(
     new IdempotencyKey(bin2hex(random_bytes(16))),
     new CreateOrderInputDto($expired->quoteToken, $lines, $input->buyer, $consents),
 ));
-$proof[] = 'replay after closure, closed group and expired quote';
+$proof[] = 'replay after closure, closed print, closed group and expired quote';
 
 // 5. A change of the curator's rights during a read is rejected.
 $curator = (int)$connection->query("SELECT ID FROM b_user WHERE LOGIN='curator@example.invalid' OR EMAIL='curator@example.invalid' LIMIT 1")->fetch()['ID'];

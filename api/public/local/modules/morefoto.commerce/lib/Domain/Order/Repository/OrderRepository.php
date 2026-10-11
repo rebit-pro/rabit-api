@@ -115,6 +115,12 @@ final readonly class OrderRepository
         return $this->query('SELECT ' . self::COLUMNS . " FROM mf_order o WHERE o.ID={$id} FOR UPDATE");
     }
 
+    /** В снимке заказа есть печатная строка: такой заказ живёт по сроку приёма печати (E7). */
+    public function containsPrint(int $id): bool
+    {
+        return false !== $this->query("SELECT 1 FROM mf_order_line WHERE ORDER_ID={$id} AND PRODUCT_KIND='physical' LIMIT 1")->fetch();
+    }
+
     /** Меняет статус оплаты и повышает версию заказа; снимок покупки не трогает. */
     public function applyPayment(int $id, string $status, ?string $paidAt, bool $latePayment): void
     {

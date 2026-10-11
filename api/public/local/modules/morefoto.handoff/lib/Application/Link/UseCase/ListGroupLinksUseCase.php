@@ -123,6 +123,7 @@ final readonly class ListGroupLinksUseCase
             referenceNow: $summary->referenceNow,
             preparing: $summary->preparing,
             open: $summary->open,
+            digital: $summary->digital,
             closed: $summary->closed,
             closingSoon: $summary->closingSoon,
             prepared: 0 === $summary->preparing ? 0 : $this->links->preparedCount($this->directory->nativeIds($query('preparing'))),

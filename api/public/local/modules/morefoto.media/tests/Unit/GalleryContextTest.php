@@ -29,7 +29,7 @@ final class GalleryContextTest extends TestCase
         ;
         $groups = $this->createMock(GalleryGroupInterface::class);
         $groups->expects(self::once())->method('get')->with('group-id')->willReturn(
-            new GalleryGroupOutputDto(1, 2, 'group-id', 'Institution', 'Shoot', 'Group', 'regular', '2026-09-21 00:00:00', '2026-09-28 00:00:00', 1),
+            new GalleryGroupOutputDto(1, 2, 'group-id', 'Institution', 'Shoot', 'Group', 'regular', '2026-09-21 00:00:00', '2026-09-28 00:00:00', '2026-10-05 00:00:00', 1),
         );
         $photos = $this->createMock(GalleryPhotoRepository::class);
         $photos->expects(self::never())->method('list');

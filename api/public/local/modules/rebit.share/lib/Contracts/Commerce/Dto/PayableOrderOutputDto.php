@@ -12,7 +12,9 @@ final readonly class PayableOrderOutputDto
      * @param int         $total         итог снимка заказа в копейках
      * @param string      $version       версия заказа для оптимистичной проверки оплаты
      * @param null|string $paidAt        момент оплаты UTC `Y-m-d H:i:s`
-     * @param null|string $closesAt      окончание приёма группы UTC `Y-m-d H:i:s`; null — срок ещё не назначен
+     * @param null|string $salesUntil    срок продаж состава заказа UTC `Y-m-d H:i:s`: приём печати, если в заказе есть
+     *                                   печать, иначе продажа электронных фото; null — срок ещё не назначен
+     * @param bool        $containsPrint в снимке заказа есть печатная продукция
      */
     public function __construct(
         public int $id,
@@ -29,6 +31,7 @@ final readonly class PayableOrderOutputDto
         public string $version,
         public ?string $paidAt,
         public bool $latePayment,
-        public ?string $closesAt,
+        public ?string $salesUntil,
+        public bool $containsPrint,
     ) {}
 }

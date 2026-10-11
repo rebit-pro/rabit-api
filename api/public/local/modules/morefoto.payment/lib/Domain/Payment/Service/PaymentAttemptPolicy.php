@@ -18,8 +18,11 @@ final readonly class PaymentAttemptPolicy
     /** Срок, в течение которого провайдер гарантирует тот же ответ на повтор с тем же ключом идемпотентности. */
     private const int PROVIDER_KEY_TTL = 86400;
 
-    /** Новая попытка — только по неоплаченному заказу с суммой больше нуля и до окончания приёма группы (G1-DEC-02). */
-    public function assertCanStart(string $orderPaymentStatus, int $amount, ?string $closesAt, \DateTimeImmutable $now): void
+    /**
+     * Новая попытка — только по неоплаченному заказу с суммой больше нуля и до срока продаж его состава (G1-DEC-02, E7):
+     * заказ с печатью после закрытия печати — PRINT_SALES_CLOSED, остальной после окончания продаж — PAYMENT_CLOSED.
+     */
+    public function assertCanStart(string $orderPaymentStatus, int $amount, ?string $salesUntil, bool $containsPrint, \DateTimeImmutable $now): void
     {
         if ('paid' === $orderPaymentStatus) {
             throw new HttpException('ORDER_ALREADY_PAID', 409);
@@ -27,20 +30,23 @@ final readonly class PaymentAttemptPolicy
         if (0 >= $amount) {
             throw new HttpException('NOTHING_TO_PAY', 409);
         }
-        if (null !== $closesAt && $this->utc($now) >= $closesAt) {
-            throw new HttpException('PAYMENT_CLOSED', 409);
+        if (null !== $salesUntil && $this->utc($now) >= $salesUntil) {
+            throw new HttpException($containsPrint ? 'PRINT_SALES_CLOSED' : 'PAYMENT_CLOSED', 409);
         }
     }
 
-    public function canStart(string $orderPaymentStatus, int $amount, ?string $closesAt, \DateTimeImmutable $now, bool $hasOpenAttempt): bool
+    public function canStart(string $orderPaymentStatus, int $amount, ?string $salesUntil, \DateTimeImmutable $now, bool $hasOpenAttempt): bool
     {
-        return !$hasOpenAttempt && 'paid' !== $orderPaymentStatus && 0 < $amount && (null === $closesAt || $this->utc($now) < $closesAt);
+        return !$hasOpenAttempt && 'paid' !== $orderPaymentStatus && 0 < $amount && (null === $salesUntil || $this->utc($now) < $salesUntil);
     }
 
-    /** Оплата, подтверждённая после окончания приёма, — денежный факт с latePayment; исполнение решает I3 (G1-D12-SCOPE). */
-    public function isLate(?string $closesAt, string $paidAt): bool
+    /**
+     * Оплата, подтверждённая после срока продаж состава заказа, — денежный факт с latePayment; исполнение решает I3
+     * (G1-D12-SCOPE). Электронный заказ, оплаченный между закрытием печати и окончанием продаж электронных, не поздний.
+     */
+    public function isLate(?string $salesUntil, string $paidAt): bool
     {
-        return null !== $closesAt && $paidAt >= $closesAt;
+        return null !== $salesUntil && $paidAt >= $salesUntil;
     }
 
     /**

@@ -44,14 +44,16 @@ $services = ServiceLocator::getInstance();
 $lifecycle = $services->get(GalleryCapabilityLifecycle::class);
 $mutations = $services->get(MediaMutationRepository::class);
 $output = [];
-foreach (['open', 'preparing', 'closed', 'revoked'] as $index => $state) {
+foreach (['open', 'preparing', 'closed', 'revoked', 'digital'] as $index => $state) {
     $groupUuid = Uuid::uuid4()->toString();
     $calendar = match ($state) {
-        'preparing' => 'NULL,NULL,NULL',
-        'closed' => 'UTC_TIMESTAMP()-INTERVAL 8 DAY,UTC_TIMESTAMP()-INTERVAL 1 DAY,UTC_TIMESTAMP()+INTERVAL 6 DAY',
-        default => 'UTC_TIMESTAMP(),UTC_TIMESTAMP()+INTERVAL 7 DAY,UTC_TIMESTAMP()+INTERVAL 14 DAY',
+        'preparing' => 'NULL,NULL,NULL,NULL',
+        // E7: print closed a day ago, digital sales go on for six more days.
+        'digital' => 'UTC_TIMESTAMP()-INTERVAL 8 DAY,UTC_TIMESTAMP()-INTERVAL 1 DAY,UTC_TIMESTAMP()+INTERVAL 6 DAY,UTC_TIMESTAMP()+INTERVAL 6 DAY',
+        'closed' => 'UTC_TIMESTAMP()-INTERVAL 15 DAY,UTC_TIMESTAMP()-INTERVAL 8 DAY,UTC_TIMESTAMP()-INTERVAL 1 DAY,UTC_TIMESTAMP()-INTERVAL 1 DAY',
+        default => 'UTC_TIMESTAMP(),UTC_TIMESTAMP()+INTERVAL 7 DAY,UTC_TIMESTAMP()+INTERVAL 14 DAY,UTC_TIMESTAMP()+INTERVAL 14 DAY',
     };
-    $connection->queryExecute("INSERT INTO b_hlbd_mf_group(UF_PUBLIC_ID,UF_SHOOT_ID,UF_NAME,UF_KIND,UF_TIMEZONE,UF_SENT_AT,UF_CLOSES_AT,UF_DELIVERY_DUE_AT,UF_REVISION,UF_CREATED_AT,UF_UPDATED_AT)
+    $connection->queryExecute("INSERT INTO b_hlbd_mf_group(UF_PUBLIC_ID,UF_SHOOT_ID,UF_NAME,UF_KIND,UF_TIMEZONE,UF_SENT_AT,UF_CLOSES_AT,UF_DIGITAL_SALES_UNTIL,UF_DELIVERY_DUE_AT,UF_REVISION,UF_CREATED_AT,UF_UPDATED_AT)
         VALUES('{$groupUuid}',{$shoot},'E4 {$state}','regular','Europe/Moscow',{$calendar},1,UTC_TIMESTAMP(),UTC_TIMESTAMP())");
     $group = (int)$connection->getInsertedId();
     $image = imagecreatetruecolor(640, 480);

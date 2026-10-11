@@ -86,8 +86,8 @@ $fixture = static function(string $name) use ($connection): string {
     $connection->queryExecute("INSERT INTO b_hlbd_mf_shoot(UF_PUBLIC_ID,UF_INSTITUTION_ID,UF_NAME,UF_DATE,UF_REVISION,UF_CREATED_AT,UF_UPDATED_AT) VALUES('{$shoot}',{$institutionId},'F2 verifier',NULL,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())");
     $shootId = (int)$connection->getInsertedId();
     $group = Uuid::uuid4()->toString();
-    $connection->queryExecute("INSERT INTO b_hlbd_mf_group(UF_PUBLIC_ID,UF_SHOOT_ID,UF_NAME,UF_KIND,UF_TIMEZONE,UF_SENT_AT,UF_CLOSES_AT,UF_DELIVERY_DUE_AT,UF_REVISION,UF_CREATED_AT,UF_UPDATED_AT)
-        VALUES('{$group}',{$shootId},'{$name}','regular','Europe/Moscow',NULL,NULL,NULL,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())");
+    $connection->queryExecute("INSERT INTO b_hlbd_mf_group(UF_PUBLIC_ID,UF_SHOOT_ID,UF_NAME,UF_KIND,UF_TIMEZONE,UF_SENT_AT,UF_CLOSES_AT,UF_DIGITAL_SALES_UNTIL,UF_DELIVERY_DUE_AT,UF_REVISION,UF_CREATED_AT,UF_UPDATED_AT)
+        VALUES('{$group}',{$shootId},'{$name}','regular','Europe/Moscow',NULL,NULL,NULL,NULL,1,UTC_TIMESTAMP(),UTC_TIMESTAMP())");
 
     return $group;
 };
@@ -108,14 +108,20 @@ try {
     $calendar->lock($groupId);
     $first = $calendar->recordLinkSent(new LinkSentInputDto($groupId, $actor, Uuid::uuid4()->toString(), new DateTimeImmutable('2026-09-11T14:30:00+03:00'), null));
     $check(2 === $first->revision && '2026-09-18T14:30:00+03:00' === $first->calendar->closesAt && '2026-09-25T14:30:00+03:00' === $first->calendar->deliveryDueAt, 'recorded delivery +7/+7 in Moscow');
+    $check('2026-09-25T14:30:00+03:00' === $first->calendar->digitalSalesUntil, 'E7: digital sales +14 from the same T0');
     $repeat = $calendar->recordLinkSent(new LinkSentInputDto($groupId, $actor, Uuid::uuid4()->toString(), new DateTimeImmutable('2026-09-11T20:00:00+03:00'), null));
     $check(2 === $repeat->revision && $first->calendar == $repeat->calendar, 'repeated delivery keeps every deadline');
     $extended = $calendar->extend(new CalendarCommandInputDto($groupId, $actor, 2, str_repeat('e', 32), 'Продление по согласованию'), new DateTimeImmutable('2026-09-21T12:00:00+03:00'));
     $check(3 === $extended->revision && '2026-09-21T12:00:00+03:00' === $extended->calendar->closesAt, 'internal extension');
+    $check('2026-09-25T14:30:00+03:00' === $extended->calendar->digitalSalesUntil, 'print extension keeps the later digital deadline');
     $clock->now = new DateTimeImmutable('2026-09-15T00:00:00+03:00');
     $corrected = $calendar->correctLinkSent(new LinkSentInputDto($groupId, $actor, Uuid::uuid4()->toString(), new DateTimeImmutable('2026-09-10T09:00:00+03:00'), 'Ошибка в дате'));
     $check(4 === $corrected->revision && '2026-09-10T09:00:00+03:00' === $corrected->calendar->sentAt, 'correction revision and moment');
     $check('2026-09-21T12:00:00+03:00' === $corrected->calendar->closesAt && '2026-09-28T12:00:00+03:00' === $corrected->calendar->deliveryDueAt, 'correction keeps the later extension');
+    $check('2026-09-24T09:00:00+03:00' === $corrected->calendar->digitalSalesUntil, 'correction recalculates digital sales from the new T0');
+    $clock->now = new DateTimeImmutable('2026-09-21T12:00:00+03:00');
+    $rejects('PRINT_SALES_CLOSED', static fn(): mixed => $calendar->correctLinkSent(new LinkSentInputDto($groupId, $actor, Uuid::uuid4()->toString(), new DateTimeImmutable('2026-09-12T09:00:00+03:00'), 'Ошибка в дате')));
+    $clock->now = new DateTimeImmutable('2026-09-15T00:00:00+03:00');
     $calendar->lock($fresh);
     $rejects('LINK_NOT_SENT', static fn(): mixed => $calendar->correctLinkSent(new LinkSentInputDto($fresh, $actor, Uuid::uuid4()->toString(), new DateTimeImmutable('2026-09-14T09:00:00+03:00'), 'Ошибка в дате')));
     $rejects('SENT_AT_IN_FUTURE', static fn(): mixed => $calendar->recordLinkSent(new LinkSentInputDto($fresh, $actor, Uuid::uuid4()->toString(), new DateTimeImmutable('2026-09-15T00:00:01+03:00'), null)));
@@ -128,18 +134,24 @@ try {
 $check(['recordLinkSent', 'extendCalendar', 'correctLinkSent'] === $column("SELECT JSON_UNQUOTE(JSON_EXTRACT(c.UF_DELTA,'$.action')) FROM b_hlbd_mf_organization_change c
     JOIN b_hlbd_mf_group g ON g.ID=c.UF_AGGREGATE_ID WHERE c.UF_AGGREGATE_TYPE='group' AND g.UF_PUBLIC_ID='{$groupId}' ORDER BY c.ID"), 'journal of the controlled calendar');
 
-// 3. The close boundary is the same in Organization and in the buyer gallery: now == closesAt is closed.
+// 3. Both boundaries are the same in Organization and in the buyer gallery: now == deadline is past it (E7).
 $directory = new GroupDirectory($clock);
 $nativeId = (int)$connection->query("SELECT ID FROM b_hlbd_mf_group WHERE UF_PUBLIC_ID='{$groupId}'")->fetch()['ID'];
 $states = static fn(): array => array_map(
     static fn(string $state): int => $directory->page(new GroupDirectoryQueryInputDto(null, [$nativeId], null, null, $state, 1, 25))->total,
-    ['open' => 'open', 'closed' => 'closed'],
+    ['open' => 'open', 'digital' => 'digital', 'closed' => 'closed'],
 );
 $clock->now = new DateTimeImmutable('2026-09-21T11:59:59+03:00');
-$check('open' === $directory->find($groupId)?->calendar->status && ['open' => 1, 'closed' => 0] === $states(), 'one second before the close is open');
-$check('open' === (new GalleryAvailability())->state('2026-09-10 06:00:00', '2026-09-21 09:00:00', $clock->now), 'gallery is open one second before the close');
+$gallery = static fn(): string => (new GalleryAvailability())->state('2026-09-10 06:00:00', '2026-09-21 09:00:00', '2026-09-24 06:00:00', $clock->now);
+$check('open' === $directory->find($groupId)?->calendar->status && ['open' => 1, 'digital' => 0, 'closed' => 0] === $states(), 'one second before the print close is open');
+$check('open' === $gallery(), 'gallery is open one second before the print close');
 $clock->now = new DateTimeImmutable('2026-09-21T12:00:00+03:00');
-$check('closed' === $directory->find($groupId)?->calendar->status && ['open' => 0, 'closed' => 1] === $states(), 'the close moment itself is closed');
-$check('closed' === (new GalleryAvailability())->state('2026-09-10 06:00:00', '2026-09-21 09:00:00', $clock->now), 'gallery closes at the same moment');
+$check('digital' === $directory->find($groupId)?->calendar->status && ['open' => 0, 'digital' => 1, 'closed' => 0] === $states(), 'the print close moment sells digital only');
+$check('digital' === $gallery(), 'gallery stops print at the same moment');
+$clock->now = new DateTimeImmutable('2026-09-24T08:59:59+03:00');
+$check('digital' === $directory->find($groupId)?->calendar->status && 'digital' === $gallery(), 'one second before the digital close');
+$clock->now = new DateTimeImmutable('2026-09-24T09:00:00+03:00');
+$check('closed' === $directory->find($groupId)?->calendar->status && ['open' => 0, 'digital' => 0, 'closed' => 1] === $states(), 'the digital close moment itself is closed');
+$check('closed' === $gallery(), 'gallery closes at the same moment');
 
 echo "F2 integration passed\n";

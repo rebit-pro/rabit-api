@@ -21,6 +21,7 @@ final readonly class GalleryGroup implements GalleryGroupInterface
             $row = Application::getConnection()->query("SELECT g.ID,g.UF_PUBLIC_ID,g.UF_NAME,g.UF_KIND,g.UF_REVISION,
                 DATE_FORMAT(g.UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS SENT_AT,
                 DATE_FORMAT(g.UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS CLOSES_AT,
+                DATE_FORMAT(g.UF_DIGITAL_SALES_UNTIL,'%Y-%m-%d %H:%i:%s') AS DIGITAL_SALES_UNTIL,
                 s.ID AS SHOOT_ID,s.UF_NAME AS SHOOT_NAME,i.UF_NAME AS INSTITUTION_NAME
                 FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot s ON s.ID=g.UF_SHOOT_ID
                 INNER JOIN b_hlbd_mf_institution i ON i.ID=s.UF_INSTITUTION_ID
@@ -42,6 +43,7 @@ final readonly class GalleryGroup implements GalleryGroupInterface
             (string)$row['UF_KIND'],
             null === $row['SENT_AT'] ? null : (string)$row['SENT_AT'],
             null === $row['CLOSES_AT'] ? null : (string)$row['CLOSES_AT'],
+            null === $row['DIGITAL_SALES_UNTIL'] ? null : (string)$row['DIGITAL_SALES_UNTIL'],
             (int)$row['UF_REVISION'],
         );
     }

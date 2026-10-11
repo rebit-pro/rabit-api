@@ -40,7 +40,7 @@ final readonly class GalleryAccess implements GalleryAccessInterface
         }
         $group = $this->groups->get($key['GROUP_PUBLIC_ID']);
         $now = $this->clock->now();
-        $state = $this->availability->state($group->sentAt, $group->closesAt, $now);
+        $state = $this->availability->state($group->sentAt, $group->closesAt, $group->digitalSalesUntil, $now);
 
         return new GalleryContextOutputDto($group, $state, $now->format(DATE_ATOM), (int)$key['REVISION']);
     }
