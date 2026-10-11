@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, toRef } from 'vue';
+import { computed, shallowRef, toRef } from 'vue';
 import { useRouter } from 'vue-router';
 import { addToStoredCart, rememberedGallery } from '../../commerce/services/storefront';
 import { money } from '../../commerce/money';
@@ -15,14 +15,18 @@ const { quote, loading, starting, uncertain, error, load, pay, follow } = useLiv
   toRef(props, 'orderKey'),
   computed(() => !paid.value)
 );
-const closed = computed(() => props.order.period.state === 'closed');
 // E7: an unpaid order with print cannot be paid after the print close; its digital photos may form a new order.
 const block = computed(() => orderSalesBlock(props.order));
 const galleryToken = computed(() => rememberedGallery(props.order.groupId));
+const reorderError = shallowRef('');
 const router = useRouter();
 async function reorder(): Promise<void> {
   if (!block.value || !galleryToken.value) return;
-  addToStoredCart(props.order.groupId, reorderLines(block.value.digitalLines));
+  reorderError.value = '';
+  if (!addToStoredCart(props.order.groupId, reorderLines(block.value.digitalLines))) {
+    reorderError.value = 'Браузер не дал сохранить корзину. Откройте ссылку на галерею и выберите эти фотографии снова.';
+    return;
+  }
   await router.push('/g/' + galleryToken.value + '/cart');
 }
 </script>
@@ -58,6 +62,7 @@ async function reorder(): Promise<void> {
           <v-btn v-if="galleryToken" block color="primary" data-testid="order-reorder-digital" @click="reorder"
             >Оформить электронные фото новым заказом</v-btn
           >
+          <p v-if="reorderError" class="order-payment__note" role="alert" data-testid="order-reorder-error">{{ reorderError }}</p>
           <p v-else class="order-payment__note" data-testid="order-reorder-hint">
             Откройте ссылку на галерею, которую прислал куратор, и выберите эти фотографии снова.
           </p>
@@ -105,11 +110,7 @@ async function reorder(): Promise<void> {
       Сумма заказа 0 ₽ — оплата не требуется.
     </p>
     <p v-else-if="quote" class="order-payment__note" data-testid="payment-unavailable">
-      {{
-        closed
-          ? 'Приём заказов группы завершён — оплатить заказ уже нельзя.'
-          : 'Оплата сейчас недоступна. Заказ сохранён — вернитесь к нему позже.'
-      }}
+      Оплата сейчас недоступна. Заказ сохранён — вернитесь к нему позже.
     </p>
     <v-alert v-if="error" type="warning" variant="tonal" density="compact" class="mt-3" role="alert" data-testid="payment-error"
       >{{ error }}<v-btn v-if="!quote" variant="text" size="small" @click="load">Повторить</v-btn></v-alert

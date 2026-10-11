@@ -93,6 +93,22 @@ test('E7-T13: an unpaid mixed order is blocked after the print close and offers 
   assert.equal(orderSalesBlock(order('closed', 'declined', ['digital']))?.kind, 'closed');
 });
 
+test('E7-T13: a 0 ₽ order is never shown as unpayable and a gift bundle is not offered again', () => {
+  const free = order('closed', 'unpaid', ['digital']);
+  free.quote.total = 0;
+  assert.equal(orderSalesBlock(free), null, 'nothing to pay is not a closed payment');
+  const gifted = order('digital', 'unpaid', ['physical', 'bundle', 'digital']);
+  gifted.quote.total = 500;
+  gifted.quote.lines[1].coveredByGift = true;
+  const block = orderSalesBlock(gifted);
+  assert.equal(block?.kind, 'print');
+  // The gift came with the print threshold; without print it would be charged in full.
+  assert.deepEqual(reorderLines(block?.digitalLines ?? []), [line('a-3', 'digital')]);
+  const onlyGift = order('digital', 'unpaid', ['physical', 'bundle']);
+  onlyGift.quote.lines[1].coveredByGift = true;
+  assert.deepEqual(orderSalesBlock(onlyGift)?.digitalLines, [], 'no bought digital photo — no reorder button');
+});
+
 test('E7-T13: server codes of the closed print explain what the buyer can still do', () => {
   const problem = { status: 409, code: 'PRINT_SALES_CLOSED', network: false };
   assert.match(checkoutOutcome(problem, false).message, /печать завершён/);

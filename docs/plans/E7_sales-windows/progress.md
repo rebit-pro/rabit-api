@@ -5,8 +5,8 @@
 - Дата: 11.10.2026. Ветка `codex/e7-sales-windows` от `origin/main` fd7498a; рабочая копия `/home/user/rabit-api-worktrees/e7-sales-windows`. PR нет.
 - Связанное: план ускоренного MVP — ветка `codex/ops-mvp-payment-print-email-plan`, локальная, не опубликована, в общем checkout ведётся другой сессией. Граф E7 пока только там.
 - Завершено: план (de41609), backend (604d435), frontend и подвал (5f61914), оферта `2026-10-11` и E2E (1b33a89), верификатор миграции и правки E2E (c00776d), документация волны.
-- Сейчас: ревью PR #162 — 4 блокера (review 5482500492), неблокирующие #164–#167.
-- Следующий шаг: исправить блокеры B1–B4 (phpDoc `CalendarProjection` и `ListGroupLinksUseCase`, 0 ₽ в блоке заказа, try/catch записи токена, перенос без подарка), повторить быстрые проверки.
+- Сейчас: блокеры ревью PR #162 исправлены, ждём повторного ревью.
+- Следующий шаг: после ревью без блокеров — полный `make test-e2e` и visual (по графу — пользователь с другой моделью); перед merge — граф MVP в main и дата редакции оферты.
 - Следующий шаг: ревью PR; после ревью без блокеров — полный `make test-e2e` и visual (по графу — пользователь с другой моделью).
 - Блокеры merge: граф MVP с волной E7 не в `main`; полный E2E-гейт не запускался. Перед merge перенести дату редакции оферты на дату публикации, если она позже 11.10.2026.
 - Рабочее дерево: всё закоммичено, кроме документации последнего шага до её коммита.
@@ -71,6 +71,17 @@
 - Неблокирующие замечания вынесены в issues #164–#167 (дублей нет).
 - Отклонены: проверка срока до выдачи открытой попытки (решение DEC-06) и лишний индексный запрос `containsPrint`.
 
+### 11.10.2026 — исправление блокеров ревью
+
+- B1: class-level phpDoc у `CalendarProjection`; phpDoc `ListGroupLinksUseCase` описывает `digital` и `closingSoon` по сроку печати.
+- B2: `orderSalesBlock` возвращает `null` для оплаченного заказа и для заказа на 0 ₽; недостижимый тернарий `closed` в `OrderPaymentPanel` убран.
+- B3: запись в `localStorage` (`store()`) в `storefront.ts` — best effort в try/catch; `addToStoredCart` возвращает успех, при ошибке блок заказа показывает подсказку вместо перехода.
+- B4: `digitalLines` блока заказа — только купленные электронные строки, без `coveredByGift`; кнопка переноса скрыта, если таких строк нет.
+- Проверки 11.10.2026:
+  - frontend `npm run check` — exit 0, UI 88/88; `test:commerce` — 231/231 (новый кейс 0 ₽ и подарка);
+  - php-cs-fixer по 2 файлам — 0 исправлений;
+  - PHPUnit Organization и Handoff — OK, 215 тестов.
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -82,7 +93,7 @@
 | E7-T10 | PASS | 11.10.2026 | PHPUnit `GroupLinkWorkflowTest`, `GroupLinkContractTest`, `StaffTransferPolicyTest` |
 | E7-T11 | PASS | 11.10.2026 | Architecture-тесты модулей входят в PHPUnit 1099 OK |
 | E7-T12 | PENDING | — | `verify-sales-windows.php` написан; запуск в `make test-e2e` |
-| E7-T13 | PASS | 11.10.2026 | `tests/commerce/sales-windows.test.mjs` 7/7, `npm run check`, `test:commerce` 230/230 |
+| E7-T13 | PASS | 11.10.2026 | `tests/commerce/sales-windows.test.mjs` 8/8 (после блокеров ревью), `npm run check`, `test:commerce` 231/231 |
 | E7-T14, T15 | PENDING | — | spec и `verify-orders.php` написаны; HTTP-оплата PRINT_SALES_CLOSED без тестового магазина проверяется на уровне сервисов |
 | E7-T16 | PENDING | — | скриншоты e7-desktop/mobile-gallery/cart появятся в гейте |
 | E7-T17 | BLOCKED | 11.10.2026 | граф MVP с E7 не слит в main |

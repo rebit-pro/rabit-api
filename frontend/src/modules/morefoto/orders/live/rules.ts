@@ -92,13 +92,15 @@ export function checkoutOutcome(problem: ApiProblem, recovering: boolean): Check
 export interface OrderSalesBlock {
   kind: 'print' | 'closed';
   printLines: LiveOrderLine[];
+  /** Bought digital photos and bundles; a gift bundle earned by the print threshold is not re-offered. */
   digitalLines: LiveOrderLine[];
 }
 
 export function orderSalesBlock(order: Pick<BuyerOrder, 'paymentStatus' | 'period' | 'quote'>): OrderSalesBlock | null {
-  if (order.paymentStatus === 'paid') return null;
+  // A paid snapshot is final, and a 0 ₽ order needs no payment at all.
+  if (order.paymentStatus === 'paid' || order.quote.total === 0) return null;
   const printLines = order.quote.lines.filter((line) => line.product.kind === 'physical');
-  const digitalLines = order.quote.lines.filter((line) => line.product.kind !== 'physical');
+  const digitalLines = order.quote.lines.filter((line) => line.product.kind !== 'physical' && !line.coveredByGift);
   if (order.period.state === 'closed') return { kind: 'closed', printLines, digitalLines };
   if (order.period.state === 'digital' && printLines.length > 0) return { kind: 'print', printLines, digitalLines };
   return null;

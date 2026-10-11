@@ -48,6 +48,15 @@ function key(groupId: string): string {
 function galleryKey(groupId: string): string {
   return 'morefoto:gallery:v1:' + groupId;
 }
+/** Blocked site data or a full quota must not break the storefront: the value is a convenience. */
+function store(name: string, value: string): boolean {
+  try {
+    localStorage.setItem(name, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
 /** Gallery link of a group opened on this device: an order page can send its buyer back to the same cart. */
 export function rememberedGallery(groupId: string): string | null {
   try {
@@ -58,8 +67,8 @@ export function rememberedGallery(groupId: string): string | null {
   }
 }
 /** Adds order lines to the stored cart of the group; the buyer confirms them as a new order with fresh prices. */
-export function addToStoredCart(groupId: string, lines: Line[]): void {
-  localStorage.setItem(key(groupId), JSON.stringify(mergeCartLines(read(groupId), lines)));
+export function addToStoredCart(groupId: string, lines: Line[]): boolean {
+  return store(key(groupId), JSON.stringify(mergeCartLines(read(groupId), lines)));
 }
 function read(groupId: string): Line[] {
   try {
@@ -124,7 +133,7 @@ export async function loadStorefront(token: string, gallery: GallerySnapshot): P
     );
     return;
   }
-  localStorage.setItem(galleryKey(gallery.groupId), token);
+  store(galleryKey(gallery.groupId), token);
   let catalog: Catalog;
   try {
     ({ data: catalog } = await api.get<Catalog>('/api/v1/public/galleries/' + token + '/catalog'));
@@ -151,7 +160,7 @@ export async function loadStorefront(token: string, gallery: GallerySnapshot): P
     gallery.state === 'digital'
       ? sellableLines(stored, new Map(catalog.products.map((product) => [product.id, product.kind])), gallery.state)
       : { kept: stored, dropped: 0 };
-  if (dropped > 0) localStorage.setItem(key(gallery.groupId), JSON.stringify(kept));
+  if (dropped > 0) store(key(gallery.groupId), JSON.stringify(kept));
   const state = shallowReactive<State>({
     gallery,
     token,
