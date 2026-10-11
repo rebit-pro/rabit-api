@@ -52,6 +52,8 @@ VERIFIERS = [
     ("verify-handoff.php", None, "F1 list integration passed", ["zzz-handoff"]),
     # The browser records the secrets it received so the verifier can prove none of them is stored in clear text.
     ("verify-orders.php", "e5-orders.json", "E5 integration passed", ["zzzzz-orders", "zzzzzz-transfers", "zzzzzzzz-payment-costs"]),
+    # D4: pause, serialization with orders on the group row, stale quote and GROUP_HAS_ORDERS on the verifier's own group.
+    ("verify-markup-correction.php", None, "D4 markup correction integration passed", ["zzzz-storefront", "zzzzz-markup-correction"]),
     # F2 prepares the link first in its group and reports the delivery after the minute of preparation is over.
     ("verify-links.php", None, "F2 integration passed", ["z-links-preparation", "zzzz-links"]),
     # D3: the browser leaves one untransferred staff request for the injected-failure check on MySQL.

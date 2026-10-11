@@ -44,7 +44,8 @@ $services = ServiceLocator::getInstance();
 $lifecycle = $services->get(GalleryCapabilityLifecycle::class);
 $mutations = $services->get(MediaMutationRepository::class);
 $output = [];
-foreach (['open', 'preparing', 'closed', 'revoked', 'digital'] as $index => $state) {
+// D4: 'markup' is corrected by the browser, 'markup-db' by the MySQL verifier; both are transmitted and have no orders.
+foreach (['open', 'preparing', 'closed', 'revoked', 'digital', 'markup', 'markup-db'] as $index => $state) {
     $groupUuid = Uuid::uuid4()->toString();
     $calendar = match ($state) {
         'preparing' => 'NULL,NULL,NULL,NULL',

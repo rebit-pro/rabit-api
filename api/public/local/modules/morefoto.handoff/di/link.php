@@ -21,6 +21,7 @@ use Morefoto\Handoff\Domain\Link\Service\LinkPermissionPolicy;
 use Morefoto\Handoff\Domain\Link\Service\LinkReadinessPolicy;
 use Morefoto\Handoff\Domain\Link\Service\MarkupCorrectionAvailability;
 use Morefoto\Handoff\Infrastructure\Database\BitrixGroupLinkRepository;
+use Morefoto\Handoff\Infrastructure\Database\BitrixHandoffTransaction;
 use Morefoto\Handoff\Presentation\Controller\GroupLinkController;
 use Morefoto\Handoff\Presentation\Link\GroupLinkInputMapper;
 use Morefoto\Handoff\Presentation\Link\GroupLinkResultMapper;
@@ -53,9 +54,30 @@ $dependencies = [
     PrepareGroupLinkUseCase::class => [HandoffTransactionInterface::class, GroupLinkCommandSession::class, GroupLinkRepositoryInterface::class, GalleryLinkInterface::class, GroupLinkOutputMapper::class],
     TransmitGroupLinkUseCase::class => [HandoffTransactionInterface::class, GroupLinkCommandSession::class, GroupLinkRepositoryInterface::class, GalleryLinkInterface::class, GroupCalendarInterface::class, LinkReadinessPolicy::class, LinkDeliveryPolicy::class, GroupLinkOutputMapper::class],
     CorrectGroupLinkDateUseCase::class => [HandoffTransactionInterface::class, GroupLinkCommandSession::class, GroupLinkRepositoryInterface::class, GalleryLinkInterface::class, GroupCalendarInterface::class, LinkDeliveryPolicy::class, GroupLinkOutputMapper::class],
-    StartMarkupCorrectionUseCase::class => [HandoffTransactionInterface::class, GroupLinkCommandSession::class, GroupLinkRepositoryInterface::class, GroupOrdersInterface::class, GroupMarkupCorrectionInterface::class, GroupLinkOutputMapper::class],
-    FinishMarkupCorrectionUseCase::class => [HandoffTransactionInterface::class, GroupLinkCommandSession::class, GroupLinkRepositoryInterface::class, GroupMarkupCorrectionInterface::class, GroupLinkOutputMapper::class],
     GroupLinkController::class => [ListGroupLinksUseCase::class, GetGroupLinkUseCase::class, PrepareGroupLinkUseCase::class, TransmitGroupLinkUseCase::class, CorrectGroupLinkDateUseCase::class, StartMarkupCorrectionUseCase::class, FinishMarkupCorrectionUseCase::class, GroupLinkInputMapper::class, GroupLinkResultMapper::class],
+];
+// D4: an order holds the group row with a shared lock while the start locks it exclusively; a deadlock repeats the
+// whole re-reading command, as for the D3 transfer.
+$services[StartMarkupCorrectionUseCase::class] = [
+    'className' => StartMarkupCorrectionUseCase::class,
+    'constructorParams' => static fn(): array => [
+        new BitrixHandoffTransaction(3),
+        ServiceLocator::getInstance()->get(GroupLinkCommandSession::class),
+        ServiceLocator::getInstance()->get(GroupLinkRepositoryInterface::class),
+        ServiceLocator::getInstance()->get(GroupOrdersInterface::class),
+        ServiceLocator::getInstance()->get(GroupMarkupCorrectionInterface::class),
+        ServiceLocator::getInstance()->get(GroupLinkOutputMapper::class),
+    ],
+];
+$services[FinishMarkupCorrectionUseCase::class] = [
+    'className' => FinishMarkupCorrectionUseCase::class,
+    'constructorParams' => static fn(): array => [
+        new BitrixHandoffTransaction(3),
+        ServiceLocator::getInstance()->get(GroupLinkCommandSession::class),
+        ServiceLocator::getInstance()->get(GroupLinkRepositoryInterface::class),
+        ServiceLocator::getInstance()->get(GroupMarkupCorrectionInterface::class),
+        ServiceLocator::getInstance()->get(GroupLinkOutputMapper::class),
+    ],
 ];
 foreach ($dependencies as $class => $arguments) {
     $services[$class] = [
