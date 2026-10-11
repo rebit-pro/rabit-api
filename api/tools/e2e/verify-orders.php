@@ -188,12 +188,12 @@ $expect('QUOTE_EXPIRED', static fn() => $checkout->execute(
 $proof[] = 'replay after closure, closed print, closed group and expired quote';
 
 // E7: the digital window sells a bundle; such an order is payable until the digital deadline, not the print one.
-$bundle = $connection->query("SELECT UF_PUBLIC_ID FROM b_hlbd_mf_product WHERE UF_KIND='bundle' AND UF_ACTIVE=1 ORDER BY ID LIMIT 1")->fetch();
+$bundle = $connection->query("SELECT UF_UUID FROM b_hlbd_mf_product WHERE UF_KIND='bundle' AND UF_ACTIVE=1 ORDER BY ID LIMIT 1")->fetch();
 $digitalGallery = $services->get(GalleryAccessInterface::class)->resolve($fixture['digital']['token']);
 if (false === $bundle || 'digital' !== $digitalGallery->state) {
     throw new RuntimeException('The digital window fixture needs an active bundle and the digital state.');
 }
-$digitalLines = [new QuoteLineInputDto($digitalGallery->assignments[0]->assignmentId, (string)$bundle['UF_PUBLIC_ID'], 1)];
+$digitalLines = [new QuoteLineInputDto($digitalGallery->assignments[0]->assignmentId, (string)$bundle['UF_UUID'], 1)];
 $digitalQuote = $services->get(CreateQuoteUseCase::class)->execute($fixture['digital']['token'], $digitalLines);
 $digitalOrder = $checkout->execute($fixture['digital']['token'], new IdempotencyKey(bin2hex(random_bytes(16))), new CreateOrderInputDto(
     $digitalQuote->quoteToken,
@@ -207,11 +207,11 @@ if ($digitalPayable->containsPrint || $digitalUntil !== $digitalPayable->salesUn
     throw new RuntimeException('A digital order must be payable until the digital deadline.');
 }
 new PaymentAttemptPolicy()->assertCanStart($digitalPayable->paymentStatus, $digitalPayable->total, $digitalPayable->salesUntil, false, new DateTimeImmutable('now', new DateTimeZone('UTC')));
-$printLine = $connection->query("SELECT UF_PUBLIC_ID FROM b_hlbd_mf_product WHERE UF_KIND='physical' AND UF_ACTIVE=1 ORDER BY ID LIMIT 1")->fetch();
+$printLine = $connection->query("SELECT UF_UUID FROM b_hlbd_mf_product WHERE UF_KIND='physical' AND UF_ACTIVE=1 ORDER BY ID LIMIT 1")->fetch();
 if (false !== $printLine) {
     $expect('PRINT_SALES_CLOSED', static fn() => $services->get(CreateQuoteUseCase::class)->execute(
         $fixture['digital']['token'],
-        [new QuoteLineInputDto($digitalGallery->assignments[0]->assignmentId, (string)$printLine['UF_PUBLIC_ID'], 1)],
+        [new QuoteLineInputDto($digitalGallery->assignments[0]->assignmentId, (string)$printLine['UF_UUID'], 1)],
     ));
 }
 $proof[] = 'E7 digital window: bundle order payable until the digital deadline, print refused';
