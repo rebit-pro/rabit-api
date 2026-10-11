@@ -2,15 +2,15 @@
 
 ## Точка продолжения
 
-- Дата: 11.10.2026. Ветка `codex/e7-sales-windows` от `origin/main` fd7498a; рабочая копия `/home/user/rabit-api-worktrees/e7-sales-windows`. PR нет.
-- Связанное: план ускоренного MVP — ветка `codex/ops-mvp-payment-print-email-plan`, локальная, не опубликована, в общем checkout ведётся другой сессией. Граф E7 пока только там.
-- Завершено: план (de41609), backend (604d435), frontend и подвал (5f61914), оферта `2026-10-11` и E2E (1b33a89), верификатор миграции и правки E2E (c00776d), документация волны.
-- Сейчас: блокеры ревью PR #162 исправлены, ждём повторного ревью.
-- Следующий шаг: после ревью без блокеров — полный `make test-e2e` и visual (по графу — пользователь с другой моделью); перед merge — граф MVP в main и дата редакции оферты.
-- Следующий шаг: ревью PR; после ревью без блокеров — полный `make test-e2e` и visual (по графу — пользователь с другой моделью).
-- Блокеры merge: граф MVP с волной E7 не в `main`; полный E2E-гейт не запускался. Перед merge перенести дату редакции оферты на дату публикации, если она позже 11.10.2026.
-- Рабочее дерево: всё закоммичено, кроме документации последнего шага до её коммита.
-- Проверки: PHPUnit/PHPStan/cs-fixer — `php.sh` из scratchpad (docker `rabit-api-php-cli:d1-local`, volume `rabit-e7-vendor`, копия `rabit-j1-vendor`: composer.lock не менялся с J1); frontend — docker Playwright-образ с node_modules volume.
+- Дата: 11.10.2026. Ветка `codex/e7-sales-windows` от `origin/main` fd7498a, в неё влит `main` 3194db8 (граф MVP, PR #169); рабочая копия `/home/user/rabit-api-worktrees/e7-sales-windows`. PR #162 (https://github.com/rebit-pro/rabit-api/pull/162).
+- Связанное: граф ускоренного MVP `docs/waves/graph.json` (в `main`), план `docs/plans/OPS-mvp-payment-print-email-plan/`, отчёт волны `docs/waves/e7/README.md`.
+- Завершено: план, backend, frontend и подвал, оферта `2026-10-11`, E2E-фикстуры, spec и верификаторы, документация; блокеры первого ревью (b9d0b5d) и повторного ревью (этот шаг); E7 отмечена `review` в графе.
+- Сейчас: ждём ревью без блокеров.
+- Следующий шаг: полный `make test-e2e` и visual desktop/mobile (по графу — пользователь с другой моделью).
+- Блокеры merge: E2E-гейт и visual не запускались (E7-T12, T14–T16 PENDING). Перед merge перенести дату редакции оферты и `effectiveFrom` на дату публикации, если она позже 11.10.2026. Отметку `merged` в графе вносит следующая волна (L1).
+- Открытые решения: нет.
+- Рабочее дерево: всё закоммичено и запушено.
+- Проверки: PHPUnit/PHPStan/cs-fixer — `php.sh` из scratchpad (docker `rabit-api-php-cli:d1-local`, volume `rabit-e7-vendor`); frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'` (от root); граф — `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
 
 ## Журнал
 
@@ -82,6 +82,19 @@
   - php-cs-fixer по 2 файлам — 0 исправлений;
   - PHPUnit Organization и Handoff — OK, 215 тестов.
 
+### 11.10.2026 — повторное ревью PR #162 и его блокеры
+
+- Повторное ревью (review 5483325318) нашло 2 блокера:
+  - R1: b9d0b5d вставил строку ошибки между кнопкой переноса и подсказкой, и `v-else` подсказки стал относиться к ошибке: при запомненной ссылке галереи покупатель видел и кнопку, и «откройте ссылку на галерею»;
+  - R2: после слияния графа MVP в `main` (PR #169) точка продолжения, README, план и описание PR устарели.
+- R1: в `OrderPaymentPanel.vue` восстановлена пара `v-btn v-if="galleryToken"` / подсказка `v-else`; ошибка сохранения — отдельная строка `order-reorder-error`. Автотеста шаблона нет (node-тесты не монтируют компоненты); блок увидит visual-проверка заказа.
+- R2: влит `main` 3194db8 (merge без конфликтов, только docs и `tools/verify-wave-graph.py`). E7 в графе — `review` (как E6/G1 в своих PR), решения записаны в `baseline.decisionEvidence["E7-DEC-01-11"]`; таблица `docs/waves/README.md` — «На ревью, PR #162». Обновлены план (S9, T17), README волны, verification.json, точка продолжения, описание PR. Канонический `../MoreFoto` не менялся: патч синхронизации MVP туда ещё не применён, E7 в нём нет.
+- Проверки 11.10.2026 после смены base:
+  - frontend `npm run check` — exit 0, UI 88/88; `test:commerce` — 231/231;
+  - `python3 tools/verify-wave-graph.py docs/waves/graph.json` — exit 0, 55 волн, 122 API ID, 35 WNN, readyMvpFromMain=[E7];
+  - `python3 -m unittest discover -s tools/tests` — 25/26, известное падение #163 (как на `main`);
+  - `git diff --check` — чисто. Backend-код с b9d0b5d не менялся, а `main` принёс только документы и проверку графа, поэтому PHPUnit/PHPStan не перезапускались.
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -96,4 +109,4 @@
 | E7-T13 | PASS | 11.10.2026 | `tests/commerce/sales-windows.test.mjs` 8/8 (после блокеров ревью), `npm run check`, `test:commerce` 231/231 |
 | E7-T14, T15 | PENDING | — | spec и `verify-orders.php` написаны; HTTP-оплата PRINT_SALES_CLOSED без тестового магазина проверяется на уровне сервисов |
 | E7-T16 | PENDING | — | скриншоты e7-desktop/mobile-gallery/cart появятся в гейте |
-| E7-T17 | BLOCKED | 11.10.2026 | граф MVP с E7 не слит в main |
+| E7-T17 | PASS | 11.10.2026 | `python3 tools/verify-wave-graph.py docs/waves/graph.json` exit 0 после слияния `main` 3194db8; E7 `review` |

@@ -62,10 +62,10 @@ async function reorder(): Promise<void> {
           <v-btn v-if="galleryToken" block color="primary" data-testid="order-reorder-digital" @click="reorder"
             >Оформить электронные фото новым заказом</v-btn
           >
-          <p v-if="reorderError" class="order-payment__note" role="alert" data-testid="order-reorder-error">{{ reorderError }}</p>
           <p v-else class="order-payment__note" data-testid="order-reorder-hint">
             Откройте ссылку на галерею, которую прислал куратор, и выберите эти фотографии снова.
           </p>
+          <p v-if="reorderError" class="order-payment__note" role="alert" data-testid="order-reorder-error">{{ reorderError }}</p>
         </template>
       </template>
       <p v-else class="order-payment__note">Приём заказов группы завершён — оплатить заказ уже нельзя.</p>

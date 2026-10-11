@@ -22,8 +22,8 @@
       "note": "tools/tests: 25 of 26 OK; test_f2_prepares_first_and_reports_later_in_one_group fails on main fd7498a as well (cabinet-tables sorts before z-links-preparation), issue #163"
     },
     "graph": {
-      "status": "blocked",
-      "note": "E7 is defined only in the unmerged MVP plan branch codex/ops-mvp-payment-print-email-plan; the graph status is recorded after that plan reaches main"
+      "status": "passed",
+      "note": "MVP graph merged to main in PR #169 (3194db8) and merged into the branch; E7 deliveryState review, decision record E7-DEC-01-11; python3 tools/verify-wave-graph.py docs/waves/graph.json exit 0, 55 waves, 122 endpoints, readyMvpFromMain [E7]"
     },
     "browser": {
       "status": "not-run",
