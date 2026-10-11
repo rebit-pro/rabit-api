@@ -30,14 +30,20 @@ final readonly class PaymentAttemptPolicy
         if (0 >= $amount) {
             throw new HttpException('NOTHING_TO_PAY', 409);
         }
-        if (null !== $salesUntil && $this->utc($now) >= $salesUntil) {
+        if (!$this->salesOpen($salesUntil, $now)) {
             throw new HttpException($containsPrint ? 'PRINT_SALES_CLOSED' : 'PAYMENT_CLOSED', 409);
         }
     }
 
     public function canStart(string $orderPaymentStatus, int $amount, ?string $salesUntil, \DateTimeImmutable $now, bool $hasOpenAttempt): bool
     {
-        return !$hasOpenAttempt && 'paid' !== $orderPaymentStatus && 0 < $amount && (null === $salesUntil || $this->utc($now) < $salesUntil);
+        return !$hasOpenAttempt && 'paid' !== $orderPaymentStatus && 0 < $amount && $this->salesOpen($salesUntil, $now);
+    }
+
+    /** Срок продаж состава заказа не наступил: только тогда заказ оплачивается, в том числе начатой попыткой (E7). */
+    public function salesOpen(?string $salesUntil, \DateTimeImmutable $now): bool
+    {
+        return null === $salesUntil || $this->utc($now) < $salesUntil;
     }
 
     /**

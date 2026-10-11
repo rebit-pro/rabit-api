@@ -25,8 +25,9 @@ use Rebit\Share\Contracts\Commerce\OrderPaymentInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /** Начинает оплату заказа выбранным способом: резервирует единственную открытую попытку под блокировкой заказа,
- * затем вне транзакции создаёт платёж у провайдера. Повтор, двойной клик и вторая вкладка получают ту же попытку,
- * но только до срока продаж состава заказа (E7); браузер не может объявить заказ оплаченным.
+ * затем вне транзакции создаёт платёж у провайдера. Двойной клик и вторая вкладка получают ту же попытку только до
+ * срока продаж состава заказа (E7), а точный повтор ключа после срока отдаёт её без страницы провайдера.
+ * Браузер не может объявить заказ оплаченным.
  */
 final readonly class StartPaymentAttemptUseCase
 {
@@ -66,7 +67,9 @@ final readonly class StartPaymentAttemptUseCase
             throw new \LogicException('A reserved payment attempt disappeared.');
         }
 
-        return $this->mapper->attempt($attempt, $this->orders->byKey($orderKey)->version, $created);
+        $order = $this->orders->byKey($orderKey);
+
+        return $this->mapper->attempt($attempt, $order->version, $created, $this->policy->salesOpen($order->salesUntil, $this->clock->now()));
     }
 
     /** @return array{int, bool} ID попытки и признак новой попытки */

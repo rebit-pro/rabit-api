@@ -85,7 +85,11 @@ final class StartPaymentAttemptTest extends TestCase
         } catch (HttpException $error) {
             self::assertSame(['PRINT_SALES_CLOSED', 409], [$error->getMessage(), $error->getCode()]);
         }
-        self::assertSame($first->id, $scenario->start()->execute(FakeOrders::KEY, new IdempotencyKey(self::KEY_A), $input)->id);
+        $replay = $scenario->start()->execute(FakeOrders::KEY, new IdempotencyKey(self::KEY_A), $input);
+        self::assertSame($first->id, $replay->id);
+        self::assertSame('pending', $replay->status);
+        self::assertNotNull($first->redirectUrl);
+        self::assertNull($replay->redirectUrl, 'After the deadline the exact replay no longer leads to the provider page.');
         self::assertCount(1, $scenario->provider->created);
     }
 

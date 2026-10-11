@@ -50,6 +50,15 @@ final class PaymentAttemptPolicyTest extends TestCase
         self::assertFalse($policy->canStart('unpaid', 1, self::CLOSES_AT, new \DateTimeImmutable('2026-10-01 00:00:00', new \DateTimeZone('Europe/Moscow')), false));
     }
 
+    public function testSalesAreOpenStrictlyBeforeTheDeadline(): void
+    {
+        $policy = new PaymentAttemptPolicy();
+
+        self::assertTrue($policy->salesOpen(self::CLOSES_AT, new \DateTimeImmutable('2026-09-30 20:59:59', new \DateTimeZone('UTC'))));
+        self::assertFalse($policy->salesOpen(self::CLOSES_AT, new \DateTimeImmutable(self::CLOSES_AT, new \DateTimeZone('UTC'))));
+        self::assertTrue($policy->salesOpen(null, new \DateTimeImmutable('2026-12-31 00:00:00', new \DateTimeZone('UTC'))));
+    }
+
     public function testLatePaymentIsAConfirmationAtOrAfterClose(): void
     {
         $policy = new PaymentAttemptPolicy();

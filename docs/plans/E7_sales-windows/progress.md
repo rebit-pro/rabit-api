@@ -4,8 +4,8 @@
 
 - Дата: 11.10.2026. Ветка `codex/e7-sales-windows` от `origin/main` fd7498a, в неё влит `main` 3194db8 (граф MVP, PR #169); рабочая копия `/home/user/rabit-api-worktrees/e7-sales-windows`. PR #162 (https://github.com/rebit-pro/rabit-api/pull/162).
 - Связанное: граф ускоренного MVP `docs/waves/graph.json` (в `main`), план `docs/plans/OPS-mvp-payment-print-email-plan/`, отчёт волны `docs/waves/e7/README.md`. Обновлённый состав волн после ручного тестирования — локальная ветка `codex/ops-telemos-feedback-plan` (8ec5c2f, не запушена): после merge E7 — D4.
-- Завершено: план, backend, frontend и подвал, оферта `2026-10-11`, E2E-фикстуры, spec и верификаторы, документация; блокеры первого ревью (b9d0b5d) и повторного ревью (этот шаг); E7 отмечена `review` в графе.
-- Сейчас: ждём ревью без блокеров.
+- Завершено: план, backend, frontend и подвал, оферта `2026-10-11`, E2E-фикстуры, spec и верификаторы, документация; блокеры первого ревью (b9d0b5d), повторного (60e684c) и третьего (ссылка к провайдеру после срока, S9a); E7 отмечена `review` в графе.
+- Сейчас: блокер третьего ревью (5483648771) исправлен, ответ в треде; ждём ревью без блокеров.
 - Следующий шаг: полный `make test-e2e` и visual desktop/mobile (по графу — пользователь с другой моделью).
 - Блокеры merge: E2E-гейт и visual не запускались (E7-T12, T14–T16 PENDING). Перед merge перенести дату редакции оферты и `effectiveFrom` на дату публикации, если она позже 11.10.2026. Отметку `merged` в графе вносит следующая волна — по решению владельца D4.
 - Открытые решения: нет.
@@ -95,6 +95,19 @@
   - `python3 -m unittest discover -s tools/tests` — 25/26, известное падение #163 (как на `main`);
   - `git diff --check` — чисто. Backend-код с b9d0b5d не менялся, а `main` принёс только документы и проверку графа, поэтому PHPUnit/PHPStan не перезапускались.
 
+### 11.10.2026 — третье ревью PR #162 и его блокер
+
+- Третье ревью (review 5483648771, на 0e8f404): блокеры повторного ревью закрыты, новый блокер один. Заказ с печатью можно было оплатить после закрытия печати через начатую до срока попытку:
+  - кнопка «Проверить начатую оплату» в блоке `order-sales-closed` вела на экран возврата, а `GET` попытки отдавал `redirectUrl` для `pending`, и экран показывал «Продолжить оплату»;
+  - точный повтор того же `Idempotency-Key` возвращал старую попытку раньше `assertCanStart`, и `pay()` уводил на страницу провайдера.
+- Неблокирующие замечания: #170 (повторный заказ и комплект ребёнка), #171 (скрытая подпись `MfTimeline`), #172 (лишние запросы при старте оплаты). Остальные уже в #164–#167.
+- Исправление (S9a, только backend): `PaymentAttemptPolicy::salesOpen` — единое правило «срок продаж состава не наступил» для `assertCanStart`/`canStart`. `PaymentOutputMapper::attempt` получает этот признак и после срока не выдаёт `redirectUrl`; признак передают `GetPaymentAttemptUseCase` и `StartPaymentAttemptUseCase`. Статус попытки по-прежнему сверяется, поэтому оплату, прошедшую до срока, покупатель увидит. Экран возврата без ссылки уходит в «Проверяем оплату», frontend не менялся. Остаточный риск: страница провайдера, открытая до срока, ещё может завершить платёж с `latePayment` (записано в плане).
+- Проверки 11.10.2026:
+  - `php.sh php vendor/bin/phpunit` — OK, 1101 тест / 47068 проверок;
+  - PHPStan `tools/e2e/phpstan.neon` (`XDEBUG_MODE=off`, volume `rabit-e7-phpstan`) — No errors;
+  - php-cs-fixer по 7 изменённым файлам — исправлено выравнивание phpDoc в `PaymentOutputMapper`, повторный dry-run чистый;
+  - `git diff --check` — чисто.
+
 ### 11.10.2026 — обновлённый состав волн
 
 - Владелец обновил состав волн после ручного тестирования (ветка `codex/ops-telemos-feedback-plan`, 8ec5c2f, локальная): после merge E7 делаем D4 (коррекция разметки переданной группы без заказов; зависимости D2, D3, F2, E5, E7). E7 этим планом не расширяется; в его графе E7 тоже `review`.
@@ -115,3 +128,4 @@
 | E7-T14, T15 | PENDING | — | spec и `verify-orders.php` написаны; HTTP-оплата PRINT_SALES_CLOSED без тестового магазина проверяется на уровне сервисов |
 | E7-T16 | PENDING | — | скриншоты e7-desktop/mobile-gallery/cart появятся в гейте |
 | E7-T17 | PASS | 11.10.2026 | `python3 tools/verify-wave-graph.py docs/waves/graph.json` exit 0 после слияния `main` 3194db8; E7 `review` |
+| E7-T18 | PASS | 11.10.2026 | PHPUnit 1101 OK: `StartPaymentAttemptTest` (повтор ключа после срока без `redirectUrl`), `PaymentReconcilerTest::testReturnPageDoesNotOfferTheProviderPageAfterTheSalesDeadline`, `PaymentAttemptPolicyTest::testSalesAreOpenStrictlyBeforeTheDeadline` |

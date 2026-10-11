@@ -26,7 +26,7 @@
 | Галерея `GET /public/galleries/{token}` | `state` += `digital`; новое поле `digitalSalesUntil` |
 | Quote / заказ `POST …/quotes`, `POST …/orders` | в `digital` строка `physical` → 409 `PRINT_SALES_CLOSED`; `closed`/`preparing` → 409 `GALLERY_CLOSED` (как раньше). Повтор заказа по Idempotency-Key возвращает исходный заказ |
 | Заказ покупателя и сотрудника `period` | `state` += `digital`; `digitalSalesUntil` |
-| Оплата `GET payment-quote`, `POST payment-attempts` | срок по составу: с печатью — `closesAt`, иначе `digitalSalesUntil`. Отказ: 409 `PRINT_SALES_CLOSED` для заказа с печатью, 409 `PAYMENT_CLOSED` для остальных. Открытая попытка после срока не выдаётся; точный повтор того же ключа остаётся идемпотентным |
+| Оплата `GET payment-quote`, `POST payment-attempts`, `GET payment-attempts/{id}` | срок по составу: с печатью — `closesAt`, иначе `digitalSalesUntil`. Отказ: 409 `PRINT_SALES_CLOSED` для заказа с печатью, 409 `PAYMENT_CLOSED` для остальных. Открытая попытка после срока не выдаётся; точный повтор того же ключа остаётся идемпотентным. После срока ответ попытки (повтор ключа и экран возврата) содержит статус, но `redirectUrl = null`: продолжить оплату на странице провайдера нельзя |
 | `latePayment` | считается от срока состава: электронный заказ, оплаченный на 10-й день, не поздний, и J1 выдаёт файлы |
 | Ссылки `GET /group-links`, `GET /groups/{id}/link`, ответы transmit/correct | `digitalSalesUntil`; фильтр `state=digital`; `summary.byState.digital`. `closingSoon` — открытые группы, у которых печать закрывается в ближайшие 72 ч. Сохранённые до E7 ответы повтора отдают `digitalSalesUntil: null` |
 | Структура и учреждение | `digitalSalesUntil` у групп; `summary.byState.digital` |
