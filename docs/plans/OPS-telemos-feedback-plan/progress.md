@@ -1,8 +1,8 @@
 # Прогресс разбора встречи 11.10.2026
 
 ## Точка продолжения
-- Ветка `codex/ops-telemos-feedback-plan`; worktree `/home/user/rabit-api/.worktrees/ops-telemos-feedback-plan`. Base `3194db86` (main после PR #169), head до фиксации документов тот же; итоговый head — локальный commit этой ветки, получить `git rev-parse HEAD`. PR задачи не создавался, push/merge не выполнялись.
-- E7: [PR #162](https://github.com/rebit-pro/rabit-api/pull/162), OPEN, head `b9d0b5d5bdf748fc1abcca842c8b8420358aee48`, base `fd7498a3`; это прочитанный снимок внешнего review, не review этой задачей.
+- Ветка `codex/ops-telemos-feedback-plan`; worktree `/home/user/rabit-api/.worktrees/ops-telemos-feedback-plan`. Base `3194db86` (main после PR #169), 11.10.2026 в ветку влит `main` 50c8ee1 (merge E7, PR #162) без конфликтов. Ветка запушена, PR в `main` открыт 11.10.2026 по поручению пользователя начать следующую волну (D4).
+- E7: [PR #162](https://github.com/rebit-pro/rabit-api/pull/162) MERGED 11.10.2026, merge-коммит 50c8ee1; полный E2E-гейт и visual — PASS. В графе E7 остаётся `review`: отметку `merged` вносит D4 своим PR.
 - Завершено: локальная расшифровка, сверка требований/кода/issues/ответов владельца, план R01–R14 и IMP-01–10, граф 59 волн, обзор/карта, проверенный replacement sync patch для MoreFoto. Новые волны D4/E8/F3/J4, J2 перенесена в MVP; E7 остаётся review.
 - Сейчас: документы проверены и подготовлены к локальному commit/передаче. Следующий шаг после передачи: завершить E7 своим исполнителем/Reviewer, затем брать готовые волны по графу; эту задачу реализации не продолжать автоматически.
 - Открыто: D06 есть в decisions.md как принятое, отсутствует в acceptedImplementationDecisions графа — сверить до L1; D09, параметры архива/поздних оплат и исторических прав J4. Почтовый issue #161 и guide #129 остаются задачами реализации. Продуктовые IMP-01–10 PENDING.
@@ -11,6 +11,10 @@
 - Следующие допустимые команды: `git diff --check`; `git diff --cached --check`; `git status --short --branch`; `git log -1 --oneline`. Для восстановления графа: `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
 
 ## Журнал
+### 11.10.2026 — передача в main
+- E7 слита в `main` (PR #162, 50c8ee1). `git merge origin/main` в эту ветку — без конфликтов; `python3 tools/verify-wave-graph.py docs/waves/graph.json` — exit 0, 59 волн, readyMvpFromMain=[E7] (E7 ещё `review` до отметки D4).
+- Ветка запушена и оформлена PR в `main`, чтобы граф с D4/E8/F3/J4 попал в `main` до их PR.
+
 ### 11.10.2026 — начало и контекст
 - DOC-01 PASS: `git fetch origin main`; `gh pr list`; `gh issue list --state open --limit 100`; `gh pr view 162 --json headRefOid,reviews`. Main 3194db86, E7 открыта. Повторное внешнее review на b9d0b5d: подсказка OrderPaymentPanel и синхронизация с main/MVP-планом. Собственное code review/E2E этой задачей не выполнялось.
 - Прочитаны AGENTS.md/CLAUDE.md, существующие планы/граф, код затрагиваемых сценариев. Применены rebit-studio-lead, rebit-studio, rebit-os для планирования и проверки фактов; проектные правила хранения приоритетны.
