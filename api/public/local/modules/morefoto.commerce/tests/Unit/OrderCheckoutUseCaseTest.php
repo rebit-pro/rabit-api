@@ -22,6 +22,7 @@ use Morefoto\Commerce\Application\Storefront\UseCase\CreateQuoteUseCase;
 use Morefoto\Commerce\Application\Storefront\UseCase\ValidateQuoteUseCase;
 use Morefoto\Commerce\Domain\Order\Service\BuyerPolicy;
 use Morefoto\Commerce\Domain\Order\ValueObject\IdempotencyKey;
+use Morefoto\Commerce\Domain\Storefront\Service\SalesWindowPolicy;
 use Morefoto\Commerce\Domain\Storefront\Exception\QuotePriceChangedException;
 use PHPUnit\Framework\TestCase;
 use Rebit\Share\Application\Contract\Consent\ConsentRecorderInterface;
@@ -65,6 +66,18 @@ final class OrderCheckoutUseCaseTest extends TestCase
         $this->expectException(HttpException::class);
         $this->expectExceptionMessage('GALLERY_CLOSED');
         $this->useCase(state: 'closed', receipts: $receipts, quotes: $quotes)->execute(str_repeat('a', 64), new IdempotencyKey(str_repeat('b', 32)), $this->input());
+    }
+
+    public function testDigitalWindowStillPlacesOrdersThroughTheQuoteCheck(): void
+    {
+        $receipts = $this->createStub(CheckoutReceipts::class);
+        $receipts->method('reserve')->willReturn(null);
+        $quotes = $this->createMock(ValidateQuoteUseCase::class);
+        // The quote check owns the composition rule: print lines after the print deadline are refused there.
+        $quotes->expects(self::once())->method('executeWithinTransaction')->willThrowException(new HttpException('PRINT_SALES_CLOSED', 409));
+        $this->expectException(HttpException::class);
+        $this->expectExceptionMessage('PRINT_SALES_CLOSED');
+        $this->useCase(state: 'digital', receipts: $receipts, quotes: $quotes)->execute(str_repeat('a', 64), new IdempotencyKey(str_repeat('b', 32)), $this->input());
     }
 
     public function testReplayReturnsOriginalOrderBeforeRevalidatingQuoteOrGroup(): void
@@ -184,6 +197,7 @@ final class OrderCheckoutUseCaseTest extends TestCase
             $placement ?? $this->createStub(OrderPlacement::class),
             $transaction,
             $consents ?? $this->createStub(ConsentRecorderInterface::class),
+            new SalesWindowPolicy(),
         );
     }
 
@@ -199,7 +213,7 @@ final class OrderCheckoutUseCaseTest extends TestCase
 
     private function group(): GalleryGroupOutputDto
     {
-        return new GalleryGroupOutputDto(1, 2, 'group-id', 'Institution', 'Shoot', 'Group', 'regular', '2026-09-21 00:00:00', '2026-09-28 00:00:00', 1);
+        return new GalleryGroupOutputDto(1, 2, 'group-id', 'Institution', 'Shoot', 'Group', 'regular', '2026-09-21 00:00:00', '2026-09-28 00:00:00', '2026-10-05 00:00:00', 1);
     }
 
     private function validated(): ValidatedQuoteOutputDto

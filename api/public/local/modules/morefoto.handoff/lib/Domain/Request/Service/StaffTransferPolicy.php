@@ -38,7 +38,8 @@ final readonly class StaffTransferPolicy
         array $targetCodes,
         array $ordered,
     ): StaffTransferPlan {
-        if ('closed' === $targetStatus) {
+        // The staff group stops taking children when its print sales close, even while digital sales go on.
+        if (in_array($targetStatus, ['digital', 'closed'], true)) {
             throw new HttpException('TARGET_GROUP_CLOSED', 409);
         }
         if ([] === $rows || count($targetCodes) < count($rows)) {

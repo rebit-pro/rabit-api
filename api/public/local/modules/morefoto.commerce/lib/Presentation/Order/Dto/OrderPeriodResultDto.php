@@ -14,6 +14,7 @@ final readonly class OrderPeriodResultDto implements ResultDtoInterface
         public string $timezone,
         public ?string $sentAt,
         public ?string $closesAt,
+        public ?string $digitalSalesUntil,
         public ?string $deliveryDueAt,
         public string $now,
     ) {}

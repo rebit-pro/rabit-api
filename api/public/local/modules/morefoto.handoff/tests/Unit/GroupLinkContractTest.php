@@ -10,6 +10,7 @@ use Morefoto\Handoff\Application\Link\Dto\GroupLinkPageOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\GroupLinkSummaryOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkCalendarOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkEventOutputDto;
+use Morefoto\Handoff\Application\Link\Mapper\GroupLinkOutputMapper;
 use Morefoto\Handoff\Presentation\Link\GroupLinkInputMapper;
 use Morefoto\Handoff\Presentation\Link\GroupLinkResultMapper;
 use Morefoto\Handoff\Presentation\Link\Request\Dto\CorrectGroupLinkDateRequestDto;
@@ -98,7 +99,7 @@ final class GroupLinkContractTest extends TestCase
         $mapper = new GroupLinkResultMapper();
         $summary = ['groupId' => self::UUID, 'name' => 'Солнышко', 'kind' => 'regular', 'institutionId' => self::UUID, 'institutionName' => 'Сад', 'shootId' => self::UUID,
             'shootName' => 'Осень', 'revision' => 3, 'signature' => str_repeat('a', 64), 'prepared' => true, 'problems' => [], 'state' => 'open', 'timezone' => 'Europe/Moscow',
-            'sentAt' => '2026-09-22T10:15:00+03:00', 'closesAt' => '2026-09-29T10:15:00+03:00', 'deliveryAt' => '2026-10-06T10:15:00+03:00', 'photoCount' => 12, 'childCount' => 4];
+            'sentAt' => '2026-09-22T10:15:00+03:00', 'closesAt' => '2026-09-29T10:15:00+03:00', 'digitalSalesUntil' => '2026-10-06T10:15:00+03:00', 'deliveryAt' => '2026-10-06T10:15:00+03:00', 'photoCount' => 12, 'childCount' => 4];
         $event = ['kind' => 'corrected', 'actorId' => 5, 'actorName' => 'curator', 'at' => '2026-09-22T11:00:00+03:00', 'sentAt' => '2026-09-22T10:15:00+03:00',
             'closesAt' => '2026-09-29T10:15:00+03:00', 'deliveryAt' => '2026-10-06T10:15:00+03:00', 'previousSentAt' => '2026-09-22T10:45:00+03:00',
             'previousClosesAt' => '2026-09-29T10:45:00+03:00', 'previousDeliveryAt' => '2026-10-06T10:45:00+03:00', 'reason' => 'Ошибка в дате'];
@@ -107,18 +108,20 @@ final class GroupLinkContractTest extends TestCase
             $summary + ['galleryToken' => str_repeat('f', 64), 'referenceNow' => '2026-09-22T08:00:00+00:00', 'history' => [$event]],
             json_decode($serializer->serialize($mapper->detail($detail)), true, 16, JSON_THROW_ON_ERROR),
         );
-        $page = new GroupLinkPageOutputDto([new GroupLinkSummaryOutputDto(...$summary, curatorName: 'Мария Иванова')], 1, 25, 1, 1, new GroupLinkCountersOutputDto('2026-09-22T08:00:00+00:00', 2, 1, 0, 1, 1));
+        $page = new GroupLinkPageOutputDto([new GroupLinkSummaryOutputDto(...$summary, curatorName: 'Мария Иванова')], 1, 25, 1, 1, new GroupLinkCountersOutputDto('2026-09-22T08:00:00+00:00', 2, 1, 3, 0, 1, 1));
         self::assertSame(
             ['data' => ['items' => [$summary + ['curatorName' => 'Мария Иванова']]], 'meta' => ['page' => 1, 'pageSize' => 25, 'total' => 1, 'totalPages' => 1, 'summary' => [
-                'referenceNow' => '2026-09-22T08:00:00+00:00', 'byState' => ['preparing' => 2, 'open' => 1, 'closed' => 0], 'closingSoon' => 1, 'prepared' => 1,
+                'referenceNow' => '2026-09-22T08:00:00+00:00', 'byState' => ['preparing' => 2, 'open' => 1, 'digital' => 3, 'closed' => 0], 'closingSoon' => 1, 'prepared' => 1,
             ]]],
             json_decode($serializer->serialize(['data' => $mapper->list($page), 'meta' => $mapper->meta($page)]), true, 16, JSON_THROW_ON_ERROR),
         );
         self::assertArrayNotHasKey('galleryToken', $summary);
         self::assertSame(
-            ['revision' => 4, 'sentAt' => 's', 'closesAt' => 'c', 'deliveryAt' => 'd'],
-            json_decode($serializer->serialize($mapper->calendar(new LinkCalendarOutputDto(4, 's', 'c', 'd'))), true, 4, JSON_THROW_ON_ERROR),
+            ['revision' => 4, 'sentAt' => 's', 'closesAt' => 'c', 'digitalSalesUntil' => 'g', 'deliveryAt' => 'd'],
+            json_decode($serializer->serialize($mapper->calendar(new LinkCalendarOutputDto(4, 's', 'c', 'g', 'd'))), true, 4, JSON_THROW_ON_ERROR),
         );
+        // A replay stored before E7 has no digital deadline and is still served.
+        self::assertNull(new GroupLinkOutputMapper()->calendar(['revision' => 4, 'sentAt' => 's', 'closesAt' => 'c', 'deliveryAt' => 'd'])->digitalSalesUntil);
     }
 
     /**

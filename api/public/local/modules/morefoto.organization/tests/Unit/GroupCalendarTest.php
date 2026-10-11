@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Morefoto\Organization\Tests\Unit;
 
 use Morefoto\Organization\Application\Calendar\Service\CalendarProjection;
+use Morefoto\Organization\Domain\Calendar\Exception\CalendarRuleViolation;
 use Morefoto\Organization\Domain\Calendar\Service\CalendarPolicy;
 use Morefoto\Organization\Domain\Calendar\ValueObject\GroupCalendar;
 use Morefoto\Organization\Infrastructure\Calendar\ServerCalendarClock;
@@ -23,10 +24,13 @@ final class GroupCalendarTest extends TestCase
         self::assertSame('preparing', $empty->status($sent));
         $calendar = $empty->confirmLinkSent($sent);
         self::assertSame('2026-09-18T14:30:00+03:00', $calendar->closesAt?->format(\DateTimeInterface::ATOM));
+        self::assertSame('2026-09-25T14:30:00+03:00', $calendar->digitalSalesUntil?->format(\DateTimeInterface::ATOM));
         self::assertSame('2026-09-25T14:30:00+03:00', $calendar->deliveryDueAt?->format(\DateTimeInterface::ATOM));
         self::assertSame('open', $calendar->status(new \DateTimeImmutable('2026-09-18T14:29:59+03:00')));
-        self::assertSame('closed', $calendar->status(new \DateTimeImmutable('2026-09-18T14:30:00+03:00')));
-        self::assertSame('closed', $calendar->status(new \DateTimeImmutable('2026-09-19T00:00:00Z')));
+        self::assertSame('digital', $calendar->status(new \DateTimeImmutable('2026-09-18T14:30:00+03:00')));
+        self::assertSame('digital', $calendar->status(new \DateTimeImmutable('2026-09-25T14:29:59+03:00')));
+        self::assertSame('closed', $calendar->status(new \DateTimeImmutable('2026-09-25T14:30:00+03:00')));
+        self::assertSame('closed', $calendar->status(new \DateTimeImmutable('2026-09-26T00:00:00Z')));
     }
 
     public function testRetransmissionAfterClosePreservesAllDatesAndInstance(): void
@@ -39,11 +43,34 @@ final class GroupCalendarTest extends TestCase
     {
         $calendar = (new GroupCalendar())->confirmLinkSent(new \DateTimeImmutable('2026-12-24T14:30:00+03:00'));
         $newClose = new \DateTimeImmutable('2027-01-05T20:15:00+03:00');
-        $extended = $calendar->extend($newClose, new \DateTimeImmutable('2027-01-01T00:00:00Z'));
+        $extended = $calendar->extend($newClose, new \DateTimeImmutable('2026-12-28T00:00:00Z'));
         self::assertSame($calendar->sentAt, $extended->sentAt);
         self::assertSame($newClose, $extended->closesAt);
+        self::assertSame('2027-01-07T14:30:00+03:00', $extended->digitalSalesUntil?->format(\DateTimeInterface::ATOM));
         self::assertSame('2027-01-12T20:15:00+03:00', $extended->deliveryDueAt?->format(\DateTimeInterface::ATOM));
         self::assertSame('open', $extended->status(new \DateTimeImmutable('2027-01-01T00:00:00Z')));
+        self::assertSame('digital', $extended->status($newClose));
+    }
+
+    public function testPrintExtendedBeyondDigitalDeadlineCarriesDigitalSalesWithIt(): void
+    {
+        $calendar = (new GroupCalendar())->confirmLinkSent(new \DateTimeImmutable('2026-10-11T15:00:00+03:00'));
+        $newClose = new \DateTimeImmutable('2026-10-30T15:00:00+03:00');
+        $extended = $calendar->extend($newClose, new \DateTimeImmutable('2026-10-17T00:00:00Z'));
+        self::assertSame($newClose, $extended->digitalSalesUntil);
+        self::assertSame('open', $extended->status(new \DateTimeImmutable('2026-10-29T00:00:00Z')));
+        self::assertSame('closed', $extended->status($newClose));
+    }
+
+    public function testClosedPrintCannotBeExtendedAgain(): void
+    {
+        $calendar = (new GroupCalendar())->confirmLinkSent(new \DateTimeImmutable('2026-10-11T15:00:00+03:00'));
+        try {
+            $calendar->extend(new \DateTimeImmutable('2026-10-24T15:00:00+03:00'), new \DateTimeImmutable('2026-10-18T15:00:00+03:00'));
+            self::fail('Print sales closed at T0+7 must not be reopened.');
+        } catch (CalendarRuleViolation $violation) {
+            self::assertSame('PRINT_SALES_CLOSED', $violation->getMessage());
+        }
     }
 
     #[DataProvider('invalidExtensions')]
@@ -59,8 +86,8 @@ final class GroupCalendarTest extends TestCase
     {
         yield 'same deadline' => ['2026-09-18T14:30:00+03:00', '2026-09-12T00:00:00Z'];
         yield 'shorter deadline' => ['2026-09-17T14:30:00+03:00', '2026-09-12T00:00:00Z'];
-        yield 'equal to server now' => ['2026-09-20T14:30:00+03:00', '2026-09-20T14:30:00+03:00'];
-        yield 'later than previous but past' => ['2026-09-20T14:30:00+03:00', '2026-09-21T00:00:00Z'];
+        yield 'equal to server now' => ['2026-09-17T14:30:00+03:00', '2026-09-17T14:30:00+03:00'];
+        yield 'later than now but not than close' => ['2026-09-18T14:00:00+03:00', '2026-09-17T00:00:00Z'];
     }
 
     public function testUnsentGroupCannotBeExtended(): void
@@ -103,35 +130,46 @@ final class GroupCalendarTest extends TestCase
 
     public function testStorageUsesUtcAndProjectionUsesExplicitMoscowOffset(): void
     {
-        $calendar = GroupCalendar::fromStorage('2026-09-11 11:30:00', '2026-09-18 11:30:00', '2026-09-25 11:30:00');
+        $calendar = GroupCalendar::fromStorage('2026-09-11 11:30:00', '2026-09-18 11:30:00', '2026-09-25 11:30:00', '2026-09-25 11:30:00');
         $projection = CalendarProjection::create($calendar, new \DateTimeImmutable('2026-09-18T11:30:00Z'));
         self::assertSame('UTC', $calendar->sentAt?->getTimezone()->getName());
         self::assertSame('Europe/Moscow', $projection->timezone);
         self::assertSame('2026-09-11T14:30:00+03:00', $projection->sentAt);
         self::assertSame('2026-09-18T14:30:00+03:00', $projection->closesAt);
+        self::assertSame('2026-09-25T14:30:00+03:00', $projection->digitalSalesUntil);
         self::assertSame('2026-09-25T14:30:00+03:00', $projection->deliveryDueAt);
-        self::assertSame('closed', $projection->status);
+        self::assertSame('digital', $projection->status);
     }
 
     #[DataProvider('invalidStorage')]
-    public function testRejectsCorruptOrPartialStorage(?string $sent, ?string $close, ?string $delivery): void
+    public function testRejectsCorruptOrPartialStorage(?string $sent, ?string $close, ?string $digital, ?string $delivery): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        GroupCalendar::fromStorage($sent, $close, $delivery);
+        GroupCalendar::fromStorage($sent, $close, $digital, $delivery);
     }
 
-    /** @return iterable<string, array{?string, ?string, ?string}> */
+    /** @return iterable<string, array{?string, ?string, ?string, ?string}> */
     public static function invalidStorage(): iterable
     {
-        yield 'sent only' => ['2026-09-11 11:30:00', null, null];
-        yield 'close only' => [null, '2026-09-18 11:30:00', null];
-        yield 'delivery only' => [null, null, '2026-09-25 11:30:00'];
-        yield 'missing delivery' => ['2026-09-11 11:30:00', '2026-09-18 11:30:00', null];
-        yield 'invalid leap date' => ['2027-02-29 11:30:00', '2027-03-07 11:30:00', '2027-03-14 11:30:00'];
-        yield 'offset in UTC storage' => ['2026-09-11T11:30:00Z', '2026-09-18 11:30:00', '2026-09-25 11:30:00'];
-        yield 'close before send' => ['2026-09-19 11:30:00', '2026-09-18 11:30:00', '2026-09-25 11:30:00'];
-        yield 'delivery before close' => ['2026-09-11 11:30:00', '2026-09-18 11:30:00', '2026-09-17 11:30:00'];
-        yield 'close equals send' => ['2026-09-11 11:30:00', '2026-09-11 11:30:00', '2026-09-25 11:30:00'];
+        yield 'sent only' => ['2026-09-11 11:30:00', null, null, null];
+        yield 'close only' => [null, '2026-09-18 11:30:00', null, null];
+        yield 'digital only' => [null, null, '2026-09-25 11:30:00', null];
+        yield 'delivery only' => [null, null, null, '2026-09-25 11:30:00'];
+        yield 'missing digital' => ['2026-09-11 11:30:00', '2026-09-18 11:30:00', null, '2026-09-25 11:30:00'];
+        yield 'missing delivery' => ['2026-09-11 11:30:00', '2026-09-18 11:30:00', '2026-09-25 11:30:00', null];
+        yield 'invalid leap date' => ['2027-02-29 11:30:00', '2027-03-07 11:30:00', '2027-03-14 11:30:00', '2027-03-14 11:30:00'];
+        yield 'offset in UTC storage' => ['2026-09-11T11:30:00Z', '2026-09-18 11:30:00', '2026-09-25 11:30:00', '2026-09-25 11:30:00'];
+        yield 'close before send' => ['2026-09-19 11:30:00', '2026-09-18 11:30:00', '2026-09-25 11:30:00', '2026-09-25 11:30:00'];
+        yield 'digital before close' => ['2026-09-11 11:30:00', '2026-09-18 11:30:00', '2026-09-18 11:29:59', '2026-09-25 11:30:00'];
+        yield 'delivery before close' => ['2026-09-11 11:30:00', '2026-09-18 11:30:00', '2026-09-25 11:30:00', '2026-09-17 11:30:00'];
+        yield 'close equals send' => ['2026-09-11 11:30:00', '2026-09-11 11:30:00', '2026-09-25 11:30:00', '2026-09-25 11:30:00'];
+    }
+
+    public function testDigitalDeadlineMayEqualPrintAfterAnExtension(): void
+    {
+        $calendar = GroupCalendar::fromStorage('2026-09-11 11:30:00', '2026-09-30 11:30:00', '2026-09-30 11:30:00', '2026-10-07 11:30:00');
+        self::assertSame('open', $calendar->status(new \DateTimeImmutable('2026-09-30 11:29:59', new \DateTimeZone('UTC'))));
+        self::assertSame('closed', $calendar->status(new \DateTimeImmutable('2026-09-30 11:30:00', new \DateTimeZone('UTC'))));
     }
 
     public function testExtensionCannotOverflowThePersistedDeliveryDate(): void

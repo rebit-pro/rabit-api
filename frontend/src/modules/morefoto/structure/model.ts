@@ -1,3 +1,4 @@
+import type { SalesState } from '../commerce/sales-windows.js';
 export type StructureKind = 'institution' | 'shoot' | 'group';
 export interface Institution {
   id: string;
@@ -32,10 +33,13 @@ export interface Group {
   groupKind: 'regular' | 'staff';
   revision: number;
   teacherId: number | null;
-  status: 'preparing' | 'open' | 'closed';
+  status: SalesState;
   timezone: string;
   sentAt: string | null;
+  /** Print sales close (T0+7). */
   closesAt: string | null;
+  /** Digital sales close (T0+14). */
+  digitalSalesUntil: string | null;
   deliveryDueAt: string | null;
 }
 export type StructureItem = Institution | Shoot | Group;

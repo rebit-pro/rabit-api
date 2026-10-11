@@ -76,10 +76,18 @@ final class StaffTransferPolicyTest extends TestCase
         yield 'frame shared with a child outside the request' => ['SHARED_PHOTO', static fn(array $sets): array => [7 => $sets[7], 8 => new ChildSetOutputDto(8, 'child-8', 31, 'B', $sets[8]->photos, ['B001'])]];
     }
 
-    public function testClosedTargetIsRefused(): void
+    #[DataProvider('closedTargets')]
+    public function testClosedTargetIsRefused(string $status): void
     {
         $this->expectExceptionMessage('TARGET_GROUP_CLOSED');
-        (new StaffTransferPolicy())->plan('request', 3, 'staff-group', 'closed', $this->rows(), $this->sets(), ['C', 'D'], []);
+        (new StaffTransferPolicy())->plan('request', 3, 'staff-group', $status, $this->rows(), $this->sets(), ['C', 'D'], []);
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function closedTargets(): iterable
+    {
+        yield 'all sales closed' => ['closed'];
+        yield 'print closed, digital still on sale' => ['digital'];
     }
 
     /** @return list<array{id: int, publicId: string, groupId: int, groupPublicId: string, childId: int, photoIds: list<string>}> */

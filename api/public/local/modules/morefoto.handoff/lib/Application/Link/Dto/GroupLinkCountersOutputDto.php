@@ -10,6 +10,7 @@ final readonly class GroupLinkCountersOutputDto
         public string $referenceNow,
         public int $preparing,
         public int $open,
+        public int $digital,
         public int $closed,
         public int $closingSoon,
         public int $prepared,

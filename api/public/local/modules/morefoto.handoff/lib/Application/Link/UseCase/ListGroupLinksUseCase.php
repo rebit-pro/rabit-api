@@ -23,8 +23,9 @@ use Rebit\Share\Shared\Exception\HttpException;
 
 /**
  * Показывает сотруднику ссылки и сроки групп только его серверной области, с готовностью к передаче и куратором
- * учреждения для каждой группы и счётчиками по всей области: сколько групп готовится, подготовлено, в приёме, закрыто
- * и закрывается в ближайшие дни. Ключи галерей в список не попадают: ссылку выдаёт карточка группы по отдельному запросу.
+ * учреждения для каждой группы и счётчиками по всей области: сколько групп готовится, подготовлено, в полном приёме,
+ * продаёт только электронные фото (E7), закрыто и у скольких приём печати закрывается в ближайшие дни. Ключи галерей
+ * в список не попадают: ссылку выдаёт карточка группы по отдельному запросу.
  */
 final readonly class ListGroupLinksUseCase
 {
@@ -123,6 +124,7 @@ final readonly class ListGroupLinksUseCase
             referenceNow: $summary->referenceNow,
             preparing: $summary->preparing,
             open: $summary->open,
+            digital: $summary->digital,
             closed: $summary->closed,
             closingSoon: $summary->closingSoon,
             prepared: 0 === $summary->preparing ? 0 : $this->links->preparedCount($this->directory->nativeIds($query('preparing'))),

@@ -18,6 +18,7 @@ final readonly class GalleryResultDto implements ResponseDtoInterface
         public string $state,
         public ?string $sentAt,
         public ?string $closesAt,
+        public ?string $digitalSalesUntil,
         public string $referenceNow,
         public array $children,
         public string $curator,

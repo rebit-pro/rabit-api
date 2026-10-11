@@ -22,6 +22,7 @@ final readonly class GroupDirectory implements GroupDirectoryInterface
     private const string FIELDS = "g.ID,g.UF_PUBLIC_ID,g.UF_NAME,g.UF_KIND,g.UF_TIMEZONE,
         DATE_FORMAT(g.UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS SENT_AT,
         DATE_FORMAT(g.UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS CLOSES_AT,
+        DATE_FORMAT(g.UF_DIGITAL_SALES_UNTIL,'%Y-%m-%d %H:%i:%s') AS DIGITAL_SALES_UNTIL,
         DATE_FORMAT(g.UF_DELIVERY_DUE_AT,'%Y-%m-%d %H:%i:%s') AS DELIVERY_DUE_AT,
         s.ID AS SHOOT_ID,s.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID,s.UF_NAME AS SHOOT_NAME,
         i.ID AS INSTITUTION_ID,i.UF_PUBLIC_ID AS INSTITUTION_PUBLIC_ID,i.UF_NAME AS INSTITUTION_NAME";
@@ -88,6 +89,7 @@ final readonly class GroupDirectory implements GroupDirectoryInterface
         return new GroupDirectorySummaryOutputDto(
             preparing: $byState['preparing'],
             open: $byState['open'],
+            digital: $byState['digital'],
             closed: $byState['closed'],
             closingSoon: false === $row ? 0 : (int)$row['CLOSING_SOON'],
             referenceNow: $now->format(\DateTimeInterface::ATOM),
@@ -149,7 +151,7 @@ final readonly class GroupDirectory implements GroupDirectoryInterface
     /** @param array<string, mixed> $row */
     private function item(array $row, \DateTimeImmutable $now): GroupDirectoryItemOutputDto
     {
-        $calendar = GroupCalendar::fromStorage($this->instant($row['SENT_AT']), $this->instant($row['CLOSES_AT']), $this->instant($row['DELIVERY_DUE_AT']), (string)$row['UF_TIMEZONE']);
+        $calendar = GroupCalendar::fromStorage($this->instant($row['SENT_AT']), $this->instant($row['CLOSES_AT']), $this->instant($row['DIGITAL_SALES_UNTIL']), $this->instant($row['DELIVERY_DUE_AT']), (string)$row['UF_TIMEZONE']);
 
         return new GroupDirectoryItemOutputDto(
             nativeId: (int)$row['ID'],

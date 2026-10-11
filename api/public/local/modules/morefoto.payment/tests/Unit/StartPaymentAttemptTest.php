@@ -69,6 +69,30 @@ final class StartPaymentAttemptTest extends TestCase
         self::assertCount(1, $scenario->attempts->rows);
     }
 
+    public function testOpenAttemptIsNotHandedOutAfterTheSalesDeadlineButTheSameKeyStillReplays(): void
+    {
+        $scenario = new PaymentScenario();
+        $scenario->provider->answer(FakeProvider::payment('00000000-0000-4000-8000-000000000001', 'pending'));
+        $input = $this->input($scenario, 'bank_card');
+        $first = $scenario->start()->execute(FakeOrders::KEY, new IdempotencyKey(self::KEY_A), $input);
+        $scenario->orders->salesUntil = '2026-09-25 12:00:01';
+        $scenario->advance(1);
+
+        // E7: the print deadline of a mixed order also closes the attempt opened before it.
+        try {
+            $scenario->start()->execute(FakeOrders::KEY, new IdempotencyKey(self::KEY_B), $input);
+            self::fail('An open attempt must not bypass the closed print sales.');
+        } catch (HttpException $error) {
+            self::assertSame(['PRINT_SALES_CLOSED', 409], [$error->getMessage(), $error->getCode()]);
+        }
+        $replay = $scenario->start()->execute(FakeOrders::KEY, new IdempotencyKey(self::KEY_A), $input);
+        self::assertSame($first->id, $replay->id);
+        self::assertSame('pending', $replay->status);
+        self::assertNotNull($first->redirectUrl);
+        self::assertNull($replay->redirectUrl, 'After the deadline the exact replay no longer leads to the provider page.');
+        self::assertCount(1, $scenario->provider->created);
+    }
+
     public function testSameKeyWithAnotherBodyIsAConflict(): void
     {
         $scenario = new PaymentScenario();
@@ -153,8 +177,14 @@ final class StartPaymentAttemptTest extends TestCase
 
             return null;
         }, 'NOTHING_TO_PAY'];
-        yield 'closed period' => [static function(PaymentScenario $scenario): null {
-            $scenario->orders->closesAt = '2026-09-25 11:59:59';
+        yield 'closed print of a mixed order' => [static function(PaymentScenario $scenario): null {
+            $scenario->orders->salesUntil = '2026-09-25 11:59:59';
+
+            return null;
+        }, 'PRINT_SALES_CLOSED'];
+        yield 'closed digital sales' => [static function(PaymentScenario $scenario): null {
+            $scenario->orders->salesUntil = '2026-09-25 11:59:59';
+            $scenario->orders->containsPrint = false;
 
             return null;
         }, 'PAYMENT_CLOSED'];

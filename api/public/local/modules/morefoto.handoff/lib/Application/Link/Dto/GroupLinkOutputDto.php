@@ -26,6 +26,7 @@ final readonly class GroupLinkOutputDto
         public string $timezone,
         public ?string $sentAt,
         public ?string $closesAt,
+        public ?string $digitalSalesUntil,
         public ?string $deliveryAt,
         public int $photoCount,
         public int $childCount,

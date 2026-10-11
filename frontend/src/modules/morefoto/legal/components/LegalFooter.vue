@@ -13,6 +13,8 @@ const seller = computed(() => sellerLine(catalog.value?.seller ?? null));
       <RouterLink :to="documentPath('offer')">Оферта</RouterLink>
       <RouterLink to="/legal">Документы и реквизиты</RouterLink>
     </nav>
+    <!-- Developer of the application; the seller line above keeps its legal role (E7). -->
+    <p data-testid="footer-developer">Разработано в <a href="https://rebit-pro.ru" target="_blank" rel="noopener">ReBit Studio</a></p>
   </footer>
 </template>
 <style scoped>

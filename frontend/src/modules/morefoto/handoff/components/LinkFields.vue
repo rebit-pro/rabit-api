@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { LinkCommand, LinkGroup, HandoffErrors } from '../types';
-import { calendarDays, closingAfterCorrection, parseTransmission } from '../rules';
+import { calendarDays, closingAfterCorrection, digitalSalesAfter, parseTransmission } from '../rules';
 import { formatMoment, problemText } from '../display';
 import { isMockApiEnabled } from '@/mocks/config';
 const props = defineProps<{ command: LinkCommand; group: LinkGroup; now: string; errors: HandoffErrors }>();
 const emit = defineEmits<{ change: [value: Partial<LinkCommand>] }>();
 const sent = computed(() => parseTransmission(props.command.sentAt, props.now));
 const closing = computed(() => (sent.value ? closingAfterCorrection(sent.value, props.group.extensionClosesAt) : null));
+const digital = computed(() => (sent.value && closing.value ? digitalSalesAfter(sent.value, closing.value) : null));
 </script>
 <template>
   <p class="mb-5">
@@ -44,7 +45,10 @@ const closing = computed(() => (sent.value ? closingAfterCorrection(sent.value, 
     <p class="mf-muted">Проверка фиксируется для текущего состава фотографий и условий. Изменения потребуют повторной проверки.</p>
   </template>
   <template v-else>
-    <p class="mb-4">Укажите, когда ссылка действительно была передана родителям. Приём длится 7 календарных дней с этого момента.</p>
+    <p class="mb-4">
+      Укажите, когда ссылка действительно была передана родителям. С этого момента печать продаётся 7 календарных дней, электронные фото —
+      14.
+    </p>
     <p class="mf-muted mb-5">{{ isMockApiEnabled ? 'Текущее время демонстрации' : 'Текущее время' }}: {{ formatMoment(now) }}.</p>
     <v-text-field
       :model-value="command.sentAt"
@@ -56,12 +60,14 @@ const closing = computed(() => (sent.value ? closingAfterCorrection(sent.value, 
     />
     <div class="handoff-dates mb-5" aria-live="polite">
       <div v-if="command.action === 'correct'">
-        <span>До исправления</span><strong>Приём до {{ formatMoment(group.closesAt) }}</strong
+        <span>До исправления</span><strong>Печать до {{ formatMoment(group.closesAt) }}</strong
+        ><span>Электронные фото до {{ formatMoment(group.digitalSalesUntil) }}</span
         ><span>Доставка до {{ formatMoment(group.deliveryAt) }}</span>
       </div>
       <div>
         <span>{{ command.action === 'correct' ? 'После исправления' : 'Сроки' }}</span
-        ><strong>Приём до {{ formatMoment(closing) }}</strong
+        ><strong>Печать до {{ formatMoment(closing) }}</strong
+        ><span>Электронные фото до {{ formatMoment(digital) }}</span
         ><span>Доставка до {{ formatMoment(closing ? calendarDays(closing, 7) : null) }}</span>
       </div>
     </div>

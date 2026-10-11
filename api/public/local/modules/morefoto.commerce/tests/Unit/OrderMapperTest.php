@@ -130,7 +130,7 @@ final class OrderMapperTest extends TestCase
             'total' => 25000, 'subtotal' => 50000, 'discount' => 0, 'giftSaving' => 25000, 'gifts' => ['A'], 'count' => 3, 'invalid' => [],
             'revision' => 3, 'conditionsRevision' => 4,
         ];
-        $group = new GalleryGroupOutputDto(1, 2, 'group-id', 'Institution', 'Shoot', 'Group', 'regular', null, null, 1);
+        $group = new GalleryGroupOutputDto(1, 2, 'group-id', 'Institution', 'Shoot', 'Group', 'regular', null, null, null, 1);
         $assignment = new GalleryAssignmentOutputDto(self::ASSIGNMENT, self::PHOTO, 'child-id', 12, 'A', 'A003', 1200, 800, 1);
 
         return new ValidatedQuoteOutputDto(new QuoteOutputDto($quote, str_repeat('c', 64), '2026-09-22T10:15:00+00:00'), new GalleryAccessOutputDto($group, 'open', 'now', 1, [$assignment]));

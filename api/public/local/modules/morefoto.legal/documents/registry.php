@@ -15,6 +15,8 @@ return [
         'title' => 'Публичная оферта о продаже фотографий и фотопродукции',
         'versions' => [
             ['version' => '2026-09-25', 'effectiveFrom' => '2026-09-25', 'reconsent' => false],
+            // E7: separate print (7 days) and digital (14 days) intake from the link delivery.
+            ['version' => '2026-10-11', 'effectiveFrom' => '2026-10-11', 'reconsent' => false],
         ],
     ],
     'buyer-consent' => [

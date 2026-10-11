@@ -94,6 +94,8 @@ export function paymentError(problem: ApiProblem): string {
       return 'Этот способ оплаты сейчас недоступен. Выберите другой.';
     case 'PAYMENT_CLOSED':
       return 'Приём заказов группы завершён, оплатить заказ уже нельзя.';
+    case 'PRINT_SALES_CLOSED':
+      return 'Приём заказов на печать завершён — заказ с печатью оплатить уже нельзя. Электронные фото можно оформить новым заказом.';
     case 'ORDER_ALREADY_PAID':
       return 'Заказ уже оплачен.';
     case 'NOTHING_TO_PAY':

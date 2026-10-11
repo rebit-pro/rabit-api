@@ -23,7 +23,7 @@ final readonly class GroupLinkInputMapper
 
     public function list(GroupLinkListRequestDto $request): GroupLinkListInputDto
     {
-        if (null !== $request->state && !in_array($request->state, ['preparing', 'open', 'closed'], true)) {
+        if (null !== $request->state && !in_array($request->state, ['preparing', 'open', 'digital', 'closed'], true)) {
             throw new HttpException('INVALID_STATE', 422);
         }
         if (1 > $request->page || 1000000 < $request->page || 1 > $request->pageSize || 100 < $request->pageSize) {

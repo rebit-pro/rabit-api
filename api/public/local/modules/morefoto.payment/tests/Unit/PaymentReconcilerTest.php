@@ -59,7 +59,7 @@ final class PaymentReconcilerTest extends TestCase
 
     public function testPaymentConfirmedAfterCloseIsLateButStillAMoneyFact(): void
     {
-        $scenario = $this->pending(new FakeOrders(closesAt: '2026-09-25 12:02:00'));
+        $scenario = $this->pending(new FakeOrders(salesUntil: '2026-09-25 12:02:00'));
         $scenario->provider->answer(FakeProvider::payment(self::ATTEMPT, 'succeeded', paidAt: '2026-09-25 12:02:30'));
 
         $scenario->reconciler()->reconcile(1, ConfirmationSourceEnum::RECONCILE);
@@ -243,6 +243,22 @@ final class PaymentReconcilerTest extends TestCase
         self::assertSame('succeeded', $paid->status);
         self::assertNull($paid->redirectUrl);
         self::assertCount(2, $scenario->provider->found);
+    }
+
+    public function testReturnPageDoesNotOfferTheProviderPageAfterTheSalesDeadline(): void
+    {
+        $scenario = $this->pending();
+        self::assertNotNull($scenario->attempt()->execute(FakeOrders::KEY, self::ATTEMPT)->redirectUrl, 'Before the deadline the buyer may continue.');
+        $scenario->orders->salesUntil = '2026-09-25 12:00:05';
+        $scenario->advance(5);
+        $scenario->provider->answer(FakeProvider::payment(self::ATTEMPT, 'pending'));
+
+        $late = $scenario->attempt()->execute(FakeOrders::KEY, self::ATTEMPT);
+
+        // E7: the status is still checked, but an attempt opened before the deadline is not continued after it.
+        self::assertSame('pending', $late->status);
+        self::assertNull($late->redirectUrl);
+        self::assertCount(1, $scenario->provider->found);
     }
 
     public function testForeignAttemptIsNotFound(): void

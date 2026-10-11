@@ -12,6 +12,7 @@ final readonly class LinkCalendarResultDto implements ResultDtoInterface
         public int $revision,
         public string $sentAt,
         public string $closesAt,
+        public ?string $digitalSalesUntil,
         public string $deliveryAt,
     ) {}
 }
