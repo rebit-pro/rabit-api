@@ -19,7 +19,7 @@
     },
     "runner": {
       "status": "failed-baseline",
-      "note": "tools/tests: 25 of 26 OK; test_f2_prepares_first_and_reports_later_in_one_group fails on main fd7498a as well (cabinet-tables sorts before z-links-preparation)"
+      "note": "tools/tests: 25 of 26 OK; test_f2_prepares_first_and_reports_later_in_one_group fails on main fd7498a as well (cabinet-tables sorts before z-links-preparation), issue #163"
     },
     "graph": {
       "status": "blocked",
