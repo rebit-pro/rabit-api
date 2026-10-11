@@ -99,12 +99,11 @@ const tiles = [
 ] as const;
 type LinkState = (typeof tiles)[number]['text'];
 const columns: UiTableColumn[] = [
-  { key: 'name', label: 'Группа', sortable: true, primary: true, width: '24%' },
-  { key: 'status', label: 'Состояние', sortable: true, mobile: true, width: '16%' },
-  { key: 'sentAt', label: 'Передана', type: 'date', sortable: true, mobile: true, width: '10%' },
-  { key: 'closesAt', label: 'Печать до', type: 'date', sortable: true, mobile: true, width: '12%' },
-  { key: 'digitalSalesUntil', label: 'Электронные до', type: 'date', sortable: true, width: '11%' },
-  { key: 'deliveryAt', label: 'Доставка', type: 'date', sortable: true, width: '10%' }
+  { key: 'name', label: 'Группа', sortable: true, primary: true, width: '28%' },
+  { key: 'status', label: 'Состояние', sortable: true, mobile: true, width: '19%' },
+  { key: 'sentAt', label: 'Передана', type: 'date', sortable: true, mobile: true, width: '11%' },
+  { key: 'closesAt', label: 'Печать до', type: 'date', sortable: true, mobile: true, width: '14%' },
+  { key: 'deliveryAt', label: 'Доставка', type: 'date', sortable: true, width: '11%' }
 ];
 const stateFilter = shallowRef<LinkState | null>(null);
 const institutionFilter = shallowRef<string | null>(null);
@@ -147,7 +146,6 @@ const rows = computed<UiTableRow[]>(() => {
       status: linkStatus(g).text,
       sentAt: g.sentAt,
       closesAt: g.closesAt,
-      digitalSalesUntil: g.digitalSalesUntil,
       deliveryAt: g.deliveryAt
     }));
 });
@@ -420,9 +418,12 @@ async function openHistory(group: LinkGroup) {
         <span class="links-state">
           {{ day(group(row.id).closesAt) }}
           <small v-if="left(group(row.id))" class="links-left">{{ left(group(row.id)) }}</small>
+          <!-- E7: digital photos stay on sale after the print close; a separate column would squeeze the dates (#156). -->
+          <small v-if="group(row.id).digitalSalesUntil" data-testid="links-digital-until"
+            >электронные до {{ day(group(row.id).digitalSalesUntil) }}</small
+          >
         </span>
       </template>
-      <template #cell-digitalSalesUntil="{ row }">{{ day(group(row.id).digitalSalesUntil) }}</template>
       <template #cell-deliveryAt="{ row }">{{ day(group(row.id).deliveryAt) }}</template>
       <template #actions="{ row }">
         <div class="links-actions">

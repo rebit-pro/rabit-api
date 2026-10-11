@@ -101,8 +101,7 @@ const groupColumns: UiTableColumn[] = [
       closed: { label: 'Приём завершён', tone: 'neutral' }
     }
   },
-  { key: 'closesAt', label: 'Печать до', type: 'date', sortable: true, mobile: true },
-  { key: 'digitalSalesUntil', label: 'Электронные до', type: 'date', sortable: true }
+  { key: 'closesAt', label: 'Печать до', type: 'date', sortable: true, mobile: true }
 ];
 const moscowDate = new Intl.DateTimeFormat('ru-RU', { timeZone: 'Europe/Moscow' });
 const shootNames = computed(() => new Map((snapshot.value?.shoots.items ?? []).map((shoot) => [shoot.id, shoot.name])));
@@ -323,10 +322,12 @@ async function confirmRemove(): Promise<void> {
             <small v-if="group(row.id)?.groupKind === 'staff'">сотрудники</small>
           </span>
         </template>
-        <template #cell-closesAt="{ row }">{{ row.closesAt ? moscowDate.format(new Date(String(row.closesAt))) : 'Не указано' }}</template>
-        <template #cell-digitalSalesUntil="{ row }">{{
-          row.digitalSalesUntil ? moscowDate.format(new Date(String(row.digitalSalesUntil))) : 'Не указано'
-        }}</template>
+        <template #cell-closesAt="{ row }">
+          {{ row.closesAt ? moscowDate.format(new Date(String(row.closesAt))) : 'Не указано' }}
+          <small v-if="row.digitalSalesUntil" class="d-block mf-muted"
+            >электронные до {{ moscowDate.format(new Date(String(row.digitalSalesUntil))) }}</small
+          >
+        </template>
         <template #actions="{ row }">
           <div class="institution-row-actions">
             <v-btn
