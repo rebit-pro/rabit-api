@@ -40,7 +40,8 @@ final class GroupLinkControllerArchitectureTest extends TestCase
             'json_decode', 'HttpException', '$this->json([', 'try {'] as $forbidden) {
             self::assertStringNotContainsString($forbidden, $source);
         }
-        self::assertSame(5, preg_match_all('/public function \w+Action\(\w+RequestDto \$request\): ControllerJson/', $source));
+        // F2 list, detail, preparation, transmission, date correction; D4 start and finish of a markup correction.
+        self::assertSame(7, preg_match_all('/public function \w+Action\(\w+RequestDto \$request\): ControllerJson/', $source));
     }
 
     public function testLinkControllerLogsToTheHandoffChannel(): void

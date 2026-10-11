@@ -9,6 +9,7 @@ use Morefoto\Handoff\Application\Link\Dto\GroupLinkPageOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\GroupLinkSummaryOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkCalendarOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkEventOutputDto;
+use Morefoto\Handoff\Application\Link\Dto\LinkMarkupCorrectionOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkPreparationOutputDto;
 use Morefoto\Handoff\Presentation\Link\Result\Dto\GroupLinkCountersResultDto;
 use Morefoto\Handoff\Presentation\Link\Result\Dto\GroupLinkListResultDto;
@@ -17,6 +18,7 @@ use Morefoto\Handoff\Presentation\Link\Result\Dto\GroupLinkSummaryResultDto;
 use Morefoto\Handoff\Presentation\Link\Result\Dto\LinkCalendarResultDto;
 use Morefoto\Handoff\Presentation\Link\Result\Dto\LinkEventResultDto;
 use Morefoto\Handoff\Presentation\Link\Result\Dto\LinkPreparationResultDto;
+use Morefoto\Handoff\Presentation\Link\Result\Dto\MarkupCorrectionResultDto;
 
 final readonly class GroupLinkResultMapper
 {
@@ -64,15 +66,22 @@ final readonly class GroupLinkResultMapper
             deliveryAt: $output->deliveryAt,
             photoCount: $output->photoCount,
             childCount: $output->childCount,
+            markupCorrectionAt: $output->markupCorrectionAt,
             galleryToken: $output->galleryToken,
             referenceNow: $output->referenceNow,
             history: array_map($this->event(...), $output->history),
+            markupCorrectable: $output->markupCorrectable,
         );
     }
 
     public function preparation(LinkPreparationOutputDto $output): LinkPreparationResultDto
     {
         return new LinkPreparationResultDto($output->revision, $output->signature, $output->prepared);
+    }
+
+    public function markupCorrection(LinkMarkupCorrectionOutputDto $output): MarkupCorrectionResultDto
+    {
+        return new MarkupCorrectionResultDto($output->revision, $output->startedAt);
     }
 
     public function calendar(LinkCalendarOutputDto $output): LinkCalendarResultDto
@@ -102,6 +111,7 @@ final readonly class GroupLinkResultMapper
             deliveryAt: $output->deliveryAt,
             photoCount: $output->photoCount,
             childCount: $output->childCount,
+            markupCorrectionAt: $output->markupCorrectionAt,
             curatorName: $output->curatorName,
         );
     }

@@ -10,12 +10,12 @@ use Morefoto\Media\Application\Photo\Contract\PrivatePhotoStorageInterface;
 use Morefoto\Media\Application\Photo\Dto\PhotoRegistration;
 use Morefoto\Media\Application\Photo\Dto\UploadPhotoInputDto;
 use Morefoto\Media\Application\Photo\Dto\UploadPhotoOutputDto;
+use Morefoto\Media\Application\Photo\Service\GroupMarkupAccess;
 use Morefoto\Media\Application\Photo\Service\UploadChildAssignment;
 use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
-use Morefoto\Media\Application\Photo\Service\GroupMarkupAccess;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 

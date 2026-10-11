@@ -76,10 +76,10 @@ final class LinkPolicyTest extends TestCase
             }
         }
         self::assertSame([
-            'organizer' => ['read' => true, 'prepare' => true, 'transmit' => true, 'correct' => true],
-            'curator' => ['read' => true, 'prepare' => false, 'transmit' => true, 'correct' => true],
-            'head' => ['read' => true, 'prepare' => false, 'transmit' => false, 'correct' => false],
-            'teacher' => ['read' => true, 'prepare' => false, 'transmit' => true, 'correct' => false],
+            'organizer' => ['read' => true, 'prepare' => true, 'transmit' => true, 'correct' => true, 'startMarkupCorrection' => true, 'finishMarkupCorrection' => true],
+            'curator' => ['read' => true, 'prepare' => false, 'transmit' => true, 'correct' => true, 'startMarkupCorrection' => true, 'finishMarkupCorrection' => true],
+            'head' => ['read' => true, 'prepare' => false, 'transmit' => false, 'correct' => false, 'startMarkupCorrection' => false, 'finishMarkupCorrection' => false],
+            'teacher' => ['read' => true, 'prepare' => false, 'transmit' => true, 'correct' => false, 'startMarkupCorrection' => false, 'finishMarkupCorrection' => false],
         ], $matrix);
         self::assertSame([null, null], $policy->scope('organizer', [3], [10]));
         self::assertSame([[3], null], $policy->scope('head', [3], []));

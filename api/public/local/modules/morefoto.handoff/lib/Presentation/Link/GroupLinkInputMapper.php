@@ -6,12 +6,16 @@ namespace Morefoto\Handoff\Presentation\Link;
 
 use Morefoto\Handoff\Application\Link\Dto\GroupLinkListInputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkCorrectionInputDto;
+use Morefoto\Handoff\Application\Link\Dto\MarkupCorrectionFinishInputDto;
+use Morefoto\Handoff\Application\Link\Dto\MarkupCorrectionStartInputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkPreparationInputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkTransmissionInputDto;
 use Morefoto\Handoff\Domain\Request\ValueObject\IdempotencyKey;
 use Morefoto\Handoff\Presentation\Link\Request\Dto\CorrectGroupLinkDateRequestDto;
+use Morefoto\Handoff\Presentation\Link\Request\Dto\FinishMarkupCorrectionRequestDto;
 use Morefoto\Handoff\Presentation\Link\Request\Dto\GroupLinkListRequestDto;
 use Morefoto\Handoff\Presentation\Link\Request\Dto\PrepareGroupLinkRequestDto;
+use Morefoto\Handoff\Presentation\Link\Request\Dto\StartMarkupCorrectionRequestDto;
 use Morefoto\Handoff\Presentation\Link\Request\Dto\TransmitGroupLinkRequestDto;
 use Morefoto\Handoff\Presentation\Request\StaffRequestValidation;
 use Rebit\Share\Shared\Exception\HttpException;
@@ -66,7 +70,17 @@ final readonly class GroupLinkInputMapper
         return new LinkCorrectionInputDto($this->revision($request->revision), $this->signature($request->signature), $this->sentAt($request->sentAt), $reason);
     }
 
-    public function key(CorrectGroupLinkDateRequestDto|PrepareGroupLinkRequestDto|TransmitGroupLinkRequestDto $request): IdempotencyKey
+    public function markupStart(StartMarkupCorrectionRequestDto $request): MarkupCorrectionStartInputDto
+    {
+        return new MarkupCorrectionStartInputDto($this->revision($request->revision));
+    }
+
+    public function markupFinish(FinishMarkupCorrectionRequestDto $request): MarkupCorrectionFinishInputDto
+    {
+        return new MarkupCorrectionFinishInputDto($this->revision($request->revision), $this->signature($request->signature));
+    }
+
+    public function key(CorrectGroupLinkDateRequestDto|FinishMarkupCorrectionRequestDto|PrepareGroupLinkRequestDto|StartMarkupCorrectionRequestDto|TransmitGroupLinkRequestDto $request): IdempotencyKey
     {
         return new IdempotencyKey($request->idempotencyKey);
     }

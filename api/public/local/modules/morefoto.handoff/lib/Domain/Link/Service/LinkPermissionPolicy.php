@@ -7,7 +7,8 @@ namespace Morefoto\Handoff\Domain\Link\Service;
 use Morefoto\Handoff\Domain\Link\Enum\LinkActionEnum;
 
 /**
- * Применяет матрицу D08 к ссылкам групп: кто видит группу и кто проверяет, передаёт или исправляет дату передачи.
+ * Применяет матрицу D08 к ссылкам групп: кто видит группу и кто проверяет, передаёт, исправляет дату передачи или
+ * разметку переданной группы (D4).
  * Группа вне области неотличима от несуществующей, а запрещённое действие в своей области отклоняется явно.
  */
 final readonly class LinkPermissionPolicy
@@ -32,7 +33,7 @@ final readonly class LinkPermissionPolicy
             LinkActionEnum::READ => ['organizer', 'curator', 'head', 'teacher'],
             LinkActionEnum::PREPARE => ['organizer'],
             LinkActionEnum::TRANSMIT => ['organizer', 'curator', 'teacher'],
-            LinkActionEnum::CORRECT => ['organizer', 'curator'],
+            LinkActionEnum::CORRECT, LinkActionEnum::START_MARKUP_CORRECTION, LinkActionEnum::FINISH_MARKUP_CORRECTION => ['organizer', 'curator'],
         }, true);
     }
 
