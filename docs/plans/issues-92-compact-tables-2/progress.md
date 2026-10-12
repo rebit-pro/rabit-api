@@ -2,19 +2,20 @@
 
 ## Точка продолжения
 
-- Ветка `codex/issues-92-compact-tables-2`, worktree `/home/user/rabit-api-worktrees/issues-92-compact-tables-2`,
-  base `origin/main` `18d10b1` (слит в `0abb702`). Issue [#92](https://github.com/rebit-pro/rabit-api/issues/92), draft PR
-  [#160](https://github.com/rebit-pro/rabit-api/pull/160).
-- Завершено: макеты одобрены; backend (сортировка трёх списков, `DELETE` списка и заказа, контракт Payment), фронтенд,
-  unit/архитектурные тесты, live-спек `zzzzzzzzzzz-tables` (группа b), поправки селекторов старых спеков, верификатор.
-- Сейчас: прогон live E2E группы b (`E2E_GROUPS=b E2E_STANDS=1`).
-- Следующий шаг: по итогам группы b — группа a (старые спеки не менялись, но `UiDataTable` общий), затем PR из draft в review.
-- Блокеров нет. Открытых решений нет.
-- Backend-проверки из `api/`: `docker run --rm --network none -e XDEBUG_MODE=off -v "$PWD":/app -v /home/user/rabit-api/api/vendor:/app/vendor:ro -w /app rabit-api-php-cli:d3-webp sh -c 'php vendor/bin/phpunit --testsuite=unit; php -d memory_limit=4G vendor/bin/phpstan analyse --configuration=phpstan.neon'`.
-- Frontend-проверки из `frontend/`: `docker run --rm --network none -v "$PWD":/app -v rabit-issues92-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`.
+- Ветка `codex/issues-92-compact-tables-2`, worktree `/home/user/rabit-api-worktrees/issues-92-compact-tables-2`.
+  Issue [#92](https://github.com/rebit-pro/rabit-api/issues/92), draft PR [#160](https://github.com/rebit-pro/rabit-api/pull/160).
+  В ветку слит `origin/main` b085e8e (merge J4), коммит 700a623.
+- Завершено: 2026-09-27 — backend (сортировка трёх списков, `DELETE` списка и заказа, контракт Payment), фронтенд,
+  unit/архитектурные тесты, live-спек `zzzzzzzzzzz-tables`. Эти коммиты не были запушены до 2026-10-12.
+  2026-10-12 — слияние main (конфликты E7/D4/E8/J4), DEC-07/08 по новым ответам пользователя, быстрые проверки зелёные.
+- Сейчас: полный `make test-e2e` (ЮKassa OFF), лог `e2e-92-run1.log` в scratchpad сессии.
+- Следующий шаг: по зелёному гейту — PR из draft в review, ревью; merge по команде пользователя «влей в main, если всё ок».
+- Блокеров нет. Внешнее: тестовый магазин ЮKassa (#174) — гейт без него.
+- Backend-проверки: `php-92.sh` в scratchpad сессии (docker `rabit-api-php-cli:d1-local`, vendor volume `rabit-e7-vendor`):
+  `vendor/bin/phpunit`, `vendor/bin/phpstan analyse --configuration=tools/e2e/phpstan.neon`.
+- Frontend-проверки из `frontend/`: `docker run --rm --network none -v "$PWD":/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`.
 - Форматирование фронтенда — только `npx eslint --fix <файлы>`, не `prettier --write`.
-- Полный гейт: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`;
-  частичный — с `E2E_GROUPS=b` (не гейт).
+- Полный гейт: `E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e`.
 
 ## Статус тест-кейсов
 
@@ -73,3 +74,20 @@
   `zzzzz-orders` создаёт заново); старые спеки переведены на `[data-row-id]`/`ui-table-range`, `order-scope-filters`
   теперь на всей форме, шаги mock-Cucumber открывают список по `/^Открыть список /`.
 - Скриншоты реализации — `screens/impl/` (12), совпадают с макетами.
+
+### 2026-10-12
+
+- Пользователь: «взять ветку PR 160, проверить и влить в main, если всё ок». Проверка: на GitHub — draft с планом и прототипом,
+  конфликт с main; локально — 9 незапушенных коммитов реализации от 2026-09-27 (`2fa2de6`, `012a85f`, `ed4807c` и слияние).
+  Сливать было нельзя; пользователь выбрал «доделать срез».
+- Новые ответы пользователя: DEC-05 сервер, DEC-06 организатор (как раньше), DEC-07 — только выбранные строки (без
+  «Выгрузить всё»), DEC-08 — только email («Надо учитывать. Остался только e-mail»). DEC-09 — последовательные запросы.
+- Локальные коммиты запушены; в ветку слит `origin/main` b085e8e (700a623). Конфликты: `groups.json`, раннер (verify-orders
+  + `zzzzzzzzzzz-tables`), `OrderRepository` (оба набора методов), `OrderInputMapperTest` (импорты), `zzzzz-orders.spec`
+  (строки таблицы + email E8), `StaffOrdersLiveScreen` (таблица ветки).
+- DEC-07/08: удалены «Выгрузить всё» заказов и платежей; колонка покупателя, сортировка (`OrderSortEnum::BUYER_EMAIL`),
+  CSV и диалог удаления — email; спек таблиц создаёт заказы только с email и ищет их по нему; T14 снят.
+  `staffBuyerLine` (E8) и его тест удалены как неиспользуемые.
+- На `mf_order` ссылаются только E5/G1/J1-таблицы (новых FK с 27.09 нет); `mf_legal_consent` без FK — DEC-10.
+- Проверки: PHPUnit 1130 OK; PHPStan OK; php-cs-fixer 0 из 38 файлов; `npm run check` OK (UI 88), commerce 237, build OK.
+

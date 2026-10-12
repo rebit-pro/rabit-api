@@ -6,7 +6,7 @@ import { money } from '../../commerce/money';
 import OrderComposition from '../../orders/components/OrderComposition.vue';
 import OrderLiveFacts from '../../orders/components/OrderLiveFacts.vue';
 import { formatMoment, livePaymentLabels as paymentLabels, productionLabels } from '../../orders/formatters';
-import { hasStaffFilters, orderQuoteAsCart, staffBuyerLine } from '../../orders/live/rules';
+import { hasStaffFilters, orderQuoteAsCart } from '../../orders/live/rules';
 import { useStaffOrders } from '../useStaffOrders';
 import { useStaffOrderScope } from '../useStaffOrderScope';
 import MfStatus from '@/components/status/MfStatus.vue';
@@ -104,19 +104,7 @@ async function confirmRemove(): Promise<void> {
     removing.value = false;
   }
 }
-const csvHeader = [
-  'Номер',
-  'Создан (мск)',
-  'Учреждение',
-  'Съёмка',
-  'Группа',
-  'Покупатель',
-  'Телефон',
-  'Email',
-  'Сумма, ₽',
-  'Оплата',
-  'Изготовление'
-];
+const csvHeader = ['Номер', 'Создан (мск)', 'Учреждение', 'Съёмка', 'Группа', 'Email покупателя', 'Сумма, ₽', 'Оплата', 'Изготовление'];
 function exportRows(orders: StaffOrder[]): void {
   const rows = orders.map((order) => [
     order.number,
@@ -124,39 +112,12 @@ function exportRows(orders: StaffOrder[]): void {
     order.institutionName,
     order.shootName,
     order.groupName,
-    order.buyer.name,
-    formatPhone(order.buyer.phone),
     order.buyer.email,
     (order.quote.total / 100).toFixed(2).replace('.', ','),
     paymentLabels[order.paymentStatus],
     productionLabels[order.productionStatus]
   ]);
   downloadCsv('orders-' + moscowDate(0) + '.csv', csvText(csvHeader, rows));
-}
-/** Everything the filter finds, page by page up to the limit (#92 DEC-07); a larger set asks for a narrower filter. */
-const EXPORT_LIMIT = 1000;
-const exporting = shallowRef(false);
-async function exportAll(): Promise<void> {
-  if ((page.value?.meta.total ?? 0) > EXPORT_LIMIT) {
-    notice.value = {
-      tone: 'warning',
-      text: 'Выгрузка — не больше ' + EXPORT_LIMIT + ' заказов. Уточните фильтр или период.',
-      failures: []
-    };
-    return;
-  }
-  exporting.value = true;
-  try {
-    const orders: StaffOrder[] = [];
-    for (let number = 1, pages = 1; number <= pages; number++) {
-      const result = await liveOrdersApi.search(filters, { ...view.value, page: number, pageSize: 100 });
-      orders.push(...result.items);
-      pages = result.meta.totalPages;
-    }
-    exportRows(orders);
-  } finally {
-    exporting.value = false;
-  }
 }
 function lastDays(days: number): void {
   filters.dateFrom = moscowDate(days - 1);
@@ -171,15 +132,6 @@ function lastDays(days: number): void {
       <h1>{{ orderId ? 'Заказ' : 'Заказы' }}</h1>
       <p class="mf-muted">Заказы покупателей в вашей области. Ключи доступа покупателей здесь не показываются.</p>
     </div>
-    <v-btn
-      v-if="!orderId && page?.meta.total"
-      variant="outlined"
-      prepend-icon="mdi-download-outline"
-      :loading="exporting"
-      data-testid="order-export-all"
-      @click="exportAll"
-      >Выгрузить всё · CSV</v-btn
-    >
   </header>
   <v-alert v-if="error" type="error" variant="tonal" class="mb-5" role="alert"
     >{{ error }}<v-btn variant="text" @click="reload">Повторить</v-btn></v-alert
@@ -332,7 +284,7 @@ function lastDays(days: number): void {
   <UiRemoveDialog
     :open="!!removal"
     :title="removal?.length === 1 ? 'Удалить заказ ' + removal[0]?.number + '?' : 'Удалить заказы: ' + (removal?.length ?? 0) + '?'"
-    :names="removal?.map((order) => order.number + ' · ' + order.buyer.name + ' · ' + money(order.quote.total)) ?? []"
+    :names="removal?.map((order) => order.number + ' · ' + order.buyer.email + ' · ' + money(order.quote.total)) ?? []"
     :busy="removing"
     testid="order-remove-dialog"
     @close="removal = null"

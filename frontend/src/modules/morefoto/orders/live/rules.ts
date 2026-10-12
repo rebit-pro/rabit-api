@@ -1,15 +1,8 @@
 import type { SalesLine } from '../../commerce/sales-windows.js';
 import type { CartQuote } from '../../commerce/types.js';
 import type { Group, Institution, Shoot } from '../../structure/model.js';
-import { formatPhone } from '../../ui/field-values.ts';
 import type { BuyerErrors } from '../types.js';
-import type { ApiProblem, BuyerOrder, CreatedOrder, LiveBuyer, LiveOrderLine, LiveOrderQuote, StaffOrderFilters } from './types.js';
-
-/** E8: a staff list row of an order without a name shows its email; one placed before E8 keeps «name · phone». */
-export function staffBuyerLine(buyer: Pick<LiveBuyer, 'name' | 'phone' | 'email'>): string {
-  const parts = [buyer.name, buyer.phone === null ? null : formatPhone(buyer.phone)].filter((part): part is string => !!part);
-  return parts.length > 0 ? parts.join(' · ') : buyer.email;
-}
+import type { ApiProblem, BuyerOrder, CreatedOrder, LiveOrderLine, LiveOrderQuote, StaffOrderFilters } from './types.js';
 
 export type CheckoutOutcome =
   | { kind: 'unknown'; message: string }

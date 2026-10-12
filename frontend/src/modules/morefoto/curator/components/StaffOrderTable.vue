@@ -7,7 +7,6 @@ import type { StaffOrder } from '../../orders/live/types';
 import { money } from '../../commerce/money';
 import { livePaymentLabels as paymentLabels, productionLabels } from '../../orders/formatters';
 import { tableMoment } from '../../ui/table-values';
-import { formatPhone } from '../../ui/field-values';
 import MfStatus from '@/components/status/MfStatus.vue';
 import { toneOf } from '@/components/status/tones';
 import { paymentTone, productionTone } from '../../ui/statusTone';
@@ -32,7 +31,7 @@ const emit = defineEmits<{
 const selected = defineModel<string[]>('selected', { default: () => [] });
 const columns: UiTableColumn[] = [
   { key: 'createdAt', label: 'Заказ', sortable: true, primary: true, width: '15%' },
-  { key: 'buyerName', label: 'Покупатель', sortable: true, mobile: true, width: '16%' },
+  { key: 'buyerEmail', label: 'Покупатель', sortable: true, mobile: true, width: '16%' },
   { key: 'institutionName', label: 'Учреждение и группа', sortable: true, width: '19%' },
   { key: 'total', label: 'Сумма', type: 'money', sortable: true, mobile: true, width: '10%' },
   { key: 'paymentStatus', label: 'Оплата', sortable: true, mobile: true, width: '18%' },
@@ -44,7 +43,7 @@ const rows = computed<UiTableRow[]>(() =>
     id: order.id,
     createdAt: order.createdAt,
     number: order.number,
-    buyerName: order.buyer.name,
+    buyerEmail: order.buyer.email,
     institutionName: order.institutionName,
     total: order.quote.total,
     paymentStatus: order.paymentStatus,
@@ -101,11 +100,9 @@ function deletable(id: string): boolean {
         <small>{{ tableMoment(String(row.createdAt)) }}</small>
       </span>
     </template>
-    <template #cell-buyerName="{ row }">
-      <span class="order-cell">
-        <span>{{ row.buyerName }}</span>
-        <small>{{ formatPhone(order(row.id).buyer.phone) }}</small>
-      </span>
+    <!-- E8 and #92 DEC-08: the email is the only contact an order keeps. -->
+    <template #cell-buyerEmail="{ row }">
+      <span class="order-clip" :title="String(row.buyerEmail)">{{ row.buyerEmail }}</span>
     </template>
     <template #cell-institutionName="{ row }">
       <span class="order-cell">

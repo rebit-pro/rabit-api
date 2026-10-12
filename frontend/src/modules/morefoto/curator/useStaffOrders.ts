@@ -14,7 +14,7 @@ import { tableViewFromQuery, tableViewQuery, type TableView } from '../ui/table-
 import type { UiTableSort } from '../ui/table-types';
 
 /** Columns the server orders by (#92 DEC-05); newest first by default. */
-export const ORDER_SORTS = ['createdAt', 'buyerName', 'institutionName', 'total', 'paymentStatus', 'productionStatus'] as const;
+export const ORDER_SORTS = ['createdAt', 'buyerEmail', 'institutionName', 'total', 'paymentStatus', 'productionStatus'] as const;
 export const ORDER_SORT: UiTableSort = { key: 'createdAt', direction: 'desc' };
 
 export function useStaffOrders() {

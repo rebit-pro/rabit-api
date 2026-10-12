@@ -219,7 +219,7 @@ final readonly class OrderRepository
         $direction = $descending ? 'DESC' : 'ASC';
         $column = match ($sort) {
             OrderSortEnum::CREATED_AT => null,
-            OrderSortEnum::BUYER_NAME => 'o.BUYER_NAME',
+            OrderSortEnum::BUYER_EMAIL => 'o.BUYER_EMAIL',
             OrderSortEnum::INSTITUTION_NAME => 'o.INSTITUTION_NAME',
             OrderSortEnum::TOTAL => 'o.TOTAL',
             OrderSortEnum::PAYMENT_STATUS => "FIELD(o.PAYMENT_STATUS,'unpaid','pending','declined','paid')",

@@ -20,7 +20,8 @@ function reportRemoved(orderIds: string[]): void {
   secrets.removedOrderIds = [...(secrets.removedOrderIds ?? []), ...orderIds];
   writeFileSync(path, JSON.stringify(secrets));
 }
-async function placeOrder(page: Page, name: string, quantity: number): Promise<{ id: string; number: string }> {
+/** E8: the email is the only contact; `tag` makes both orders of a run findable by one search. */
+async function placeOrder(page: Page, tag: string, quantity: number): Promise<{ id: string; number: string }> {
   const catalog = (await body(await page.request.get(gallery + '/catalog'))).data;
   const product = catalog.products.find((item: { kind: string }) => item.kind === 'physical');
   const photo = (await body(await page.request.get(gallery))).data.children.flatMap(
@@ -28,7 +29,7 @@ async function placeOrder(page: Page, name: string, quantity: number): Promise<{
   )[0];
   const lines = [{ assignmentId: photo.assignmentId, productId: product.id, quantity }];
   const priced = (await body(await page.request.post(gallery + '/quotes', { data: { lines } }))).data;
-  const buyer = { name, phone: '8 (900) 555-09-2' + quantity, email: 'tables.' + quantity + '@example.test', comment: '', reviewed: true };
+  const buyer = { email: tag + '-' + quantity + '@example.test', comment: '', reviewed: true };
   return (
     await body(
       await page.request.post(gallery + '/orders', {
@@ -72,8 +73,8 @@ test.afterEach(async ({ page }) => {
   expect(problems.get(page)).toEqual([]);
 });
 
-test('#92 T06 T09 T12 T13 T14 T15: заказы — сортировка сервером, CSV и удаление неоплаченных', async ({ page, browser, baseURL }) => {
-  const buyer = 'Табличный ' + suffix();
+test('#92 T06 T09 T12 T13 T15: заказы — сортировка сервером, CSV и удаление неоплаченных', async ({ page, browser, baseURL }) => {
+  const buyer = 'tables-' + suffix();
   const cheap = await placeOrder(page, buyer, 1);
   const dear = await placeOrder(page, buyer, 2);
   let removed = false;
@@ -105,13 +106,11 @@ test('#92 T06 T09 T12 T13 T14 T15: заказы — сортировка сер�
     await page.getByTestId('order-bulk').getByRole('button', { name: 'Выгрузить CSV', exact: true }).click();
     const lines = await csv(picked);
     expect(lines).toHaveLength(3);
-    expect(lines[0]).toContain('Номер;Создан (мск)');
-    expect(lines.slice(1).join('\n')).toContain(buyer);
-
-    // T14: the whole filter is exported page by page.
-    const all = page.waitForEvent('download');
-    await page.getByTestId('order-export-all').click();
-    expect(await csv(all)).toHaveLength(3);
+    // DEC-08: the buyer is the email only (E8), there is no name or phone column.
+    expect(lines[0]).toBe('Номер;Создан (мск);Учреждение;Съёмка;Группа;Email покупателя;Сумма, ₽;Оплата;Изготовление');
+    expect(lines.slice(1).join('\n')).toContain(buyer + '-1@example.test');
+    // DEC-07: only the selection is exported; there is no «export all».
+    await expect(page.getByText('Выгрузить всё', { exact: false })).toHaveCount(0);
 
     // T06, T15: both unpaid orders go after one confirmation; the buyer link and the registry forget them.
     await page.getByTestId('order-bulk').getByRole('button', { name: 'Удалить неоплаченные', exact: true }).click();

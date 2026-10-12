@@ -8,7 +8,7 @@ namespace Morefoto\Commerce\Domain\Order\Enum;
 enum OrderSortEnum: string
 {
     case CREATED_AT = 'createdAt';
-    case BUYER_NAME = 'buyerName';
+    case BUYER_EMAIL = 'buyerEmail';
     case INSTITUTION_NAME = 'institutionName';
     case TOTAL = 'total';
     case PAYMENT_STATUS = 'paymentStatus';

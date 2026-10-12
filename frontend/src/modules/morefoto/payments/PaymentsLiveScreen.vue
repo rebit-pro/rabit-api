@@ -10,7 +10,6 @@ import type { StatusTone } from '@/components/status/tones';
 import { usePaymentRegistry } from './usePaymentRegistry';
 import PaymentTable from './PaymentTable.vue';
 import { csvText, downloadCsv } from '../ui/csv';
-import { livePaymentsApi } from '../orders/live/payments-api';
 import type { StaffPayment } from '../orders/live/payment-types';
 const route = useRoute();
 const { attemptId, filters, view, page, card, loading, error, reload, apply, reset } = usePaymentRegistry();
@@ -50,29 +49,6 @@ function exportRows(payments: StaffPayment[]): void {
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(new Date());
   downloadCsv('payments-' + today + '.csv', csvText(csvHeader, rows));
 }
-/** Everything the filter finds, page by page up to the limit (#92 DEC-07). */
-const EXPORT_LIMIT = 1000;
-const exporting = shallowRef(false);
-const exportError = shallowRef('');
-async function exportAll(): Promise<void> {
-  exportError.value = '';
-  if ((page.value?.meta.total ?? 0) > EXPORT_LIMIT) {
-    exportError.value = 'Выгрузка — не больше ' + EXPORT_LIMIT + ' платежей. Уточните фильтр или период.';
-    return;
-  }
-  exporting.value = true;
-  try {
-    const payments: StaffPayment[] = [];
-    for (let number = 1, pages = 1; number <= pages; number++) {
-      const result = await livePaymentsApi.search(filters, { ...view.value, page: number, pageSize: 100 });
-      payments.push(...result.items);
-      pages = result.meta.totalPages;
-    }
-    exportRows(payments);
-  } finally {
-    exporting.value = false;
-  }
-}
 </script>
 <template>
   <header class="payments__heading">
@@ -83,17 +59,7 @@ async function exportAll(): Promise<void> {
         Попытки оплаты заказов вашей области. Оплату подтверждает только ЮKassa; ключи покупателей здесь не показываются.
       </p>
     </div>
-    <v-btn
-      v-if="!attemptId && page?.meta.total"
-      variant="outlined"
-      prepend-icon="mdi-download-outline"
-      :loading="exporting"
-      data-testid="payment-export-all"
-      @click="exportAll"
-      >Выгрузить всё · CSV</v-btn
-    >
   </header>
-  <v-alert v-if="exportError" type="warning" variant="tonal" class="mb-5" role="status">{{ exportError }}</v-alert>
   <v-alert v-if="error" type="error" variant="tonal" class="mb-5" role="alert"
     >{{ error }}<v-btn variant="text" @click="reload">Повторить</v-btn></v-alert
   >
