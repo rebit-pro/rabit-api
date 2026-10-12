@@ -28,8 +28,6 @@ const globalPath = '/api/v1/catalog/conditions';
 const groupPath = '/api/v1/groups/' + fixture.open.groupId + '/conditions';
 const key = () => crypto.randomUUID().replace(/-/g, '');
 const buyer = {
-  name: 'Ирина Расходова',
-  phone: '8 (900) 555-06-06',
   email: 'e6.buyer@example.test',
   comment: 'E6 проверка',
   reviewed: true

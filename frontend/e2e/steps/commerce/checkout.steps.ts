@@ -6,8 +6,6 @@ function page(world: CustomWorld): Page {
   return world.page;
 }
 async function fillBuyer(p: Page) {
-  await p.getByRole('textbox', { name: 'Имя покупателя', exact: true }).fill('Тестовый покупатель');
-  await p.getByRole('textbox', { name: 'Телефон', exact: true }).fill('+7 (900) 123-45-67');
   await p.getByRole('textbox', { name: 'Email', exact: true }).fill('parent@example.test');
   await p.getByRole('textbox', { name: 'Комментарий — необязательно', exact: true }).fill('Тестовый комментарий');
 }
@@ -39,15 +37,14 @@ Then('заказы ещё не созданы', async function (this: CustomWorl
 });
 Then('контакты покупателя показаны в заказе', async function (this: CustomWorld) {
   await expect(page(this).getByText('parent@example.test', { exact: true })).toBeVisible();
-  await expect(page(this).getByText('+7 900 123-45-67', { exact: true })).toBeVisible();
+  // E8: the order holds no phone and shows no empty phone row.
+  await expect(page(this).getByText('Телефон', { exact: true })).toHaveCount(0);
 });
 Then('форма оформления показывает обязательные ошибки', async function (this: CustomWorld) {
-  await expect(page(this).getByText('Укажите имя: от 2 до 100 символов.', { exact: true })).toBeVisible();
   await expect(page(this).getByText('Укажите email в формате name@example.ru.', { exact: true })).toBeVisible();
-  await expect(page(this).getByRole('textbox', { name: 'Имя покупателя', exact: true })).toBeFocused();
+  await expect(page(this).getByRole('textbox', { name: 'Email', exact: true })).toBeFocused();
 });
 Then('контакты сохранены в форме оформления', async function (this: CustomWorld) {
-  await expect(page(this).getByRole('textbox', { name: 'Имя покупателя', exact: true })).toHaveValue('Тестовый покупатель');
   await expect(page(this).getByRole('textbox', { name: 'Email', exact: true })).toHaveValue('parent@example.test');
   await expect(page(this).getByRole('textbox', { name: 'Комментарий — необязательно', exact: true })).toHaveValue('Тестовый комментарий');
 });

@@ -51,7 +51,7 @@ async function placeBundleOrder(page: Page): Promise<Created> {
         headers: { 'Idempotency-Key': idempotencyKey },
         data: {
           lines,
-          buyer: { name: 'Ирина Файлова', phone: '8 (900) 555-09-10', email: 'files.j1@example.test', comment: '', reviewed: true },
+          buyer: { email: 'files.j1@example.test', comment: '', reviewed: true },
           quoteToken: priced.quoteToken,
           consents: await orderConsents(page)
         }

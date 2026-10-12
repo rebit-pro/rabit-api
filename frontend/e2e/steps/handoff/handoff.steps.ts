@@ -368,8 +368,6 @@ Then('R10 проверяет {string}', async function (this: CustomWorld, name:
       before: string | null = null;
     if (name === 'оплаченный заказ сохраняется') {
       await p.getByRole('link', { name: 'Оформить заказ', exact: true }).click();
-      await p.getByLabel('Имя покупателя', { exact: true }).fill('Покупатель R10');
-      await p.getByLabel('Телефон', { exact: true }).fill('+7 (900) 123-45-67');
       await p.getByLabel('Email', { exact: true }).fill('r10@example.test');
       await p.getByLabel('Состав и условия проверены', { exact: true }).check();
       await p.getByTestId('create-order').click();

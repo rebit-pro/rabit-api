@@ -447,7 +447,7 @@ Then('R16 проверяет состояние {string}', { timeout: 180000 }, 
     await h.checkout(p);
     await h.fillBuyer(p);
     await p.reload({ waitUntil: 'networkidle' });
-    await expect(p.getByLabel('Имя покупателя', { exact: true })).toHaveValue(h.longName);
+    await expect(p.getByLabel('Email', { exact: true })).toHaveValue(h.longEmail);
     await p.getByLabel('Состав и условия проверены', { exact: true }).check();
     const second = await p.context().newPage();
     try {

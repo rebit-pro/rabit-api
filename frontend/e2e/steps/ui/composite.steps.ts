@@ -105,47 +105,27 @@ Then('очистка сохраняет выбор после ошибки и в
   await expect(p.getByRole('heading', { name: 'Корзина пока пуста', exact: true })).toBeVisible();
   await expect(p.getByRole('link', { name: 'Перейти к фотографиям', exact: true })).toBeFocused();
 });
-Then('телефон и очистка контактов сохраняют черновик', async function (this: CustomWorld) {
+Then('очистка контактов сохраняет черновик', async function (this: CustomWorld) {
   const p = page(this);
-  const phone = p.getByRole('textbox', { name: 'Телефон', exact: true });
   const email = p.getByRole('textbox', { name: 'Email', exact: true });
-  const name = p.getByRole('textbox', { name: 'Имя покупателя', exact: true });
-  await phone.fill('89001234567');
-  await phone.press('Home');
-  await phone.press('ArrowRight');
-  expect(await phone.evaluate((el) => (el as HTMLInputElement).selectionStart)).toBe(1);
-  await phone.press('Delete');
-  await expect(phone).toHaveValue('8001234567');
-  await phone.press('Tab');
-  await expect(phone).toHaveValue('8001234567');
-  await phone.fill('+44 20 7946 0958');
+  // E8: the email is the only contact; the form has no name and no phone.
+  await expect(p.getByRole('textbox', { name: 'Имя покупателя', exact: true })).toHaveCount(0);
+  await expect(p.getByRole('textbox', { name: 'Телефон', exact: true })).toHaveCount(0);
   await email.focus();
-  await expect(phone).toHaveValue('+44 20 7946 0958');
-  await phone.fill('8 (900) 123-45-67');
-  await email.focus();
-  await expect(phone).toHaveValue('+7 (900) 123-45-67');
-  for (const [label, input, restored] of [
-    ['Очистить имя покупателя', name, 'Тестовый покупатель'],
-    ['Очистить телефон', phone, '+7 (900) 123-45-67'],
-    ['Очистить email', email, 'parent@example.test']
-  ] as const) {
-    await input.focus();
-    await p.keyboard.press('Tab');
-    await expect(p.getByRole('button', { name: label, exact: true })).toBeFocused();
-    await p.keyboard.press('Enter');
-    await expect(input).toHaveValue('');
-    await expect(input).toBeFocused();
-    await p.reload({ waitUntil: 'networkidle' });
-    await expect(input).toHaveValue('');
-    await input.fill(restored);
-  }
-  await expect(name).toHaveValue('Тестовый покупатель');
-  await expect(phone).toHaveValue('+7 (900) 123-45-67');
+  await p.keyboard.press('Tab');
+  await expect(p.getByRole('button', { name: 'Очистить email', exact: true })).toBeFocused();
+  await p.keyboard.press('Enter');
+  await expect(email).toHaveValue('');
+  await expect(email).toBeFocused();
+  await p.reload({ waitUntil: 'networkidle' });
+  await expect(email).toHaveValue('');
+  await email.fill('parent@example.test');
   await expect(p.getByRole('textbox', { name: 'Комментарий — необязательно', exact: true })).toHaveValue('Тестовый комментарий');
   await p.getByRole('checkbox', { name: 'Состав и условия проверены', exact: true }).check();
   await p.getByTestId('create-order').click();
   await expect(p).toHaveURL(/\/orders\/access\/[a-f0-9]{32}$/);
-  expect(await p.evaluate(() => JSON.parse(localStorage.getItem('morefoto:demo:orders:v1') || '[]')[0].buyer.phone)).toBe('+79001234567');
+  const buyer = await p.evaluate(() => JSON.parse(localStorage.getItem('morefoto:demo:orders:v1') || '[]')[0].buyer);
+  expect([buyer.email, buyer.name, buyer.phone]).toEqual(['parent@example.test', undefined, undefined]);
 });
 Then('корзина и оформление на ширине {int} не обрезают действия', async function (this: CustomWorld, width: number) {
   const p = page(this);
@@ -159,10 +139,8 @@ Then('корзина и оформление на ширине {int} не обр
   expect(quantity && price && price.x - (quantity.x + quantity.width)).toBeLessThanOrEqual(24);
   await p.getByRole('link', { name: 'Оформить заказ', exact: true }).click();
   await expect(p.locator('.checkout-contacts')).toBeVisible();
-  const name = await p.locator('.contact-name .v-field').boundingBox();
-  expect(name?.width).toBeLessThanOrEqual(560);
-  const phone = await p.locator('[name=buyer-phone]').boundingBox();
-  if (width >= 768) expect(phone?.width).toBeLessThanOrEqual(280);
+  const email = await p.locator('.contact-email .v-field').boundingBox();
+  expect(email?.width).toBeLessThanOrEqual(560);
   expect(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await p.evaluate(() => {
     document.documentElement.style.fontSize = '32px';

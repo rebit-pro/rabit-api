@@ -167,7 +167,7 @@ Then(
     await h.add(p, base);
     await h.checkout(p);
     await p.getByTestId('create-order').click();
-    await expect(p.getByLabel('Имя покупателя', { exact: true })).toBeFocused();
+    await expect(p.getByLabel('Email', { exact: true })).toBeFocused();
     await doubleText(p);
     await shot(p, 'checkout-errors-text200', width);
     await h.fillBuyer(p);
