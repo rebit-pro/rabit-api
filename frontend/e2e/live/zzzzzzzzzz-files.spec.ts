@@ -167,9 +167,9 @@ test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and nev
     await expect(hint).toHaveText('Электронная копия этого кадра входит в печать вашей корзины.');
     await hint.scrollIntoViewIfNeeded();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    // The viewer scrolls inside the dialog; a full-page capture would lay it out again and lose that scroll.
     await page.screenshot({
       path: testInfo.outputPath('j4-' + viewport.name + '-print-copy-hint.png'),
-      fullPage: true,
       animations: 'disabled'
     });
   }
