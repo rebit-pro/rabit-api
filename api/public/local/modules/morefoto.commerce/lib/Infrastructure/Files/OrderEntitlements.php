@@ -52,8 +52,9 @@ final readonly class OrderEntitlements implements OrderEntitlementInterface
         while (false !== ($line = $result->fetch())) {
             /** @var array{CHILD_ID: int|string, CHILD_CODE: string, PHOTO_PUBLIC_ID: null|string, PHOTO_CODE: null|string, PRODUCT_KIND: string} $line */
             $kind = ProductKind::from($line['PRODUCT_KIND']);
-            if (ProductKind::DIGITAL === $kind && null !== $line['PHOTO_PUBLIC_ID']) {
-                $photos[] = new OrderEntitledPhotoOutputDto($line['PHOTO_PUBLIC_ID'], $line['CHILD_CODE'], (string)$line['PHOTO_CODE']);
+            // J4: a print gives the digital copy of its own frame; several prints or formats of one frame give one file.
+            if (ProductKind::BUNDLE !== $kind && null !== $line['PHOTO_PUBLIC_ID']) {
+                $photos[$line['PHOTO_PUBLIC_ID']] ??= new OrderEntitledPhotoOutputDto($line['PHOTO_PUBLIC_ID'], $line['CHILD_CODE'], (string)$line['PHOTO_CODE']);
             }
             // A gift is stored by child code and grants the whole set of that child, the same as a bought bundle line.
             if (ProductKind::BUNDLE === $kind || isset($giftCodes[$line['CHILD_CODE']])) {
@@ -72,7 +73,7 @@ final readonly class OrderEntitlements implements OrderEntitlementInterface
             latePayment: 1 === (int)$order['LATE_PAYMENT'],
             filesAvailableUntil: null === $paidAt ? null
                 : $this->calendar->filesAvailableUntil(new \DateTimeImmutable($paidAt, new \DateTimeZone('UTC')))->format('Y-m-d H:i:s'),
-            photos: $photos,
+            photos: array_values($photos),
             childIds: array_keys($children),
         );
     }
