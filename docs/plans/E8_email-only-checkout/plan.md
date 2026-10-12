@@ -86,7 +86,7 @@
 - [x] S2. Commerce: миграция, DTO, политика, запись и чтение, хеш.
 - [x] S3. Frontend: форма, черновик, тело, проверка, отображение, демо.
 - [x] S4. Тесты: PHPUnit, frontend, live-спеки, верификатор, Cucumber-шаги.
-- [ ] S5. Документация волны, граф (E8 `review`, D4 `merged`), PR.
+- [x] S5. Документация волны, граф (E8 `review`, D4 `merged`), PR.
 - [x] S6. Полный `make test-e2e` и visual desktop/mobile.
 
 ## Критерии приёмки
