@@ -2,11 +2,12 @@
 
 ## Точка продолжения
 
-- Дата: 12.10.2026. Ветка `codex/d4-sent-markup-correction` от `origin/main` 50c8ee1 (merge E7, PR #162), влит `main` 480427c (план #173); рабочая копия `/home/user/rabit-api-worktrees/d4-sent-markup-correction`. PR нет.
+- Дата: 12.10.2026. Ветка `codex/d4-sent-markup-correction` от `origin/main` 50c8ee1 (merge E7, PR #162), влит `main` 480427c (план #173); рабочая копия `/home/user/rabit-api-worktrees/d4-sent-markup-correction`. PR #175.
 - Связанное: план владельца `docs/plans/OPS-telemos-feedback-plan/` и граф с D4 — PR #173 (слит 480427c). План волны — `docs/plans/D4_sent-markup-correction/plan.md`.
 - Завершено: инвентаризация, решения D4-DEC-01…06, backend (Organization, Commerce, Access, Media, Handoff), frontend, unit-тесты, E2E-спек и верификатор, документация волны.
 - Сейчас: S2–S9 сделаны, полный гейт PASS (прогон 5 `rabit-e2e-f048a4c2af27`, тестовый магазин ЮKassa OFF из-за #174), visual PASS.
-- Следующий шаг: при зелёном гейте — visual/verification в docs/waves/d4, D4 `review` в графе, push и PR (пользователь поручил открыть PR после гейта).
+- PR: [#175](https://github.com/rebit-pro/rabit-api/pull/175), открыт 12.10.2026.
+- Следующий шаг: ревью PR #175; блокеры — в треды, неблокирующее — в issues.
 - Блокеры: нет (#173 слит). Внешнее: G1-T14 с тестовым магазином ЮKassa (#174).
 - Рабочее дерево: изменения закоммичены по этапам.
 - Проверки (план): PHPUnit/PHPStan — docker `rabit-api-php-cli:d1-local` с vendor volume (для D4 — скопировать `rabit-e7-vendor`, если `api/composer.lock` не менялся); frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`; граф — `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
@@ -68,4 +69,4 @@
 | D4-T09 | PASS | 12.10.2026 | `npm run check`, `test:commerce` 233/233 (D4-T09 в `sales-windows.test.mjs`, `handoff.test.mjs`) |
 | D4-T10 | PASS | 12.10.2026 | `rabit-e2e-f048a4c2af27`: `zzzzz-markup-correction` desktop/mobile |
 | D4-T11 | PASS | 12.10.2026 | `docs/waves/d4/visual.json`, скриншоты `docs/waves/d4/screenshots/` |
-| D4-T12 | PENDING | — | после PR: D4 `review` в графе, `verify-wave-graph` |
+| D4-T12 | PASS | 12.10.2026 | D4 `review` в графе (PR #175), решение `D4-DEC-01-04` в `decisionEvidence`; `python3 tools/verify-wave-graph.py docs/waves/graph.json` exit 0 |

@@ -84,7 +84,7 @@
 - [x] S5. Handoff: начало/завершение, маршруты, история, карточка ссылки.
 - [x] S6. Frontend: рабочее место, карточка ссылки, галерея и корзина.
 - [x] S7. PHPUnit, PHPStan, php-cs-fixer, frontend check/test; E2E spec и верификатор.
-- [ ] S8. Документация волны, граф (D4 `review`, E7 `merged`), PR после merge #173.
+- [x] S8. Документация волны, граф (D4 `review`, E7 `merged`), PR #175 после merge #173.
 - [x] S9. Полный `make test-e2e` и visual desktop/mobile — PASS 12.10.2026 (`rabit-e2e-f048a4c2af27`, тестовый магазин ЮKassa OFF из-за #174).
 
 ## Критерии приёмки
