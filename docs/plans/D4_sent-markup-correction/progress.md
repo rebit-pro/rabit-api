@@ -4,11 +4,11 @@
 
 - Дата: 12.10.2026. Ветка `codex/d4-sent-markup-correction` от `origin/main` 50c8ee1 (merge E7, PR #162), влит `main` 480427c (план #173); рабочая копия `/home/user/rabit-api-worktrees/d4-sent-markup-correction`. PR #175.
 - Связанное: план владельца `docs/plans/OPS-telemos-feedback-plan/` и граф с D4 — PR #173 (слит 480427c). План волны — `docs/plans/D4_sent-markup-correction/plan.md`.
-- PR: [#175](https://github.com/rebit-pro/rabit-api/pull/175), head b6df341; ревью 5486913242, 5487050525 и 5487270700.
+- PR: [#175](https://github.com/rebit-pro/rabit-api/pull/175), head 63d4b6b; ревью 5486913242, 5487050525 и 5487270700 — блокеры закрыты.
 - Завершено: решения D4-DEC-01…06, backend (Organization, Commerce, Access, Media, Handoff), frontend, unit-тесты, E2E-спек и верификатор, документация волны; блокеры ревью 5486913242 (267a560) и 5487050525 (b6df341) исправлены, ответы в тредах.
-- Сейчас: блокер третьего ревью 5487270700 — эта «Точка продолжения»; код без замечаний. Последний гейт `rabit-e2e-9f0b20f6ca72` на b6df341: D4 и группа b зелёные, группа a падает только на `zz-questions` (K3, #179) — гонка в самом спеке K3.
-- Следующий шаг: отдельный OPS PR с исправлением спека K3 (#179); после его merge влить `main` в ветку и повторить полный гейт.
-- Блокеры merge: зелёный полный гейт — ждёт исправления #179. Внешнее: тестовый магазин ЮKassa (#174) — гейт идёт с `E2E_YOOKASSA_ENV=/nonexistent/…`, часть G1 BLOCKED. Неблокирующие замечания — #176–#178.
+- Сейчас: полный гейт PASS на 63d4b6b (`rabit-e2e-63b3944c7baf`, тестовый магазин ЮKassa OFF по #174); по поручению пользователя PR #175 сливается в `main`.
+- Следующий шаг: после merge — выкладка по runbook `docs/waves/d4/README.md` (отдельное действие); следующая волна вносит D4 `merged` в граф.
+- Блокеры merge: нет. Внешнее: тестовый магазин ЮKassa (#174) — часть G1 в гейте BLOCKED. Неблокирующие замечания — #176–#178.
 - Рабочее дерево: всё закоммичено и запушено.
 - Проверки (план): PHPUnit/PHPStan — docker `rabit-api-php-cli:d1-local` с vendor volume (для D4 — скопировать `rabit-e7-vendor`, если `api/composer.lock` не менялся); frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`; граф — `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
 
@@ -74,6 +74,11 @@
 - Причина K3 найдена по trace (комментарий в #179): спек кладёт ключ вопроса в `localStorage` до `page.route`; галерея, смонтировав блок вопроса после записи ключа, получает настоящий 404 на `/api/v1/public/questions/current` и стирает ключ — после `reload` тред не запрашивается. К D4 не относится; исправление — отдельный OPS PR по решению пользователя.
 - Третье ревью 5487270700 (на b6df341): блокер второго ревью закрыт, код без замечаний; блокер — устаревшая «Точка продолжения» (две строки «Сейчас», прогон 7 не записан). Исправлено этим обновлением.
 
+### 12.10.2026 — исправление K3 и финальный гейт
+
+- PR #180 (порядок `page.route` в спеке K3, #179) слит пользователем в `main` (7d1e066) и влит в ветку (63d4b6b).
+- Гейт на 63d4b6b `rabit-e2e-63b3944c7baf` (тестовый магазин OFF), 398.4 s — PASS: группа a 81 passed, группа b 59 passed, 14 верификаторов, включая `verify-markup-correction.php`.
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -85,8 +90,8 @@
 | D4-T05 | PASS | 12.10.2026 | PHPUnit `StorefrontQuoteTest`, `OrderCheckoutUseCaseTest` (GALLERY_UPDATING); верификатор — QUOTE_STALE после исправления |
 | D4-T06 | PASS | 12.10.2026 | `verify-markup-correction.php`: заказ в любом статусе закрывает исправление |
 | D4-T07 | PASS | 12.10.2026 | Architecture: `GroupLinkControllerArchitectureTest` (7 action), phpDoc UseCase/Service |
-| D4-T08 | PASS | 12.10.2026 | `rabit-e2e-f048a4c2af27`: `verify-markup-correction.php` — старт ждёт транзакцию «заказа», расчёт ждёт старт (второе MySQL-соединение), без частичных изменений |
+| D4-T08 | PASS | 12.10.2026 | `rabit-e2e-63b3944c7baf`: `verify-markup-correction.php` — старт ждёт транзакцию «заказа», расчёт ждёт старт (второе MySQL-соединение), без частичных изменений |
 | D4-T09 | PASS | 12.10.2026 | `npm run check`, `test:commerce` 233/233 (D4-T09 в `sales-windows.test.mjs`, `handoff.test.mjs`) |
-| D4-T10 | PASS | 12.10.2026 | `rabit-e2e-f048a4c2af27`: `zzzzz-markup-correction` desktop/mobile |
+| D4-T10 | PASS | 12.10.2026 | `rabit-e2e-63b3944c7baf`: `zzzzz-markup-correction` desktop/mobile, включая параллельную правку и `SIGNATURE_CONFLICT` |
 | D4-T11 | PASS | 12.10.2026 | `docs/waves/d4/visual.json`, скриншоты `docs/waves/d4/screenshots/` |
 | D4-T12 | PASS | 12.10.2026 | D4 `review` в графе (PR #175), решение `D4-DEC-01-04` в `decisionEvidence`; `python3 tools/verify-wave-graph.py docs/waves/graph.json` exit 0 |
