@@ -37,8 +37,9 @@ export interface LiveOrderQuote {
   conditionsRevision: number;
 }
 export interface LiveBuyer {
-  name: string;
-  phone: string;
+  /** E8: orders placed since E8 have no name and phone; earlier orders keep them. */
+  name: string | null;
+  phone: string | null;
   email: string;
   comment: string;
   receiptChannel: string | null;
@@ -146,7 +147,7 @@ export interface StaffOrderPage {
 }
 export interface CheckoutBody {
   lines: { assignmentId: string; productId: string; quantity: number }[];
-  buyer: { name: string; phone: string; email: string; comment: string; reviewed: boolean };
+  buyer: { email: string; comment: string; reviewed: boolean };
   quoteToken: string;
   /** Current versions of the buyer consent and the offer, accepted with separate checkboxes. */
   consents: { code: string; version: string }[];

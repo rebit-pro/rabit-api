@@ -35,11 +35,12 @@ const states = {
   <section class="mf-panel order-facts" data-testid="order-contacts">
     <h2>Контакты покупателя</h2>
     <dl>
-      <div>
+      <!-- E8: orders since E8 have the email only; earlier ones keep the name and the phone. -->
+      <div v-if="buyer.name">
         <dt>Покупатель</dt>
         <dd>{{ buyer.name }}</dd>
       </div>
-      <div>
+      <div v-if="buyer.phone">
         <dt>Телефон</dt>
         <dd>{{ formatPhone(buyer.phone) }}</dd>
       </div>

@@ -19,6 +19,10 @@ export function settlement(order: SaleOrder): SettlementState {
 export function saleVersion(order: SaleOrder): string {
   return JSON.stringify([settlement(order).revision, order.paymentStatus, order.paidAt, order.productionStatus]);
 }
+/** One line of the known contacts: an order since E8 has the email only. */
+export function contactLine(buyer: { name?: string; email: string; phone?: string }): string {
+  return [buyer.name, buyer.email, buyer.phone].filter((part): part is string => !!part).join(' · ');
+}
 export function currentBuyer(order: Pick<SaleOrder, 'buyer' | 'settlement'>) {
   let buyer = order.buyer;
   for (const c of order.settlement?.corrections ?? []) if (c.buyerAfter) buyer = c.buyerAfter;
@@ -123,9 +127,11 @@ export function saleErrors(order: SaleOrder, c: SaleCommand): SaleErrors {
     if (!c.verified) e.verified = 'Подтвердите проверку заказа и контакта по обращению родителя.';
   }
   if (c.action === 'contacts') {
-    if (c.name.trim().length < 2 || c.name.trim().length > 100) e.name = 'Имя: от 2 до 100 символов.';
-    if (!/^[+\d\s().-]+$/.test(c.phone) || c.phone.replace(/\D/g, '').length < 10 || c.phone.replace(/\D/g, '').length > 15)
-      e.phone = 'Укажите телефон: от 10 до 15 цифр.';
+    // E8: the email is the only required contact; a name or a phone, when given, keeps its format.
+    const name = c.name.trim();
+    const digits = c.phone.replace(/\D/g, '').length;
+    if (name && (name.length < 2 || name.length > 100)) e.name = 'Имя: от 2 до 100 символов.';
+    if (c.phone.trim() && (!/^[+\d\s().-]+$/.test(c.phone) || digits < 10 || digits > 15)) e.phone = 'Укажите телефон: от 10 до 15 цифр.';
   }
   if (c.action === 'line') {
     const line = currentLines(order).find((l) => l.id === c.lineId);

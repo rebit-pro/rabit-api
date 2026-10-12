@@ -53,7 +53,8 @@ const rows = computed<UiTableRow[]>(() =>
           id: o.id,
           number: o.number,
           group: o.groupName,
-          buyer: currentBuyer(o).name,
+          // E8: an order without a name shows the email of the buyer.
+          buyer: currentBuyer(o).name ?? currentBuyer(o).email,
           payment: o.paymentStatus,
           production: o.productionStatus,
           total: o.quote.total,

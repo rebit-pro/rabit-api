@@ -16,8 +16,6 @@ export function saveCheckoutDraft(groupId: string, draft: CheckoutDraft): void {
 export function readCheckoutDraft(groupId: string): CheckoutDraft {
   const stored = readDemo<Partial<CheckoutDraft>>('checkout:' + groupId, {});
   const draft: CheckoutDraft = {
-    name: typeof stored.name === 'string' ? stored.name : '',
-    phone: typeof stored.phone === 'string' ? stored.phone : '',
     email: typeof stored.email === 'string' ? stored.email : '',
     comment: typeof stored.comment === 'string' ? stored.comment : '',
     receiptChannel: stored.receiptChannel === 'max' ? 'max' : 'email',

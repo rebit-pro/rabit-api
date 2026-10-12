@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { SaleOrder, SaleCommand } from '../types';
-import { settlement, currentLines, financials } from '../rules';
+import { settlement, currentLines, financials, contactLine } from '../rules';
 import { money } from '../../commerce/money';
 import { formatMoment } from '../../handoff/display';
 import SettlementTotals from './SettlementTotals.vue';
@@ -39,11 +39,11 @@ const refundLabels = { pending: 'Обрабатывается', confirmed: 'По
       <div v-if="c.buyerBefore && c.buyerAfter" class="sale-comparison">
         <div>
           <strong>Было</strong>
-          <p>{{ c.buyerBefore.name }}<br />{{ c.buyerBefore.email }}<br />{{ c.buyerBefore.phone }}</p>
+          <p>{{ contactLine(c.buyerBefore) }}</p>
         </div>
         <div>
           <strong>Стало</strong>
-          <p>{{ c.buyerAfter.name }}<br />{{ c.buyerAfter.email }}<br />{{ c.buyerAfter.phone }}</p>
+          <p>{{ contactLine(c.buyerAfter) }}</p>
         </div>
       </div>
       <div v-if="c.before && c.after" class="sale-comparison">
