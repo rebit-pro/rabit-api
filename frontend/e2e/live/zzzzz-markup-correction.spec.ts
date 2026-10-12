@@ -58,6 +58,8 @@ for (const viewport of [
       animations: 'disabled'
     });
     // Another staff member labels a frame after this screen was refreshed: «finish» must not publish what nobody has seen.
+    // The card reload starts with the refreshed frames; an enabled button means its signature already covers them.
+    await expect(page.getByTestId('markup-correction-finish')).toBeEnabled();
     const shoot = '/api/v1/shoots/' + link.shootId + '/photos';
     const frames = (await body(await page.request.get(shoot, { headers: auth, params: { groupId: fixture.groupId } }))).data;
     await body(

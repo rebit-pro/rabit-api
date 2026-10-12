@@ -7,8 +7,8 @@
 - Завершено: инвентаризация, решения D4-DEC-01…06, backend (Organization, Commerce, Access, Media, Handoff), frontend, unit-тесты, E2E-спек и верификатор, документация волны.
 - Сейчас: S2–S9 сделаны, полный гейт PASS (прогон 5 `rabit-e2e-f048a4c2af27`, тестовый магазин ЮKassa OFF из-за #174), visual PASS.
 - PR: [#175](https://github.com/rebit-pro/rabit-api/pull/175), открыт 12.10.2026.
-- Сейчас: блокеры ревью 5486913242 исправлены; повторный полный гейт.
-- Следующий шаг: ответы в тредах ревью, затем повторное ревью.
+- Сейчас: блокер повторного ревью 5487050525 (гонка в спеке) исправлен; полный гейт заново.
+- Следующий шаг: ответ в треде повторного ревью с результатом гейта.
 - Блокеры: нет (#173 слит). Внешнее: G1-T14 с тестовым магазином ЮKassa (#174).
 - Рабочее дерево: изменения закоммичены по этапам.
 - Проверки (план): PHPUnit/PHPStan — docker `rabit-api-php-cli:d1-local` с vendor volume (для D4 — скопировать `rabit-e7-vendor`, если `api/composer.lock` не менялся); frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`; граф — `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
@@ -63,6 +63,11 @@
 - R3, миграция: проверка строк истории `prepared` без подписи и `corrected` без причины до любых изменений; CHECK истории меняется одним `ALTER … DROP CHECK …, ADD CONSTRAINT …`. Проверено на одноразовом mysql:8.0 (`--network none`, tmpfs): прежний CHECK пропускал NULL, единый ALTER проходит, новый CHECK отвергает NULL.
 - R4: class-level phpDoc у `PermissionPolicy`.
 - Проверки: PHPUnit — OK 1119 тестов / 47235 проверок; PHPStan — No errors; php-cs-fixer по 77 файлам — 0 исправлений; frontend `npm run check` — exit 0 (UI 88/88), `test:commerce` — 233/233; `git diff --check` — чисто.
+
+### 12.10.2026 — повторное ревью PR #175
+
+- Повторное ревью 5487050525 (на 267a560): четыре блокера первого ревью закрыты, ответы в тредах. Новый блокер — гонка в шаге спека: «чужая» привязка через API могла опередить перечитывание карточки после своей правки. Исправлено: перед ней спек ждёт активную кнопку «Завершить исправление» (флаг перечитывания ставится синхронно).
+- Гейт на 267a560 `rabit-e2e-25902ea7fb8a` (тестовый магазин OFF): группа b 59 passed и её 11 верификаторов, включая `verify-markup-correction.php`; группа a 80 passed, 1 failed — `zz-questions` (K3, метка ответа куратора), код галереи и вопросов не менялся, нестабильность вынесена в #179; верификаторы группы a не запускались.
 
 ## Тест-кейсы
 
