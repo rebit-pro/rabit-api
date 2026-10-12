@@ -3,7 +3,7 @@ import { simulateRequest } from '../mocks/runtime';
 import { readPhotos } from '../photos/repository';
 import { getCatalog } from '../commerce/mocks/catalog';
 import { handoffAccess, canReadRequest } from './scope';
-import { calendarDays, currentGroupState, groupSentAt, preparationProblems, preparationSignature } from './rules';
+import { calendarDays, currentGroupState, digitalSalesAfter, groupSentAt, preparationProblems, preparationSignature } from './rules';
 import { isAxiosError } from 'axios';
 import { staffRequestsApi, type StaffRequestPage } from './api';
 import { linksApi, toLinkGroup } from './links-api';
@@ -55,6 +55,7 @@ export async function loadHandoff(token: string, requestId?: string, query: Staf
           sentAt,
           extensionClosesAt: group.extensions?.[group.extensions.length - 1]?.closesAt,
           closesAt: group.closesAt,
+          digitalSalesUntil: sentAt && group.closesAt ? digitalSalesAfter(sentAt, group.closesAt) : null,
           deliveryAt: group.closesAt ? calendarDays(group.closesAt, 7) : null,
           signature,
           prepared: !!sentAt || (!problems.length && group.preparation?.signature === signature),
@@ -98,6 +99,7 @@ function liveWorkspace(first: StaffRequestPage, requests: StaffRequest[]): Hando
     state: group.state === 'open' || group.state === 'closed' ? group.state : 'preparing',
     sentAt: null,
     closesAt: null,
+    digitalSalesUntil: null,
     deliveryAt: null,
     signature: '',
     prepared: false,

@@ -21,8 +21,11 @@ final readonly class PaymentOutputMapper
 {
     private const string TIMEZONE = 'Europe/Moscow';
 
-    /** @param AttemptRecord $attempt */
-    public function attempt(array $attempt, string $orderVersion, bool $created): PaymentAttemptOutputDto
+    /**
+     * @param AttemptRecord $attempt
+     * @param bool          $salesOpen срок продаж состава заказа не наступил (PaymentAttemptPolicy::salesOpen)
+     */
+    public function attempt(array $attempt, string $orderVersion, bool $created, bool $salesOpen): PaymentAttemptOutputDto
     {
         return new PaymentAttemptOutputDto(
             id: $attempt['PUBLIC_ID'],
@@ -31,8 +34,8 @@ final readonly class PaymentOutputMapper
             paymentMethod: $attempt['PAYMENT_METHOD'],
             orderVersion: $orderVersion,
             latePayment: $attempt['LATE_PAYMENT'],
-            // The provider page is offered only while the payment still waits for the buyer.
-            redirectUrl: AttemptStatusEnum::PENDING->value === $attempt['STATUS'] ? $attempt['CONFIRMATION_URL'] : null,
+            // The provider page is offered only while the payment still waits for the buyer and the order is on sale (E7).
+            redirectUrl: $salesOpen && AttemptStatusEnum::PENDING->value === $attempt['STATUS'] ? $attempt['CONFIRMATION_URL'] : null,
             created: $created,
         );
     }

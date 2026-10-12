@@ -5,6 +5,8 @@ import type { GalleryPhoto, GallerySnapshot } from '../../gallery/types';
 import { useCart } from '../composables/useCart';
 import { addToCart } from '../services/cart';
 import { money } from '../money';
+import { printIncludesCopy } from '../print-copy';
+import { sellsKind } from '../sales-windows';
 import UiQuantityField from '../../ui/components/UiQuantityField.vue';
 import { quantityValue } from '../../ui/field-values';
 const props = defineProps<{
@@ -19,7 +21,8 @@ const quantityField = useTemplateRef<{ validate: () => boolean }>('quantityField
 const busy = shallowRef(false);
 const notice = shallowRef('');
 const error = shallowRef('');
-const products = computed(() => catalog.value.products.filter((product) => product.active));
+// E7: once print sales close only digital products and bundles are offered.
+const products = computed(() => catalog.value.products.filter((product) => product.active && sellsKind(props.gallery.state, product.kind)));
 watch(
   products,
   (items) => {
@@ -43,6 +46,8 @@ const covered = computed(
       (product.value?.kind === 'digital' &&
         quote.value.lines.some((line) => line.childCode === childCode.value && line.product.kind === 'bundle')))
 );
+// J4: a print of this frame in the cart already brings its digital copy; the digital product keeps its price.
+const printed = computed(() => product.value?.kind === 'digital' && !covered.value && printIncludesCopy(quote.value, props.photo.id));
 const unitPrice = computed(() => {
   const price = product.value?.price ?? 0;
   return discounted.value ? Math.ceil(price / 2) : price;
@@ -88,6 +93,9 @@ async function add() {
   <form class="product-selector" novalidate @submit.prevent="add">
     <h3>Заказать этот кадр</h3>
     <p v-if="isMockApiEnabled" class="product-demo">Демонстрационные цены</p>
+    <p v-if="gallery.state === 'digital'" class="mf-muted" data-testid="selector-digital-only">
+      Печать закрыта — доступны электронные фотографии.
+    </p>
     <v-select
       v-model="productId"
       :items="products"
@@ -106,6 +114,9 @@ async function add() {
         {{ product.format }}<template v-if="product.unit"> · Единица: {{ product.unit }}</template>
       </p>
       <p v-if="covered" class="product-discount">Входит в электронный комплект вашей корзины без дополнительной оплаты.</p>
+      <p v-if="printed" class="product-discount" data-testid="product-print-copy">
+        Электронная копия этого кадра входит в печать вашей корзины.
+      </p>
       <p v-if="discounted" class="product-discount">
         Скидка сотрудника 50% <s>{{ money(product.price) }}</s>
       </p>

@@ -18,8 +18,9 @@ use Rebit\Share\Contracts\Organization\Dto\LinkSentInputDto;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /**
- * Единственный владелец календаря приёма группы: блокирует группу для внешнего сценария и меняет сроки по правилам D10.
- * Запись и исправление факта передачи ссылки пересчитывают закрытие и доставку, сохраняя изменение в журнале Organization.
+ * Единственный владелец календаря приёма группы: блокирует группу для внешнего сценария и меняет сроки по правилам D10 и E7.
+ * Запись и исправление факта передачи ссылки пересчитывают сроки печати, электронных фото и доставки, сохраняя изменение
+ * в журнале Organization.
  */
 final readonly class GroupCalendar implements GroupCalendarInterface
 {
@@ -50,7 +51,7 @@ final readonly class GroupCalendar implements GroupCalendarInterface
         return new CalendarMutationOutputDto(
             $groupId,
             (int)$row['UF_REVISION'],
-            CalendarProjection::create(Calendar::fromStorage($row['UF_SENT_AT'], $row['UF_CLOSES_AT'], $row['UF_DELIVERY_DUE_AT'], (string)$row['UF_TIMEZONE']), $this->clock->now()),
+            CalendarProjection::create(Calendar::fromStorage($row['UF_SENT_AT'], $row['UF_CLOSES_AT'], $row['UF_DIGITAL_SALES_UNTIL'], $row['UF_DELIVERY_DUE_AT'], (string)$row['UF_TIMEZONE']), $this->clock->now()),
         );
     }
 
@@ -92,12 +93,12 @@ final readonly class GroupCalendar implements GroupCalendarInterface
             throw new HttpException('NOT_FOUND', 404);
         }
         $revision = (int)$row['UF_REVISION'];
-        $before = Calendar::fromStorage($row['UF_SENT_AT'], $row['UF_CLOSES_AT'], $row['UF_DELIVERY_DUE_AT'], (string)$row['UF_TIMEZONE']);
+        $before = Calendar::fromStorage($row['UF_SENT_AT'], $row['UF_CLOSES_AT'], $row['UF_DIGITAL_SALES_UNTIL'], $row['UF_DELIVERY_DUE_AT'], (string)$row['UF_TIMEZONE']);
         $now = $this->clock->now();
         try {
             $after = $correction ? $before->correctLinkSent($input->sentAt, $now) : $before->recordLinkSent($input->sentAt, $now);
         } catch (CalendarRuleViolation $violation) {
-            throw new HttpException($violation->getMessage(), 'LINK_NOT_SENT' === $violation->getMessage() ? 409 : 422, $violation);
+            throw new HttpException($violation->getMessage(), in_array($violation->getMessage(), ['LINK_NOT_SENT', 'PRINT_SALES_CLOSED'], true) ? 409 : 422, $violation);
         }
         if ($after === $before) {
             return new CalendarMutationOutputDto($input->groupId, $revision, CalendarProjection::create($before, $now));
@@ -145,7 +146,7 @@ final readonly class GroupCalendar implements GroupCalendarInterface
         if ($input->expectedRevision !== (int)$row['UF_REVISION']) {
             throw new HttpException('VERSION_CONFLICT', 409);
         }
-        $before = Calendar::fromStorage($row['UF_SENT_AT'], $row['UF_CLOSES_AT'], $row['UF_DELIVERY_DUE_AT'], (string)$row['UF_TIMEZONE']);
+        $before = Calendar::fromStorage($row['UF_SENT_AT'], $row['UF_CLOSES_AT'], $row['UF_DIGITAL_SALES_UNTIL'], $row['UF_DELIVERY_DUE_AT'], (string)$row['UF_TIMEZONE']);
         $now = $this->clock->now();
         $after = null === $newClosesAt ? $before->confirmLinkSent($now) : $before->extend($newClosesAt, $now);
         $revision = $input->expectedRevision;
@@ -179,7 +180,7 @@ final readonly class GroupCalendar implements GroupCalendarInterface
         /** @var array{
          *     groupId: string,
          *     revision: int,
-         *     calendar: array{timezone: string, sentAt: ?string, closesAt: ?string, deliveryDueAt: ?string, status: string},
+         *     calendar: array{timezone: string, sentAt: ?string, closesAt: ?string, digitalSalesUntil?: ?string, deliveryDueAt: ?string, status: string},
          * } $result */
         $result = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
 
@@ -190,6 +191,8 @@ final readonly class GroupCalendar implements GroupCalendarInterface
                 $result['calendar']['timezone'],
                 $result['calendar']['sentAt'],
                 $result['calendar']['closesAt'],
+                // Results stored before E7 have no digital deadline.
+                $result['calendar']['digitalSalesUntil'] ?? null,
                 $result['calendar']['deliveryDueAt'],
                 $result['calendar']['status'],
             ),

@@ -21,9 +21,7 @@ defineEmits<{ download: [photoId?: string] }>();
     <p v-else-if="access.state === 'review'" class="mf-muted mt-3">
       Оплата пришла после закрытия группы. Рита согласует выдачу файлов или возврат. Повторно платить не нужно.
     </p>
-    <p v-else-if="access.state === 'empty'" class="mf-muted mt-3">
-      В этом заказе только печатная продукция. Электронных файлов и подарочного комплекта нет.
-    </p>
+    <p v-else-if="access.state === 'empty'" class="mf-muted mt-3">В этом заказе нет файлов для скачивания.</p>
     <p v-else-if="access.state === 'revoked'" class="mf-muted mt-3">
       Последующая выдача файлов прекращена по подтверждённому возврату. Ранее полученные файлы остаются в истории.
     </p>

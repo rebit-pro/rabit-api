@@ -35,6 +35,9 @@ const {
   selectedGroupId,
   changeGroup,
   editable,
+  canPrepare,
+  correction,
+  finishCorrection,
   pageReady,
   items,
   total,
@@ -242,9 +245,51 @@ async function confirmMove(toId: string, code: string) {
         <p class="mf-muted mt-2 mb-4">Родители увидят кадры группы только после отметки передачи ссылки.</p>
         <GalleryPath :steps="pathSteps" :fix="pathFix" />
       </section>
-      <v-alert v-if="!editable" type="info" variant="tonal" class="mb-6"
-        >Подборка уже опубликована. Здесь можно просмотреть наборы; изменения доступны в группах со статусом «Подготовка».</v-alert
+      <v-alert v-if="correction.correcting.value" type="warning" variant="tonal" class="mb-6" data-testid="markup-correction-active">
+        <p>
+          Идёт исправление разметки: покупка в галерее приостановлена, сроки продаж не меняются. Исправьте наборы и завершите исправление —
+          родители сразу увидят новую разметку.
+        </p>
+        <v-btn
+          class="mt-3"
+          color="primary"
+          :loading="correction.busy.value"
+          :disabled="correction.loading.value"
+          data-testid="markup-correction-finish"
+          @click="finishCorrection"
+          >Завершить исправление</v-btn
+        >
+      </v-alert>
+      <v-alert
+        v-else-if="group.state !== 'preparing' && correction.correctable.value"
+        type="info"
+        variant="tonal"
+        class="mb-6"
+        data-testid="markup-correction-available"
       >
+        <p>
+          Ссылка уже передана родителям, заказов пока нет. Если кадры размечены с ошибкой, исправьте разметку: на это время покупка будет
+          приостановлена, сроки продаж и ссылка не изменятся.
+        </p>
+        <v-btn
+          class="mt-3"
+          variant="outlined"
+          color="primary"
+          :loading="correction.busy.value"
+          data-testid="markup-correction-start"
+          @click="correction.start"
+          >Исправить разметку</v-btn
+        >
+      </v-alert>
+      <v-alert v-else-if="group.state !== 'preparing'" type="info" variant="tonal" class="mb-6" data-testid="markup-locked"
+        >Подборка уже опубликована. Исправить разметку можно, только пока у группы нет заказов и идут продажи.</v-alert
+      >
+      <v-alert v-else-if="!canPrepare" type="info" variant="tonal" class="mb-6"
+        >Подборку готовит организатор — кадры появятся здесь после передачи ссылки родителям.</v-alert
+      >
+      <v-alert v-if="correction.error.value" type="error" variant="tonal" class="mb-6" role="alert" data-testid="markup-correction-error">{{
+        correction.error.value
+      }}</v-alert>
       <PhotoUpload
         v-if="editable || jobs.length"
         class="mb-6"
@@ -282,7 +327,7 @@ async function confirmMove(toId: string, code: string) {
         :child-codes="childCodes"
         :cover-id="cover?.id"
         :disabled="!editable"
-        :allow-move="true"
+        :allow-move="group.state === 'preparing'"
         :busy="busy || uploading || moveLoading"
         :suggested-code="suggestedCode"
         @update:filter="setFilter"

@@ -22,6 +22,7 @@ use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Morefoto\Media\Infrastructure\File\PhotoFileInspector;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
+use Morefoto\Media\Application\Photo\Service\GroupMarkupAccess;
 use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Rebit\Share\Infrastructure\Logger\CommonLoggerProcessor;
 use Rebit\Share\Contracts\Organization\Dto\MediaScopeOutputDto;
@@ -242,7 +243,7 @@ final class PhotoPipelineDiagnosticsTest extends TestCase
 
         return (new UploadPhotoUseCase(
             $scopes,
-            $this->createStub(AccessGuardInterface::class),
+            new GroupMarkupAccess($this->createStub(AccessGuardInterface::class)),
             new PhotoFileInspector(),
             $storage,
             $this->originals(),

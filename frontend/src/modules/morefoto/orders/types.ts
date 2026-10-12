@@ -20,9 +20,8 @@ export interface OrderEvent {
   previousTotal?: number;
 }
 export type ReceiptChannel = 'email' | 'max';
+/** E8: email is the only contact of a buyer; name and phone are not asked any more. */
 export interface BuyerFields {
-  name: string;
-  phone: string;
   email: string;
   comment: string;
   receiptChannel: ReceiptChannel;
@@ -47,7 +46,8 @@ export interface OrderSnapshot {
   audience: 'regular' | 'staff';
   createdAt: string;
   closesAt: string;
-  buyer: Omit<BuyerFields, 'reviewed'>;
+  /** Demo orders placed before E8 may still carry a name and a phone. */
+  buyer: Omit<BuyerFields, 'reviewed'> & { name?: string; phone?: string };
   quote: CartQuote;
   digitalPhotos: GalleryPhoto[];
   paymentStatus: 'unpaid' | 'pending' | 'declined' | 'paid';

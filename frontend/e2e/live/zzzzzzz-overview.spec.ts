@@ -30,7 +30,7 @@ test('U6: обзор организатора — плитки ссылок по
     ['Ждут проверки', Math.max(0, summary.byState.preparing - summary.prepared)],
     ['Готовы к передаче', summary.prepared],
     ['Приём открыт', summary.byState.open],
-    ['Закрываются за 3 дня', summary.closingSoon]
+    ['Печать закрывается за 3 дня', summary.closingSoon]
   ] as const;
   for (const [index, [label, value]] of expected.entries()) {
     await expect(tiles.nth(index)).toHaveAttribute('aria-label', new RegExp('^' + label + ': ' + value + ' '));

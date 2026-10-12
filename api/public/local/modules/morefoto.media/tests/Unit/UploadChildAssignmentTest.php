@@ -21,6 +21,7 @@ use Morefoto\Media\Presentation\Photo\PhotoInputMapper;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Morefoto\Media\Application\Photo\Service\GroupMarkupAccess;
 use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Rebit\Share\Contracts\Organization\Dto\MediaScopeOutputDto;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
@@ -171,7 +172,7 @@ final class UploadChildAssignmentTest extends TestCase
         try {
             return (new UploadPhotoUseCase(
                 $scopes,
-                $this->createStub(AccessGuardInterface::class),
+                new GroupMarkupAccess($this->createStub(AccessGuardInterface::class)),
                 new PhotoFileInspector(),
                 $storage,
                 $originals,
@@ -199,7 +200,7 @@ final class UploadChildAssignmentTest extends TestCase
             }
         });
 
-        return new UploadChildAssignment($transaction, $media, $scopes);
+        return new UploadChildAssignment($transaction, $media, $scopes, new GroupMarkupAccess($this->createStub(AccessGuardInterface::class)));
     }
 
     private function scope(): MediaScopeOutputDto

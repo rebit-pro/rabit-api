@@ -11,7 +11,7 @@ final readonly class OrderEntitlementOutputDto
      * @param int                               $shootId             внутренний ID съёмки Media
      * @param null|string                       $paidAt              первый подтверждённый платёж UTC `Y-m-d H:i:s`
      * @param null|string                       $filesAvailableUntil конец срока файлов по D10 UTC `Y-m-d H:i:s`; null — заказ не оплачен
-     * @param list<OrderEntitledPhotoOutputDto> $photos              кадры строк digital в порядке заказа
+     * @param list<OrderEntitledPhotoOutputDto> $photos              кадры строк digital и physical (J4) в порядке заказа, каждый один раз
      * @param list<int>                         $childIds            внутренние ID детей Media с комплектом: строка bundle или подарок
      */
     public function __construct(

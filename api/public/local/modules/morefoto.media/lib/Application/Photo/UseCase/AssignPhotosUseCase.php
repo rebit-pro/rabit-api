@@ -7,14 +7,15 @@ namespace Morefoto\Media\Application\Photo\UseCase;
 use Morefoto\Media\Application\Photo\Contract\MediaTransactionInterface;
 use Morefoto\Media\Application\Photo\Dto\AssignmentMutationOutputDto;
 use Morefoto\Media\Application\Photo\Dto\AssignPhotosInputDto;
+use Morefoto\Media\Application\Photo\Service\GroupMarkupAccess;
 use Morefoto\Media\Domain\Photo\Repository\MediaMutationRepository;
 use Morefoto\Media\Domain\Photo\ValueObject\IdempotencyKey;
-use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /**
- * Атомарно привязывает выбранные готовые фотографии к ребёнку в редактируемой группе.
+ * Атомарно привязывает выбранные готовые фотографии к ребёнку в группе до передачи ссылки или во время исправления
+ * разметки (D4), когда продажа на паузе.
  *
  * Проверяет область и доступ, revision и идемпотентность, не допуская частично сохранённой разметки.
  */
@@ -24,20 +25,20 @@ final readonly class AssignPhotosUseCase
         private MediaTransactionInterface $transaction,
         private MediaMutationRepository $media,
         private MediaScopeInterface $scopes,
-        private AccessGuardInterface $access,
+        private GroupMarkupAccess $markup,
     ) {}
 
     public function execute(int $actorId, string $groupId, IdempotencyKey $key, AssignPhotosInputDto $input): AssignmentMutationOutputDto
     {
         return $this->transaction->execute(function() use ($actorId, $groupId, $key, $input): AssignmentMutationOutputDto {
             $scope = $this->scopes->resolve($input->shootId, $groupId);
-            $this->access->assertCan($actorId, 'media.manage', $scope->institutionId, $scope->groupId);
-            if (!$scope->groupEditable || null === $scope->groupId) {
+            $this->markup->assertCan($actorId, $scope);
+            if (!$this->markup->editable($scope) || null === $scope->groupId) {
                 throw new HttpException('GROUP_LOCKED', 409);
             }
             $current = $this->media->lockRevision($scope->shootId);
             // Link delivery takes the same lock: re-read after waiting so no labeling slips into an opened gallery.
-            if (!$this->scopes->resolve($input->shootId, $groupId)->groupEditable) {
+            if (!$this->markup->editable($this->scopes->resolve($input->shootId, $groupId))) {
                 throw new HttpException('GROUP_LOCKED', 409);
             }
             $resource = '/groups/' . $groupId . '/photo-assignments';

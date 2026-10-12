@@ -8,6 +8,7 @@ use Bitrix\Main\DB\Result;
 use Morefoto\Commerce\Domain\Order\Repository\OrderAccessKeyRepository;
 use Morefoto\Commerce\Domain\Order\Repository\OrderRepository;
 use Morefoto\Commerce\Domain\Order\Service\OrderCalendarPolicy;
+use Morefoto\Commerce\Domain\Storefront\Service\SalesWindowPolicy;
 use Morefoto\Commerce\Infrastructure\Payment\OrderPayments;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +22,7 @@ use Rebit\Share\Shared\Exception\HttpException;
 require_once __DIR__ . '/../bootstrap.php';
 
 /**
- * Контракт OrderPaymentInterface: paid окончателен, повтор статуса не меняет версию, срок приёма в UTC.
+ * Контракт OrderPaymentInterface: paid окончателен, повтор статуса не меняет версию, срок продаж состава заказа в UTC.
  *
  * @internal
  */
@@ -85,7 +86,8 @@ final class OrderPaymentsTest extends TestCase
         }
     }
 
-    public function testLockedOrderCarriesTotalsAndCloseInUtc(): void
+    #[DataProvider('compositions')]
+    public function testLockedOrderCarriesTotalsAndTheSalesDeadlineOfItsCompositionInUtc(bool $containsPrint, string $salesUntil): void
     {
         $orders = $this->createStub(OrderRepository::class);
         $orders->method('lock')->willReturn($this->rows([
@@ -93,18 +95,26 @@ final class OrderPaymentsTest extends TestCase
             'GROUP_PUBLIC_ID' => 'g-1', 'SUBTOTAL' => '110000', 'DISCOUNT' => '5000', 'GIFT_SAVING' => '0', 'TOTAL' => '105000',
             'PAYMENT_STATUS' => 'pending', 'VERSION' => '4', 'PAID_AT' => null, 'LATE_PAYMENT' => '0',
         ]));
+        $orders->method('containsPrint')->willReturn($containsPrint);
 
-        $order = $this->payments($orders, '2026-10-01T00:00:00+03:00')->lock(7);
+        $order = $this->payments($orders, '2026-10-01T00:00:00+03:00', null, '2026-10-08T00:00:00+03:00')->lock(7);
 
         self::assertSame([7, 3, 105000, '4', 'pending', false], [$order->id, $order->institutionId, $order->total, $order->version, $order->paymentStatus, $order->latePayment]);
-        self::assertSame('2026-09-30 21:00:00', $order->closesAt);
+        self::assertSame([$salesUntil, $containsPrint], [$order->salesUntil, $order->containsPrint]);
+    }
+
+    /** @return iterable<string, array{bool, string}> */
+    public static function compositions(): iterable
+    {
+        yield 'print or mixed order closes with print' => [true, '2026-09-30 21:00:00'];
+        yield 'digital order closes with digital sales' => [false, '2026-10-07 21:00:00'];
     }
 
     public function testMalformedOrMissingKeyIsNotFound(): void
     {
         $keys = $this->createStub(OrderAccessKeyRepository::class);
         $keys->method('findActive')->willReturn(false);
-        $payments = new OrderPayments($keys, $this->createStub(OrderRepository::class), $this->createStub(GroupCalendarInterface::class), $this->clock(), new OrderCalendarPolicy());
+        $payments = new OrderPayments($keys, $this->createStub(OrderRepository::class), $this->createStub(GroupCalendarInterface::class), $this->clock(), new OrderCalendarPolicy(), new SalesWindowPolicy());
 
         foreach ([null, 'short', str_repeat('a', 64)] as $key) {
             try {
@@ -116,12 +126,12 @@ final class OrderPaymentsTest extends TestCase
         }
     }
 
-    private function payments(OrderRepository $orders, ?string $closesAt = null, ?OrderAccessKeyRepository $keys = null): OrderPayments
+    private function payments(OrderRepository $orders, ?string $closesAt = null, ?OrderAccessKeyRepository $keys = null, ?string $digitalSalesUntil = null): OrderPayments
     {
         $calendars = $this->createStub(GroupCalendarInterface::class);
-        $calendars->method('get')->willReturn(new CalendarMutationOutputDto('g-1', 1, new GroupCalendarOutputDto('Europe/Moscow', null, $closesAt, null, 'open')));
+        $calendars->method('get')->willReturn(new CalendarMutationOutputDto('g-1', 1, new GroupCalendarOutputDto('Europe/Moscow', null, $closesAt, $digitalSalesUntil, null, 'open')));
 
-        return new OrderPayments($keys ?? $this->createStub(OrderAccessKeyRepository::class), $orders, $calendars, $this->clock(), new OrderCalendarPolicy());
+        return new OrderPayments($keys ?? $this->createStub(OrderAccessKeyRepository::class), $orders, $calendars, $this->clock(), new OrderCalendarPolicy(), new SalesWindowPolicy());
     }
 
     private function clock(): ClockInterface

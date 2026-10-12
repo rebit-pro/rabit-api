@@ -8,6 +8,11 @@ use Morefoto\Access\Domain\Staff\Entity\StaffProfile;
 use Morefoto\Access\Domain\Staff\Enum\PermissionEnum;
 use Morefoto\Access\Domain\Staff\Enum\RoleEnum;
 
+/**
+ * Решает, разрешено ли сотруднику действие по его роли и назначенной области: организатору — всё, куратору и
+ * руководителю — чтение своих учреждений, куратору — заказы и исправление разметки переданных групп своих учреждений (D4),
+ * воспитателю — свои группы. Отключённый профиль не может ничего.
+ */
 final readonly class PermissionPolicy
 {
     /**
@@ -34,7 +39,7 @@ final readonly class PermissionPolicy
         return match ($permission) {
             PermissionEnum::INSTITUTION_READ, PermissionEnum::SHOOT_READ => in_array($profile->role, [RoleEnum::CURATOR, RoleEnum::HEAD], true)
                 && $this->inScope($institutionIds, $institutionId),
-            PermissionEnum::ORDER_READ => RoleEnum::CURATOR === $profile->role && $this->inScope($institutionIds, $institutionId),
+            PermissionEnum::ORDER_READ, PermissionEnum::MEDIA_CORRECT => RoleEnum::CURATOR === $profile->role && $this->inScope($institutionIds, $institutionId),
             PermissionEnum::GROUP_READ => match ($profile->role) {
                 RoleEnum::CURATOR, RoleEnum::HEAD => (null === $groupId || null !== $institutionId)
                     && $this->inScope($institutionIds, $institutionId),

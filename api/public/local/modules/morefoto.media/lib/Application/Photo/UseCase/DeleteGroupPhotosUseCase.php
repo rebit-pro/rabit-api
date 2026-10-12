@@ -7,16 +7,17 @@ namespace Morefoto\Media\Application\Photo\UseCase;
 use Morefoto\Media\Application\Photo\Contract\MediaTransactionInterface;
 use Morefoto\Media\Application\Photo\Dto\DeletePhotosInputDto;
 use Morefoto\Media\Application\Photo\Dto\DeletionMutationOutputDto;
+use Morefoto\Media\Application\Photo\Service\GroupMarkupAccess;
 use Morefoto\Media\Application\Photo\Service\PhotoFileCleaner;
 use Morefoto\Media\Domain\Photo\Repository\MediaMutationRepository;
 use Morefoto\Media\Domain\Photo\ValueObject\IdempotencyKey;
-use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Rebit\Share\Contracts\Organization\GroupReferenceInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /**
- * Безвозвратно убирает лишние кадры из группы, пока она готовится и кадры не могли попасть в заказы.
+ * Безвозвратно убирает лишние кадры из группы, пока она готовится или исправляется её разметка (D4): в обоих случаях
+ * заказов нет, и кадры не могли в них попасть.
  *
  * Вместе с кадрами снимает их назначения детям и записи повторов, переносит обложку, а файлы удаляет после фиксации транзакции.
  */
@@ -27,7 +28,7 @@ final readonly class DeleteGroupPhotosUseCase
         private MediaMutationRepository $media,
         private GroupReferenceInterface $groups,
         private MediaScopeInterface $scopes,
-        private AccessGuardInterface $access,
+        private GroupMarkupAccess $markup,
         private PhotoFileCleaner $files,
     ) {}
 
@@ -37,13 +38,13 @@ final readonly class DeleteGroupPhotosUseCase
         $output = $this->transaction->execute(function() use ($actorId, $groupId, $key, $input, &$removed): DeletionMutationOutputDto {
             $group = $this->groups->get($groupId);
             $scope = $this->scopes->resolve($group->shootId, $groupId);
-            $this->access->assertCan($actorId, 'media.manage', $scope->institutionId, $scope->groupId);
-            if (!$scope->groupEditable || null === $scope->groupId) {
+            $this->markup->assertCan($actorId, $scope);
+            if (!$this->markup->editable($scope) || null === $scope->groupId) {
                 throw new HttpException('GROUP_LOCKED', 409);
             }
             $current = $this->media->lockRevision($scope->shootId);
             // Link delivery takes the same lock: re-read after waiting so no photo disappears from an opened gallery.
-            if (!$this->scopes->resolve($group->shootId, $groupId)->groupEditable) {
+            if (!$this->markup->editable($this->scopes->resolve($group->shootId, $groupId))) {
                 throw new HttpException('GROUP_LOCKED', 409);
             }
             $resource = '/groups/' . $groupId . '/photo-deletions';

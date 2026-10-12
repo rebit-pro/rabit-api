@@ -39,7 +39,7 @@ final readonly class GroupCalendarRepository
         self::validateId($publicId);
         $lock = $forUpdate ? ' FOR UPDATE' : '';
         try {
-            return Application::getConnection()->query("SELECT ID,UF_PUBLIC_ID,UF_REVISION,UF_TIMEZONE,DATE_FORMAT(UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS UF_SENT_AT,DATE_FORMAT(UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS UF_CLOSES_AT,DATE_FORMAT(UF_DELIVERY_DUE_AT,'%Y-%m-%d %H:%i:%s') AS UF_DELIVERY_DUE_AT FROM b_hlbd_mf_group WHERE UF_PUBLIC_ID='{$publicId}'{$lock}");
+            return Application::getConnection()->query("SELECT ID,UF_PUBLIC_ID,UF_REVISION,UF_TIMEZONE,DATE_FORMAT(UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS UF_SENT_AT,DATE_FORMAT(UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS UF_CLOSES_AT,DATE_FORMAT(UF_DIGITAL_SALES_UNTIL,'%Y-%m-%d %H:%i:%s') AS UF_DIGITAL_SALES_UNTIL,DATE_FORMAT(UF_DELIVERY_DUE_AT,'%Y-%m-%d %H:%i:%s') AS UF_DELIVERY_DUE_AT,DATE_FORMAT(UF_MARKUP_CORRECTION_AT,'%Y-%m-%d %H:%i:%s') AS UF_MARKUP_CORRECTION_AT FROM b_hlbd_mf_group WHERE UF_PUBLIC_ID='{$publicId}'{$lock}");
         } catch (\Throwable $exception) {
             throw new CalendarStorageException('Cannot read group calendar.', 0, $exception);
         }
@@ -65,20 +65,39 @@ final readonly class GroupCalendarRepository
 
     public function save(int $id, int $expectedRevision, GroupCalendar $calendar): bool
     {
-        if (1 > $id || 1 > $expectedRevision || 2147483646 < $expectedRevision || null === $calendar->sentAt || null === $calendar->closesAt || null === $calendar->deliveryDueAt) {
+        if (1 > $id || 1 > $expectedRevision || 2147483646 < $expectedRevision || null === $calendar->sentAt || null === $calendar->closesAt || null === $calendar->digitalSalesUntil || null === $calendar->deliveryDueAt) {
             throw new \InvalidArgumentException('A complete calendar and incrementable group revision are required.');
         }
         $utc = new \DateTimeZone('UTC');
         $sentAt = $calendar->sentAt->setTimezone($utc)->format('Y-m-d H:i:s');
         $closesAt = $calendar->closesAt->setTimezone($utc)->format('Y-m-d H:i:s');
+        $digitalSalesUntil = $calendar->digitalSalesUntil->setTimezone($utc)->format('Y-m-d H:i:s');
         $deliveryDueAt = $calendar->deliveryDueAt->setTimezone($utc)->format('Y-m-d H:i:s');
         try {
             $connection = Application::getConnection();
-            $connection->queryExecute("UPDATE b_hlbd_mf_group SET UF_SENT_AT='{$sentAt}',UF_CLOSES_AT='{$closesAt}',UF_DELIVERY_DUE_AT='{$deliveryDueAt}',UF_REVISION=UF_REVISION+1,UF_UPDATED_AT=UTC_TIMESTAMP() WHERE ID={$id} AND UF_REVISION={$expectedRevision}");
+            $connection->queryExecute("UPDATE b_hlbd_mf_group SET UF_SENT_AT='{$sentAt}',UF_CLOSES_AT='{$closesAt}',UF_DIGITAL_SALES_UNTIL='{$digitalSalesUntil}',UF_DELIVERY_DUE_AT='{$deliveryDueAt}',UF_REVISION=UF_REVISION+1,UF_UPDATED_AT=UTC_TIMESTAMP() WHERE ID={$id} AND UF_REVISION={$expectedRevision}");
 
             return 1 === $connection->getAffectedRowsCount();
         } catch (\Throwable $exception) {
             throw new CalendarStorageException('Cannot save group calendar.', 0, $exception);
+        }
+    }
+
+    /** Starts (UTC `Y-m-d H:i:s`) or finishes (null) the markup correction of a transmitted group under the revision CAS. */
+    public function saveMarkupCorrection(int $id, int $expectedRevision, ?string $startedAt): bool
+    {
+        if (1 > $id || 1 > $expectedRevision || 2147483646 < $expectedRevision
+            || (null !== $startedAt && 1 !== preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/D', $startedAt))) {
+            throw new \InvalidArgumentException('A correction moment and an incrementable group revision are required.');
+        }
+        $value = null === $startedAt ? 'NULL' : "'{$startedAt}'";
+        try {
+            $connection = Application::getConnection();
+            $connection->queryExecute("UPDATE b_hlbd_mf_group SET UF_MARKUP_CORRECTION_AT={$value},UF_REVISION=UF_REVISION+1,UF_UPDATED_AT=UTC_TIMESTAMP() WHERE ID={$id} AND UF_REVISION={$expectedRevision}");
+
+            return 1 === $connection->getAffectedRowsCount();
+        } catch (\Throwable $exception) {
+            throw new CalendarStorageException('Cannot save the markup correction.', 0, $exception);
         }
     }
 

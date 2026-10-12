@@ -38,7 +38,7 @@ const queue = computed<QueueItem[]>(
       };
     }) ?? []
 );
-const stateSegments = computed(() => groupStateSegments(scope.value?.counters.byState ?? { preparing: 0, open: 0, closed: 0 }));
+const stateSegments = computed(() => groupStateSegments(scope.value?.counters.byState ?? { preparing: 0, open: 0, digital: 0, closed: 0 }));
 const finance = ['Оплачено', 'Подтверждённые возвраты', 'Итого после возвратов'];
 </script>
 
@@ -82,7 +82,7 @@ const finance = ['Оплачено', 'Подтверждённые возвра�
         to="/cabinet/links"
       />
       <MfStatTile
-        label="Закрываются за 3 дня"
+        label="Печать закрывается за 3 дня"
         :value="scope.counters.closingSoon"
         :unit="plural(scope.counters.closingSoon, groups)"
         :pastel="CHART_CATEGORY.groups"
@@ -132,6 +132,7 @@ const finance = ['Оплачено', 'Подтверждённые возвра�
         <MfTimeline
           :sent-at="group.sentAt"
           :closes-at="group.closesAt"
+          :digital-until="group.digitalSalesUntil"
           :delivery-at="group.deliveryAt"
           :now="teacher.referenceNow"
           :timezone="group.timezone"

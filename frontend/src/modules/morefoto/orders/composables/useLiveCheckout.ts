@@ -2,6 +2,7 @@ import { computed, nextTick, reactive, shallowRef, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { forgetLiveCart, liveQuote, liveState, refreshStorefront } from '../../commerce/services/storefront';
 import type { GallerySnapshot } from '../../gallery/types';
+import { galleryBuys } from '../../commerce/sales-windows';
 import { apiProblem, liveOrdersApi } from '../live/api';
 import { checkoutOutcome, isCreatedOrder, newRequestId, showsCheckoutRecovery, type CheckoutSubmission } from '../live/rules';
 import type { CheckoutBody } from '../live/types';
@@ -11,7 +12,10 @@ import { acceptedDocuments, isDraftFresh, ORDER_DOCUMENTS } from '../../legal/ru
 import { useLegalCatalog } from '../../legal/useLegalCatalog';
 
 interface LiveDraft extends CheckoutDraft {
-  /** Exact body of an attempt whose outcome is unknown; it is resent unchanged with the same key. */
+  /**
+   * Exact body of an attempt whose outcome is unknown; it is resent unchanged with the same key. One stored before E8
+   * still holds the name and the phone: the server accepts and ignores them.
+   */
   pending: CheckoutBody | null;
 }
 interface StoredDraft extends LiveDraft {
@@ -31,8 +35,6 @@ function readDraft(groupId: string): LiveDraft {
   const pending = stored.pending && typeof stored.pending === 'object' ? stored.pending : null;
   if (pending === null && !isDraftFresh(stored.savedAt, Date.now())) stored = {};
   return {
-    name: typeof stored.name === 'string' ? stored.name : '',
-    phone: typeof stored.phone === 'string' ? stored.phone : '',
     email: typeof stored.email === 'string' ? stored.email : '',
     comment: typeof stored.comment === 'string' ? stored.comment : '',
     receiptChannel: 'email',
@@ -69,7 +71,7 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
   const canSubmit = computed(
     () =>
       state.catalog.capabilities?.purchaseEnabled === true &&
-      gallery.state === 'open' &&
+      galleryBuys(gallery) &&
       quote.value.lines.length > 0 &&
       !quote.value.invalid.length &&
       state.quoteToken !== null
@@ -81,7 +83,7 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
   function body(): CheckoutBody {
     return {
       lines: state.lines.map(({ assignmentId, productId, quantity }) => ({ assignmentId, productId, quantity })),
-      buyer: { name: draft.name, phone: draft.phone, email: draft.email, comment: draft.comment, reviewed: draft.reviewed },
+      buyer: { email: draft.email, comment: draft.comment, reviewed: draft.reviewed },
       quoteToken: state.quoteToken ?? '',
       consents: acceptedDocuments(legal.value, ORDER_DOCUMENTS) ?? []
     };

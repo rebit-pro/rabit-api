@@ -36,6 +36,8 @@ use Morefoto\Commerce\Infrastructure\Order\OrderTokenGenerator;
 use Morefoto\Commerce\Infrastructure\Order\OrderTransaction;
 use Morefoto\Commerce\Infrastructure\Files\OrderEntitlements;
 use Morefoto\Commerce\Infrastructure\Payment\OrderPayments;
+use Morefoto\Commerce\Domain\Storefront\Service\SalesWindowPolicy;
+use Morefoto\Commerce\Infrastructure\Correction\GroupOrders;
 use Morefoto\Commerce\Infrastructure\Transfer\ChildOrders;
 use Morefoto\Commerce\Presentation\Controller\OrderController;
 use Morefoto\Commerce\Presentation\Controller\StaffOrderController;
@@ -47,6 +49,7 @@ use Rebit\Share\Application\Contract\Clock\ClockInterface;
 use Rebit\Share\Application\Contract\Consent\ConsentRecorderInterface;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Contracts\Commerce\ChildOrdersInterface;
+use Rebit\Share\Contracts\Commerce\GroupOrdersInterface;
 use Rebit\Share\Contracts\Commerce\StructureSalesRemovalInterface;
 use Morefoto\Commerce\Infrastructure\Organization\StructureSalesRemoval;
 use Rebit\Share\Contracts\Commerce\OrderEntitlementInterface;
@@ -65,6 +68,9 @@ return [
     OrderTransactionInterface::class => [
         'constructor' => static fn(): OrderTransactionInterface => new OrderTransaction(),
     ],
+    GroupOrdersInterface::class => [
+        'constructor' => static fn(): GroupOrdersInterface => new GroupOrders(ServiceLocator::getInstance()->get(OrderRepository::class)),
+    ],
     ChildOrdersInterface::class => [
         'constructor' => static fn(): ChildOrdersInterface => new ChildOrders(ServiceLocator::getInstance()->get(OrderRepository::class)),
     ],
@@ -78,6 +84,7 @@ return [
             ServiceLocator::getInstance()->get(GroupCalendarInterface::class),
             ServiceLocator::getInstance()->get(ClockInterface::class),
             ServiceLocator::getInstance()->get(OrderCalendarPolicy::class),
+            ServiceLocator::getInstance()->get(SalesWindowPolicy::class),
         ),
     ],
     OrderEntitlementInterface::class => [
@@ -172,6 +179,7 @@ return [
             ServiceLocator::getInstance()->get(OrderPlacement::class),
             ServiceLocator::getInstance()->get(OrderTransactionInterface::class),
             ServiceLocator::getInstance()->get(ConsentRecorderInterface::class),
+            ServiceLocator::getInstance()->get(SalesWindowPolicy::class),
         ],
     ],
     GetBuyerOrderUseCase::class => [

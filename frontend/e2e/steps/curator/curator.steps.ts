@@ -269,7 +269,7 @@ Then('R11 проверяет {string}', async function (this: CustomWorld, name:
     await expect(p.getByTestId('order-period')).toContainText('20 сентября');
     await expect(p.getByTestId('order-period')).toContainText('27 сентября');
     await go(p, base, '/g/' + token);
-    await expect(p.locator('.gallery-conditions time')).toContainText('20 сентября');
+    await expect(p.locator('.gallery-conditions time').first()).toContainText('20 сентября');
   } else if (name === 'закрытая группа открывается после продления') {
     const state = await org(p);
     state.groups[0]!.closesAt = '2026-09-06T15:00:00Z';
@@ -460,8 +460,6 @@ Then('R11 проверяет {string}', async function (this: CustomWorld, name:
     await expect(p.locator('.product-notice')).toBeVisible();
     await p.getByRole('link', { name: 'Посмотреть корзину', exact: true }).click();
     await p.getByRole('link', { name: 'Оформить заказ', exact: true }).click();
-    await p.getByLabel('Имя покупателя', { exact: true }).fill('Новый покупатель R11');
-    await p.getByLabel('Телефон', { exact: true }).fill('+7 (900) 123-45-67');
     await p.getByLabel('Email', { exact: true }).fill('new-r11@example.test');
     await p.getByLabel('Состав и условия проверены', { exact: true }).check();
     await p.getByTestId('create-order').click();

@@ -32,10 +32,12 @@ final readonly class GalleryResultMapper
             $output->state,
             $this->date($group->sentAt),
             $this->date($group->closesAt),
+            $this->date($group->digitalSalesUntil),
             $output->referenceNow,
             array_values($children),
             '',
             'Срок передачи фотографий уточняйте у куратора.',
+            updating: null !== $group->markupCorrectionAt,
         );
     }
 

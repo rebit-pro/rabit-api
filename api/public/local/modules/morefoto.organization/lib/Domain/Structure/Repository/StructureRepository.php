@@ -58,7 +58,7 @@ final readonly class StructureRepository
     /** One GroupRow per result. */
     public function group(StructureId $id): Result
     {
-        return $this->query("SELECT g.ID,g.UF_PUBLIC_ID,g.UF_SHOOT_ID,g.UF_NAME,g.UF_KIND,g.UF_REVISION,DATE_FORMAT(g.UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS UF_SENT_AT,s.UF_INSTITUTION_ID,s.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot s ON s.ID=g.UF_SHOOT_ID WHERE g.UF_PUBLIC_ID='{$id->value}'");
+        return $this->query("SELECT g.ID,g.UF_PUBLIC_ID,g.UF_SHOOT_ID,g.UF_NAME,g.UF_KIND,g.UF_REVISION,DATE_FORMAT(g.UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS UF_SENT_AT,DATE_FORMAT(g.UF_MARKUP_CORRECTION_AT,'%Y-%m-%d %H:%i:%s') AS UF_MARKUP_CORRECTION_AT,s.UF_INSTITUTION_ID,s.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot s ON s.ID=g.UF_SHOOT_ID WHERE g.UF_PUBLIC_ID='{$id->value}'");
     }
 
     public function lockInstitution(int $id): Result
@@ -129,14 +129,14 @@ SQL);
     public function groups(int $shootId, int $limit, int $offset, ?string $nowUtc = null): Result
     {
         $this->bounds($limit, $offset);
-        $counters = null === $nowUtc ? 'NULL AS STATE_PREPARING,NULL AS STATE_OPEN,NULL AS STATE_CLOSED' : GroupStateSql::counters($nowUtc);
+        $counters = null === $nowUtc ? 'NULL AS STATE_PREPARING,NULL AS STATE_OPEN,NULL AS STATE_DIGITAL,NULL AS STATE_CLOSED' : GroupStateSql::counters($nowUtc);
 
         return $this->query(<<<SQL
 SELECT page.ID,page.UF_PUBLIC_ID,page.UF_NAME,page.UF_KIND,page.UF_REVISION,page.UF_TIMEZONE,
-DATE_FORMAT(page.UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS UF_SENT_AT,DATE_FORMAT(page.UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS UF_CLOSES_AT,DATE_FORMAT(page.UF_DELIVERY_DUE_AT,'%Y-%m-%d %H:%i:%s') AS UF_DELIVERY_DUE_AT,totals.TOTAL,totals.STATE_PREPARING,totals.STATE_OPEN,totals.STATE_CLOSED
+DATE_FORMAT(page.UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS UF_SENT_AT,DATE_FORMAT(page.UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS UF_CLOSES_AT,DATE_FORMAT(page.UF_DIGITAL_SALES_UNTIL,'%Y-%m-%d %H:%i:%s') AS UF_DIGITAL_SALES_UNTIL,DATE_FORMAT(page.UF_DELIVERY_DUE_AT,'%Y-%m-%d %H:%i:%s') AS UF_DELIVERY_DUE_AT,totals.TOTAL,totals.STATE_PREPARING,totals.STATE_OPEN,totals.STATE_DIGITAL,totals.STATE_CLOSED
 FROM (SELECT COUNT(*) AS TOTAL,{$counters} FROM b_hlbd_mf_group g WHERE g.UF_SHOOT_ID={$shootId}) totals
 LEFT JOIN (
-    SELECT ID,UF_PUBLIC_ID,UF_NAME,UF_KIND,UF_REVISION,UF_TIMEZONE,UF_SENT_AT,UF_CLOSES_AT,UF_DELIVERY_DUE_AT,UF_CREATED_AT
+    SELECT ID,UF_PUBLIC_ID,UF_NAME,UF_KIND,UF_REVISION,UF_TIMEZONE,UF_SENT_AT,UF_CLOSES_AT,UF_DIGITAL_SALES_UNTIL,UF_DELIVERY_DUE_AT,UF_CREATED_AT
     FROM b_hlbd_mf_group WHERE UF_SHOOT_ID={$shootId}
     ORDER BY UF_CREATED_AT DESC,ID DESC LIMIT {$limit} OFFSET {$offset}
 ) page ON 1=1 ORDER BY page.UF_CREATED_AT DESC,page.ID DESC
@@ -151,7 +151,7 @@ SQL);
      *     ID: int|string|null, UF_PUBLIC_ID: string|null, SHOOT_PUBLIC_ID: string|null, SHOOT_NAME: string|null,
      *     UF_NAME: string|null, UF_KIND: string|null, UF_REVISION: int|string|null,
      *     UF_TIMEZONE: string|null, UF_SENT_AT: string|null, UF_CLOSES_AT: string|null,
-     *     UF_DELIVERY_DUE_AT: string|null, TOTAL: int|string,
+     *     UF_DIGITAL_SALES_UNTIL: string|null, UF_DELIVERY_DUE_AT: string|null, TOTAL: int|string,
      * }
      */
     public function institutionGroups(int $institutionId, int $limit, int $offset, ?array $institutionIds, string $nowUtc): Result
@@ -162,10 +162,10 @@ SQL);
 
         return $this->query(<<<SQL
 SELECT page.ID,page.UF_PUBLIC_ID,page.SHOOT_PUBLIC_ID,page.SHOOT_NAME,page.UF_NAME,page.UF_KIND,page.UF_REVISION,page.UF_TIMEZONE,
-DATE_FORMAT(page.UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS UF_SENT_AT,DATE_FORMAT(page.UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS UF_CLOSES_AT,DATE_FORMAT(page.UF_DELIVERY_DUE_AT,'%Y-%m-%d %H:%i:%s') AS UF_DELIVERY_DUE_AT,totals.TOTAL,totals.STATE_PREPARING,totals.STATE_OPEN,totals.STATE_CLOSED
+DATE_FORMAT(page.UF_SENT_AT,'%Y-%m-%d %H:%i:%s') AS UF_SENT_AT,DATE_FORMAT(page.UF_CLOSES_AT,'%Y-%m-%d %H:%i:%s') AS UF_CLOSES_AT,DATE_FORMAT(page.UF_DIGITAL_SALES_UNTIL,'%Y-%m-%d %H:%i:%s') AS UF_DIGITAL_SALES_UNTIL,DATE_FORMAT(page.UF_DELIVERY_DUE_AT,'%Y-%m-%d %H:%i:%s') AS UF_DELIVERY_DUE_AT,totals.TOTAL,totals.STATE_PREPARING,totals.STATE_OPEN,totals.STATE_DIGITAL,totals.STATE_CLOSED
 FROM (SELECT COUNT(*) AS TOTAL,{$counters} FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot s ON s.ID=g.UF_SHOOT_ID WHERE {$condition}) totals
 LEFT JOIN (
-    SELECT g.ID,g.UF_PUBLIC_ID,s.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID,s.UF_NAME AS SHOOT_NAME,g.UF_NAME,g.UF_KIND,g.UF_REVISION,g.UF_TIMEZONE,g.UF_SENT_AT,g.UF_CLOSES_AT,g.UF_DELIVERY_DUE_AT,g.UF_CREATED_AT
+    SELECT g.ID,g.UF_PUBLIC_ID,s.UF_PUBLIC_ID AS SHOOT_PUBLIC_ID,s.UF_NAME AS SHOOT_NAME,g.UF_NAME,g.UF_KIND,g.UF_REVISION,g.UF_TIMEZONE,g.UF_SENT_AT,g.UF_CLOSES_AT,g.UF_DIGITAL_SALES_UNTIL,g.UF_DELIVERY_DUE_AT,g.UF_CREATED_AT
     FROM b_hlbd_mf_group g INNER JOIN b_hlbd_mf_shoot s ON s.ID=g.UF_SHOOT_ID WHERE {$condition}
     ORDER BY g.UF_CREATED_AT DESC,g.ID DESC LIMIT {$limit} OFFSET {$offset}
 ) page ON 1=1 ORDER BY page.UF_CREATED_AT DESC,page.ID DESC

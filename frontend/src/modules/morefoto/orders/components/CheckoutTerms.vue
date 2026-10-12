@@ -3,6 +3,7 @@ import type { GallerySnapshot } from '../../gallery/types';
 import { documentPath, sellerLine } from '../../legal/rules';
 import type { LegalDocument, Seller } from '../../legal/types';
 import { isMockApiEnabled } from '@/mocks/config';
+import { formatMoment } from '../formatters';
 defineProps<{ gallery: GallerySnapshot; seller: Seller | null; offer: LegalDocument | null }>();
 </script>
 <template>
@@ -12,16 +13,18 @@ defineProps<{ gallery: GallerySnapshot; seller: Seller | null; offer: LegalDocum
       <div>
         <dt>Печатная продукция</dt>
         <dd>
-          Передадим в {{ gallery.institutionName }} в течение семи календарных дней после завершения приёма группы. При продлении приёма
+          Заказ и оплата — до окончания приёма печати<template v-if="gallery.closesAt"> ({{ formatMoment(gallery.closesAt) }} мск)</template
+          >. Передадим в {{ gallery.institutionName }} в течение семи календарных дней после окончания приёма печати. При продлении приёма
           дата передачи изменится.
         </dd>
       </div>
       <div>
         <dt>Электронные файлы</dt>
         <dd>
-          После подтверждения оплаты. Срок скачивания — один календарный месяц со дня покупки.<template v-if="isMockApiEnabled">
-            В демонстрации выдаются тестовые файлы.</template
-          >
+          Покупка — до окончания продажи электронных фото<template v-if="gallery.digitalSalesUntil">
+            ({{ formatMoment(gallery.digitalSalesUntil) }} мск)</template
+          >. Файлы — после подтверждения оплаты, срок скачивания — один календарный месяц со дня покупки. К каждому оплаченному печатному
+          кадру — его электронная копия без доплаты.<template v-if="isMockApiEnabled"> В демонстрации выдаются тестовые файлы.</template>
         </dd>
       </div>
       <div>

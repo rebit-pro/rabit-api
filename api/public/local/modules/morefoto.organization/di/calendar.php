@@ -6,20 +6,31 @@ use Bitrix\Main\DI\ServiceLocator;
 use Morefoto\Organization\Application\Calendar\Contract\CalendarClockInterface;
 use Morefoto\Organization\Application\Calendar\Service\CalendarCommandValidator;
 use Morefoto\Organization\Application\Calendar\Service\GroupCalendar;
+use Morefoto\Organization\Application\Calendar\Service\GroupMarkupCorrection;
 use Morefoto\Organization\Application\Calendar\UseCase\ChangeGroupCalendarUseCase;
 use Morefoto\Organization\Application\Institution\Contract\InstitutionTransactionInterface;
 use Morefoto\Organization\Domain\Calendar\Repository\GroupCalendarRepository;
+use Morefoto\Organization\Domain\Calendar\Service\MarkupCorrectionPolicy;
 use Morefoto\Organization\Domain\Institution\Repository\InstitutionOperationRepository;
 use Morefoto\Organization\Infrastructure\Calendar\ServerCalendarClock;
 use Morefoto\Organization\Infrastructure\Handoff\GroupDirectory;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Contracts\Organization\GroupCalendarInterface;
 use Rebit\Share\Contracts\Organization\GroupDirectoryInterface;
+use Rebit\Share\Contracts\Organization\GroupMarkupCorrectionInterface;
 
 return [
     CalendarClockInterface::class => ['constructor' => static fn(): CalendarClockInterface => new ServerCalendarClock()],
     CalendarCommandValidator::class => ['className' => CalendarCommandValidator::class],
     GroupCalendarRepository::class => ['className' => GroupCalendarRepository::class],
+    MarkupCorrectionPolicy::class => ['className' => MarkupCorrectionPolicy::class],
+    GroupMarkupCorrectionInterface::class => [
+        'constructor' => static fn(): GroupMarkupCorrectionInterface => new GroupMarkupCorrection(
+            ServiceLocator::getInstance()->get(GroupCalendarRepository::class),
+            ServiceLocator::getInstance()->get(MarkupCorrectionPolicy::class),
+            ServiceLocator::getInstance()->get(CalendarClockInterface::class),
+        ),
+    ],
     GroupCalendarInterface::class => [
         'constructor' => static fn(): GroupCalendarInterface => new GroupCalendar(
             ServiceLocator::getInstance()->get(GroupCalendarRepository::class),

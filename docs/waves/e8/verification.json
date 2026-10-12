@@ -1,0 +1,73 @@
+{
+  "wave": "E8",
+  "status": "passed",
+  "date": "2026-10-12",
+  "branch": "codex/e8-email-only-checkout",
+  "base": "28a8c55 (merge D4, PR #175)",
+  "head": "25fa0bc89d571ffb8b6808bce0038cd45866e80e",
+  "decisions": "E8-DEC-01…05 chosen by the user on 2026-10-12; DEC-01 = the server ignores name and phone (not the recommended option)",
+  "checks": {
+    "backend": {
+      "status": "passed",
+      "phpunit": "OK 1109 tests (php-e8.sh) and OK in the gate",
+      "phpstan": "No errors (tools/e2e/phpstan.neon)",
+      "csFixer": "clean on the changed PHP files",
+      "migration": "20261012100001: combined ALTER checked on a disposable mysql:8.0, then in the gate"
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "stylelint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "UI unit 88",
+        "commerce unit 233",
+        "production build"
+      ]
+    },
+    "graph": {
+      "status": "passed",
+      "note": "D4 merged (PR #175, 28a8c55); python3 tools/verify-wave-graph.py exit 0, 59 waves, readyMvpFromMain [E8, F3, J4]"
+    },
+    "browser": {
+      "status": "passed",
+      "command": "E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e",
+      "runs": [
+        {
+          "run": "rabit-e2e-64ca39ba3e76",
+          "head": "df8783e",
+          "mode": "full gate",
+          "result": "140 scenarios passed (a 81, b 59), 15 verifiers passed incl. verify-email-only-orders.php, 416 s"
+        },
+        {
+          "run": "rabit-e2e-14bb523c86a3",
+          "head": "25fa0bc",
+          "mode": "E2E_GROUPS=b (partial)",
+          "result": "59 scenarios and 12 verifiers passed, 273 s; rerun after the CSS-only width fix of CheckoutContacts.vue to re-shoot the screenshots"
+        }
+      ],
+      "yookassa": "test shop OFF (#174): payment scenarios ran in the disabled mode, the sandbox part is BLOCKED"
+    },
+    "demoCucumber": {
+      "status": "failed-baseline",
+      "note": "npm run test:e2e:run (mock) fails at the demo login (login.feature:20) on main 28a8c55 and on E8 alike, issue #182; the E8 step edits (commerce/checkout.steps.ts, ui/composite.steps.ts, features/ui/composite.feature) are checked by typecheck:e2e only"
+    }
+  },
+  "testCases": {
+    "E8-T01": "PASS",
+    "E8-T02": "PASS",
+    "E8-T03": "PASS",
+    "E8-T04": "PASS",
+    "E8-T05": "PASS",
+    "E8-T06": "PASS",
+    "E8-T07": "PASS",
+    "E8-T08": "PASS",
+    "E8-T09": "PASS after E8 review mark"
+  },
+  "limits": [
+    "G1 sandbox payment with the real test shop is not rerun (#174)",
+    "Group a was last run on df8783e; the following commit changes only CheckoutContacts.vue styles",
+    "Demo Cucumber suite is broken on main (#182); E8 step edits are type-checked only"
+  ]
+}

@@ -32,6 +32,7 @@ export function resolveDemoGallery(token: string): GallerySnapshot {
     state,
     sentAt: state === 'preparing' ? null : groupSentAt(group),
     closesAt,
+    digitalSalesUntil: closesAt ? calendarDays(closesAt, 7) : null,
     referenceNow,
     delivery:
       group.sentAt && closesAt

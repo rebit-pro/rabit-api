@@ -10,11 +10,15 @@ use Morefoto\Handoff\Application\Link\Dto\GroupLinkPageOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\GroupLinkSummaryOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkCalendarOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkEventOutputDto;
+use Morefoto\Handoff\Application\Link\Dto\LinkMarkupCorrectionOutputDto;
+use Morefoto\Handoff\Application\Link\Mapper\GroupLinkOutputMapper;
 use Morefoto\Handoff\Presentation\Link\GroupLinkInputMapper;
 use Morefoto\Handoff\Presentation\Link\GroupLinkResultMapper;
 use Morefoto\Handoff\Presentation\Link\Request\Dto\CorrectGroupLinkDateRequestDto;
+use Morefoto\Handoff\Presentation\Link\Request\Dto\FinishMarkupCorrectionRequestDto;
 use Morefoto\Handoff\Presentation\Link\Request\Dto\GroupLinkListRequestDto;
 use Morefoto\Handoff\Presentation\Link\Request\Dto\PrepareGroupLinkRequestDto;
+use Morefoto\Handoff\Presentation\Link\Request\Dto\StartMarkupCorrectionRequestDto;
 use Morefoto\Handoff\Presentation\Link\Request\Dto\TransmitGroupLinkRequestDto;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -71,6 +75,17 @@ final class GroupLinkContractTest extends TestCase
         $this->assertCode('VALIDATION_FAILED', fn(): object => $mapper->preparation($this->request(PrepareGroupLinkRequestDto::class, ['revision' => 0] + $this->preparation())));
     }
 
+    public function testMarkupCorrectionCommandsValidateRevisionAndSignature(): void
+    {
+        $mapper = new GroupLinkInputMapper();
+        self::assertSame(3, $mapper->markupStart($this->request(StartMarkupCorrectionRequestDto::class, ['revision' => 3]))->revision);
+        $finish = $mapper->markupFinish($this->request(FinishMarkupCorrectionRequestDto::class, ['revision' => 4, 'signature' => str_repeat('b', 64)]));
+        self::assertSame([4, str_repeat('b', 64)], [$finish->revision, $finish->signature]);
+        $this->assertCode('VALIDATION_FAILED', fn(): object => $mapper->markupStart($this->request(StartMarkupCorrectionRequestDto::class, ['revision' => 0])));
+        $this->assertCode('VALIDATION_FAILED', fn(): object => $mapper->markupFinish($this->request(FinishMarkupCorrectionRequestDto::class, ['revision' => 4, 'signature' => 'short'])));
+        $this->assertCode(null, static fn(): array => StrictRequestValues::normalize(['revision' => '3', 'groupId' => self::UUID, 'idempotencyKey' => str_repeat('a', 32)], StartMarkupCorrectionRequestDto::class, true));
+    }
+
     public function testStrictJsonRejectsCoercionAndUnknownFields(): void
     {
         foreach (['revision' => '2', 'confirmed' => 'true', 'sentAt' => 1700000000, 'extra' => true] as $name => $value) {
@@ -98,27 +113,37 @@ final class GroupLinkContractTest extends TestCase
         $mapper = new GroupLinkResultMapper();
         $summary = ['groupId' => self::UUID, 'name' => 'Солнышко', 'kind' => 'regular', 'institutionId' => self::UUID, 'institutionName' => 'Сад', 'shootId' => self::UUID,
             'shootName' => 'Осень', 'revision' => 3, 'signature' => str_repeat('a', 64), 'prepared' => true, 'problems' => [], 'state' => 'open', 'timezone' => 'Europe/Moscow',
-            'sentAt' => '2026-09-22T10:15:00+03:00', 'closesAt' => '2026-09-29T10:15:00+03:00', 'deliveryAt' => '2026-10-06T10:15:00+03:00', 'photoCount' => 12, 'childCount' => 4];
+            'sentAt' => '2026-09-22T10:15:00+03:00', 'closesAt' => '2026-09-29T10:15:00+03:00', 'digitalSalesUntil' => '2026-10-06T10:15:00+03:00', 'deliveryAt' => '2026-10-06T10:15:00+03:00', 'photoCount' => 12, 'childCount' => 4,
+            'markupCorrectionAt' => '2026-09-23T09:00:00+03:00'];
         $event = ['kind' => 'corrected', 'actorId' => 5, 'actorName' => 'curator', 'at' => '2026-09-22T11:00:00+03:00', 'sentAt' => '2026-09-22T10:15:00+03:00',
             'closesAt' => '2026-09-29T10:15:00+03:00', 'deliveryAt' => '2026-10-06T10:15:00+03:00', 'previousSentAt' => '2026-09-22T10:45:00+03:00',
             'previousClosesAt' => '2026-09-29T10:45:00+03:00', 'previousDeliveryAt' => '2026-10-06T10:45:00+03:00', 'reason' => 'Ошибка в дате'];
-        $detail = new GroupLinkOutputDto(...$summary, galleryToken: str_repeat('f', 64), referenceNow: '2026-09-22T08:00:00+00:00', history: [new LinkEventOutputDto(...$event)]);
+        $detail = new GroupLinkOutputDto(...$summary, galleryToken: str_repeat('f', 64), referenceNow: '2026-09-22T08:00:00+00:00', history: [new LinkEventOutputDto(...$event)], markupCorrectable: false);
         self::assertSame(
-            $summary + ['galleryToken' => str_repeat('f', 64), 'referenceNow' => '2026-09-22T08:00:00+00:00', 'history' => [$event]],
+            $summary + ['galleryToken' => str_repeat('f', 64), 'referenceNow' => '2026-09-22T08:00:00+00:00', 'history' => [$event], 'markupCorrectable' => false],
             json_decode($serializer->serialize($mapper->detail($detail)), true, 16, JSON_THROW_ON_ERROR),
         );
-        $page = new GroupLinkPageOutputDto([new GroupLinkSummaryOutputDto(...$summary, curatorName: 'Мария Иванова')], 1, 25, 1, 1, new GroupLinkCountersOutputDto('2026-09-22T08:00:00+00:00', 2, 1, 0, 1, 1));
+        $page = new GroupLinkPageOutputDto([new GroupLinkSummaryOutputDto(...$summary, curatorName: 'Мария Иванова')], 1, 25, 1, 1, new GroupLinkCountersOutputDto('2026-09-22T08:00:00+00:00', 2, 1, 3, 0, 1, 1));
         self::assertSame(
             ['data' => ['items' => [$summary + ['curatorName' => 'Мария Иванова']]], 'meta' => ['page' => 1, 'pageSize' => 25, 'total' => 1, 'totalPages' => 1, 'summary' => [
-                'referenceNow' => '2026-09-22T08:00:00+00:00', 'byState' => ['preparing' => 2, 'open' => 1, 'closed' => 0], 'closingSoon' => 1, 'prepared' => 1,
+                'referenceNow' => '2026-09-22T08:00:00+00:00', 'byState' => ['preparing' => 2, 'open' => 1, 'digital' => 3, 'closed' => 0], 'closingSoon' => 1, 'prepared' => 1,
             ]]],
             json_decode($serializer->serialize(['data' => $mapper->list($page), 'meta' => $mapper->meta($page)]), true, 16, JSON_THROW_ON_ERROR),
         );
         self::assertArrayNotHasKey('galleryToken', $summary);
         self::assertSame(
-            ['revision' => 4, 'sentAt' => 's', 'closesAt' => 'c', 'deliveryAt' => 'd'],
-            json_decode($serializer->serialize($mapper->calendar(new LinkCalendarOutputDto(4, 's', 'c', 'd'))), true, 4, JSON_THROW_ON_ERROR),
+            ['revision' => 4, 'sentAt' => 's', 'closesAt' => 'c', 'digitalSalesUntil' => 'g', 'deliveryAt' => 'd'],
+            json_decode($serializer->serialize($mapper->calendar(new LinkCalendarOutputDto(4, 's', 'c', 'g', 'd'))), true, 4, JSON_THROW_ON_ERROR),
         );
+        // D4: a finished correction answers without the moment; its stored replay has no moment either.
+        self::assertSame(
+            ['revision' => 5, 'startedAt' => null],
+            json_decode($serializer->serialize($mapper->markupCorrection(new LinkMarkupCorrectionOutputDto(5, null))), true, 4, JSON_THROW_ON_ERROR),
+        );
+        self::assertSame(['revision' => 5], new GroupLinkOutputMapper()->markupCorrectionResult(5, null));
+        self::assertSame('2026-09-23T09:00:00+03:00', new GroupLinkOutputMapper()->markupCorrection(['revision' => 4, 'startedAt' => '2026-09-23T09:00:00+03:00'])->startedAt);
+        // A replay stored before E7 has no digital deadline and is still served.
+        self::assertNull(new GroupLinkOutputMapper()->calendar(['revision' => 4, 'sentAt' => 's', 'closesAt' => 'c', 'deliveryAt' => 'd'])->digitalSalesUntil);
     }
 
     /**

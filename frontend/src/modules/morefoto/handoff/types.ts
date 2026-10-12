@@ -1,7 +1,8 @@
+import type { SalesState } from '../commerce/sales-windows.js';
 import type { ManagedPhoto } from '../photos/types.js';
 import type { ScopeSnapshot, StaffRole } from '../types.js';
 export interface LinkEvent {
-  kind: 'prepared' | 'transmitted' | 'corrected';
+  kind: 'prepared' | 'transmitted' | 'corrected' | 'markup_started' | 'markup_finished';
   actorName?: string;
   actorId: number;
   at: string;
@@ -66,9 +67,12 @@ export interface LinkGroup {
   galleryToken: string;
   kind: 'regular' | 'staff';
   revision: number;
-  state: 'preparing' | 'open' | 'closed';
+  state: SalesState;
   sentAt: string | null;
+  /** Print sales close (T0+7). */
   closesAt: string | null;
+  /** Digital sales close (T0+14). */
+  digitalSalesUntil: string | null;
   deliveryAt: string | null;
   extensionClosesAt?: string;
   signature: string;

@@ -19,8 +19,6 @@ Given('покупатель оформил заказ R06 {string}', async funct
   await expect(p.locator('.product-notice')).toBeVisible();
   await p.getByRole('link', { name: 'Посмотреть корзину', exact: true }).click();
   await p.getByRole('link', { name: 'Оформить заказ', exact: true }).click();
-  await p.getByRole('textbox', { name: 'Имя покупателя', exact: true }).fill('Тестовый покупатель');
-  await p.getByRole('textbox', { name: 'Телефон', exact: true }).fill('+79001234567');
   await p.getByRole('textbox', { name: 'Email', exact: true }).fill('parent@example.test');
   await p.getByRole('checkbox', { name: 'Состав и условия проверены', exact: true }).check();
   await p.getByTestId('create-order').click();

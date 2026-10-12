@@ -101,7 +101,9 @@ export async function saveSettlement(token: string, c: SaleCommand): Promise<voi
           after = {
             ...before,
             email: c.email.trim().toLowerCase(),
-            ...(c.action === 'contacts' ? { name: c.name.trim(), phone: '+' + phoneDigits(c.phone) } : {})
+            ...(c.action === 'contacts'
+              ? { name: c.name.trim() || undefined, phone: c.phone.trim() ? '+' + phoneDigits(c.phone) : undefined }
+              : {})
           };
         if (c.action === 'recover' && downloadAccess(order, now).state !== 'available')
           throw new Error('Повторная выдача недоступна: проверьте решение по оплате, возврат и исходный месячный срок.');

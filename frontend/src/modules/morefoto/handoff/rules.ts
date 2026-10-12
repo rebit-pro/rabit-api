@@ -160,6 +160,12 @@ export function closingAfterCorrection(sentAt: string, extensionClosesAt?: strin
   return extensionClosesAt && Date.parse(extensionClosesAt) > Date.parse(base) ? extensionClosesAt : base;
 }
 
+/** E7: digital photos are sold 14 calendar days from the same moment, never closing before print. */
+export function digitalSalesAfter(sentAt: string, closing: string): string {
+  const base = calendarDays(sentAt, 14);
+  return Date.parse(closing) > Date.parse(base) ? closing : base;
+}
+
 /** HND-10 → вид проверки переноса. Служебные превью доступны только организатору, остальным показываются коды кадров. */
 export function transferPreviewFromServer(
   value: ServerTransferPreview,

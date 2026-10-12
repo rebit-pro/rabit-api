@@ -6,6 +6,9 @@ namespace Rebit\Share\Contracts\Organization\Dto;
 
 final readonly class GroupDirectoryItemOutputDto
 {
+    /**
+     * @param null|string $markupCorrectionAt начало исправления разметки (D4), ATOM в зоне группы; null — продажи идут
+     */
     public function __construct(
         public int $nativeId,
         public string $id,
@@ -18,5 +21,6 @@ final readonly class GroupDirectoryItemOutputDto
         public string $shootId,
         public string $shootName,
         public GroupCalendarOutputDto $calendar,
+        public ?string $markupCorrectionAt = null,
     ) {}
 }

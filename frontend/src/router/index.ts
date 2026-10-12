@@ -67,7 +67,12 @@ router.beforeEach(async (to) => {
     if (['Catalog', 'GroupConditions'].includes(String(to.name)) && !auth.user?.permissions?.includes('catalog.manage'))
       return '/access-unavailable';
     if (to.path === '/cabinet/users' && !auth.user?.permissions?.includes('staff.manage')) return '/access-unavailable';
-    if (to.name === 'PhotoWorkspace' && !auth.user?.permissions?.includes('media.manage')) return '/access-unavailable';
+    // D4: the curator opens the photos of an institution to correct the markup of a transmitted group.
+    if (
+      to.name === 'PhotoWorkspace' &&
+      !auth.user?.permissions?.some((permission) => permission === 'media.manage' || permission === 'media.correct')
+    )
+      return '/access-unavailable';
     // G1: the payment registry has the order scope and the same permission.
     if (
       ['WorkOrders', 'WorkOrder', 'WorkPayments', 'WorkPayment'].includes(String(to.name)) &&

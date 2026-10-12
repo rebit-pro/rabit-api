@@ -123,8 +123,8 @@ test('an edited text after a lost first answer joins the recovered conversation 
 });
 
 test('a new curator answer is marked on the gallery until the parent opens it', async ({ page }) => {
-  await page.goto(gallery);
-  await page.evaluate(({ key, value }) => localStorage.setItem(key, value), { key: storageKey, value: 'b'.repeat(64) });
+  // The route goes first (#179): a gallery that mounts after the key is written must never reach the real server,
+  // whose 404 for this made-up key would erase it before the reload.
   await page.route('**/api/v1/public/questions/current', (route) =>
     route.fulfill({
       json: {
@@ -146,6 +146,8 @@ test('a new curator answer is marked on the gallery until the parent opens it', 
       }
     })
   );
+  await page.goto(gallery);
+  await page.evaluate(({ key, value }) => localStorage.setItem(key, value), { key: storageKey, value: 'b'.repeat(64) });
   await page.reload();
   await expect(page.getByTestId('gallery-question-unread')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Вопрос куратору, новый ответ' })).toBeVisible();

@@ -20,9 +20,12 @@ export interface LiveLinkItem {
   timezone: string;
   sentAt: string | null;
   closesAt: string | null;
+  digitalSalesUntil: string | null;
   deliveryAt: string | null;
   photoCount: number;
   childCount: number;
+  /** D4: start of the markup correction that pauses the sales; null while the group sells normally. */
+  markupCorrectionAt: string | null;
   /** Curator of the group's institution, whom the teacher asks about the group (INF-11); only in the list. */
   curatorName?: string | null;
 }
@@ -43,11 +46,13 @@ export interface LiveLinkDetail extends LiveLinkItem {
   galleryToken: string | null;
   referenceNow: string;
   history: LiveLinkEvent[];
+  /** D4: a transmitted group that still sells and has no orders; the server repeats the check on start. */
+  markupCorrectable: boolean;
 }
 /** U5: counters of the whole visible scope, independent of the state filter and paging. */
 export interface LinkCounters {
   referenceNow: string;
-  byState: { preparing: number; open: number; closed: number };
+  byState: { preparing: number; open: number; digital: number; closed: number };
   closingSoon: number;
   prepared: number;
 }
@@ -100,6 +105,23 @@ export const linksApi = {
   }
 };
 
+/**
+ * D4 commands of a transmitted group. Each attempt gets a new key: after a lost answer the caller reloads the card,
+ * which shows whether the command was saved, instead of repeating it.
+ */
+export const markupCorrectionApi = {
+  async start(groupId: string, revision: number, requestId: string): Promise<void> {
+    await api.post(path(groupId) + '/markup-corrections', { revision }, { headers: { 'Idempotency-Key': key(requestId) } });
+  },
+  async finish(groupId: string, revision: number, signature: string, requestId: string): Promise<void> {
+    await api.post(
+      path(groupId) + '/markup-correction-completions',
+      { revision, signature },
+      { headers: { 'Idempotency-Key': key(requestId) } }
+    );
+  }
+};
+
 export function toLinkGroup(item: LiveLinkItem, detail?: LiveLinkDetail): LinkGroup {
   return {
     id: item.groupId,
@@ -113,6 +135,7 @@ export function toLinkGroup(item: LiveLinkItem, detail?: LiveLinkDetail): LinkGr
     state: item.state,
     sentAt: item.sentAt,
     closesAt: item.closesAt,
+    digitalSalesUntil: item.digitalSalesUntil,
     deliveryAt: item.deliveryAt,
     signature: item.signature,
     prepared: item.prepared,

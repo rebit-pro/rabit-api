@@ -1,13 +1,11 @@
+import { isAxiosError } from 'axios';
 import { shallowReactive } from 'vue';
 import api from '@/api/http';
 import type { GallerySnapshot } from '../../gallery/types';
 import type { CartQuote, Catalog } from '../types';
+import { galleryBuys, mergeCartLines, quoteErrorMessage, sellableLines, type SalesLine } from '../sales-windows';
 
-interface Line {
-  assignmentId: string;
-  productId: string;
-  quantity: number;
-}
+type Line = SalesLine;
 interface State {
   gallery: GallerySnapshot;
   token: string;
@@ -17,6 +15,8 @@ interface State {
   quoteToken: string | null;
   busy: boolean;
   error: string;
+  /** E7: print lines removed from the stored selection after print sales closed. */
+  droppedPrint: number;
 }
 interface Calculation {
   quote: CartQuote;
@@ -45,6 +45,31 @@ export function liveQuote(groupId: string): CartQuote {
 function key(groupId: string): string {
   return 'morefoto:cart:v1:' + groupId;
 }
+function galleryKey(groupId: string): string {
+  return 'morefoto:gallery:v1:' + groupId;
+}
+/** Blocked site data or a full quota must not break the storefront: the value is a convenience. */
+function store(name: string, value: string): boolean {
+  try {
+    localStorage.setItem(name, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+/** Gallery link of a group opened on this device: an order page can send its buyer back to the same cart. */
+export function rememberedGallery(groupId: string): string | null {
+  try {
+    const token = localStorage.getItem(galleryKey(groupId));
+    return token && /^[a-f0-9]{64}$/.test(token) ? token : null;
+  } catch {
+    return null;
+  }
+}
+/** Adds order lines to the stored cart of the group; the buyer confirms them as a new order with fresh prices. */
+export function addToStoredCart(groupId: string, lines: Line[]): boolean {
+  return store(key(groupId), JSON.stringify(mergeCartLines(read(groupId), lines)));
+}
 function read(groupId: string): Line[] {
   try {
     const value: unknown = JSON.parse(localStorage.getItem(key(groupId)) ?? '[]');
@@ -69,8 +94,9 @@ function read(groupId: string): Line[] {
   }
 }
 function message(cause: unknown): string {
-  if (cause instanceof Error && 'isAxiosError' in cause) {
-    return 'Не удалось проверить корзину. Обновите расчёт или очистите сохранённый выбор.';
+  if (isAxiosError(cause)) {
+    const code = (cause.response?.data as { error?: { code?: string } } | undefined)?.error?.code ?? '';
+    return quoteErrorMessage(code) ?? 'Не удалось проверить корзину. Обновите расчёт или очистите сохранённый выбор.';
   }
   return cause instanceof Error ? cause.message : 'Не удалось рассчитать корзину.';
 }
@@ -101,11 +127,13 @@ export async function loadStorefront(token: string, gallery: GallerySnapshot): P
         quote: null,
         quoteToken: null,
         busy: false,
-        error: ''
+        error: '',
+        droppedPrint: 0
       })
     );
     return;
   }
+  store(galleryKey(gallery.groupId), token);
   let catalog: Catalog;
   try {
     ({ data: catalog } = await api.get<Catalog>('/api/v1/public/galleries/' + token + '/catalog'));
@@ -120,23 +148,34 @@ export async function loadStorefront(token: string, gallery: GallerySnapshot): P
         quote: null,
         quoteToken: null,
         busy: false,
-        error: message(cause)
+        error: message(cause),
+        droppedPrint: 0
       })
     );
     return;
   }
+  // A closed group keeps the stored selection for viewing; only the digital window drops print it can no longer sell.
+  const stored = read(gallery.groupId);
+  // Every gallery page loads the storefront again (gallery → cart): the next load finds nothing to drop, keep the notice.
+  const droppedBefore = states.get(gallery.groupId)?.droppedPrint ?? 0;
+  const { kept, dropped } =
+    gallery.state === 'digital'
+      ? sellableLines(stored, new Map(catalog.products.map((product) => [product.id, product.kind])), gallery.state)
+      : { kept: stored, dropped: 0 };
+  if (dropped > 0) store(key(gallery.groupId), JSON.stringify(kept));
   const state = shallowReactive<State>({
     gallery,
     token,
     catalog,
-    lines: read(gallery.groupId),
+    lines: kept,
     quote: null,
     quoteToken: null,
     busy: false,
-    error: ''
+    error: '',
+    droppedPrint: droppedBefore + dropped
   });
   states.set(gallery.groupId, state);
-  if (gallery.state === 'open') await refreshStorefront(gallery.groupId);
+  if (galleryBuys(gallery)) await refreshStorefront(gallery.groupId);
 }
 export async function refreshStorefront(groupId: string): Promise<void> {
   const state = liveState(groupId);
@@ -227,13 +266,14 @@ export async function changeLive(token: string, id: string, quantity: number): P
 export async function clearLive(token: string): Promise<void> {
   const state = forToken(token);
   if (state.busy) throw new Error('Дождитесь завершения расчёта.');
-  if (state.gallery.state === 'open') {
+  if (galleryBuys(state.gallery)) {
     await persist(state, []);
   }
   localStorage.removeItem(key(state.gallery.groupId));
   state.lines = [];
   state.error = '';
-  if (state.gallery.state !== 'open') state.quote = null;
+  state.droppedPrint = 0;
+  if (!galleryBuys(state.gallery)) state.quote = null;
 }
 /** Drops the local selection after the server confirmed the order; other groups keep their carts. */
 export function forgetLiveCart(groupId: string): void {
@@ -242,4 +282,5 @@ export function forgetLiveCart(groupId: string): void {
   state.lines = [];
   state.quote = empty;
   state.quoteToken = null;
+  state.droppedPrint = 0;
 }

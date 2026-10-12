@@ -20,4 +20,6 @@ return static function(RoutingConfigurator $routes): void {
     $routes->post('/api/v1/groups/{group_id}/link-preparations', [GroupLinkController::class, 'preparationAction']);
     $routes->post('/api/v1/groups/{group_id}/link-transmissions', [GroupLinkController::class, 'transmissionAction']);
     $routes->post('/api/v1/groups/{group_id}/link-date-corrections', [GroupLinkController::class, 'dateCorrectionAction']);
+    $routes->post('/api/v1/groups/{group_id}/markup-corrections', [GroupLinkController::class, 'markupCorrectionAction']);
+    $routes->post('/api/v1/groups/{group_id}/markup-correction-completions', [GroupLinkController::class, 'markupCompletionAction']);
 };

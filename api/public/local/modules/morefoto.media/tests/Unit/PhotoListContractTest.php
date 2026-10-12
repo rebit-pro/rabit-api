@@ -10,6 +10,7 @@ use Morefoto\Media\Application\Photo\Dto\PhotoAssignmentOutputDto;
 use Morefoto\Media\Application\Photo\Dto\PhotoGroupSummaryOutputDto;
 use Morefoto\Media\Application\Photo\Dto\PhotoOutputDto;
 use Morefoto\Media\Application\Photo\Dto\PhotoPageOutputDto;
+use Morefoto\Media\Application\Photo\Service\GroupMarkupAccess;
 use Morefoto\Media\Application\Photo\Service\PhotoRowMapper;
 use Morefoto\Media\Application\Photo\UseCase\ListPhotosUseCase;
 use Morefoto\Media\Domain\Photo\Repository\MediaMutationRepository;
@@ -200,7 +201,7 @@ final class PhotoListContractTest extends TestCase
         $media->method('covers')->willReturn([]);
         $media->method('revision')->willReturn(5);
 
-        return new ListPhotosUseCase($photos, $media, new PhotoRowMapper(), $scopes, $this->createStub(AccessGuardInterface::class));
+        return new ListPhotosUseCase($photos, $media, new PhotoRowMapper(), $scopes, new GroupMarkupAccess($this->createStub(AccessGuardInterface::class)));
     }
 
     private function emptyResult(): Result

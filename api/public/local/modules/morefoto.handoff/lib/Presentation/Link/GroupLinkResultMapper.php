@@ -9,6 +9,7 @@ use Morefoto\Handoff\Application\Link\Dto\GroupLinkPageOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\GroupLinkSummaryOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkCalendarOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkEventOutputDto;
+use Morefoto\Handoff\Application\Link\Dto\LinkMarkupCorrectionOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkPreparationOutputDto;
 use Morefoto\Handoff\Presentation\Link\Result\Dto\GroupLinkCountersResultDto;
 use Morefoto\Handoff\Presentation\Link\Result\Dto\GroupLinkListResultDto;
@@ -17,6 +18,7 @@ use Morefoto\Handoff\Presentation\Link\Result\Dto\GroupLinkSummaryResultDto;
 use Morefoto\Handoff\Presentation\Link\Result\Dto\LinkCalendarResultDto;
 use Morefoto\Handoff\Presentation\Link\Result\Dto\LinkEventResultDto;
 use Morefoto\Handoff\Presentation\Link\Result\Dto\LinkPreparationResultDto;
+use Morefoto\Handoff\Presentation\Link\Result\Dto\MarkupCorrectionResultDto;
 
 final readonly class GroupLinkResultMapper
 {
@@ -35,7 +37,7 @@ final readonly class GroupLinkResultMapper
             'totalPages' => $output->totalPages,
             'summary' => new GroupLinkCountersResultDto(
                 referenceNow: $output->summary->referenceNow,
-                byState: ['preparing' => $output->summary->preparing, 'open' => $output->summary->open, 'closed' => $output->summary->closed],
+                byState: ['preparing' => $output->summary->preparing, 'open' => $output->summary->open, 'digital' => $output->summary->digital, 'closed' => $output->summary->closed],
                 closingSoon: $output->summary->closingSoon,
                 prepared: $output->summary->prepared,
             ),
@@ -60,12 +62,15 @@ final readonly class GroupLinkResultMapper
             timezone: $output->timezone,
             sentAt: $output->sentAt,
             closesAt: $output->closesAt,
+            digitalSalesUntil: $output->digitalSalesUntil,
             deliveryAt: $output->deliveryAt,
             photoCount: $output->photoCount,
             childCount: $output->childCount,
+            markupCorrectionAt: $output->markupCorrectionAt,
             galleryToken: $output->galleryToken,
             referenceNow: $output->referenceNow,
             history: array_map($this->event(...), $output->history),
+            markupCorrectable: $output->markupCorrectable,
         );
     }
 
@@ -74,9 +79,14 @@ final readonly class GroupLinkResultMapper
         return new LinkPreparationResultDto($output->revision, $output->signature, $output->prepared);
     }
 
+    public function markupCorrection(LinkMarkupCorrectionOutputDto $output): MarkupCorrectionResultDto
+    {
+        return new MarkupCorrectionResultDto($output->revision, $output->startedAt);
+    }
+
     public function calendar(LinkCalendarOutputDto $output): LinkCalendarResultDto
     {
-        return new LinkCalendarResultDto($output->revision, $output->sentAt, $output->closesAt, $output->deliveryAt);
+        return new LinkCalendarResultDto($output->revision, $output->sentAt, $output->closesAt, $output->digitalSalesUntil, $output->deliveryAt);
     }
 
     private function summary(GroupLinkSummaryOutputDto $output): GroupLinkSummaryResultDto
@@ -97,9 +107,11 @@ final readonly class GroupLinkResultMapper
             timezone: $output->timezone,
             sentAt: $output->sentAt,
             closesAt: $output->closesAt,
+            digitalSalesUntil: $output->digitalSalesUntil,
             deliveryAt: $output->deliveryAt,
             photoCount: $output->photoCount,
             childCount: $output->childCount,
+            markupCorrectionAt: $output->markupCorrectionAt,
             curatorName: $output->curatorName,
         );
     }

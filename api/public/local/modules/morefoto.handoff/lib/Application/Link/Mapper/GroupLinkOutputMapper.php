@@ -9,6 +9,7 @@ use Morefoto\Handoff\Application\Link\Dto\GroupLinkSummaryOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkAssessmentOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkCalendarOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkEventOutputDto;
+use Morefoto\Handoff\Application\Link\Dto\LinkMarkupCorrectionOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkPreparationOutputDto;
 use Morefoto\Handoff\Domain\Link\Enum\LinkProblemEnum;
 use Rebit\Share\Contracts\Organization\Dto\GroupCalendarOutputDto;
@@ -50,6 +51,7 @@ final readonly class GroupLinkOutputMapper
         ?string $galleryToken,
         \DateTimeImmutable $now,
         array $history,
+        bool $markupCorrectable = false,
     ): GroupLinkOutputDto {
         $zone = new \DateTimeZone($group->calendar->timezone);
         $events = [];
@@ -74,6 +76,7 @@ final readonly class GroupLinkOutputMapper
             galleryToken: $galleryToken,
             referenceNow: $now->format(\DateTimeInterface::ATOM),
             history: $events,
+            markupCorrectable: $markupCorrectable,
         );
     }
 
@@ -83,14 +86,32 @@ final readonly class GroupLinkOutputMapper
         return ['revision' => $revision, 'signature' => $signature, 'prepared' => true];
     }
 
-    /** @return array{revision: int, sentAt: string, closesAt: string, deliveryAt: string} */
+    /** @return array{revision: int, sentAt: string, closesAt: string, digitalSalesUntil: ?string, deliveryAt: string} */
     public function calendarResult(int $revision, GroupCalendarOutputDto $dates): array
     {
         if (null === $dates->sentAt || null === $dates->closesAt || null === $dates->deliveryDueAt) {
             throw new \UnexpectedValueException('A delivered link must have a complete calendar.');
         }
 
-        return ['revision' => $revision, 'sentAt' => $dates->sentAt, 'closesAt' => $dates->closesAt, 'deliveryAt' => $dates->deliveryDueAt];
+        return [
+            'revision' => $revision,
+            'sentAt' => $dates->sentAt,
+            'closesAt' => $dates->closesAt,
+            'digitalSalesUntil' => $dates->digitalSalesUntil,
+            'deliveryAt' => $dates->deliveryDueAt,
+        ];
+    }
+
+    /** @return array{revision: int, startedAt?: string} without the moment once the correction is finished */
+    public function markupCorrectionResult(int $revision, ?string $startedAt): array
+    {
+        return null === $startedAt ? ['revision' => $revision] : ['revision' => $revision, 'startedAt' => $startedAt];
+    }
+
+    /** @param array<string, bool|int|string> $result */
+    public function markupCorrection(array $result): LinkMarkupCorrectionOutputDto
+    {
+        return new LinkMarkupCorrectionOutputDto((int)$result['revision'], isset($result['startedAt']) ? (string)$result['startedAt'] : null);
     }
 
     /** @param array<string, bool|int|string> $result */
@@ -99,10 +120,19 @@ final readonly class GroupLinkOutputMapper
         return new LinkPreparationOutputDto((int)$result['revision'], (string)$result['signature'], (bool)$result['prepared']);
     }
 
-    /** @param array<string, bool|int|string> $result */
+    /** @param array<string, null|bool|int|string> $result */
     public function calendar(array $result): LinkCalendarOutputDto
     {
-        return new LinkCalendarOutputDto((int)$result['revision'], (string)$result['sentAt'], (string)$result['closesAt'], (string)$result['deliveryAt']);
+        // Replays stored before E7 have no digital deadline.
+        $digital = $result['digitalSalesUntil'] ?? null;
+
+        return new LinkCalendarOutputDto(
+            (int)$result['revision'],
+            (string)$result['sentAt'],
+            (string)$result['closesAt'],
+            null === $digital ? null : (string)$digital,
+            (string)$result['deliveryAt'],
+        );
     }
 
     /**
@@ -110,7 +140,7 @@ final readonly class GroupLinkOutputMapper
      *     groupId: string, name: string, kind: string, institutionId: string, institutionName: string,
      *     shootId: string, shootName: string, revision: int, signature: string, prepared: bool,
      *     problems: list<string>, state: string, timezone: string, sentAt: ?string, closesAt: ?string,
-     *     deliveryAt: ?string, photoCount: int, childCount: int,
+     *     digitalSalesUntil: ?string, deliveryAt: ?string, photoCount: int, childCount: int, markupCorrectionAt: ?string,
      * }
      */
     private function fields(GroupDirectoryItemOutputDto $group, LinkAssessmentOutputDto $assessment, int $revision, bool $prepared): array
@@ -131,9 +161,11 @@ final readonly class GroupLinkOutputMapper
             'timezone' => $group->calendar->timezone,
             'sentAt' => $group->calendar->sentAt,
             'closesAt' => $group->calendar->closesAt,
+            'digitalSalesUntil' => $group->calendar->digitalSalesUntil,
             'deliveryAt' => $group->calendar->deliveryDueAt,
             'photoCount' => $assessment->photoCount,
             'childCount' => $assessment->childCount,
+            'markupCorrectionAt' => $group->markupCorrectionAt,
         ];
     }
 

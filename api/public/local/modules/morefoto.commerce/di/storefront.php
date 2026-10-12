@@ -12,6 +12,7 @@ use Morefoto\Commerce\Application\Storefront\UseCase\CreateQuoteUseCase;
 use Morefoto\Commerce\Application\Storefront\UseCase\GetStorefrontCatalogUseCase;
 use Morefoto\Commerce\Application\Storefront\UseCase\ValidateQuoteUseCase;
 use Morefoto\Commerce\Domain\Storefront\Repository\QuoteRepository;
+use Morefoto\Commerce\Domain\Storefront\Service\SalesWindowPolicy;
 use Morefoto\Commerce\Infrastructure\Storefront\QuoteTransaction;
 use Morefoto\Commerce\Presentation\Controller\StorefrontController;
 use Morefoto\Commerce\Presentation\Storefront\StorefrontMapper;
@@ -23,6 +24,7 @@ return [
     QuoteTransactionInterface::class => [
         'constructor' => static fn(): QuoteTransactionInterface => new QuoteTransaction(),
     ],
+    SalesWindowPolicy::class => ['className' => SalesWindowPolicy::class],
     QuoteRepository::class => [
         'className' => QuoteRepository::class,
     ],
@@ -36,6 +38,7 @@ return [
             ServiceLocator::getInstance()->get(GetGroupConditionsUseCase::class),
             ServiceLocator::getInstance()->get(StaffEligibilityInterface::class),
             ServiceLocator::getInstance()->get(PublishedPrices::class),
+            ServiceLocator::getInstance()->get(SalesWindowPolicy::class),
         ],
     ],
     GetStorefrontCatalogUseCase::class => [

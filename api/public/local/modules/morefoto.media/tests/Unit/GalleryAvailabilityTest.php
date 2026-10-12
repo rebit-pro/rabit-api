@@ -14,14 +14,16 @@ require_once __DIR__ . '/../bootstrap.php';
  */
 final class GalleryAvailabilityTest extends TestCase
 {
-    public function testOnlyActualTransmissionOpensTheGalleryAndClosingBoundaryIsExclusive(): void
+    public function testOnlyActualTransmissionOpensTheGalleryAndBothDeadlinesAreExclusive(): void
     {
         $availability = new GalleryAvailability();
         $now = new \DateTimeImmutable('2026-09-21T10:00:00Z');
-        self::assertSame('preparing', $availability->state(null, null, $now));
-        self::assertSame('preparing', $availability->state('2026-09-21 10:01:00', '2026-09-28 10:01:00', $now));
-        self::assertSame('open', $availability->state('2026-09-14 10:00:01', '2026-09-21 10:00:01', $now));
-        self::assertSame('closed', $availability->state('2026-09-14 10:00:00', '2026-09-21 10:00:00', $now));
-        self::assertSame('closed', $availability->state('2026-09-14 09:59:59', '2026-09-21 09:59:59', $now));
+        self::assertSame('preparing', $availability->state(null, null, null, $now));
+        self::assertSame('preparing', $availability->state('2026-09-21 10:01:00', '2026-09-28 10:01:00', '2026-10-05 10:01:00', $now));
+        self::assertSame('open', $availability->state('2026-09-14 10:00:01', '2026-09-21 10:00:01', '2026-09-28 10:00:01', $now));
+        self::assertSame('digital', $availability->state('2026-09-14 10:00:00', '2026-09-21 10:00:00', '2026-09-28 10:00:00', $now));
+        self::assertSame('digital', $availability->state('2026-09-07 10:00:01', '2026-09-14 10:00:01', '2026-09-21 10:00:01', $now));
+        self::assertSame('closed', $availability->state('2026-09-07 10:00:00', '2026-09-14 10:00:00', '2026-09-21 10:00:00', $now));
+        self::assertSame('closed', $availability->state('2026-09-07 09:59:59', '2026-09-14 09:59:59', '2026-09-21 09:59:59', $now));
     }
 }

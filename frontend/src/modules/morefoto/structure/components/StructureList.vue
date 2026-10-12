@@ -41,6 +41,7 @@ function description(item: StructureItem): string {
 const statusLabels = {
   preparing: 'Подготовка',
   open: 'Приём заказов открыт',
+  digital: 'Печать закрыта, электронные фото продаются',
   closed: 'Приём заказов закрыт'
 };
 function deadline(value: string): string {
@@ -88,11 +89,12 @@ function counters(item: Institution): string | null {
             class="structure-timeline"
             :sent-at="group(item)!.sentAt"
             :closes-at="group(item)!.closesAt"
+            :digital-until="group(item)!.digitalSalesUntil"
             :delivery-at="group(item)!.deliveryDueAt"
             :now="now"
             :timezone="group(item)!.timezone"
           />
-          <p v-else-if="group(item)!.closesAt" class="mf-muted mt-3">Закрытие приёма: {{ deadline(group(item)!.closesAt!) }} МСК</p>
+          <p v-else-if="group(item)!.closesAt" class="mf-muted mt-3">Закрытие печати: {{ deadline(group(item)!.closesAt!) }} МСК</p>
         </template>
       </div>
       <div v-if="canManage" class="structure-card-actions">

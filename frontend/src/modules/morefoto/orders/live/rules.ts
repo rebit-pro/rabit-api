@@ -1,7 +1,15 @@
+import type { SalesLine } from '../../commerce/sales-windows.js';
 import type { CartQuote } from '../../commerce/types.js';
 import type { Group, Institution, Shoot } from '../../structure/model.js';
+import { formatPhone } from '../../ui/field-values.ts';
 import type { BuyerErrors } from '../types.js';
-import type { ApiProblem, CreatedOrder, LiveOrderQuote, StaffOrderFilters } from './types.js';
+import type { ApiProblem, BuyerOrder, CreatedOrder, LiveBuyer, LiveOrderLine, LiveOrderQuote, StaffOrderFilters } from './types.js';
+
+/** E8: a staff list row of an order without a name shows its email; one placed before E8 keeps «name · phone». */
+export function staffBuyerLine(buyer: Pick<LiveBuyer, 'name' | 'phone' | 'email'>): string {
+  const parts = [buyer.name, buyer.phone === null ? null : formatPhone(buyer.phone)].filter((part): part is string => !!part);
+  return parts.length > 0 ? parts.join(' · ') : buyer.email;
+}
 
 export type CheckoutOutcome =
   | { kind: 'unknown'; message: string }
@@ -10,8 +18,6 @@ export type CheckoutOutcome =
   | { kind: 'message'; message: string };
 
 const fieldCodes: Record<string, [keyof BuyerErrors, string]> = {
-  INVALID_BUYER_NAME: ['name', 'Укажите имя: от 2 до 100 символов.'],
-  INVALID_BUYER_PHONE: ['phone', 'Укажите телефон: от 10 до 15 цифр, например +7 900 123-45-67.'],
   INVALID_BUYER_EMAIL: ['email', 'Укажите email в формате name@example.ru.'],
   INVALID_BUYER_COMMENT: ['comment', 'Комментарий — не более 1000 символов.'],
   REVIEW_REQUIRED: ['reviewed', 'Подтвердите, что проверили состав и условия заказа.'],
@@ -27,6 +33,8 @@ const fieldCodes: Record<string, [keyof BuyerErrors, string]> = {
 const unusedKeyCodes = new Set([
   ...Object.keys(fieldCodes),
   'GALLERY_CLOSED',
+  'GALLERY_UPDATING',
+  'PRINT_SALES_CLOSED',
   'PRICE_CHANGED',
   'QUOTE_STALE',
   'QUOTE_EXPIRED',
@@ -69,6 +77,13 @@ export function checkoutOutcome(problem: ApiProblem, recovering: boolean): Check
       };
     case 'GALLERY_CLOSED':
       return { kind: 'message', message: 'Приём заказов закрыт. Новый заказ оформить уже нельзя.' };
+    case 'PRINT_SALES_CLOSED':
+      return { kind: 'message', message: PRINT_CLOSED_MESSAGE };
+    case 'GALLERY_UPDATING':
+      return {
+        kind: 'message',
+        message: 'Фотографии группы обновляются, покупка временно приостановлена. Заполнение сохранено — повторите позже.'
+      };
     case 'GALLERY_NOT_READY':
     case 'GALLERY_NOT_FOUND':
       return { kind: 'message', message: 'Ссылка на группу недействительна или ещё не открыта.' };
@@ -83,6 +98,33 @@ export function checkoutOutcome(problem: ApiProblem, recovering: boolean): Check
       return { kind: 'message', message: 'Сервер отклонил заказ. Заполнение сохранено — проверьте данные и попробуйте ещё раз.' };
   }
 }
+
+/** E7: why an unpaid order can no longer be paid. Print lines are listed; digital ones may go to a new order. */
+export interface OrderSalesBlock {
+  kind: 'print' | 'closed';
+  printLines: LiveOrderLine[];
+  /** Bought digital photos and bundles; a gift bundle earned by the print threshold is not re-offered. */
+  digitalLines: LiveOrderLine[];
+}
+
+export function orderSalesBlock(order: Pick<BuyerOrder, 'paymentStatus' | 'period' | 'quote'>): OrderSalesBlock | null {
+  // A paid snapshot is final, and a 0 ₽ order needs no payment at all.
+  if (order.paymentStatus === 'paid' || order.quote.total === 0) return null;
+  const printLines = order.quote.lines.filter((line) => line.product.kind === 'physical');
+  const digitalLines = order.quote.lines.filter((line) => line.product.kind !== 'physical' && !line.coveredByGift);
+  if (order.period.state === 'closed') return { kind: 'closed', printLines, digitalLines };
+  if (order.period.state === 'digital' && printLines.length > 0) return { kind: 'print', printLines, digitalLines };
+  return null;
+}
+
+/** Cart lines for a new order with the same digital photos; prices are recalculated by the server. */
+export function reorderLines(lines: LiveOrderLine[]): SalesLine[] {
+  return lines.map((line) => ({ assignmentId: line.assignmentId, productId: line.productId, quantity: line.quantity }));
+}
+
+/** E7: print sales closed while the cart still had print; digital photos stay on sale until their own deadline. */
+export const PRINT_CLOSED_MESSAGE =
+  'Приём заказов на печать завершён. Обновите корзину: печатные позиции уберутся, электронные фото можно оформить до окончания их продажи.';
 
 /** What the checkout is sending now: nothing, a fresh attempt from the form or the stored unconfirmed attempt. */
 export type CheckoutSubmission = 'idle' | 'first' | 'recovery';

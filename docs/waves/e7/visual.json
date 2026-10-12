@@ -1,0 +1,36 @@
+{
+  "wave": "E7",
+  "status": "passed",
+  "fixture": "rabit-e2e-ca3bd75983eb",
+  "head": "ab09bd378375249a127ae21f02b62900f62c4f58",
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ],
+  "screenshots": [
+    {
+      "file": "docs/waves/e7/screenshots/e7-desktop-gallery.png",
+      "sha256": "5d6403317738e10c3b5dddbc78147490fc24e4a472e6da8638de93beeefc3ca1"
+    },
+    {
+      "file": "docs/waves/e7/screenshots/e7-desktop-cart.png",
+      "sha256": "8af2a7fb8ecce32d6114ce4b42944a4d44d49184293d69a0f43e072c84a3061e"
+    },
+    {
+      "file": "docs/waves/e7/screenshots/e7-mobile-gallery.png",
+      "sha256": "f21167125fcfcedcfc9c9b3d3501f78b08b24ae8844e9846ff02a36130b8389b"
+    },
+    {
+      "file": "docs/waves/e7/screenshots/e7-mobile-cart.png",
+      "sha256": "60f9636dc66dc8403800f49a2acccb04152046ac3f5b0ae7c09d86ebe9f68d39"
+    }
+  ],
+  "checks": [
+    "Галерея в окне digital: плашка «Печать закрыта», оба срока («Печать: до 10 октября», «Электронные фото: до 17 октября»), «Осталось 5 дней», уведомление о продаже только электронных фото",
+    "Селектор кадра: печатная продукция недоступна, «E7 Электронный кадр» добавляется в корзину (quote 200)",
+    "Корзина: «Приём заказов на печать завершён — … Печатные позиции убраны из корзины: 1» после перехода из галереи (исправлено в fbe8f14), итог 150 ₽, «Оформить заказ»",
+    "Подвал: сведения продавца и legal-ссылки сохранены, «Разработано в ReBit Studio» ведёт на https://rebit-pro.ru",
+    "Mobile 390×844: те же блоки, горизонтальной прокрутки нет (проверка спека scrollWidth <= innerWidth)",
+    "Не E7: иконка «Помощь» в шапке галереи на mobile прижата к правому краю; верхнюю панель E7 не меняла"
+  ]
+}

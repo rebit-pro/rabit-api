@@ -22,6 +22,14 @@ import UiDataTable from '../../ui/components/UiDataTable.vue';
 import { clampTablePage, sortTableRows } from '../../ui/table-values';
 import type { UiTableColumn, UiTableRow, UiTableSort } from '../../ui/table-types';
 import { galleryPath, type GalleryStepKey } from '../galleryPath';
+/** Event titles of the link history: F2 delivery steps and the D4 markup correction that pauses the sales. */
+const linkEventTitles: Record<LinkEvent['kind'], string> = {
+  prepared: 'Ссылка проверена',
+  transmitted: 'Передача отмечена',
+  corrected: 'Дата исправлена',
+  markup_started: 'Начато исправление разметки, покупка приостановлена',
+  markup_finished: 'Исправление разметки завершено, покупка возобновлена'
+};
 const live = !isMockApiEnabled,
   authStore = useAuthStore(),
   route = useRoute(),
@@ -94,6 +102,7 @@ const tiles = [
   { text: 'Требует проверки', icon: 'mdi-alert-circle-outline', pastel: 4 },
   { text: 'Готова к передаче', icon: 'mdi-send-check-outline', pastel: 3 },
   { text: 'Приём открыт', icon: 'mdi-cart-outline', pastel: 2 },
+  { text: 'Только электронные', icon: 'mdi-image-multiple-outline', pastel: 5 },
   { text: 'Приём завершён', icon: 'mdi-check-all', pastel: 7 }
 ] as const;
 type LinkState = (typeof tiles)[number]['text'];
@@ -101,7 +110,7 @@ const columns: UiTableColumn[] = [
   { key: 'name', label: 'Группа', sortable: true, primary: true, width: '28%' },
   { key: 'status', label: 'Состояние', sortable: true, mobile: true, width: '19%' },
   { key: 'sentAt', label: 'Передана', type: 'date', sortable: true, mobile: true, width: '11%' },
-  { key: 'closesAt', label: 'Приём до', type: 'date', sortable: true, mobile: true, width: '14%' },
+  { key: 'closesAt', label: 'Печать до', type: 'date', sortable: true, mobile: true, width: '14%' },
   { key: 'deliveryAt', label: 'Доставка', type: 'date', sortable: true, width: '11%' }
 ];
 const stateFilter = shallowRef<LinkState | null>(null);
@@ -113,7 +122,13 @@ const pageSize = shallowRef(25);
 const selected = shallowRef<string[]>([]);
 const byId = computed(() => new Map((data.value?.groups ?? []).map((g) => [g.id, g])));
 const counts = computed(() => {
-  const result: Record<LinkState, number> = { 'Требует проверки': 0, 'Готова к передаче': 0, 'Приём открыт': 0, 'Приём завершён': 0 };
+  const result: Record<LinkState, number> = {
+    'Требует проверки': 0,
+    'Готова к передаче': 0,
+    'Приём открыт': 0,
+    'Только электронные': 0,
+    'Приём завершён': 0
+  };
   for (const g of groups.value) result[linkStatus(g).text as LinkState]++;
   return result;
 });
@@ -133,7 +148,14 @@ const rows = computed<UiTableRow[]>(() => {
         (!institutionFilter.value || g.institutionId === institutionFilter.value) &&
         (g.name + ' ' + g.shootName).toLocaleLowerCase('ru').includes(needle)
     )
-    .map((g) => ({ id: g.id, name: g.name, status: linkStatus(g).text, sentAt: g.sentAt, closesAt: g.closesAt, deliveryAt: g.deliveryAt }));
+    .map((g) => ({
+      id: g.id,
+      name: g.name,
+      status: linkStatus(g).text,
+      sentAt: g.sentAt,
+      closesAt: g.closesAt,
+      deliveryAt: g.deliveryAt
+    }));
 });
 const pageRows = computed(() =>
   sortTableRows(rows.value, columns, sort.value).slice((page.value - 1) * pageSize.value, page.value * pageSize.value)
@@ -164,7 +186,7 @@ function checkBlocker(g: LinkGroup): string | undefined {
   return g.problems.length ? stateNote(g)?.hint || stateNote(g)?.text : undefined;
 }
 function left(g: LinkGroup): string {
-  if (g.state === 'closed' || !data.value) return '';
+  if (g.state !== 'open' || !data.value) return '';
   const result = countdown(g.sentAt, g.closesAt, data.value.now);
   return result.days !== null && result.days > 0 ? result.label : '';
 }
@@ -175,7 +197,8 @@ function day(value: string | null): string {
 const canCopy = (g: LinkGroup) => !live || g.prepared || !!g.sentAt;
 const canCheck = (g: LinkGroup) => data.value?.role === 'organizer' && !g.sentAt && !g.prepared;
 const canTransmit = (g: LinkGroup) => data.value?.role !== 'head' && !g.sentAt && g.prepared;
-const canCorrect = (g: LinkGroup) => !!g.sentAt && ['curator', 'organizer'].includes(data.value?.role ?? '');
+// E7: the date is corrected only while print sales are open; afterwards the server refuses it (PRINT_SALES_CLOSED).
+const canCorrect = (g: LinkGroup) => !!g.sentAt && g.state === 'open' && ['curator', 'organizer'].includes(data.value?.role ?? '');
 const hasHistory = (g: LinkGroup) => live || g.history.length > 0;
 /** The page where the organizer fixes the current step; after the transmission — the photos of the group. */
 function fix(g: LinkGroup): { to: string; label: string } | null {
@@ -403,6 +426,10 @@ async function openHistory(group: LinkGroup) {
         <span class="links-state">
           {{ day(group(row.id).closesAt) }}
           <small v-if="left(group(row.id))" class="links-left">{{ left(group(row.id)) }}</small>
+          <!-- E7: digital photos stay on sale after the print close; a separate column would squeeze the dates (#156). -->
+          <small v-if="group(row.id).digitalSalesUntil" data-testid="links-digital-until"
+            >электронные до {{ day(group(row.id).digitalSalesUntil) }}</small
+          >
         </span>
       </template>
       <template #cell-deliveryAt="{ row }">{{ day(group(row.id).deliveryAt) }}</template>
@@ -500,17 +527,15 @@ async function openHistory(group: LinkGroup) {
       <p v-else-if="!historyEvents.length" class="mf-muted">Изменений пока не было: ссылку ещё не проверяли и не передавали.</p>
       <ol v-else class="links-history-events">
         <li v-for="(event, index) in historyEvents" :key="index">
-          <strong>{{
-            event.kind === 'prepared' ? 'Ссылка проверена' : event.kind === 'transmitted' ? 'Передача отмечена' : 'Дата исправлена'
-          }}</strong>
+          <strong>{{ linkEventTitles[event.kind] }}</strong>
           · {{ event.actorName ?? 'Сотрудник №' + event.actorId }} ·
           {{ formatMoment(event.at) }}
           <p v-if="event.sentAt">
-            Передача: {{ formatMoment(event.sentAt) }} · приём до
+            Передача: {{ formatMoment(event.sentAt) }} · печать до
             {{ formatMoment(event.closesAt) }}
           </p>
           <p v-if="event.previousSentAt">
-            Прежняя передача: {{ formatMoment(event.previousSentAt) }} · приём до {{ formatMoment(event.previousClosesAt) }}
+            Прежняя передача: {{ formatMoment(event.previousSentAt) }} · печать до {{ formatMoment(event.previousClosesAt) }}
           </p>
           <p v-if="event.reason">{{ event.reason }}</p>
         </li>

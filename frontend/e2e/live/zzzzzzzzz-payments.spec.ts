@@ -11,8 +11,6 @@ const gallery = '/api/v1/public/galleries/' + fixture.open.token;
 const sandbox = process.env.E2E_YOOKASSA === '1';
 const key = () => crypto.randomUUID().replace(/-/g, '');
 const buyer = {
-  name: 'Ольга Платёжная',
-  phone: '8 (900) 555-07-08',
   email: 'payment.g1@example.test',
   comment: 'G1 проверка',
   reviewed: true

@@ -15,6 +15,7 @@ use Morefoto\Commerce\Application\Storefront\UseCase\ValidateQuoteUseCase;
 use Morefoto\Commerce\Domain\Order\Service\BuyerPolicy;
 use Morefoto\Commerce\Domain\Order\ValueObject\IdempotencyKey;
 use Morefoto\Commerce\Domain\Storefront\Exception\QuotePriceChangedException;
+use Morefoto\Commerce\Domain\Storefront\Service\SalesWindowPolicy;
 use Rebit\Share\Application\Contract\Consent\ConsentRecorderInterface;
 use Rebit\Share\Application\Contract\Consent\Enum\ConsentContextEnum;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
@@ -22,8 +23,9 @@ use Rebit\Share\Shared\Exception\HttpException;
 
 /** Оформляет заказ покупателя из проверенного серверного расчёта одной атомарной операцией.
  * Повтор с тем же Idempotency-Key возвращает исходный заказ даже после закрытия приёма; новый заказ создаётся
- * только в открытой группе по актуальному расчёту и с принятыми действующими редакциями согласия и оферты,
- * а изменение цены возвращает новый расчёт для подтверждения.
+ * только в открытом сроке продаж его состава (печать — до +7, электронные — до +14) вне паузы исправления разметки (D4)
+ * по актуальному расчёту и с принятыми действующими редакциями согласия и оферты, а изменение цены возвращает новый
+ * расчёт для подтверждения.
  */
 final readonly class CreateOrderUseCase
 {
@@ -37,6 +39,7 @@ final readonly class CreateOrderUseCase
         private OrderPlacement $placement,
         private OrderTransactionInterface $transaction,
         private ConsentRecorderInterface $consents,
+        private SalesWindowPolicy $windows,
     ) {}
 
     public function execute(string $galleryToken, IdempotencyKey $key, CreateOrderInputDto $input): CreatedOrderOutputDto
@@ -55,7 +58,8 @@ final readonly class CreateOrderUseCase
 
     private function place(string $galleryToken, IdempotencyKey $key, CreateOrderInputDto $input): CreatedOrderOutputDto
     {
-        $state = $this->gallery->context($galleryToken)->state;
+        $context = $this->gallery->context($galleryToken);
+        $state = $context->state;
         if ('preparing' === $state) {
             throw new HttpException('GALLERY_NOT_READY', 409);
         }
@@ -63,11 +67,13 @@ final readonly class CreateOrderUseCase
         if (null !== $replay) {
             return $replay;
         }
-        if ('open' !== $state) {
-            throw new HttpException('GALLERY_CLOSED', 409);
-        }
+        // Print lines after the print deadline are refused by the quote check below.
+        $this->windows->assertSalesOpen($state);
+        // D4: the group row read here serializes the order with the start of a markup correction.
+        $this->windows->assertNotPaused($context->group->markupCorrectionAt);
         $buyer = $input->buyer;
-        $accepted = $this->buyers->accept($buyer->name, $buyer->phone, $buyer->email, $buyer->comment, $buyer->receiptChannel, $buyer->reviewed, $this->availability->receiptChannels());
+        // E8: the name and the phone of the request are not part of the order.
+        $accepted = $this->buyers->accept($buyer->email, $buyer->comment, $buyer->receiptChannel, $buyer->reviewed, $this->availability->receiptChannels());
         $placed = $this->placement->place($this->quotes->executeWithinTransaction($galleryToken, $input->quoteToken, $input->lines), $accepted, $galleryToken, $input->quoteToken);
         // A missing or outdated document rolls the whole checkout back together with the order.
         $this->consents->record(ConsentContextEnum::ORDER, $placed->orderId, $input->consents);

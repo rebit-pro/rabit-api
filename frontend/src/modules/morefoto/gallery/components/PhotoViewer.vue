@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { watch } from 'vue';
 import type { GalleryPhoto, GallerySnapshot } from '../types';
+import { galleryBuys } from '../../commerce/sales-windows';
 import ProductSelector from '../../commerce/components/ProductSelector.vue';
 import GalleryImage from './GalleryImage.vue';
 const props = defineProps<{
@@ -40,7 +41,7 @@ watch(
         </div>
         <v-btn icon="mdi-close" variant="text" aria-label="Закрыть просмотр" @click="$emit('close')" />
       </header>
-      <div class="photo-viewer__body" :class="{ 'photo-viewer__body--shopping': gallery.state === 'open' }">
+      <div class="photo-viewer__body" :class="{ 'photo-viewer__body--shopping': galleryBuys(gallery) }">
         <div class="photo-viewer__media">
           <div class="photo-viewer__stage">
             <GalleryImage :key="photo.id" :src="photo.previewSrc" :alt="'Крупный кадр ' + photo.code" eager />
@@ -70,7 +71,7 @@ watch(
             </div>
           </footer>
         </div>
-        <ProductSelector v-if="gallery.state === 'open'" :gallery="gallery" :photo="photo" :token="token" />
+        <ProductSelector v-if="galleryBuys(gallery)" :gallery="gallery" :photo="photo" :token="token" />
       </div>
     </v-card>
   </v-dialog>

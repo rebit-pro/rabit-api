@@ -10,7 +10,8 @@ type Line = { assignmentId: string; productId: string; quantity: number };
 const fixture = JSON.parse(readFileSync('var/e4-fixture.json', 'utf8')) as Fixture;
 const gallery = (kind: keyof Fixture = 'open') => '/api/v1/public/galleries/' + fixture[kind].token;
 const key = () => crypto.randomUUID().replace(/-/g, '');
-const buyer = { name: 'Анна Тестовая', phone: '8 (900) 555-01-02', email: 'Order.E5@Example.test', comment: 'E5 проверка', reviewed: true };
+// E8: email is the only contact of the buyer.
+const buyer = { email: 'Order.E5@Example.test', comment: 'E5 проверка', reviewed: true };
 // The verifier proves that none of these secrets is stored in clear text.
 const secrets = { accessKeys: [] as string[], idempotencyKeys: [] as string[], galleryToken: fixture.open.token, orderIds: [] as string[] };
 let printId = '';
@@ -137,8 +138,8 @@ test('E5: checkout is idempotent, keeps one order per quote and hides secrets', 
   expect(created.accessKey).toMatch(/^[a-f0-9]{64}$/);
   expect(created).toMatchObject({ paymentStatus: 'unpaid', productionStatus: 'not-started', groupId: fixture.open.groupId });
   expect(created.buyer).toEqual({
-    name: 'Анна Тестовая',
-    phone: '+79005550102',
+    name: null,
+    phone: null,
     email: 'order.e5@example.test',
     comment: 'E5 проверка',
     receiptChannel: null
@@ -193,6 +194,13 @@ test('E5: checkout rejects closed, unready, revoked, invalid and repriced reques
     expect((await body(await order(page, { ...data, ...patch }), 422)).error.code).toBe(code);
   const malformed = await page.request.post(gallery() + '/orders', { headers: { 'Idempotency-Key': 'not-a-key' }, data });
   expect((await body(malformed, 422)).error.code).toBe('INVALID_IDEMPOTENCY_KEY');
+  // E8: a page opened before the release still sends a name and a phone, even malformed ones: accepted, never stored.
+  const olderQuote = await quote(page, lines);
+  const older = (
+    await body(await order(page, { ...data, quoteToken: olderQuote.quoteToken, buyer: { ...buyer, name: 'А', phone: 'не телефон' } }), 201)
+  ).data;
+  remember(older);
+  expect([older.buyer.name, older.buyer.phone, older.buyer.email]).toEqual([null, null, 'order.e5@example.test']);
 
   await login(page);
   const before = (await body(await order(page, data), 201)).data;
@@ -441,8 +449,8 @@ for (const viewport of [
     await page.getByRole('link', { name: 'Оформить заказ', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Оформление заказа', exact: true })).toBeVisible();
     await expect(page.getByTestId('receipt-unavailable')).toBeVisible();
-    await page.getByRole('textbox', { name: 'Имя покупателя', exact: true }).fill('Мария ' + viewport.name);
-    await page.locator('[name="buyer-phone"]').fill('+7 900 555-03-04');
+    // E8: the form asks only for the email.
+    await expect(page.locator('[name="buyer-name"], [name="buyer-phone"]')).toHaveCount(0);
     await page.getByRole('textbox', { name: 'Email', exact: true }).fill(viewport.name + '.e5@example.test');
     await page.getByLabel('Состав и условия проверены').check();
     await acceptCheckoutDocuments(page);
@@ -458,7 +466,8 @@ for (const viewport of [
     await expect(page.getByTestId('order-payment-status')).toHaveText('Не оплачено');
     await expect(page.getByTestId('order-key-expiry')).toContainText('действует до');
     await expect(page.getByTestId('order-line')).toHaveCount(1);
-    await expect(page.getByTestId('order-contacts')).toContainText('+7 900 555-03-04');
+    await expect(page.getByTestId('order-contacts')).toContainText(viewport.name + '.e5@example.test');
+    await expect(page.getByTestId('order-contacts')).not.toContainText('Телефон');
     expect(await page.evaluate((groupId) => localStorage.getItem('morefoto:cart:v1:' + groupId), fixture.open.groupId)).toBeNull();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: info.outputPath('e5-' + viewport.name + '-order.png'), fullPage: true, animations: 'disabled' });
@@ -473,14 +482,14 @@ for (const viewport of [
       await staff.getByRole('textbox', { name: 'Номер, имя, email или телефон', exact: true }).fill(payload.data.number);
       await staff.getByRole('button', { name: 'Найти', exact: true }).click();
       await expect(rows(staff)).toHaveCount(1);
-      await expect(rows(staff)).toContainText('+7 900 555-03-04');
+      await expect(rows(staff)).toContainText(viewport.name + '.e5@example.test');
       expect(await staff.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await staff.screenshot({ path: info.outputPath('e5-' + viewport.name + '-staff-list.png'), fullPage: true, animations: 'disabled' });
       await staff.getByRole('link', { name: payload.data.number, exact: true }).click();
       await expect(staff.getByTestId('staff-order-number')).toHaveText(payload.data.number);
       await expect(staff.getByTestId('correction-photos')).toContainText('A001');
       await expect(staff.getByTestId('order-contacts')).toContainText(viewport.name + '.e5@example.test');
-      await expect(staff.getByTestId('order-contacts')).toContainText('+7 900 555-03-04');
+      await expect(staff.getByTestId('order-contacts')).not.toContainText('Телефон');
       expect(await staff.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await staff.screenshot({ path: info.outputPath('e5-' + viewport.name + '-staff-card.png'), fullPage: true, animations: 'disabled' });
       await staff.getByRole('link', { name: 'Все заказы', exact: true }).click();
@@ -501,15 +510,13 @@ for (const viewport of [
   });
 }
 
-async function fillCheckout(page: Page, name: string, email: string, quantity: number) {
+async function fillCheckout(page: Page, email: string, quantity: number) {
   await page.goto('/g/' + fixture.open.token);
   await page.evaluate(({ groupId, line }) => localStorage.setItem('morefoto:cart:v1:' + groupId, JSON.stringify([line])), {
     groupId: fixture.open.groupId,
     line: { assignmentId: assignment, productId: printId, quantity }
   });
   await page.goto('/g/' + fixture.open.token + '/checkout');
-  await page.getByRole('textbox', { name: 'Имя покупателя', exact: true }).fill(name);
-  await page.locator('[name="buyer-phone"]').fill('+7 900 555-05-06');
   await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
   await page.getByLabel('Состав и условия проверены').check();
   await acceptCheckoutDocuments(page);
@@ -548,7 +555,7 @@ async function recover(page: Page, key: string, email: string, whilePending?: ()
 }
 
 test('E5: lost response survives group closure and reload, then recovers the same order', async ({ page }) => {
-  await fillCheckout(page, 'Потерянный ответ', 'lost.e5@example.test', 3);
+  await fillCheckout(page, 'lost.e5@example.test', 3);
   const keys: string[] = [];
   await page.route('**/orders', async (route) => {
     keys.push(route.request().headers()['idempotency-key']!);
@@ -576,7 +583,7 @@ test('E5: lost response survives group closure and reload, then recovers the sam
 });
 
 test('E5: 502 after a committed order keeps the attempt and recovers the same key', async ({ page }) => {
-  await fillCheckout(page, 'Ответ прокси', 'gateway.e5@example.test', 4);
+  await fillCheckout(page, 'gateway.e5@example.test', 4);
   const keys: string[] = [];
   await page.route('**/orders', async (route) => {
     keys.push(route.request().headers()['idempotency-key']!);
@@ -596,7 +603,7 @@ test('E5: 502 after a committed order keeps the attempt and recovers the same ke
 });
 
 test('E5: refusals while recovering keep the attempt until the same order is replayed', async ({ page }, info) => {
-  await fillCheckout(page, 'Отказ при повторе', 'refusal.e5@example.test', 5);
+  await fillCheckout(page, 'refusal.e5@example.test', 5);
   const attempts: { key: string; body: string | null }[] = [];
   const created: { id: string; accessKey: string }[] = [];
   // PURCHASE_DISABLED is answered before the key lookup, 429 by an intermediate service: neither proves the key unused.
@@ -645,8 +652,6 @@ test('E5: changed price at checkout asks the buyer to confirm the new total', as
     line: { assignmentId: assignment, productId: printId, quantity: 1 }
   });
   await page.goto('/g/' + fixture.open.token + '/checkout');
-  await page.getByRole('textbox', { name: 'Имя покупателя', exact: true }).fill('Новая цена');
-  await page.locator('[name="buyer-phone"]').fill('+7 900 555-07-08');
   await page.getByRole('textbox', { name: 'Email', exact: true }).fill('price.e5@example.test');
   await page.getByLabel('Состав и условия проверены').check();
   await acceptCheckoutDocuments(page);

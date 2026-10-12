@@ -1,0 +1,51 @@
+{
+  "wave": "E8",
+  "status": "passed",
+  "fixture": "rabit-e2e-14bb523c86a3",
+  "head": "25fa0bc89d571ffb8b6808bce0038cd45866e80e",
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ],
+  "screenshots": [
+    {
+      "file": "docs/waves/e8/screenshots/e8-desktop-checkout.png",
+      "sha256": "6aac23efe34e26f81233d1dc473014ce41dfadf96c10d49fd55beb2aff8cb432"
+    },
+    {
+      "file": "docs/waves/e8/screenshots/e8-desktop-order.png",
+      "sha256": "ad73c277cd1c52e1c8aed2de91418d3d1eef95fed3c3efe1fcbb34b817ec9447"
+    },
+    {
+      "file": "docs/waves/e8/screenshots/e8-desktop-staff-card.png",
+      "sha256": "0efecc424e6f5778ce9905d94a8e69dd19d32c25e4009409834b4ade89911bb6"
+    },
+    {
+      "file": "docs/waves/e8/screenshots/e8-desktop-staff-list.png",
+      "sha256": "ab69f6b91a7465598e0d3311629cc2ce9ae4a1d48c373534555c3197a6fac320"
+    },
+    {
+      "file": "docs/waves/e8/screenshots/e8-mobile-checkout.png",
+      "sha256": "fbed7d66da04545d043d1a733e8cae9167f494faed37cfb98996f7fbed317fe5"
+    },
+    {
+      "file": "docs/waves/e8/screenshots/e8-mobile-order.png",
+      "sha256": "3ad9477cbd008c91b5cf23c436061a75ba8e4d7a8670b6954e0fdb083dc95169"
+    },
+    {
+      "file": "docs/waves/e8/screenshots/e8-mobile-staff-card.png",
+      "sha256": "3ecc37082fba770f77bd9911ae3dd662bd886a11beaa70b7b56a621c696fc4c2"
+    },
+    {
+      "file": "docs/waves/e8/screenshots/e8-mobile-staff-list.png",
+      "sha256": "407752d2a08e9affaa9cb1cd6fadcb17daf535143c7a4001cf97e6d7502b0cf2"
+    }
+  ],
+  "checks": [
+    "Оформление: блок «Контакт покупателя» — только Email и «Комментарий — необязательно» одной ширины (560 px); полей «Имя покупателя» и «Телефон» нет",
+    "Страница заказа: «Контакты покупателя» — только Email, без пустых строк «Покупатель» и «Телефон»",
+    "Список заказов сотрудника: строка заказа без имени показывает email покупателя (E8-DEC-04)",
+    "Карточка заказа сотрудника: «Контакты покупателя» — только Email",
+    "Mobile 390×844: те же блоки без горизонтального скролла (проверки спека scrollWidth <= innerWidth)"
+  ]
+}

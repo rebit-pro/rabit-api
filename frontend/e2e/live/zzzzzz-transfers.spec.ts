@@ -18,8 +18,6 @@ type Result = {
 };
 const key = () => crypto.randomUUID().replace(/-/g, '');
 const buyer = {
-  name: 'Мария Тестовая',
-  phone: '8 (900) 555-03-04',
   email: 'transfer.d3@example.test',
   comment: 'D3 проверка',
   reviewed: true

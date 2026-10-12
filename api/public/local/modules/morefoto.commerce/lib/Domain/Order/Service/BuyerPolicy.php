@@ -7,26 +7,14 @@ namespace Morefoto\Commerce\Domain\Order\Service;
 use Morefoto\Commerce\Domain\Order\ValueObject\OrderBuyer;
 use Rebit\Share\Shared\Exception\HttpException;
 
-/** Проверяет контакты покупателя по правилам оформления и приводит их к единому виду: национальная запись 8… без «+»
- * становится российским +7…, номер с явным международным «+» сохраняется как есть. Канал чека принимается только
- * из реально подключённых каналов, подтверждение состава обязательно.
+/** Проверяет контакт покупателя по правилам оформления E8: единственный обязательный контакт — email, имя и телефон
+ * заказ не хранит. Канал чека принимается только из реально подключённых каналов, подтверждение состава обязательно.
  */
 final readonly class BuyerPolicy
 {
     /** @param list<string> $receiptChannels */
-    public function accept(string $name, string $phone, string $email, string $comment, ?string $receiptChannel, bool $reviewed, array $receiptChannels): OrderBuyer
+    public function accept(string $email, string $comment, ?string $receiptChannel, bool $reviewed, array $receiptChannels): OrderBuyer
     {
-        $name = trim($name);
-        if (2 > mb_strlen($name) || 100 < mb_strlen($name)) {
-            throw new HttpException('INVALID_BUYER_NAME', 422);
-        }
-        $digits = (string)preg_replace('/\D/', '', $phone);
-        if (1 !== preg_match('/^[+\d\s().-]+$/D', $phone) || 10 > strlen($digits) || 15 < strlen($digits)) {
-            throw new HttpException('INVALID_BUYER_PHONE', 422);
-        }
-        if (11 === strlen($digits) && str_starts_with($digits, '8') && 1 !== preg_match('/^\D*\+/', $phone)) {
-            $digits = '7' . substr($digits, 1);
-        }
         $email = mb_strtolower(trim($email));
         if (254 < mb_strlen($email) || 1 !== preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]+$/uD', $email)) {
             throw new HttpException('INVALID_BUYER_EMAIL', 422);
@@ -42,6 +30,6 @@ final readonly class BuyerPolicy
             throw new HttpException('REVIEW_REQUIRED', 422);
         }
 
-        return new OrderBuyer($name, '+' . $digits, $email, $comment, $receiptChannel);
+        return new OrderBuyer($email, $comment, $receiptChannel);
     }
 }

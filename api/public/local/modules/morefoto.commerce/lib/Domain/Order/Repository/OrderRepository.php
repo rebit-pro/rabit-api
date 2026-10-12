@@ -20,7 +20,7 @@ use Rebit\Share\Shared\Exception\HttpException;
  *     INSTITUTION_ID: int, INSTITUTION_PUBLIC_ID: string, SHOOT_ID: int, SHOOT_PUBLIC_ID: string,
  *     GROUP_ID: int, GROUP_PUBLIC_ID: string, AUDIENCE: string,
  *     INSTITUTION_NAME: string, SHOOT_NAME: string, GROUP_NAME: string,
- *     BUYER_NAME: string, BUYER_PHONE: string, BUYER_EMAIL: string, BUYER_COMMENT: string, RECEIPT_CHANNEL: null|string,
+ *     BUYER_NAME: null|string, BUYER_PHONE: null|string, BUYER_EMAIL: string, BUYER_COMMENT: string, RECEIPT_CHANNEL: null|string,
  *     SUBTOTAL: int, DISCOUNT: int, GIFT_SAVING: int, TOTAL: int, ITEM_COUNT: int, GIFTS: string,
  *     CATALOG_REVISION: int, CONDITIONS_REVISION: int, PAYMENT_STATUS: string, PRODUCTION_STATUS: string, CREATED_AT: string,
  * }
@@ -141,6 +141,12 @@ final readonly class OrderRepository
         }
     }
 
+    /** В снимке заказа есть печатная строка: такой заказ живёт по сроку приёма печати (E7). */
+    public function containsPrint(int $id): bool
+    {
+        return false !== $this->query("SELECT 1 FROM mf_order_line WHERE ORDER_ID={$id} AND PRODUCT_KIND='physical' LIMIT 1")->fetch();
+    }
+
     /** Меняет статус оплаты и повышает версию заказа; снимок покупки не трогает. */
     public function applyPayment(int $id, string $status, ?string $paidAt, bool $latePayment): void
     {
@@ -189,6 +195,16 @@ final readonly class OrderRepository
         }
 
         return $children;
+    }
+
+    /** Хотя бы один заказ группы в любом статусе оплаты; чтение по индексу `ix_mf_order_group`. */
+    public function groupHasOrders(string $groupPublicId): bool
+    {
+        if (1 !== preg_match('/^[a-f0-9-]{36}$/D', $groupPublicId)) {
+            throw new \InvalidArgumentException('Invalid group ID.');
+        }
+
+        return false !== $this->query("SELECT 1 FROM mf_order WHERE GROUP_PUBLIC_ID='{$groupPublicId}' LIMIT 1")->fetch();
     }
 
     public function page(OrderSearchCriteria $criteria, int $limit, int $offset, OrderSortEnum $sort = OrderSortEnum::CREATED_AT, bool $descending = true): Result

@@ -15,5 +15,7 @@ enum PermissionEnum: string
     case ORGANIZATION_MANAGE = 'organization.manage';
     case CATALOG_MANAGE = 'catalog.manage';
     case MEDIA_MANAGE = 'media.manage';
+    /** D4: viewing the photos of an institution and correcting the markup of its transmitted group while sales are paused. */
+    case MEDIA_CORRECT = 'media.correct';
     case ORDER_READ = 'order.read';
 }

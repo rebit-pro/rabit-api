@@ -1,3 +1,4 @@
+import type { SalesState } from '../../commerce/sales-windows.js';
 import type { Product } from '../../commerce/types.js';
 
 export type PaymentStatus = 'unpaid' | 'pending' | 'declined' | 'paid';
@@ -36,18 +37,22 @@ export interface LiveOrderQuote {
   conditionsRevision: number;
 }
 export interface LiveBuyer {
-  name: string;
-  phone: string;
+  /** E8: orders placed since E8 have no name and phone; earlier orders keep them. */
+  name: string | null;
+  phone: string | null;
   email: string;
   comment: string;
   receiptChannel: string | null;
 }
 export interface OrderPeriod {
   groupId: string;
-  state: 'preparing' | 'open' | 'closed';
+  state: SalesState;
   timezone: string;
   sentAt: string | null;
+  /** Print sales close (T0+7). */
   closesAt: string | null;
+  /** Digital sales close (T0+14). */
+  digitalSalesUntil: string | null;
   deliveryDueAt: string | null;
   now: string;
 }
@@ -75,7 +80,7 @@ export interface BuyerOrder {
   buyer: LiveBuyer;
   quote: LiveOrderQuote;
   paymentStatus: PaymentStatus;
-  /** G1: confirmed payment moment; late — confirmed after the group closed. */
+  /** G1: confirmed payment moment; late — confirmed after the sales deadline of the order composition (E7). */
   paidAt: string | null;
   latePayment: boolean;
   productionStatus: ProductionStatus;
@@ -142,7 +147,7 @@ export interface StaffOrderPage {
 }
 export interface CheckoutBody {
   lines: { assignmentId: string; productId: string; quantity: number }[];
-  buyer: { name: string; phone: string; email: string; comment: string; reviewed: boolean };
+  buyer: { email: string; comment: string; reviewed: boolean };
   quoteToken: string;
   /** Current versions of the buyer consent and the offer, accepted with separate checkboxes. */
   consents: { code: string; version: string }[];

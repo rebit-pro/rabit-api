@@ -28,11 +28,14 @@ final readonly class GroupLinkResultDto implements ResultDtoInterface
         public string $timezone,
         public ?string $sentAt,
         public ?string $closesAt,
+        public ?string $digitalSalesUntil,
         public ?string $deliveryAt,
         public int $photoCount,
         public int $childCount,
+        public ?string $markupCorrectionAt,
         public ?string $galleryToken,
         public string $referenceNow,
         public array $history,
+        public bool $markupCorrectable,
     ) {}
 }

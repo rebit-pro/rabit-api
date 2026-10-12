@@ -27,5 +27,6 @@ export interface DashboardFilters {
 export const stateLabels: Record<Group['state'], string> = {
   preparing: 'Подготовка',
   open: 'Приём открыт',
+  digital: 'Только электронные',
   closed: 'Приём закрыт'
 };
