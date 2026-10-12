@@ -1,0 +1,33 @@
+{
+  "wave": "J4",
+  "status": "passed",
+  "fixture": "rabit-e2e-072725b5135d",
+  "head": "445d379",
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ],
+  "screenshots": [
+    {
+      "file": "docs/waves/j4/screenshots/j4-desktop-print-copy-hint.png",
+      "sha256": "21d581577855f7e26f47be1ddae0c25952c4b877d608d578772e4c2f656c6098"
+    },
+    {
+      "file": "docs/waves/j4/screenshots/j4-desktop-print-files.png",
+      "sha256": "bb121ab0e2b3824f63a146919f3cfab6c558d1ab544a109888ca4cb6bf4320a6"
+    },
+    {
+      "file": "docs/waves/j4/screenshots/j4-mobile-print-copy-hint.png",
+      "sha256": "13ef4d4623e2049e4bfda9c5510b084de6736239eb54d7fa69417adf4a8befb7"
+    },
+    {
+      "file": "docs/waves/j4/screenshots/j4-mobile-print-files.png",
+      "sha256": "d53b91d09f5232f43838e0506fa2d368d2edbc57e3518c04ec558e47c395cdcb"
+    }
+  ],
+  "checks": [
+    "Галерея, кадр B001 группы E4 print: при выбранном «E7 Электронный кадр» и печати этого кадра в корзине — «Электронная копия этого кадра входит в печать вашей корзины.»; цена прежняя (150 ₽), «Добавить в корзину» доступна",
+    "Страница оплаченного заказа печати: подсказка «Электронные фотографии и копии оплаченных печатных кадров появятся…»; блок «Ваши файлы» — A001 и B001 (2 файла · ZIP), соседнего B002 нет; состав — три печатные строки (A001 ×3, A001 другим форматом, B001)",
+    "Mobile 390×844: те же блоки без горизонтального скролла (проверки спека scrollWidth <= innerWidth); снимок подсказки — видимая область диалога"
+  ]
+}

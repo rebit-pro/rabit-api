@@ -12,12 +12,13 @@ use Morefoto\Commerce\Infrastructure\Files\OrderEntitlements;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
+use Rebit\Share\Contracts\Commerce\Dto\OrderEntitledPhotoOutputDto;
 use Rebit\Share\Shared\Exception\HttpException;
 
 require_once __DIR__ . '/../bootstrap.php';
 
 /**
- * Право на файлы: digital даёт свой кадр, bundle и подарок — ребёнка целиком, печать — ничего; срок по D10.
+ * Право на файлы: digital и печать (J4) дают свой кадр, bundle и подарок — ребёнка целиком; срок по D10.
  *
  * @internal
  */
@@ -56,8 +57,30 @@ final class OrderEntitlementsTest extends TestCase
         $order = $this->entitlements($orders)->byId(7);
 
         self::assertSame([7, 4, 'paid', false, '2027-02-28 07:00:00'], [$order->id, $order->shootId, $order->paymentStatus, $order->latePayment, $order->filesAvailableUntil]);
-        self::assertSame([['p-1', 'A', 'A-01']], array_map(static fn($photo): array => [$photo->photoId, $photo->childCode, $photo->code], $order->photos));
+        self::assertSame([['p-1', 'A', 'A-01'], ['p-2', 'A', 'A-02'], ['p-3', 'B', 'B-01']], $this->photos($order->photos));
         self::assertSame([12, 13], $order->childIds);
+    }
+
+    public function testEachPrintedFrameGivesOneCopyWhateverTheFormatsAndCount(): void
+    {
+        // J4-T01, J4-T02: A in two formats ×3 and as a digital line, B once; C is only in the gift set.
+        $orders = $this->createStub(OrderRepository::class);
+        $orders->method('find')->willReturn($this->rows([[
+            'ID' => '8', 'PUBLIC_ID' => 'o-8', 'NUMBER' => 'MF-0008', 'SHOOT_ID' => '4', 'PAYMENT_STATUS' => 'paid',
+            'PAID_AT' => '2027-01-31 07:00:00', 'LATE_PAYMENT' => '0', 'GIFTS' => '["C"]',
+        ]]));
+        $orders->method('lines')->willReturn($this->rows([
+            ['CHILD_ID' => '11', 'CHILD_CODE' => 'A', 'PHOTO_PUBLIC_ID' => 'p-a', 'PHOTO_CODE' => 'A-01', 'PRODUCT_KIND' => 'physical'],
+            ['CHILD_ID' => '11', 'CHILD_CODE' => 'A', 'PHOTO_PUBLIC_ID' => 'p-a', 'PHOTO_CODE' => 'A-01', 'PRODUCT_KIND' => 'physical'],
+            ['CHILD_ID' => '12', 'CHILD_CODE' => 'B', 'PHOTO_PUBLIC_ID' => 'p-b', 'PHOTO_CODE' => 'B-01', 'PRODUCT_KIND' => 'physical'],
+            ['CHILD_ID' => '11', 'CHILD_CODE' => 'A', 'PHOTO_PUBLIC_ID' => 'p-a', 'PHOTO_CODE' => 'A-01', 'PRODUCT_KIND' => 'digital'],
+            ['CHILD_ID' => '13', 'CHILD_CODE' => 'C', 'PHOTO_PUBLIC_ID' => 'p-c', 'PHOTO_CODE' => 'C-01', 'PRODUCT_KIND' => 'physical'],
+        ]));
+
+        $order = $this->entitlements($orders)->byId(8);
+
+        self::assertSame([['p-a', 'A', 'A-01'], ['p-b', 'B', 'B-01'], ['p-c', 'C', 'C-01']], $this->photos($order->photos));
+        self::assertSame([13], $order->childIds, 'The gift keeps granting the whole set of its child.');
     }
 
     public function testUnpaidOrderHasNoDeadline(): void
@@ -86,6 +109,16 @@ final class OrderEntitlementsTest extends TestCase
                 self::assertSame(['ORDER_NOT_FOUND', 404], [$error->getMessage(), $error->getCode()]);
             }
         }
+    }
+
+    /**
+     * @param list<OrderEntitledPhotoOutputDto> $photos
+     *
+     * @return list<array{string, string, string}>
+     */
+    private function photos(array $photos): array
+    {
+        return array_map(static fn(OrderEntitledPhotoOutputDto $photo): array => [$photo->photoId, $photo->childCode, $photo->code], $photos);
     }
 
     private function entitlements(OrderRepository $orders): OrderEntitlements

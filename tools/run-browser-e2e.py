@@ -75,6 +75,8 @@ VERIFIERS = [
     # J1: downloads agree with archives on disk, the paid key lasts the files month, expired archives are purged.
     ("verify-files.php", "j1-files.json", "J1 files integration passed", ["zzzzzzzzzz-files"]),
 ]
+# J4-DEC-04: the spec whose print order the stand pays with the fixture provider during the browser stage.
+PAY_FIXTURE_SPEC = "zzzzzzzzzz-files"
 # The browser stage of a group; the opt-in media bench sets itself 45 minutes on top of the other files of its group.
 BROWSER_TIMEOUT = 900
 BENCH_TIMEOUT = 45 * 60
@@ -542,6 +544,25 @@ def browser_timeout(group):
     return BROWSER_TIMEOUT + (BENCH_TIMEOUT if os.environ.get("E2E_MEDIA_BENCH") and BENCH in GROUPS[group] else 0)
 
 
+def pay_fixture(report, fpm, var, done):
+    """J4-DEC-04: the files spec places a print order and asks for its payment; the stand pays it once through the G1 code
+    with the fixture provider. A failure is handed to the spec, which reports it instead of waiting for its timeout."""
+    # Both sides write aside and rename: the spec renames its request, the answer appears only when complete.
+    request = var / "j4-pay-request.json"
+    answer = var / "j4-paid.json.tmp"
+    while not done.wait(0.5):
+        if not request.is_file():
+            continue
+        try:
+            docker("cp", str(request), fpm + ":/runtime/j4-pay-request.json")
+            docker("exec", fpm, "php", "/app/tools/e2e/pay-fixture.php", log=report / "pay-fixture.log")
+            docker("cp", fpm + ":/runtime/j4-paid.json", str(answer))
+        except Exception as error:  # noqa: BLE001 - the spec shows the reason
+            answer.write_text(json.dumps({"error": str(error)}))
+        os.replace(answer, var / "j4-paid.json")
+        return
+
+
 def test_stand(state, stand):
     if state["stopped"]:
         raise RuntimeError("The E2E fixture has been stopped")
@@ -568,7 +589,16 @@ def test_stand(state, stand):
                 "--env", "E2E_BASE_URL=http://127.0.0.1", *(["--env", "E2E_YOOKASSA=1"] if YOOKASSA_ENV.is_file() else []), *bench, IMAGE, "npm", "run", "test:e2e:live", "--", "--project", group, log=output / "browser.log",
                 timeout=browser_timeout(group))
             return check_results(group, output / "results.json")
-        result = stage(state, f"{stand['name']}: real browser group {group}", browser)
+        done = threading.Event()
+        payer = threading.Thread(target=pay_fixture, args=(report, fpm, var, done), daemon=True) if PAY_FIXTURE_SPEC in GROUPS[group] else None
+        if payer:
+            payer.start()
+        try:
+            result = stage(state, f"{stand['name']}: real browser group {group}", browser)
+        finally:
+            done.set()
+            if payer:
+                payer.join()
         with LOCK:
             state["results"][group] = result
             save(state)

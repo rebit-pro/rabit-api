@@ -51,6 +51,19 @@ foreach (['mf_file_download', 'mf_file_download_request'] as $table) {
 $check(0 === $scalar('SELECT COUNT(*) FROM mf_file_download_request r JOIN mf_file_download d ON d.ID=r.DOWNLOAD_ID WHERE d.ORDER_ID<>r.ORDER_ID'), 'a key points at a foreign download');
 $check(0 === $scalar("SELECT COUNT(*) FROM mf_file_download WHERE KIND='zip' AND STATUS<>'expired' AND ARCHIVE_PATH IS NULL"), 'a live archive row lost its path');
 $check('' === $record['accessKey'] || !str_contains($dump, (string)$record['accessKey']), 'a raw order key is stored');
+$check(!str_contains($dump, (string)$record['printCopy']['accessKey']), 'a raw key of the print order is stored');
+
+// J4: the print order paid by the stand fixture keeps its files month and its downloads match the disk.
+$print = $connection->query("SELECT ID,DATE_FORMAT(PAID_AT,'%Y-%m-%d %H:%i:%s') AS PAID_AT FROM mf_order WHERE PUBLIC_ID='" . $sql->forSql((string)$record['printCopy']['orderId']) . "'")->fetch();
+$check(is_array($print) && null !== $print['PAID_AT'], 'the print order is paid');
+$printId = (int)$print['ID'];
+$check(1 === $scalar("SELECT COUNT(*) FROM mf_payment_fact f JOIN mf_payment_attempt a ON a.ID=f.ATTEMPT_ID WHERE f.ORDER_ID={$printId} AND a.PROVIDER='e2e-fixture'"), 'the print order has the fixture money fact');
+$printUntil = new OrderCalendarPolicy()->filesAvailableUntil(new DateTimeImmutable((string)$print['PAID_AT'], new DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+$check(1 === $scalar("SELECT COUNT(*) FROM mf_order_access_key WHERE ORDER_ID={$printId} AND REVOKED_AT IS NULL AND EXPIRES_AT>='{$printUntil}'"), 'the print order key was not extended');
+$check(1 === $scalar("SELECT COUNT(*) FROM mf_file_download WHERE PUBLIC_ID='" . $sql->forSql((string)$record['printCopy']['fileDownloadId']) . "' AND ORDER_ID={$printId} AND KIND='file' AND STATUS='ready'"), 'the print copy file download');
+$printArchive = $connection->query("SELECT ARCHIVE_PATH,BYTES FROM mf_file_download WHERE ORDER_ID={$printId} AND KIND='zip' AND STATUS='ready'")->fetch();
+$check(is_array($printArchive) && (int)$record['printCopy']['archiveBytes'] === (int)$printArchive['BYTES'] && is_file($root . '/' . $printArchive['ARCHIVE_PATH'])
+    && filesize($root . '/' . $printArchive['ARCHIVE_PATH']) === (int)$printArchive['BYTES'], 'the print copy archive matches the journal and the browser');
 
 if ($record['sandbox']) {
     $order = $connection->query("SELECT ID,DATE_FORMAT(PAID_AT,'%Y-%m-%d %H:%i:%s') AS PAID_AT FROM mf_order WHERE PUBLIC_ID='" . $sql->forSql((string)$record['orderId']) . "'")->fetch();
@@ -79,7 +92,7 @@ if ($record['sandbox']) {
     $expired = $download((string)$record['archiveDownloadId']);
     $check(!is_file($path) && is_array($expired) && 'expired' === $expired['STATUS'] && null === $expired['ARCHIVE_PATH'], 'purge removed the expired archive');
 } else {
-    $check(0 === $scalar('SELECT COUNT(*) FROM mf_file_download'), 'an unpaid order created a download');
+    $check(0 === $scalar("SELECT COUNT(*) FROM mf_file_download WHERE ORDER_ID<>{$printId}"), 'an unpaid order created a download');
 }
 
 // 5. The migration replays without touching the journal.

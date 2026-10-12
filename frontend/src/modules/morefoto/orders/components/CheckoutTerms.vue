@@ -23,9 +23,8 @@ defineProps<{ gallery: GallerySnapshot; seller: Seller | null; offer: LegalDocum
         <dd>
           Покупка — до окончания продажи электронных фото<template v-if="gallery.digitalSalesUntil">
             ({{ formatMoment(gallery.digitalSalesUntil) }} мск)</template
-          >. Файлы — после подтверждения оплаты, срок скачивания — один календарный месяц со дня покупки.<template v-if="isMockApiEnabled">
-            В демонстрации выдаются тестовые файлы.</template
-          >
+          >. Файлы — после подтверждения оплаты, срок скачивания — один календарный месяц со дня покупки. К каждому оплаченному печатному
+          кадру — его электронная копия без доплаты.<template v-if="isMockApiEnabled"> В демонстрации выдаются тестовые файлы.</template>
         </dd>
       </div>
       <div>
