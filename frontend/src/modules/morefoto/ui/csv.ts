@@ -1,6 +1,10 @@
-/** A CSV cell for Excel in a Russian locale: quoted when it holds a separator, a quote or a line break. */
+/**
+ * A CSV cell for Excel in a Russian locale: quoted when it holds a separator, a quote or a line break. A value that
+ * Excel would run as a formula (a buyer's email may start with `=`) gets a leading apostrophe and stays plain text.
+ */
 function csvCell(value: string | number): string {
-  const text = String(value);
+  const raw = String(value);
+  const text = /^[=+\-@\t\r]/.test(raw) ? "'" + raw : raw;
   return /[;"\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
 }
 

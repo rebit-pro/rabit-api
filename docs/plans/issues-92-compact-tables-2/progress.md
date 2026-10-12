@@ -8,8 +8,8 @@
 - Завершено: 2026-09-27 — backend (сортировка трёх списков, `DELETE` списка и заказа, контракт Payment), фронтенд,
   unit/архитектурные тесты, live-спек `zzzzzzzzzzz-tables`. Эти коммиты не были запушены до 2026-10-12.
   2026-10-12 — слияние main (конфликты E7/D4/E8/J4), DEC-07/08 по новым ответам пользователя, быстрые проверки зелёные.
-- Сейчас: полный `make test-e2e` (ЮKassa OFF), лог `e2e-92-run1.log` в scratchpad сессии.
-- Следующий шаг: по зелёному гейту — PR из draft в review, ревью; merge по команде пользователя «влей в main, если всё ок».
+- Сейчас: гейт `rabit-e2e-fc91403fb329` зелёный; PR #160 из draft в review; ревью 5491441893 — 1 блокер (формулы в CSV), исправлен следующим коммитом.
+- Следующий шаг: merge PR #160 в main по команде пользователя «влей в main, если всё ок»; выкладка — отдельно (frontend и backend, миграций нет).
 - Блокеров нет. Внешнее: тестовый магазин ЮKassa (#174) — гейт без него.
 - Backend-проверки: `php-92.sh` в scratchpad сессии (docker `rabit-api-php-cli:d1-local`, vendor volume `rabit-e7-vendor`):
   `vendor/bin/phpunit`, `vendor/bin/phpstan analyse --configuration=tools/e2e/phpstan.neon`.
@@ -90,4 +90,11 @@
   `staffBuyerLine` (E8) и его тест удалены как неиспользуемые.
 - На `mf_order` ссылаются только E5/G1/J1-таблицы (новых FK с 27.09 нет); `mf_legal_consent` без FK — DEC-10.
 - Проверки: PHPUnit 1130 OK; PHPStan OK; php-cs-fixer 0 из 38 файлов; `npm run check` OK (UI 88), commerce 237, build OK.
+- Полный гейт `rabit-e2e-fc91403fb329` (044b55f, ЮKassa OFF): PASS — a 81, b 63 (в т. ч. `zzzzzzzzzzz-tables`), верификаторы прошли; 388 с.
+- PR #160: описание обновлено, переведён из draft в review.
+- Ревью 5491441893 (044b55f): блокер — CSV без защиты от формул: email покупателя проходит `BuyerPolicy` и может начинаться
+  с `=` (`=HYPERLINK(…)@a.ru`), Excel выполнит его у сотрудника. Исправление: `csvCell()` ставит апостроф перед значением,
+  начинающимся с `=`, `+`, `-`, `@`, табуляции или `\r`; unit-тест в `table-query.test.mjs`. Проверки: `npm run check` (UI 88),
+  commerce 238. Гейт не перезапускался: изменён только вывод таких ячеек, значения спека (номера, даты, суммы, email `tables-…`)
+  под правило не попадают.
 

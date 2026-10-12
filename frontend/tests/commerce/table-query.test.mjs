@@ -32,3 +32,17 @@ test('CSV opens in a Russian Excel: BOM, semicolons, CRLF and quoted cells (#92 
 test('table moment fits one line in Moscow time', () => {
   assert.equal(tableMoment('2026-09-26T09:15:00Z'), '26.09.2026, 12:15');
 });
+
+test('#92 review: a cell Excel would run as a formula stays text', () => {
+  const text = csvText(['Email'], [['=HYPERLINK("http://x";"y")@a.ru'], ['+7'], ['-1'], ['@sum'], ['\tx'], ['ok@a.ru'], [123]]);
+  assert.deepEqual(text.slice(1).trimEnd().split('\r\n'), [
+    'Email',
+    '"\'=HYPERLINK(""http://x"";""y"")@a.ru"',
+    "'+7",
+    "'-1",
+    "'@sum",
+    "'\tx",
+    'ok@a.ru',
+    '123'
+  ]);
+});
