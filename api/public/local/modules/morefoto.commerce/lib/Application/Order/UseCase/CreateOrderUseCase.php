@@ -72,7 +72,8 @@ final readonly class CreateOrderUseCase
         // D4: the group row read here serializes the order with the start of a markup correction.
         $this->windows->assertNotPaused($context->group->markupCorrectionAt);
         $buyer = $input->buyer;
-        $accepted = $this->buyers->accept($buyer->name, $buyer->phone, $buyer->email, $buyer->comment, $buyer->receiptChannel, $buyer->reviewed, $this->availability->receiptChannels());
+        // E8: the name and the phone of the request are not part of the order.
+        $accepted = $this->buyers->accept($buyer->email, $buyer->comment, $buyer->receiptChannel, $buyer->reviewed, $this->availability->receiptChannels());
         $placed = $this->placement->place($this->quotes->executeWithinTransaction($galleryToken, $input->quoteToken, $input->lines), $accepted, $galleryToken, $input->quoteToken);
         // A missing or outdated document rolls the whole checkout back together with the order.
         $this->consents->record(ConsentContextEnum::ORDER, $placed->orderId, $input->consents);

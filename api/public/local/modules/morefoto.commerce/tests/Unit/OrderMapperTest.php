@@ -31,7 +31,7 @@ final class OrderMapperTest extends TestCase
     {
         $records = (new OrderRecordMapper())->records(
             $this->validated(),
-            new OrderBuyer('Анна', '+79001234567', 'buyer@example.test', '', null),
+            new OrderBuyer('buyer@example.test', '', null),
             new MediaScopeOutputDto(5, 2, 'shoot-id', 1, 'group-id', false, 'institution-id', 'regular'),
             'order-id',
             ['line-1', 'line-2'],
@@ -48,6 +48,8 @@ final class OrderMapperTest extends TestCase
         self::assertSame([12, 12], array_column($records['lines'], 'CHILD_ID'));
         self::assertNull($records['lines'][1]['PHOTO_PUBLIC_ID']);
         self::assertSame('A003', $records['lines'][0]['PHOTO_CODE']);
+        // E8: a new order keeps only the email of the buyer.
+        self::assertSame([null, null, 'buyer@example.test'], [$records['order']['BUYER_NAME'], $records['order']['BUYER_PHONE'], $records['order']['BUYER_EMAIL']]);
     }
 
     public function testUnknownAssignmentCannotEnterSnapshot(): void
@@ -58,7 +60,7 @@ final class OrderMapperTest extends TestCase
         $this->expectException(HttpException::class);
         (new OrderRecordMapper())->records(
             new ValidatedQuoteOutputDto(new QuoteOutputDto($quote, str_repeat('c', 64), 'x'), $validated->gallery),
-            new OrderBuyer('Анна', '+79001234567', 'buyer@example.test', '', null),
+            new OrderBuyer('buyer@example.test', '', null),
             new MediaScopeOutputDto(5, 2, 'shoot-id', 1, 'group-id', false, 'institution-id', 'regular'),
             'order-id',
             ['line-1', 'line-2'],
@@ -79,6 +81,15 @@ final class OrderMapperTest extends TestCase
         self::assertSame(['id' => self::PHOTO, 'assignmentId' => self::ASSIGNMENT, 'code' => 'A003', 'width' => 1200, 'height' => 800], $order->quote['lines'][0]['photo']);
         self::assertTrue($order->quote['lines'][0]['product']['staffDiscount']);
         self::assertSame('1', $order->version);
+        self::assertSame(['Анна', '+79001234567'], [$order->buyer->name, $order->buyer->phone], 'An order placed before E8 keeps its contacts.');
+    }
+
+    public function testEmailOnlyOrderReadsWithoutMadeUpContacts(): void
+    {
+        // E8-T03: a NULL name and phone stay null, never an empty or invented value.
+        $order = (new OrderRowMapper(new OrderCalendarPolicy()))->order(['BUYER_NAME' => null, 'BUYER_PHONE' => null] + self::row(), [self::line()]);
+
+        self::assertSame([null, null, 'buyer@example.test'], [$order->buyer->name, $order->buyer->phone, $order->buyer->email]);
     }
 
     /** @return array<string, mixed> */

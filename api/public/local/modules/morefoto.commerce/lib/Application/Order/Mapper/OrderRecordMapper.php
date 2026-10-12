@@ -94,8 +94,9 @@ final readonly class OrderRecordMapper
             'INSTITUTION_NAME' => $group->institutionName,
             'SHOOT_NAME' => $group->shootName,
             'GROUP_NAME' => $group->groupName,
-            'BUYER_NAME' => $buyer->name,
-            'BUYER_PHONE' => $buyer->phone,
+            // E8: a new order stores the email only; the name and phone of earlier orders stay in their rows.
+            'BUYER_NAME' => null,
+            'BUYER_PHONE' => null,
             'BUYER_EMAIL' => $buyer->email,
             'BUYER_COMMENT' => $buyer->comment,
             'RECEIPT_CHANNEL' => $buyer->receiptChannel,

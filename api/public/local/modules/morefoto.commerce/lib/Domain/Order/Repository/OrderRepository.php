@@ -19,7 +19,7 @@ use Rebit\Share\Shared\Exception\HttpException;
  *     INSTITUTION_ID: int, INSTITUTION_PUBLIC_ID: string, SHOOT_ID: int, SHOOT_PUBLIC_ID: string,
  *     GROUP_ID: int, GROUP_PUBLIC_ID: string, AUDIENCE: string,
  *     INSTITUTION_NAME: string, SHOOT_NAME: string, GROUP_NAME: string,
- *     BUYER_NAME: string, BUYER_PHONE: string, BUYER_EMAIL: string, BUYER_COMMENT: string, RECEIPT_CHANNEL: null|string,
+ *     BUYER_NAME: null|string, BUYER_PHONE: null|string, BUYER_EMAIL: string, BUYER_COMMENT: string, RECEIPT_CHANNEL: null|string,
  *     SUBTOTAL: int, DISCOUNT: int, GIFT_SAVING: int, TOTAL: int, ITEM_COUNT: int, GIFTS: string,
  *     CATALOG_REVISION: int, CONDITIONS_REVISION: int, PAYMENT_STATUS: string, PRODUCTION_STATUS: string, CREATED_AT: string,
  * }
