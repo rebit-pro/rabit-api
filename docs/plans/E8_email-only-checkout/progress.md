@@ -5,10 +5,10 @@
 - Дата: 12.10.2026. Ветка `codex/e8-email-only-checkout` от `origin/main` 28a8c55 (merge D4); рабочая копия `/home/user/rabit-api-worktrees/e8-email-only-checkout`. PR #181 (https://github.com/rebit-pro/rabit-api/pull/181).
 - Связанное: README волны `docs/waves/e8/README.md`, `verification.json`, `visual.json`, граф `docs/waves/graph.json`, план владельца `docs/plans/OPS-telemos-feedback-plan/` (R02).
 - Завершено: S0–S4, S6 — реализация, быстрые проверки, полный гейт (rabit-e2e-64ca39ba3e76) и прогон b после правки ширины (rabit-e2e-14bb523c86a3), visual desktop/mobile.
-- Сейчас: PR #181 открыт, E8 `review` в графе; все шаги плана S0–S6 закрыты.
-- Следующий шаг: ревью PR #181 по команде пользователя; merge — только по его команде. После merge выкладка: backend + `migrate up 20261012100001`, затем frontend (`docs/waves/e8/README.md`).
+- Сейчас: блокер ревью 5489141780 исправлен (пункт риска в плане, ограничение #182 в плане и `verification.json`), ответ в треде. Неблокирующие — #182, #183.
+- Следующий шаг: повторное ревью или merge — только по команде пользователя. После merge выкладка: backend + `migrate up 20261012100001`, затем frontend (`docs/waves/e8/README.md`). После merge выкладка: backend + `migrate up 20261012100001`, затем frontend (`docs/waves/e8/README.md`).
 - Блокеры: нет. Внешнее: тестовый магазин ЮKassa (#174) — в гейте выключен.
-- Рабочее дерево: чистое после коммита документации.
+- Рабочее дерево: чистое после коммита исправления.
 - Проверки: PHPUnit/PHPStan — docker `rabit-api-php-cli:d1-local`, vendor volume `rabit-e7-vendor`; frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`; гейт — `E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e`; граф — `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
 
 ## Журнал
@@ -49,6 +49,14 @@
 ### 12.10.2026 — PR
 
 - Ветка запушена, открыт PR #181 в main. E8 отмечена `review` в графе; `verify-wave-graph` exit 0.
+### 12.10.2026 — ревью PR #181
+
+- Review 5489141780 (head 081afa7). Блокер: `plan.md:79` обещает, что миграция перед `ALTER` проверяет строки и отказывает, — в `up()` проверки нет (и не нужна: правило E8 только ослабляет E5).
+- Демо-набор Cucumber (`npm run test:e2e:run`, mock) запущен при ревью: полный прогон не уложился в 25 мин; `--fail-fast` падает на демо-входе (`login.feature:20`) одинаково на main 28a8c55 и на E8 → #182. Шаги, изменённые в E8, проверены только `typecheck:e2e`.
+- Неблокирующие: #182, #183 (устаревший черновик оформления с именем и телефоном остаётся в localStorage).
+### 12.10.2026 — исправление блокера
+
+- `plan.md`: пункт риска о пересоздании CHECK переписан — предварительной проверки нет и она не нужна (E8 только ослабляет E5), сбой `ALTER` оставляет схему E5; добавлено ограничение #182. `verification.json`: `demoCucumber` = failed-baseline (#182) и ограничение в `limits`. Код не менялся, гейт не перезапускался.
 
 ## Тест-кейсы
 

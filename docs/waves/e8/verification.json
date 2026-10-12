@@ -48,6 +48,10 @@
         }
       ],
       "yookassa": "test shop OFF (#174): payment scenarios ran in the disabled mode, the sandbox part is BLOCKED"
+    },
+    "demoCucumber": {
+      "status": "failed-baseline",
+      "note": "npm run test:e2e:run (mock) fails at the demo login (login.feature:20) on main 28a8c55 and on E8 alike, issue #182; the E8 step edits (commerce/checkout.steps.ts, ui/composite.steps.ts, features/ui/composite.feature) are checked by typecheck:e2e only"
     }
   },
   "testCases": {
@@ -63,6 +67,7 @@
   },
   "limits": [
     "G1 sandbox payment with the real test shop is not rerun (#174)",
-    "Group a was last run on df8783e; the following commit changes only CheckoutContacts.vue styles"
+    "Group a was last run on df8783e; the following commit changes only CheckoutContacts.vue styles",
+    "Demo Cucumber suite is broken on main (#182); E8 step edits are type-checked only"
   ]
 }
