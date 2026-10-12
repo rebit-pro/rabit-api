@@ -90,7 +90,7 @@ fieldset {
   gap: var(--mf-space-4);
   border: 0;
   min-width: 0;
-  max-width: 640px;
+  max-width: 560px;
 }
 .visually-hidden {
   display: block;
@@ -102,9 +102,6 @@ fieldset {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
-}
-.contact-email {
-  max-width: 560px;
 }
 .contact-channel-note {
   font-size: var(--mf-text-small);
