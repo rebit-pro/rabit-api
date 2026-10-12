@@ -13,7 +13,8 @@ import {
   staffOrderParams,
   staffScopeOptions,
   staffScopePatch,
-  staffScopeRetry
+  staffScopeRetry,
+  staffBuyerLine
 } from '../../src/modules/morefoto/orders/live/rules.ts';
 
 const problem = (code, status = 409) => ({ status, code, network: false });
@@ -31,6 +32,12 @@ test('server field codes land on the matching checkout field', () => {
   assert.deepEqual(Object.keys(checkoutOutcome(problem('INVALID_BUYER_EMAIL', 422), false).errors), ['email']);
   assert.deepEqual(Object.keys(checkoutOutcome(problem('REVIEW_REQUIRED', 422), false).errors), ['reviewed']);
   assert.deepEqual(Object.keys(checkoutOutcome(problem('RECEIPT_CHANNEL_UNAVAILABLE', 422), false).errors), ['receiptChannel']);
+});
+
+test('E8-T05: a staff list row shows the email of an order without a name, an earlier order keeps name and phone', () => {
+  assert.equal(staffBuyerLine({ name: null, phone: null, email: 'parent@example.ru' }), 'parent@example.ru');
+  assert.equal(staffBuyerLine({ name: 'Анна', phone: '+79001234567', email: 'a@b.ru' }), 'Анна · +7 900 123-45-67');
+  assert.equal(staffBuyerLine({ name: 'Анна', phone: null, email: 'a@b.ru' }), 'Анна');
 });
 
 test('order lines never invent image URLs; a trusted thumbnail source is optional', () => {

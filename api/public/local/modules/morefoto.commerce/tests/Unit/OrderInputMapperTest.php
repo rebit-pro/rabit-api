@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace Morefoto\Commerce\Tests\Unit;
 
+use Morefoto\Commerce\Presentation\Order\Dto\CreateOrderRequestDto;
+use Morefoto\Commerce\Presentation\Order\Dto\OrderBuyerRequestDto;
 use Morefoto\Commerce\Presentation\Order\Dto\StaffOrderListRequestDto;
 use Morefoto\Commerce\Presentation\Order\OrderInputMapper;
+use Morefoto\Commerce\Presentation\Storefront\Dto\QuoteLineRequestDto;
 use Morefoto\Commerce\Presentation\Storefront\StorefrontMapper;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Rebit\Share\Infrastructure\Controller\Request\StrictRequestValues;
 use Rebit\Share\Presentation\Consent\AcceptedDocumentInputMapper;
 use Rebit\Share\Shared\Exception\HttpException;
+use Rebit\Share\Shared\Helper\ArrayToDtoMapper;
 
 require_once __DIR__ . '/../bootstrap.php';
 
@@ -19,6 +24,21 @@ require_once __DIR__ . '/../bootstrap.php';
  */
 final class OrderInputMapperTest extends TestCase
 {
+    public function testOrderBuyerNeedsOnlyTheEmailAndStillAcceptsAnOlderBody(): void
+    {
+        // E8-T04: the strict body needs only the email; a page opened before E8 still sends name and phone.
+        $mapper = new OrderInputMapper(new StorefrontMapper(), new AcceptedDocumentInputMapper());
+        $line = new QuoteLineRequestDto('11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', 1);
+        $order = static fn(OrderBuyerRequestDto $buyer): CreateOrderRequestDto => new CreateOrderRequestDto(str_repeat('a', 64), [$line], $buyer, str_repeat('c', 64), str_repeat('b', 32));
+        $buyer = static fn(array $values): OrderBuyerRequestDto => ArrayToDtoMapper::map(StrictRequestValues::normalize($values, OrderBuyerRequestDto::class, true), OrderBuyerRequestDto::class);
+
+        $current = $mapper->create($order($buyer(['email' => 'parent@example.ru', 'reviewed' => true])))->buyer;
+        $older = $mapper->create($order($buyer(['name' => 'Анна', 'phone' => '+79001234567', 'email' => 'parent@example.ru', 'reviewed' => true])))->buyer;
+
+        self::assertSame(['', '', 'parent@example.ru'], [$current->name, $current->phone, $current->email]);
+        self::assertSame(['Анна', '+79001234567'], [$older->name, $older->phone], 'Kept only for the replay hash of an attempt begun before E8.');
+    }
+
     public function testEmptyFiltersAreAbsentAndValidOnesPassThrough(): void
     {
         $input = (new OrderInputMapper(new StorefrontMapper(), new AcceptedDocumentInputMapper()))->search(new StaffOrderListRequestDto(

@@ -4,7 +4,6 @@ import type { OrganizationState } from '../../../src/modules/morefoto/organizati
 export const regular = '/g/158-group-7bc93615c4e94fd18a207d560b3e1f82';
 export const physical = 'Два отпечатка 10 × 15';
 export const digital = 'Электронный кадр';
-export const longName = 'Александра Константиновна Волкова — проверка длинного имени покупателя';
 export const longEmail = 'alexandra.konstantinovna.volkova.review@example.test';
 export async function go(p: Page, base: string, path: string) {
   await p.goto(base + path, { waitUntil: 'networkidle' });
@@ -94,8 +93,6 @@ export async function checkout(p: Page) {
   await expect(p.getByRole('heading', { name: 'Оформление заказа', exact: true })).toBeVisible();
 }
 export async function fillBuyer(p: Page) {
-  await p.getByLabel('Имя покупателя', { exact: true }).fill(longName);
-  await p.getByLabel('Телефон', { exact: true }).fill('+7 (900) 123-45-67');
   await p.getByLabel('Email', { exact: true }).fill(longEmail);
   await p
     .getByLabel('Комментарий — необязательно', { exact: true })

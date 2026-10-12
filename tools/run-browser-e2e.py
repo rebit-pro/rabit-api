@@ -54,6 +54,8 @@ VERIFIERS = [
     ("verify-orders.php", "e5-orders.json", "E5 integration passed", ["zzzzz-orders", "zzzzzz-transfers", "zzzzzzzz-payment-costs"]),
     # D4: pause, serialization with orders on the group row, stale quote and GROUP_HAS_ORDERS on the verifier's own group.
     ("verify-markup-correction.php", None, "D4 markup correction integration passed", ["zzzz-storefront", "zzzzz-markup-correction"]),
+    # E8: orders of every browser scenario keep the email only; CHECK for stored contacts, migration replay and rollback.
+    ("verify-email-only-orders.php", None, "E8 email-only order integration passed", ["zzzzz-orders", "zzzzzzzzz-payments"]),
     # F2 prepares the link first in its group and reports the delivery after the minute of preparation is over.
     ("verify-links.php", None, "F2 integration passed", ["z-links-preparation", "zzzz-links"]),
     # D3: the browser leaves one untransferred staff request for the injected-failure check on MySQL.

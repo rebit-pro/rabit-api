@@ -41,8 +41,8 @@ final readonly class OrderRowMapper
             audience: (string)$row['AUDIENCE'],
             createdAt: $this->calendar->display(new \DateTimeImmutable((string)$row['CREATED_AT'], new \DateTimeZone('UTC'))),
             buyer: new OrderBuyerOutputDto(
-                (string)$row['BUYER_NAME'],
-                (string)$row['BUYER_PHONE'],
+                null === $row['BUYER_NAME'] ? null : (string)$row['BUYER_NAME'],
+                null === $row['BUYER_PHONE'] ? null : (string)$row['BUYER_PHONE'],
                 (string)$row['BUYER_EMAIL'],
                 (string)$row['BUYER_COMMENT'],
                 null === $row['RECEIPT_CHANNEL'] ? null : (string)$row['RECEIPT_CHANNEL'],

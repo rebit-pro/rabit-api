@@ -6,8 +6,7 @@ import { money } from '../../commerce/money';
 import OrderComposition from '../../orders/components/OrderComposition.vue';
 import OrderLiveFacts from '../../orders/components/OrderLiveFacts.vue';
 import { formatMoment, livePaymentLabels as paymentLabels, productionLabels } from '../../orders/formatters';
-import { hasStaffFilters, orderQuoteAsCart } from '../../orders/live/rules';
-import { formatPhone } from '../../ui/field-values';
+import { hasStaffFilters, orderQuoteAsCart, staffBuyerLine } from '../../orders/live/rules';
 import { useStaffOrders } from '../useStaffOrders';
 import { useStaffOrderScope } from '../useStaffOrderScope';
 import MfStatus from '@/components/status/MfStatus.vue';
@@ -191,7 +190,8 @@ function lastDays(days: number): void {
               order.number
             }}</RouterLink>
             <p class="mf-muted">{{ order.institutionName }} · {{ order.groupName }}</p>
-            <p>{{ order.buyer.name }} · {{ formatPhone(order.buyer.phone) }}</p>
+            <!-- E8: an order without a name shows its email; earlier orders keep the name and the phone. -->
+            <p>{{ staffBuyerLine(order.buyer) }}</p>
           </div>
           <div class="staff-orders__side">
             <strong>{{ money(order.quote.total) }}</strong>

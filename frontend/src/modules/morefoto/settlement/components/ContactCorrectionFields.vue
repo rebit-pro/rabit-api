@@ -1,21 +1,21 @@
 <script setup lang="ts">
 import type { SaleCommand, SaleErrors, SaleOrder } from '../types';
-import { currentBuyer } from '../rules';
+import { contactLine, currentBuyer } from '../rules';
 defineProps<{ command: SaleCommand; errors: SaleErrors; order: SaleOrder }>();
 defineEmits<{ change: [value: Partial<SaleCommand>] }>();
 </script>
 <template>
   <div class="sale-fields">
-    <p><strong>Сейчас:</strong> {{ currentBuyer(order).name }} · {{ currentBuyer(order).email }} · {{ currentBuyer(order).phone }}</p>
+    <p><strong>Сейчас:</strong> {{ contactLine(currentBuyer(order)) }}</p>
     <template v-if="command.action === 'contacts'"
       ><v-text-field
         :model-value="command.name"
-        label="Имя покупателя"
+        label="Имя покупателя — необязательно"
         :error-messages="errors.name"
         :aria-invalid="!!errors.name"
         @update:model-value="$emit('change', { name: $event })" /><v-text-field
         :model-value="command.phone"
-        label="Телефон покупателя"
+        label="Телефон покупателя — необязательно"
         type="tel"
         :error-messages="errors.phone"
         :aria-invalid="!!errors.phone"
@@ -37,8 +37,14 @@ defineEmits<{ change: [value: Partial<SaleCommand>] }>();
       @update:model-value="$emit('change', { verified: !!$event })"
     />
     <p>
-      <strong>Станет:</strong> {{ command.action === 'contacts' ? command.name : currentBuyer(order).name }} · {{ command.email }} ·
-      {{ command.action === 'contacts' ? command.phone : currentBuyer(order).phone }}
+      <strong>Станет:</strong>
+      {{
+        contactLine(
+          command.action === 'contacts'
+            ? { name: command.name.trim(), email: command.email, phone: command.phone.trim() }
+            : { ...currentBuyer(order), email: command.email }
+        )
+      }}
     </p>
     <p class="mf-muted">Личная ссылка, история оплаты и исходный месячный срок файлов сохранятся. Настоящие письма не отправляются.</p>
   </div>

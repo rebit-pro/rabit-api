@@ -44,6 +44,12 @@ final class OrderReceiptsAndAccessTest extends TestCase
         self::assertNotSame($hash->hash($this->input([self::LINE_A])), $hash->hash($this->input([self::LINE_A], 'Другое имя')));
     }
 
+    public function testReplayHashOfAnAttemptBegunBeforeE8IsUnchanged(): void
+    {
+        // E8-T02: the hashed tuple still holds the raw name and phone, so an old key with its old body returns its order.
+        self::assertSame('507e22ab8bb386f9d10546bf63329c32f2b6ee94390d27ce97957b6cf71854a7', (new CheckoutRequestHash())->hash($this->input([self::LINE_A])));
+    }
+
     public function testSameKeyWithAnotherBodyIsConflict(): void
     {
         $repository = $this->createStub(OrderCheckoutRepository::class);

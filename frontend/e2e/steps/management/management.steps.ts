@@ -90,8 +90,6 @@ async function total(p: Page, value: number) {
 async function order(p: Page, base: string) {
   await addPhoto(p, base, groupToken, 'Электронный кадр');
   await p.getByRole('link', { name: 'Оформить заказ', exact: true }).click();
-  await p.getByLabel('Имя покупателя', { exact: true }).fill('Покупатель R09');
-  await p.getByLabel('Телефон', { exact: true }).fill('+7 (900) 123-45-67');
   await p.getByLabel('Email', { exact: true }).fill('buyer@example.test');
   await p.getByLabel('Состав и условия проверены', { exact: true }).check();
   await p.getByTestId('create-order').click();

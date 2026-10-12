@@ -10,11 +10,11 @@ const buyer = computed(() => currentBuyer(props.order));
   <section class="mf-panel">
     <h2 class="order-contacts__title">Контакты и получение</h2>
     <dl class="order-contacts">
-      <div class="order-contacts__row">
+      <div v-if="buyer.name" class="order-contacts__row">
         <dt>Покупатель</dt>
         <dd>{{ buyer.name }}</dd>
       </div>
-      <div class="order-contacts__row">
+      <div v-if="buyer.phone" class="order-contacts__row">
         <dt>Телефон</dt>
         <dd>{{ formatPhone(buyer.phone) }}</dd>
       </div>
