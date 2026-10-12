@@ -1,6 +1,6 @@
 import { isAxiosError } from 'axios';
 import api from '@/api/http';
-import { serverMoment } from './rules';
+import { galleryLinkKey, serverMoment } from './rules';
 import { linkErrorText } from './link-errors';
 import type { LinkCommand, LinkEvent, LinkGroup } from './types';
 
@@ -44,6 +44,8 @@ interface LiveLinkEvent {
 }
 export interface LiveLinkDetail extends LiveLinkItem {
   galleryToken: string | null;
+  /** F3: the short alias staff copy into the parents chat; null only for a key without one. */
+  galleryAlias: string | null;
   referenceNow: string;
   history: LiveLinkEvent[];
   /** D4: a transmitted group that still sells and has no orders; the server repeats the check on start. */
@@ -129,7 +131,7 @@ export function toLinkGroup(item: LiveLinkItem, detail?: LiveLinkDetail): LinkGr
     institutionId: item.institutionId,
     shootId: item.shootId,
     shootName: item.shootName,
-    galleryToken: detail?.galleryToken ?? '',
+    galleryToken: detail ? galleryLinkKey(detail) : '',
     kind: item.kind,
     revision: item.revision,
     state: item.state,

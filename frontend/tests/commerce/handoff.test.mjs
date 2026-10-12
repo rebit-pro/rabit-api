@@ -268,3 +268,10 @@ test('D4-T09: markup correction refusals tell the staff what blocks the correcti
   }
   assert.match(linkErrorText({ network: false, status: 409, code: 'LINK_NOT_READY' }), /не готова/);
 });
+
+test('F3-T05: staff copy the short link; the long key is the fallback of a key without an alias', async () => {
+  const { galleryLinkKey } = await import('../../src/modules/morefoto/handoff/rules.ts');
+  assert.equal(galleryLinkKey({ galleryAlias: 'k3m9x2q7v4', galleryToken: 'a'.repeat(64) }), 'k3m9x2q7v4');
+  assert.equal(galleryLinkKey({ galleryAlias: null, galleryToken: 'a'.repeat(64) }), 'a'.repeat(64));
+  assert.equal(galleryLinkKey({ galleryToken: null }), '');
+});

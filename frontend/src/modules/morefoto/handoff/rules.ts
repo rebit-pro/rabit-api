@@ -221,3 +221,8 @@ export function staffTransferErrorText(code: string | undefined, photoCodes: str
 export function handoffRefreshSucceeded(action: string | undefined, previewError: string): boolean {
   return action !== 'confirm' || previewError === '';
 }
+
+/** F3: the key in a gallery link staff copy — the short alias when the server has one, otherwise the long key. */
+export function galleryLinkKey(link: { galleryAlias?: string | null; galleryToken: string | null }): string {
+  return link.galleryAlias || link.galleryToken || '';
+}
