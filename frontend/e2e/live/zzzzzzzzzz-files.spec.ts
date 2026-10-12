@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { test, expect, type APIResponse, type Page } from '@playwright/test';
 import { orderConsents, payOnProvider } from './helpers.js';
 
@@ -197,7 +197,9 @@ test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and nev
   expect((await request({ kind: 'zip' }, 409)).error.code).toBe('FILES_UNAVAILABLE');
 
   // J4-DEC-04: the stand pays the order through the G1 code with the fixture provider; the runner watches this request.
-  writeFileSync('var/j4-pay-request.json', JSON.stringify({ orderKey: created.accessKey }));
+  // Written aside and renamed: the runner never copies a half-written request.
+  writeFileSync('var/j4-pay-request.json.tmp', JSON.stringify({ orderKey: created.accessKey }));
+  renameSync('var/j4-pay-request.json.tmp', 'var/j4-pay-request.json');
   await expect.poll(() => existsSync('var/j4-paid.json'), { timeout: 60000 }).toBe(true);
   expect(JSON.parse(readFileSync('var/j4-paid.json', 'utf8')).error).toBeUndefined();
   // Printed frames once each; the print threshold keeps granting the whole set of its child (J1-DEC-01).

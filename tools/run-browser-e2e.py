@@ -547,16 +547,19 @@ def browser_timeout(group):
 def pay_fixture(report, fpm, var, done):
     """J4-DEC-04: the files spec places a print order and asks for its payment; the stand pays it once through the G1 code
     with the fixture provider. A failure is handed to the spec, which reports it instead of waiting for its timeout."""
+    # Both sides write aside and rename: the spec renames its request, the answer appears only when complete.
     request = var / "j4-pay-request.json"
+    answer = var / "j4-paid.json.tmp"
     while not done.wait(0.5):
         if not request.is_file():
             continue
         try:
             docker("cp", str(request), fpm + ":/runtime/j4-pay-request.json")
             docker("exec", fpm, "php", "/app/tools/e2e/pay-fixture.php", log=report / "pay-fixture.log")
-            docker("cp", fpm + ":/runtime/j4-paid.json", str(var / "j4-paid.json"))
+            docker("cp", fpm + ":/runtime/j4-paid.json", str(answer))
         except Exception as error:  # noqa: BLE001 - the spec shows the reason
-            (var / "j4-paid.json").write_text(json.dumps({"error": str(error)}))
+            answer.write_text(json.dumps({"error": str(error)}))
+        os.replace(answer, var / "j4-paid.json")
         return
 
 
