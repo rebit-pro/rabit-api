@@ -51,7 +51,9 @@
       "D4",
       "E8"
     ],
-    "review": {},
+    "review": {
+      "J4": "https://github.com/rebit-pro/rabit-api/pull/184"
+    },
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
     "mergedPullRequests": {
       "B1": "https://github.com/rebit-pro/rabit-api/pull/8",

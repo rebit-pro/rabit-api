@@ -2,11 +2,11 @@
 
 ## Точка продолжения
 
-- Дата: 12.10.2026. Ветка `codex/j4-print-digital-copy` от `origin/main` a302774 (merge E8); рабочая копия `/home/user/rabit-api-worktrees/j4-print-digital-copy`. PR нет.
+- Дата: 12.10.2026. Ветка `codex/j4-print-digital-copy` от `origin/main` a302774 (merge E8); рабочая копия `/home/user/rabit-api-worktrees/j4-print-digital-copy`. PR #184 (https://github.com/rebit-pro/rabit-api/pull/184).
 - Связанное: README волны `docs/waves/j4/README.md`, граф `docs/waves/graph.json`, план владельца `docs/plans/OPS-telemos-feedback-plan/` (R03), J1 `docs/waves/j1/README.md`.
 - Завершено: S0–S5, S7 — код (df88185, 1e88e79, оферта, cdfd6b9, 2fc24a4, d410e03, 445d379), полный гейт `rabit-e2e-1ef3dd028ca9` и прогоны b для снимков, visual desktop/mobile.
-- Сейчас: S6 — push и PR в main (команда пользователя «открывай PR J4 после гейта»), затем ревью PR (команда «Сделай ревью PR J4»).
-- Следующий шаг: после открытия PR — J4 `review` в графе; ревью и публикация замечаний.
+- Сейчас: PR #184 открыт, J4 `review` в графе; все шаги плана S0–S7 закрыты. Идёт ревью PR по команде пользователя.
+- Следующий шаг: опубликовать ревью; исправления и merge — только по команде пользователя. После merge выкладка без миграций: preview SQL из README, затем backend и frontend.
 - Блокеры: нет. Внешнее: тестовый магазин ЮKassa (#174) — гейт без него, оплата печати фикстурой (DEC-04).
 - Рабочее дерево: чистое после коммита документации.
 - Проверки: PHPUnit/PHPStan — docker `rabit-api-php-cli:d1-local`, vendor volume `rabit-e7-vendor` (скрипт `php-j4.sh` в scratchpad); frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`; гейт — `E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e`; граф — `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
@@ -51,6 +51,10 @@
 - Прогон 3 (`E2E_GROUPS=b`, d410e03, `rabit-e2e-65fb1516fa3e`): PASS — b 60, 12 верификаторов.
 - Прогон 4 (`E2E_GROUPS=b`, 445d379, `rabit-e2e-072725b5135d`): PASS — b 60, 12 верификаторов; скриншоты `docs/waves/j4/screenshots/`, хеши в `visual.json`.
 
+### 12.10.2026 — PR
+
+- Ветка запушена, открыт PR #184 в main. J4 отмечена `review` в графе; `verify-wave-graph` exit 0.
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -64,4 +68,4 @@
 | J4-T07 | PASS | 12.10.2026 | тот же сценарий: `unpaid` и 409 `FILES_UNAVAILABLE` до оплаты |
 | J4-T08 | PASS | 12.10.2026 | `docs/waves/j4/visual.json`, 4 скриншота (`rabit-e2e-072725b5135d`) |
 | J4-T09 | PASS | 12.10.2026 | PHPUnit legal 21 OK; гейт: legal.spec и заказы с текущей редакцией (`rabit-e2e-1ef3dd028ca9`) |
-| J4-T10 | PENDING | — | граф проверен (exit 0); J4 `review` — после открытия PR |
+| J4-T10 | PASS | 12.10.2026 | J4 `review` (PR #184), E8 `merged`; `python3 tools/verify-wave-graph.py docs/waves/graph.json` exit 0 |

@@ -60,7 +60,7 @@
 - [x] S3. Frontend: тексты, подсказка, демо.
 - [x] S4. Оферта (по DEC-02).
 - [x] S5. Live-спек и верификатор.
-- [ ] S6. Документация волны, граф (E8 `merged`, J4 `review`), PR.
+- [x] S6. Документация волны, граф (E8 `merged`, J4 `review`), PR.
 - [x] S7. Полный `make test-e2e` и visual desktop/mobile.
 
 ## Критерии приёмки
