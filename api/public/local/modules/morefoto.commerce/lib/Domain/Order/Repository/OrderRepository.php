@@ -6,6 +6,7 @@ namespace Morefoto\Commerce\Domain\Order\Repository;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\Result;
+use Morefoto\Commerce\Domain\Order\Enum\OrderSortEnum;
 use Morefoto\Commerce\Domain\Order\Enum\ProductionStatusEnum;
 use Morefoto\Commerce\Domain\Order\Exception\OrderStorageException;
 use Morefoto\Commerce\Domain\Order\ValueObject\OrderSearchCriteria;
@@ -115,6 +116,31 @@ final readonly class OrderRepository
         return $this->query('SELECT ' . self::COLUMNS . " FROM mf_order o WHERE o.ID={$id} FOR UPDATE");
     }
 
+    /** Блокирует заказ по публичному ID для удаления; область не нужна — удаляет только организатор. */
+    public function lockPublic(string $publicId): Result
+    {
+        $id = Application::getConnection()->getSqlHelper()->forSql($publicId);
+
+        return $this->query('SELECT ' . self::COLUMNS . " FROM mf_order o WHERE o.PUBLIC_ID='{$id}' FOR UPDATE");
+    }
+
+    /**
+     * Только под lock() и после удаления попыток оплаты: строки, ключи покупателя, оформление и сам заказ.
+     * Выгрузок файлов у неоплаченного заказа не бывает — право на файлы даёт только оплата.
+     */
+    public function delete(int $id): void
+    {
+        $connection = Application::getConnection();
+        try {
+            $connection->queryExecute("DELETE FROM mf_order_line WHERE ORDER_ID={$id}");
+            $connection->queryExecute("DELETE FROM mf_order_access_key WHERE ORDER_ID={$id}");
+            $connection->queryExecute("DELETE FROM mf_order_checkout WHERE ORDER_ID={$id}");
+            $connection->queryExecute("DELETE FROM mf_order WHERE ID={$id}");
+        } catch (\Throwable $error) {
+            throw new OrderStorageException('Cannot delete order.', 0, $error);
+        }
+    }
+
     /** В снимке заказа есть печатная строка: такой заказ живёт по сроку приёма печати (E7). */
     public function containsPrint(int $id): bool
     {
@@ -153,7 +179,8 @@ final readonly class OrderRepository
     }
 
     /**
-     * Дети с хотя бы одной строкой заказа; строки заказов не удаляются, поэтому чтения без блокировки достаточно.
+     * Дети с хотя бы одной строкой заказа. Строки удаляются только вместе с неоплаченным заказом, то есть множество лишь
+     * сужается: чтение без блокировки может увидеть удаляемый заказ и отказать лишний раз, но не пропустит новый.
      *
      * @param non-empty-list<int> $childIds
      *
@@ -180,10 +207,28 @@ final readonly class OrderRepository
         return false !== $this->query("SELECT 1 FROM mf_order WHERE GROUP_PUBLIC_ID='{$groupPublicId}' LIMIT 1")->fetch();
     }
 
-    public function page(OrderSearchCriteria $criteria, int $limit, int $offset): Result
+    public function page(OrderSearchCriteria $criteria, int $limit, int $offset, OrderSortEnum $sort = OrderSortEnum::CREATED_AT, bool $descending = true): Result
     {
         return $this->query('SELECT ' . self::COLUMNS . ' FROM mf_order o WHERE ' . $this->where($criteria)
-            . " ORDER BY o.CREATED_AT DESC,o.ID DESC LIMIT {$limit} OFFSET {$offset}");
+            . $this->order($sort, $descending) . " LIMIT {$limit} OFFSET {$offset}");
+    }
+
+    /** Statuses sort by their meaning, not alphabetically; the newest order first keeps pages stable on ties. */
+    private function order(OrderSortEnum $sort, bool $descending): string
+    {
+        $direction = $descending ? 'DESC' : 'ASC';
+        $column = match ($sort) {
+            OrderSortEnum::CREATED_AT => null,
+            OrderSortEnum::BUYER_EMAIL => 'o.BUYER_EMAIL',
+            OrderSortEnum::INSTITUTION_NAME => 'o.INSTITUTION_NAME',
+            OrderSortEnum::TOTAL => 'o.TOTAL',
+            OrderSortEnum::PAYMENT_STATUS => "FIELD(o.PAYMENT_STATUS,'unpaid','pending','declined','paid')",
+            OrderSortEnum::PRODUCTION_STATUS => "FIELD(o.PRODUCTION_STATUS,'not-started','queued','printing','ready','delivered')",
+        };
+
+        return null === $column
+            ? " ORDER BY o.CREATED_AT {$direction},o.ID {$direction}"
+            : " ORDER BY {$column} {$direction},o.CREATED_AT DESC,o.ID DESC";
     }
 
     public function count(OrderSearchCriteria $criteria): int

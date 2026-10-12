@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Payment\Tests\Unit;
 
+use Morefoto\Payment\Domain\Payment\Enum\PaymentSortEnum;
 use Morefoto\Payment\Presentation\Payment\PaymentInputMapper;
 use Morefoto\Payment\Presentation\Payment\Request\Dto\PaymentListRequestDto;
 use Morefoto\Payment\Presentation\Payment\Request\Dto\PaymentNotificationObjectRequestDto;
@@ -32,6 +33,17 @@ final class PaymentInputMapperTest extends TestCase
         self::assertSame(2, $input->page);
     }
 
+    public function testRegistrySortIsWhitelisted(): void
+    {
+        $default = new PaymentInputMapper()->search(new PaymentListRequestDto());
+        self::assertSame(PaymentSortEnum::CREATED_AT, $default->sort);
+        self::assertTrue($default->descending);
+
+        $byAmount = new PaymentInputMapper()->search(new PaymentListRequestDto(sort: 'amount', direction: 'asc'));
+        self::assertSame(PaymentSortEnum::AMOUNT, $byAmount->sort);
+        self::assertFalse($byAmount->descending);
+    }
+
     #[DataProvider('invalidFilters')]
     public function testRegistryRejectsInvalidFilters(PaymentListRequestDto $request, string $code): void
     {
@@ -48,6 +60,8 @@ final class PaymentInputMapperTest extends TestCase
         yield 'impossible date' => [new PaymentListRequestDto(dateFrom: '2026-02-30'), 'INVALID_FILTER'];
         yield 'reversed dates' => [new PaymentListRequestDto(dateFrom: '2026-09-30', dateTo: '2026-09-01'), 'INVALID_FILTER'];
         yield 'page size' => [new PaymentListRequestDto(pageSize: 101), 'INVALID_PAGE'];
+        yield 'unknown sort' => [new PaymentListRequestDto(sort: 'PROVIDER_KEY'), 'INVALID_SORT'];
+        yield 'unknown direction' => [new PaymentListRequestDto(sort: 'amount', direction: 'up'), 'INVALID_SORT'];
     }
 
     public function testNotificationKeepsOnlyEventAndPaymentId(): void

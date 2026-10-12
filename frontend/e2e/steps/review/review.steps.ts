@@ -37,7 +37,10 @@ Then('R16 проходит путь {string}', { timeout: 240000 }, async functi
     await p.getByRole('button', { name: 'Новый список', exact: true }).click();
     await p.getByLabel('Код ребёнка или снимка 1', { exact: true }).fill('A001-01');
     await h.save(p, 'Передать список куратору');
-    await p.getByRole('link', { name: 'Открыть список', exact: true }).click();
+    await p
+      .getByRole('link', { name: /^Открыть список / })
+      .first()
+      .click();
     await expect(p).toHaveURL(/\/cabinet\/staff-requests\/[^/?#]+$/);
     const path = new URL(p.url()).pathname;
     await h.login(p, base, 'curator');

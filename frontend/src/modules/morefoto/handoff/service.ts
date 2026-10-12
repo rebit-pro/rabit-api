@@ -9,13 +9,16 @@ import { staffRequestsApi, type StaffRequestPage } from './api';
 import { linksApi, toLinkGroup } from './links-api';
 import type { StaffRole } from '../types';
 import type { HandoffWorkspace, LinkGroup, StaffRequest } from './types';
+import type { UiTableSort } from '../ui/table-types';
 /** One page of the live staff request list: server filters and a bounded page size (#26). */
 export interface StaffRequestQuery {
   page: number;
   status: StaffRequest['status'] | null;
   shootId: string | null;
+  pageSize?: number;
+  sort?: UiTableSort;
 }
-export const STAFF_REQUEST_PAGE_SIZE = 20;
+export const STAFF_REQUEST_PAGE_SIZE = 25;
 const FIRST_PAGE: StaffRequestQuery = { page: 1, status: null, shootId: null };
 
 export async function loadHandoff(token: string, requestId?: string, query: StaffRequestQuery = FIRST_PAGE): Promise<HandoffWorkspace> {
@@ -71,7 +74,11 @@ async function loadLiveHandoff(requestId: string | undefined, query: StaffReques
     const [scope, detail] = await Promise.all([staffRequestsApi.list(1, 1), staffRequestsApi.detail(requestId).catch(missing)]);
     return liveWorkspace(scope, detail ? [detail] : []);
   }
-  const page = await staffRequestsApi.list(query.page, STAFF_REQUEST_PAGE_SIZE, { status: query.status, shootId: query.shootId });
+  const page = await staffRequestsApi.list(query.page, query.pageSize ?? STAFF_REQUEST_PAGE_SIZE, {
+    status: query.status,
+    shootId: query.shootId,
+    sort: query.sort
+  });
   return {
     ...liveWorkspace(page, page.items),
     requestPage: { page: page.meta.page, totalPages: page.meta.totalPages, total: page.meta.total }

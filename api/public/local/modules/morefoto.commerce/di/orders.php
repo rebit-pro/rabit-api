@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use Morefoto\Commerce\Application\Order\UseCase\DeleteOrderUseCase;
+use Morefoto\Commerce\Presentation\Controller\StaffOrderRemovalController;
+use Rebit\Share\Contracts\Payment\OrderPaymentRemovalInterface;
 use Bitrix\Main\DI\ServiceLocator;
 use Morefoto\Commerce\Application\Order\Contract\CheckoutKeySealInterface;
 use Morefoto\Commerce\Application\Order\Contract\OrderStaffAccessInterface;
@@ -232,5 +235,18 @@ return [
             ServiceLocator::getInstance()->get(OrderInputMapper::class),
             ServiceLocator::getInstance()->get(OrderResultMapper::class),
         ],
+    ],
+    DeleteOrderUseCase::class => [
+        'className' => DeleteOrderUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(OrderStaffAccessInterface::class),
+            ServiceLocator::getInstance()->get(OrderRepository::class),
+            ServiceLocator::getInstance()->get(OrderPaymentRemovalInterface::class),
+            ServiceLocator::getInstance()->get(OrderTransactionInterface::class),
+        ],
+    ],
+    StaffOrderRemovalController::class => [
+        'className' => StaffOrderRemovalController::class,
+        'constructorParams' => static fn(): array => [ServiceLocator::getInstance()->get(DeleteOrderUseCase::class)],
     ],
 ];

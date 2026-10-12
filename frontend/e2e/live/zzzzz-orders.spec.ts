@@ -2,6 +2,9 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { test, expect, type APIResponse, type Browser, type Page } from '@playwright/test';
 import { acceptCheckoutDocuments, login, orderConsents, password, token } from './helpers.js';
 
+/** Visible rows of the orders table: the desktop row and the mobile card of one order share its ID. */
+const rows = (scope: Page) => scope.locator('[data-row-id]').filter({ visible: true });
+
 type Fixture = Record<'open' | 'preparing' | 'closed' | 'revoked', { token: string; groupId: string; photoId: string }>;
 type Line = { assignmentId: string; productId: string; quantity: number };
 const fixture = JSON.parse(readFileSync('var/e4-fixture.json', 'utf8')) as Fixture;
@@ -312,7 +315,7 @@ test('E5: staff narrow orders by institution, shoot and group', async ({ page, b
   const inGroup = (await body(await page.request.get('/api/v1/orders?groupId=' + group.id, { headers: organizer }))).meta.total;
   expect(inGroup).toBeGreaterThan(0);
   const searched = () => page.waitForResponse((r) => new URL(r.url()).pathname === '/api/v1/orders' && r.request().method() === 'GET');
-  const total = page.getByText(/^Найдено заказов: \d+$/);
+  const total = page.getByTestId('ui-table-range');
   const reset = page.getByRole('button', { name: 'Сбросить', exact: true });
   const field = (label: string) => page.getByRole('combobox', { name: label, exact: true });
 
@@ -320,7 +323,7 @@ test('E5: staff narrow orders by institution, shoot and group', async ({ page, b
   let listed = searched();
   await page.goto('/cabinet/orders?groupId=' + group.id);
   expect(new URL((await listed).url()).searchParams.get('groupId')).toBe(group.id);
-  await expect(total).toHaveText('Найдено заказов: ' + inGroup);
+  await expect(total).toHaveText(new RegExp(' из ' + inGroup + '$'));
   await reset.click();
   await expect(page).not.toHaveURL(/groupId=/);
 
@@ -335,11 +338,11 @@ test('E5: staff narrow orders by institution, shoot and group', async ({ page, b
     shootId: shoot.id,
     groupId: group.id
   });
-  await expect(total).toHaveText('Найдено заказов: ' + inGroup);
-  await expect(page.getByTestId('staff-order').first()).toContainText(group.name);
+  await expect(total).toHaveText(new RegExp(' из ' + inGroup + '$'));
+  await expect(rows(page).first()).toContainText(group.name);
 
   // List → card → list keeps the scope in the URL and in the form.
-  await page.getByTestId('staff-order').first().getByRole('link').click();
+  await rows(page).first().getByRole('link').first().click();
   await expect(page.getByTestId('staff-order-number')).toBeVisible();
   await page.getByRole('link', { name: 'Все заказы', exact: true }).click();
   await expect(page).toHaveURL(new RegExp('groupId=' + group.id));
@@ -391,7 +394,7 @@ test('#72: staff retry scope options after a failed institution list or institut
   await login(page);
   await breakFirst(page, isList);
   await page.goto('/cabinet/orders?groupId=' + fixture.open.groupId);
-  await expect(page.getByText(/^Найдено заказов: \d+$/)).toBeVisible();
+  await expect(page.getByTestId('ui-table-range')).toBeVisible();
   const scope = page.getByTestId('order-scope-filters');
   await expect(scope.getByRole('alert')).toHaveText(failure);
   const listed = page.waitForResponse((r) => isList(new URL(r.url())));
@@ -416,6 +419,8 @@ test('#72: staff retry scope options after a failed institution list or institut
     });
     await breakFirst(viewer, isCard);
     await viewer.goto('/cabinet/orders');
+    // Shoot and group wait under «Фильтры» until a link or a pick needs them (#92 slice 2).
+    await viewer.getByRole('button', { name: 'Фильтры', exact: true }).click();
     const area = viewer.getByTestId('order-scope-filters');
     await expect(area.getByRole('alert')).toHaveText(failure);
     const opened = viewer.waitForResponse((r) => isCard(new URL(r.url())));
@@ -476,8 +481,8 @@ for (const viewport of [
       else await staff.goto('/cabinet/orders');
       await staff.getByRole('textbox', { name: 'Номер, имя, email или телефон', exact: true }).fill(payload.data.number);
       await staff.getByRole('button', { name: 'Найти', exact: true }).click();
-      await expect(staff.getByTestId('staff-order')).toHaveCount(1);
-      await expect(staff.getByTestId('staff-order')).toContainText(viewport.name + '.e5@example.test');
+      await expect(rows(staff)).toHaveCount(1);
+      await expect(rows(staff)).toContainText(viewport.name + '.e5@example.test');
       expect(await staff.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await staff.screenshot({ path: info.outputPath('e5-' + viewport.name + '-staff-list.png'), fullPage: true, animations: 'disabled' });
       await staff.getByRole('link', { name: payload.data.number, exact: true }).click();
@@ -496,7 +501,7 @@ for (const viewport of [
       await staff.getByRole('button', { name: 'Найти', exact: true }).click();
       await expect(staff).not.toHaveURL(/[?&]q=/);
       await expect(reset).toBeDisabled();
-      await expect(staff.getByTestId('staff-order').first()).toBeVisible();
+      await expect(rows(staff).first()).toBeVisible();
     } finally {
       await context.close();
     }

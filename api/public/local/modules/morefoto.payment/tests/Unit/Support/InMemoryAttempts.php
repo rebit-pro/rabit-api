@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Payment\Tests\Unit\Support;
 
+use Morefoto\Payment\Domain\Payment\Enum\PaymentSortEnum;
 use Morefoto\Payment\Domain\Payment\Repository\PaymentAttemptRepositoryInterface;
 use Morefoto\Payment\Domain\Payment\ValueObject\AttemptOutcome;
 use Morefoto\Payment\Domain\Payment\ValueObject\PaymentSearchCriteria;
@@ -104,7 +105,7 @@ final class InMemoryAttempts implements PaymentAttemptRepositoryInterface
         return array_slice(array_keys($due), 0, $limit);
     }
 
-    public function page(PaymentSearchCriteria $criteria, int $limit, int $offset): array
+    public function page(PaymentSearchCriteria $criteria, int $limit, int $offset, PaymentSortEnum $sort = PaymentSortEnum::CREATED_AT, bool $descending = true): array
     {
         return array_slice($this->matching($criteria), $offset, $limit);
     }

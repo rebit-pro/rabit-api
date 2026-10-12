@@ -132,7 +132,10 @@ async function newRequest(p: Page, base: string, code = 'A001-01') {
 async function submit(p: Page, base: string) {
   await newRequest(p, base);
   await save(p, 'Передать список куратору');
-  await p.getByRole('link', { name: 'Открыть список', exact: true }).click();
+  await p
+    .getByRole('link', { name: /^Открыть список / })
+    .first()
+    .click();
   await expect(p.getByTestId('request-detail')).toBeVisible();
   return p.url().replace(base, '');
 }

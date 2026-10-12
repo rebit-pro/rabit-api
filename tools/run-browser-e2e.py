@@ -51,7 +51,7 @@ VERIFIERS = [
     # #26: HND-06 on 1000 staff requests keeps a fixed SQL count; the set is rolled back after the measurement.
     ("verify-handoff.php", None, "F1 list integration passed", ["zzz-handoff"]),
     # The browser records the secrets it received so the verifier can prove none of them is stored in clear text.
-    ("verify-orders.php", "e5-orders.json", "E5 integration passed", ["zzzzz-orders", "zzzzzz-transfers", "zzzzzzzz-payment-costs"]),
+    ("verify-orders.php", "e5-orders.json", "E5 integration passed", ["zzzzz-orders", "zzzzzz-transfers", "zzzzzzzz-payment-costs", "zzzzzzzzzzz-tables"]),
     # D4: pause, serialization with orders on the group row, stale quote and GROUP_HAS_ORDERS on the verifier's own group.
     ("verify-markup-correction.php", None, "D4 markup correction integration passed", ["zzzz-storefront", "zzzzz-markup-correction"]),
     # E8: orders of every browser scenario keep the email only; CHECK for stored contacts, migration replay and rollback.

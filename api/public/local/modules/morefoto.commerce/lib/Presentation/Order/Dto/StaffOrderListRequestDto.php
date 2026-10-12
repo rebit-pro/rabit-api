@@ -23,5 +23,7 @@ final readonly class StaffOrderListRequestDto implements RequestDtoInterface
         public ?string $settlement = null,
         public int $page = 1,
         public int $pageSize = 50,
+        public ?string $sort = null,
+        public ?string $direction = null,
     ) {}
 }

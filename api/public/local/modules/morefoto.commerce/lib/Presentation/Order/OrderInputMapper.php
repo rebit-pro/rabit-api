@@ -7,6 +7,7 @@ namespace Morefoto\Commerce\Presentation\Order;
 use Morefoto\Commerce\Application\Order\Dto\CreateOrderInputDto;
 use Morefoto\Commerce\Application\Order\Dto\OrderBuyerInputDto;
 use Morefoto\Commerce\Application\Order\Dto\SearchOrdersInputDto;
+use Morefoto\Commerce\Domain\Order\Enum\OrderSortEnum;
 use Morefoto\Commerce\Domain\Order\Enum\PaymentStatusEnum;
 use Morefoto\Commerce\Domain\Order\Enum\ProductionStatusEnum;
 use Morefoto\Commerce\Domain\Order\ValueObject\IdempotencyKey;
@@ -62,6 +63,11 @@ final readonly class OrderInputMapper
             || (null !== $productionStatus && null === ProductionStatusEnum::tryFrom($productionStatus))) {
             throw new HttpException('INVALID_FILTER', 422);
         }
+        $sort = $this->optional($request->sort);
+        $direction = $this->optional($request->direction);
+        if (null !== $direction && !in_array($direction, ['asc', 'desc'], true)) {
+            throw new HttpException('INVALID_SORT', 422);
+        }
         $dateFrom = $this->date($request->dateFrom);
         $dateTo = $this->date($request->dateTo);
         if (null !== $dateFrom && null !== $dateTo && $dateFrom > $dateTo) {
@@ -80,6 +86,8 @@ final readonly class OrderInputMapper
             page: $request->page,
             pageSize: $request->pageSize,
             latePayment: null === $late ? null : 'true' === $late,
+            sort: null === $sort ? OrderSortEnum::CREATED_AT : (OrderSortEnum::tryFrom($sort) ?? throw new HttpException('INVALID_SORT', 422)),
+            descending: 'asc' !== $direction,
         );
     }
 

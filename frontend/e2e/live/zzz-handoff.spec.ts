@@ -129,7 +129,7 @@ test('F1: воспитатель подаёт список, куратор ут�
     // #26: the list reads one bounded page, not every page of the history.
     const firstPage = teacher.waitForRequest((request) => {
       const url = new URL(request.url());
-      return url.pathname === '/api/v1/staff-requests' && url.searchParams.get('pageSize') === '20';
+      return url.pathname === '/api/v1/staff-requests' && url.searchParams.get('pageSize') === '25';
     });
     await teacher.getByLabel('Основная навигация').getByRole('link', { name: 'Списки сотрудников', exact: true }).click();
     await expect(teacher.getByRole('heading', { name: 'Заявки на списки сотрудников', exact: true })).toBeVisible();
@@ -165,7 +165,12 @@ test('F1: воспитатель подаёт список, куратор ут�
     const createRequest = await pendingRequest;
     const created = (await body(await pendingResponse, 201)).data;
     await expect(dialog).not.toBeVisible();
-    await expect(teacher.locator('a[href="/cabinet/staff-requests/' + created.id + '"]')).toHaveCount(1);
+    await expect(
+      teacher
+        .locator('[data-row-id]')
+        .filter({ visible: true })
+        .filter({ has: teacher.locator('a[href="/cabinet/staff-requests/' + created.id + '"]') })
+    ).toHaveCount(1);
     await teacher.screenshot({ path: testInfo.outputPath('f1-desktop-list.png'), fullPage: true });
 
     const createKey = createRequest.headers()['idempotency-key']!;
@@ -330,7 +335,7 @@ test('F1: воспитатель подаёт список, куратор ут�
     await clarifyDialog.getByRole('button', { name: 'Запросить уточнение', exact: true }).click();
     expect((await body(await clarification)).data).toMatchObject({ id: created.id, revision: 2, status: 'clarification' });
 
-    // #26: the status tile asks the server for a filtered page; the pager appears only for several pages.
+    // #26: the status tile asks the server for a filtered page.
     await curator.getByRole('link', { name: 'Все списки', exact: true }).click();
     const filtered = curator.waitForResponse((response) => {
       const url = new URL(response.url());
@@ -341,11 +346,13 @@ test('F1: воспитатель подаёт список, куратор ут�
       .getByRole('button', { name: /^Нужно уточнение:/ })
       .click();
     const filteredPage = await body(await filtered);
-    expect(filteredPage.meta.pageSize).toBe(20);
+    expect(filteredPage.meta.pageSize).toBe(25);
     expect(filteredPage.data.items.every((item: { status: string }) => item.status === 'clarification')).toBe(true);
     expect(filteredPage.data.items.map((item: { id: string }) => item.id)).toContain(created.id);
-    await expect(curator.locator('a[href="/cabinet/staff-requests/' + created.id + '"]')).toHaveCount(1);
-    await expect(curator.getByTestId('request-pagination')).toHaveCount(filteredPage.meta.totalPages > 1 ? 1 : 0);
+    // #92: one table row per list; the pager of the table replaces the separate pagination.
+    const listed = curator.locator('[data-row-id]').filter({ visible: true });
+    await expect(listed.filter({ has: curator.locator('a[href="/cabinet/staff-requests/' + created.id + '"]') })).toHaveCount(1);
+    await expect(curator.getByTestId('ui-table-range')).toContainText(' из ' + filteredPage.meta.total);
 
     await teacher.goto('/cabinet/staff-requests/' + created.id);
     await expect(teacher.getByTestId('request-detail')).toContainText('Нужно уточнение');

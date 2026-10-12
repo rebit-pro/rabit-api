@@ -6,6 +6,7 @@ namespace Morefoto\Payment\Infrastructure\Database;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\Result;
+use Morefoto\Payment\Domain\Payment\Enum\PaymentSortEnum;
 use Morefoto\Payment\Domain\Payment\Exception\PaymentStorageException;
 use Morefoto\Payment\Domain\Payment\Repository\PaymentAttemptRepositoryInterface;
 use Morefoto\Payment\Domain\Payment\ValueObject\AttemptOutcome;
@@ -114,10 +115,27 @@ final readonly class BitrixPaymentAttemptRepository implements PaymentAttemptRep
         return $ids;
     }
 
-    public function page(PaymentSearchCriteria $criteria, int $limit, int $offset): array
+    public function page(PaymentSearchCriteria $criteria, int $limit, int $offset, PaymentSortEnum $sort = PaymentSortEnum::CREATED_AT, bool $descending = true): array
     {
         return $this->all($this->query('SELECT ' . self::COLUMNS . ' FROM mf_payment_attempt a WHERE ' . $this->where($criteria)
-            . " ORDER BY a.CREATED_AT DESC,a.ID DESC LIMIT {$limit} OFFSET {$offset}"));
+            . $this->order($sort, $descending) . " LIMIT {$limit} OFFSET {$offset}"));
+    }
+
+    /** Statuses sort by their meaning, not alphabetically; the newest attempt first keeps pages stable on ties. */
+    private function order(PaymentSortEnum $sort, bool $descending): string
+    {
+        $direction = $descending ? 'DESC' : 'ASC';
+        $column = match ($sort) {
+            PaymentSortEnum::CREATED_AT => null,
+            PaymentSortEnum::ORDER_NUMBER => 'a.ORDER_NUMBER',
+            PaymentSortEnum::PAYMENT_METHOD => 'a.PAYMENT_METHOD',
+            PaymentSortEnum::AMOUNT => 'a.AMOUNT',
+            PaymentSortEnum::STATUS => "FIELD(a.STATUS,'unknown','pending','canceled','succeeded')",
+        };
+
+        return null === $column
+            ? " ORDER BY a.CREATED_AT {$direction},a.ID {$direction}"
+            : " ORDER BY {$column} {$direction},a.CREATED_AT DESC,a.ID DESC";
     }
 
     public function count(PaymentSearchCriteria $criteria): int

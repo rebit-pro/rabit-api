@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use Morefoto\Handoff\Infrastructure\Organization\StructureHandoffRemoval;
+use Morefoto\Handoff\Application\Request\UseCase\DeleteStaffRequestUseCase;
+use Morefoto\Handoff\Presentation\Controller\StaffRequestRemovalController;
 use Rebit\Share\Contracts\Handoff\StructureHandoffRemovalInterface;
 use Bitrix\Main\DI\ServiceLocator;
 use Morefoto\Handoff\Application\Request\Contract\HandoffTransactionInterface;
@@ -60,6 +62,8 @@ $dependencies = [
     GetStaffRequestUseCase::class => [StaffRequestWorkflow::class],
     SaveStaffRequestUseCase::class => [StaffRequestWorkflow::class],
     ClarifyStaffRequestUseCase::class => [StaffRequestWorkflow::class],
+    DeleteStaffRequestUseCase::class => [StaffRequestWorkflow::class],
+    StaffRequestRemovalController::class => [DeleteStaffRequestUseCase::class],
     StaffTransferGuard::class => [GroupLinkAccessInterface::class],
     // Commerce includes Handoff; the orders contract is resolved lazily after init.php loaded both modules.
     StaffTransferPlanner::class => [StaffRequestRepository::class, MediaScopeInterface::class, GroupDirectoryInterface::class, ChildTransferInterface::class, ChildOrdersInterface::class, StaffTransferPolicy::class],

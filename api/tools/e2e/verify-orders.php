@@ -88,9 +88,18 @@ if (0 !== $scalar('SELECT COUNT(*) FROM (SELECT QUOTE_HASH FROM mf_order GROUP B
 }
 $proof[] = 'one order per quote and receipt';
 
+// #92 DEC-10: an unpaid order removed by the organizer keeps its consent record (it holds no personal data). Only the
+// orders the browser removed may leave such records, two per order, and none of them may remain.
+$removed = array_values(array_unique($secrets['removedOrderIds'] ?? []));
+$removedIds = implode("','", array_map(static fn(string $id): string => $connection->getSqlHelper()->forSql($id), $removed));
+if ([] !== $removed && 0 !== $scalar("SELECT COUNT(*) FROM mf_order WHERE PUBLIC_ID IN ('{$removedIds}')")) {
+    throw new RuntimeException('A removed order is still stored.');
+}
+$proof[] = count($removed) . ' removed unpaid orders gone';
+
 // OPS legal: every order carries exactly the buyer consent and the offer; rejected checkouts left no consent behind.
 if (0 !== $scalar("SELECT COUNT(*) FROM mf_order o WHERE 2 <> (SELECT COUNT(DISTINCT c.DOCUMENT_CODE) FROM mf_legal_consent c WHERE c.CONTEXT='order' AND c.SUBJECT_ID=o.ID AND c.DOCUMENT_CODE IN ('buyer-consent','offer'))")
-    || 0 !== $scalar("SELECT COUNT(*) FROM mf_legal_consent c LEFT JOIN mf_order o ON o.ID=c.SUBJECT_ID WHERE c.CONTEXT='order' AND o.ID IS NULL")) {
+    || 2 * count($removed) !== $scalar("SELECT COUNT(*) FROM mf_legal_consent c LEFT JOIN mf_order o ON o.ID=c.SUBJECT_ID WHERE c.CONTEXT='order' AND o.ID IS NULL")) {
     throw new RuntimeException('Every order must keep its accepted consent and offer, and nothing else.');
 }
 $proof[] = 'consent and offer recorded per order';

@@ -1,15 +1,8 @@
 import type { SalesLine } from '../../commerce/sales-windows.js';
 import type { CartQuote } from '../../commerce/types.js';
 import type { Group, Institution, Shoot } from '../../structure/model.js';
-import { formatPhone } from '../../ui/field-values.ts';
 import type { BuyerErrors } from '../types.js';
-import type { ApiProblem, BuyerOrder, CreatedOrder, LiveBuyer, LiveOrderLine, LiveOrderQuote, StaffOrderFilters } from './types.js';
-
-/** E8: a staff list row of an order without a name shows its email; one placed before E8 keeps «name · phone». */
-export function staffBuyerLine(buyer: Pick<LiveBuyer, 'name' | 'phone' | 'email'>): string {
-  const parts = [buyer.name, buyer.phone === null ? null : formatPhone(buyer.phone)].filter((part): part is string => !!part);
-  return parts.length > 0 ? parts.join(' · ') : buyer.email;
-}
+import type { ApiProblem, BuyerOrder, CreatedOrder, LiveOrderLine, LiveOrderQuote, StaffOrderFilters } from './types.js';
 
 export type CheckoutOutcome =
   | { kind: 'unknown'; message: string }
@@ -269,8 +262,19 @@ export function staffOrderError(problem: ApiProblem): string {
   if (problem.code === 'FORBIDDEN' || problem.status === 403) return 'Заказы доступны организатору и куратору своей области.';
   if (problem.code === 'ORDER_NOT_FOUND' || problem.status === 404) return 'Заказ не найден в вашей области.';
   if (problem.code === 'ACCESS_CHANGED') return 'Ваши права изменились во время загрузки. Обновите страницу.';
-  if (problem.code === 'INVALID_FILTER' || problem.code === 'INVALID_PAGE') return 'Проверьте значения фильтров.';
+  if (problem.code === 'INVALID_FILTER' || problem.code === 'INVALID_PAGE' || problem.code === 'INVALID_SORT')
+    return 'Проверьте значения фильтров.';
   return 'Сервер не вернул заказы. Повторите попытку.';
+}
+
+/** Why an order stayed after «Удалить» (#92 DEC-02): money received or still possible keeps it. */
+export function orderRemovalError(problem: ApiProblem): string {
+  if (problem.network) return 'нет ответа сервера — обновите список';
+  if (problem.code === 'ORDER_PAID') return 'заказ оплачен';
+  if (problem.code === 'PAYMENT_IN_PROGRESS') return 'оплата ещё идёт — дождитесь её результата';
+  if (problem.code === 'ORDER_NOT_FOUND' || problem.status === 404) return 'заказ уже удалён';
+  if (problem.status === 403) return 'удалять заказы может только организатор';
+  return 'сервер не удалил заказ, повторите позже';
 }
 
 export function newRequestId(random: () => string = () => crypto.randomUUID()): string {
