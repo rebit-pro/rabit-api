@@ -163,7 +163,9 @@ test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and nev
     await page.getByRole('button', { name: 'Открыть кадр ' + photo('B', frames.B1).code, exact: true }).click();
     await page.locator('.product-selector .v-select .v-field').click();
     await page.getByRole('option', { name: digital!.name, exact: true }).click();
-    await expect(page.getByTestId('product-print-copy')).toHaveText('Электронная копия этого кадра входит в печать вашей корзины.');
+    const hint = page.getByTestId('product-print-copy');
+    await expect(hint).toHaveText('Электронная копия этого кадра входит в печать вашей корзины.');
+    await hint.scrollIntoViewIfNeeded();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({
       path: testInfo.outputPath('j4-' + viewport.name + '-print-copy-hint.png'),
