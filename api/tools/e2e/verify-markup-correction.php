@@ -89,6 +89,8 @@ $check($rejected('UPDATE b_hlbd_mf_group SET UF_MARKUP_CORRECTION_AT=UTC_TIMESTA
 $before = $row();
 $check($rejected("INSERT INTO mf_group_link_history(GROUP_ID,KIND,ACTOR_ID,ACTOR_NAME,REASON,CREATED_AT) VALUES({$before['ID']},'markup_started',{$organizer},'x','reason',UTC_TIMESTAMP())"), 'CHECK refuses a started event with a reason');
 $check($rejected("INSERT INTO mf_group_link_history(GROUP_ID,KIND,ACTOR_ID,ACTOR_NAME,CREATED_AT) VALUES({$before['ID']},'markup_finished',{$organizer},'x',UTC_TIMESTAMP())"), 'CHECK refuses a finished event without the signature');
+$check($rejected("INSERT INTO mf_group_link_history(GROUP_ID,KIND,ACTOR_ID,ACTOR_NAME,CREATED_AT) VALUES({$before['ID']},'prepared',{$organizer},'x',UTC_TIMESTAMP())"), 'the NULL-safe CHECK refuses a preparation without the signature');
+$check($rejected("INSERT INTO mf_group_link_history(GROUP_ID,KIND,ACTOR_ID,ACTOR_NAME,SENT_AT,CLOSES_AT,DELIVERY_DUE_AT,PREVIOUS_SENT_AT,PREVIOUS_CLOSES_AT,PREVIOUS_DELIVERY_DUE_AT,CREATED_AT) VALUES({$before['ID']},'corrected',{$organizer},'x',UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP())"), 'the NULL-safe CHECK refuses a date correction without the reason');
 $proof[] = 'schema checks';
 
 // 2. A quote made before the correction; the correction will make it stale.

@@ -8,13 +8,16 @@ use Bitrix\Main\Application;
 
 final class Version20261011180001 extends Version
 {
-    /** History kinds before D4; the D4 markup events carry no dates or reason, the finished one the published signature. */
-    private const string HISTORY_KINDS = "(KIND='prepared' AND CHAR_LENGTH(SIGNATURE)=64 AND SENT_AT IS NULL AND REASON IS NULL)"
+    /**
+     * History kinds before D4, made NULL-safe: a CHECK passes on UNKNOWN, so CHAR_LENGTH(NULL)=64 used to admit a missing
+     * signature or reason. The D4 markup events carry no dates or reason, the finished one the published signature.
+     */
+    private const string HISTORY_KINDS = "(KIND='prepared' AND SIGNATURE IS NOT NULL AND CHAR_LENGTH(SIGNATURE)=64 AND SENT_AT IS NULL AND REASON IS NULL)"
         . " OR (KIND='transmitted' AND SENT_AT IS NOT NULL AND CLOSES_AT IS NOT NULL AND DELIVERY_DUE_AT IS NOT NULL AND PREVIOUS_SENT_AT IS NULL AND REASON IS NULL)"
         . " OR (KIND='corrected' AND SENT_AT IS NOT NULL AND CLOSES_AT IS NOT NULL AND DELIVERY_DUE_AT IS NOT NULL"
-        . ' AND PREVIOUS_SENT_AT IS NOT NULL AND PREVIOUS_CLOSES_AT IS NOT NULL AND PREVIOUS_DELIVERY_DUE_AT IS NOT NULL AND CHAR_LENGTH(REASON) BETWEEN 5 AND 500)';
+        . ' AND PREVIOUS_SENT_AT IS NOT NULL AND PREVIOUS_CLOSES_AT IS NOT NULL AND PREVIOUS_DELIVERY_DUE_AT IS NOT NULL AND REASON IS NOT NULL AND CHAR_LENGTH(REASON) BETWEEN 5 AND 500)';
     private const string MARKUP_KINDS = " OR (KIND='markup_started' AND SIGNATURE IS NULL AND SENT_AT IS NULL AND PREVIOUS_SENT_AT IS NULL AND REASON IS NULL)"
-        . " OR (KIND='markup_finished' AND CHAR_LENGTH(SIGNATURE)=64 AND SENT_AT IS NULL AND PREVIOUS_SENT_AT IS NULL AND REASON IS NULL)";
+        . " OR (KIND='markup_finished' AND SIGNATURE IS NOT NULL AND CHAR_LENGTH(SIGNATURE)=64 AND SENT_AT IS NULL AND PREVIOUS_SENT_AT IS NULL AND REASON IS NULL)";
 
     protected $author = 'claude';
     protected $description = 'D4: markup correction of a transmitted group pauses its sales until the correction is finished; link history records it';
