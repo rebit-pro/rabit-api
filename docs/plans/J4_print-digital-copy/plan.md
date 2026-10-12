@@ -61,7 +61,7 @@
 - [x] S4. Оферта (по DEC-02).
 - [x] S5. Live-спек и верификатор.
 - [ ] S6. Документация волны, граф (E8 `merged`, J4 `review`), PR.
-- [ ] S7. Полный `make test-e2e` и visual desktop/mobile.
+- [x] S7. Полный `make test-e2e` и visual desktop/mobile.
 
 ## Критерии приёмки
 

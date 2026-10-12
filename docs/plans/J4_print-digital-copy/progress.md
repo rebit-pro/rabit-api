@@ -4,9 +4,9 @@
 
 - Дата: 12.10.2026. Ветка `codex/j4-print-digital-copy` от `origin/main` a302774 (merge E8); рабочая копия `/home/user/rabit-api-worktrees/j4-print-digital-copy`. PR нет.
 - Связанное: README волны `docs/waves/j4/README.md`, граф `docs/waves/graph.json`, план владельца `docs/plans/OPS-telemos-feedback-plan/` (R03), J1 `docs/waves/j1/README.md`.
-- Завершено: S0–S5 — Commerce (df88185), frontend (1e88e79), оферта (коммит редакции 2026-10-12), E2E и фикстура оплаты (cdfd6b9), документация и граф (E8 `merged`).
-- Сейчас: S7 — полный гейт, прогон 2 (лог в scratchpad сессии `e2e-j4-run2.log`).
-- Следующий шаг: по зелёному гейту — скриншоты в `docs/waves/j4/screenshots/`, `verification.json`, `visual.json`, push и PR, затем J4 `review` в графе.
+- Завершено: S0–S5, S7 — код (df88185, 1e88e79, оферта, cdfd6b9, 2fc24a4, d410e03, 445d379), полный гейт `rabit-e2e-1ef3dd028ca9` и прогоны b для снимков, visual desktop/mobile.
+- Сейчас: S6 — push и PR в main (команда пользователя «открывай PR J4 после гейта»), затем ревью PR (команда «Сделай ревью PR J4»).
+- Следующий шаг: после открытия PR — J4 `review` в графе; ревью и публикация замечаний.
 - Блокеры: нет. Внешнее: тестовый магазин ЮKassa (#174) — гейт без него, оплата печати фикстурой (DEC-04).
 - Рабочее дерево: чистое после коммита документации.
 - Проверки: PHPUnit/PHPStan — docker `rabit-api-php-cli:d1-local`, vendor volume `rabit-e7-vendor` (скрипт `php-j4.sh` в scratchpad); frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`; гейт — `E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e`; граф — `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
@@ -43,6 +43,14 @@
 
 - `rabit-e2e-352f0346b9e7` (39c96fa, ЮKassa OFF): FAIL — группа b, сценарий J4: `created.gifts` undefined — подарки расчёта лежат в `data.quote.gifts`, а не в `data.gifts`. Остальные 59 сценариев b до него прошли; группа a отменена раннером. Исправлено в спеке, прогон 2.
 
+### 12.10.2026 — гейт, прогоны 2–4 и visual
+
+- Прогон 2 (полный, 2fc24a4, `rabit-e2e-1ef3dd028ca9`): PASS — a 81, b 60, 15 верификаторов; `pay-fixture.log`: «J4 fixture payment succeeded»; 396 с; ЮKassa OFF.
+- В этом прогоне подарок по порогу не сработал (`quote.gifts` пуст при условиях стенда): ожидаемый набор файлов — A001 и B001. Ветку «печать + подарок» покрывает unit-тест; README исправлен, без утверждения «выше порога» (d410e03).
+- Visual: на mobile подсказка выбора не попадала в полностраничный снимок — прокрутка (d410e03) не помогла, снимок подсказки переведён на видимую область (445d379).
+- Прогон 3 (`E2E_GROUPS=b`, d410e03, `rabit-e2e-65fb1516fa3e`): PASS — b 60, 12 верификаторов.
+- Прогон 4 (`E2E_GROUPS=b`, 445d379, `rabit-e2e-072725b5135d`): PASS — b 60, 12 верификаторов; скриншоты `docs/waves/j4/screenshots/`, хеши в `visual.json`.
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -52,8 +60,8 @@
 | J4-T03 | PASS | 12.10.2026 | PHPUnit `FileAccessTest` (объединение по `photoId`, в составе 1110 OK) |
 | J4-T04 | PASS | 12.10.2026 | PHPUnit `FileAccessTest::testStateFollowsPaymentLatenessAndDeadline` (состояния не зависят от вида строки) |
 | J4-T05 | PASS | 12.10.2026 | `npm run test:commerce` → `print-copy.test.mjs` |
-| J4-T06 | PENDING | — | гейт, прогон 1 |
-| J4-T07 | PENDING | — | гейт, прогон 1 |
-| J4-T08 | PENDING | — | гейт, прогон 1 |
-| J4-T09 | PENDING | — | PHPUnit legal 21 OK; гейт (legal/orders) |
+| J4-T06 | PASS | 12.10.2026 | `make test-e2e` → `zzzzzzzzzz-files` J4, `pay-fixture.php`, `verify-files.php` (`rabit-e2e-1ef3dd028ca9`, `rabit-e2e-072725b5135d`) |
+| J4-T07 | PASS | 12.10.2026 | тот же сценарий: `unpaid` и 409 `FILES_UNAVAILABLE` до оплаты |
+| J4-T08 | PASS | 12.10.2026 | `docs/waves/j4/visual.json`, 4 скриншота (`rabit-e2e-072725b5135d`) |
+| J4-T09 | PASS | 12.10.2026 | PHPUnit legal 21 OK; гейт: legal.spec и заказы с текущей редакцией (`rabit-e2e-1ef3dd028ca9`) |
 | J4-T10 | PENDING | — | граф проверен (exit 0); J4 `review` — после открытия PR |

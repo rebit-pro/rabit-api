@@ -1,0 +1,90 @@
+{
+  "wave": "J4",
+  "status": "passed",
+  "date": "2026-10-12",
+  "branch": "codex/j4-print-digital-copy",
+  "base": "a302774 (merge E8, PR #181)",
+  "head": "445d379",
+  "decisions": "J4-DEC-01…04 chosen by the user on 2026-10-12; DEC-04 = stand payment fixture instead of the recommended test shop",
+  "checks": {
+    "backend": {
+      "status": "passed",
+      "phpunit": "OK 1110 tests (php-j4.sh) and OK in the gate",
+      "phpstan": "No errors (tools/e2e/phpstan.neon)",
+      "csFixer": "clean on the changed PHP files",
+      "legal": "21 OK, offer edition 2026-10-12"
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "stylelint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "UI unit 88",
+        "commerce unit 235 (print-copy.test.mjs)",
+        "production build"
+      ]
+    },
+    "runner": {
+      "status": "failed-baseline",
+      "note": "tools/tests 25 of 26 OK; test_f2_prepares_first_and_reports_later_in_one_group fails on main as well, issue #163"
+    },
+    "graph": {
+      "status": "passed",
+      "note": "E8 merged (PR #181, a302774); python3 tools/verify-wave-graph.py exit 0, 59 waves, readyMvpFromMain [F3, J4]"
+    },
+    "browser": {
+      "status": "passed",
+      "command": "E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e",
+      "runs": [
+        {
+          "run": "rabit-e2e-352f0346b9e7",
+          "head": "39c96fa",
+          "mode": "full gate",
+          "result": "FAILED: the J4 scenario read gifts from data.gifts instead of data.quote.gifts (spec bug); group a cancelled"
+        },
+        {
+          "run": "rabit-e2e-1ef3dd028ca9",
+          "head": "2fc24a4",
+          "mode": "full gate",
+          "result": "141 scenarios passed (a 81, b 60), 15 verifiers passed; pay-fixture.php: J4 fixture payment succeeded"
+        },
+        {
+          "run": "rabit-e2e-65fb1516fa3e",
+          "head": "d410e03",
+          "mode": "E2E_GROUPS=b (partial)",
+          "result": "60 scenarios and 12 verifiers passed; mobile hint still out of the full-page capture"
+        },
+        {
+          "run": "rabit-e2e-072725b5135d",
+          "head": "445d379",
+          "mode": "E2E_GROUPS=b (partial)",
+          "result": "60 scenarios and 12 verifiers passed; screenshots of this run"
+        }
+      ],
+      "yookassa": "test shop OFF (#174); the J4 print order is paid by the stand fixture e2e-fixture through the G1 code (J4-DEC-04)"
+    },
+    "demoCucumber": {
+      "status": "failed-baseline",
+      "note": "the demo suite fails at the demo login on main (#182); the J4 edit of features/commerce/delivery.feature is type-checked only"
+    }
+  },
+  "testCases": {
+    "J4-T01": "PASS",
+    "J4-T02": "PASS",
+    "J4-T03": "PASS",
+    "J4-T04": "PASS",
+    "J4-T05": "PASS",
+    "J4-T06": "PASS",
+    "J4-T07": "PASS",
+    "J4-T08": "PASS",
+    "J4-T09": "PASS",
+    "J4-T10": "PASS after J4 review mark"
+  },
+  "limits": [
+    "The real provider payment of a print order is not exercised by J4 (DEC-04); G1 covers it with the test shop",
+    "The print gift threshold did not grant a gift in the E2E runs (quote.gifts empty under the stand conditions); the print + gift union is covered by OrderEntitlementsTest",
+    "After 2fc24a4 only the files spec, its screenshot and README changed; group a was last run on 2fc24a4"
+  ]
+}
