@@ -105,7 +105,10 @@ export const linksApi = {
   }
 };
 
-/** D4 commands of a transmitted group; the key is kept by the caller until the server answers. */
+/**
+ * D4 commands of a transmitted group. Each attempt gets a new key: after a lost answer the caller reloads the card,
+ * which shows whether the command was saved, instead of repeating it.
+ */
 export const markupCorrectionApi = {
   async start(groupId: string, revision: number, requestId: string): Promise<void> {
     await api.post(path(groupId) + '/markup-corrections', { revision }, { headers: { 'Idempotency-Key': key(requestId) } });

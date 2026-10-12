@@ -92,6 +92,20 @@ final class MediaLockRecheckTest extends TestCase
         $useCase->execute(5, self::GROUP, new IdempotencyKey(str_repeat('e', 32)), new AssignPhotosInputDto(self::SHOOT, 4, ['32345678-abcd-4abc-8abc-123456789abc'], 'A'));
     }
 
+    public function testCuratorReadsOnlyTransmittedGroupsAndNeverThePreparationOrTheWholeShoot(): void
+    {
+        // D4 review: transmitted group — media.correct; group in preparation and the shoot without a group — media.manage.
+        $access = $this->createMock(AccessGuardInterface::class);
+        $access->expects(self::exactly(3))->method('assertCan')->willReturnCallback(static function(int $actor, string $permission, ?int $institution, ?int $group): void {
+            self::assertSame(5, $actor);
+            self::assertSame(null === $group || 4 === $group ? 'media.manage' : 'media.correct', $permission);
+        });
+        $markup = new GroupMarkupAccess($access);
+        $markup->assertCanRead(5, $this->corrected(false));
+        $markup->assertCanRead(5, new MediaScopeOutputDto(institutionId: 1, shootId: 2, shootPublicId: self::SHOOT, groupId: 4, groupPublicId: self::GROUP, groupEditable: true));
+        $markup->assertCanRead(5, new MediaScopeOutputDto(institutionId: 1, shootId: 2, shootPublicId: self::SHOOT, groupId: null, groupPublicId: null, groupEditable: false));
+    }
+
     /** The first read happens before the lock, the second one after the delivery committed. */
     private function scopes(): MediaScopeInterface
     {

@@ -13,8 +13,8 @@ async function body(response: APIResponse, status = 200) {
 }
 
 for (const viewport of [
-  { name: 'desktop', width: 1440, height: 1000, code: 'C' },
-  { name: 'mobile', width: 390, height: 844, code: 'D' }
+  { name: 'desktop', width: 1440, height: 1000, code: 'C', other: 'E' },
+  { name: 'mobile', width: 390, height: 844, code: 'D', other: 'F' }
 ]) {
   test('D4: the organizer corrects the markup of a transmitted group on ' + viewport.name, async ({ page, browser }, info) => {
     await page.setViewportSize(viewport);
@@ -57,6 +57,20 @@ for (const viewport of [
       fullPage: true,
       animations: 'disabled'
     });
+    // Another staff member labels a frame after this screen was refreshed: «finish» must not publish what nobody has seen.
+    const shoot = '/api/v1/shoots/' + link.shootId + '/photos';
+    const frames = (await body(await page.request.get(shoot, { headers: auth, params: { groupId: fixture.groupId } }))).data;
+    await body(
+      await page.request.post('/api/v1/groups/' + fixture.groupId + '/photo-assignments', {
+        headers: { ...auth, 'Idempotency-Key': crypto.randomUUID().replace(/-/g, '') },
+        data: { shootId: link.shootId, revision: frames.revision, photoIds: [frames.items[0].id], childCode: viewport.other }
+      })
+    );
+    await page.getByTestId('markup-correction-finish').click();
+    await expect(page.getByTestId('markup-correction-error')).toContainText('изменились');
+    await expect(page.getByTestId('markup-correction-active')).toBeVisible();
+    // The refused finish refreshes the frames; the next attempt confirms what is now on screen.
+    await expect(page.getByTestId('photo-card').first()).toContainText(viewport.other + '001');
     await page.getByTestId('markup-correction-finish').click();
     await expect(page.getByTestId('markup-correction-available')).toBeVisible();
 
@@ -65,7 +79,9 @@ for (const viewport of [
     await expect(buyer.getByTestId('gallery-updating')).toHaveCount(0);
     const published = (await body(await buyer.request.get(gallery))).data;
     expect(published.updating).toBe(false);
-    expect(published.children.map((child: { code: string }) => child.code)).toContain(viewport.code);
+    expect(published.children.map((child: { code: string }) => child.code)).toEqual(
+      expect.arrayContaining([viewport.code, viewport.other])
+    );
     const after = (await body(await page.request.get('/api/v1/groups/' + fixture.groupId + '/link', { headers: auth }))).data;
     expect([after.sentAt, after.markupCorrectionAt]).toEqual([sentAt, null]);
     expect(after.history.slice(-2).map((event: { kind: string }) => event.kind)).toEqual(['markup_started', 'markup_finished']);

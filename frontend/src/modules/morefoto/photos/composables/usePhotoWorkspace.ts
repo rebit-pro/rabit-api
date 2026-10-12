@@ -158,6 +158,10 @@ export function usePhotoWorkspace() {
     if (page.value > photoPages(next.total)) setPage(photoPages(next.total));
     else if (filter.value !== 'all' && filter.value !== 'unassigned' && !next.summary.children.includes(filter.value)) setFilter('all');
   }
+  /** A refused finish (another staff member's edit, unready frames) shows the current frames before the next attempt. */
+  async function finishCorrection(): Promise<void> {
+    if (!(await correction.finish())) await refreshPhotos();
+  }
   async function refreshPhotos(): Promise<boolean> {
     const groupId = group.value?.id;
     if (!groupId) {
@@ -170,6 +174,11 @@ export function usePhotoWorkspace() {
         ...localPhotoPage(state.photos, groupId, filter.value, page.value),
         covers: state.covers
       });
+      return true;
+    }
+    // D4 review: the curator reads only transmitted groups; preparation material stays with the organizer.
+    if (group.value?.state === 'preparing' && !canPrepare.value) {
+      applyPage(groupId, { items: [], total: 0, summary: emptySummary, covers: {} });
       return true;
     }
     const ticket = ++mediaRequest;
@@ -193,6 +202,8 @@ export function usePhotoWorkspace() {
         covers: result.covers,
         stats: result.stats ?? null
       });
+      // The signature of «finish» must cover the frames now on screen, including this staff member's own edits.
+      if (correction.correcting.value) void correction.refresh();
       return true;
     } catch (cause) {
       if (current()) error.value = photoApiError(cause);
@@ -473,6 +484,7 @@ export function usePhotoWorkspace() {
     editable,
     canPrepare,
     correction,
+    finishCorrection,
     pageReady,
     items,
     total,

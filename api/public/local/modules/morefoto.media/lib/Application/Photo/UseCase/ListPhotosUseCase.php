@@ -7,10 +7,10 @@ namespace Morefoto\Media\Application\Photo\UseCase;
 use Morefoto\Media\Application\Photo\Dto\ListPhotosInputDto;
 use Morefoto\Media\Application\Photo\Dto\PhotoGroupSummaryOutputDto;
 use Morefoto\Media\Application\Photo\Dto\PhotoPageOutputDto;
+use Morefoto\Media\Application\Photo\Service\GroupMarkupAccess;
 use Morefoto\Media\Application\Photo\Service\PhotoRowMapper;
 use Morefoto\Media\Domain\Photo\Repository\MediaMutationRepository;
 use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
-use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 
 /**
@@ -29,14 +29,13 @@ final readonly class ListPhotosUseCase
         private MediaMutationRepository $media,
         private PhotoRowMapper $mapper,
         private MediaScopeInterface $scopes,
-        private AccessGuardInterface $access,
+        private GroupMarkupAccess $markup,
     ) {}
 
     public function execute(int $userId, string $shootId, ListPhotosInputDto $input): PhotoPageOutputDto
     {
         $scope = $this->scopes->resolve($shootId, $input->groupId);
-        // The organizer and the curator of the institution (D4 correction) read the photos; others never see them.
-        $this->access->assertCan($userId, 'media.correct', $scope->institutionId, $scope->groupId);
+        $this->markup->assertCanRead($userId, $scope);
         $items = [];
         $result = $this->photos->photos(
             $scope->shootId,

@@ -148,7 +148,7 @@ return [
             ServiceLocator::getInstance()->get(MediaMutationRepository::class),
             ServiceLocator::getInstance()->get(PhotoRowMapper::class),
             ServiceLocator::getInstance()->get(MediaScopeInterface::class),
-            ServiceLocator::getInstance()->get(AccessGuardInterface::class),
+            ServiceLocator::getInstance()->get(GroupMarkupAccess::class),
         ],
     ],
     AssignPhotosUseCase::class => [
@@ -202,7 +202,7 @@ return [
             ServiceLocator::getInstance()->get(PhotoRepository::class),
             ServiceLocator::getInstance()->get(PhotoRowMapper::class),
             ServiceLocator::getInstance()->get(MediaScopeInterface::class),
-            ServiceLocator::getInstance()->get(AccessGuardInterface::class),
+            ServiceLocator::getInstance()->get(GroupMarkupAccess::class),
         ],
     ],
     ConsumeMediaUseCase::class => [

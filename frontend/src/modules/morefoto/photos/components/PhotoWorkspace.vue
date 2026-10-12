@@ -37,6 +37,7 @@ const {
   editable,
   canPrepare,
   correction,
+  finishCorrection,
   pageReady,
   items,
   total,
@@ -253,8 +254,9 @@ async function confirmMove(toId: string, code: string) {
           class="mt-3"
           color="primary"
           :loading="correction.busy.value"
+          :disabled="correction.loading.value"
           data-testid="markup-correction-finish"
-          @click="correction.finish"
+          @click="finishCorrection"
           >Завершить исправление</v-btn
         >
       </v-alert>
@@ -283,7 +285,7 @@ async function confirmMove(toId: string, code: string) {
         >Подборка уже опубликована. Исправить разметку можно, только пока у группы нет заказов и идут продажи.</v-alert
       >
       <v-alert v-else-if="!canPrepare" type="info" variant="tonal" class="mb-6"
-        >Подборку готовит организатор. Здесь можно просмотреть наборы.</v-alert
+        >Подборку готовит организатор — кадры появятся здесь после передачи ссылки родителям.</v-alert
       >
       <v-alert v-if="correction.error.value" type="error" variant="tonal" class="mb-6" role="alert" data-testid="markup-correction-error">{{
         correction.error.value

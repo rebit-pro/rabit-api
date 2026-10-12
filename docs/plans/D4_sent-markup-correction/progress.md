@@ -7,7 +7,8 @@
 - Завершено: инвентаризация, решения D4-DEC-01…06, backend (Organization, Commerce, Access, Media, Handoff), frontend, unit-тесты, E2E-спек и верификатор, документация волны.
 - Сейчас: S2–S9 сделаны, полный гейт PASS (прогон 5 `rabit-e2e-f048a4c2af27`, тестовый магазин ЮKassa OFF из-за #174), visual PASS.
 - PR: [#175](https://github.com/rebit-pro/rabit-api/pull/175), открыт 12.10.2026.
-- Следующий шаг: ревью PR #175; блокеры — в треды, неблокирующее — в issues.
+- Сейчас: блокеры ревью 5486913242 исправлены; повторный полный гейт.
+- Следующий шаг: ответы в тредах ревью, затем повторное ревью.
 - Блокеры: нет (#173 слит). Внешнее: G1-T14 с тестовым магазином ЮKassa (#174).
 - Рабочее дерево: изменения закоммичены по этапам.
 - Проверки (план): PHPUnit/PHPStan — docker `rabit-api-php-cli:d1-local` с vendor volume (для D4 — скопировать `rabit-e7-vendor`, если `api/composer.lock` не менялся); frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`; граф — `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
@@ -53,6 +54,15 @@
   - прогон 4 `rabit-e2e-47250c37c9da` с `E2E_YOOKASSA_ENV=/nonexistent/…` (тестовый магазин OFF, часть G1 — BLOCKED): группа b PASS, `verify-markup-correction.php` нашёл дефект — CHECK истории пропускал `markup_finished` без подписи (CHECK принимает UNKNOWN). Условия сделаны устойчивыми к NULL, включая старые `prepared`/`corrected` из F2; верификатор проверяет все три; в README — read-only запрос перед миграцией.
 - Прогон 5 `rabit-e2e-f048a4c2af27` (a452c4b, тестовый магазин OFF) — PASS: группа a 81, группа b 59, 14 верификаторов, `verify-markup-correction.php` — «schema checks, start and quote serialize on the group row, pause refuses quote and order, correction published, stale quote, order, GROUP_HAS_ORDERS, migration replay and guarded rollback». Скриншоты и проверки — `docs/waves/d4/visual.json`.
 - Visual (прогон 2): рабочее место в режиме исправления и галерея с плашкой на 1440×1000 и 390×844 — без горизонтального скролла, тексты и кнопки на месте.
+
+### 12.10.2026 — ревью PR #175 и его блокеры
+
+- Ревью 5486913242 (на 7ba201c): 4 блокера; неблокирующие — #176 (завершение требует товарных проблем, отмены нет), #177 (дублирование правила и проекции, недостижимый повторный старт), #178 (исключение хранилища Commerce уходит в Handoff как 500).
+- R1, подпись завершения: `useMarkupCorrection` отправляет `revision`/`signature` загруженной карточки, а не свежей. Рабочее место перечитывает карточку после каждого обновления кадров, кнопка «Завершить» заблокирована, пока карточка перечитывается. Отказ завершения обновляет кадры на экране. Комментарий `markupCorrectionApi` о ключе исправлен. Спек D4: параллельная привязка «другим сотрудником» → `SIGNATURE_CONFLICT` → кадры обновлены → повторное завершение.
+- R2, чтение кадров: `GroupMarkupAccess::assertCanRead` — переданная группа `media.correct`, группа в подготовке и список съёмки без группы `media.manage`; `ListPhotosUseCase`/`GetPhotoUseCase` (и превью сотрудника). Рабочее место не запрашивает кадры подготовки для куратора. DEC-02 в плане уточнён.
+- R3, миграция: проверка строк истории `prepared` без подписи и `corrected` без причины до любых изменений; CHECK истории меняется одним `ALTER … DROP CHECK …, ADD CONSTRAINT …`. Проверено на одноразовом mysql:8.0 (`--network none`, tmpfs): прежний CHECK пропускал NULL, единый ALTER проходит, новый CHECK отвергает NULL.
+- R4: class-level phpDoc у `PermissionPolicy`.
+- Проверки: PHPUnit — OK 1119 тестов / 47235 проверок; PHPStan — No errors; php-cs-fixer по 77 файлам — 0 исправлений; frontend `npm run check` — exit 0 (UI 88/88), `test:commerce` — 233/233; `git diff --check` — чисто.
 
 ## Тест-кейсы
 

@@ -8,6 +8,11 @@ use Morefoto\Access\Domain\Staff\Entity\StaffProfile;
 use Morefoto\Access\Domain\Staff\Enum\PermissionEnum;
 use Morefoto\Access\Domain\Staff\Enum\RoleEnum;
 
+/**
+ * Решает, разрешено ли сотруднику действие по его роли и назначенной области: организатору — всё, куратору и
+ * руководителю — чтение своих учреждений, куратору — заказы и исправление разметки переданных групп своих учреждений (D4),
+ * воспитателю — свои группы. Отключённый профиль не может ничего.
+ */
 final readonly class PermissionPolicy
 {
     /**

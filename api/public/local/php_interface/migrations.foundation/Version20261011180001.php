@@ -28,6 +28,13 @@ final class Version20261011180001 extends Version
         if (!$connection->isTableExists('b_hlbd_mf_group')) {
             throw new \RuntimeException('D4 markup correction requires the merged C3 group calendar.');
         }
+        if (!$connection->isTableExists('mf_group_link_history')) {
+            throw new \RuntimeException('D4 markup correction requires the merged F2 link history.');
+        }
+        // The NULL-safe history CHECK is stricter than the F2 one: refuse before any change instead of failing halfway.
+        if (false !== $connection->query("SELECT 1 FROM mf_group_link_history WHERE (KIND='prepared' AND SIGNATURE IS NULL) OR (KIND='corrected' AND REASON IS NULL) LIMIT 1")->fetch()) {
+            throw new \RuntimeException('Link history has a preparation without the signature or a correction without the reason; fix them before D4.');
+        }
         if (!$this->columnExists('UF_MARKUP_CORRECTION_AT')) {
             $helper = $this->getHelperManager()->Hlblock();
             $helper->saveField($helper->getHlblockId('MfGroup'), [
@@ -43,9 +50,6 @@ final class Version20261011180001 extends Version
         if (!$this->constraintExists('ck_mf_group_markup_correction')) {
             $connection->queryExecute('ALTER TABLE b_hlbd_mf_group ADD CONSTRAINT ck_mf_group_markup_correction CHECK ('
                 . 'UF_MARKUP_CORRECTION_AT IS NULL OR UF_SENT_AT IS NOT NULL)');
-        }
-        if (!$connection->isTableExists('mf_group_link_history')) {
-            throw new \RuntimeException('D4 markup correction requires the merged F2 link history.');
         }
         $this->historyCheck(self::HISTORY_KINDS . self::MARKUP_KINDS);
     }
@@ -71,10 +75,10 @@ final class Version20261011180001 extends Version
     private function historyCheck(string $kinds): void
     {
         $connection = Application::getConnection();
-        if (false !== $connection->query("SELECT 1 FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='mf_group_link_history' AND CONSTRAINT_NAME='ck_mf_group_link_history'")->fetch()) {
-            $connection->queryExecute('ALTER TABLE mf_group_link_history DROP CHECK ck_mf_group_link_history');
-        }
-        $connection->queryExecute('ALTER TABLE mf_group_link_history ADD CONSTRAINT ck_mf_group_link_history CHECK (ACTOR_ID>0 AND (' . $kinds . '))');
+        $exists = false !== $connection->query("SELECT 1 FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='mf_group_link_history' AND CONSTRAINT_NAME='ck_mf_group_link_history'")->fetch();
+        // One ALTER replaces the CHECK as a whole: DDL is not transactional, two statements could leave the table without it.
+        $connection->queryExecute('ALTER TABLE mf_group_link_history ' . ($exists ? 'DROP CHECK ck_mf_group_link_history, ' : '')
+            . 'ADD CONSTRAINT ck_mf_group_link_history CHECK (ACTOR_ID>0 AND (' . $kinds . '))');
     }
 
     private function columnExists(string $column): bool
