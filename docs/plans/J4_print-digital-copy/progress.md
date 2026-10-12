@@ -5,7 +5,7 @@
 - Дата: 12.10.2026. Ветка `codex/j4-print-digital-copy` от `origin/main` a302774 (merge E8); рабочая копия `/home/user/rabit-api-worktrees/j4-print-digital-copy`. PR нет.
 - Связанное: README волны `docs/waves/j4/README.md`, граф `docs/waves/graph.json`, план владельца `docs/plans/OPS-telemos-feedback-plan/` (R03), J1 `docs/waves/j1/README.md`.
 - Завершено: S0–S5 — Commerce (df88185), frontend (1e88e79), оферта (коммит редакции 2026-10-12), E2E и фикстура оплаты (cdfd6b9), документация и граф (E8 `merged`).
-- Сейчас: S7 — полный гейт, прогон 1 (лог в scratchpad сессии `e2e-j4-run1.log`).
+- Сейчас: S7 — полный гейт, прогон 2 (лог в scratchpad сессии `e2e-j4-run2.log`).
 - Следующий шаг: по зелёному гейту — скриншоты в `docs/waves/j4/screenshots/`, `verification.json`, `visual.json`, push и PR, затем J4 `review` в графе.
 - Блокеры: нет. Внешнее: тестовый магазин ЮKassa (#174) — гейт без него, оплата печати фикстурой (DEC-04).
 - Рабочее дерево: чистое после коммита документации.
@@ -38,6 +38,10 @@
 - PHPUnit (`php-j4.sh`): OK 1110 тестов. PHPStan: без ошибок. php-cs-fixer: 0 исправлений по изменённым PHP-файлам. `php -l` новых E2E-скриптов — без ошибок.
 - Frontend: `npm run check` exit 0, `test:commerce` 235/235, `typecheck:e2e` OK, ESLint спека OK.
 - Раннер: `python3 -m unittest discover -s tools/tests` — 25/26, падает только `test_f2_prepares_first_and_reports_later_in_one_group` (как на main, #163).
+
+### 12.10.2026 — гейт, прогон 1
+
+- `rabit-e2e-352f0346b9e7` (39c96fa, ЮKassa OFF): FAIL — группа b, сценарий J4: `created.gifts` undefined — подарки расчёта лежат в `data.quote.gifts`, а не в `data.gifts`. Остальные 59 сценариев b до него прошли; группа a отменена раннером. Исправлено в спеке, прогон 2.
 
 ## Тест-кейсы
 

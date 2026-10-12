@@ -64,7 +64,7 @@ async function placeOrder(page: Page, path: string, lines: Line[], email: string
     )
   ).data as Created;
   remember(created, idempotencyKey);
-  return { ...created, gifts: priced.gifts };
+  return { ...created, gifts: priced.quote.gifts };
 }
 /** A full set of child A: the bundle grants every current photo of the child. */
 async function placeBundleOrder(page: Page): Promise<Created> {
