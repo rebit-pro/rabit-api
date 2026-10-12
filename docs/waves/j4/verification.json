@@ -4,7 +4,7 @@
   "date": "2026-10-12",
   "branch": "codex/j4-print-digital-copy",
   "base": "a302774 (merge E8, PR #181)",
-  "head": "445d379",
+  "head": "35db235",
   "decisions": "J4-DEC-01…04 chosen by the user on 2026-10-12; DEC-04 = stand payment fixture instead of the recommended test shop",
   "checks": {
     "backend": {
@@ -61,6 +61,12 @@
           "head": "445d379",
           "mode": "E2E_GROUPS=b (partial)",
           "result": "60 scenarios and 12 verifiers passed; screenshots of this run"
+        },
+        {
+          "run": "rabit-e2e-873ff0e61586",
+          "head": "35db235",
+          "mode": "E2E_GROUPS=b (partial)",
+          "result": "60 scenarios and 12 verifiers passed after the atomic spec/runner handoff (review #184)"
         }
       ],
       "yookassa": "test shop OFF (#174); the J4 print order is paid by the stand fixture e2e-fixture through the G1 code (J4-DEC-04)"
@@ -85,6 +91,6 @@
   "limits": [
     "The real provider payment of a print order is not exercised by J4 (DEC-04); G1 covers it with the test shop",
     "The print gift threshold did not grant a gift in the E2E runs (quote.gifts empty under the stand conditions); the print + gift union is covered by OrderEntitlementsTest",
-    "After 2fc24a4 only the files spec, its screenshot and README changed; group a was last run on 2fc24a4"
+    "After 2fc24a4 only the files spec, its screenshot, README and the runner's payment fixture handoff changed; group a was last run on 2fc24a4"
   ]
 }

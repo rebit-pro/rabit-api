@@ -5,8 +5,8 @@
 - Дата: 12.10.2026. Ветка `codex/j4-print-digital-copy` от `origin/main` a302774 (merge E8); рабочая копия `/home/user/rabit-api-worktrees/j4-print-digital-copy`. PR #184 (https://github.com/rebit-pro/rabit-api/pull/184).
 - Связанное: README волны `docs/waves/j4/README.md`, граф `docs/waves/graph.json`, план владельца `docs/plans/OPS-telemos-feedback-plan/` (R03), J1 `docs/waves/j1/README.md`.
 - Завершено: S0–S5, S7 — код (df88185, 1e88e79, оферта, cdfd6b9, 2fc24a4, d410e03, 445d379), полный гейт `rabit-e2e-1ef3dd028ca9` и прогоны b для снимков, visual desktop/mobile.
-- Сейчас: исправление блокера ревью PR #184 (review 5491026503 на 72518f6): 1 блокер — неатомарная передача `j4-pay-request.json`/`j4-paid.json` между спеком и раннером; неблокирующее — #185 (демо «расчёты» теряют копию печати после правки строки).
-- Следующий шаг: прогон группы b после исправления блокера, затем ответ в треде; merge — только по команде пользователя. После merge выкладка без миграций: preview SQL из README, затем backend и frontend.
+- Сейчас: блокер ревью 5491026503 исправлен (35db235), прогон b зелёный, ответ в треде; неблокирующее — #185.
+- Следующий шаг: повторное ревью PR #184 (команда пользователя); merge — только по его команде. После merge выкладка без миграций: preview SQL из README, затем backend и frontend. После merge выкладка без миграций: preview SQL из README, затем backend и frontend.
 - Блокеры: нет. Внешнее: тестовый магазин ЮKassa (#174) — гейт без него, оплата печати фикстурой (DEC-04).
 - Рабочее дерево: чистое после коммита исправления.
 - Проверки: PHPUnit/PHPStan — docker `rabit-api-php-cli:d1-local`, vendor volume `rabit-e7-vendor` (скрипт `php-j4.sh` в scratchpad); frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`; гейт — `E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e`; граф — `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
@@ -64,7 +64,8 @@
 ### 12.10.2026 — исправление блокера
 
 - Спек пишет `var/j4-pay-request.json.tmp` и делает `renameSync`; раннер копирует ответ в `j4-paid.json.tmp` (ошибку пишет туда же) и делает `os.replace` — обе стороны видят только целый файл.
-- Проверки: `py_compile` OK; `tools/tests` 25/26 (только #163); ESLint и `typecheck:e2e` спека OK. Далее прогон `E2E_GROUPS=b`.
+- Проверки: `py_compile` OK; `tools/tests` 25/26 (только #163); ESLint и `typecheck:e2e` спека OK.
+- Прогон 5 (`E2E_GROUPS=b`, 35db235, `rabit-e2e-873ff0e61586`): PASS — b 60, 12 верификаторов; `pay-fixture.log` — «J4 fixture payment succeeded»; в `var` нет оставшихся `.tmp`.
 
 ## Тест-кейсы
 
