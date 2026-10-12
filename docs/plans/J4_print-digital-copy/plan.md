@@ -56,10 +56,10 @@
 
 - [x] S0. Инвентаризация, план и progress.
 - [x] S1. Согласование J4-DEC-01…04 (12.10.2026).
-- [ ] S2. Commerce: право печатных кадров, тесты.
-- [ ] S3. Frontend: тексты, подсказка, демо.
-- [ ] S4. Оферта (по DEC-02).
-- [ ] S5. Live-спек и верификатор.
+- [x] S2. Commerce: право печатных кадров, тесты.
+- [x] S3. Frontend: тексты, подсказка, демо.
+- [x] S4. Оферта (по DEC-02).
+- [x] S5. Live-спек и верификатор.
 - [ ] S6. Документация волны, граф (E8 `merged`, J4 `review`), PR.
 - [ ] S7. Полный `make test-e2e` и visual desktop/mobile.
 
@@ -74,13 +74,13 @@
 
 | ID | Предусловия / действие | Ожидаемый результат | Команда |
 | --- | --- | --- | --- |
-| J4-T01 | Unit: строки A×3 (два формата) и B — physical, C в неоплаченном | проекция: A и B по одному разу | PHPUnit `OrderEntitlementsTest` |
+| J4-T01 | Unit: A в двух форматах ×3 и в digital, B, C в подарке | проекция: A, B, C по одному разу; подарок раскрывает ребёнка | PHPUnit `OrderEntitlementsTest` |
 | J4-T02 | Unit: physical A + digital A + bundle/GIFTS ребёнка | объединение без дублей, комплект по прежнему правилу | PHPUnit `OrderEntitlementsTest`, Files `FileAccessTest` |
-| J4-T03 | Unit Files: оплаченный заказ только с печатью | `available`, список A/B; ZIP-состав = список | PHPUnit Files |
+| J4-T03 | Unit Files: объединение кандидатов по `photoId` (логика Files не менялась) | кадр из нескольких строк — один файл | PHPUnit `FileAccessTest` (существующие тесты J1) |
 | J4-T04 | Unit Files: unpaid/review/expired с печатью | файлов нет, состояния прежние | PHPUnit Files |
 | J4-T05 | Frontend unit: подсказка выбора, демо-право | подсказка для кадра с печатью в корзине; демо даёт копию | `npm run check`, `npm run test:commerce` |
 | J4-T06 | HTTP/E2E: заказ печати, оплата фикстурой `e2e-fixture` (код G1, подставной провайдер) | FIL-01 `available` с оплаченными кадрами без дублей; байты файла и ZIP = оригиналы; чужой ключ — 404 | `make test-e2e` (`zzzzzzzzzz-files`, `pay-fixture.php`, `verify-files.php`) |
 | J4-T07 | HTTP/E2E: неоплаченный заказ печати | `unpaid`, скачивание 409 `FILES_UNAVAILABLE` | `make test-e2e` |
-| J4-T08 | Visual desktop/mobile | блок «Ваши файлы» оплаченного заказа печати; подсказка выбора | `make test-e2e` → `docs/waves/j4/visual.json` |
+| J4-T08 | Visual desktop/mobile | блок «Ваши файлы» оплаченного заказа печати; подсказка выбора | `make test-e2e` (`j4-*-print-files.png`, `j4-*-print-copy-hint.png`) → `docs/waves/j4/visual.json` |
 | J4-T09 | Оферта (по DEC-02) | новая редакция действует, согласие на заказ — с ней | `make test-e2e` (legal/orders), PHPUnit legal |
 | J4-T10 | Граф и документация | E8 `merged`, J4 `review`, DAG/ID валидны | `python3 tools/verify-wave-graph.py docs/waves/graph.json` |
