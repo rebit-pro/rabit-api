@@ -1,0 +1,50 @@
+{
+  "wave": "D4",
+  "status": "passed",
+  "date": "2026-10-12",
+  "branch": "codex/d4-sent-markup-correction",
+  "base": "50c8ee1 + main 480427c (plan #173)",
+  "head": "a452c4b447f1c68a241efb2f917e54cad6996995",
+  "decisions": "D4-DEC-01…04 chosen by the user on 2026-10-11 (recommended options); DEC-05/06 follow from them",
+  "checks": {
+    "backend": {
+      "status": "passed",
+      "phpunit": "OK in the gate (1110+ tests incl. D4 unit tests)",
+      "phpstan": "No errors (tools/e2e/phpstan.neon)",
+      "csFixer": "clean on 76 changed PHP files"
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "stylelint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "UI unit 88",
+        "commerce unit 233",
+        "production build"
+      ]
+    },
+    "runner": {
+      "status": "failed-baseline",
+      "note": "tools/tests 25 of 26 OK; test_f2_prepares_first_and_reports_later_in_one_group fails on main as well, issue #163"
+    },
+    "graph": {
+      "status": "passed",
+      "note": "main 480427c (plan #173) merged in; E7 merged; python3 tools/verify-wave-graph.py exit 0, 59 waves, readyMvpFromMain [D4, E8, F3, J4]"
+    },
+    "browser": {
+      "status": "passed",
+      "command": "E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e",
+      "run": "rabit-e2e-f048a4c2af27 on a452c4b, 368.5 s",
+      "result": "group a 81 passed, group b 59 passed (incl. zzzzz-markup-correction desktop/mobile); 14 MySQL verifiers passed incl. verify-markup-correction.php",
+      "blocked": "YooKassa test shop OFF: the G1 sandbox part is BLOCKED by issue #174 (the test shop does not answer the SBP creation within 9 s); D4 changes no payment code",
+      "previousRuns": [
+        "rabit-e2e-a9b8fa951c36: fixture colour 260 for the seventh group (fixed c357559)",
+        "rabit-e2e-684b683411d0, rabit-e2e-de3a5a1ee193: D4 specs passed; G1-T14 failed on the test shop (#174), group a cancelled, verifiers not run",
+        "rabit-e2e-47250c37c9da (test shop OFF): verify-markup-correction found the link history CHECK admitting NULL (fixed a452c4b)"
+      ],
+      "visual": "docs/waves/d4/visual.json"
+    }
+  }
+}
