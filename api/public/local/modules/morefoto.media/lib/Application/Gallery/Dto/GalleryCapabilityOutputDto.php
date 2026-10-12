@@ -9,5 +9,6 @@ final readonly class GalleryCapabilityOutputDto
     public function __construct(
         public string $token,
         public int $revision,
+        public string $alias,
     ) {}
 }

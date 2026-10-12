@@ -32,6 +32,7 @@ final readonly class GroupLinkOutputDto
         public int $childCount,
         public ?string $markupCorrectionAt,
         public ?string $galleryToken,
+        public ?string $galleryAlias,
         public string $referenceNow,
         public array $history,
         public bool $markupCorrectable,

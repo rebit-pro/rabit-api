@@ -75,6 +75,7 @@ return [
         'className' => GetGalleryUseCase::class,
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(GalleryAccessInterface::class),
+            ServiceLocator::getInstance()->get(GalleryCapabilityRepository::class),
         ],
     ],
     GalleryController::class => [

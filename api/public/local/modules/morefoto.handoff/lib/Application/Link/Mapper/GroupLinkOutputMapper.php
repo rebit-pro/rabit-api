@@ -49,6 +49,7 @@ final readonly class GroupLinkOutputMapper
         int $revision,
         bool $prepared,
         ?string $galleryToken,
+        ?string $galleryAlias,
         \DateTimeImmutable $now,
         array $history,
         bool $markupCorrectable = false,
@@ -74,6 +75,7 @@ final readonly class GroupLinkOutputMapper
         return new GroupLinkOutputDto(
             ...$this->fields($group, $assessment, $revision, $prepared),
             galleryToken: $galleryToken,
+            galleryAlias: $galleryAlias,
             referenceNow: $now->format(\DateTimeInterface::ATOM),
             history: $events,
             markupCorrectable: $markupCorrectable,
