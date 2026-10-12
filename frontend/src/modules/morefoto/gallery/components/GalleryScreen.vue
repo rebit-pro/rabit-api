@@ -104,6 +104,9 @@ function askCurator(): void {
         <v-alert v-if="gallery.audience === 'staff'" type="info" variant="tonal" class="mb-6" data-testid="staff-gallery">
           Подборка сотрудников. Для разрешённых товаров действует скидка 50%. Льгота определяется этой подборкой.
         </v-alert>
+        <v-alert v-if="gallery.updating" type="warning" variant="tonal" class="mb-6" data-testid="gallery-updating">
+          Фотографии группы обновляются, покупка временно приостановлена. Посмотреть кадры можно уже сейчас.
+        </v-alert>
         <v-alert v-if="gallery.state === 'digital'" type="info" variant="tonal" class="mb-6" data-testid="gallery-digital-only">
           Приём заказов на печать завершён. Электронные фотографии можно купить до
           {{ gallery.digitalSalesUntil ? formatMoment(gallery.digitalSalesUntil) : 'окончания приёма' }} мск.

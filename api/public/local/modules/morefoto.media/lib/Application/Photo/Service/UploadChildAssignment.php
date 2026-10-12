@@ -21,6 +21,7 @@ final readonly class UploadChildAssignment
         private MediaTransactionInterface $transaction,
         private MediaMutationRepository $media,
         private MediaScopeInterface $scopes,
+        private GroupMarkupAccess $markup,
     ) {}
 
     /**
@@ -41,7 +42,7 @@ final readonly class UploadChildAssignment
         return $this->transaction->execute(function() use ($shootId, $groupId, $shootPublicId, $groupPublicId, $photoId, $childCodes): array {
             $current = $this->media->lockRevision($shootId);
             // Link delivery takes the same lock: re-read after waiting so no labeling slips into an opened gallery.
-            if (!$this->scopes->resolve($shootPublicId, $groupPublicId)->groupEditable) {
+            if (!$this->markup->editable($this->scopes->resolve($shootPublicId, $groupPublicId))) {
                 throw new HttpException('GROUP_MEDIA_LOCKED', 409);
             }
             $nativeId = $this->media->groupPhoto($shootId, $groupId, $photoId);

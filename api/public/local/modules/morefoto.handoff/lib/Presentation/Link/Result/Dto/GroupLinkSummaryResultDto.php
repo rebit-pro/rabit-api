@@ -29,6 +29,7 @@ final readonly class GroupLinkSummaryResultDto implements ResultDtoInterface
         public ?string $deliveryAt,
         public int $photoCount,
         public int $childCount,
+        public ?string $markupCorrectionAt,
         public ?string $curatorName,
     ) {}
 }

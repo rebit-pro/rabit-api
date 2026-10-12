@@ -68,6 +68,18 @@ final class OrderCheckoutUseCaseTest extends TestCase
         $this->useCase(state: 'closed', receipts: $receipts, quotes: $quotes)->execute(str_repeat('a', 64), new IdempotencyKey(str_repeat('b', 32)), $this->input());
     }
 
+    public function testMarkupCorrectionRejectsANewOrderBeforeQuoteValidation(): void
+    {
+        // D4-T05: the order reads the paused group and is refused; an order replay never reaches this check.
+        $receipts = $this->createStub(CheckoutReceipts::class);
+        $receipts->method('reserve')->willReturn(null);
+        $quotes = $this->createMock(ValidateQuoteUseCase::class);
+        $quotes->expects(self::never())->method('executeWithinTransaction');
+        $this->expectException(HttpException::class);
+        $this->expectExceptionMessage('GALLERY_UPDATING');
+        $this->useCase(receipts: $receipts, quotes: $quotes, correction: '2026-09-22 08:00:00')->execute(str_repeat('a', 64), new IdempotencyKey(str_repeat('b', 32)), $this->input());
+    }
+
     public function testDigitalWindowStillPlacesOrdersThroughTheQuoteCheck(): void
     {
         $receipts = $this->createStub(CheckoutReceipts::class);
@@ -177,10 +189,11 @@ final class OrderCheckoutUseCaseTest extends TestCase
         ?OrderPlacement $placement = null,
         ?OrderTransactionInterface $transaction = null,
         ?ConsentRecorderInterface $consents = null,
+        ?string $correction = null,
     ): CreateOrderUseCase {
         if (null === $gallery) {
             $gallery = $this->createStub(GalleryAccessInterface::class);
-            $gallery->method('context')->willReturn(new GalleryContextOutputDto($this->group(), $state, '2026-09-22T10:00:00+00:00', 1));
+            $gallery->method('context')->willReturn(new GalleryContextOutputDto($this->group($correction), $state, '2026-09-22T10:00:00+00:00', 1));
         }
         if (null === $transaction) {
             $transaction = $this->createStub(OrderTransactionInterface::class);
@@ -211,9 +224,9 @@ final class OrderCheckoutUseCaseTest extends TestCase
         );
     }
 
-    private function group(): GalleryGroupOutputDto
+    private function group(?string $correction = null): GalleryGroupOutputDto
     {
-        return new GalleryGroupOutputDto(1, 2, 'group-id', 'Institution', 'Shoot', 'Group', 'regular', '2026-09-21 00:00:00', '2026-09-28 00:00:00', '2026-10-05 00:00:00', 1);
+        return new GalleryGroupOutputDto(1, 2, 'group-id', 'Institution', 'Shoot', 'Group', 'regular', '2026-09-21 00:00:00', '2026-09-28 00:00:00', '2026-10-05 00:00:00', 1, $correction);
     }
 
     private function validated(): ValidatedQuoteOutputDto

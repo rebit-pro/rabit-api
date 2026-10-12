@@ -1,0 +1,35 @@
+{
+  "wave": "D4",
+  "status": "passed",
+  "fixture": "rabit-e2e-f048a4c2af27",
+  "head": "a452c4b447f1c68a241efb2f917e54cad6996995",
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ],
+  "screenshots": [
+    {
+      "file": "docs/waves/d4/screenshots/d4-desktop-workspace-correction.png",
+      "sha256": "13f017e68ea9aa65de21ed6ccce3d26e832b6462b2cb6f553bd2ce22d2a6955a"
+    },
+    {
+      "file": "docs/waves/d4/screenshots/d4-desktop-gallery-updating.png",
+      "sha256": "0090dc7aeafa257aa2a23154e7ea05f0d392647f8818e1b74fa7d9f28fc481bc"
+    },
+    {
+      "file": "docs/waves/d4/screenshots/d4-mobile-workspace-correction.png",
+      "sha256": "8c22683b742bb2f9c9d090ef0524dbf6ef059ac062e9b64bbc0ea07b22ecae16"
+    },
+    {
+      "file": "docs/waves/d4/screenshots/d4-mobile-gallery-updating.png",
+      "sha256": "52065382eb4bb23a50b5bf8ef97eae89507e8eff020c1f149e20a19cf18c1175"
+    }
+  ],
+  "checks": [
+    "Рабочее место кадров переданной группы в режиме исправления: плашка «Идёт исправление разметки: покупка в галерее приостановлена, сроки продаж не меняются…» и «Завершить исправление»; загрузка, привязка к коду, удаление и обложка доступны, «Перенести весь набор» скрыт",
+    "После привязки к коду поле предлагает следующий свободный код; статус «Кадры назначены ребёнку.»",
+    "Галерея родителей во время исправления: плашка «Фотографии группы обновляются, покупка временно приостановлена…», кадры видны, сроки продаж прежние",
+    "Mobile 390×844: те же блоки без горизонтального скролла (проверки спека scrollWidth <= innerWidth)",
+    "Шапка кабинета посреди полностраничного скриншота — артефакт закреплённой панели при fullPage, не D4"
+  ]
+}

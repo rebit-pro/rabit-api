@@ -10,13 +10,17 @@ use Morefoto\Handoff\Application\Link\Dto\GroupLinkListInputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkCorrectionInputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkPreparationInputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkTransmissionInputDto;
+use Morefoto\Handoff\Application\Link\Dto\MarkupCorrectionFinishInputDto;
+use Morefoto\Handoff\Application\Link\Dto\MarkupCorrectionStartInputDto;
 use Morefoto\Handoff\Application\Link\Mapper\GroupLinkOutputMapper;
 use Morefoto\Handoff\Application\Link\Service\GroupLinkCommandSession;
 use Morefoto\Handoff\Application\Link\Service\GroupLinkReadiness;
 use Morefoto\Handoff\Application\Link\UseCase\CorrectGroupLinkDateUseCase;
+use Morefoto\Handoff\Application\Link\UseCase\FinishMarkupCorrectionUseCase;
 use Morefoto\Handoff\Application\Link\UseCase\GetGroupLinkUseCase;
 use Morefoto\Handoff\Application\Link\UseCase\ListGroupLinksUseCase;
 use Morefoto\Handoff\Application\Link\UseCase\PrepareGroupLinkUseCase;
+use Morefoto\Handoff\Application\Link\UseCase\StartMarkupCorrectionUseCase;
 use Morefoto\Handoff\Application\Link\UseCase\TransmitGroupLinkUseCase;
 use Morefoto\Handoff\Application\Request\Contract\HandoffTransactionInterface;
 use Morefoto\Handoff\Domain\Link\Enum\LinkEventKindEnum;
@@ -24,6 +28,7 @@ use Morefoto\Handoff\Domain\Link\Repository\GroupLinkRepositoryInterface;
 use Morefoto\Handoff\Domain\Link\Service\LinkDeliveryPolicy;
 use Morefoto\Handoff\Domain\Link\Service\LinkPermissionPolicy;
 use Morefoto\Handoff\Domain\Link\Service\LinkReadinessPolicy;
+use Morefoto\Handoff\Domain\Link\Service\MarkupCorrectionAvailability;
 use Morefoto\Handoff\Domain\Link\ValueObject\LinkHistoryEntry;
 use Morefoto\Handoff\Domain\Link\ValueObject\LinkState;
 use Morefoto\Handoff\Domain\Request\ValueObject\IdempotencyKey;
@@ -34,6 +39,7 @@ use Rebit\Share\Contracts\Access\Dto\LinkActorOutputDto;
 use Rebit\Share\Contracts\Access\GroupAccessInterface;
 use Rebit\Share\Contracts\Access\GroupLinkAccessInterface;
 use Rebit\Share\Contracts\Commerce\Dto\SalesReadinessOutputDto;
+use Rebit\Share\Contracts\Commerce\GroupOrdersInterface;
 use Rebit\Share\Contracts\Commerce\GroupSalesReadinessInterface;
 use Rebit\Share\Contracts\Media\Dto\GalleryLinkOutputDto;
 use Rebit\Share\Contracts\Media\Dto\GroupMaterialsOutputDto;
@@ -47,8 +53,11 @@ use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryPageOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryQueryInputDto;
 use Rebit\Share\Contracts\Organization\Dto\GroupDirectorySummaryOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\LinkSentInputDto;
+use Rebit\Share\Contracts\Organization\Dto\MarkupCorrectionInputDto;
+use Rebit\Share\Contracts\Organization\Dto\MarkupCorrectionOutputDto;
 use Rebit\Share\Contracts\Organization\GroupCalendarInterface;
 use Rebit\Share\Contracts\Organization\GroupDirectoryInterface;
+use Rebit\Share\Contracts\Organization\GroupMarkupCorrectionInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 require_once __DIR__ . '/../bootstrap.php';
@@ -77,6 +86,9 @@ final class GroupLinkWorkflowTest extends TestCase
     private TransmitGroupLinkUseCase $transmit;
     private CorrectGroupLinkDateUseCase $correct;
     private ListGroupLinksUseCase $list;
+    private StartMarkupCorrectionUseCase $startMarkup;
+    private FinishMarkupCorrectionUseCase $finishMarkup;
+    private GroupOrdersInterface&\stdClass $orders;
 
     protected function setUp(): void
     {
@@ -101,7 +113,11 @@ final class GroupLinkWorkflowTest extends TestCase
         $readiness = new GroupLinkReadiness($this->materials, $sales, $teachers, $this->links, new LinkReadinessPolicy());
         $session = new GroupLinkCommandSession($access, $this->calendar, $this->directory, $this->links, $readiness, new LinkPermissionPolicy());
         $mapper = new GroupLinkOutputMapper();
-        $this->read = new GetGroupLinkUseCase($access, $this->directory, $readiness, $this->links, $this->gallery, new LinkPermissionPolicy(), new LinkReadinessPolicy(), $mapper, $clock);
+        $this->orders = $this->orders();
+        $corrections = $this->corrections($this->directory);
+        $this->read = new GetGroupLinkUseCase($access, $this->directory, $readiness, $this->links, $this->gallery, new LinkPermissionPolicy(), new LinkReadinessPolicy(), $mapper, $clock, $this->orders, new MarkupCorrectionAvailability());
+        $this->startMarkup = new StartMarkupCorrectionUseCase($transaction, $session, $this->links, $this->orders, $corrections, $mapper);
+        $this->finishMarkup = new FinishMarkupCorrectionUseCase($transaction, $session, $this->links, $corrections, $mapper);
         $this->prepare = new PrepareGroupLinkUseCase($transaction, $session, $this->links, $this->gallery, $mapper);
         $this->transmit = new TransmitGroupLinkUseCase($transaction, $session, $this->links, $this->gallery, $this->calendar, new LinkReadinessPolicy(), new LinkDeliveryPolicy(), $mapper);
         $institutions = $this->createStub(InstitutionAccessInterface::class);
@@ -220,6 +236,101 @@ final class GroupLinkWorkflowTest extends TestCase
         self::assertSame('Ошибка в дате', $this->calendar->delivered[1]->reason);
     }
 
+    public function testCuratorPausesSalesForAMarkupCorrectionAndFinishesItWithoutTouchingTheDeadlines(): void
+    {
+        $this->transmitted();
+        $card = $this->read->execute(self::CURATOR, self::GROUP);
+        self::assertSame([true, null], [$card->markupCorrectable, $card->markupCorrectionAt]);
+
+        $started = $this->startMarkup->execute(self::CURATOR, self::GROUP, $this->key('1'), new MarkupCorrectionStartInputDto($card->revision));
+        self::assertSame([4, '2026-09-22T11:00:00+03:00'], [$started->revision, $started->startedAt]);
+        $replay = $this->startMarkup->execute(self::CURATOR, self::GROUP, $this->key('1'), new MarkupCorrectionStartInputDto($card->revision));
+        self::assertSame([4, '2026-09-22T11:00:00+03:00'], [$replay->revision, $replay->startedAt], 'The same key replays the stored result.');
+        $paused = $this->read->execute(self::ORGANIZER, self::GROUP);
+        self::assertSame([false, '2026-09-22T11:00:00+03:00'], [$paused->markupCorrectable, $paused->markupCorrectionAt]);
+        $this->assertCode('CORRECTION_IN_PROGRESS', 409, fn(): object => $this->startMarkup->execute(self::ORGANIZER, self::GROUP, $this->key('2'), new MarkupCorrectionStartInputDto(4)));
+
+        $this->materials->snapshot = new GroupMaterialsOutputDto(12, 0, 0, 4, str_repeat('b', 64));
+        $corrected = $this->read->execute(self::CURATOR, self::GROUP)->signature;
+        $this->assertCode('SIGNATURE_CONFLICT', 409, fn(): object => $this->finishMarkup->execute(self::CURATOR, self::GROUP, $this->key('3'), new MarkupCorrectionFinishInputDto(4, $card->signature)));
+        $finished = $this->finishMarkup->execute(self::CURATOR, self::GROUP, $this->key('4'), new MarkupCorrectionFinishInputDto(4, $corrected));
+        self::assertSame([5, null], [$finished->revision, $finished->startedAt]);
+        self::assertNull($this->read->execute(self::CURATOR, self::GROUP)->markupCorrectionAt);
+        self::assertSame('2026-09-29T10:15:00+03:00', $this->directory->calendar->closesAt, 'T0 and the deadlines stay as transmitted.');
+        self::assertCount(1, $this->calendar->delivered);
+        $events = array_slice($this->links->history, 2);
+        self::assertSame(
+            [[LinkEventKindEnum::MARKUP_STARTED, null, 'curator'], [LinkEventKindEnum::MARKUP_FINISHED, $corrected, 'curator']],
+            array_map(static fn(LinkHistoryEntry $entry): array => [$entry->kind, $entry->signature, $entry->actorName], $events),
+        );
+    }
+
+    public function testMarkupCorrectionIsRefusedWithOrdersBeforeTransmissionForOtherRolesAndUnreadyMaterials(): void
+    {
+        $this->assertCode('LINK_NOT_SENT', 409, fn(): object => $this->startMarkup->execute(self::ORGANIZER, self::GROUP, $this->key('a'), new MarkupCorrectionStartInputDto(1)));
+        self::assertFalse($this->read->execute(self::ORGANIZER, self::GROUP)->markupCorrectable);
+        $this->transmitted();
+        $this->assertCode('CORRECTION_NOT_STARTED', 409, fn(): object => $this->finishMarkup->execute(self::ORGANIZER, self::GROUP, $this->key('b'), new MarkupCorrectionFinishInputDto(3, str_repeat('a', 64))));
+        $this->assertCode('FORBIDDEN', 403, fn(): object => $this->startMarkup->execute(self::TEACHER, self::GROUP, $this->key('c'), new MarkupCorrectionStartInputDto(3)));
+        $this->assertCode('FORBIDDEN', 403, fn(): object => $this->startMarkup->execute(self::HEAD, self::GROUP, $this->key('d'), new MarkupCorrectionStartInputDto(3)));
+        $this->assertCode('GROUP_NOT_FOUND', 404, fn(): object => $this->startMarkup->execute(self::FOREIGN_CURATOR, self::GROUP, $this->key('e'), new MarkupCorrectionStartInputDto(3)));
+        $this->assertCode('REVISION_CONFLICT', 409, fn(): object => $this->startMarkup->execute(self::ORGANIZER, self::GROUP, $this->key('f'), new MarkupCorrectionStartInputDto(2)));
+
+        // Any order, even an unpaid one, closes the correction.
+        $this->orders->exists = true;
+        self::assertFalse($this->read->execute(self::ORGANIZER, self::GROUP)->markupCorrectable);
+        $this->assertCode('GROUP_HAS_ORDERS', 409, fn(): object => $this->startMarkup->execute(self::ORGANIZER, self::GROUP, $this->key('5'), new MarkupCorrectionStartInputDto(3)));
+        self::assertNull($this->directory->markupCorrectionAt);
+
+        $this->orders->exists = false;
+        $this->startMarkup->execute(self::ORGANIZER, self::GROUP, $this->key('6'), new MarkupCorrectionStartInputDto(3));
+        $this->materials->snapshot = new GroupMaterialsOutputDto(11, 0, 1, 4, str_repeat('c', 64));
+        $unready = $this->read->execute(self::ORGANIZER, self::GROUP);
+        self::assertSame(['unassignedPhotos'], $unready->problems);
+        $this->assertCode('LINK_NOT_READY', 409, fn(): object => $this->finishMarkup->execute(self::ORGANIZER, self::GROUP, $this->key('9'), new MarkupCorrectionFinishInputDto(4, $unready->signature)));
+        self::assertSame('2026-09-22T11:00:00+03:00', $this->directory->markupCorrectionAt, 'Sales stay paused until the materials are ready.');
+    }
+
+    private function transmitted(): void
+    {
+        $signature = $this->read->execute(self::ORGANIZER, self::GROUP)->signature;
+        $this->prepare->execute(self::ORGANIZER, self::GROUP, $this->key('7'), new LinkPreparationInputDto(1, $signature));
+        $this->transmit->execute(self::ORGANIZER, self::GROUP, $this->key('8'), new LinkTransmissionInputDto(2, $signature, new \DateTimeImmutable('2026-09-22T10:15:00+03:00')));
+    }
+
+    private function orders(): GroupOrdersInterface&\stdClass
+    {
+        return new class extends \stdClass implements GroupOrdersInterface {
+            public bool $exists = false;
+
+            public function exist(string $groupPublicId): bool
+            {
+                return $this->exists;
+            }
+        };
+    }
+
+    private function corrections(\stdClass $directory): GroupMarkupCorrectionInterface
+    {
+        return new readonly class($directory) implements GroupMarkupCorrectionInterface {
+            public function __construct(private \stdClass $directory) {}
+
+            public function start(MarkupCorrectionInputDto $input): MarkupCorrectionOutputDto
+            {
+                $this->directory->markupCorrectionAt = '2026-09-22T11:00:00+03:00';
+
+                return new MarkupCorrectionOutputDto($input->groupId, 9, $this->directory->markupCorrectionAt);
+            }
+
+            public function finish(MarkupCorrectionInputDto $input): MarkupCorrectionOutputDto
+            {
+                $this->directory->markupCorrectionAt = null;
+
+                return new MarkupCorrectionOutputDto($input->groupId, 10, null);
+            }
+        };
+    }
+
     private function key(string $char): IdempotencyKey
     {
         return new IdempotencyKey(str_repeat($char, 32));
@@ -262,6 +373,7 @@ final class GroupLinkWorkflowTest extends TestCase
     {
         return new class extends \stdClass implements GroupDirectoryInterface {
             public GroupCalendarOutputDto $calendar;
+            public ?string $markupCorrectionAt = null;
 
             /** @var list<GroupDirectoryQueryInputDto> */
             public array $queries = [];
@@ -297,7 +409,7 @@ final class GroupLinkWorkflowTest extends TestCase
 
             private function item(): GroupDirectoryItemOutputDto
             {
-                return new GroupDirectoryItemOutputDto(10, '22345678-abcd-4abc-8abc-123456789abc', 'Солнышко', 'regular', 3, '32345678-abcd-4abc-8abc-123456789abc', 'Сад', 5, '12345678-abcd-4abc-8abc-123456789abc', 'Осень', $this->calendar);
+                return new GroupDirectoryItemOutputDto(10, '22345678-abcd-4abc-8abc-123456789abc', 'Солнышко', 'regular', 3, '32345678-abcd-4abc-8abc-123456789abc', 'Сад', 5, '12345678-abcd-4abc-8abc-123456789abc', 'Осень', $this->calendar, $this->markupCorrectionAt);
             }
         };
     }

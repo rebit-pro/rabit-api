@@ -22,6 +22,14 @@ import UiDataTable from '../../ui/components/UiDataTable.vue';
 import { clampTablePage, sortTableRows } from '../../ui/table-values';
 import type { UiTableColumn, UiTableRow, UiTableSort } from '../../ui/table-types';
 import { galleryPath, type GalleryStepKey } from '../galleryPath';
+/** Event titles of the link history: F2 delivery steps and the D4 markup correction that pauses the sales. */
+const linkEventTitles: Record<LinkEvent['kind'], string> = {
+  prepared: 'Ссылка проверена',
+  transmitted: 'Передача отмечена',
+  corrected: 'Дата исправлена',
+  markup_started: 'Начато исправление разметки, покупка приостановлена',
+  markup_finished: 'Исправление разметки завершено, покупка возобновлена'
+};
 const live = !isMockApiEnabled,
   authStore = useAuthStore(),
   route = useRoute(),
@@ -519,9 +527,7 @@ async function openHistory(group: LinkGroup) {
       <p v-else-if="!historyEvents.length" class="mf-muted">Изменений пока не было: ссылку ещё не проверяли и не передавали.</p>
       <ol v-else class="links-history-events">
         <li v-for="(event, index) in historyEvents" :key="index">
-          <strong>{{
-            event.kind === 'prepared' ? 'Ссылка проверена' : event.kind === 'transmitted' ? 'Передача отмечена' : 'Дата исправлена'
-          }}</strong>
+          <strong>{{ linkEventTitles[event.kind] }}</strong>
           · {{ event.actorName ?? 'Сотрудник №' + event.actorId }} ·
           {{ formatMoment(event.at) }}
           <p v-if="event.sentAt">

@@ -170,6 +170,16 @@ final readonly class OrderRepository
         return $children;
     }
 
+    /** Хотя бы один заказ группы в любом статусе оплаты; чтение по индексу `ix_mf_order_group`. */
+    public function groupHasOrders(string $groupPublicId): bool
+    {
+        if (1 !== preg_match('/^[a-f0-9-]{36}$/D', $groupPublicId)) {
+            throw new \InvalidArgumentException('Invalid group ID.');
+        }
+
+        return false !== $this->query("SELECT 1 FROM mf_order WHERE GROUP_PUBLIC_ID='{$groupPublicId}' LIMIT 1")->fetch();
+    }
+
     public function page(OrderSearchCriteria $criteria, int $limit, int $offset): Result
     {
         return $this->query('SELECT ' . self::COLUMNS . ' FROM mf_order o WHERE ' . $this->where($criteria)

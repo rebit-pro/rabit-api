@@ -6,7 +6,7 @@
   "backend": "RaBit API",
   "baseline": {
     "branch": "main",
-    "commit": "3194db8666321b18d27679e58314f55b2ea3edc6",
+    "commit": "480427c9928f2952bd04d865e3337481cb98b5bf",
     "mergedWaves": [
       "A1",
       "A2",
@@ -46,10 +46,11 @@
       "E6",
       "G1",
       "K3",
-      "J1"
+      "J1",
+      "E7"
     ],
     "review": {
-      "E7": "https://github.com/rebit-pro/rabit-api/pull/162"
+      "D4": "https://github.com/rebit-pro/rabit-api/pull/175"
     },
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
     "mergedPullRequests": {
@@ -85,7 +86,8 @@
       "E6": "https://github.com/rebit-pro/rabit-api/pull/66",
       "G1": "https://github.com/rebit-pro/rabit-api/pull/80",
       "K3": "https://github.com/rebit-pro/rabit-api/pull/89",
-      "J1": "https://github.com/rebit-pro/rabit-api/pull/143"
+      "J1": "https://github.com/rebit-pro/rabit-api/pull/143",
+      "E7": "https://github.com/rebit-pro/rabit-api/pull/162"
     },
     "mergeCommits": {
       "C4": "cfc334e5890dd51dfd6ff6638eac2cc3e436322b",
@@ -112,7 +114,8 @@
       "E6": "54bd4abbb62fbda2dc030281e4b4893820d83e84",
       "G1": "fc0cdb94d570aa7046e953029d5e58ac4aed1554",
       "K3": "caa37b60f8db447ee6d7498ab87beb8a4b4da12c",
-      "J1": "591d698ab7389b7edf9825029fefbe81c42851b8"
+      "J1": "591d698ab7389b7edf9825029fefbe81c42851b8",
+      "E7": "50c8ee1793439c0d2bf275d23f21dcf1ad8bcdfd"
     },
     "decisionEvidence": {
       "D02-D05": "docs/waves/e3/README.md in rabit-api: user accepted rules before PR #20",
@@ -134,7 +137,8 @@
       "K3-MERGED": "2026-09-26: K3 слита PR #89 (caa37b6) и выложена; отмечено волной J1.",
       "MVP-2026-10-11": "Пользователь подтвердил общий отсчёт от передачи ссылки группе: 7 дней на выбор и оплату печати, 14 дней на покупку электронных фото, email оплаченной печати в Сивму; автоматические возвраты и полный production/logistics отложены. Формат Сивмы не подтверждён.",
       "MVP-MANUAL-2026-10-11": "Ручной ZIP/ссылка по названиям продукции — основной MVP; email/автоотправка дополнительны, в существующем блоке «Печать». E7 уже в работе и не меняется.",
-      "E7-DEC-01-11": "2026-10-11: пользователь принял решения E7: срок печати остаётся closesAt, добавлен digitalSalesUntil (DEC-01); исправление T0 и продление после закрытия печати — 409 PRINT_SALES_CLOSED (DEC-04); новая редакция оферты 2026-10-11 в E7 (DEC-10); подпись «Разработано в ReBit Studio» ведёт на https://rebit-pro.ru (DEC-11). План: docs/plans/E7_sales-windows/plan.md в rabit-api, PR #162."
+      "E7-DEC-01-11": "2026-10-11: пользователь принял решения E7: срок печати остаётся closesAt, добавлен digitalSalesUntil (DEC-01); исправление T0 и продление после закрытия печати — 409 PRINT_SALES_CLOSED (DEC-04); новая редакция оферты 2026-10-11 в E7 (DEC-10); подпись «Разработано в ReBit Studio» ведёт на https://rebit-pro.ru (DEC-11). План: docs/plans/E7_sales-windows/plan.md в rabit-api, PR #162.",
+      "D4-DEC-01-04": "2026-10-11: пользователь выбрал рекомендуемые варианты D4: сеанс исправления с паузой продаж (GALLERY_UPDATING), организатор и куратор учреждения (media.correct), только существующие команды разметки (MED-07 до передачи по D11), старт только пока группа продаёт (open/digital). План: docs/plans/D4_sent-markup-correction/plan.md."
     }
   },
   "acceptedImplementationDecisions": [
@@ -3168,7 +3172,7 @@
       ],
       "activation": "Тестовое включение двух сроков; существующие просроченные группы предварительно показать оператору. Реальные продажи после N3.",
       "legacyIds": [],
-      "deliveryState": "review",
+      "deliveryState": "merged",
       "unlocks": [
         "L1",
         "N3",
@@ -3383,7 +3387,7 @@
       ],
       "activation": "Тестовая среда после merge зависимостей; реальные покупатели после N3.",
       "legacyIds": [],
-      "deliveryState": "planned",
+      "deliveryState": "review",
       "unlocks": [
         "N3"
       ],

@@ -10,17 +10,19 @@ use Morefoto\Handoff\Application\Link\Service\GroupLinkReadiness;
 use Morefoto\Handoff\Domain\Link\Enum\LinkActionEnum;
 use Morefoto\Handoff\Domain\Link\Repository\GroupLinkRepositoryInterface;
 use Morefoto\Handoff\Domain\Link\Service\LinkPermissionPolicy;
+use Morefoto\Handoff\Domain\Link\Service\MarkupCorrectionAvailability;
 use Morefoto\Handoff\Domain\Link\Service\LinkReadinessPolicy;
 use Morefoto\Handoff\Domain\Link\ValueObject\LinkState;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
 use Rebit\Share\Contracts\Access\GroupLinkAccessInterface;
 use Rebit\Share\Contracts\Media\GalleryLinkInterface;
+use Rebit\Share\Contracts\Commerce\GroupOrdersInterface;
 use Rebit\Share\Contracts\Organization\GroupDirectoryInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /**
  * Даёт сотруднику из области группы карточку ссылки: действующий ключ галереи, подпись для команд, проблемы готовности,
- * фактические сроки и историю проверок, передач и исправлений даты.
+ * фактические сроки, историю проверок, передач и исправлений, а также можно ли сейчас начать исправление разметки (D4).
  */
 final readonly class GetGroupLinkUseCase
 {
@@ -34,6 +36,8 @@ final readonly class GetGroupLinkUseCase
         private LinkReadinessPolicy $policy,
         private GroupLinkOutputMapper $mapper,
         private ClockInterface $clock,
+        private GroupOrdersInterface $orders,
+        private MarkupCorrectionAvailability $corrections,
     ) {}
 
     public function execute(int $actorId, string $groupId): GroupLinkOutputDto
@@ -48,6 +52,11 @@ final readonly class GetGroupLinkUseCase
         }
         $assessment = $this->readiness->assess([$group])[$group->nativeId];
         $state = $this->links->states([$group->nativeId])[$group->nativeId] ?? new LinkState();
+        $calendar = $group->calendar;
+        // Orders are read only when everything else already allows the correction.
+        $correctable = null !== $calendar->sentAt && null === $group->markupCorrectionAt
+            && $this->permissions->allows($actor->role, LinkActionEnum::START_MARKUP_CORRECTION)
+            && $this->corrections->available($calendar->sentAt, $calendar->status, $group->markupCorrectionAt, $this->orders->exist($groupId));
 
         return $this->mapper->detail(
             group: $group,
@@ -57,6 +66,7 @@ final readonly class GetGroupLinkUseCase
             galleryToken: $this->galleryLinks->current($groupId)?->token,
             now: $this->clock->now(),
             history: $this->links->history($group->nativeId),
+            markupCorrectable: $correctable,
         );
     }
 }

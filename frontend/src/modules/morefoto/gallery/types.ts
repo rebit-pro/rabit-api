@@ -26,6 +26,8 @@ export interface GallerySnapshot {
   closesAt: string | null;
   /** Digital sales close (T0+14). */
   digitalSalesUntil: string | null;
+  /** D4: the markup is being corrected — frames can be viewed, buying is paused until the correction ends. */
+  updating?: boolean;
   referenceNow: string;
   delivery: string;
   curator: string;

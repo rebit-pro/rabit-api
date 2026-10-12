@@ -20,6 +20,7 @@ use Morefoto\Media\Domain\Photo\ValueObject\IdempotencyKey;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Morefoto\Media\Application\Photo\Service\GroupMarkupAccess;
 use Rebit\Share\Contracts\Access\AccessGuardInterface;
 use Rebit\Share\Contracts\Organization\Dto\GroupReferenceOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\MediaScopeOutputDto;
@@ -215,7 +216,7 @@ final class DeleteGroupPhotosUseCaseTest extends TestCase
             $media,
             $groups,
             $scopes ?? $this->scopes(true),
-            $this->createStub(AccessGuardInterface::class),
+            new GroupMarkupAccess($this->createStub(AccessGuardInterface::class)),
             new PhotoFileCleaner(
                 $photos ?? $this->createStub(PhotoRepository::class),
                 $storage ?? $this->createStub(PrivatePhotoStorageInterface::class),

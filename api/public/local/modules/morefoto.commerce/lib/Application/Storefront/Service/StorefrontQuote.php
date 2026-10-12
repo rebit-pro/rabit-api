@@ -19,8 +19,8 @@ use Rebit\Share\Contracts\Media\GalleryAccessInterface;
 use Rebit\Share\Contracts\Handoff\StaffEligibilityInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
-/** Проверяет состав корзины по разрешённым назначениям и срокам продаж (E7) и рассчитывает цены правилами E3 от цены
- * для покупателя (E6). Связывает итог с версиями снимков, условиями группы и серверным подтверждением льготы.
+/** Проверяет состав корзины по разрешённым назначениям, срокам продаж (E7) и паузе исправления разметки (D4) и
+ * рассчитывает цены правилами E3 от цены для покупателя (E6). Связывает итог с версиями снимков, условиями группы и серверным подтверждением льготы.
  *
  * @phpstan-import-type CartQuote from QuoteOutputDto
  * @phpstan-import-type QuoteLine from QuoteOutputDto
@@ -45,6 +45,7 @@ final readonly class StorefrontQuote
         }
         $gallery = $this->gallery->resolve($token);
         $this->windows->assertSalesOpen($gallery->state);
+        $this->windows->assertNotPaused($gallery->group->markupCorrectionAt);
         $conditions = $this->conditions->executeWithinTransaction($gallery->group->id);
         $photos = [];
         $mediaFingerprint = [];

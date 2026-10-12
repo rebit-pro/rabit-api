@@ -30,8 +30,10 @@ final readonly class GroupLinkOutputDto
         public ?string $deliveryAt,
         public int $photoCount,
         public int $childCount,
+        public ?string $markupCorrectionAt,
         public ?string $galleryToken,
         public string $referenceNow,
         public array $history,
+        public bool $markupCorrectable,
     ) {}
 }

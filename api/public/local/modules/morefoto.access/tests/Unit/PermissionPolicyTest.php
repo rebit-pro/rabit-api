@@ -50,6 +50,12 @@ final class PermissionPolicyTest extends TestCase
         yield 'curator scoped order list' => [Role::CURATOR, Permission::ORDER_READ, null, null, true];
         yield 'curator cannot read foreign orders' => [Role::CURATOR, Permission::ORDER_READ, 12, null, false];
         yield 'head cannot read orders' => [Role::HEAD, Permission::ORDER_READ, 11, null, false];
+        yield 'organizer prepares and corrects media' => [Role::ORGANIZER, Permission::MEDIA_CORRECT, 99, null, true];
+        yield 'curator corrects media of own institution' => [Role::CURATOR, Permission::MEDIA_CORRECT, 11, 5, true];
+        yield 'curator cannot correct foreign media' => [Role::CURATOR, Permission::MEDIA_CORRECT, 12, 5, false];
+        yield 'curator still cannot prepare media' => [Role::CURATOR, Permission::MEDIA_MANAGE, 11, 5, false];
+        yield 'head cannot correct media' => [Role::HEAD, Permission::MEDIA_CORRECT, 11, 5, false];
+        yield 'teacher cannot correct media' => [Role::TEACHER, Permission::MEDIA_CORRECT, 11, 5, false];
         yield 'teacher cannot read orders' => [Role::TEACHER, Permission::ORDER_READ, 11, 21, false];
     }
 

@@ -6,6 +6,7 @@ namespace Morefoto\Media\Tests\Unit;
 
 use Bitrix\Main\DB\Result;
 use Morefoto\Media\Application\Photo\Dto\ListPhotosInputDto;
+use Morefoto\Media\Application\Photo\Service\GroupMarkupAccess;
 use Morefoto\Media\Application\Photo\Service\PhotoRowMapper;
 use Morefoto\Media\Application\Photo\UseCase\ListPhotosUseCase;
 use Morefoto\Media\Domain\Photo\Repository\MediaMutationRepository;
@@ -37,9 +38,10 @@ final class PhotoStatsTest extends TestCase
         $media->method('covers')->willReturn([]);
         $media->method('revision')->willReturn(4);
         $access = $this->createMock(AccessGuardInterface::class);
+        // A group in preparation stays with the organizer (D4 review): media.manage, not media.correct.
         $access->expects(self::once())->method('assertCan')->with(21, 'media.manage', 3, 10);
 
-        $page = (new ListPhotosUseCase($photos, $media, new PhotoRowMapper(), $scopes, $access))
+        $page = (new ListPhotosUseCase($photos, $media, new PhotoRowMapper(), $scopes, new GroupMarkupAccess($access)))
             ->execute(21, '12345678-abcd-4abc-8abc-123456789abc', new ListPhotosInputDto('22345678-abcd-4abc-8abc-123456789abc', 1, 50, 'A-7', false, 'ready'))
         ;
 

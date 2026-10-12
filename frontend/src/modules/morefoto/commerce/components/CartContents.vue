@@ -2,7 +2,7 @@
 import { isMockApiEnabled } from '@/mocks/config';
 import { refreshStorefront } from '../services/storefront';
 import { computed, shallowRef, useTemplateRef } from 'vue';
-import { sellsAnything } from '../sales-windows';
+import { galleryBuys } from '../sales-windows';
 import type { GallerySnapshot } from '../../gallery/types';
 import { useCart } from '../composables/useCart';
 import { changeCartLine, clearCart } from '../services/cart';
@@ -10,7 +10,7 @@ import CartItems from './CartItems.vue';
 import CartSummary from './CartSummary.vue';
 const props = defineProps<{ gallery: GallerySnapshot; token: string }>();
 const { quote, catalog, calculationError, hasQuote, droppedPrint } = useCart(() => props.gallery);
-const selling = computed(() => sellsAnything(props.gallery.state));
+const selling = computed(() => galleryBuys(props.gallery));
 const busy = shallowRef(false);
 const notice = shallowRef('');
 const error = shallowRef('');
@@ -56,7 +56,10 @@ async function clear() {
   <p class="cart-separation">
     <v-icon icon="mdi-information-outline" size="20" /> В каждой группе своя корзина. Выбор в других группах сохраняется отдельно.
   </p>
-  <v-alert v-if="!selling" type="info" variant="tonal" class="mb-5"
+  <v-alert v-if="gallery.updating" type="info" variant="tonal" class="mb-5" data-testid="cart-updating"
+    >Фотографии группы обновляются, покупка временно приостановлена. Выбор сохранён — вернитесь немного позже.</v-alert
+  >
+  <v-alert v-else-if="!selling" type="info" variant="tonal" class="mb-5"
     >Приём заказов закрыт. Выбор сохранён; новые заказы сейчас не принимаются.</v-alert
   >
   <v-alert v-else-if="gallery.state === 'digital'" type="info" variant="tonal" class="mb-5" data-testid="cart-digital-only"

@@ -85,6 +85,14 @@ final class StorefrontQuoteTest extends TestCase
         $this->calculator(state: 'closed')->calculate(str_repeat('a', 64), []);
     }
 
+    public function testMarkupCorrectionPausesTheQuote(): void
+    {
+        // D4-T05: while the markup is corrected the buyer cannot price the cart against intermediate frames.
+        $this->expectException(HttpException::class);
+        $this->expectExceptionMessage('GALLERY_UPDATING');
+        $this->calculator(correction: '2026-09-22 08:00:00')->calculate(str_repeat('a', 64), [new QuoteLineInputDto(self::A, self::BUNDLE, 1)]);
+    }
+
     public function testDigitalWindowSellsDigitalAndBundleButNotPrint(): void
     {
         $result = $this->calculator(state: 'digital')->calculate(str_repeat('a', 64), [
@@ -178,11 +186,11 @@ final class StorefrontQuoteTest extends TestCase
     }
 
     /** @param array<int,bool> $eligible */
-    private function calculator(bool $staff = false, array $eligible = [], string $state = 'open', int $price = 10000, int $photoRevision = 1, ?PaymentCostPolicy $policy = null): StorefrontQuote
+    private function calculator(bool $staff = false, array $eligible = [], string $state = 'open', int $price = 10000, int $photoRevision = 1, ?PaymentCostPolicy $policy = null, ?string $correction = null): StorefrontQuote
     {
         $access = $this->createStub(GalleryAccessInterface::class);
         $access->method('resolve')->willReturn(new GalleryAccessOutputDto(
-            new GalleryGroupOutputDto(1, 2, self::A, 'Institution', 'Shoot', 'Group', $staff ? 'staff' : 'regular', '2026-09-21 00:00:00', '2026-09-28 00:00:00', '2026-10-05 00:00:00', 1),
+            new GalleryGroupOutputDto(1, 2, self::A, 'Institution', 'Shoot', 'Group', $staff ? 'staff' : 'regular', '2026-09-21 00:00:00', '2026-09-28 00:00:00', '2026-10-05 00:00:00', 1, $correction),
             $state,
             '2026-09-21T10:00:00Z',
             1,
