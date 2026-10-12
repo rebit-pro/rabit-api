@@ -19,7 +19,7 @@ const { files, loading, busy, preparing, error, load, download } = useLiveFiles(
         Оплата пришла после закрытия приёма заказов. Организатор согласует выдачу файлов. Повторно платить не нужно.
       </p>
       <p v-else-if="files.state === 'empty'" class="mf-muted mt-3" data-testid="files-state-empty">
-        В этом заказе только печатная продукция: электронных файлов и подарочного комплекта нет.
+        В этом заказе нет файлов для скачивания. Если они нужны, напишите куратору учреждения.
       </p>
       <template v-else>
         <p class="downloads__deadline mt-3" data-testid="files-deadline">
