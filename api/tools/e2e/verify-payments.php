@@ -55,8 +55,10 @@ if ($record['sandbox']) {
     $check('succeeded' === $attempts[1]['STATUS'] && 'bank_card' === $attempts[1]['PAYMENT_METHOD'] && (int)$attempts[0]['ID'] === (int)$attempts[1]['PRECEDING_ID'], 'the card attempt follows the refused one');
     $check(1 === $scalar("SELECT COUNT(*) FROM mf_payment_notification WHERE PROVIDER='yookassa' AND EVENT_KEY='payment.succeeded:" . $connection->getSqlHelper()->forSql((string)$record['providerPaymentId']) . "' AND RESULT='succeeded'"), 'the notification replay is recorded once');
 } else {
-    $check(0 === $scalar('SELECT COUNT(*) FROM mf_payment_attempt'), 'a disabled shop created an attempt');
+    // J4-DEC-04: only the stand fixture pays without the test shop.
+    $check(0 === $scalar("SELECT COUNT(*) FROM mf_payment_attempt WHERE PROVIDER<>'e2e-fixture'"), 'a disabled shop created an attempt');
 }
+$check(0 === $scalar("SELECT COUNT(*) FROM mf_payment_attempt WHERE PROVIDER='e2e-fixture' AND STATUS<>'succeeded'"), 'the fixture payment did not succeed');
 
 // 3. Rollback never drops money silently.
 Loader::includeModule('sprint.migration');
