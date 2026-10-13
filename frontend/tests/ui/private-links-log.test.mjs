@@ -16,6 +16,9 @@ for (const env of ['production', 'development']) {
     assert.match(config, /access_log \S+ combined if=\$gallery_access_log;/);
     assert.equal(isSkipped('/api/v1/public/orders/current/downloads/d1/content?token=1790000000.ab'), true);
     assert.equal(isSkipped('/api/v1/public/galleries/t/photos'), true);
+    // F3: the short link staff copy and its API lookup are a gallery key too.
+    assert.equal(isSkipped('/g/k3m9x2q7v4?child=A'), true);
+    assert.equal(isSkipped('/api/v1/public/galleries/k3m9x2q7v4'), true);
     assert.equal(isSkipped('/orders/access/k'), true);
     assert.equal(isSkipped('/api/v1/public/orders/current'), false);
   });
