@@ -7,6 +7,7 @@ namespace Morefoto\Organization\Domain\Structure\Repository;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\Result;
 use Morefoto\Organization\Domain\Calendar\Repository\GroupStateSql;
+use Morefoto\Organization\Domain\Structure\Enum\ShootSortEnum;
 use Morefoto\Organization\Domain\Structure\ValueObject\StructureId;
 use Morefoto\Organization\Domain\Structure\ValueObject\StructureName;
 use Morefoto\Organization\Domain\Structure\ValueObject\ShootDate;
@@ -125,6 +126,41 @@ LEFT JOIN (
 SQL);
     }
 
+    /**
+     * Page of shoots across the visible institutions (UI-DEC-03): every row names its institution and counts the shoot's groups
+     * and the groups taking orders at `$nowUtc`. The whole filter is ordered; ties fall back to the newest shoot.
+     *
+     * @param null|list<int> $institutionIds visible institutions; null means all
+     */
+    public function shootList(?array $institutionIds, string $query, ShootSortEnum $sort, bool $descending, int $limit, int $offset, string $nowUtc): Result
+    {
+        $this->bounds($limit, $offset);
+        if (100 < mb_strlen($query)) {
+            throw new \InvalidArgumentException('Invalid shoot search.');
+        }
+        $condition = '1=1' . $this->scope($institutionIds, 's.UF_INSTITUTION_ID');
+        if ('' !== $query) {
+            $condition .= ' AND s.UF_NAME LIKE ' . $this->quote(strtr($query, ['\\' => '\\\\', '%' => '\%', '_' => '\_']) . '%');
+        }
+        $open = GroupStateSql::condition('open', $nowUtc);
+        $inner = $this->shootOrder($sort, $descending, 's.UF_DATE', 's.UF_NAME', 'i.UF_NAME', 'GROUP_COUNT', 'OPEN_COUNT') . ',s.UF_CREATED_AT DESC,s.ID DESC';
+        $outer = $this->shootOrder($sort, $descending, 'page.UF_DATE', 'page.UF_NAME', 'page.INSTITUTION_NAME', 'page.GROUP_COUNT', 'page.OPEN_COUNT')
+            . ',page.UF_CREATED_AT DESC,page.ID DESC';
+
+        return $this->query(<<<SQL
+SELECT page.ID,page.UF_PUBLIC_ID,page.UF_NAME,page.UF_DATE,page.UF_REVISION,page.INSTITUTION_PUBLIC_ID,page.INSTITUTION_NAME,page.GROUP_COUNT,page.OPEN_COUNT,totals.TOTAL
+FROM (SELECT COUNT(*) AS TOTAL FROM b_hlbd_mf_shoot s WHERE {$condition}) totals
+LEFT JOIN (
+    SELECT s.ID,s.UF_PUBLIC_ID,s.UF_NAME,DATE_FORMAT(s.UF_DATE,'%Y-%m-%d') AS UF_DATE,s.UF_REVISION,s.UF_CREATED_AT,
+        i.UF_PUBLIC_ID AS INSTITUTION_PUBLIC_ID,i.UF_NAME AS INSTITUTION_NAME,
+        (SELECT COUNT(*) FROM b_hlbd_mf_group g WHERE g.UF_SHOOT_ID=s.ID) AS GROUP_COUNT,
+        (SELECT COUNT(*) FROM b_hlbd_mf_group g WHERE g.UF_SHOOT_ID=s.ID AND {$open}) AS OPEN_COUNT
+    FROM b_hlbd_mf_shoot s INNER JOIN b_hlbd_mf_institution i ON i.ID=s.UF_INSTITUTION_ID
+    WHERE {$condition} ORDER BY {$inner} LIMIT {$limit} OFFSET {$offset}
+) page ON 1=1 ORDER BY {$outer}
+SQL);
+    }
+
     /** Page of the shoot's groups; with `$nowUtc` every row also carries the state counters of all its groups. */
     public function groups(int $shootId, int $limit, int $offset, ?string $nowUtc = null): Result
     {
@@ -231,6 +267,20 @@ SQL);
         }
 
         return ' AND ' . $column . ' IN (' . ([] === $ids ? '0' : implode(',', $ids)) . ')';
+    }
+
+    /** A shoot without a date goes last in both directions: an unplanned shoot is never the newest or the oldest. */
+    private function shootOrder(ShootSortEnum $sort, bool $descending, string $date, string $name, string $institution, string $groups, string $open): string
+    {
+        $direction = $descending ? 'DESC' : 'ASC';
+
+        return match ($sort) {
+            ShootSortEnum::DATE => "{$date} IS NULL,{$date} {$direction}",
+            ShootSortEnum::NAME => "{$name} {$direction}",
+            ShootSortEnum::INSTITUTION => "{$institution} {$direction}",
+            ShootSortEnum::GROUPS => "{$groups} {$direction}",
+            ShootSortEnum::OPEN => "{$open} {$direction}",
+        };
     }
 
     private function bounds(int $limit, int $offset): void

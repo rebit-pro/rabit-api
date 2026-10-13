@@ -7,7 +7,10 @@ import { useStructurePage } from '../useStructurePage';
 import type { Shoot } from '../model';
 const auth = useAuthStore();
 const canManage = computed(() => auth.user?.role === 'organizer' && !!auth.user.permissions?.includes('organization.manage'));
-const { snapshot, loading, error, query, reload, page, pageSize, resize } = useStructurePage({ kind: 'shoot' });
+const { snapshot, loading, error, query, reload, page, pageSize, resize, sort, order } = useStructurePage(
+  { kind: 'shoot' },
+  { key: 'date', direction: 'desc' }
+);
 const shoots = computed(() => (snapshot.value?.items ?? []) as Shoot[]);
 const emptyText = computed(() =>
   query.value.trim()
@@ -36,12 +39,14 @@ const emptyText = computed(() =>
     :total="snapshot?.meta.total ?? 0"
     :page="page"
     :page-size="pageSize"
+    :sort="sort ?? { key: 'date', direction: 'desc' }"
     :loading="loading && !snapshot"
     :error="error"
     :can-manage="canManage"
     :empty-description="emptyText"
     @page="reload($event)"
     @page-size="resize"
+    @sort="order"
     @retry="reload()"
   />
 </template>

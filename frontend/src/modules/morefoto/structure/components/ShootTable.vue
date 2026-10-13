@@ -1,24 +1,23 @@
 <script setup lang="ts">
-import { computed, shallowRef } from 'vue';
+import { computed } from 'vue';
 import UiDataTable from '../../ui/components/UiDataTable.vue';
 import type { UiTableColumn, UiTableRow, UiTableSort } from '../../ui/table-types';
-import { sortTableRows } from '../../ui/table-values';
 import MfStatus from '@/components/status/MfStatus.vue';
 import type { Shoot } from '../model';
-/** Shoots of every institution in the staff member's area as one table (UI-DEC-03); newest first by default. */
+/** Shoots of every institution in the staff member's area as one table (UI-DEC-03); the server orders the whole list. */
 const props = defineProps<{
   shoots: Shoot[];
   total: number;
   page: number;
   pageSize: number;
+  sort: UiTableSort;
   loading: boolean;
   error: string;
   /** The organizer opens the shoot itself and its photos; other roles open the institution. */
   canManage: boolean;
   emptyDescription: string;
 }>();
-const emit = defineEmits<{ page: [page: number]; pageSize: [size: number]; retry: [] }>();
-const sort = shallowRef<UiTableSort>({ key: 'date', direction: 'desc' });
+const emit = defineEmits<{ page: [page: number]; pageSize: [size: number]; sort: [sort: UiTableSort]; retry: [] }>();
 const columns: UiTableColumn[] = [
   { key: 'name', label: 'Съёмка', sortable: true, primary: true, width: '26%' },
   { key: 'institution', label: 'Учреждение', sortable: true, mobile: true, width: '30%' },
@@ -28,18 +27,14 @@ const columns: UiTableColumn[] = [
 ];
 const byId = computed(() => new Map(props.shoots.map((shoot) => [shoot.id, shoot])));
 const rows = computed<UiTableRow[]>(() =>
-  sortTableRows(
-    props.shoots.map((shoot) => ({
-      id: shoot.id,
-      name: shoot.name,
-      institution: shoot.institutionName ?? '',
-      date: shoot.date,
-      groups: shoot.groupCount ?? null,
-      open: shoot.openGroupCount ?? 0
-    })),
-    columns,
-    sort.value
-  )
+  props.shoots.map((shoot) => ({
+    id: shoot.id,
+    name: shoot.name,
+    institution: shoot.institutionName ?? '',
+    date: shoot.date,
+    groups: shoot.groupCount ?? null,
+    open: shoot.openGroupCount ?? 0
+  }))
 );
 const shoot = (id: string) => byId.value.get(id)!;
 const institutionPath = (id: string) => '/cabinet/institutions/' + encodeURIComponent(shoot(id).institutionId);
@@ -68,7 +63,7 @@ function shootDate(value: unknown): string {
     :error="error"
     empty-title="Съёмок пока нет"
     :empty-description="emptyDescription"
-    @sort="sort = $event"
+    @sort="emit('sort', $event)"
     @page="emit('page', $event)"
     @page-size="emit('pageSize', $event)"
     @retry="emit('retry')"

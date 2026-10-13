@@ -1,15 +1,18 @@
 import { computed, onMounted, onScopeDispose, shallowRef, watch } from 'vue';
 import { structureApi, structureError } from './api';
 import type { StructurePage, StructureScope } from './model';
+import type { UiTableSort } from '../ui/table-types';
 import { useInstitutionName } from './useInstitutionName';
 /** The institution search starts by itself once the typing pauses. */
 const SEARCH_DELAY = 300;
-export function useStructurePage(scope: StructureScope) {
+/** `sort` is sent only for lists the server orders (the cabinet-wide shoots); null keeps the server's own order. */
+export function useStructurePage(scope: StructureScope, initialSort: UiTableSort | null = null) {
   const snapshot = shallowRef<StructurePage | null>(null),
     loading = shallowRef(false),
     error = shallowRef(''),
     query = shallowRef(''),
     pageSize = shallowRef(25),
+    sort = shallowRef<UiTableSort | null>(initialSort),
     institutionName = useInstitutionName(scope.kind === 'group' ? scope.institutionId : undefined);
   let generation = 0,
     alive = true,
@@ -20,7 +23,7 @@ export function useStructurePage(scope: StructureScope) {
     loading.value = true;
     error.value = '';
     try {
-      const result = await structureApi.list(scope, page, pageSize.value, query.value.trim());
+      const result = await structureApi.list(scope, page, pageSize.value, query.value.trim(), sort.value);
       if (!alive || request !== generation) return false;
       snapshot.value = result;
       return true;
@@ -40,6 +43,10 @@ export function useStructurePage(scope: StructureScope) {
     pageSize.value = size;
     void reload(1);
   }
+  function order(next: UiTableSort): void {
+    sort.value = next;
+    void reload(1);
+  }
   onMounted(() => {
     void reload();
   });
@@ -57,6 +64,8 @@ export function useStructurePage(scope: StructureScope) {
     reload,
     pageSize,
     resize,
+    sort,
+    order,
     page: computed(() => snapshot.value?.meta.page ?? 1),
     pages: computed(() => Math.max(1, snapshot.value?.meta.totalPages ?? 1))
   };

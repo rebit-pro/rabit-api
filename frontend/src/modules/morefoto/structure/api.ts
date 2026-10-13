@@ -1,4 +1,5 @@
 import { isAxiosError } from 'axios';
+import type { UiTableSort } from '../ui/table-types';
 import api from '@/api/http';
 import type {
   Institution,
@@ -20,7 +21,8 @@ export const structureApi = {
     });
     return result.data;
   },
-  async list(scope: StructureScope, page = 1, pageSize = 25, q = ''): Promise<StructurePage> {
+  /** `sort` orders the cabinet-wide shoot list on the server; other lists keep their server order. */
+  async list(scope: StructureScope, page = 1, pageSize = 25, q = '', sort: UiTableSort | null = null): Promise<StructurePage> {
     if (scope.kind === 'group') {
       const result = await api.get<ShootDetail>('/api/v1/shoots/' + encodeURIComponent(scope.shootId ?? ''), {
         params: { page, pageSize }
@@ -48,7 +50,8 @@ export const structureApi = {
       params: {
         page,
         pageSize,
-        ...((scope.kind === 'institution' || everyShoot) && q ? { q } : {})
+        ...((scope.kind === 'institution' || everyShoot) && q ? { q } : {}),
+        ...(everyShoot && sort ? { sort: sort.key, direction: sort.direction } : {})
       },
       unwrapEnvelope: false
     });
