@@ -5,7 +5,7 @@
 - Дата: 13.10.2026. Ветка `codex/issues-92-129-ui-refresh` от main b1b547a; рабочая копия `/home/user/rabit-api-worktrees/issues-92-129-ui-refresh`. Прототип e89af3b согласован пользователем.
 - Связанное: #92, #129, #157, #159, #188; план `plan.md`; скриншоты `screenshots/`; страница сравнения https://claude.ai/artifact/HyZvj8sVvbAgeHEekxzrNB.
 - Завершено: S0–S7, S8.1 (FB-1…4), S8.2 (`GET /api/v1/shoots`, серверная сортировка «Съёмок»), S8.3 (правки live E2E и новый сценарий «Съёмки»); быстрые проверки зелёные.
-- Сейчас: S8.4 — полный `make test-e2e` (прогон 2 после исправления восстановления в корзине).
+- Сейчас: merge PR #189 и выкладка на stage по команде пользователя («Если тесты зелёные, мержи и выкладывай»).
 - Следующий шаг: открыть PR; после ревью без блокеров — полный гейт (тестовый магазин ЮKassa выключен, #174).
 - Блокеры: нет. Live E2E по изменённым спекам ещё не запускались.
 - Проверки: PHP — scratchpad `php-ui.sh` (php-cli d1-local, volumes `rabit-e7-vendor`, `rabit-e7-phpstan`); frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy sh -c 'npm run check && npm run test:commerce'`; гейт — `E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e`.
@@ -45,17 +45,20 @@
 - Прогон 1 `rabit-e2e-d25de27a4186` (head ad2baeb) — FAIL: группа b 66 passed, 1 failed — `zzzzz-orders` «E5: lost response survives group closure and reload, then recovers the same order»: после закрытия группы корзина не получает расчёт и не показывает панель оформления, а вместе с ней пропадал экран восстановления неподтверждённой отправки (на прежней странице оформления он был всегда). Группа a остановлена раннером.
 - Исправление: состояние оформления принадлежит корзине (`useCheckout` в `CartContents`, тип `Checkout`), экран восстановления — отдельный `CheckoutRecovery` над корзиной при любой корзине; обычная форма скрыта на время восстановления; `CartContents` пересоздаётся по токену галереи. `npm run check`, `test:commerce` 239/239 — зелёные.
 
+- Прогон 2 `rabit-e2e-443cdee64847` (head 7416987) — группа b PASS: 67 сценариев, 12 верификаторов, в том числе новый «UI-T03 UI-T09» и восстановление E5; группа a — 80 passed, 1 timedOut: `organization` «C3: съёмки учреждения листаются в виджете, группы съёмки — страницами сервера» искал прежнюю кнопку «Следующая», а у таблицы — «Следующая страница» (ошибка спека, код не менялся). Исправлено в спеке.
+- Прогон 3 `rabit-e2e-6f35a7171197` (`E2E_GROUPS=a`, после правки спека) — PASS: 81 сценарий, 3 верификатора. Вместе с группой b прогона 2 на том же коде — гейт зелёный; ЮKassa-магазин выключен (#174).
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
 | --- | --- | --- | --- |
 | UI-T01 | PASS (скриншот) | 13.10.2026 | `screenshots/after/*-cab-institutions.webp`; без горизонтальной прокрутки на 390 px; live E2E — S8 |
 | UI-T02 | PASS (скриншот) | 13.10.2026 | `screenshots/after/*-cab-shoot.webp`; live E2E — S8 |
-| UI-T03 | PENDING | — | backend готов, сценарий `cabinet-tables` «UI-T03 UI-T09» — в полном гейте |
+| UI-T03 | PASS | 13.10.2026 | `rabit-e2e-443cdee64847` группа b: `cabinet-tables` «UI-T03 UI-T09» |
 | UI-T04 | PASS (скриншот) | 13.10.2026 | `*-cab-orders.webp`, `*-cab-institutions.webp`, `*-cab-institution.webp` |
 | UI-T05 | PASS (скриншот, unit) | 13.10.2026 | `*-live-photo.webp`, `*-live-cart.webp`, `mobile-gallery-with-cart.webp`; `/checkout` → `/cart`; `npm run test:commerce` 239/239; live E2E — S8 |
 | UI-T06 | PASS (скриншот, unit) | 13.10.2026 | `*-login.webp`; `tests/shell/navigation.test.mjs` в `test:ui` |
 | UI-T07 | PASS (скриншот) | 13.10.2026 | футер на `*-login.webp`, `*-live-cart.webp`; `data-testid` `legal-footer`, `footer-developer` и ссылка «Оферта» сохранены |
-| UI-T09 | PASS (unit), PENDING (E2E) | 13.10.2026 | `ShootListTest` 11 тестов; live — гейт |
+| UI-T09 | PASS | 13.10.2026 | `ShootListTest` 11 тестов; live — `rabit-e2e-443cdee64847` группа b |
 | UI-T10 | PASS (скриншот) | 13.10.2026 | стенд: страница съёмки без шкалы, вкладки, фильтры заказов, согласия в корзине |
 | UI-T08 | PASS | 13.10.2026 | `npm run check` (lint, stylelint, typecheck, typecheck:e2e, `test:ui` 88/88) и `npm run test:commerce` 239/239 |
