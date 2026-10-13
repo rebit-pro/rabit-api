@@ -1,0 +1,63 @@
+{
+  "wave": "F3",
+  "status": "passed",
+  "date": "2026-10-13",
+  "branch": "codex/f3-short-group-link",
+  "base": "0d02adf (merge #160)",
+  "head": "d0c4c8b",
+  "pullRequest": "https://github.com/rebit-pro/rabit-api/pull/186",
+  "decisions": "F3-DEC-01…04 chosen by the user on 2026-10-12; DEC-01 = 10 symbols instead of the recommended 12, request limit is #187",
+  "checks": {
+    "backend": {
+      "status": "passed",
+      "phpunit": "OK 1134 tests (php-f3.sh) and OK in the gate",
+      "phpstan": "No errors (tools/e2e/phpstan.neon)",
+      "csFixer": "clean on the changed PHP files"
+    },
+    "frontend": {
+      "status": "passed",
+      "checks": [
+        "ESLint",
+        "stylelint",
+        "Vue typecheck",
+        "E2E TypeScript",
+        "UI unit 88 (private-links-log /g/<alias>)",
+        "commerce unit 239 (galleryLinkKey)",
+        "production build"
+      ]
+    },
+    "graph": {
+      "status": "passed",
+      "note": "J4 merged (PR #184, b085e8e), F3 review (PR #186); python3 tools/verify-wave-graph.py exit 0, 59 waves"
+    },
+    "review": {
+      "status": "passed",
+      "note": "review 5500006083 on 7fd6844: code without findings, 1 blocker in the README deploy runbook fixed in d0c4c8b; non-blocking #187"
+    },
+    "browser": {
+      "status": "passed",
+      "command": "E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e",
+      "runs": [
+        {
+          "run": "rabit-e2e-b00e58ba69e2",
+          "head": "d0c4c8b",
+          "mode": "full gate",
+          "result": "147 scenarios passed (a 81, b 66), 15 verifiers passed incl. verify-links.php (one alias per key, every copyable key has one, migration replay keeps aliases); 411.6 s"
+        }
+      ],
+      "yookassa": "test shop OFF (#174)"
+    }
+  },
+  "testCases": {
+    "F3-T01": "PASS",
+    "F3-T02": "PASS",
+    "F3-T03": "PASS",
+    "F3-T04": "PASS",
+    "F3-T05": "PASS",
+    "F3-T06": "PASS",
+    "F3-T07": "PASS",
+    "F3-T08": "PASS",
+    "F3-T09": "PASS",
+    "F3-T10": "PASS"
+  }
+}

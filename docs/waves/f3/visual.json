@@ -1,0 +1,25 @@
+{
+  "wave": "F3",
+  "status": "passed",
+  "fixture": "rabit-e2e-b00e58ba69e2",
+  "head": "d0c4c8b",
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ],
+  "screenshots": [
+    {
+      "file": "docs/waves/f3/screenshots/f3-desktop-short-link.png",
+      "sha256": "cc89a8f425b7a02ad16ebfe85765dc9fd3a9b33d763dca0dc18a2bf268b42844"
+    },
+    {
+      "file": "docs/waves/f3/screenshots/f3-mobile-short-link.png",
+      "sha256": "fc93288ca97a5532fb1f04c77171fe49afae415dc6d9bd92b026426d88741e4f"
+    }
+  ],
+  "checks": [
+    "Галерея группы E4 open открыта по /g/<псевдоним>?child=A: адрес заменён на /g/<64-символьный ключ>?child=A, выбрана серия A, кадр A001, «Приём открыт» со сроками печати и электронных фото E7",
+    "Mobile 390×844: та же галерея без горизонтального скролла (проверка спека scrollWidth <= innerWidth); шапка совпадает с E7",
+    "Неизвестный псевдоним /g/zzzzzzzzzz — «Ссылка недействительна», ошибок страницы нет"
+  ]
+}

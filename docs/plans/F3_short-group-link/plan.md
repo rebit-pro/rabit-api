@@ -71,7 +71,7 @@
 - [x] S3. Frontend.
 - [x] S4. Тесты и E2E (браузерный прогон — в S6).
 - [x] S5. Документация, граф, PR #186.
-- [ ] S6. Полный `make test-e2e` и visual desktop/mobile.
+- [x] S6. Полный `make test-e2e` и visual desktop/mobile (`rabit-e2e-b00e58ba69e2`).
 
 ## Критерии приёмки
 

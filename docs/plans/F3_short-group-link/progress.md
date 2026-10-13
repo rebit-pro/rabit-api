@@ -5,8 +5,9 @@
 - Дата: 13.10.2026. Ветка `codex/f3-short-group-link` от `origin/main` 0d02adf (merge #160); рабочая копия `/home/user/rabit-api-worktrees/f3-short-group-link`. PR #186 (F3 `review` в графе).
 - Связанное: README волны `docs/waves/f3/README.md`, граф `docs/waves/graph.json`, план владельца `docs/plans/OPS-telemos-feedback-plan/` (R05), F2 `docs/waves/f2/README.md`.
 - Завершено: S0–S5 — реализация (314533f, 8d62da9), E2E и верификатор (1357d85), README, ручной чек-лист, граф (J4 `merged`, F3 `review`); быстрые проверки зелёные; ревью 5500006083 — 1 блокер (README выкладки) исправлен, в backlog #187.
-- Сейчас: S6 — полный `make test-e2e` и visual.
-- Следующий шаг: гейт; при PASS — `docs/waves/f3/visual.json`, `verification.json`, журнал, затем merge по команде пользователя.
+- Завершено также S6: полный гейт `rabit-e2e-b00e58ba69e2` на d0c4c8b — PASS (a 81, b 66, 15 верификаторов); `visual.json`, `verification.json`, скриншоты.
+- Сейчас: ожидание команды пользователя на merge #186.
+- Следующий шаг: merge #186 по команде; затем выкладка на stage всего слитого по `docs/waves/f3/README.md` и README волн E7/D4/E8/J4.
 - Блокеры: нет.
 - Рабочее дерево: чистое после коммита.
 - После merge F3 — выкладка на stage всего слитого (E7, D4, E8, J4, #160, F3) по указанию пользователя 12.10 и 13.10.2026. Юридический вопрос E8 закрыт 13.10.2026 (см. журнал).
@@ -56,6 +57,12 @@
 - Исправлено в README: миграция и переключение backend подряд; ключ без псевдонима — только повторная подготовка, иначе длинная ссылка; `down`/`redo` `20261012180001` после выкладки запрещены. Ответ в треде.
 - Неблокирующее: #187 — лимит неуспешных обращений к публичной галерее (риск F3-DEC-01).
 
+### 13.10.2026 — полный гейт
+
+- Команда: `E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e` на d0c4c8b.
+- Прогон `rabit-e2e-b00e58ba69e2` — exit 0 за 411,6 с: группа a 81 passed, группа b 66 passed (три новых сценария F3), 15 верификаторов passed, в том числе `verify-links.php`. Тестовый магазин ЮKassa выключен (#174).
+- Visual: `f3-desktop-short-link.png`, `f3-mobile-short-link.png` — адрес заменён на длинный, кадр A001 и сроки E7 видны, горизонтального скролла нет; шапка mobile совпадает с E7.
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -65,8 +72,8 @@
 | F3-T03 | PASS | 13.10.2026 | PHPUnit `testGalleryOpensByAliasAsTheSameKey`, `testLongKeyIsUnchangedAndUnknownAliasIsNotFound`; отозванный ключ — T07 |
 | F3-T04 | PASS | 13.10.2026 | PHPUnit `GroupLinkContractTest` |
 | F3-T05 | PASS | 13.10.2026 | `npm run test:commerce` (`galleryLinkKey`), `npm run test:ui` (access-лог), `npm run check` |
-| F3-T06 | PENDING | — | `make test-e2e` после ревью: `z-links-preparation`, `cabinet-tables`, `zzzz-short-links` |
-| F3-T07 | PENDING | — | `make test-e2e` после ревью: `zzzz-short-links` |
-| F3-T08 | PENDING | — | `make test-e2e` → `verify-links.php` |
-| F3-T09 | PENDING | — | `make test-e2e` → `docs/waves/f3/visual.json` |
+| F3-T06 | PASS | 13.10.2026 | гейт `rabit-e2e-b00e58ba69e2`: `z-links-preparation`, `cabinet-tables`, `zzzz-short-links` (API и desktop/mobile) — passed |
+| F3-T07 | PASS | 13.10.2026 | гейт `rabit-e2e-b00e58ba69e2`: `zzzz-short-links` — окна `open`/`digital`, отозванный и неверные псевдонимы 404, `/catalog` по псевдониму 404 |
+| F3-T08 | PASS | 13.10.2026 | гейт `rabit-e2e-b00e58ba69e2` → `verify-links.php` passed |
+| F3-T09 | PASS | 13.10.2026 | `docs/waves/f3/visual.json`, скриншоты desktop 1440×1000 и mobile 390×844 просмотрены |
 | F3-T10 | PASS | 13.10.2026 | J4 `merged`, F3 `review` (PR #186); `python3 tools/verify-wave-graph.py docs/waves/graph.json` exit 0 |
