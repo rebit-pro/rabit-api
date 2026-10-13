@@ -2,9 +2,7 @@
 import { computed, shallowRef } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import MfBreadcrumbs from '@/components/navigation/MfBreadcrumbs.vue';
-import MfDistribution from '@/components/viz/MfDistribution.vue';
 import AdminDialog from '../../management/components/AdminDialog.vue';
-import { groupStateSegments } from '../../ui/groupStates';
 import StructureFields from './StructureFields.vue';
 import InstitutionTable from './InstitutionTable.vue';
 import GroupTable from './GroupTable.vue';
@@ -68,10 +66,6 @@ const crumbs = computed(() =>
       ]
     : []
 );
-const groupStates = computed(() => {
-  const counts = snapshot.value?.meta.summary?.byState;
-  return counts ? groupStateSegments(counts) : null;
-});
 const institutions = computed(() => (snapshot.value?.items ?? []) as Institution[]);
 const groups = computed(() => (snapshot.value?.items ?? []) as Group[]);
 const emptyText = computed(() =>
@@ -151,9 +145,6 @@ function editShoot(): void {
   />
   <v-alert v-if="removeError" type="error" variant="tonal" role="alert" class="mb-5">{{ removeError }}</v-alert>
   <v-alert v-if="notice" type="success" variant="tonal" role="status" class="mb-5">{{ notice }}</v-alert>
-  <div v-if="scope.kind === 'group' && groupStates && snapshot?.meta.total" class="mf-panel structure-states">
-    <MfDistribution title="Группы по состоянию приёма" :segments="groupStates" :unit-forms="['группы', 'групп', 'групп']" />
-  </div>
   <InstitutionTable
     v-if="scope.kind === 'institution'"
     :institutions="institutions"
@@ -217,9 +208,5 @@ function editShoot(): void {
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--mf-space-4);
-}
-.structure-states {
-  margin-bottom: var(--mf-space-4);
-  padding: var(--mf-space-4) var(--mf-space-5);
 }
 </style>

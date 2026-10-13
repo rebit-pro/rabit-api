@@ -91,7 +91,7 @@ function edit(id: string): void {
 }
 </script>
 <template>
-  <form class="catalog-filters mb-4" aria-label="Фильтры каталога" @submit.prevent>
+  <form class="catalog-filters mb-4 mf-filters" aria-label="Фильтры каталога" @submit.prevent>
     <v-text-field
       :model-value="query"
       label="Название"

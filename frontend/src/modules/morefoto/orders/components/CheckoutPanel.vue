@@ -83,11 +83,21 @@ function place(): void {
   font-size: var(--mf-text-sm);
   line-height: 1.5;
 }
+/* FB-4: the two consents sit close together; each line keeps a 36 px tap target. */
 .checkout-panel__consents {
   display: grid;
-  margin-block: calc(var(--mf-space-1) * -1);
+  gap: var(--mf-space-1);
+}
+.checkout-panel__consents :deep(.v-selection-control) {
+  --v-selection-control-size: 36px;
+  min-height: 36px;
+  align-items: flex-start;
+}
+.checkout-panel__consents :deep(.v-selection-control__wrapper) {
+  margin-top: -6px;
 }
 .checkout-panel__consents :deep(.v-label) {
+  padding-top: 2px;
   font-size: var(--mf-text-sm);
   line-height: 1.4;
   opacity: 1;

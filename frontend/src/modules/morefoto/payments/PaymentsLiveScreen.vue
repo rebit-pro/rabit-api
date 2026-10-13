@@ -130,7 +130,7 @@ function exportRows(payments: StaffPayment[]): void {
     </article>
   </template>
   <template v-else>
-    <form class="mf-panel payments__filters" role="search" @submit.prevent="apply()">
+    <form class="mf-panel payments__filters mf-filters" role="search" @submit.prevent="apply()">
       <v-text-field
         v-model="filters.orderNumber"
         name="orderNumber"

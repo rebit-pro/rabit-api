@@ -5,7 +5,7 @@ const emit = defineEmits<{ search: []; refresh: [] }>();
 const query = defineModel<string>({ required: true });
 </script>
 <template>
-  <form class="mf-panel structure-search" role="search" @submit.prevent="emit('search')">
+  <form class="mf-panel structure-search mf-filters" role="search" @submit.prevent="emit('search')">
     <v-text-field
       :model-value="query"
       :label="label"

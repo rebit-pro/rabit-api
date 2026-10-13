@@ -353,7 +353,7 @@ async function openHistory(group: LinkGroup) {
         @select="stateFilter = stateFilter === tile.text ? null : tile.text"
       />
     </section>
-    <form class="links-filters mb-4" aria-label="Фильтры ссылок" @submit.prevent>
+    <form class="links-filters mb-4 mf-filters" aria-label="Фильтры ссылок" @submit.prevent>
       <v-text-field
         :model-value="query"
         label="Группа или съёмка"
