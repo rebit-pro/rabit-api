@@ -2,16 +2,14 @@
 
 ## Точка продолжения
 
-- Дата: 13.10.2026. Ветка `codex/issues-92-129-ui-refresh` от main b1b547a; рабочая копия `/home/user/rabit-api-worktrees/issues-92-129-ui-refresh`. PR нет — сначала пользователь смотрит скриншоты.
-- Связанное: #92, #129, #157, #159, #188; план `plan.md`; скриншоты `screenshots/before/`, `screenshots/after/`; скрипты стенда `screenshots/tools/`.
-- Завершено: S0–S6 — прототип frontend всех шести пунктов, быстрые проверки зелёные, скриншоты «до» и «после» desktop 1440 и mobile 390.
-- Сейчас: S7 — пользователь смотрит скриншоты.
-- Следующий шаг: учесть замечания; затем S8 — `GET /api/v1/shoots` (UseCase, SQL, DI, контракт), серверная сортировка учреждений и групп, правки live E2E, полный `make test-e2e`, PR.
-- Блокеры: нет. Открытые решения: UI-DEC-01…08 по скриншотам; UI-DEC-05 (без галочки «Состав и условия проверены») — юридически значимое, нужна явная отметка пользователя.
-- Рабочее дерево: всё в коммите прототипа.
-- Стенд скриншотов: контейнер Playwright 1.52 без сети, node_modules `rabit-e7-node`, frontend смонтирован в `/app`, Vite demo на 4173 и live на 4174, скрипты из `screenshots/tools/` в `/shots`:
-  `docker run -d --name mf-ui-shots --network none -v <worktree>/frontend:/app -v rabit-e7-node:/app/node_modules -v <tools-dir>:/shots -w /app mcr.microsoft.com/playwright:v1.52.0-jammy sleep infinity`, затем два `vite` (`VITE_API_MOCKS_ENABLED=true` на 4173 и `false` на 4174) и `node demo-flow.mjs after`, `node live-cabinet.mjs after`, `node live-cart.mjs after` (выход в `/shots/out`).
-- Проверки: `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy sh -c 'npm run check && npm run test:commerce'`. Форматирование — только `npx eslint --fix <файлы>`.
+- Дата: 13.10.2026. Ветка `codex/issues-92-129-ui-refresh` от main b1b547a; рабочая копия `/home/user/rabit-api-worktrees/issues-92-129-ui-refresh`. Прототип e89af3b согласован пользователем.
+- Связанное: #92, #129, #157, #159, #188; план `plan.md`; скриншоты `screenshots/`; страница сравнения https://claude.ai/artifact/HyZvj8sVvbAgeHEekxzrNB.
+- Завершено: S0–S7, S8.1 (FB-1…4), S8.2 (`GET /api/v1/shoots`, серверная сортировка «Съёмок»), S8.3 (правки live E2E и новый сценарий «Съёмки»); быстрые проверки зелёные.
+- Сейчас: S8.4 — коммиты, PR, ревью, затем полный `make test-e2e`.
+- Следующий шаг: открыть PR; после ревью без блокеров — полный гейт (тестовый магазин ЮKassa выключен, #174).
+- Блокеры: нет. Live E2E по изменённым спекам ещё не запускались.
+- Проверки: PHP — scratchpad `php-ui.sh` (php-cli d1-local, volumes `rabit-e7-vendor`, `rabit-e7-phpstan`); frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy sh -c 'npm run check && npm run test:commerce'`; гейт — `E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e`.
+- Стенд скриншотов: см. `screenshots/tools/` и запуск в журнале «прототип».
 
 ## Журнал
 
@@ -31,15 +29,26 @@
 - Попутно #157: ссылки согласий — цвет ссылок продукта.
 - Стенд скриншотов: живой режим кабинета с подменой API (`/api/v1/me`, учреждения, съёмки, заказы), живая витрина с подменой (галерея, каталог, расчёт, документы), демо-режим для галереи и диалога. Найдены и исправлены при съёмке: маршрут `ShootList` не был в списке живого режима; узкие колонки групп; зазор в сетке корзины; порядок блоков корзины на телефоне; тесная шапка входа на телефоне.
 
+### 13.10.2026 — согласование и реализация
+
+- Пользователь посмотрел страницу сравнения: «Со всем остальным я согласен… бери в реализацию». Приняты UI-DEC-01…09, в том числе UI-DEC-05. Замечания FB-1…4 записаны в план.
+- FB-1: шкала «Группы по состоянию приёма» снята со страницы съёмки. FB-2: вкладки съёмки — сегменты с иконками на подложке, текущая белая. FB-3: класс `mf-filters` на панелях фильтров (заказы, платежи, ссылки, сотрудники, каталог, поиск структуры) — заливка, светлая граница, 14 px; поля форм не тронуты (контраст 3:1). FB-4: согласия компактнее (36 px), ссылки без подчёркивания.
+- Backend (BE-DEC-01): `GET /api/v1/shoots` — `ShootListController` (чистый: RequestDto → `ShootListInputMapper` → `ListAllShootsUseCase` → `ShootListResultMapper`), `ShootSortEnum`, `StructureRepository::shootList` (область по ролям, поиск по началу названия, сортировка всего фильтра, съёмка без даты — последней), маршрут и DI. Frontend «Съёмок» передаёт `sort`/`direction` серверу.
+- Unit: `ShootListTest` — граница контроллера, умолчания и 422 маппера, область организатора и куратора, 403 воспитателя, 409 при смене доступа, маппинг строк.
+- E2E: `productRadio` в helpers; `zzzz-storefront`, `zzzz-storefront-windows`, `zzzzzzzzzz-files` — выбор продукции списком; `zzzzz-orders` — оформление в корзине, без галочки «проверено», старый `/checkout` ведёт в корзину, изменение цены подтверждается кнопкой с новым итогом; `organization`, `cabinet-tables`, `z-institution-detail`, `zz-u7-screens` — строки таблиц вместо карточек, нет шкалы на странице съёмки; новый сценарий «UI-T03 UI-T09» в `cabinet-tables` (API: порядок, поля, 422, 403 воспитателя; UI: меню, поиск, сортировка, переход в съёмку).
+- Проверки 13.10.2026: PHPUnit OK 1145; PHPStan без ошибок; php-cs-fixer 0 по 15 файлам; `npm run check` (lint, stylelint, typecheck, typecheck:e2e, test:ui 88/88), `test:commerce` 239/239.
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
 | --- | --- | --- | --- |
 | UI-T01 | PASS (скриншот) | 13.10.2026 | `screenshots/after/*-cab-institutions.webp`; без горизонтальной прокрутки на 390 px; live E2E — S8 |
 | UI-T02 | PASS (скриншот) | 13.10.2026 | `screenshots/after/*-cab-shoot.webp`; live E2E — S8 |
-| UI-T03 | PENDING | — | экран и подмена API готовы (`*-cab-shoots.webp`); backend `GET /api/v1/shoots` — S8 |
+| UI-T03 | PENDING | — | backend готов, сценарий `cabinet-tables` «UI-T03 UI-T09» — в полном гейте |
 | UI-T04 | PASS (скриншот) | 13.10.2026 | `*-cab-orders.webp`, `*-cab-institutions.webp`, `*-cab-institution.webp` |
 | UI-T05 | PASS (скриншот, unit) | 13.10.2026 | `*-live-photo.webp`, `*-live-cart.webp`, `mobile-gallery-with-cart.webp`; `/checkout` → `/cart`; `npm run test:commerce` 239/239; live E2E — S8 |
 | UI-T06 | PASS (скриншот, unit) | 13.10.2026 | `*-login.webp`; `tests/shell/navigation.test.mjs` в `test:ui` |
 | UI-T07 | PASS (скриншот) | 13.10.2026 | футер на `*-login.webp`, `*-live-cart.webp`; `data-testid` `legal-footer`, `footer-developer` и ссылка «Оферта» сохранены |
+| UI-T09 | PASS (unit), PENDING (E2E) | 13.10.2026 | `ShootListTest` 11 тестов; live — гейт |
+| UI-T10 | PASS (скриншот) | 13.10.2026 | стенд: страница съёмки без шкалы, вкладки, фильтры заказов, согласия в корзине |
 | UI-T08 | PASS | 13.10.2026 | `npm run check` (lint, stylelint, typecheck, typecheck:e2e, `test:ui` 88/88) и `npm run test:commerce` 239/239 |
