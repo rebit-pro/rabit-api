@@ -4,7 +4,7 @@ import { formatMoment } from '../formatters';
 import { useLiveFiles } from '../composables/useLiveFiles';
 import { fileSize, filesCount } from '../live/files-rules';
 const props = defineProps<{ orderKey: string }>();
-const { files, loading, busy, preparing, error, load, download } = useLiveFiles(toRef(props, 'orderKey'));
+const { files, loading, busy, preparing, error, load, download, canSave, save, sharePending } = useLiveFiles(toRef(props, 'orderKey'));
 </script>
 <template>
   <section id="order-files" class="mf-panel downloads" aria-labelledby="downloads-title" data-testid="order-files">
@@ -56,16 +56,33 @@ const { files, loading, busy, preparing, error, load, download } = useLiveFiles(
                 <strong>{{ file.code }}</strong
                 ><span class="mf-muted downloads__note">{{ file.filename }} · {{ fileSize(file.bytes) }}</span>
               </div>
-              <v-btn
-                variant="outlined"
-                color="primary"
-                :aria-label="'Скачать кадр ' + file.code"
-                :loading="busy === file.photoId"
-                :disabled="!!busy"
-                data-testid="files-download"
-                @click="download(file.photoId)"
-                >Скачать</v-btn
-              >
+              <div class="downloads__buttons">
+                <!-- #192: on a phone the share sheet saves the photo into the gallery; a download lands in Files. -->
+                <v-btn
+                  v-if="canSave"
+                  color="primary"
+                  prepend-icon="mdi-cellphone-arrow-down"
+                  :aria-label="'Сохранить в телефон кадр ' + file.code"
+                  :loading="busy === 'save:' + file.photoId"
+                  :disabled="!!busy"
+                  data-testid="files-save"
+                  @click="save(file)"
+                  >Сохранить в телефон</v-btn
+                >
+                <v-btn
+                  variant="outlined"
+                  color="primary"
+                  :aria-label="'Скачать кадр ' + file.code"
+                  :loading="busy === file.photoId"
+                  :disabled="!!busy"
+                  data-testid="files-download"
+                  @click="download(file.photoId)"
+                  >Скачать</v-btn
+                >
+              </div>
+              <p v-if="sharePending === file.photoId" class="downloads__note downloads__retry" role="status" data-testid="files-save-retry">
+                Фото готово — нажмите «Сохранить в телефон» ещё раз.
+              </p>
             </li>
           </ul>
         </template>
@@ -108,6 +125,16 @@ const { files, loading, busy, preparing, error, load, download } = useLiveFiles(
   border-top: 1px solid rgba(var(--v-theme-on-surface), 0.12);
   padding-top: var(--mf-space-3);
 }
+.downloads__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--mf-space-2);
+}
+.downloads__retry {
+  flex-basis: 100%;
+  color: var(--mf-color-link);
+}
 .downloads__name {
   display: grid;
   gap: var(--mf-space-1);
@@ -119,8 +146,11 @@ const { files, loading, busy, preparing, error, load, download } = useLiveFiles(
   .downloads__file {
     flex-wrap: wrap;
   }
-  .downloads__file .v-btn {
-    margin-left: auto;
+  .downloads__buttons {
+    width: 100%;
+  }
+  .downloads__buttons .v-btn {
+    flex: 1 1 auto;
   }
 }
 </style>
