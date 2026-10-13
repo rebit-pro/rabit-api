@@ -128,6 +128,12 @@ const MainRoutes: RouteRecordRaw = {
       }
     },
     {
+      name: 'ShootList',
+      path: 'shoots',
+      component: () => import('@/modules/morefoto/views/ShootListPage.vue'),
+      meta: { title: 'Съёмки', staffRoles: ['organizer', 'curator', 'head'] }
+    },
+    {
       name: 'PhotoWorkspace',
       path: 'institutions/:institutionId/shoots/:shootId/photos',
       component: () => import('@/modules/morefoto/views/PhotoWorkspacePage.vue'),

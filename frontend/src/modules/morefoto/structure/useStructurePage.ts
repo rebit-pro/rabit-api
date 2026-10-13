@@ -9,6 +9,7 @@ export function useStructurePage(scope: StructureScope) {
     loading = shallowRef(false),
     error = shallowRef(''),
     query = shallowRef(''),
+    pageSize = shallowRef(25),
     institutionName = useInstitutionName(scope.kind === 'group' ? scope.institutionId : undefined);
   let generation = 0,
     alive = true,
@@ -19,7 +20,7 @@ export function useStructurePage(scope: StructureScope) {
     loading.value = true;
     error.value = '';
     try {
-      const result = await structureApi.list(scope, page, 25, query.value.trim());
+      const result = await structureApi.list(scope, page, pageSize.value, query.value.trim());
       if (!alive || request !== generation) return false;
       snapshot.value = result;
       return true;
@@ -34,6 +35,11 @@ export function useStructurePage(scope: StructureScope) {
     window.clearTimeout(searchTimer);
     searchTimer = window.setTimeout(() => void reload(1), SEARCH_DELAY);
   });
+  /** A new page size starts from the first page, as in every table of the cabinet. */
+  function resize(size: number): void {
+    pageSize.value = size;
+    void reload(1);
+  }
   onMounted(() => {
     void reload();
   });
@@ -49,6 +55,8 @@ export function useStructurePage(scope: StructureScope) {
     query,
     institutionName,
     reload,
+    pageSize,
+    resize,
     page: computed(() => snapshot.value?.meta.page ?? 1),
     pages: computed(() => Math.max(1, snapshot.value?.meta.totalPages ?? 1))
   };

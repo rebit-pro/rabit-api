@@ -10,8 +10,16 @@ const accepted = defineModel<boolean>({ required: true });
     <template #label>
       <span
         >{{ before }}
-        <a :href="documentPath(document.code, document.version)" target="_blank" rel="noopener" @click.stop>{{ link }}</a></span
+        <a class="consent-link" :href="documentPath(document.code, document.version)" target="_blank" rel="noopener" @click.stop>{{
+          link
+        }}</a></span
       >
     </template>
   </v-checkbox>
 </template>
+<style scoped>
+/* #157: the document link keeps the product's link colour, not the browser default blue. */
+.consent-link {
+  color: var(--mf-color-link);
+}
+</style>

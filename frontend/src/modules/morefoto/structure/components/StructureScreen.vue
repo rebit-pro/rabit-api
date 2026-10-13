@@ -6,17 +6,21 @@ import MfDistribution from '@/components/viz/MfDistribution.vue';
 import AdminDialog from '../../management/components/AdminDialog.vue';
 import { groupStateSegments } from '../../ui/groupStates';
 import StructureFields from './StructureFields.vue';
-import StructureList from './StructureList.vue';
+import InstitutionTable from './InstitutionTable.vue';
+import GroupTable from './GroupTable.vue';
+import StructureSearch from './StructureSearch.vue';
 import StructureRemoveDialog from './StructureRemoveDialog.vue';
 import ShootTabs from './ShootTabs.vue';
 import { useStructurePage } from '../useStructurePage';
 import { useStructureEditor } from '../useStructureEditor';
 import { structureApi, structureRemovalError } from '../api';
-import type { StructureItem, StructureScope } from '../model';
+import type { Group, Institution, StructureItem, StructureScope } from '../model';
 const props = defineProps<{ scope: StructureScope }>();
 const auth = useAuthStore();
 const canManage = computed(() => auth.user?.role === 'organizer' && !!auth.user.permissions?.includes('organization.manage'));
-const { snapshot, loading, error, query, institutionName, reload, page, pages } = useStructurePage(props.scope);
+const { snapshot, loading, error, query, institutionName, reload, page, pageSize, resize } = useStructurePage(props.scope);
+// Countdowns of the group table count from the page's own clock: the structure answer has no server moment.
+const now = new Date().toISOString();
 const notice = shallowRef('');
 const editor = useStructureEditor(props.scope, async () => {
   notice.value = 'Изменения сохранены.';
@@ -68,11 +72,8 @@ const groupStates = computed(() => {
   const counts = snapshot.value?.meta.summary?.byState;
   return counts ? groupStateSegments(counts) : null;
 });
-// An empty list offers the first record itself; the heading keeps the action only when there is something to add to.
-const emptyOffersCreate = computed(() => canManage.value && !!snapshot.value && !snapshot.value.items.length && !query.value.trim());
-const emptyTitle = computed(
-  () => ({ institution: 'Учреждений пока нет', shoot: 'Съёмок пока нет', group: 'Групп пока нет' })[props.scope.kind]
-);
+const institutions = computed(() => (snapshot.value?.items ?? []) as Institution[]);
+const groups = computed(() => (snapshot.value?.items ?? []) as Group[]);
 const emptyText = computed(() =>
   query.value.trim()
     ? 'По этому началу названия ничего не найдено.'
@@ -123,65 +124,70 @@ function editShoot(): void {
 </script>
 <template>
   <MfBreadcrumbs v-if="crumbs.length" :items="crumbs" />
-  <header class="mf-page-heading">
-    <p class="mf-eyebrow">ОРГАНИЗАЦИЯ СЪЁМОК</p>
-    <h1>{{ heading }}</h1>
-    <p v-if="scope.kind === 'institution'" class="mf-muted">Учреждения и их самостоятельные съёмки</p>
-    <p v-else-if="scope.kind === 'shoot'" class="mf-muted">У каждой съёмки свой список групп</p>
-    <p v-else-if="snapshot?.shoot" class="mf-muted">
-      {{ snapshot.shoot.date ? 'Дата съёмки: ' + snapshot.shoot.date.split('-').reverse().join('.') : 'Дата съёмки не назначена' }}
-    </p>
-    <div class="mf-actions mt-5">
-      <v-btn v-if="canManage && !emptyOffersCreate" prepend-icon="mdi-plus" :disabled="disabled" @click="edit()">{{ createLabel }}</v-btn>
-      <v-btn v-if="canManage && scope.kind === 'group'" variant="outlined" :disabled="disabled" @click="editShoot"
-        >Редактировать съёмку</v-btn
-      >
-      <v-btn variant="outlined" :disabled="loading" @click="reload()">Обновить список</v-btn>
+  <header class="mf-page-heading structure-heading">
+    <div>
+      <p class="mf-eyebrow">ОРГАНИЗАЦИЯ СЪЁМОК</p>
+      <h1>{{ heading }}</h1>
+      <p v-if="scope.kind === 'institution'" class="mf-muted">Учреждения и их самостоятельные съёмки</p>
+      <p v-else-if="scope.kind === 'shoot'" class="mf-muted">У каждой съёмки свой список групп</p>
+      <p v-else-if="snapshot?.shoot" class="mf-muted">
+        {{ snapshot.shoot.date ? 'Дата съёмки: ' + snapshot.shoot.date.split('-').reverse().join('.') : 'Дата съёмки не назначена' }}
+      </p>
+    </div>
+    <div v-if="canManage" class="mf-actions">
+      <v-btn v-if="scope.kind === 'group'" variant="outlined" :disabled="disabled" @click="editShoot">Редактировать съёмку</v-btn>
+      <v-btn prepend-icon="mdi-plus" :disabled="disabled" @click="edit()">{{ createLabel }}</v-btn>
     </div>
   </header>
   <ShootTabs v-if="scope.kind === 'group'" :institution-id="scope.institutionId ?? ''" :shoot-id="scope.shootId ?? ''" current="groups" />
-  <form v-if="scope.kind === 'institution'" class="structure-search mf-actions mb-5" @submit.prevent="reload(1)">
-    <v-text-field
-      :model-value="query"
-      @update:model-value="query = $event ?? ''"
-      label="Поиск по началу названия"
-      aria-label="Поиск учреждений"
-      maxlength="100"
-      hide-details
-      clearable
-      @click:clear="query = ''"
-    />
-    <v-btn type="submit" variant="outlined" :disabled="loading">Найти</v-btn>
-  </form>
-  <v-progress-linear v-if="loading" indeterminate aria-label="Загрузка структуры" class="mb-5" />
-  <v-alert v-if="error" type="error" variant="tonal" role="alert" class="mb-5">{{ error }}</v-alert>
+  <StructureSearch
+    v-if="scope.kind === 'institution'"
+    v-model="query"
+    label="Поиск по началу названия"
+    accessible-name="Поиск учреждений"
+    :loading="loading"
+    @search="reload(1)"
+    @refresh="reload()"
+  />
   <v-alert v-if="removeError" type="error" variant="tonal" role="alert" class="mb-5">{{ removeError }}</v-alert>
   <v-alert v-if="notice" type="success" variant="tonal" role="status" class="mb-5">{{ notice }}</v-alert>
-  <section v-if="snapshot && !error" aria-label="Записи структуры">
-    <h2 v-if="scope.kind === 'group'" class="mb-4">Группы</h2>
-    <div v-if="groupStates && snapshot.meta.total" class="mf-panel structure-states mb-5">
-      <MfDistribution title="Группы по состоянию приёма" :segments="groupStates" :unit-forms="['группы', 'групп', 'групп']" />
-    </div>
-    <p class="mf-muted mb-4">Всего: {{ snapshot.meta.total }}</p>
-    <StructureList
-      :items="snapshot.items"
-      :scope="scope"
-      :disabled="disabled"
-      :can-manage="canManage"
-      :empty-title="emptyTitle"
-      :empty-text="emptyText"
-      :create-label="canManage && !query.trim() ? createLabel : ''"
-      :removable="removable"
-      @edit="edit"
-      @create="edit()"
-      @remove="askRemove"
-    />
-    <nav v-if="pages > 1" class="mf-actions mt-5" aria-label="Страницы структуры">
-      <v-btn variant="outlined" :disabled="loading || page === 1" @click="reload(page - 1)">Предыдущая</v-btn>
-      <span role="status">Страница {{ page }} из {{ pages }}</span>
-      <v-btn variant="outlined" :disabled="loading || page === pages" @click="reload(page + 1)">Следующая</v-btn>
-    </nav>
-  </section>
+  <div v-if="scope.kind === 'group' && groupStates && snapshot?.meta.total" class="mf-panel structure-states">
+    <MfDistribution title="Группы по состоянию приёма" :segments="groupStates" :unit-forms="['группы', 'групп', 'групп']" />
+  </div>
+  <InstitutionTable
+    v-if="scope.kind === 'institution'"
+    :institutions="institutions"
+    :total="snapshot?.meta.total ?? 0"
+    :page="page"
+    :page-size="pageSize"
+    :loading="loading && !snapshot"
+    :error="error"
+    :can-manage="canManage"
+    :disabled="disabled"
+    :empty-description="emptyText"
+    @page="reload($event)"
+    @page-size="resize"
+    @edit="edit"
+    @remove="askRemove"
+    @retry="reload()"
+  />
+  <GroupTable
+    v-else
+    :groups="groups"
+    :total="snapshot?.meta.total ?? 0"
+    :page="page"
+    :page-size="pageSize"
+    :loading="loading && !snapshot"
+    :error="error"
+    :can-manage="canManage"
+    :disabled="disabled"
+    :now="now"
+    :empty-description="emptyText"
+    @page="reload($event)"
+    @page-size="resize"
+    @edit="edit"
+    @retry="reload()"
+  />
   <StructureRemoveDialog
     :kind="removal ? 'institution' : null"
     :names="removal ? [removal.name] : []"
@@ -205,11 +211,15 @@ function editShoot(): void {
   </AdminDialog>
 </template>
 <style scoped>
-.structure-search .v-input {
-  min-width: 220px;
-  flex: 1;
+.structure-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--mf-space-4);
 }
-.structure-search {
-  align-items: center;
+.structure-states {
+  margin-bottom: var(--mf-space-4);
+  padding: var(--mf-space-4) var(--mf-space-5);
 }
 </style>

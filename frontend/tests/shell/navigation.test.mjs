@@ -7,17 +7,17 @@ const organizerPermissions = ['catalog.manage', 'staff.manage', 'order.read', 'm
 
 test('live organizer sees work and settings groups', () => {
   assert.deepEqual(titles(cabinetNavigation({ role: 'organizer', permissions: organizerPermissions, demo: false })), [
-    ['Работа', ['Обзор', 'Учреждения', 'Ссылки и сроки', 'Списки сотрудников', 'Заказы', 'Платежи']],
+    ['Работа', ['Обзор', 'Учреждения', 'Съёмки', 'Ссылки и сроки', 'Списки сотрудников', 'Заказы', 'Платежи']],
     ['Настройки', ['Каталог и цены', 'Сотрудники']]
   ]);
 });
 
 test('live roles keep the visibility of the router guards', () => {
   assert.deepEqual(titles(cabinetNavigation({ role: 'curator', permissions: ['order.read'], demo: false })), [
-    ['Работа', ['Обзор', 'Учреждения', 'Ссылки и сроки', 'Списки сотрудников', 'Заказы', 'Платежи']]
+    ['Работа', ['Обзор', 'Учреждения', 'Съёмки', 'Ссылки и сроки', 'Списки сотрудников', 'Заказы', 'Платежи']]
   ]);
   assert.deepEqual(titles(cabinetNavigation({ role: 'head', permissions: [], demo: false })), [
-    ['Работа', ['Обзор', 'Учреждения', 'Ссылки и сроки', 'Списки сотрудников', 'Вопрос куратору']]
+    ['Работа', ['Обзор', 'Учреждения', 'Съёмки', 'Ссылки и сроки', 'Списки сотрудников', 'Вопрос куратору']]
   ]);
   assert.deepEqual(titles(cabinetNavigation({ role: 'teacher', permissions: [], demo: false })), [
     ['Работа', ['Мои группы', 'Ссылки и сроки', 'Списки сотрудников', 'Вопрос куратору']]
@@ -26,7 +26,7 @@ test('live roles keep the visibility of the router guards', () => {
 
 test('permissions, not roles, open settings in live mode', () => {
   const groups = cabinetNavigation({ role: 'organizer', permissions: [], demo: false });
-  assert.deepEqual(titles(groups), [['Работа', ['Обзор', 'Учреждения', 'Ссылки и сроки', 'Списки сотрудников']]]);
+  assert.deepEqual(titles(groups), [['Работа', ['Обзор', 'Учреждения', 'Съёмки', 'Ссылки и сроки', 'Списки сотрудников']]]);
 });
 
 test('demo mode keeps the product screens without live API', () => {

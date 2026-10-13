@@ -33,10 +33,14 @@ export const structureApi = {
         shoot: result.data
       };
     }
+    // UI-DEC-03: a shoot scope without an institution is the cabinet-wide list of shoots.
+    const everyShoot = scope.kind === 'shoot' && !scope.institutionId;
     const path =
       scope.kind === 'institution'
         ? '/api/v1/institutions'
-        : '/api/v1/institutions/' + encodeURIComponent(scope.institutionId ?? '') + '/shoots';
+        : everyShoot
+          ? '/api/v1/shoots'
+          : '/api/v1/institutions/' + encodeURIComponent(scope.institutionId ?? '') + '/shoots';
     const result = await api.get<{
       data: { items: Institution[] | Shoot[] };
       meta: PageMeta;
@@ -44,7 +48,7 @@ export const structureApi = {
       params: {
         page,
         pageSize,
-        ...(scope.kind === 'institution' && q ? { q } : {})
+        ...((scope.kind === 'institution' || everyShoot) && q ? { q } : {})
       },
       unwrapEnvelope: false
     });

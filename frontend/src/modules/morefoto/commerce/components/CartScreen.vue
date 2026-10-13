@@ -15,7 +15,7 @@ const { gallery, loading, error, unavailable, reload } = useGallery();
     >
     <template v-else-if="gallery">
       <header class="mf-page-heading">
-        <p class="mf-eyebrow">ВАШ ВЫБОР</p>
+        <p class="mf-eyebrow">ВАШ ЗАКАЗ</p>
         <h1>Корзина</h1>
         <p class="mf-muted">{{ gallery.institutionName }} · {{ gallery.groupName }} · {{ gallery.shootName }}</p>
       </header>

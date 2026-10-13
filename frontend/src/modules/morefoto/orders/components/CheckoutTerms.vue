@@ -7,8 +7,12 @@ import { formatMoment } from '../formatters';
 defineProps<{ gallery: GallerySnapshot; seller: Seller | null; offer: LegalDocument | null }>();
 </script>
 <template>
-  <section class="mf-panel checkout-terms" aria-labelledby="checkout-terms-title">
-    <h2 id="checkout-terms-title">Как получить заказ</h2>
+  <!-- UI-DEC-04: the terms stay next to the order but folded; the seller is also named in the footer. -->
+  <details class="mf-panel checkout-terms" data-testid="checkout-terms">
+    <summary>
+      <h2 id="checkout-terms-title">Как получить заказ</h2>
+      <span>Сроки печати и файлов, чек, продавец</span>
+    </summary>
     <dl>
       <div>
         <dt>Печатная продукция</dt>
@@ -51,12 +55,41 @@ defineProps<{ gallery: GallerySnapshot; seller: Seller | null; offer: LegalDocum
         заказа.
       </p>
     </div>
-  </section>
+  </details>
 </template>
 <style scoped>
-.checkout-terms h2 {
-  font-size: 20px;
-  margin-bottom: 20px;
+.checkout-terms {
+  padding: var(--mf-space-4) var(--mf-space-5);
+}
+.checkout-terms > summary {
+  display: grid;
+  gap: 2px;
+  cursor: pointer;
+  list-style: none;
+}
+.checkout-terms > summary::-webkit-details-marker {
+  display: none;
+}
+.checkout-terms > summary h2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--mf-text-base);
+}
+.checkout-terms > summary h2::after {
+  content: '+';
+  color: var(--mf-color-link);
+  font-weight: 400;
+}
+.checkout-terms[open] > summary h2::after {
+  content: '−';
+}
+.checkout-terms > summary span {
+  color: var(--mf-color-text-secondary);
+  font-size: var(--mf-text-sm);
+}
+.checkout-terms[open] > summary {
+  margin-bottom: var(--mf-space-4);
 }
 .checkout-terms dl {
   display: grid;
@@ -79,7 +112,7 @@ defineProps<{ gallery: GallerySnapshot; seller: Seller | null; offer: LegalDocum
   font-size: 13px;
   line-height: 1.7;
 }
-.checkout-terms summary {
+.checkout-terms details summary {
   cursor: pointer;
   color: var(--mf-color-link);
 }

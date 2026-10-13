@@ -53,7 +53,13 @@ export function cabinetNavigation({ role, permissions, demo, counters = {} }: Na
       );
     }
   } else {
-    if ('teacher' !== role) work.push(item('Учреждения', '/cabinet/institutions', 'mdi-home-city-outline'));
+    if ('teacher' !== role) {
+      // UI-DEC-03: shoots of every institution have their own section next to the institutions.
+      work.push(
+        item('Учреждения', '/cabinet/institutions', 'mdi-home-city-outline'),
+        item('Съёмки', '/cabinet/shoots', 'mdi-camera-outline')
+      );
+    }
     work.push(item('Ссылки и сроки', '/cabinet/links', 'mdi-link-variant'));
     // DS-14: the head reads the staff lists of their institutions without changing them.
     work.push(item('Списки сотрудников', '/cabinet/staff-requests', 'mdi-account-check-outline'));

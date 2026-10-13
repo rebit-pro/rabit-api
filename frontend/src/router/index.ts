@@ -50,6 +50,7 @@ router.beforeEach(async (to) => {
         'CabinetProfile',
         'CabinetWelcome',
         'OrganizationList',
+        'ShootList',
         'CabinetInstitution',
         'OrganizationShoot',
         'PhotoWorkspace',

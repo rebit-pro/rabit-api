@@ -297,6 +297,11 @@ defineExpose({ focusRow });
 <style scoped>
 .ui-data-table {
   min-width: 0;
+  /* UI-DEC-01: the table is a work area on a pale sea tray, set apart from the page; rows stay on white. */
+  padding: var(--mf-space-2);
+  border: 1px solid var(--mf-color-workspace-border);
+  border-radius: 14px;
+  background: var(--mf-color-workspace);
 }
 table {
   width: 100%;
@@ -321,7 +326,7 @@ table {
   gap: var(--mf-space-2) var(--mf-space-3);
   /* Touch compact buttons are 44px: the bar keeps one height with or without a selection. */
   min-height: 56px;
-  margin-bottom: var(--mf-space-3);
+  margin-bottom: var(--mf-space-2);
   padding: 6px var(--mf-space-3);
   border-radius: var(--mf-radius-sm);
   font-size: var(--mf-text-small);
@@ -329,7 +334,20 @@ table {
   transition: background-color 0.15s ease;
 }
 .ui-table-toolbar--selected {
-  background: var(--mf-color-selected);
+  background: var(--mf-color-surface);
+  box-shadow: inset 0 0 0 1px var(--mf-color-selected-strong);
+}
+.ui-table-desktop {
+  overflow: hidden;
+  border-radius: var(--mf-radius-sm);
+  background: var(--mf-color-surface);
+  box-shadow: 0 0 0 1px var(--mf-color-workspace-border);
+}
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+tbody tr:hover {
+  background: var(--mf-color-workspace-row-hover);
 }
 .ui-table-summary {
   color: var(--mf-color-text-secondary);
@@ -417,7 +435,8 @@ th {
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
-  margin-top: 16px;
+  margin-top: var(--mf-space-2);
+  padding: var(--mf-space-1) var(--mf-space-2) 0;
   font-size: var(--mf-text-small);
 }
 .ui-table-page-size {
@@ -451,12 +470,13 @@ th {
   .ui-table-mobile {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
+    gap: var(--mf-space-2);
   }
   .ui-table-card {
     padding: 16px;
-    border: 1px solid var(--mf-color-border);
+    border: 1px solid var(--mf-color-workspace-border);
     border-radius: 8px;
+    background: var(--mf-color-surface);
     min-width: 0;
   }
   .ui-table-card-title {

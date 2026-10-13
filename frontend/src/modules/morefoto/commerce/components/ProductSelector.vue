@@ -9,6 +9,7 @@ import { printIncludesCopy } from '../print-copy';
 import { sellsKind } from '../sales-windows';
 import UiQuantityField from '../../ui/components/UiQuantityField.vue';
 import { quantityValue } from '../../ui/field-values';
+import { plural } from '@/components/viz/measures';
 const props = defineProps<{
   gallery: GallerySnapshot;
   photo: GalleryPhoto;
@@ -31,6 +32,10 @@ watch(
   { immediate: true }
 );
 const product = computed(() => products.value.find((product) => product.id === productId.value));
+const kindLabels = { physical: 'Печать', digital: 'Электронный файл', bundle: 'Все кадры серии файлами' } as const;
+function optionNote(item: { kind: keyof typeof kindLabels; format?: string }): string {
+  return item.format ? kindLabels[item.kind] + ' · ' + item.format : kindLabels[item.kind];
+}
 const discounted = computed(() => isMockApiEnabled && props.gallery.audience === 'staff' && product.value?.staffDiscount);
 const childCode = computed(
   () =>
@@ -90,29 +95,35 @@ async function add() {
 }
 </script>
 <template>
+  <!-- UI-DEC-06: products are a short list with prices; one tap picks a product, one more adds it to the cart. -->
   <form class="product-selector" novalidate @submit.prevent="add">
     <h3>Заказать этот кадр</h3>
     <p v-if="isMockApiEnabled" class="product-demo">Демонстрационные цены</p>
     <p v-if="gallery.state === 'digital'" class="mf-muted" data-testid="selector-digital-only">
       Печать закрыта — доступны электронные фотографии.
     </p>
-    <v-select
-      v-model="productId"
-      :items="products"
-      item-title="name"
-      item-value="id"
-      label="Продукция"
-      open-text="Продукция"
-      close-text="Продукция"
-      :disabled="busy"
-      hide-details
-    />
-    <p v-if="!products.length" role="status">Ассортимент этой группы пока недоступен.</p>
+    <fieldset v-if="products.length" class="product-options" :disabled="busy">
+      <legend class="mf-sr-only">Продукция</legend>
+      <label
+        v-for="item in products"
+        :key="item.id"
+        class="product-option"
+        :class="{ 'product-option--active': item.id === productId }"
+        data-testid="product-option"
+      >
+        <input v-model="productId" type="radio" name="product" :value="item.id" class="product-option__input" />
+        <span class="product-option__copy">
+          <strong>{{ item.name }}</strong>
+          <small v-if="item.id === productId"
+            >{{ item.description }}<template v-if="item.unit"> Единица: {{ item.unit }}.</template></small
+          >
+          <small v-else-if="item.kind !== 'physical'">{{ optionNote(item) }}</small>
+        </span>
+        <span class="product-option__price">{{ money(item.price) }}</span>
+      </label>
+    </fieldset>
+    <p v-else role="status">Ассортимент этой группы пока недоступен.</p>
     <template v-if="product">
-      <p class="product-description">{{ product.description }}</p>
-      <p v-if="product.format || product.unit" class="mf-muted">
-        {{ product.format }}<template v-if="product.unit"> · Единица: {{ product.unit }}</template>
-      </p>
       <p v-if="covered" class="product-discount">Входит в электронный комплект вашей корзины без дополнительной оплаты.</p>
       <p v-if="printed" class="product-discount" data-testid="product-print-copy">
         Электронная копия этого кадра входит в печать вашей корзины.
@@ -120,53 +131,118 @@ async function add() {
       <p v-if="discounted" class="product-discount">
         Скидка сотрудника 50% <s>{{ money(product.price) }}</s>
       </p>
-      <UiQuantityField
-        v-if="product.kind === 'physical'"
-        ref="quantityField"
-        v-model="quantity"
-        :label="product.printCount > 1 ? 'Количество комплектов' : 'Количество'"
-        :context="photo.code"
-        :disabled="busy"
-        class="product-quantity"
-      />
+      <div class="product-buy">
+        <UiQuantityField
+          v-if="product.kind === 'physical'"
+          ref="quantityField"
+          v-model="quantity"
+          :label="product.printCount > 1 ? 'Количество комплектов' : 'Количество'"
+          :context="photo.code"
+          :disabled="busy"
+          density="compact"
+          class="product-quantity"
+        />
+        <div class="product-price">
+          <span>{{ isMockApiEnabled ? 'Итого' : 'Цена за единицу' }}</span>
+          <strong>{{ isMockApiEnabled ? (total === null ? '—' : money(total)) : money(product.price) }}</strong>
+        </div>
+      </div>
       <p v-if="product.printCount > 1" class="mf-muted">
         Отпечатков:
         {{ Number(quantity) > 0 ? Number(quantity) * product.printCount : 0 }}
       </p>
-      <div class="product-price">
-        <span>{{ isMockApiEnabled ? 'Итого' : 'Цена за единицу до расчёта' }}</span
-        ><strong>{{ isMockApiEnabled ? (total === null ? '—' : money(total)) : money(product.price) }}</strong>
-      </div>
-      <v-btn type="submit" color="primary" block :loading="busy" :disabled="busy" data-testid="add-to-cart">Добавить в корзину</v-btn>
-      <v-btn :to="'/g/' + token + '/cart'" variant="text" color="primary" block>Посмотреть корзину</v-btn>
+      <v-btn
+        type="submit"
+        color="primary"
+        block
+        size="large"
+        :loading="busy"
+        :disabled="busy"
+        prepend-icon="mdi-cart-plus"
+        data-testid="add-to-cart"
+        >Добавить в корзину</v-btn
+      >
     </template>
     <v-alert v-if="error" type="error" variant="tonal" density="compact" role="alert">{{ error }}</v-alert>
     <p v-if="notice" role="status" class="product-notice">{{ notice }}</p>
+    <v-btn v-if="quote.count" :to="'/g/' + token + '/cart'" variant="tonal" color="primary" block append-icon="mdi-arrow-right"
+      >Оформить заказ · {{ quote.count }} {{ plural(quote.count, ['позиция', 'позиции', 'позиций']) }}</v-btn
+    >
   </form>
 </template>
 <style scoped>
 .product-selector {
-  padding: var(--mf-space-6);
+  padding: var(--mf-space-5);
   align-self: start;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--mf-space-4);
+  gap: var(--mf-space-3);
   background: var(--mf-color-surface);
 }
 .product-selector h3 {
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.4;
 }
 .product-demo {
   font-size: 12px;
   color: var(--mf-color-text-secondary);
-  margin-top: -10px;
+  margin-top: -8px;
 }
-.product-description {
-  font-size: 14px;
-  line-height: 1.6;
+.product-options {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  border: 0;
+}
+.product-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--mf-space-3);
+  min-height: var(--mf-touch-size);
+  padding: 6px var(--mf-space-3);
+  border: 1px solid var(--mf-color-border);
+  border-radius: var(--mf-radius-md);
+  cursor: pointer;
+  transition:
+    border-color var(--mf-duration-fast) var(--mf-ease-standard),
+    background-color var(--mf-duration-fast) var(--mf-ease-standard);
+}
+.product-option:hover {
+  border-color: var(--mf-color-border-hover);
+}
+.product-option--active {
+  border-color: var(--mf-color-primary);
+  background: var(--mf-color-selected);
+}
+.product-option:has(.product-option__input:focus-visible) {
+  outline: 2px solid var(--mf-color-focus);
+  outline-offset: 2px;
+}
+.product-option__input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--mf-color-primary);
+}
+.product-option__copy {
+  display: grid;
+  min-width: 0;
+  line-height: 1.35;
+}
+.product-option__copy strong {
+  font-size: var(--mf-text-md);
+  font-weight: 600;
+}
+.product-option__copy small {
   color: var(--mf-color-text-secondary);
+  font-size: var(--mf-text-xs);
+}
+.product-option__price {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
 }
 .product-discount {
   color: var(--mf-color-link);
@@ -176,18 +252,30 @@ async function add() {
   margin-left: 8px;
   color: var(--mf-color-text-secondary);
 }
-.product-price {
+.product-buy {
   display: flex;
+  flex-wrap: wrap;
+  align-items: end;
   justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  padding: 8px 0;
+  gap: var(--mf-space-3);
+}
+.product-quantity {
+  width: 160px;
+}
+.product-price {
+  display: grid;
+  justify-items: end;
+  margin-left: auto;
+  font-size: var(--mf-text-xs);
+  color: var(--mf-color-text-secondary);
 }
 .product-price strong {
-  font-size: 24px;
+  color: var(--mf-color-text);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
 }
 .product-notice {
-  padding: 12px;
+  padding: 10px 12px;
   background: var(--mf-color-selected);
   border-radius: 8px;
   color: var(--mf-color-link);

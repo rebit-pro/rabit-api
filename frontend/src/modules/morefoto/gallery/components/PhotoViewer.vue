@@ -163,7 +163,8 @@ watch(
     gap: 20px;
   }
   .photo-viewer__stage {
-    height: 58svh;
+    /* UI-DEC-06: the order list starts within the first screen on a phone. */
+    height: 42svh;
   }
 }
 </style>
