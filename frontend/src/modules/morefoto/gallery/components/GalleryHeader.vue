@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { daysLeft, salesStateTitle } from '../../commerce/sales-windows';
 import type { GallerySnapshot } from '../types';
+import BuyerGuideLink from '../../guide/BuyerGuideLink.vue';
 const props = defineProps<{ gallery: GallerySnapshot }>();
 const emit = defineEmits<{ help: [] }>();
 const format = (moment: string): string =>
@@ -36,6 +37,7 @@ const remaining = computed(() => {
             : 'Выберите код ребёнка и откройте понравившийся кадр.'
         }}
       </p>
+      <BuyerGuideLink class="gallery-heading__guide" />
     </div>
     <aside class="gallery-conditions" aria-label="Условия съёмки">
       <div class="gallery-conditions__title">
@@ -75,6 +77,9 @@ const remaining = computed(() => {
 }
 .gallery-heading__copy {
   min-width: 0;
+}
+.gallery-heading__guide {
+  margin-top: var(--mf-space-3);
 }
 .gallery-heading h1 {
   font-size: clamp(32px, 4vw, 48px);

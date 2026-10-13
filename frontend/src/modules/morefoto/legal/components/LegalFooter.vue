@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import MfLogo from '@/components/brand/MfLogo.vue';
 import { documentPath, sellerLine } from '../rules';
 import { useLegalCatalog } from '../useLegalCatalog';
+import { buyerGuidePath } from '../../guide/buyerGuide';
 const { catalog } = useLegalCatalog();
 const seller = computed(() => sellerLine(catalog.value?.seller ?? null));
 </script>
@@ -16,7 +17,7 @@ const seller = computed(() => sellerLine(catalog.value?.seller ?? null));
       </div>
       <nav class="mf-legal-footer__nav" aria-label="Помощь покупателю">
         <p>Покупателям</p>
-        <a href="/guide/parent/">Как заказать фото</a>
+        <a :href="buyerGuidePath" data-testid="footer-buyer-guide">Как купить фото</a>
         <a href="/guide/faq/">Вопросы и ответы</a>
       </nav>
       <nav class="mf-legal-footer__nav" aria-label="Юридические документы">
