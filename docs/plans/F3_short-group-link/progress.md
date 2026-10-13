@@ -2,13 +2,13 @@
 
 ## Точка продолжения
 
-- Дата: 13.10.2026. Ветка `codex/f3-short-group-link` от `origin/main` 0d02adf (merge #160); рабочая копия `/home/user/rabit-api-worktrees/f3-short-group-link`. PR — см. журнал «PR».
+- Дата: 13.10.2026. Ветка `codex/f3-short-group-link` от `origin/main` 0d02adf (merge #160); рабочая копия `/home/user/rabit-api-worktrees/f3-short-group-link`. PR #186 (F3 `review` в графе).
 - Связанное: README волны `docs/waves/f3/README.md`, граф `docs/waves/graph.json`, план владельца `docs/plans/OPS-telemos-feedback-plan/` (R05), F2 `docs/waves/f2/README.md`.
 - Завершено: S0–S4 и документация S5 — реализация (314533f, 8d62da9), E2E и верификатор (1357d85), README, ручной чек-лист, граф (J4 `merged`); быстрые проверки зелёные.
-- Сейчас: S5 — PR и ревью.
+- Сейчас: ревью PR #186.
 - Следующий шаг: ревью PR; без блокеров — полный `make test-e2e` и visual (S6), затем merge по команде пользователя.
 - Блокеры: нет.
-- Рабочее дерево: чистое после коммита документации.
+- Рабочее дерево: чистое после коммита.
 - После merge F3 — выкладка на stage всего слитого (E7, D4, E8, J4, #160, F3) по указанию пользователя 12.10 и 13.10.2026. Юридический вопрос E8 закрыт 13.10.2026 (см. журнал).
 - Команды: PHP — scratchpad `php-f3.sh` (php-cli `rabit-api-php-cli:d1-local`, volumes `rabit-e7-vendor`, `rabit-e7-phpstan`); frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce && npm run test:ui && npm run typecheck:e2e'`; гейт — `E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e`; граф — `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
 
@@ -46,6 +46,10 @@
 
 - Пользователь проверил: для продажи фото физлицу достаточно email, ФИО и телефон не нужны (ст. 4.7 54-ФЗ). Кассовый чек уходит на email — волна G2; ссылка на заказ письмом — J2. Отправку писем пока не включаем; текущая форма отправку не обещает («Выбор канала для чека появится позже»). Выкладка E7/D4/E8/J4 больше не ждёт ответа.
 
+### 13.10.2026 — PR
+
+- Ветка запушена, открыт PR #186 в main; F3 `review` в графе, `verify-wave-graph` exit 0.
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -59,4 +63,4 @@
 | F3-T07 | PENDING | — | `make test-e2e` после ревью: `zzzz-short-links` |
 | F3-T08 | PENDING | — | `make test-e2e` → `verify-links.php` |
 | F3-T09 | PENDING | — | `make test-e2e` → `docs/waves/f3/visual.json` |
-| F3-T10 | PENDING | — | J4 `merged` готово, verify exit 0; F3 `review` — после открытия PR |
+| F3-T10 | PASS | 13.10.2026 | J4 `merged`, F3 `review` (PR #186); `python3 tools/verify-wave-graph.py docs/waves/graph.json` exit 0 |
