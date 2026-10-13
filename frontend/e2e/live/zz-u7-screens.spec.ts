@@ -35,8 +35,10 @@ test('U7: учреждение и съёмка — счётчики, хлебн�
   const search = page.waitForResponse((r) => r.url().includes('/api/v1/institutions?') && r.url().includes('q=U7'));
   await page.getByLabel('Поиск учреждений', { exact: true }).fill('U7 Учр');
   expect((await search).status()).toBe(200);
-  const row = page.getByTestId('structure-row').filter({ hasText: 'U7 Учреждение' });
-  await expect(row).toContainText('1 съёмка · 1 группа');
+  // #92: the institution list is a table; its counters are columns.
+  const row = page.locator('[data-row-id]').filter({ visible: true }).filter({ hasText: 'U7 Учреждение' });
+  await expect(row.locator('[data-column="shoots"]')).toHaveText('1');
+  await expect(row.locator('[data-column="groups"]')).toHaveText('1');
   await row.getByRole('link', { name: 'U7 Учреждение', exact: true }).click();
 
   const crumbs = page.getByRole('navigation', { name: 'Хлебные крошки' });
@@ -51,8 +53,10 @@ test('U7: учреждение и съёмка — счётчики, хлебн�
   const tabs = page.getByRole('navigation', { name: 'Разделы съёмки' });
   await expect(tabs.getByRole('link', { name: 'Группы', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(crumbs.getByRole('link', { name: 'U7 Учреждение', exact: true })).toBeVisible();
-  await expect(page.getByTestId('distribution').locator('table caption')).toContainText('из 1 группы');
-  await expect(page.getByTestId('structure-row')).toContainText('Ответственный группы не назначен');
+  // FB-1: the shoot page has no state bar; the groups table names the missing responsible person.
+  await expect(page.getByTestId('distribution')).toHaveCount(0);
+  const group = page.locator('[data-row-id]').filter({ visible: true }).filter({ hasText: 'U7 Группа' });
+  await expect(group.locator('[data-column="teacher"]')).toHaveText('Не назначен');
 
   await tabs.getByRole('link', { name: 'Условия', exact: true }).click();
   await expect(page).toHaveURL(new RegExp('/shoots/' + shoot.id + '/conditions'));

@@ -209,7 +209,7 @@ test('#92 DEC-05: учреждение удаляется из списка уч
   try {
     await page.goto('/cabinet/institutions');
     await page.getByLabel('Поиск учреждений', { exact: true }).fill(name);
-    const card = page.getByTestId('structure-row').filter({ hasText: name });
+    const card = rowOf(page, name);
     await expect(card).toHaveCount(1);
     await card.getByRole('button', { name: 'Удалить «' + name + '»', exact: true }).click();
     const dialog = page.getByTestId('structure-remove-dialog');
@@ -256,5 +256,68 @@ test('#92 T11 T12: ссылки фильтруются плиткой «Приё
   } finally {
     await remove(page, '/api/v1/institutions/' + parent.id);
     await remove(page, '/api/v1/catalog/products/' + productId);
+  }
+});
+
+type ShootItem = { id: string; institutionId: string; institutionName: string; name: string; groupCount: number; openGroupCount: number };
+
+test('UI-T03 UI-T09: раздел «Съёмки» — съёмки всех учреждений, поиск и сортировка на сервере', async ({ page, browser, baseURL }) => {
+  const mark = 'UI03 ' + suffix();
+  const { parent, shoot } = await institution(page, mark + ' сад');
+  await create(page, '/api/v1/institutions/' + parent.id + '/shoots', { name: mark + ' весна', date: '2026-11-20' });
+  await create(page, '/api/v1/institutions/' + parent.id + '/shoots', { name: mark + ' без даты', date: null });
+  await group(page, shoot.id, mark + ' Ромашки');
+  const list = async (viewer: Page, query: string) =>
+    (await body(await viewer.request.get('/api/v1/shoots?' + query, { headers: await auth(viewer) }))) as {
+      data: { items: ShootItem[] };
+      meta: { page: number; pageSize: number; total: number; totalPages: number };
+    };
+  try {
+    // The server orders the whole filter: newest first, a shoot without a date last.
+    const byDate = await list(page, 'q=' + encodeURIComponent(mark));
+    expect(byDate.data.items.map((item) => item.name)).toEqual([mark + ' весна', mark + ' сад съёмка', mark + ' без даты']);
+    expect(byDate.meta).toEqual({ page: 1, pageSize: 25, total: 3, totalPages: 1 });
+    const dated = byDate.data.items[1]!;
+    expect([dated.id, dated.institutionId, dated.institutionName, dated.groupCount, dated.openGroupCount]).toEqual([
+      shoot.id,
+      parent.id,
+      mark + ' сад',
+      1,
+      0
+    ]);
+    const byName = await list(page, 'q=' + encodeURIComponent(mark) + '&sort=name&direction=asc&pageSize=2');
+    expect([byName.data.items.map((item) => item.name), byName.meta.totalPages]).toEqual([[mark + ' без даты', mark + ' весна'], 2]);
+    for (const query of ['sort=revision', 'direction=up', 'pageSize=101']) {
+      expect((await page.request.get('/api/v1/shoots?' + query, { headers: await auth(page) })).status()).toBe(422);
+    }
+    const context = await browser.newContext({ baseURL });
+    try {
+      const teacher = await context.newPage();
+      await login(teacher, 'teacher');
+      expect((await teacher.request.get('/api/v1/shoots', { headers: await auth(teacher) })).status()).toBe(403);
+    } finally {
+      await context.close();
+    }
+
+    // The menu opens the section; the search narrows the list; a column header asks the server for another order.
+    await page.goto('/cabinet/overview');
+    await page.getByRole('navigation', { name: 'Основная навигация' }).getByRole('link', { name: 'Съёмки', exact: true }).click();
+    await expect(page).toHaveURL(/\/cabinet\/shoots$/);
+    await page.getByLabel('Поиск съёмок', { exact: true }).fill(mark);
+    await expect(rows(page)).toHaveCount(3);
+    await expect(rows(page).first()).toContainText(mark + ' весна');
+    const sorted = page.waitForResponse((response) => response.url().includes('/api/v1/shoots?') && response.url().includes('sort=name'));
+    await page.getByRole('button', { name: 'Сортировать: Съёмка', exact: true }).click();
+    expect((await sorted).status()).toBe(200);
+    await expect(rows(page).first()).toContainText(mark + ' без даты');
+    await rowOf(page, mark + ' сад съёмка')
+      .getByRole('link', { name: mark + ' сад съёмка', exact: true })
+      .click();
+    await expect(page).toHaveURL(new RegExp('/shoots/' + shoot.id + '$'));
+    await expect(
+      page.getByRole('navigation', { name: 'Разделы съёмки' }).getByRole('link', { name: 'Группы', exact: true })
+    ).toHaveAttribute('aria-current', 'page');
+  } finally {
+    await remove(page, '/api/v1/institutions/' + parent.id);
   }
 });

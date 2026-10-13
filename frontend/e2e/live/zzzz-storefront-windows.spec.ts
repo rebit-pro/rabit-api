@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { test, expect, type APIResponse } from '@playwright/test';
-import { login, token } from './helpers.js';
+import { login, productRadio, token } from './helpers.js';
 
 /** E7: a gallery whose print sales closed a day ago and whose digital sales go on for six more days. */
 type Fixture = Record<'digital' | 'closed', { token: string; groupId: string }>;
@@ -101,9 +101,8 @@ for (const viewport of [
     const code = gallery.children[0]!.photos[0]!.code;
     await page.getByRole('button', { name: 'Открыть кадр ' + code, exact: true }).click();
     await expect(page.getByTestId('selector-digital-only')).toBeVisible();
-    await page.locator('.product-selector .v-select .v-field').click();
-    await expect(page.getByRole('option', { name: 'E7 Печать 15×21', exact: true })).toHaveCount(0);
-    await page.getByRole('option', { name: 'E7 Электронный кадр', exact: true }).click();
+    await expect(productRadio(page, 'E7 Печать 15×21')).toHaveCount(0);
+    await productRadio(page, 'E7 Электронный кадр').check();
     const priced = page.waitForResponse((r) => r.url().endsWith('/quotes') && r.request().method() === 'POST');
     await page.getByTestId('add-to-cart').click();
     expect((await priced).status()).toBe(200);
@@ -111,7 +110,7 @@ for (const viewport of [
     await page.getByRole('link', { name: 'Открыть корзину', exact: true }).click();
     await expect(page.getByTestId('cart-digital-only')).toContainText('Печатные позиции убраны из корзины: 1');
     await expect(page.getByTestId('cart-total')).toContainText('150');
-    await expect(page.getByRole('link', { name: 'Оформить заказ', exact: true })).toBeVisible();
+    await expect(page.getByTestId('create-order')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: info.outputPath('e7-' + viewport.name + '-cart.png'), fullPage: true, animations: 'disabled' });
     expect(errors).toEqual([]);

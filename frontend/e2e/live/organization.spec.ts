@@ -5,7 +5,9 @@ const institutionsApi = '/api/v1/institutions';
 const institutionsPage = '/cabinet/institutions';
 const errors = new WeakMap<Page, string[]>();
 const key = () => crypto.randomUUID().replace(/-/g, '');
-const row = (page: Page, name: string) => page.getByTestId('structure-row').filter({ hasText: name });
+/** A row of the institution list or of the shoot's groups (#92): the desktop row and the mobile card share the ID. */
+const rows = (page: Page) => page.locator('[data-row-id]').filter({ visible: true });
+const row = (page: Page, name: string) => rows(page).filter({ hasText: name });
 const edit = (page: Page, name: string) =>
   row(page, name).getByRole('button', {
     name: `Редактировать «${name}»`,
@@ -166,7 +168,7 @@ test('C3: учреждение, две съёмки и группы сохран
     await expect(row(another, 'C3 Сотрудники')).toBeVisible();
     await another.goto(shootPage(parent.id, second.id));
     await expect(another.getByRole('button', { name: 'Новая группа', exact: true })).toBeEnabled();
-    await expect(another.getByTestId('structure-row')).toHaveCount(0);
+    await expect(rows(another)).toHaveCount(0);
   } finally {
     await fresh.close();
   }
@@ -303,13 +305,13 @@ test('C3: съёмки учреждения листаются в виджете
   const event = events[0]!;
   for (let i = 0; i < 26; i++) await group(page, event.id, `C3 Группа ${String(i).padStart(2, '0')}`);
   await page.goto(shootPage(parent.id, event.id));
-  await expect(page.getByTestId('structure-row')).toHaveCount(25);
+  await expect(rows(page)).toHaveCount(25);
   const pending = page.waitForResponse((response) => response.url().includes(`/shoots/${event.id}?page=2`));
   await page.getByRole('button', { name: 'Следующая', exact: true }).click();
   const groups = await body(await pending);
   expect(groups.data.groups.meta.page).toBe(2);
   expect(groups.data.groups.meta.total).toBe(26);
-  await expect(page.getByTestId('structure-row')).toHaveCount(1);
+  await expect(rows(page)).toHaveCount(1);
   await expect(row(page, groups.data.groups.items[0].name)).toBeVisible();
 });
 

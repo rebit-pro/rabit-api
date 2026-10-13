@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { test, expect, type APIResponse } from '@playwright/test';
-import { login, token } from './helpers.js';
+import { login, productRadio, token } from './helpers.js';
 
 type Fixture = Record<'open' | 'preparing' | 'closed' | 'revoked', { token: string; groupId: string; photoId: string }>;
 const fixture = JSON.parse(readFileSync('var/e4-fixture.json', 'utf8')) as Fixture;
@@ -168,15 +168,16 @@ for (const viewport of [
       animations: 'disabled'
     });
     await page.getByRole('button', { name: 'Открыть кадр A001', exact: true }).click();
-    await page.locator('.product-selector .v-select .v-field').click();
-    await page.getByRole('option', { name: 'E4 Печать 10×15', exact: true }).click();
+    // UI-DEC-06: products are a priced list; a radio is named «product, price».
+    await productRadio(page, 'E4 Печать 10×15').check();
     const priced = page.waitForResponse((r) => r.url().endsWith('/quotes') && r.request().method() === 'POST');
     await page.getByTestId('add-to-cart').click();
     expect((await priced).status()).toBe(200);
     await page.getByRole('button', { name: 'Закрыть просмотр', exact: true }).click();
     await page.getByRole('link', { name: 'Открыть корзину', exact: true }).click();
     await expect(page.getByTestId('cart-total')).toContainText('100');
-    await expect(page.getByRole('link', { name: 'Оформить заказ', exact: true })).toBeVisible();
+    // UI-DEC-04: the order is placed from the cart itself.
+    await expect(page.getByTestId('create-order')).toBeVisible();
     await page.reload();
     await expect(page.getByTestId('cart-total')).toContainText('100');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -229,7 +230,7 @@ test('E4: failed clear keeps the saved selection', async ({ page }) => {
   await page.goto('/g/' + fixture.open.token + '/cart');
   await expect(page.getByTestId('cart-total')).toContainText('100');
   await page.route('**/quotes', (route) => route.abort());
-  await page.getByRole('button', { name: 'Очистить корзину группы' }).click();
+  await page.getByRole('button', { name: 'Очистить корзину', exact: true }).click();
   await page.getByRole('button', { name: 'Да, очистить' }).click();
   await expect(page.getByRole('dialog', { name: 'Очистить корзину этой группы?' }).getByRole('alert')).toContainText(
     'Не удалось проверить корзину'

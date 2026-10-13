@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { test, expect, type APIResponse, type Page } from '@playwright/test';
-import { orderConsents, payOnProvider } from './helpers.js';
+import { orderConsents, payOnProvider, productRadio } from './helpers.js';
 
 // J1: purchased originals of a paid order. The order is paid on the YooKassa test page like in G1; without the test
 // shop keys the spec proves only the honest unpaid state, and the gate accepts no skipped test.
@@ -161,8 +161,7 @@ test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and nev
     await page.setViewportSize(viewport);
     await page.goto('/g/' + fixture.print.token);
     await page.getByRole('button', { name: 'Открыть кадр ' + photo('B', frames.B1).code, exact: true }).click();
-    await page.locator('.product-selector .v-select .v-field').click();
-    await page.getByRole('option', { name: digital!.name, exact: true }).click();
+    await productRadio(page, digital!.name).check();
     const hint = page.getByTestId('product-print-copy');
     await expect(hint).toHaveText('Электронная копия этого кадра входит в печать вашей корзины.');
     await hint.scrollIntoViewIfNeeded();

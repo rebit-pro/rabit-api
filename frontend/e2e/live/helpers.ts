@@ -66,6 +66,11 @@ export async function acceptCheckoutDocuments(page: Page): Promise<void> {
   await page.getByLabel('Даю согласие на обработку персональных данных').check();
   await page.getByLabel('Принимаю условия публичной оферты').check();
 }
+/** UI-DEC-06: a product of the frame dialog is a radio named «product, price». */
+export function productRadio(page: Page, name: string): Locator {
+  return page.getByRole('radio', { name: new RegExp('^' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ', ') });
+}
+
 export async function token(page: Page): Promise<string> {
   const value = await page.evaluate(() => localStorage.getItem('morefoto:live:auth:token'));
   expect(value).toBeTruthy();

@@ -111,7 +111,14 @@ async function add() {
         :class="{ 'product-option--active': item.id === productId }"
         data-testid="product-option"
       >
-        <input v-model="productId" type="radio" name="product" :value="item.id" class="product-option__input" />
+        <input
+          v-model="productId"
+          type="radio"
+          name="product"
+          :value="item.id"
+          :aria-label="item.name + ', ' + money(item.price)"
+          class="product-option__input"
+        />
         <span class="product-option__copy">
           <strong>{{ item.name }}</strong>
           <small v-if="item.id === productId"
