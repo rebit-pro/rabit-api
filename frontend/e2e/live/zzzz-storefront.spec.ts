@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { test, expect, type APIResponse } from '@playwright/test';
-import { login, productRadio, token } from './helpers.js';
+import { login, productAdd, token } from './helpers.js';
 
 type Fixture = Record<'open' | 'preparing' | 'closed' | 'revoked', { token: string; groupId: string; photoId: string }>;
 const fixture = JSON.parse(readFileSync('var/e4-fixture.json', 'utf8')) as Fixture;
@@ -162,22 +162,36 @@ for (const viewport of [
     expect(navigation?.headers()['referrer-policy']).toBe('no-referrer');
     await expect(page.getByRole('button', { name: 'Открыть кадр A001', exact: true })).toBeVisible();
     await expect(page.locator('[data-testid="photo-card"] img').first()).toHaveJSProperty('naturalWidth', 320);
+    // KK-T04 (#192): the parents' guide is one tap away on every purchase step and opens in a new tab.
+    const guide = page.getByTestId('buyer-guide-link');
+    await expect(guide.first()).toBeVisible();
+    await expect(guide.first()).toHaveAttribute('href', '/kak-kupit/');
+    await expect(guide.first()).toHaveAttribute('target', '_blank');
     await page.screenshot({
       path: info.outputPath('e4-' + viewport.name + '-gallery.png'),
       fullPage: true,
       animations: 'disabled'
     });
     await page.getByRole('button', { name: 'Открыть кадр A001', exact: true }).click();
-    // UI-DEC-06: products are a priced list; a radio is named «product, price».
-    await productRadio(page, 'E4 Печать 10×15').check();
+    // #192: each product has its own «+»; an added print turns into a counter, the frame shows its sum.
     const priced = page.waitForResponse((r) => r.url().endsWith('/quotes') && r.request().method() === 'POST');
-    await page.getByTestId('add-to-cart').click();
+    await productAdd(page, 'E4 Печать 10×15').click();
     expect((await priced).status()).toBe(200);
+    const count = page.getByRole('dialog').getByTestId('product-count');
+    await expect(count).toHaveText('1');
+    await page.getByRole('button', { name: 'Добавить ещё один: E4 Печать 10×15', exact: true }).click();
+    await expect(count).toHaveText('2');
+    await expect(page.getByTestId('frame-summary')).toContainText('В корзине из этого кадра: 2 шт.');
+    await page.getByRole('button', { name: 'Убрать один: E4 Печать 10×15', exact: true }).click();
+    await expect(count).toHaveText('1');
+    await expect(page.getByRole('dialog').getByTestId('buyer-guide-link')).toHaveAttribute('href', '/kak-kupit/#foto');
     await page.getByRole('button', { name: 'Закрыть просмотр', exact: true }).click();
     await page.getByRole('link', { name: 'Открыть корзину', exact: true }).click();
     await expect(page.getByTestId('cart-total')).toContainText('100');
     // UI-DEC-04: the order is placed from the cart itself.
     await expect(page.getByTestId('create-order')).toBeVisible();
+    await expect(guide).toHaveAttribute('href', '/kak-kupit/#zakaz');
+    await expect(guide).toBeInViewport();
     await page.reload();
     await expect(page.getByTestId('cart-total')).toContainText('100');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -190,6 +204,35 @@ for (const viewport of [
     expect(await page.evaluate(() => Object.keys(localStorage).some((k) => k.startsWith('morefoto:demo:')))).toBe(false);
   });
 }
+
+test('KK-T01 KK-T06: the parents guide is served with its preview, screenshots and a relative directory redirect', async ({
+  page,
+  request
+}) => {
+  const bare = await request.get('/kak-kupit', { maxRedirects: 0 });
+  expect(bare.status()).toBe(301);
+  expect(bare.headers()['location']).toBe('/kak-kupit/');
+  const errors: string[] = [];
+  const failed: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('response', (response) => response.status() >= 400 && failed.push(response.status() + ' ' + response.url()));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/kak-kupit/');
+  await expect(page.getByRole('heading', { level: 1, name: 'Как купить фото' })).toBeVisible();
+  await expect(page.locator('.kk-card')).toHaveCount(6);
+  const preview = await page.locator('meta[property="og:image"]').getAttribute('content');
+  expect((await request.get(new URL(preview!).pathname)).headers()['content-type']).toBe('image/jpeg');
+  for (const image of await page.locator('.kk-card img').all()) {
+    await image.scrollIntoViewIfNeeded();
+    await expect.poll(() => image.evaluate((node) => (node as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.locator('.shot > a').first().click();
+  await expect(page.locator('dialog.lb')).toHaveJSProperty('open', true);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('dialog.lb')).toHaveJSProperty('open', false);
+  expect([errors, failed]).toEqual([[], []]);
+});
 
 test('E4: failed recalculation keeps selection and offers a real retry', async ({ page }) => {
   await page.goto('/g/' + fixture.open.token);
