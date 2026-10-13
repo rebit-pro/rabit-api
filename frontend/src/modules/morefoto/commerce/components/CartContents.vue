@@ -94,7 +94,7 @@ async function clear() {
         </div>
       </div>
       <!-- UI-DEC-04: the order is placed right here; the old checkout address leads to this page. -->
-      <CheckoutPanel v-if="purchasable" class="cart-layout__order" :gallery="gallery" :token="token" />
+      <CheckoutPanel v-if="purchasable" :key="token" class="cart-layout__order" :gallery="gallery" :token="token" />
       <CartSummary v-else class="cart-layout__order" :quote="quote" :catalog="catalog" :staff="gallery.audience === 'staff'">
         <p class="cart-unavailable" role="status">Оформление заказов в этой группе пока не открыто.</p>
       </CartSummary>
