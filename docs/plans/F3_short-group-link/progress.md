@@ -2,16 +2,14 @@
 
 ## Точка продолжения
 
-- Дата: 13.10.2026. Ветка `codex/f3-short-group-link` от `origin/main` 0d02adf (merge #160); рабочая копия `/home/user/rabit-api-worktrees/f3-short-group-link`. PR #186 (F3 `review` в графе).
-- Связанное: README волны `docs/waves/f3/README.md`, граф `docs/waves/graph.json`, план владельца `docs/plans/OPS-telemos-feedback-plan/` (R05), F2 `docs/waves/f2/README.md`.
-- Завершено: S0–S5 — реализация (314533f, 8d62da9), E2E и верификатор (1357d85), README, ручной чек-лист, граф (J4 `merged`, F3 `review`); быстрые проверки зелёные; ревью 5500006083 — 1 блокер (README выкладки) исправлен, в backlog #187.
-- Завершено также S6: полный гейт `rabit-e2e-b00e58ba69e2` на d0c4c8b — PASS (a 81, b 66, 15 верификаторов); `visual.json`, `verification.json`, скриншоты.
-- Сейчас: ожидание команды пользователя на merge #186.
-- Следующий шаг: merge #186 по команде; затем выкладка на stage всего слитого по `docs/waves/f3/README.md` и README волн E7/D4/E8/J4.
-- Блокеры: нет.
-- Рабочее дерево: чистое после коммита.
-- После merge F3 — выкладка на stage всего слитого (E7, D4, E8, J4, #160, F3) по указанию пользователя 12.10 и 13.10.2026. Юридический вопрос E8 закрыт 13.10.2026 (см. журнал).
-- Команды: PHP — scratchpad `php-f3.sh` (php-cli `rabit-api-php-cli:d1-local`, volumes `rabit-e7-vendor`, `rabit-e7-phpstan`); frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce && npm run test:ui && npm run typecheck:e2e'`; гейт — `E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e`; граф — `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
+- Дата: 13.10.2026. F3 слита: PR #186 → main 68355a0 (по команде пользователя). Ветка `codex/f3-short-group-link`, рабочая копия `/home/user/rabit-api-worktrees/f3-short-group-link`.
+- Связанное: README волны `docs/waves/f3/README.md`, граф `docs/waves/graph.json`, план владельца `docs/plans/OPS-telemos-feedback-plan/` (R05).
+- Завершено: S0–S6, merge, выкладка на stage релизом `main-20261013105144-68355a0` вместе с E7, D4, E8, J4 и #160 (журнал «13.10.2026 — выкладка»).
+- Сейчас: задача закрыта.
+- Следующий шаг: следующая волна отмечает F3 `merged` в графе (PR #186, 68355a0a0df15ed9f4188abdd3c989019a98182d).
+- Открыто вне волны: #187 (лимит обращений к галерее), #188 (база знаний `/guide/` после E7/D4/E8/J4/F3).
+- Блокеры: нет. Рабочее дерево ветки чистое.
+- Откат stage: `docker service rollback` для 11 backend-сервисов (спецификации в `services-before.json` релиза) и `morefoto_frontend` (прежний образ в `frontend-before.txt`). Миграции не откатывать: `down`/`redo` `20261012180001` сломает разосланные короткие ссылки.
 
 ## Журнал
 
@@ -62,6 +60,23 @@
 - Команда: `E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e` на d0c4c8b.
 - Прогон `rabit-e2e-b00e58ba69e2` — exit 0 за 411,6 с: группа a 81 passed, группа b 66 passed (три новых сценария F3), 15 верификаторов passed, в том числе `verify-links.php`. Тестовый магазин ЮKassa выключен (#174).
 - Visual: `f3-desktop-short-link.png`, `f3-mobile-short-link.png` — адрес заменён на длинный, кадр A001 и сроки E7 видны, горизонтального скролла нет; шапка mobile совпадает с E7.
+
+### 13.10.2026 — выкладка на stage
+
+- Пользователь разрешил merge и выкладку («Выкладывай!»); дату редакции оферты оставили 2026-10-12. Merge #186 → 68355a0.
+- Релиз `/srv/morefoto/releases/main-20261013105144-68355a0`: `git archive 68355a0 api` (2578 файлов) и образ `morefoto-frontend:main-20261013105144-68355a0` (`VITE_API_MOCKS_ENABLED=false`, база знаний из main). `vendor` и `backend.conf` — из `main-20260927092151-9a4cce6` (`composer.lock` и nginx не менялись). До релиза на stage были backend 9a4cce6 и frontend `guide-refresh-20260927113203-82a6672-18d10b1`.
+- `sha256sum --check` PASS; `prepare-release.sh` PASS; `backup.sh` — 267 786 байт; `restore-check.sh` — 175 таблиц PASS.
+- `preview.sh` (только чтение): E7 — групп с повторным открытием электронных продаж нет; D4 — 0 плохих строк истории; J4 — 1 оплаченный заказ печати, 1 кадр; F3 — 6 ключей получат псевдоним.
+- `migrate.sh ls`: Installed 32, Created 10 (4 новых и 6 старых неотмеченных — не трогали). Точечно `up` Version20261011120001, Version20261011180001, Version20261012100001, Version20261012180001 — все success.
+- Сразу FPM: DI-smoke 25/25. Затем backend и 9 воркеров/диспетчеров (11 backend-сервисов), frontend 2/2. Все 12 сервисов 1/1 и 2/2.
+- Живая проверка:
+  - `/`, `/login`, `/health`, `/guide/`, `/guide/parent/`, `/legal/offer`, `/g/zzzzzzzzzz` — 200; бандл `index-nh7dIl4a.js` совпадает со сборкой;
+  - MED-01 по неизвестному псевдониму — 404 `GALLERY_NOT_FOUND`, `/catalog` по псевдониму — 404;
+  - `mf_gallery_alias` — 6 строк, ключей без псевдонима 0; все 6 псевдонимов на сервере открывают галерею (200) и возвращают ключ, чей `sha256` совпадает с `TOKEN_HASH` (значения не выводились);
+  - оферта: текущая редакция `2026-10-12`, «Редакция от 12.10.2026», текст об email и копии печати;
+  - Playwright desktop 1440×1000 и mobile 390×844: «Ссылка недействительна» для неизвестного псевдонима, страница оферты без горизонтального скролла, ошибок страницы нет;
+  - логи сервисов за 15 минут: фатальных ошибок нет, в FPM только 404 от проверочных запросов.
+- Не проверено вживую: оформление заказа с одним email и оплата (не создавали данные на stage), исправление разметки D4, копирование короткой ссылки в кабинете — покрыто гейтами волн.
 
 ## Тест-кейсы
 

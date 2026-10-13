@@ -39,6 +39,8 @@
 
 ## Выкладка и откат
 
+**Выложено на stage 13.10.2026** релизом `main-20261013105144-68355a0` (main 68355a0, вместе с E7, D4, E8, J4, #160 и F3); миграции выполнены точечно, запись — `docs/plans/F3_short-group-link/progress.md`, «13.10.2026 — выкладка».
+
 1. До выкладки read-only запрос должен вернуть 0: `SELECT COUNT(*) FROM mf_group_link_history WHERE (KIND='prepared' AND SIGNATURE IS NULL) OR (KIND='corrected' AND REASON IS NULL)`. Иначе усиленный CHECK не создастся — разобрать такие строки до миграции.
 2. Backend и точечно `migrate up 20261011180001` — одним окном.
 3. Затем frontend: без него кнопок исправления нет, а галерея не показывает плашку обновления, хотя расчёт корзины уже отклоняется (`GALLERY_UPDATING`).
