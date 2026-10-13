@@ -20,6 +20,8 @@ import { useLiveCheckout } from './useLiveCheckout';
 export function useCheckout(gallery: GallerySnapshot, token: string) {
   return isMockApiEnabled ? useDemoCheckout(gallery, token) : useLiveCheckout(gallery, token);
 }
+/** State and actions of placing the order of one group's cart (UI-DEC-04: owned by the cart page). */
+export type Checkout = ReturnType<typeof useCheckout>;
 function useDemoCheckout(gallery: GallerySnapshot, token: string) {
   const router = useRouter();
   const quote = shallowRef(quoteCart(gallery));

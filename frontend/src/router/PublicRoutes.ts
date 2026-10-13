@@ -34,10 +34,10 @@ const PublicRoutes: RouteRecordRaw = {
       meta: { title: 'Результат оплаты' }
     },
     {
+      // UI-DEC-04: the order is placed on the cart page; saved links to the old checkout keep working.
       name: 'Checkout',
       path: '/g/:token/checkout',
-      component: () => import('@/modules/morefoto/views/CheckoutPage.vue'),
-      meta: { title: 'Оформление заказа' }
+      redirect: (to) => ({ name: 'Cart', params: to.params, query: to.query })
     },
     {
       name: 'Order',

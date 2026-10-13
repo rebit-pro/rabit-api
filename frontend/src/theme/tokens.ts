@@ -85,6 +85,10 @@ export const MF_SEMANTIC: Readonly<Record<string, MfPrimitive>> = {
   selected: 'sea-50',
   'selected-strong': 'sea-100',
   hover: 'ink-50',
+  // UI-DEC-01: a table lies on a pale sea tray, set apart from the page; its rows stay white.
+  workspace: 'sea-100',
+  'workspace-border': 'sea-200',
+  'workspace-row-hover': 'sea-50',
   focus: 'sea-600',
   skeleton: 'ink-100',
   'skeleton-hi': 'ink-50',

@@ -12,6 +12,8 @@ const props = withDefaults(
     disabled?: boolean;
     readonly?: boolean;
     density?: UiDensity;
+    /** The label stays for assistive tech only, e.g. in a compact cart row that already names the product. */
+    hideLabel?: boolean;
   }>(),
   { label: 'Количество', context: '', min: 1, max: 99, density: 'comfortable' }
 );
@@ -67,7 +69,7 @@ defineExpose({ validate });
 </script>
 <template>
   <div class="ui-quantity" :class="{ 'ui-quantity--compact': density === 'compact' }">
-    <label :for="id" class="ui-quantity__label">{{ props.label }}</label>
+    <label :for="id" class="ui-quantity__label" :class="{ 'mf-sr-only': hideLabel }">{{ props.label }}</label>
     <div class="ui-quantity__controls">
       <v-btn
         icon="mdi-minus"

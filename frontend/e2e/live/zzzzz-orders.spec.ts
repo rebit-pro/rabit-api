@@ -446,17 +446,16 @@ for (const viewport of [
       line: { assignmentId: assignment, productId: printId, quantity: 1 }
     });
     await page.goto('/g/' + fixture.open.token + '/cart');
-    await page.getByRole('link', { name: 'Оформить заказ', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Оформление заказа', exact: true })).toBeVisible();
-    await expect(page.getByTestId('receipt-unavailable')).toBeVisible();
-    // E8: the form asks only for the email.
-    await expect(page.locator('[name="buyer-name"], [name="buyer-phone"]')).toHaveCount(0);
+    // UI-DEC-04: the order is placed from the cart; no receipt channel choice while receipts are not sent.
+    await expect(page.getByRole('heading', { name: 'Корзина', exact: true })).toBeVisible();
+    await expect(page.getByRole('radiogroup', { name: 'Куда направить чек' })).toHaveCount(0);
+    // E8: the form asks only for the email; UI-DEC-05: no separate «reviewed» checkbox.
+    await expect(page.locator('[name="buyer-name"], [name="buyer-phone"], [name="buyer-reviewed"]')).toHaveCount(0);
     await page.getByRole('textbox', { name: 'Email', exact: true }).fill(viewport.name + '.e5@example.test');
-    await page.getByLabel('Состав и условия проверены').check();
     await acceptCheckoutDocuments(page);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: info.outputPath('e5-' + viewport.name + '-checkout.png'), fullPage: true, animations: 'disabled' });
-    await expect(page.getByTestId('create-order')).toHaveText('Оформить заказ');
+    await expect(page.getByTestId('create-order')).toHaveText(/^Оформить заказ · 100\s₽$/);
     const created = page.waitForResponse((r) => r.url().endsWith('/orders') && r.request().method() === 'POST');
     await page.getByTestId('create-order').click();
     const payload = await (await created).json();
@@ -516,9 +515,10 @@ async function fillCheckout(page: Page, email: string, quantity: number) {
     groupId: fixture.open.groupId,
     line: { assignmentId: assignment, productId: printId, quantity }
   });
+  // A saved link to the old checkout opens the cart, where the order is placed (UI-DEC-04).
   await page.goto('/g/' + fixture.open.token + '/checkout');
+  await expect(page).toHaveURL(new RegExp('/g/' + fixture.open.token + '/cart$'));
   await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
-  await page.getByLabel('Состав и условия проверены').check();
   await acceptCheckoutDocuments(page);
 }
 /**
@@ -651,9 +651,8 @@ test('E5: changed price at checkout asks the buyer to confirm the new total', as
     groupId: fixture.open.groupId,
     line: { assignmentId: assignment, productId: printId, quantity: 1 }
   });
-  await page.goto('/g/' + fixture.open.token + '/checkout');
+  await page.goto('/g/' + fixture.open.token + '/cart');
   await page.getByRole('textbox', { name: 'Email', exact: true }).fill('price.e5@example.test');
-  await page.getByLabel('Состав и условия проверены').check();
   await acceptCheckoutDocuments(page);
   const context = await browser.newContext({ baseURL });
   const organizer = await context.newPage();
@@ -663,8 +662,8 @@ test('E5: changed price at checkout asks the buyer to confirm the new total', as
     await page.getByTestId('create-order').click();
     await expect(page.locator('#checkout-error')).toContainText('Цена изменилась');
     await expect(page.locator('#checkout-error')).toContainText('Новый итог');
-    await expect(page.getByLabel('Состав и условия проверены')).not.toBeChecked();
-    await page.getByLabel('Состав и условия проверены').check();
+    // UI-DEC-05: the button names the new total, so the next click confirms it.
+    await expect(page.getByTestId('create-order')).toContainText('110');
     const created = page.waitForResponse((r) => r.url().endsWith('/orders') && r.request().method() === 'POST');
     await page.getByTestId('create-order').click();
     const payload = await (await created).json();

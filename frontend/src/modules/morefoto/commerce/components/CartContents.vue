@@ -8,9 +8,21 @@ import { useCart } from '../composables/useCart';
 import { changeCartLine, clearCart } from '../services/cart';
 import CartItems from './CartItems.vue';
 import CartSummary from './CartSummary.vue';
+import CheckoutPanel from '../../orders/components/CheckoutPanel.vue';
+import CheckoutRecovery from '../../orders/components/CheckoutRecovery.vue';
+import { useCheckout } from '../../orders/composables/useCheckout';
+import CheckoutTerms from '../../orders/components/CheckoutTerms.vue';
+import { useLegalCatalog } from '../../legal/useLegalCatalog';
+import { findDocument } from '../../legal/rules';
 const props = defineProps<{ gallery: GallerySnapshot; token: string }>();
 const { quote, catalog, calculationError, hasQuote, droppedPrint } = useCart(() => props.gallery);
 const selling = computed(() => galleryBuys(props.gallery));
+const purchasable = computed(() => isMockApiEnabled || !!catalog.value.capabilities?.purchaseEnabled);
+// The cart owns the checkout: an attempt whose answer was lost is recovered first, even when the group has closed meanwhile.
+const checkout = useCheckout(props.gallery, props.token);
+const { recovering, busy: sending, error: sendError, submit: resend } = checkout;
+const { catalog: legal } = useLegalCatalog();
+const offer = computed(() => findDocument(legal.value, 'offer'));
 const busy = shallowRef(false);
 const notice = shallowRef('');
 const error = shallowRef('');
@@ -53,8 +65,9 @@ async function clear() {
 }
 </script>
 <template>
+  <CheckoutRecovery v-if="recovering" :busy="sending" :error="sendError" @retry="resend" />
   <p class="cart-separation">
-    <v-icon icon="mdi-information-outline" size="20" /> В каждой группе своя корзина. Выбор в других группах сохраняется отдельно.
+    <v-icon icon="mdi-information-outline" size="18" /> В каждой группе своя корзина. Выбор в других группах сохраняется отдельно.
   </p>
   <v-alert v-if="gallery.updating" type="info" variant="tonal" class="mb-5" data-testid="cart-updating"
     >Фотографии группы обновляются, покупка временно приостановлена. Выбор сохранён — вернитесь немного позже.</v-alert
@@ -81,21 +94,20 @@ async function clear() {
     <div class="cart-layout">
       <div class="cart-items-column">
         <CartItems :quote="quote" :busy="busy" :closed="!selling" @change="change" />
-        <v-btn ref="clearButton" class="cart-clear" variant="text" color="secondary" :disabled="busy" @click="openClear"
-          >Очистить корзину группы</v-btn
-        >
+        <div class="cart-tools">
+          <v-btn :to="'/g/' + token" variant="text" color="primary" prepend-icon="mdi-plus">Добавить ещё фото</v-btn>
+          <v-btn ref="clearButton" variant="text" color="secondary" :disabled="busy" @click="openClear">Очистить корзину</v-btn>
+        </div>
       </div>
-      <CartSummary :quote="quote" :catalog="catalog" :staff="gallery.audience === 'staff'">
-        <v-btn
-          v-if="isMockApiEnabled || catalog.capabilities?.purchaseEnabled"
-          :to="'/g/' + token + '/checkout'"
-          color="primary"
-          block
-          class="mt-6"
-          :disabled="busy || !selling || !!quote.invalid.length"
-          >Оформить заказ</v-btn
-        >
+      <!-- UI-DEC-04: the order is placed right here; the old checkout address leads to this page. -->
+      <CheckoutPanel v-if="purchasable && !recovering" class="cart-layout__order" :gallery="gallery" :checkout="checkout" />
+      <CartSummary v-else class="cart-layout__order" :quote="quote" :catalog="catalog" :staff="gallery.audience === 'staff'">
+        <p class="cart-unavailable" role="status">
+          {{ recovering ? 'Сначала проверьте прошлую отправку выше.' : 'Оформление заказов в этой группе пока не открыто.' }}
+        </p>
       </CartSummary>
+      <!-- On a phone the terms follow the order button; on a wide screen they stay under the cart. -->
+      <CheckoutTerms class="cart-layout__terms" :gallery="gallery" :seller="legal?.seller ?? null" :offer="offer" />
     </div>
   </template>
   <section v-else-if="hasQuote" class="mf-panel mf-empty">
@@ -125,23 +137,39 @@ async function clear() {
   align-content: start;
   min-width: 0;
 }
-.cart-clear {
-  justify-self: start;
+.cart-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--mf-space-2);
+}
+.cart-unavailable {
+  color: var(--mf-color-text-secondary);
+  font-size: var(--mf-text-sm);
 }
 .cart-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: var(--mf-space-6);
+  grid-template-columns: minmax(0, 1fr) 380px;
+  /* The tall order panel spans both rows; its extra height goes to the second row, under the terms. */
+  grid-template-rows: auto 1fr;
+  gap: var(--mf-space-4) var(--mf-space-6);
   align-items: start;
+}
+.cart-layout__order {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+.cart-layout__terms {
+  grid-column: 1;
 }
 .cart-separation {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: var(--mf-text-sm);
+  line-height: 1.5;
   color: var(--mf-color-text-secondary);
-  margin-bottom: 24px;
+  margin-bottom: var(--mf-space-4);
 }
 .cart-notice {
   padding: 16px;
@@ -154,6 +182,12 @@ async function clear() {
 @media (max-width: 1000px) {
   .cart-layout {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+  }
+  .cart-layout__order,
+  .cart-layout__terms {
+    grid-column: 1;
+    grid-row: auto;
   }
 }
 </style>

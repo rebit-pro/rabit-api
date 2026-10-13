@@ -21,8 +21,11 @@ export interface Shoot {
   name: string;
   date: string | null;
   revision: number;
-  /** Groups of the shoot, in the institution page answer only (#92). */
+  /** Groups of the shoot, in the institution page answer and the shoot list (#92). */
   groupCount?: number;
+  /** The cabinet-wide shoot list (UI-DEC-03) names the institution and counts the groups taking orders. */
+  institutionName?: string;
+  openGroupCount?: number;
 }
 export interface Group {
   id: string;

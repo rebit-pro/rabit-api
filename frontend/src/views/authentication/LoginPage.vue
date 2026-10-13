@@ -10,9 +10,28 @@ const feedbackOpen = shallowRef(false);
 <template>
   <AccessShell title="Вход в кабинет" description="Введите email и пароль от личного кабинета">
     <template #header>
-      <v-btn variant="outlined" prepend-icon="mdi-message-text-outline" data-testid="login-feedback-open" @click="feedbackOpen = true">
-        Написать нам
-      </v-btn>
+      <div class="login-header">
+        <!-- #129: the knowledge base is one step away before signing in. -->
+        <v-btn
+          variant="text"
+          href="/guide/"
+          prepend-icon="mdi-book-open-page-variant-outline"
+          class="login-header__wide"
+          data-testid="login-guide-open"
+        >
+          База знаний
+        </v-btn>
+        <v-btn
+          variant="text"
+          href="/guide/"
+          icon="mdi-book-open-page-variant-outline"
+          aria-label="База знаний"
+          class="login-header__narrow"
+        />
+        <v-btn variant="outlined" prepend-icon="mdi-message-text-outline" data-testid="login-feedback-open" @click="feedbackOpen = true">
+          Написать нам
+        </v-btn>
+      </div>
     </template>
     <AuthLogin />
     <template #aside>
@@ -39,6 +58,14 @@ const feedbackOpen = shallowRef(false);
             </dd>
           </div>
         </dl>
+        <a href="/guide/" class="login-guide" data-testid="login-guide-link">
+          <v-icon icon="mdi-book-open-page-variant-outline" size="24" class="login-guide__icon" aria-hidden="true" />
+          <span class="login-guide__copy">
+            <strong>База знаний</strong>
+            <span>Пошаговые инструкции для организатора, куратора, заведующей, воспитателя и родителей</span>
+          </span>
+          <v-icon icon="mdi-arrow-right" size="20" aria-hidden="true" />
+        </a>
       </section>
     </template>
   </AccessShell>
@@ -46,6 +73,56 @@ const feedbackOpen = shallowRef(false);
 </template>
 
 <style scoped>
+.login-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--mf-space-2);
+}
+.login-header__narrow {
+  display: none;
+}
+@media (max-width: 599px) {
+  .login-header__wide {
+    display: none;
+  }
+  .login-header__narrow {
+    display: inline-flex;
+  }
+}
+.login-guide {
+  display: flex;
+  align-items: center;
+  gap: var(--mf-space-3);
+  padding: var(--mf-space-4);
+  border: 1px solid var(--mf-color-workspace-border);
+  border-radius: var(--mf-radius-md);
+  background: var(--mf-color-workspace);
+  color: var(--mf-color-text);
+  text-decoration: none;
+  transition: border-color var(--mf-duration-fast) var(--mf-ease-standard);
+}
+.login-guide:hover,
+.login-guide:focus-visible {
+  border-color: var(--mf-color-primary);
+}
+.login-guide__icon {
+  color: var(--mf-color-primary);
+}
+.login-guide__copy {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+  font-size: var(--mf-text-sm);
+  line-height: var(--mf-leading-snug);
+}
+.login-guide__copy strong {
+  font-size: var(--mf-text-base);
+}
+.login-guide__copy span {
+  color: var(--mf-color-text-secondary);
+}
 .login-about {
   display: grid;
   gap: var(--mf-space-4);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 use Bitrix\Main\Routing\RoutingConfigurator;
 use Morefoto\Organization\Presentation\Controller\InstitutionController;
 use Morefoto\Organization\Presentation\Controller\InstitutionDetailController;
+use Morefoto\Organization\Presentation\Controller\ShootListController;
 use Morefoto\Organization\Presentation\Controller\StructureController;
 use Morefoto\Organization\Presentation\Controller\StructureRemovalController;
 
@@ -15,6 +16,8 @@ return static function(RoutingConfigurator $routes): void {
     $routes->delete('/api/v1/institutions/{institution_id}', [StructureRemovalController::class, 'deleteInstitutionAction']);
     $routes->get('/api/v1/institutions/{institution_id}/shoots', [StructureController::class, 'listShootsAction']);
     $routes->post('/api/v1/institutions/{institution_id}/shoots', [StructureController::class, 'createShootAction']);
+    // UI-DEC-03: every shoot of the visible institutions for the «Съёмки» section.
+    $routes->get('/api/v1/shoots', [ShootListController::class, 'listAction']);
     $routes->get('/api/v1/shoots/{shoot_id}', [StructureController::class, 'getShootAction']);
     $routes->patch('/api/v1/shoots/{shoot_id}', [StructureController::class, 'updateShootAction']);
     $routes->delete('/api/v1/shoots/{shoot_id}', [StructureRemovalController::class, 'deleteShootAction']);

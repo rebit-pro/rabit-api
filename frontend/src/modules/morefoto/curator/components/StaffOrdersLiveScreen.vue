@@ -188,7 +188,7 @@ function lastDays(days: number): void {
         <MfDistribution title="Изготовление" :segments="productionSegments" :unit-forms="['заказа', 'заказов', 'заказов']" />
       </div>
     </section>
-    <form class="mf-panel staff-orders__filters" role="search" data-testid="order-scope-filters" @submit.prevent="apply()">
+    <form class="mf-panel staff-orders__filters mf-filters" role="search" data-testid="order-scope-filters" @submit.prevent="apply()">
       <!-- Vuetify sets null on clear; keep the filter a string for apply() and the URL. -->
       <v-text-field
         v-model="filters.q"

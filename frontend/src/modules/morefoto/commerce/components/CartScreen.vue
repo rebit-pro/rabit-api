@@ -15,11 +15,12 @@ const { gallery, loading, error, unavailable, reload } = useGallery();
     >
     <template v-else-if="gallery">
       <header class="mf-page-heading">
-        <p class="mf-eyebrow">ВАШ ВЫБОР</p>
+        <p class="mf-eyebrow">ВАШ ЗАКАЗ</p>
         <h1>Корзина</h1>
         <p class="mf-muted">{{ gallery.institutionName }} · {{ gallery.groupName }} · {{ gallery.shootName }}</p>
       </header>
-      <CartContents :gallery="gallery" :token="String(route.params.token)" />
+      <!-- The checkout state belongs to one group's cart: a new gallery link starts a new cart. -->
+      <CartContents :key="String(route.params.token)" :gallery="gallery" :token="String(route.params.token)" />
     </template>
   </main>
 </template>

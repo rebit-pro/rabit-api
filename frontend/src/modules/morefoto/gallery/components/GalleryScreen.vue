@@ -3,6 +3,7 @@ import { isMockApiEnabled } from '@/mocks/config';
 import { computed, shallowRef } from 'vue';
 import { useRoute } from 'vue-router';
 import CartEntry from '../../commerce/components/CartEntry.vue';
+import CartBar from '../../commerce/components/CartBar.vue';
 import { useGallery } from '../composables/useGallery';
 import GalleryHeader from './GalleryHeader.vue';
 import { formatMoment } from '../../orders/formatters';
@@ -168,9 +169,9 @@ function askCurator(): void {
           :submit="questions.send"
           @reload="questions.reload()"
         />
+        <CartBar v-if="gallery.state !== 'preparing'" :gallery="gallery" :token="token" />
       </template>
     </main>
-    <footer class="gallery-footer"><MfLogo :size="20" mono /><span>Сохраняем моменты детства</span></footer>
   </div>
 </template>
 
@@ -240,17 +241,6 @@ function askCurator(): void {
   gap: 20px;
   margin-top: 24px;
 }
-.gallery-footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 24px 0;
-  border-top: 1px solid var(--mf-color-border);
-  color: var(--mf-color-text-secondary);
-  font-size: 12px;
-}
 @media (max-width: 767px) {
   .gallery-brand {
     font-size: 20px;
@@ -296,10 +286,6 @@ function askCurator(): void {
   }
   .gallery-loading__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .gallery-footer {
-    margin: 0 16px;
-    flex-wrap: wrap;
   }
   .gallery-empty {
     padding: 40px 20px;

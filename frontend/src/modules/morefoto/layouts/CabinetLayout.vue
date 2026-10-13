@@ -126,6 +126,13 @@ watch(
           </v-list>
         </section>
       </nav>
+      <!-- #129: the knowledge base opens next to the cabinet, so the work in progress stays where it was. -->
+      <a href="/guide/" target="_blank" rel="noopener" class="mf-sidebar__guide" data-testid="cabinet-guide-link">
+        <v-icon icon="mdi-book-open-page-variant-outline" size="20" aria-hidden="true" />
+        <span>База знаний</span>
+        <v-icon icon="mdi-open-in-new" size="14" class="mf-sidebar__guide-out" aria-hidden="true" />
+        <span class="mf-sr-only">(откроется в новой вкладке)</span>
+      </a>
     </v-navigation-drawer>
     <v-main>
       <CookieNotice />
@@ -222,6 +229,26 @@ watch(
 .mf-sidebar__list {
   padding: 0;
   background: transparent;
+}
+.mf-sidebar__guide {
+  display: flex;
+  align-items: center;
+  gap: var(--mf-space-3);
+  min-height: var(--mf-touch-size);
+  margin-top: auto;
+  padding: var(--mf-space-2) var(--mf-space-3);
+  border-top: 1px solid var(--mf-color-nav-divider);
+  color: var(--mf-color-nav-fg);
+  font-size: var(--mf-text-md);
+  font-weight: var(--mf-weight-medium);
+  text-decoration: none;
+}
+.mf-sidebar__guide:hover {
+  color: var(--mf-color-primary);
+}
+.mf-sidebar__guide-out {
+  margin-left: auto;
+  color: var(--mf-color-text-tertiary);
 }
 .mf-navigation-count {
   min-width: 22px;

@@ -6,8 +6,8 @@ const cabinet = '/cabinet/institutions';
 const problems = new WeakMap<Page, string[]>();
 const shoots = (page: Page) => page.getByTestId('institution-shoots');
 const groups = (page: Page) => page.getByTestId('institution-groups');
-/** A card of the shoot page list. */
-const row = (page: Page, name: string) => page.getByTestId('structure-row').filter({ hasText: name });
+/** A row of the shoot page groups table (#92): the desktop row and the mobile card share the ID. */
+const row = (page: Page, name: string) => page.locator('[data-row-id]').filter({ visible: true }).filter({ hasText: name });
 /** Rows of a widget table of the institution page (#92): the desktop row and the mobile card share the ID. */
 const rows = (widget: Locator) => widget.locator('[data-row-id]').filter({ visible: true });
 const widgetRow = (widget: Locator, name: string) => rows(widget).filter({ hasText: name });

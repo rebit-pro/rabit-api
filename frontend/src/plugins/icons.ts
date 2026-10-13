@@ -94,7 +94,11 @@ import {
   mdiStarOutline,
   mdiCheckboxMultipleMarkedOutline,
   mdiSelectionRemove,
-  mdiAccountQuestionOutline
+  mdiAccountQuestionOutline,
+  mdiArrowRight,
+  mdiCartPlus,
+  mdiBookOpenPageVariantOutline,
+  mdiAccountAlertOutline
 } from '@mdi/js';
 
 export const MF_ICONS: Readonly<Record<string, string>> = {
@@ -191,5 +195,9 @@ export const MF_ICONS: Readonly<Record<string, string>> = {
   'mdi-star-outline': mdiStarOutline,
   'mdi-checkbox-multiple-marked-outline': mdiCheckboxMultipleMarkedOutline,
   'mdi-selection-remove': mdiSelectionRemove,
-  'mdi-account-question-outline': mdiAccountQuestionOutline
+  'mdi-account-question-outline': mdiAccountQuestionOutline,
+  'mdi-arrow-right': mdiArrowRight,
+  'mdi-cart-plus': mdiCartPlus,
+  'mdi-book-open-page-variant-outline': mdiBookOpenPageVariantOutline,
+  'mdi-account-alert-outline': mdiAccountAlertOutline
 };

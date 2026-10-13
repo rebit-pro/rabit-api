@@ -213,7 +213,7 @@ function edit(item?: StaffSummary): void {
       <MfDistribution title="Сотрудники по ролям" :segments="roleSegments" :unit-forms="['сотрудника', 'сотрудников', 'сотрудников']" />
     </div>
   </section>
-  <form class="staff-filters mb-5" aria-label="Фильтры сотрудников" @submit.prevent="reload(1)">
+  <form class="staff-filters mb-5 mf-filters" aria-label="Фильтры сотрудников" @submit.prevent="reload(1)">
     <v-text-field v-model="filters.q" label="Имя или email" clearable hide-details />
     <v-select v-model="filters.role" :items="roleItems" label="Роль" aria-label="Роль" hide-details />
     <v-select v-model="filters.accountStatus" :items="statusItems" label="Статус" aria-label="Статус" hide-details />
