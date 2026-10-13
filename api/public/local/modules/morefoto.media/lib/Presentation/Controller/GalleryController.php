@@ -22,7 +22,9 @@ final class GalleryController extends PrivateApiJsonController
 
     public function getAction(GalleryRequestDto $request): ControllerJson
     {
-        return $this->json($this->mapper->map($this->get->execute($request->token), $request->token));
+        $view = $this->get->execute($request->token);
+
+        return $this->json($this->mapper->map($view->access, $view->token));
     }
 
     public function previewAction(GalleryPreviewRequestDto $request): PreviewResponse

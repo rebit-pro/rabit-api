@@ -50,6 +50,8 @@ export async function loadGallery(token: string): Promise<GallerySnapshot> {
   }
   try {
     const { data } = await api.get<GallerySnapshot>('/api/v1/public/galleries/' + encodeURIComponent(token));
+    // F3-DEC-04: a short link only finds the long key; the screen moves to it and loads the storefront there.
+    if (data.token && data.token !== token) return data;
     await loadStorefront(token, data);
     return data;
   } catch (cause) {

@@ -38,6 +38,7 @@ final readonly class GalleryResultMapper
             '',
             'Срок передачи фотографий уточняйте у куратора.',
             updating: null !== $group->markupCorrectionAt,
+            token: $token,
         );
     }
 

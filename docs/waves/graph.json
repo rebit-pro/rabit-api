@@ -6,7 +6,7 @@
   "backend": "RaBit API",
   "baseline": {
     "branch": "main",
-    "commit": "a302774e48b597f5017d3bbacafc082730d7d045",
+    "commit": "0d02adf435848da674155be9291d5a289df4f381",
     "mergedWaves": [
       "A1",
       "A2",
@@ -49,10 +49,11 @@
       "J1",
       "E7",
       "D4",
-      "E8"
+      "E8",
+      "J4"
     ],
     "review": {
-      "J4": "https://github.com/rebit-pro/rabit-api/pull/184"
+      "F3": "https://github.com/rebit-pro/rabit-api/pull/186"
     },
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
     "mergedPullRequests": {
@@ -91,7 +92,8 @@
       "J1": "https://github.com/rebit-pro/rabit-api/pull/143",
       "E7": "https://github.com/rebit-pro/rabit-api/pull/162",
       "D4": "https://github.com/rebit-pro/rabit-api/pull/175",
-      "E8": "https://github.com/rebit-pro/rabit-api/pull/181"
+      "E8": "https://github.com/rebit-pro/rabit-api/pull/181",
+      "J4": "https://github.com/rebit-pro/rabit-api/pull/184"
     },
     "mergeCommits": {
       "C4": "cfc334e5890dd51dfd6ff6638eac2cc3e436322b",
@@ -121,7 +123,8 @@
       "J1": "591d698ab7389b7edf9825029fefbe81c42851b8",
       "E7": "50c8ee1793439c0d2bf275d23f21dcf1ad8bcdfd",
       "D4": "28a8c55943dbc427dd951b77e2bb22baccaa654a",
-      "E8": "a302774e48b597f5017d3bbacafc082730d7d045"
+      "E8": "a302774e48b597f5017d3bbacafc082730d7d045",
+      "J4": "b085e8e809367dea49b8ca0ba9219648738be4a7"
     },
     "decisionEvidence": {
       "D02-D05": "docs/waves/e3/README.md in rabit-api: user accepted rules before PR #20",
@@ -146,7 +149,9 @@
       "E7-DEC-01-11": "2026-10-11: пользователь принял решения E7: срок печати остаётся closesAt, добавлен digitalSalesUntil (DEC-01); исправление T0 и продление после закрытия печати — 409 PRINT_SALES_CLOSED (DEC-04); новая редакция оферты 2026-10-11 в E7 (DEC-10); подпись «Разработано в ReBit Studio» ведёт на https://rebit-pro.ru (DEC-11). План: docs/plans/E7_sales-windows/plan.md в rabit-api, PR #162.",
       "D4-DEC-01-04": "2026-10-11: пользователь выбрал рекомендуемые варианты D4: сеанс исправления с паузой продаж (GALLERY_UPDATING), организатор и куратор учреждения (media.correct), только существующие команды разметки (MED-07 до передачи по D11), старт только пока группа продаёт (open/digital). План: docs/plans/D4_sent-markup-correction/plan.md.",
       "E8-DEC-01-05": "2026-10-12: пользователь выбрал: имя и телефон сервер игнорирует (DEC-01, вместо рекомендованного «принимать как необязательные»), в списке сотрудника вместо имени — email (DEC-04), демо-режим тоже без имени и телефона (DEC-05); DEC-02/03 — технические следствия. План: docs/plans/E8_email-only-checkout/plan.md.",
-      "J4-DEC-01-04": "2026-10-12: пользователь принял решения J4: право на копию печати применяется ко всем оплаченным заказам без рассылки (DEC-01, закрывает MVP-PRINT-COPY-HISTORY); одна редакция оферты 2026-10-12 в J4 — email вместо имени и телефона после E8 и пункт о копии печати (DEC-02); подсказка в выборе продукции без блокировки (DEC-03); E2E оплаченной печати — фикстура оплаты кодом G1 с подставным провайдером вместо тестового магазина (DEC-04). План: docs/plans/J4_print-digital-copy/plan.md."
+      "J4-DEC-01-04": "2026-10-12: пользователь принял решения J4: право на копию печати применяется ко всем оплаченным заказам без рассылки (DEC-01, закрывает MVP-PRINT-COPY-HISTORY); одна редакция оферты 2026-10-12 в J4 — email вместо имени и телефона после E8 и пункт о копии печати (DEC-02); подсказка в выборе продукции без блокировки (DEC-03); E2E оплаченной печати — фикстура оплаты кодом G1 с подставным провайдером вместо тестового магазина (DEC-04). План: docs/plans/J4_print-digital-copy/plan.md.",
+      "F3-DEC-01-04": "2026-10-12: пользователь выбрал: псевдоним 10 символов вместо рекомендованных 12 (DEC-01, риск перебора без лимита запросов принят), домен app.morefoto36.ru/g/… (DEC-02), сотрудник копирует только короткую ссылку (DEC-03), короткая ссылка заменяет адрес на длинный (DEC-04). План: docs/plans/F3_short-group-link/plan.md.",
+      "E8-LEGAL-2026-10-13": "2026-10-13: пользователь проверил: для продажи фото физлицу достаточно email без ФИО и телефона (ст. 4.7 54-ФЗ); чек отправляется на email (G2), ссылка на заказ письмом — J2; отправка писем пока не включается."
     }
   },
   "acceptedImplementationDecisions": [
@@ -3552,7 +3557,7 @@
       ],
       "activation": "Тестовая среда после merge зависимостей; реальные покупатели после N3.",
       "legacyIds": [],
-      "deliveryState": "planned",
+      "deliveryState": "merged",
       "unlocks": [
         "J2",
         "N3"

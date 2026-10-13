@@ -58,12 +58,15 @@ final readonly class GetGroupLinkUseCase
             && $this->permissions->allows($actor->role, LinkActionEnum::START_MARKUP_CORRECTION)
             && $this->corrections->available($calendar->sentAt, $calendar->status, $group->markupCorrectionAt, $this->orders->exist($groupId));
 
+        $link = $this->galleryLinks->current($groupId);
+
         return $this->mapper->detail(
             group: $group,
             assessment: $assessment,
             revision: $state->revision,
             prepared: $this->policy->prepared(null !== $group->calendar->sentAt, $state, $assessment->readiness),
-            galleryToken: $this->galleryLinks->current($groupId)?->token,
+            galleryToken: $link?->token,
+            galleryAlias: $link?->alias,
             now: $this->clock->now(),
             history: $this->links->history($group->nativeId),
             markupCorrectable: $correctable,

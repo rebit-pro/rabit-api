@@ -7,7 +7,7 @@ import AdminDialog from '../../management/components/AdminDialog.vue';
 import LinkFields from './LinkFields.vue';
 import { useHandoff } from '../useHandoff';
 import { useHandoffEditor } from '../useHandoffEditor';
-import { moscowInput } from '../rules';
+import { galleryLinkKey, moscowInput } from '../rules';
 import { formatMoment, problemText } from '../display';
 import { loadLinks } from '../service';
 import { linkError, linksApi, toLinkGroup } from '../links-api';
@@ -209,7 +209,8 @@ const hasMenu = (g: LinkGroup) => (!g.sentAt && canCopy(g)) || canCorrect(g) || 
 const url = (token: string) => window.location.origin + '/g/' + token;
 /** Live keys are requested per group on demand: the list never carries gallery tokens. */
 async function token(group: LinkGroup): Promise<string> {
-  return live ? ((await linksApi.detail(group.id)).galleryToken ?? '') : group.galleryToken;
+  // F3-DEC-03: staff copy the short link; the long one keeps working for those who already have it.
+  return live ? galleryLinkKey(await linksApi.detail(group.id)) : group.galleryToken;
 }
 function clearNotices(): void {
   notice.value = '';
@@ -303,7 +304,7 @@ async function openHistory(group: LinkGroup) {
     const detail = await linksApi.detail(group.id);
     if (historyGroup.value?.id !== group.id) return;
     historyEvents.value = toLinkGroup(detail, detail).history;
-    historyLink.value = detail.galleryToken ? url(detail.galleryToken) : '';
+    historyLink.value = galleryLinkKey(detail) ? url(galleryLinkKey(detail)) : '';
   } catch (cause) {
     if (historyGroup.value?.id === group.id) historyError.value = linkError(cause);
   } finally {

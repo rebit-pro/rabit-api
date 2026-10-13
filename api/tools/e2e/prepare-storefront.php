@@ -94,7 +94,8 @@ foreach (['open', 'preparing', 'closed', 'revoked', 'digital', 'markup', 'markup
         $lifecycle->revoke($key->token, $key->revision);
     }
     // J1: the browser compares downloaded originals with this digest.
-    $output[$state] = ['token' => $key->token, 'groupId' => $groupUuid, 'photoId' => $photo['photoId'], 'sha256' => $photo['sha256']];
+    // F3: the short alias the staff copy; it opens the same gallery as the long key.
+    $output[$state] = ['token' => $key->token, 'alias' => $key->alias, 'groupId' => $groupUuid, 'photoId' => $photo['photoId'], 'sha256' => $photo['sha256']];
 }
 // J4: two frames per child; the browser prints A1 past the gift threshold and B1 once below it, so B2 stays a neighbour.
 [$group, $groupUuid] = $addGroup('print', 'UTC_TIMESTAMP(),UTC_TIMESTAMP()+INTERVAL 7 DAY,UTC_TIMESTAMP()+INTERVAL 14 DAY,UTC_TIMESTAMP()+INTERVAL 14 DAY');

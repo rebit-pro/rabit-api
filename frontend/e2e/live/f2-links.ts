@@ -26,6 +26,8 @@ export type Link = {
   closesAt: string | null;
   deliveryAt: string | null;
   galleryToken?: string | null;
+  /** F3: the short alias staff copy. */
+  galleryAlias?: string | null;
   history?: { kind: string; at: string; reason: string | null; previousSentAt: string | null }[];
 };
 

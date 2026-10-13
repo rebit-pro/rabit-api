@@ -118,9 +118,9 @@ final class GroupLinkContractTest extends TestCase
         $event = ['kind' => 'corrected', 'actorId' => 5, 'actorName' => 'curator', 'at' => '2026-09-22T11:00:00+03:00', 'sentAt' => '2026-09-22T10:15:00+03:00',
             'closesAt' => '2026-09-29T10:15:00+03:00', 'deliveryAt' => '2026-10-06T10:15:00+03:00', 'previousSentAt' => '2026-09-22T10:45:00+03:00',
             'previousClosesAt' => '2026-09-29T10:45:00+03:00', 'previousDeliveryAt' => '2026-10-06T10:45:00+03:00', 'reason' => 'Ошибка в дате'];
-        $detail = new GroupLinkOutputDto(...$summary, galleryToken: str_repeat('f', 64), referenceNow: '2026-09-22T08:00:00+00:00', history: [new LinkEventOutputDto(...$event)], markupCorrectable: false);
+        $detail = new GroupLinkOutputDto(...$summary, galleryToken: str_repeat('f', 64), galleryAlias: 'k3m9x2q7v4', referenceNow: '2026-09-22T08:00:00+00:00', history: [new LinkEventOutputDto(...$event)], markupCorrectable: false);
         self::assertSame(
-            $summary + ['galleryToken' => str_repeat('f', 64), 'referenceNow' => '2026-09-22T08:00:00+00:00', 'history' => [$event], 'markupCorrectable' => false],
+            $summary + ['galleryToken' => str_repeat('f', 64), 'galleryAlias' => 'k3m9x2q7v4', 'referenceNow' => '2026-09-22T08:00:00+00:00', 'history' => [$event], 'markupCorrectable' => false],
             json_decode($serializer->serialize($mapper->detail($detail)), true, 16, JSON_THROW_ON_ERROR),
         );
         $page = new GroupLinkPageOutputDto([new GroupLinkSummaryOutputDto(...$summary, curatorName: 'Мария Иванова')], 1, 25, 1, 1, new GroupLinkCountersOutputDto('2026-09-22T08:00:00+00:00', 2, 1, 3, 0, 1, 1));
@@ -131,6 +131,7 @@ final class GroupLinkContractTest extends TestCase
             json_decode($serializer->serialize(['data' => $mapper->list($page), 'meta' => $mapper->meta($page)]), true, 16, JSON_THROW_ON_ERROR),
         );
         self::assertArrayNotHasKey('galleryToken', $summary);
+        self::assertArrayNotHasKey('galleryAlias', $summary);
         self::assertSame(
             ['revision' => 4, 'sentAt' => 's', 'closesAt' => 'c', 'digitalSalesUntil' => 'g', 'deliveryAt' => 'd'],
             json_decode($serializer->serialize($mapper->calendar(new LinkCalendarOutputDto(4, 's', 'c', 'g', 'd'))), true, 4, JSON_THROW_ON_ERROR),

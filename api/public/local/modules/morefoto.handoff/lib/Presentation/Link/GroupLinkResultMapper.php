@@ -68,6 +68,7 @@ final readonly class GroupLinkResultMapper
             childCount: $output->childCount,
             markupCorrectionAt: $output->markupCorrectionAt,
             galleryToken: $output->galleryToken,
+            galleryAlias: $output->galleryAlias,
             referenceNow: $output->referenceNow,
             history: array_map($this->event(...), $output->history),
             markupCorrectable: $output->markupCorrectable,

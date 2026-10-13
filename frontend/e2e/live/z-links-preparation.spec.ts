@@ -159,6 +159,10 @@ test('F2: организатор проверяет ссылку группы и
 
   const ready = await link(page, group.id);
   expect(ready.galleryToken).toMatch(/^[a-f0-9]{64}$/);
+  // F3: the key comes with its short alias; it opens the same gallery and names the long key for the address.
+  expect(ready.galleryAlias).toMatch(/^[2-9a-km-np-z]{10}$/);
+  const byAlias = (await body(await page.request.get('/api/v1/public/galleries/' + ready.galleryAlias))).data;
+  expect([byAlias.state, byAlias.token]).toEqual(['preparing', ready.galleryToken]);
   // The key is issued in the same transaction as the first preparation event: its minute is the earliest delivery.
   const prepareMinute = ready.history![0]!.at.slice(0, 16);
   expect([ready.revision, ready.prepared]).toEqual([2, true]);
@@ -182,6 +186,8 @@ test('F2: организатор проверяет ссылку группы и
     'LINK_NOT_PREPARED'
   );
   await command(page, group.id, 'link-preparations', { ...review, revision: 2, signature: renamed.signature });
+  // F3: a repeated preparation keeps the same short link.
+  expect((await link(page, group.id)).galleryAlias).toBe(ready.galleryAlias);
   const record: PreparedLink = {
     groupId: group.id,
     shootId: shoot.id,

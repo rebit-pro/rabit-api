@@ -9,8 +9,8 @@ use Rebit\Share\Contracts\Media\Dto\GalleryLinkOutputDto;
 use Rebit\Share\Contracts\Media\GalleryLinkInterface;
 
 /**
- * Даёт сотрудникам повторно скопировать действующую ссылку галереи группы и выдаёт её при первой подготовке к передаче.
- * Покупатель по-прежнему открывает галерею только по хешу ключа; отозванная ссылка сотрудникам не показывается.
+ * Даёт сотрудникам повторно скопировать действующую ссылку галереи группы — короткую (F3) — и выдаёт её при первой
+ * подготовке к передаче. Покупатель по-прежнему открывает галерею только по хешу ключа; отозванная ссылка сотрудникам не показывается.
  */
 final readonly class GalleryLinks implements GalleryLinkInterface
 {
@@ -30,16 +30,18 @@ final readonly class GalleryLinks implements GalleryLinkInterface
             throw new \UnexpectedValueException('Invalid stored gallery link timestamp.');
         }
 
-        return new GalleryLinkOutputDto($row['TOKEN'], $issuedAt);
+        return new GalleryLinkOutputDto($row['TOKEN'], $issuedAt, $row['ALIAS']);
     }
 
     public function ensure(string $groupId): GalleryLinkOutputDto
     {
-        $current = $this->current($groupId);
-        if (null !== $current) {
-            return $current;
+        $row = $this->keys->current($groupId);
+        if (false === $row) {
+            $this->lifecycle->issue($groupId);
+        } elseif (null === $row['ALIAS']) {
+            // A key the F3 migration could not reach gets its alias on the next preparation; the key itself is unchanged.
+            $this->keys->attachAlias($row['TOKEN_HASH']);
         }
-        $this->lifecycle->issue($groupId);
 
         return $this->current($groupId) ?? throw new \UnexpectedValueException('Issued gallery link is not readable.');
     }

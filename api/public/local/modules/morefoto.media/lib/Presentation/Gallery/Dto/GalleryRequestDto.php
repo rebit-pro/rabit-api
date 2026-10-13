@@ -12,7 +12,8 @@ use Rebit\Share\Infrastructure\Controller\Request\Attribute\StrictRequest;
 final readonly class GalleryRequestDto implements RequestDtoInterface
 {
     public function __construct(
-        #[RouteParameter(name: 'gallery_token', pattern: '/^[a-f0-9]{64}$/D', errorCode: 'GALLERY_NOT_FOUND', errorStatus: 404)]
+        // F3: MED-01 also opens a short alias; every other public call takes only the 64-character key.
+        #[RouteParameter(name: 'gallery_token', pattern: '/^(?:[a-f0-9]{64}|[2-9a-km-np-z]{10})$/D', errorCode: 'GALLERY_NOT_FOUND', errorStatus: 404)]
         public string $token,
     ) {}
 }

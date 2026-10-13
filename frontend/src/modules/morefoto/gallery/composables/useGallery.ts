@@ -21,15 +21,29 @@ export function useGallery() {
     error.value = '';
     unavailable.value = false;
     gallery.value = null;
+    let moved = false;
     try {
-      const result = await loadGallery(String(route.params.token ?? ''));
-      if (id === requestId) gallery.value = result;
+      const requested = String(route.params.token ?? '');
+      const result = await loadGallery(requested);
+      if (id !== requestId) return;
+      if (result.token && result.token !== requested) {
+        // F3-DEC-04: the address becomes the long link; the token watcher reloads the gallery by it, still loading.
+        moved = true;
+        await router.replace({
+          name: route.name ?? undefined,
+          params: { ...route.params, token: result.token },
+          query: route.query,
+          hash: route.hash
+        });
+        return;
+      }
+      gallery.value = result;
     } catch (cause) {
       if (id !== requestId) return;
       unavailable.value = cause instanceof GalleryUnavailableError;
       error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить галерею.';
     } finally {
-      if (id === requestId) loading.value = false;
+      if (id === requestId && !moved) loading.value = false;
     }
   }
   watch(() => route.params.token, reload, { immediate: true });
