@@ -17,6 +17,7 @@ use Rebit\Share\Contracts\Organization\Dto\CalendarCommandInputDto;
 use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryQueryInputDto;
 use Rebit\Share\Contracts\Organization\Dto\LinkSentInputDto;
 use Rebit\Share\Shared\Exception\HttpException;
+use Sprint\Migration\Version20261012180001;
 
 // F2: real MySQL trail of the browser scenario plus calendar rules under a controlled clock.
 if ('test' !== getenv('APP_ENV') || !is_dir('/runtime/public/bitrix')) {
@@ -63,6 +64,16 @@ $check((string)$group['CLOSES_AT'] === $sent->modify('+7 days')->format('Y-m-d H
 $check((string)$group['DELIVERY_DUE_AT'] === $sent->modify('+14 days')->format('Y-m-d H:i:s'), 'delivery is seven days after the close');
 $keys = $connection->query("SELECT TOKEN,TOKEN_HASH FROM mf_gallery_capability WHERE GROUP_PUBLIC_ID='{$publicId}' AND REVOKED=0")->fetchAll();
 $check(1 === count($keys) && hash('sha256', (string)$keys[0]['TOKEN']) === (string)$keys[0]['TOKEN_HASH'], 'single active key whose hash still resolves buyers');
+// F3: the two preparations kept one alias for the key; every key staff can copy has exactly one, in the agreed format.
+$aliases = $column("SELECT ALIAS FROM mf_gallery_alias WHERE TOKEN_HASH='" . $keys[0]['TOKEN_HASH'] . "'");
+$check(1 === count($aliases) && 1 === preg_match('/^[2-9a-km-np-z]{10}$/D', $aliases[0]), 'one short alias of the key');
+$check(0 === (int)$connection->query('SELECT COUNT(*) AS TOTAL FROM mf_gallery_capability c LEFT JOIN mf_gallery_alias a ON a.TOKEN_HASH=c.TOKEN_HASH
+    WHERE c.REVOKED=0 AND c.TOKEN IS NOT NULL AND a.ALIAS IS NULL')->fetch()['TOTAL'], 'every key staff can copy has an alias');
+$before = $column('SELECT CONCAT(ALIAS,TOKEN_HASH) FROM mf_gallery_alias ORDER BY ALIAS');
+Loader::includeModule('sprint.migration');
+require_once '/app/public/local/php_interface/migrations.foundation/Version20261012180001.php';
+(new Version20261012180001())->up();
+$check($before === $column('SELECT CONCAT(ALIAS,TOKEN_HASH) FROM mf_gallery_alias ORDER BY ALIAS'), 'F3 migration replay keeps every alias');
 $actions = $column("SELECT JSON_UNQUOTE(JSON_EXTRACT(UF_DELTA,'$.action')) FROM b_hlbd_mf_organization_change WHERE UF_AGGREGATE_TYPE='group' AND UF_AGGREGATE_ID={$id} ORDER BY ID");
 $check(['recordLinkSent', 'correctLinkSent'] === array_values(array_intersect($actions, ['recordLinkSent', 'correctLinkSent'])), 'organization journal of the delivery');
 // Two preparations, the delivery, the repeat with a new key and the correction; replays and rejected commands store nothing.

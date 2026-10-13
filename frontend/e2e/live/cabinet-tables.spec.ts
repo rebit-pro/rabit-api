@@ -234,7 +234,8 @@ test('#92 T11 T12: ссылки фильтруются плиткой «Приё
     await group(page, shoot.id, mark + ' Без кадров');
     await openGroup(page, shoot.id, first.id);
     await openGroup(page, second.id, other.id);
-    const tokens = [(await link(page, first.id)).galleryToken, (await link(page, other.id)).galleryToken];
+    // F3-DEC-03: staff copy the short link.
+    const tokens = [(await link(page, first.id)).galleryAlias, (await link(page, other.id)).galleryAlias];
 
     await page.goto('/cabinet/links');
     await page.getByRole('textbox', { name: 'Группа или съёмка', exact: true }).fill(mark);
