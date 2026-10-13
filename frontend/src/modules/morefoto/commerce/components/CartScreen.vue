@@ -19,7 +19,8 @@ const { gallery, loading, error, unavailable, reload } = useGallery();
         <h1>Корзина</h1>
         <p class="mf-muted">{{ gallery.institutionName }} · {{ gallery.groupName }} · {{ gallery.shootName }}</p>
       </header>
-      <CartContents :gallery="gallery" :token="String(route.params.token)" />
+      <!-- The checkout state belongs to one group's cart: a new gallery link starts a new cart. -->
+      <CartContents :key="String(route.params.token)" :gallery="gallery" :token="String(route.params.token)" />
     </template>
   </main>
 </template>

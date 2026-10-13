@@ -9,6 +9,8 @@ import { changeCartLine, clearCart } from '../services/cart';
 import CartItems from './CartItems.vue';
 import CartSummary from './CartSummary.vue';
 import CheckoutPanel from '../../orders/components/CheckoutPanel.vue';
+import CheckoutRecovery from '../../orders/components/CheckoutRecovery.vue';
+import { useCheckout } from '../../orders/composables/useCheckout';
 import CheckoutTerms from '../../orders/components/CheckoutTerms.vue';
 import { useLegalCatalog } from '../../legal/useLegalCatalog';
 import { findDocument } from '../../legal/rules';
@@ -16,6 +18,9 @@ const props = defineProps<{ gallery: GallerySnapshot; token: string }>();
 const { quote, catalog, calculationError, hasQuote, droppedPrint } = useCart(() => props.gallery);
 const selling = computed(() => galleryBuys(props.gallery));
 const purchasable = computed(() => isMockApiEnabled || !!catalog.value.capabilities?.purchaseEnabled);
+// The cart owns the checkout: an attempt whose answer was lost is recovered first, even when the group has closed meanwhile.
+const checkout = useCheckout(props.gallery, props.token);
+const { recovering, busy: sending, error: sendError, submit: resend } = checkout;
 const { catalog: legal } = useLegalCatalog();
 const offer = computed(() => findDocument(legal.value, 'offer'));
 const busy = shallowRef(false);
@@ -60,6 +65,7 @@ async function clear() {
 }
 </script>
 <template>
+  <CheckoutRecovery v-if="recovering" :busy="sending" :error="sendError" @retry="resend" />
   <p class="cart-separation">
     <v-icon icon="mdi-information-outline" size="18" /> В каждой группе своя корзина. Выбор в других группах сохраняется отдельно.
   </p>
@@ -94,9 +100,11 @@ async function clear() {
         </div>
       </div>
       <!-- UI-DEC-04: the order is placed right here; the old checkout address leads to this page. -->
-      <CheckoutPanel v-if="purchasable" :key="token" class="cart-layout__order" :gallery="gallery" :token="token" />
+      <CheckoutPanel v-if="purchasable && !recovering" class="cart-layout__order" :gallery="gallery" :checkout="checkout" />
       <CartSummary v-else class="cart-layout__order" :quote="quote" :catalog="catalog" :staff="gallery.audience === 'staff'">
-        <p class="cart-unavailable" role="status">Оформление заказов в этой группе пока не открыто.</p>
+        <p class="cart-unavailable" role="status">
+          {{ recovering ? 'Сначала проверьте прошлую отправку выше.' : 'Оформление заказов в этой группе пока не открыто.' }}
+        </p>
       </CartSummary>
       <!-- On a phone the terms follow the order button; on a wide screen they stay under the cart. -->
       <CheckoutTerms class="cart-layout__terms" :gallery="gallery" :seller="legal?.seller ?? null" :offer="offer" />
