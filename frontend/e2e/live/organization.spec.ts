@@ -307,7 +307,8 @@ test('C3: съёмки учреждения листаются в виджете
   await page.goto(shootPage(parent.id, event.id));
   await expect(rows(page)).toHaveCount(25);
   const pending = page.waitForResponse((response) => response.url().includes(`/shoots/${event.id}?page=2`));
-  await page.getByRole('button', { name: 'Следующая', exact: true }).click();
+  // #92: the groups table pages through the server with the pager of every cabinet table.
+  await page.getByRole('button', { name: 'Следующая страница', exact: true }).click();
   const groups = await body(await pending);
   expect(groups.data.groups.meta.page).toBe(2);
   expect(groups.data.groups.meta.total).toBe(26);
