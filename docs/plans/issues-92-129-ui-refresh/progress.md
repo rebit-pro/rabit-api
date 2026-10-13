@@ -2,14 +2,12 @@
 
 ## Точка продолжения
 
-- Дата: 13.10.2026. Ветка `codex/issues-92-129-ui-refresh` от main b1b547a; рабочая копия `/home/user/rabit-api-worktrees/issues-92-129-ui-refresh`. Прототип e89af3b согласован пользователем.
-- Связанное: #92, #129, #157, #159, #188; план `plan.md`; скриншоты `screenshots/`; страница сравнения https://claude.ai/artifact/HyZvj8sVvbAgeHEekxzrNB.
-- Завершено: S0–S7, S8.1 (FB-1…4), S8.2 (`GET /api/v1/shoots`, серверная сортировка «Съёмок»), S8.3 (правки live E2E и новый сценарий «Съёмки»); быстрые проверки зелёные.
-- Сейчас: merge PR #189 и выкладка на stage по команде пользователя («Если тесты зелёные, мержи и выкладывай»).
-- Следующий шаг: открыть PR; после ревью без блокеров — полный гейт (тестовый магазин ЮKassa выключен, #174).
-- Блокеры: нет. Live E2E по изменённым спекам ещё не запускались.
-- Проверки: PHP — scratchpad `php-ui.sh` (php-cli d1-local, volumes `rabit-e7-vendor`, `rabit-e7-phpstan`); frontend — `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy sh -c 'npm run check && npm run test:commerce'`; гейт — `E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor make test-e2e`.
-- Стенд скриншотов: см. `screenshots/tools/` и запуск в журнале «прототип».
+- Дата: 13.10.2026. PR #189 слит в main 96b74b6 и выложен на stage релизом `main-20261013161806-96b74b6` (журнал «выкладка»).
+- Связанное: #92, #129, #157 (закрыт этой работой), #188 (база знаний), #190 (серверная сортировка учреждений и групп); страница сравнения https://claude.ai/artifact/HyZvj8sVvbAgeHEekxzrNB.
+- Сейчас: задача закрыта.
+- Следующий шаг: обновить базу знаний `/guide/` под новый интерфейс (#188); #190 — отдельной задачей.
+- Блокеры: нет.
+- Откат stage: `docker service rollback` 11 backend-сервисов (спецификации в `services-before.json` релиза) и `morefoto_frontend` (прежний образ `morefoto-frontend:main-20261013105144-68355a0`). Миграций в релизе нет.
 
 ## Журнал
 
@@ -47,6 +45,15 @@
 
 - Прогон 2 `rabit-e2e-443cdee64847` (head 7416987) — группа b PASS: 67 сценариев, 12 верификаторов, в том числе новый «UI-T03 UI-T09» и восстановление E5; группа a — 80 passed, 1 timedOut: `organization` «C3: съёмки учреждения листаются в виджете, группы съёмки — страницами сервера» искал прежнюю кнопку «Следующая», а у таблицы — «Следующая страница» (ошибка спека, код не менялся). Исправлено в спеке.
 - Прогон 3 `rabit-e2e-6f35a7171197` (`E2E_GROUPS=a`, после правки спека) — PASS: 81 сценарий, 3 верификатора. Вместе с группой b прогона 2 на том же коде — гейт зелёный; ЮKassa-магазин выключен (#174).
+
+### 13.10.2026 — выкладка
+
+- По команде пользователя («Если тесты зелёные, мержи и выкладывай») PR #189 слит: 96b74b6.
+- Релиз `/srv/morefoto/releases/main-20261013161806-96b74b6`: `git archive 96b74b6 api`, образ `morefoto-frontend:main-20261013161806-96b74b6` (`VITE_API_MOCKS_ENABLED=false`, в бандле `/api/v1/shoots` и экран восстановления в корзине). `vendor` и `backend.conf` — из `main-20261013105144-68355a0`. Миграций нет.
+- `sha256sum --check` PASS; `prepare-release.sh` PASS; `backup.sh` — 269 464 байт; `restore-check.sh` — 176 таблиц PASS.
+- FPM первым: DI-smoke 27/27 (с `ShootListController`, `ListAllShootsUseCase`). Затем backend и 9 воркеров/диспетчеров, frontend 2/2; все 12 сервисов 1/1 и 2/2.
+- Живая проверка: `/`, `/login`, `/health`, `/guide/`, `/cabinet/shoots`, `/g/…/checkout` — 200; `GET /api/v1/shoots` без токена — 401 UNAUTHORIZED; бандл `index-6G3k46ab.js` совпадает со сборкой; Playwright desktop/mobile — вход с «Базой знаний» (`/guide/`), футер («Как заказать фото» → `/guide/parent/`, «Оферта» → `/legal/offer`, «Разработано в ReBit Studio»), старая ссылка оформления → `/cart`, без горизонтальной прокрутки и ошибок страницы; фатальных ошибок в логах FPM, backend и воркеров за 10 минут нет.
+- Не проверено вживую под учётной записью: кабинет (таблицы, «Съёмки», фильтры) и оформление заказа — покрыто гейтом.
 
 ## Тест-кейсы
 
