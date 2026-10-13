@@ -1,183 +1,203 @@
 <script setup lang="ts">
 import { isMockApiEnabled } from '@/mocks/config';
-import { computed, shallowRef, useTemplateRef, watch } from 'vue';
+import { computed, nextTick, shallowRef, useTemplateRef, watch } from 'vue';
 import type { GalleryPhoto, GallerySnapshot } from '../../gallery/types';
 import { useCart } from '../composables/useCart';
-import { addToCart } from '../services/cart';
+import { addToCart, changeCartLine } from '../services/cart';
 import { money } from '../money';
 import { printIncludesCopy } from '../print-copy';
+import { frameLine, frameSummary } from '../frame-lines';
 import { sellsKind } from '../sales-windows';
-import UiQuantityField from '../../ui/components/UiQuantityField.vue';
-import { quantityValue } from '../../ui/field-values';
+import type { CartQuoteLine, Product } from '../types';
 import { plural } from '@/components/viz/measures';
+import BuyerGuideLink from '../../guide/BuyerGuideLink.vue';
 const props = defineProps<{
   gallery: GallerySnapshot;
   photo: GalleryPhoto;
   token: string;
 }>();
 const { catalog, quote } = useCart(() => props.gallery);
-const productId = shallowRef('print-10x15');
-const quantity = shallowRef<number | string>(1);
-const quantityField = useTemplateRef<{ validate: () => boolean }>('quantityField');
-const busy = shallowRef(false);
+const list = useTemplateRef<HTMLUListElement>('list');
+/** Product whose cart line is being changed; every control waits for the server price of one change at a time. */
+const pending = shallowRef('');
 const notice = shallowRef('');
 const error = shallowRef('');
-// E7: once print sales close only digital products and bundles are offered.
-const products = computed(() => catalog.value.products.filter((product) => product.active && sellsKind(props.gallery.state, product.kind)));
-watch(
-  products,
-  (items) => {
-    if (!items.some((item) => item.id === productId.value)) productId.value = items[0]?.id ?? '';
-  },
-  { immediate: true }
-);
-const product = computed(() => products.value.find((product) => product.id === productId.value));
-const kindLabels = { physical: 'Печать', digital: 'Электронный файл', bundle: 'Все кадры серии файлами' } as const;
-function optionNote(item: { kind: keyof typeof kindLabels; format?: string }): string {
-  return item.format ? kindLabels[item.kind] + ' · ' + item.format : kindLabels[item.kind];
-}
-const discounted = computed(() => isMockApiEnabled && props.gallery.audience === 'staff' && product.value?.staffDiscount);
+const assignmentId = computed(() => props.photo.assignmentId ?? props.photo.id);
 const childCode = computed(
-  () =>
-    props.gallery.children.find((child) =>
-      child.photos.some((photo) => (photo.assignmentId ?? photo.id) === (props.photo.assignmentId ?? props.photo.id))
-    )?.code
+  () => props.gallery.children.find((child) => child.photos.some((photo) => (photo.assignmentId ?? photo.id) === assignmentId.value))?.code
 );
-const covered = computed(
-  () =>
-    product.value?.kind !== 'physical' &&
-    !!childCode.value &&
-    ((product.value?.kind === 'bundle' && quote.value.gifts.includes(childCode.value)) ||
-      (product.value?.kind === 'digital' &&
-        quote.value.lines.some((line) => line.childCode === childCode.value && line.product.kind === 'bundle')))
+const kindLabels = { physical: 'Печать', digital: 'Электронный файл', bundle: 'Все кадры серии файлами' } as const;
+interface Row {
+  product: Product;
+  line: CartQuoteLine | undefined;
+  price: number;
+  note: string;
+  /** A file or bundle already paid by the series bundle or the gift: nothing to add. */
+  covered: boolean;
+  /** J4: a print of this frame in the cart brings its digital copy; the digital product keeps its price. */
+  printCopy: boolean;
+}
+// E7: once print sales close only digital products and bundles are offered.
+const rows = computed<Row[]>(() =>
+  catalog.value.products
+    .filter((product) => product.active && sellsKind(props.gallery.state, product.kind))
+    .map((product) => {
+      const line = frameLine(quote.value, props.photo.id, childCode.value, product);
+      const covered =
+        !line &&
+        !!childCode.value &&
+        ((product.kind === 'bundle' && quote.value.gifts.includes(childCode.value)) ||
+          (product.kind === 'digital' &&
+            quote.value.lines.some((item) => item.childCode === childCode.value && item.product.kind === 'bundle')));
+      return {
+        product,
+        line,
+        price:
+          isMockApiEnabled && props.gallery.audience === 'staff' && product.staffDiscount ? Math.ceil(product.price / 2) : product.price,
+        note:
+          product.kind === 'physical'
+            ? product.printCount > 1
+              ? 'Комплект: ' + product.printCount + ' отпечатка'
+              : ''
+            : kindLabels[product.kind] + (product.format ? ' · ' + product.format : ''),
+        covered,
+        printCopy: product.kind === 'digital' && !covered && printIncludesCopy(quote.value, props.photo.id)
+      };
+    })
 );
-// J4: a print of this frame in the cart already brings its digital copy; the digital product keeps its price.
-const printed = computed(() => product.value?.kind === 'digital' && !covered.value && printIncludesCopy(quote.value, props.photo.id));
-const unitPrice = computed(() => {
-  const price = product.value?.price ?? 0;
-  return discounted.value ? Math.ceil(price / 2) : price;
-});
-const total = computed(() => {
-  const count = product.value?.kind === 'physical' ? quantityValue(quantity.value) : 1;
-  return count === null ? null : (covered.value ? 0 : unitPrice.value) * count;
-});
-watch(
-  () => props.photo.assignmentId ?? props.photo.id,
-  () => {
-    quantity.value = 1;
-    notice.value = '';
-    error.value = '';
-  }
-);
-watch(productId, () => {
-  quantity.value = 1;
+const summary = computed(() => frameSummary(quote.value, props.photo.id));
+watch(assignmentId, () => {
   notice.value = '';
   error.value = '';
 });
-async function add() {
-  if (busy.value || !product.value) return;
-  if (product.value.kind === 'physical' && !quantityField.value?.validate()) return;
-  busy.value = true;
+/** The pressed control is replaced (＋ → counter, counter → ＋), so the focus moves to its successor in the same row. */
+async function keepFocus(productId: string): Promise<void> {
+  await nextTick();
+  const controls = list.value?.querySelector(`[data-product="${CSS.escape(productId)}"] .product-option__control`);
+  controls?.querySelector<HTMLElement>('button:last-of-type:not(:disabled)')?.focus();
+}
+async function run(productId: string, change: () => Promise<string>): Promise<void> {
+  if (pending.value) return;
+  pending.value = productId;
   error.value = '';
   notice.value = '';
   try {
-    notice.value = await addToCart(
-      props.token,
-      props.photo.assignmentId ?? props.photo.id,
-      productId.value,
-      product.value.kind === 'physical' ? Number(quantity.value) : 1
-    );
+    notice.value = await change();
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : 'Не удалось сохранить выбор.';
   } finally {
-    busy.value = false;
+    pending.value = '';
+    void keepFocus(productId);
   }
+}
+function add(row: Row): void {
+  void run(row.product.id, () => addToCart(props.token, assignmentId.value, row.product.id, 1));
+}
+function change(row: Row, quantity: number): void {
+  const line = row.line;
+  if (line) void run(row.product.id, () => changeCartLine(props.token, line.id, quantity));
 }
 </script>
 <template>
-  <!-- UI-DEC-06: products are a short list with prices; one tap picks a product, one more adds it to the cart. -->
-  <form class="product-selector" novalidate @submit.prevent="add">
-    <h3>Заказать этот кадр</h3>
+  <!-- #192: every product has its own «+»; one frame takes several formats and the counters show what is in the cart. -->
+  <section class="product-selector" aria-labelledby="product-selector-title">
+    <h3 id="product-selector-title">Заказать этот кадр</h3>
+    <p class="product-selector__hint">Можно выбрать несколько форматов — нажмите «+» у каждого.</p>
     <p v-if="isMockApiEnabled" class="product-demo">Демонстрационные цены</p>
     <p v-if="gallery.state === 'digital'" class="mf-muted" data-testid="selector-digital-only">
       Печать закрыта — доступны электронные фотографии.
     </p>
-    <fieldset v-if="products.length" class="product-options" :disabled="busy">
-      <legend class="mf-sr-only">Продукция</legend>
-      <label
-        v-for="item in products"
-        :key="item.id"
+    <ul v-if="rows.length" ref="list" class="product-options" :aria-busy="!!pending">
+      <li
+        v-for="row in rows"
+        :key="row.product.id"
         class="product-option"
-        :class="{ 'product-option--active': item.id === productId }"
+        :class="{ 'product-option--added': row.line }"
+        :data-product="row.product.id"
         data-testid="product-option"
       >
-        <input
-          v-model="productId"
-          type="radio"
-          name="product"
-          :value="item.id"
-          :aria-label="item.name + ', ' + money(item.price)"
-          class="product-option__input"
-        />
         <span class="product-option__copy">
-          <strong>{{ item.name }}</strong>
-          <small v-if="item.id === productId"
-            >{{ item.description }}<template v-if="item.unit"> Единица: {{ item.unit }}.</template></small
+          <strong>{{ row.product.name }}</strong>
+          <span class="product-option__price"
+            >{{ money(row.price) }}<s v-if="row.price !== row.product.price">{{ money(row.product.price) }}</s></span
           >
-          <small v-else-if="item.kind !== 'physical'">{{ optionNote(item) }}</small>
+          <small v-if="row.note">{{ row.note }}</small>
         </span>
-        <span class="product-option__price">{{ money(item.price) }}</span>
-      </label>
-    </fieldset>
+        <span class="product-option__control">
+          <span v-if="row.covered" class="product-option__included" data-testid="product-included">
+            <v-icon icon="mdi-check" size="18" aria-hidden="true" />{{ row.product.kind === 'bundle' ? 'В подарок' : 'В комплекте' }}
+          </span>
+          <template v-else-if="row.line && row.product.kind === 'physical'">
+            <v-btn
+              icon="mdi-minus"
+              variant="outlined"
+              color="primary"
+              size="small"
+              :aria-label="'Убрать один: ' + row.product.name"
+              :disabled="!!pending"
+              @click="change(row, row.line.quantity - 1)"
+            />
+            <output class="product-option__count" :aria-label="'В корзине: ' + row.product.name" data-testid="product-count">{{
+              row.line.quantity
+            }}</output>
+            <v-btn
+              icon="mdi-plus"
+              variant="flat"
+              color="primary"
+              size="small"
+              :aria-label="'Добавить ещё один: ' + row.product.name"
+              :loading="pending === row.product.id"
+              :disabled="!!pending || row.line.quantity >= 99"
+              @click="change(row, row.line.quantity + 1)"
+            />
+          </template>
+          <v-btn
+            v-else-if="row.line"
+            variant="tonal"
+            color="success"
+            size="small"
+            prepend-icon="mdi-check"
+            :aria-label="'В корзине, убрать: ' + row.product.name"
+            :loading="pending === row.product.id"
+            :disabled="!!pending"
+            data-testid="product-remove"
+            @click="change(row, 0)"
+            >В корзине</v-btn
+          >
+          <v-btn
+            v-else
+            icon="mdi-plus"
+            variant="flat"
+            color="primary"
+            size="small"
+            :aria-label="'Добавить в корзину: ' + row.product.name + ', ' + money(row.price)"
+            :loading="pending === row.product.id"
+            :disabled="!!pending"
+            data-testid="product-add"
+            @click="add(row)"
+          />
+        </span>
+        <p v-if="row.printCopy && !row.line" class="product-option__copy-note" data-testid="product-print-copy">
+          Электронная копия этого кадра входит в печать вашей корзины.
+        </p>
+      </li>
+    </ul>
     <p v-else role="status">Ассортимент этой группы пока недоступен.</p>
-    <template v-if="product">
-      <p v-if="covered" class="product-discount">Входит в электронный комплект вашей корзины без дополнительной оплаты.</p>
-      <p v-if="printed" class="product-discount" data-testid="product-print-copy">
-        Электронная копия этого кадра входит в печать вашей корзины.
-      </p>
-      <p v-if="discounted" class="product-discount">
-        Скидка сотрудника 50% <s>{{ money(product.price) }}</s>
-      </p>
-      <div class="product-buy">
-        <UiQuantityField
-          v-if="product.kind === 'physical'"
-          ref="quantityField"
-          v-model="quantity"
-          :label="product.printCount > 1 ? 'Количество комплектов' : 'Количество'"
-          :context="photo.code"
-          :disabled="busy"
-          density="compact"
-          class="product-quantity"
-        />
-        <div class="product-price">
-          <span>{{ isMockApiEnabled ? 'Итого' : 'Цена за единицу' }}</span>
-          <strong>{{ isMockApiEnabled ? (total === null ? '—' : money(total)) : money(product.price) }}</strong>
-        </div>
-      </div>
-      <p v-if="product.printCount > 1" class="mf-muted">
-        Отпечатков:
-        {{ Number(quantity) > 0 ? Number(quantity) * product.printCount : 0 }}
-      </p>
-      <v-btn
-        type="submit"
-        color="primary"
-        block
-        size="large"
-        :loading="busy"
-        :disabled="busy"
-        prepend-icon="mdi-cart-plus"
-        data-testid="add-to-cart"
-        >Добавить в корзину</v-btn
-      >
-    </template>
+    <p v-if="summary.count" class="product-summary" data-testid="frame-summary">
+      В корзине из этого кадра: {{ summary.count }} шт. · {{ money(summary.total) }}
+    </p>
     <v-alert v-if="error" type="error" variant="tonal" density="compact" role="alert">{{ error }}</v-alert>
-    <p v-if="notice" role="status" class="product-notice">{{ notice }}</p>
-    <v-btn v-if="quote.count" :to="'/g/' + token + '/cart'" variant="tonal" color="primary" block append-icon="mdi-arrow-right"
+    <p class="product-notice" :class="{ 'mf-sr-only': !notice }" role="status">{{ notice }}</p>
+    <v-btn v-if="quote.count" :to="'/g/' + token + '/cart'" color="primary" block size="large" append-icon="mdi-arrow-right"
       >Оформить заказ · {{ quote.count }} {{ plural(quote.count, ['позиция', 'позиции', 'позиций']) }}</v-btn
     >
-  </form>
+    <BuyerGuideLink step="foto" class="product-selector__guide" />
+  </section>
 </template>
 <style scoped>
+.product-selector__guide {
+  align-self: center;
+}
 .product-selector {
   padding: var(--mf-space-5);
   align-self: start;
@@ -191,47 +211,40 @@ async function add() {
   font-size: 18px;
   line-height: 1.4;
 }
+.product-selector__hint {
+  margin-top: -8px;
+  color: var(--mf-color-text-secondary);
+  font-size: var(--mf-text-sm);
+  line-height: 1.45;
+}
 .product-demo {
   font-size: 12px;
   color: var(--mf-color-text-secondary);
-  margin-top: -8px;
 }
 .product-options {
   display: grid;
   gap: 6px;
   min-width: 0;
-  border: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 .product-option {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: var(--mf-space-3);
-  min-height: var(--mf-touch-size);
-  padding: 6px var(--mf-space-3);
+  gap: 4px var(--mf-space-3);
+  min-height: 60px;
+  padding: 8px 10px 8px var(--mf-space-3);
   border: 1px solid var(--mf-color-border);
   border-radius: var(--mf-radius-md);
-  cursor: pointer;
   transition:
     border-color var(--mf-duration-fast) var(--mf-ease-standard),
     background-color var(--mf-duration-fast) var(--mf-ease-standard);
 }
-.product-option:hover {
-  border-color: var(--mf-color-border-hover);
-}
-.product-option--active {
+.product-option--added {
   border-color: var(--mf-color-primary);
   background: var(--mf-color-selected);
-}
-.product-option:has(.product-option__input:focus-visible) {
-  outline: 2px solid var(--mf-color-focus);
-  outline-offset: 2px;
-}
-.product-option__input {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  accent-color: var(--mf-color-primary);
 }
 .product-option__copy {
   display: grid;
@@ -249,36 +262,41 @@ async function add() {
 .product-option__price {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  white-space: nowrap;
+  color: var(--mf-color-text-secondary);
 }
-.product-discount {
-  color: var(--mf-color-link);
-  font-size: 14px;
-}
-.product-discount s {
+.product-option__price s {
   margin-left: 8px;
-  color: var(--mf-color-text-secondary);
+  font-weight: 400;
 }
-.product-buy {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  justify-content: space-between;
-  gap: var(--mf-space-3);
+.product-option__control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
-.product-quantity {
-  width: 160px;
+.product-option__count {
+  min-width: 24px;
+  text-align: center;
+  font-size: var(--mf-text-md);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
-.product-price {
-  display: grid;
-  justify-items: end;
-  margin-left: auto;
+.product-option__included {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--mf-tone-success-fg);
+  font-size: var(--mf-text-sm);
+  font-weight: 600;
+}
+.product-option__copy-note {
+  grid-column: 1 / -1;
+  color: var(--mf-color-link);
   font-size: var(--mf-text-xs);
-  color: var(--mf-color-text-secondary);
+  line-height: 1.45;
 }
-.product-price strong {
-  color: var(--mf-color-text);
-  font-size: 22px;
+.product-summary {
+  font-size: var(--mf-text-sm);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 .product-notice {
