@@ -41,13 +41,15 @@ $check('' !== $root && is_dir($root), 'the private files root exists');
 $check(ModuleManager::isModuleInstalled('morefoto.production'), 'the module is registered');
 $versionId = $sql->forSql((string)$record['versionId']);
 $groupId = $sql->forSql((string)$record['groupId']);
-$version = $connection->query("SELECT * FROM mf_production_version WHERE PUBLIC_ID='{$versionId}' AND GROUP_PUBLIC_ID='{$groupId}'")->fetch();
+// fetchRaw: Bitrix fetch() turns DATETIME into a site-format object, which SQL would not accept back.
+$version = $connection->query("SELECT *,DATE_FORMAT(DEADLINE_AT,'%Y-%m-%d %H:%i:%s') AS DEADLINE_UTC FROM mf_production_version
+    WHERE PUBLIC_ID='{$versionId}' AND GROUP_PUBLIC_ID='{$groupId}'")->fetchRaw();
 $check(is_array($version), 'the version of the browser exists');
 $id = (int)$version['ID'];
 
 // 1. Exactly the paid print of the group before its deadline, each order line once, prints = quantity × printCount.
 $paid = $scalar("SELECT COUNT(*) FROM mf_order o JOIN mf_order_line l ON l.ORDER_ID=o.ID WHERE o.GROUP_PUBLIC_ID='{$groupId}'
-    AND o.PAYMENT_STATUS='paid' AND o.LATE_PAYMENT=0 AND o.PAID_AT<'{$version['DEADLINE_AT']}' AND l.PRODUCT_KIND='physical'");
+    AND o.PAYMENT_STATUS='paid' AND o.LATE_PAYMENT=0 AND o.PAID_AT<'{$version['DEADLINE_UTC']}' AND l.PRODUCT_KIND='physical'");
 $check(0 < $paid && $paid === (int)$version['LINES_COUNT'], 'the version holds every paid print line of the group');
 $check($paid === $scalar("SELECT COUNT(*) FROM mf_production_line p JOIN mf_order_line l ON l.PUBLIC_ID=p.ORDER_LINE_ID
     WHERE p.VERSION_ID={$id} AND l.PRODUCT_KIND='physical' AND p.QUANTITY=l.QUANTITY AND p.PRINT_COUNT=l.PRINT_COUNT AND p.PRINTS=l.QUANTITY*l.PRINT_COUNT
@@ -80,7 +82,7 @@ $run = $services->get(RunProductionUseCase::class)->execute(20);
 $check(1 === $scalar("SELECT COUNT(*) FROM mf_production_version WHERE GROUP_PUBLIC_ID='{$groupId}'"), 'a second run created a version of the group');
 $connection->queryExecute("UPDATE mf_production_version SET EXPIRES_AT=UTC_TIMESTAMP()-INTERVAL 1 SECOND WHERE ID={$id}");
 $check(1 <= $services->get(RunProductionUseCase::class)->execute(20)->expired, 'the expired archive was not removed');
-$check(!is_file($path) && 'expired' === $connection->query("SELECT STATUS FROM mf_production_version WHERE ID={$id}")->fetch()['STATUS'], 'the archive is deleted');
+$check(!is_file($path) && 'expired' === $connection->query("SELECT STATUS FROM mf_production_version WHERE ID={$id}")->fetchRaw()['STATUS'], 'the archive is deleted');
 try {
     $services->get(OpenProductionArchiveUseCase::class)->execute($token);
     $check(false, 'the expired link still opens');
@@ -94,7 +96,7 @@ $check(0 < $organizer, 'the fixture organizer exists');
 $renewed = $services->get(RenewProductionVersionUseCase::class)->execute($organizer, (string)$record['versionId'], bin2hex(random_bytes(16)));
 $check('pending' === $renewed->status, 'the deleted archive waits for a new build');
 $check(1 <= $services->get(RunProductionUseCase::class)->execute(20)->built, 'the archive was not built again');
-$rebuilt = $connection->query("SELECT * FROM mf_production_version WHERE ID={$id}")->fetch();
+$rebuilt = $connection->query("SELECT STATUS,LINK_GENERATION,BYTES,LINES_COUNT FROM mf_production_version WHERE ID={$id}")->fetchRaw();
 $check('ready' === $rebuilt['STATUS'] && 3 === (int)$rebuilt['LINK_GENERATION'] && is_file($path) && filesize($path) === (int)$rebuilt['BYTES'], 'the rebuilt archive is ready');
 $check($paid === (int)$rebuilt['LINES_COUNT'], 'the rebuild kept the composition');
 $check('/_protected/files/' . $version['ARCHIVE_PATH'] === $services->get(OpenProductionArchiveUseCase::class)->execute($links->token((string)$record['versionId'], 3))->internalUri, 'the new link opens the archive');
