@@ -5,8 +5,9 @@
 - Дата: 15.10.2026. Ветка `codex/issues-192-parent-buy-guide` от main 60bd97f (main не сдвинулся); рабочая копия `/home/user/rabit-api-worktrees/issues-192-parent-buy-guide`. Issue #192, PR — открывается 15.10.2026.
 - Завершено: S0–S5.1 — страница `frontend/public/kak-kupit/` (6 шагов, `og.jpg`), ссылка `BuyerGuideLink` на шагах покупателя и в футере, nginx `absolute_redirect off`, «+» у каждого формата со счётчиками, «Сохранить в телефон», unit и live E2E; быстрые проверки зелёные (13.10.2026). Версия 2 согласована владельцем 13.10.2026.
 - 15.10.2026: на stage гайда нет (`/kak-kupit/` отдаёт SPA, `/guide` → `http://`) — ветка не была запушена. Владелец: «пушь гайд и делай PR».
-- Сейчас: S6 — push, PR, самопроверка, затем полный гейт `make test-e2e`.
-- Следующий шаг: после гейта — merge и выкладка только frontend по команде владельца; после выкладки — `curl` KK-T06 и превью ссылки в мессенджере.
+- PR #194; самопроверка без блокеров (комментарий в PR), неблокирующее — #195. Полный гейт `rabit-e2e-d0348f36a9ff` на ab46129 — PASS.
+- Сейчас: ждём команду владельца на merge и выкладку.
+- Следующий шаг: merge → выкладка только frontend (`switch-frontend.sh`) → `curl` KK-T06, `og.jpg` = image/jpeg, превью ссылки в мессенджере, «Сохранить в телефон» на реальном телефоне.
 - Связанное: #193 — замена шага оплаты на QR-код СБП.
 - Стенд снимков: scratchpad сессии 13.10 `kk/` (`run.sh <frontend> <script>`; `stubs.mjs`, `crops.mjs`, `page.mjs`, `inapp.mjs`, `og.mjs`). PNG → WebP q80 — PIL.
 - Блокеры: нет. Параллельно: #191 (миниатюры в заказе) — своя ветка, тоже не запушена; обе задачи дописывают `zzzzz-orders.spec.ts` и nginx frontend в соседних местах — второй слитой ветке нужна сверка с main. #188 приостановлена.
@@ -44,16 +45,21 @@
 - Проверка выкладки по вопросу владельца: stage `main-20261013161806-96b74b6` гайда не содержит — `curl https://app.morefoto36.ru/kak-kupit/` и `/kak-kupit/og.jpg` отдают `index.html` приложения (SPA-заглушка), `/guide` → 301 `http://app.morefoto36.ru/guide/`. Причина: ветка не была запушена, PR не открыт.
 - main не сдвинулся с 60bd97f — сверка с base не нужна. Владелец: «пушь гайд и делай PR».
 
+### 15.10.2026 — PR #194 и полный гейт
+
+- PR #194 открыт. Самопроверка diff: блокеров нет — адрес гайда в одной константе, новая вкладка, `fetch` файла с того же origin (`VITE_API_URL=/api`), отменённое меню — не ошибка, `absolute_redirect off` в обоих конфигах. Неблокирующее: #195 — описание продукции больше не видно в карточке кадра.
+- `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` — прогон `rabit-e2e-d0348f36a9ff`, PASS за 409,7 с: браузер 152 (a 81, b 71), 15 верификаторов MySQL, lint/stylelint/typecheck/typecheck:e2e/test:ui/test:commerce/build, php-lint, PHPStan, PHPUnit; тестовый магазин ЮKassa включён.
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
 | --- | --- | --- | --- |
-| KK-T01 | PASS (стенд), live — PENDING | 13.10.2026 | `kk/page.mjs`: 390/1280/тёмная, 6/6 изображений, без прокрутки и ошибок; live — `zzzz-storefront` «KK-T01 KK-T06» в гейте |
+| KK-T01 | PASS | 15.10.2026 | стенд `kk/page.mjs` (13.10); live `zzzz-storefront` в гейте `rabit-e2e-d0348f36a9ff` |
 | KK-T02 | PASS (стенд) | 13.10.2026 | `kk/page.mjs`: просмотр открыт, Esc закрывает |
 | KK-T03 | PASS | 13.10.2026 | `tests/ui/buyer-guide.test.mjs` |
-| KK-T04 | PASS (unit, стенд), live — PENDING | 13.10.2026 | `buyer-guide.test.mjs`; `kk/inapp.mjs`; live — `zzzz-storefront`, `zzzzz-orders` в гейте |
+| KK-T04 | PASS | 15.10.2026 | `buyer-guide.test.mjs`; live `zzzz-storefront`, `zzzzz-orders` в гейте `rabit-e2e-d0348f36a9ff` |
 | KK-T05 | PASS | 13.10.2026 | `buyer-guide.test.mjs` |
-| KK-T06 | PASS (конфиг), live — PENDING | 13.10.2026 | `buyer-guide.test.mjs`; live — `zzzz-storefront`; stage `curl` после выкладки |
+| KK-T06 | PASS (конфиг, live), stage — PENDING | 15.10.2026 | `buyer-guide.test.mjs`; live `zzzz-storefront` в гейте; stage `curl` после выкладки |
 | KK-T07 | PASS | 13.10.2026 | `npm run check` (`test:ui` 94/94), `test:commerce` 243/243 |
-| KK-T08 | PASS (unit, стенд), live — PENDING | 13.10.2026 | `frame-lines.test.mjs`; `kk/crops.mjs`; live — гейт |
-| KK-T09 | PASS (unit, стенд), live — PENDING | 13.10.2026 | `share-files.test.mjs`; `kk/crops.mjs` (подмена меню); live — `zzzzzzzzzz-files` в гейте |
+| KK-T08 | PASS | 15.10.2026 | `frame-lines.test.mjs`; live `zzzz-storefront`, `zzzz-storefront-windows` в гейте `rabit-e2e-d0348f36a9ff` |
+| KK-T09 | PASS (live с подменой меню), реальный телефон — PENDING | 15.10.2026 | `share-files.test.mjs`; live `zzzzzzzzzz-files` в гейте; телефон — на stage |
