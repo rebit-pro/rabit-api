@@ -92,12 +92,12 @@
 
 - [x] S0. Ветка, worktree, инвентаризация, граф: D06 принят, F3 merged, L1 inProgress.
 - [x] S1. Согласование L1-DEC-01…08 — приняты все рекомендации (15.10.2026).
-- [ ] S2. Контракты поставщиков (Commerce, Organization) + реализация и DI у поставщиков, unit.
-- [ ] S3. Модуль `morefoto.production`: миграция, Domain, репозитории, DI, `prepare.php`.
-- [ ] S4. Сборка: `app:production:run` — план по курсору, ZIP + CSV под арендой, повтор/восстановление, удаление по сроку; общая запись ZIP в `rebit.share`.
-- [ ] S5. API PRD-01/02/03/04/07/10, ссылка (HMAC, поколение, отзыв), nginx-map.
-- [ ] S6. Frontend: значок и диалог «Печать» в «Ссылках и сроках», unit.
-- [ ] S7. Быстрые проверки, live E2E и верификатор, README волны, патч MoreFoto, PR.
+- [x] S2. Контракты поставщиков (Commerce, Organization) + реализация и DI у поставщиков, unit.
+- [x] S3. Модуль `morefoto.production`: миграция, Domain, репозитории, DI, `prepare.php`.
+- [x] S4. Сборка: `app:production:run` — план по курсору, ZIP + CSV под арендой, повтор/восстановление, удаление по сроку; общая запись ZIP в `rebit.share`.
+- [x] S5. API PRD-01/02/03/04/07/10, ссылка (HMAC, поколение, отзыв), nginx-map.
+- [x] S6. Frontend: значок и диалог «Печать» в «Ссылках и сроках», unit.
+- [x] S7. Быстрые проверки, live E2E и верификатор, README волны, патч MoreFoto, PR.
 - [ ] S8. Самопроверка/ревью, полный гейт `make test-e2e`, visual desktop/mobile.
 
 ## Критерии приёмки
