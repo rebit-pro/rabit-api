@@ -245,8 +245,10 @@ final readonly class DeliveryOperationRepository implements DeliveryOperationRep
         $this->transaction(function(Connection $connection) use ($id, $attempt, $status, $errorCode, $nextAttemptAt, $now): void {
             $timestamp = $this->date($now);
             $attemptStatus = 'accepted' === $status ? 'accepted' : 'rejected';
+            // J2: a letter may carry a private link; once accepted by SMTP or finally failed its text is not needed and is cleared.
+            // The payload hash stays, so a repeated queue() with the same letter still resolves to this operation.
             $connection->queryExecute(sprintf(
-                'UPDATE %s SET STATUS=%s,NEXT_ATTEMPT_AT=%s,PROCESSING_STARTED_AT=NULL,ACCEPTED_AT=%s,LAST_ERROR_CODE=%s,UPDATED_AT=%s '
+                'UPDATE %s SET STATUS=%s,NEXT_ATTEMPT_AT=%s,PROCESSING_STARTED_AT=NULL,ACCEPTED_AT=%s,LAST_ERROR_CODE=%s,UPDATED_AT=%s%s '
                 . "WHERE ID=%s AND STATUS='processing' AND ATTEMPTS=%d",
                 self::OPERATION_TABLE,
                 $this->quote($status),
@@ -254,6 +256,7 @@ final readonly class DeliveryOperationRepository implements DeliveryOperationRep
                 'accepted' === $status ? $this->quote($timestamp) : 'NULL',
                 null === $errorCode ? 'NULL' : $this->quote($errorCode),
                 $this->quote($timestamp),
+                in_array($status, ['accepted', 'failed'], true) ? ",BODY='',BODY_HTML=NULL" : '',
                 $this->quote($id),
                 $attempt,
             ));

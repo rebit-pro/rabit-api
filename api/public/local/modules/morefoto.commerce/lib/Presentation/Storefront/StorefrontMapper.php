@@ -61,6 +61,6 @@ final readonly class StorefrontMapper
             ];
         }
 
-        return new StorefrontCatalogResultDto($products, $output->giftThreshold, $output->giftForStaff, $output->revision, $output->conditionsRevision, ['receiptChannels' => $output->receiptChannels, 'purchaseEnabled' => $output->purchaseEnabled], null);
+        return new StorefrontCatalogResultDto($products, $output->giftThreshold, $output->giftForStaff, $output->revision, $output->conditionsRevision, ['receiptChannels' => $output->receiptChannels, 'purchaseEnabled' => $output->purchaseEnabled, 'orderEmail' => $output->orderEmail], null);
     }
 }
