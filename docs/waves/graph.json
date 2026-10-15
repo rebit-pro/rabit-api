@@ -6,7 +6,7 @@
   "backend": "RaBit API",
   "baseline": {
     "branch": "main",
-    "commit": "cc9200619ae6bc5a801354914774e33393d50b9c",
+    "commit": "d1741d5be8da14f4434161474203f8cee160f1c4",
     "mergedWaves": [
       "A1",
       "A2",
@@ -51,11 +51,10 @@
       "D4",
       "E8",
       "J4",
-      "F3"
+      "F3",
+      "L1"
     ],
-    "review": {
-      "L1": "https://github.com/rebit-pro/rabit-api/pull/196"
-    },
+    "review": {},
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
     "mergedPullRequests": {
       "B1": "https://github.com/rebit-pro/rabit-api/pull/8",
@@ -95,7 +94,8 @@
       "D4": "https://github.com/rebit-pro/rabit-api/pull/175",
       "E8": "https://github.com/rebit-pro/rabit-api/pull/181",
       "J4": "https://github.com/rebit-pro/rabit-api/pull/184",
-      "F3": "https://github.com/rebit-pro/rabit-api/pull/186"
+      "F3": "https://github.com/rebit-pro/rabit-api/pull/186",
+      "L1": "https://github.com/rebit-pro/rabit-api/pull/196"
     },
     "mergeCommits": {
       "C4": "cfc334e5890dd51dfd6ff6638eac2cc3e436322b",
@@ -127,7 +127,8 @@
       "D4": "28a8c55943dbc427dd951b77e2bb22baccaa654a",
       "E8": "a302774e48b597f5017d3bbacafc082730d7d045",
       "J4": "b085e8e809367dea49b8ca0ba9219648738be4a7",
-      "F3": "68355a0a0df15ed9f4188abdd3c989019a98182d"
+      "F3": "68355a0a0df15ed9f4188abdd3c989019a98182d",
+      "L1": "72aa95bbb1fedd9c055d910c7af192b9e160d0f2"
     },
     "decisionEvidence": {
       "D02-D05": "docs/waves/e3/README.md in rabit-api: user accepted rules before PR #20",
@@ -1974,7 +1975,7 @@
       "legacyIds": [
         "W26"
       ],
-      "deliveryState": "planned",
+      "deliveryState": "inProgress",
       "unlocks": [
         "J3",
         "N3"
@@ -2209,7 +2210,7 @@
       "legacyIds": [
         "W29"
       ],
-      "deliveryState": "review",
+      "deliveryState": "merged",
       "unlocks": [
         "L2",
         "L3",
