@@ -1,0 +1,247 @@
+diff -ruN a/docs/05-rest-api/README.md b/docs/05-rest-api/README.md
+--- a/docs/05-rest-api/README.md	2026-10-15 17:15:27.972468971 +0300
++++ b/docs/05-rest-api/README.md	2026-10-15 17:15:28.235592197 +0300
+@@ -411,8 +411,8 @@
+ | FIL-02 · **П** | **POST** /public/orders/current/downloads | Подготовить отдельный файл или ZIP; Заказ | photoIds, kind | **202**; id, kind, status, expiresAt, filename, error, contentUrl | J1; product |
+ | FIL-03 · **П** | **GET** /public/orders/current/downloads/{download_id} | Статус подготовки файла; Заказ | — | **200**; id, kind, status, expiresAt, filename, error, contentUrl | J1; product |
+ | FIL-04 · **П** | **GET** /public/orders/current/downloads/{download_id}/content | Скачать подготовленный оригинал или ZIP; Заказ | —; query: token | **200**; binary; Content-Type, Content-Disposition | J1; product |
+-| FIL-05 · **П** | **POST** /public/orders/current/file-deliveries | Повторно отправить письмо с файлами; Заказ | channel | **202**; id, status | J2; product |
+-| FIL-06 · **П** | **GET** /public/orders/current/file-deliveries/{file_delivery_id} | Результат отправки файлов; Заказ | — | **200**; id, status, sentAt?, error? | J2; product |
++| FIL-05 · **П** | **POST** /public/orders/current/file-deliveries | Отправить письмо со ссылкой на заказ ещё раз; Заказ | channel | **202**; id, kind, status, recipient, createdAt, acceptedAt? | J2; product |
++| FIL-06 · **П** | **GET** /public/orders/current/file-deliveries/{file_delivery_id} | Результат отправки письма; Заказ | — | **200**; id, kind, status, recipient, createdAt, acceptedAt? | J2; product |
+ | FIL-07 · **П** | **POST** /orders/{order_id}/file-recoveries | Восстановить получение после проверки адресата; О/К | reason, confirmed, orderVersion, email, verified, supportId | **202**; id, status, orderVersion | J3; product |
+ | FIL-08 · **П** | **GET** /orders/{order_id}/file-recoveries/{recovery_id} | Результат восстановления; О/К | — | **200**; id, status, sentAt?, error?, orderVersion | J3; product |
+ 
+@@ -420,7 +420,8 @@
+ - **FIL-02:** J1. Idempotency-Key 32 hex: тот же ключ и тело — та же загрузка, другое тело — 409 IDEMPOTENCY_CONFLICT. kind=file — ровно один photoId, загрузка сразу ready. kind=zip — photoIds опустить (все доступные) или разрешённое подмножество; сборка в фоне (pending), без сжатия, до 500 файлов и 2 ГиБ (иначе 413 ARCHIVE_TOO_LARGE); у заказа одна сборка (другой состав — 409 ARCHIVE_IN_PROGRESS), готовый архив того же состава переиспользуется. Отказы: 409 FILES_UNAVAILABLE {state}, 422 INVALID_DOWNLOAD, 422 PHOTO_NOT_ENTITLED, 422 INVALID_IDEMPOTENCY_KEY. Готовятся оригиналы без водяного знака.
+ - **FIL-03:** J1. status=pending/ready/failed/expired. Готовая загрузка живёт 24 ч, но не дольше срока права; при потере права показывается expired. contentUrl — только у ready: относительная ссылка на FIL-04 с подписью token на 10 минут, выдаётся заново при каждом чтении. failed: error=ARCHIVE_FAILED/COMPOSITION_CHANGED/FILES_UNAVAILABLE, повторная оплата не нужна. Чужая загрузка — 404 DOWNLOAD_NOT_FOUND.
+ - **FIL-04:** J1. X-Order-Key или token из contentUrl; перед каждой отдачей повторно проверяются ключ/подпись, оплата, срок D10 и состав. Байты отдаёт nginx из internal-location (X-Accel-Redirect), работает Range; постоянного публичного URL нет. Отказы: 403 INVALID_DOWNLOAD_TOKEN, 404 DOWNLOAD_NOT_FOUND, 409 DOWNLOAD_NOT_READY/DOWNLOAD_FAILED/FILES_UNAVAILABLE/COMPOSITION_CHANGED, 410 DOWNLOAD_EXPIRED/FILES_EXPIRED. Save response to file в Postman.
+-- **FIL-05:** Только на подтверждённый email заказа и в действующем сроке; другой адрес меняет куратор через FIL-07.
++- **FIL-05:** J2: письмо со ссылкой на страницу оплаченного заказа на email заказа (без подтверждения адреса, J2-DEC-03). Ссылка — отдельный ключ письма (HMAC от серверного секрета, хеш в mf_order_access_key KIND=email, срок — месяц файлов): повтор несёт ту же ссылку и не закрывает открытую страницу. Не чаще раза в 10 минут — 429 DELIVERY_TOO_SOON (details.retryAt), не больше 5 в сутки — 429 DELIVERY_LIMIT; отправка выключена — 409 DELIVERY_DISABLED; неоплаченный или истёкший заказ — 409 FILES_UNAVAILABLE; channel не email — 422 INVALID_DELIVERY. Idempotency-Key повторяет то же письмо. Автоматическое письмо после оплаты — cron app:files:order-emails, один раз на заказ; заказы, оплаченные до выкладки J2, автописьма не получают. Другой адрес — FIL-07 (J3).
++- **FIL-06:** J2: status pending (в очереди, отправляется или повторяется) | accepted (передано почтовому серверу, acceptedAt — не доставка и не прочтение) | failed | cancelled (срок заказа закончился). Письмо другого заказа — 404 DELIVERY_NOT_FOUND. Сводка для страницы заказа — GET /public/orders/current/file-deliveries: enabled, recipient, latest?, canResend, resendAvailableAt?.
+ - **FIL-07:** Создаёт операцию отправки; месяц доступа не продлевает. Способ проверки получателя требует D07. result sent/failed от клиента не принимается.
+ 
+ ### morefoto.support — Обращения, вопросы и продление
+diff -ruN a/docs/05-rest-api/build.py b/docs/05-rest-api/build.py
+--- a/docs/05-rest-api/build.py	2026-10-15 17:15:27.968482060 +0300
++++ b/docs/05-rest-api/build.py	2026-10-15 17:15:28.235592197 +0300
+@@ -383,11 +383,13 @@
+ add("files","FIL-04","GET","/public/orders/current/downloads/{download_id}/content","Скачать подготовленный оригинал или ZIP",B,
+     "binary; Content-Type, Content-Disposition",query=[("token","","Подпись из contentUrl вместо X-Order-Key")],fmt="binary",
+     note="J1. X-Order-Key или token из contentUrl; перед каждой отдачей повторно проверяются ключ/подпись, оплата, срок D10 и состав. Байты отдаёт nginx из internal-location (X-Accel-Redirect), работает Range; постоянного публичного URL нет. Отказы: 403 INVALID_DOWNLOAD_TOKEN, 404 DOWNLOAD_NOT_FOUND, 409 DOWNLOAD_NOT_READY/DOWNLOAD_FAILED/FILES_UNAVAILABLE/COMPOSITION_CHANGED, 410 DOWNLOAD_EXPIRED/FILES_EXPIRED. Save response to file в Postman.")
+-add("files","FIL-05","POST","/public/orders/current/file-deliveries","Повторно отправить письмо с файлами",B,
+-    "id, status",{"channel":"email"},code=202,save={"file_delivery_id":"id"},sample={"id":"file-delivery-example","status":"pending"},
+-    note="Только на подтверждённый email заказа и в действующем сроке; другой адрес меняет куратор через FIL-07.")
+-add("files","FIL-06","GET","/public/orders/current/file-deliveries/{file_delivery_id}","Результат отправки файлов",B,
+-    "id, status, sentAt?, error?",sample={"id":"file-delivery-example","status":"pending"})
++add("files","FIL-05","POST","/public/orders/current/file-deliveries","Отправить письмо со ссылкой на заказ ещё раз",B,
++    "id, kind, status, recipient, createdAt, acceptedAt?",{"channel":"email"},code=202,save={"file_delivery_id":"id"},
++    sample={"id":"file-delivery-example","kind":"manual","status":"pending"},
++    note="J2: письмо со ссылкой на страницу оплаченного заказа на email заказа (без подтверждения адреса, J2-DEC-03). Ссылка — отдельный ключ письма (HMAC от серверного секрета, хеш в mf_order_access_key KIND=email, срок — месяц файлов): повтор несёт ту же ссылку и не закрывает открытую страницу. Не чаще раза в 10 минут — 429 DELIVERY_TOO_SOON (details.retryAt), не больше 5 в сутки — 429 DELIVERY_LIMIT; отправка выключена — 409 DELIVERY_DISABLED; неоплаченный или истёкший заказ — 409 FILES_UNAVAILABLE; channel не email — 422 INVALID_DELIVERY. Idempotency-Key повторяет то же письмо. Автоматическое письмо после оплаты — cron app:files:order-emails, один раз на заказ; заказы, оплаченные до выкладки J2, автописьма не получают. Другой адрес — FIL-07 (J3).")
++add("files","FIL-06","GET","/public/orders/current/file-deliveries/{file_delivery_id}","Результат отправки письма",B,
++    "id, kind, status, recipient, createdAt, acceptedAt?",sample={"id":"file-delivery-example","status":"pending"},
++    note="J2: status pending (в очереди, отправляется или повторяется) | accepted (передано почтовому серверу, acceptedAt — не доставка и не прочтение) | failed | cancelled (срок заказа закончился). Письмо другого заказа — 404 DELIVERY_NOT_FOUND. Сводка для страницы заказа — GET /public/orders/current/file-deliveries: enabled, recipient, latest?, canResend, resendAvailableAt?.")
+ add("files","FIL-07","POST","/orders/{order_id}/file-recoveries","Восстановить получение после проверки адресата",OK,
+     "id, status, orderVersion",reason(orderVersion="{{order_version}}",email="buyer@example.test",verified=True,supportId=None),
+     code=202,save={"recovery_id":"id","order_version":"orderVersion"},
+diff -ruN a/docs/05-rest-api/endpoints.json b/docs/05-rest-api/endpoints.json
+--- a/docs/05-rest-api/endpoints.json	2026-10-15 17:15:27.972468971 +0300
++++ b/docs/05-rest-api/endpoints.json	2026-10-15 17:15:28.239578880 +0300
+@@ -3270,21 +3270,22 @@
+       "id": "FIL-05",
+       "method": "POST",
+       "path": "/public/orders/current/file-deliveries",
+-      "title": "Повторно отправить письмо с файлами",
++      "title": "Отправить письмо со ссылкой на заказ ещё раз",
+       "roles": "Заказ",
+-      "output": "id, status",
++      "output": "id, kind, status, recipient, createdAt, acceptedAt?",
+       "body": {
+         "channel": "email"
+       },
+       "code": 202,
+       "query": [],
+-      "note": "Только на подтверждённый email заказа и в действующем сроке; другой адрес меняет куратор через FIL-07.",
++      "note": "J2: письмо со ссылкой на страницу оплаченного заказа на email заказа (без подтверждения адреса, J2-DEC-03). Ссылка — отдельный ключ письма (HMAC от серверного секрета, хеш в mf_order_access_key KIND=email, срок — месяц файлов): повтор несёт ту же ссылку и не закрывает открытую страницу. Не чаще раза в 10 минут — 429 DELIVERY_TOO_SOON (details.retryAt), не больше 5 в сутки — 429 DELIVERY_LIMIT; отправка выключена — 409 DELIVERY_DISABLED; неоплаченный или истёкший заказ — 409 FILES_UNAVAILABLE; channel не email — 422 INVALID_DELIVERY. Idempotency-Key повторяет то же письмо. Автоматическое письмо после оплаты — cron app:files:order-emails, один раз на заказ; заказы, оплаченные до выкладки J2, автописьма не получают. Другой адрес — FIL-07 (J3).",
+       "status": "П",
+       "save": {
+         "file_delivery_id": "id"
+       },
+       "sample": {
+         "id": "file-delivery-example",
++        "kind": "manual",
+         "status": "pending"
+       },
+       "source": "frontend/src/modules/morefoto/orders/delivery/service.ts",
+@@ -3303,13 +3304,13 @@
+       "id": "FIL-06",
+       "method": "GET",
+       "path": "/public/orders/current/file-deliveries/{file_delivery_id}",
+-      "title": "Результат отправки файлов",
++      "title": "Результат отправки письма",
+       "roles": "Заказ",
+-      "output": "id, status, sentAt?, error?",
++      "output": "id, kind, status, recipient, createdAt, acceptedAt?",
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "",
++      "note": "J2: status pending (в очереди, отправляется или повторяется) | accepted (передано почтовому серверу, acceptedAt — не доставка и не прочтение) | failed | cancelled (срок заказа закончился). Письмо другого заказа — 404 DELIVERY_NOT_FOUND. Сводка для страницы заказа — GET /public/orders/current/file-deliveries: enabled, recipient, latest?, canResend, resendAvailableAt?.",
+       "status": "П",
+       "save": {},
+       "sample": {
+diff -ruN a/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json
+--- a/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json	2026-10-15 17:15:27.972468971 +0300
++++ b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json	2026-10-15 17:15:28.235592197 +0300
+@@ -9827,7 +9827,7 @@
+       "item": [
+         {
+           "id": "34d610a0-284c-5d60-be68-87124a8bdc81",
+-          "name": "FIL-05 · Повторно отправить письмо с файлами",
++          "name": "FIL-05 · Отправить письмо со ссылкой на заказ ещё раз",
+           "request": {
+             "method": "POST",
+             "auth": {
+@@ -9865,7 +9865,7 @@
+                 "file-deliveries"
+               ]
+             },
+-            "description": "**FIL-05 — morefoto.files**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status.\n\nТолько на подтверждённый email заказа и в действующем сроке; другой адрес меняет куратор через FIL-07.\n\nИсточник: frontend/src/modules/morefoto/orders/delivery/service.ts.\n\nОбласть: product. Основная волна: J2. Проверки: N2, N3.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_fil_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**FIL-05 — morefoto.files**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, kind, status, recipient, createdAt, acceptedAt?.\n\nJ2: письмо со ссылкой на страницу оплаченного заказа на email заказа (без подтверждения адреса, J2-DEC-03). Ссылка — отдельный ключ письма (HMAC от серверного секрета, хеш в mf_order_access_key KIND=email, срок — месяц файлов): повтор несёт ту же ссылку и не закрывает открытую страницу. Не чаще раза в 10 минут — 429 DELIVERY_TOO_SOON (details.retryAt), не больше 5 в сутки — 429 DELIVERY_LIMIT; отправка выключена — 409 DELIVERY_DISABLED; неоплаченный или истёкший заказ — 409 FILES_UNAVAILABLE; channel не email — 422 INVALID_DELIVERY. Idempotency-Key повторяет то же письмо. Автоматическое письмо после оплаты — cron app:files:order-emails, один раз на заказ; заказы, оплаченные до выкладки J2, автописьма не получают. Другой адрес — FIL-07 (J3).\n\nИсточник: frontend/src/modules/morefoto/orders/delivery/service.ts.\n\nОбласть: product. Основная волна: J2. Проверки: N2, N3.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_fil_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"channel\": \"email\"\n}",
+@@ -9961,7 +9961,7 @@
+                     "file-deliveries"
+                   ]
+                 },
+-                "description": "**FIL-05 — morefoto.files**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status.\n\nТолько на подтверждённый email заказа и в действующем сроке; другой адрес меняет куратор через FIL-07.\n\nИсточник: frontend/src/modules/morefoto/orders/delivery/service.ts.\n\nОбласть: product. Основная волна: J2. Проверки: N2, N3.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_fil_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++                "description": "**FIL-05 — morefoto.files**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, kind, status, recipient, createdAt, acceptedAt?.\n\nJ2: письмо со ссылкой на страницу оплаченного заказа на email заказа (без подтверждения адреса, J2-DEC-03). Ссылка — отдельный ключ письма (HMAC от серверного секрета, хеш в mf_order_access_key KIND=email, срок — месяц файлов): повтор несёт ту же ссылку и не закрывает открытую страницу. Не чаще раза в 10 минут — 429 DELIVERY_TOO_SOON (details.retryAt), не больше 5 в сутки — 429 DELIVERY_LIMIT; отправка выключена — 409 DELIVERY_DISABLED; неоплаченный или истёкший заказ — 409 FILES_UNAVAILABLE; channel не email — 422 INVALID_DELIVERY. Idempotency-Key повторяет то же письмо. Автоматическое письмо после оплаты — cron app:files:order-emails, один раз на заказ; заказы, оплаченные до выкладки J2, автописьма не получают. Другой адрес — FIL-07 (J3).\n\nИсточник: frontend/src/modules/morefoto/orders/delivery/service.ts.\n\nОбласть: product. Основная волна: J2. Проверки: N2, N3.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_fil_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+                 "body": {
+                   "mode": "raw",
+                   "raw": "{\n  \"channel\": \"email\"\n}",
+@@ -9981,13 +9981,13 @@
+                   "value": "application/json"
+                 }
+               ],
+-              "body": "{\n  \"data\": {\n    \"id\": \"file-delivery-example\",\n    \"status\": \"pending\"\n  }\n}"
++              "body": "{\n  \"data\": {\n    \"id\": \"file-delivery-example\",\n    \"kind\": \"manual\",\n    \"status\": \"pending\"\n  }\n}"
+             }
+           ]
+         },
+         {
+           "id": "ef25578a-4f66-5bed-abfa-c4a30f505f8a",
+-          "name": "FIL-06 · Результат отправки файлов",
++          "name": "FIL-06 · Результат отправки письма",
+           "request": {
+             "method": "GET",
+             "auth": {
+@@ -10018,7 +10018,7 @@
+                 "{{file_delivery_id}}"
+               ]
+             },
+-            "description": "**FIL-06 — morefoto.files**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, sentAt?, error?.\n\n\n\nИсточник: frontend/src/modules/morefoto/orders/delivery/service.ts.\n\nОбласть: product. Основная волна: J2. Проверки: N2, N3."
++            "description": "**FIL-06 — morefoto.files**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, kind, status, recipient, createdAt, acceptedAt?.\n\nJ2: status pending (в очереди, отправляется или повторяется) | accepted (передано почтовому серверу, acceptedAt — не доставка и не прочтение) | failed | cancelled (срок заказа закончился). Письмо другого заказа — 404 DELIVERY_NOT_FOUND. Сводка для страницы заказа — GET /public/orders/current/file-deliveries: enabled, recipient, latest?, canResend, resendAvailableAt?.\n\nИсточник: frontend/src/modules/morefoto/orders/delivery/service.ts.\n\nОбласть: product. Основная волна: J2. Проверки: N2, N3."
+           },
+           "event": [
+             {
+@@ -10079,7 +10079,7 @@
+                     "{{file_delivery_id}}"
+                   ]
+                 },
+-                "description": "**FIL-06 — morefoto.files**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, sentAt?, error?.\n\n\n\nИсточник: frontend/src/modules/morefoto/orders/delivery/service.ts.\n\nОбласть: product. Основная волна: J2. Проверки: N2, N3."
++                "description": "**FIL-06 — morefoto.files**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, kind, status, recipient, createdAt, acceptedAt?.\n\nJ2: status pending (в очереди, отправляется или повторяется) | accepted (передано почтовому серверу, acceptedAt — не доставка и не прочтение) | failed | cancelled (срок заказа закончился). Письмо другого заказа — 404 DELIVERY_NOT_FOUND. Сводка для страницы заказа — GET /public/orders/current/file-deliveries: enabled, recipient, latest?, canResend, resendAvailableAt?.\n\nИсточник: frontend/src/modules/morefoto/orders/delivery/service.ts.\n\nОбласть: product. Основная волна: J2. Проверки: N2, N3."
+               },
+               "status": "OK",
+               "code": 200,
+diff -ruN a/docs/05-rest-api/postman/MoreFoto.postman_collection.json b/docs/05-rest-api/postman/MoreFoto.postman_collection.json
+--- a/docs/05-rest-api/postman/MoreFoto.postman_collection.json	2026-10-15 17:15:27.972468971 +0300
++++ b/docs/05-rest-api/postman/MoreFoto.postman_collection.json	2026-10-15 17:15:28.235592197 +0300
+@@ -9580,7 +9580,7 @@
+         },
+         {
+           "id": "34d610a0-284c-5d60-be68-87124a8bdc81",
+-          "name": "FIL-05 · Повторно отправить письмо с файлами",
++          "name": "FIL-05 · Отправить письмо со ссылкой на заказ ещё раз",
+           "request": {
+             "method": "POST",
+             "auth": {
+@@ -9618,7 +9618,7 @@
+                 "file-deliveries"
+               ]
+             },
+-            "description": "**FIL-05 — morefoto.files**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status.\n\nТолько на подтверждённый email заказа и в действующем сроке; другой адрес меняет куратор через FIL-07.\n\nИсточник: frontend/src/modules/morefoto/orders/delivery/service.ts.\n\nОбласть: product. Основная волна: J2. Проверки: N2, N3.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_fil_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++            "description": "**FIL-05 — morefoto.files**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, kind, status, recipient, createdAt, acceptedAt?.\n\nJ2: письмо со ссылкой на страницу оплаченного заказа на email заказа (без подтверждения адреса, J2-DEC-03). Ссылка — отдельный ключ письма (HMAC от серверного секрета, хеш в mf_order_access_key KIND=email, срок — месяц файлов): повтор несёт ту же ссылку и не закрывает открытую страницу. Не чаще раза в 10 минут — 429 DELIVERY_TOO_SOON (details.retryAt), не больше 5 в сутки — 429 DELIVERY_LIMIT; отправка выключена — 409 DELIVERY_DISABLED; неоплаченный или истёкший заказ — 409 FILES_UNAVAILABLE; channel не email — 422 INVALID_DELIVERY. Idempotency-Key повторяет то же письмо. Автоматическое письмо после оплаты — cron app:files:order-emails, один раз на заказ; заказы, оплаченные до выкладки J2, автописьма не получают. Другой адрес — FIL-07 (J3).\n\nИсточник: frontend/src/modules/morefoto/orders/delivery/service.ts.\n\nОбласть: product. Основная волна: J2. Проверки: N2, N3.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_fil_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+             "body": {
+               "mode": "raw",
+               "raw": "{\n  \"channel\": \"email\"\n}",
+@@ -9714,7 +9714,7 @@
+                     "file-deliveries"
+                   ]
+                 },
+-                "description": "**FIL-05 — morefoto.files**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status.\n\nТолько на подтверждённый email заказа и в действующем сроке; другой адрес меняет куратор через FIL-07.\n\nИсточник: frontend/src/modules/morefoto/orders/delivery/service.ts.\n\nОбласть: product. Основная волна: J2. Проверки: N2, N3.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_fil_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
++                "description": "**FIL-05 — morefoto.files**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, kind, status, recipient, createdAt, acceptedAt?.\n\nJ2: письмо со ссылкой на страницу оплаченного заказа на email заказа (без подтверждения адреса, J2-DEC-03). Ссылка — отдельный ключ письма (HMAC от серверного секрета, хеш в mf_order_access_key KIND=email, срок — месяц файлов): повтор несёт ту же ссылку и не закрывает открытую страницу. Не чаще раза в 10 минут — 429 DELIVERY_TOO_SOON (details.retryAt), не больше 5 в сутки — 429 DELIVERY_LIMIT; отправка выключена — 409 DELIVERY_DISABLED; неоплаченный или истёкший заказ — 409 FILES_UNAVAILABLE; channel не email — 422 INVALID_DELIVERY. Idempotency-Key повторяет то же письмо. Автоматическое письмо после оплаты — cron app:files:order-emails, один раз на заказ; заказы, оплаченные до выкладки J2, автописьма не получают. Другой адрес — FIL-07 (J3).\n\nИсточник: frontend/src/modules/morefoto/orders/delivery/service.ts.\n\nОбласть: product. Основная волна: J2. Проверки: N2, N3.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_fil_05. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+                 "body": {
+                   "mode": "raw",
+                   "raw": "{\n  \"channel\": \"email\"\n}",
+@@ -9734,13 +9734,13 @@
+                   "value": "application/json"
+                 }
+               ],
+-              "body": "{\n  \"data\": {\n    \"id\": \"file-delivery-example\",\n    \"status\": \"pending\"\n  }\n}"
++              "body": "{\n  \"data\": {\n    \"id\": \"file-delivery-example\",\n    \"kind\": \"manual\",\n    \"status\": \"pending\"\n  }\n}"
+             }
+           ]
+         },
+         {
+           "id": "ef25578a-4f66-5bed-abfa-c4a30f505f8a",
+-          "name": "FIL-06 · Результат отправки файлов",
++          "name": "FIL-06 · Результат отправки письма",
+           "request": {
+             "method": "GET",
+             "auth": {
+@@ -9771,7 +9771,7 @@
+                 "{{file_delivery_id}}"
+               ]
+             },
+-            "description": "**FIL-06 — morefoto.files**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, sentAt?, error?.\n\n\n\nИсточник: frontend/src/modules/morefoto/orders/delivery/service.ts.\n\nОбласть: product. Основная волна: J2. Проверки: N2, N3."
++            "description": "**FIL-06 — morefoto.files**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, kind, status, recipient, createdAt, acceptedAt?.\n\nJ2: status pending (в очереди, отправляется или повторяется) | accepted (передано почтовому серверу, acceptedAt — не доставка и не прочтение) | failed | cancelled (срок заказа закончился). Письмо другого заказа — 404 DELIVERY_NOT_FOUND. Сводка для страницы заказа — GET /public/orders/current/file-deliveries: enabled, recipient, latest?, canResend, resendAvailableAt?.\n\nИсточник: frontend/src/modules/morefoto/orders/delivery/service.ts.\n\nОбласть: product. Основная волна: J2. Проверки: N2, N3."
+           },
+           "event": [
+             {
+@@ -9832,7 +9832,7 @@
+                     "{{file_delivery_id}}"
+                   ]
+                 },
+-                "description": "**FIL-06 — morefoto.files**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, status, sentAt?, error?.\n\n\n\nИсточник: frontend/src/modules/morefoto/orders/delivery/service.ts.\n\nОбласть: product. Основная волна: J2. Проверки: N2, N3."
++                "description": "**FIL-06 — morefoto.files**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Заказ.\n\nОтвет: id, kind, status, recipient, createdAt, acceptedAt?.\n\nJ2: status pending (в очереди, отправляется или повторяется) | accepted (передано почтовому серверу, acceptedAt — не доставка и не прочтение) | failed | cancelled (срок заказа закончился). Письмо другого заказа — 404 DELIVERY_NOT_FOUND. Сводка для страницы заказа — GET /public/orders/current/file-deliveries: enabled, recipient, latest?, canResend, resendAvailableAt?.\n\nИсточник: frontend/src/modules/morefoto/orders/delivery/service.ts.\n\nОбласть: product. Основная волна: J2. Проверки: N2, N3."
+               },
+               "status": "OK",
+               "code": 200,
+diff -ruN a/docs/05-rest-api/verification.json b/docs/05-rest-api/verification.json
+--- a/docs/05-rest-api/verification.json	2026-10-15 17:15:27.972468971 +0300
++++ b/docs/05-rest-api/verification.json	2026-10-15 17:15:28.239578880 +0300
+@@ -28,7 +28,7 @@
+   ],
+   "liveApiRequestsExecuted": false,
+   "sha256": {
+-    "build.py": "d9e24052c3f68c17d61ed2a2448811efc2d911ffcad38c55ae75019d6b5c2f5b",
++    "build.py": "6e47e2de79308d75a0e33648c8fc6188e53a46b391496a7bc93193576e08af2c",
+     "validate.py": "7bf233ed80992eb7392120b9ab6f34d83917f280efd5c3302e9bf17991b6ee89",
+     "validate-postman.cjs": "879a609e16602ab971c3296eacb0b0d0c702d840d842d8942c3b410240543877",
+     "../04-bitrix-modules/README.md": "c4a49f91a1beff119f3b8eaa910b24031d5cfb089375f093ef64486644d6c010",
+@@ -36,10 +36,10 @@
+     "../04-bitrix-modules/backend-waves.md": "e7f0dc77bb0e2ea0326afc667f3a741e9e3f6f0aead0821a024f7213bb3cea75",
+     "../04-bitrix-modules/render-waves.py": "e25b9a4de626c024cb814295ab9e9890995bdf35de8fcdf18a44009c7aa6660e",
+     "../04-bitrix-modules/wave_graph.py": "efe5c94bf5e643498db5dbf8c827296b47ecbd3a29f736695b3f55c5ebc7104b",
+-    "README.md": "ee8e3f4949bdf21741f963126c82b6a7f37a72f2d762daaa249d7bc052664ec1",
+-    "endpoints.json": "29621c450392d57bb04ab59a029916b0ffd4eecf14dbe950246ca155234305c6",
+-    "postman/MoreFoto.postman_collection.json": "2884bc68e90e51286ded6a294ec10d134fa3203392326ae53ea7693a35d158a4",
+-    "postman/MoreFoto.backend-waves.postman_collection.json": "6f400c7e17d4608aac3f3bad6f1e1adba96b45786b265d1c1231fad85bc43c1e",
++    "README.md": "a9b154c67c1194548a9c608a926ee4675941782e5f83680c102cebd88812fa1b",
++    "endpoints.json": "986ff0526c08c0679b9acdd86b1193a217573d9a980cbf471185df5be5a32f3a",
++    "postman/MoreFoto.postman_collection.json": "db965e189c54bb972703e9b75d0664f75ad97ef8888a1ba78fa888a955fcb8fc",
++    "postman/MoreFoto.backend-waves.postman_collection.json": "1a24d569e20155c7e3e44251249a9634432fd0cb20d14fa25cd88ec461655650",
+     "postman/MoreFoto.local.postman_environment.json": "2ae2f4bd388aad251c2ec52b8fcf22dedec50eace74acc6f2a98688b03df4f2b",
+     "postman/MoreFoto.stage.postman_environment.json": "9b8be68865bc53e1a66f231b235366af2c2e906d352582f53cfac1a510b18df5"
+   },

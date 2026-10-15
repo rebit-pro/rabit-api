@@ -147,14 +147,15 @@ final readonly class OrderRepository
         return false !== $this->query("SELECT 1 FROM mf_order_line WHERE ORDER_ID={$id} AND PRODUCT_KIND='physical' LIMIT 1")->fetch();
     }
 
-    /** Меняет статус оплаты и повышает версию заказа; снимок покупки не трогает. */
+    /** Меняет статус оплаты и повышает версию заказа; снимок покупки не трогает. J2: момент подтверждения оплаты сервером. */
     public function applyPayment(int $id, string $status, ?string $paidAt, bool $latePayment): void
     {
         $connection = Application::getConnection();
         $helper = $connection->getSqlHelper();
         $paid = null === $paidAt ? 'NULL' : "'" . $helper->forSql($paidAt) . "'";
+        $recorded = 'paid' === $status ? 'UTC_TIMESTAMP()' : 'NULL';
         try {
-            $connection->queryExecute("UPDATE mf_order SET PAYMENT_STATUS='" . $helper->forSql($status) . "',PAID_AT={$paid},LATE_PAYMENT="
+            $connection->queryExecute("UPDATE mf_order SET PAYMENT_STATUS='" . $helper->forSql($status) . "',PAID_AT={$paid},PAID_RECORDED_AT={$recorded},LATE_PAYMENT="
                 . (int)$latePayment . ",VERSION=VERSION+1,UPDATED_AT=UTC_TIMESTAMP() WHERE ID={$id}");
         } catch (\Throwable $error) {
             throw new OrderStorageException('Cannot change order payment status.', 0, $error);
@@ -220,6 +221,30 @@ final readonly class OrderRepository
             FROM mf_order o INNER JOIN mf_order_line l ON l.ORDER_ID=o.ID
             WHERE o.GROUP_PUBLIC_ID='{$group}' AND o.PAYMENT_STATUS='paid' AND o.LATE_PAYMENT=0 AND o.PAID_AT<'{$until}'
             AND l.PRODUCT_KIND='physical' AND l.PHOTO_PUBLIC_ID IS NOT NULL ORDER BY o.ID,l.LINE_NO");
+    }
+
+    /**
+     * J2: заказы, оплату которых сервер подтвердил после курсора (момент, ID); поздняя оплата и заказы до выкладки J2
+     * (без момента) не входят.
+     *
+     * @param string $since UTC `Y-m-d H:i:s`
+     */
+    public function paidForEmail(string $since, int $afterId, int $limit): Result
+    {
+        $from = Application::getConnection()->getSqlHelper()->forSql($since);
+
+        return $this->query("SELECT ID,PUBLIC_ID,NUMBER,BUYER_EMAIL,DATE_FORMAT(PAID_AT,'%Y-%m-%d %H:%i:%s') AS PAID_AT,
+            DATE_FORMAT(PAID_RECORDED_AT,'%Y-%m-%d %H:%i:%s') AS PAID_RECORDED_AT FROM mf_order
+            WHERE (PAID_RECORDED_AT>'{$from}' OR (PAID_RECORDED_AT='{$from}' AND ID>{$afterId})) AND PAYMENT_STATUS='paid' AND LATE_PAYMENT=0
+            ORDER BY PAID_RECORDED_AT,ID LIMIT {$limit}");
+    }
+
+    /** J2: оплаченный (не поздно) заказ для письма. */
+    public function paidForEmailById(int $id): Result
+    {
+        return $this->query("SELECT ID,PUBLIC_ID,NUMBER,BUYER_EMAIL,DATE_FORMAT(PAID_AT,'%Y-%m-%d %H:%i:%s') AS PAID_AT,
+            DATE_FORMAT(COALESCE(PAID_RECORDED_AT,PAID_AT),'%Y-%m-%d %H:%i:%s') AS PAID_RECORDED_AT FROM mf_order
+            WHERE ID={$id} AND PAYMENT_STATUS='paid' AND LATE_PAYMENT=0");
     }
 
     /** L1: заказы группы с печатью, у которых открыта попытка оплаты. */

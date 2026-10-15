@@ -48,6 +48,33 @@ final class FilesArchitectureTest extends TestCase
         self::assertSame(LogChannelEnum::files, LogChannelEnum::resolveFromClassName('Morefoto\Files\Presentation\Controller\PublicFileController'));
     }
 
+    /** J2: FIL-05/06 и сводка письма — тот же чистый контроллер: типизированные DTO, UseCase и мапперы. */
+    public function testDeliveryControllerOnlyMapsTypedDtosThroughUseCases(): void
+    {
+        $source = (string)file_get_contents(self::LIB . '/Presentation/Controller/PublicFileDeliveryController.php');
+        foreach (token_get_all($source) as $token) {
+            if (is_array($token) && in_array($token[0], [T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED], true)) {
+                $name = ltrim($token[1], '\\');
+                self::assertTrue(
+                    'Morefoto\Files\Presentation\Controller' === $name
+                    || (str_starts_with($name, 'Morefoto\Files\Application\Delivery\UseCase\\') && str_ends_with($name, 'UseCase'))
+                    || (str_starts_with($name, 'Morefoto\Files\Presentation\Delivery\Request\Dto\\') && str_ends_with($name, 'RequestDto'))
+                    || in_array($name, [
+                        'Morefoto\Files\Presentation\Delivery\DeliveryInputMapper',
+                        'Morefoto\Files\Presentation\Delivery\DeliveryResultMapper',
+                        'Rebit\Share\Infrastructure\Bitrix\ControllerJson',
+                        'Rebit\Share\Infrastructure\Controller\PrivateApiJsonController',
+                    ], true),
+                    'Недопустимая зависимость concrete controller: ' . $name,
+                );
+            }
+        }
+        foreach (['HttpRequest', 'ServiceLocator', 'getCurrentRoute', 'LoggerFilter', 'getRequest()', 'json_decode', 'HttpException', '$this->json([', 'try {', 'addHeader'] as $forbidden) {
+            self::assertStringNotContainsString($forbidden, $source);
+        }
+        self::assertSame(3, preg_match_all('/public function \w+Action\(\w+RequestDto \$request\): ControllerJson/', $source));
+    }
+
     public function testBackendNginxServesPrivateRootsOnlyInternallyAndKeepsTokensOutOfTheLog(): void
     {
         $config = (string)file_get_contents(dirname(__DIR__, 6) . '/docker/common/nginx/conf.d/default.conf');

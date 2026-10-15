@@ -38,6 +38,7 @@ use Morefoto\Commerce\Infrastructure\Files\OrderEntitlements;
 use Morefoto\Commerce\Infrastructure\Payment\OrderPayments;
 use Morefoto\Commerce\Domain\Storefront\Service\SalesWindowPolicy;
 use Morefoto\Commerce\Infrastructure\Correction\GroupOrders;
+use Morefoto\Commerce\Infrastructure\Files\OrderEmailLinks;
 use Morefoto\Commerce\Infrastructure\Production\GroupPrintOrders;
 use Morefoto\Commerce\Infrastructure\Transfer\ChildOrders;
 use Morefoto\Commerce\Presentation\Controller\OrderController;
@@ -51,6 +52,7 @@ use Rebit\Share\Application\Contract\Consent\ConsentRecorderInterface;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Contracts\Commerce\ChildOrdersInterface;
 use Rebit\Share\Contracts\Commerce\GroupOrdersInterface;
+use Rebit\Share\Contracts\Commerce\OrderEmailLinkInterface;
 use Rebit\Share\Contracts\Commerce\GroupPrintOrdersInterface;
 use Rebit\Share\Contracts\Commerce\StructureSalesRemovalInterface;
 use Morefoto\Commerce\Infrastructure\Organization\StructureSalesRemoval;
@@ -65,13 +67,27 @@ use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 return [
     CheckoutAvailability::class => [
         // Checkout stays disabled unless an isolated stand explicitly enables it; no charges are ever made by E5.
-        'constructor' => static fn(): CheckoutAvailability => new CheckoutAvailability('1' === getenv('MOREFOTO_CHECKOUT_ENABLED')),
+        'constructor' => static fn(): CheckoutAvailability => new CheckoutAvailability(
+            '1' === getenv('MOREFOTO_CHECKOUT_ENABLED'),
+            '1' === getenv('MOREFOTO_ORDER_EMAIL_ENABLED'),
+        ),
     ],
     OrderTransactionInterface::class => [
         'constructor' => static fn(): OrderTransactionInterface => new OrderTransaction(),
     ],
     GroupOrdersInterface::class => [
         'constructor' => static fn(): GroupOrdersInterface => new GroupOrders(ServiceLocator::getInstance()->get(OrderRepository::class)),
+    ],
+    OrderEmailLinkInterface::class => [
+        // J2: the email key is derived from the server secret, like J1 download links; the buyer key is never sent.
+        'constructor' => static fn(): OrderEmailLinkInterface => new OrderEmailLinks(
+            ServiceLocator::getInstance()->get(OrderRepository::class),
+            ServiceLocator::getInstance()->get(OrderAccessKeyRepository::class),
+            ServiceLocator::getInstance()->get(OrderCalendarPolicy::class),
+            ServiceLocator::getInstance()->get(CheckoutAvailability::class),
+            ServiceLocator::getInstance()->get(ClockInterface::class),
+            (string)(getenv('REBIT_ENCRYPTION_KEY') ?: ''),
+        ),
     ],
     GroupPrintOrdersInterface::class => [
         'constructor' => static fn(): GroupPrintOrdersInterface => new GroupPrintOrders(ServiceLocator::getInstance()->get(OrderRepository::class)),

@@ -1,0 +1,23 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Morefoto\Files\Presentation\Delivery\Request\Dto;
+
+use Rebit\Share\Application\Interface\RequestDtoInterface;
+use Rebit\Share\Infrastructure\Controller\Request\Attribute\JsonBody;
+use Rebit\Share\Infrastructure\Controller\Request\Attribute\RequestHeader;
+use Rebit\Share\Infrastructure\Controller\Request\Attribute\StrictRequest;
+
+#[JsonBody(maxBytes: 1024)]
+#[StrictRequest]
+final readonly class CreateFileDeliveryRequestDto implements RequestDtoInterface
+{
+    public function __construct(
+        public string $channel,
+        #[RequestHeader('Idempotency-Key')]
+        public string $idempotencyKey,
+        #[RequestHeader('X-Order-Key', required: false)]
+        public ?string $orderKey = null,
+    ) {}
+}

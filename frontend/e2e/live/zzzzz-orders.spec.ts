@@ -86,7 +86,8 @@ test.beforeAll(async ({ browser }) => {
   try {
     const catalog = (await body(await page.request.get(gallery() + '/catalog'))).data;
     printId = catalog.products.find((p: { kind: string }) => p.kind === 'physical').id;
-    expect(catalog.capabilities).toEqual({ receiptChannels: [], purchaseEnabled: true });
+    // J2: the stand sends the link to the order after the payment, so the checkout announces it.
+    expect(catalog.capabilities).toEqual({ receiptChannels: [], purchaseEnabled: true, orderEmail: true });
     expect(catalog.purchaseTerms).toBeNull();
     const photos = (await body(await page.request.get(gallery()))).data.children.flatMap(
       (child: { photos: { assignmentId: string }[] }) => child.photos

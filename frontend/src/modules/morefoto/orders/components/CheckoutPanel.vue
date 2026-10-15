@@ -34,6 +34,7 @@ function place(): void {
         :busy="busy"
         :max-available="capabilities.maxAvailable"
         :receipt-available="capabilities.receiptAvailable"
+        :order-email="catalog.capabilities?.orderEmail === true"
         @change="Object.assign(draft, $event)"
       />
       <div v-if="consents && consentDocument && offerDocument" class="checkout-panel__consents">

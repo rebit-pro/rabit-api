@@ -21,6 +21,41 @@ final readonly class OrderAccessKeyRepository
         }
     }
 
+    /**
+     * J2: ключ письма заказа — отдельный тип со своей уникальностью действующего ключа; ключ покупателя не затрагивается.
+     *
+     * @return null|string SHA-256 действующего ключа письма заказа
+     */
+    public function activeEmailKey(int $orderId): ?string
+    {
+        try {
+            $row = Application::getConnection()->query("SELECT KEY_HASH FROM mf_order_access_key WHERE ORDER_ID={$orderId} AND KIND='email'
+                AND REVOKED_AT IS NULL")->fetch();
+        } catch (\Throwable $error) {
+            throw new OrderStorageException('Cannot read the order email key.', 0, $error);
+        }
+
+        return false === $row ? null : (string)$row['KEY_HASH'];
+    }
+
+    /** J2: выдаёт ключ письма; прежний ключ письма с другим хешем (смена серверного секрета) отзывается в той же транзакции. */
+    public function replaceEmailKey(int $orderId, string $keyHash, string $issuedAt, string $expiresAt): void
+    {
+        $connection = Application::getConnection();
+        $connection->startTransaction();
+        try {
+            $connection->queryExecute("UPDATE mf_order_access_key SET REVOKED_AT='{$issuedAt}',REVOKE_REASON='replaced'
+                WHERE ORDER_ID={$orderId} AND KIND='email' AND REVOKED_AT IS NULL AND KEY_HASH<>'{$keyHash}'");
+            $connection->queryExecute("INSERT IGNORE INTO mf_order_access_key(ORDER_ID,KIND,KEY_HASH,ISSUED_AT,EXPIRES_AT,ISSUE_REASON)
+                VALUES({$orderId},'email','{$keyHash}','{$issuedAt}','{$expiresAt}','email')");
+            $connection->commitTransaction();
+        } catch (\Throwable $error) {
+            $connection->rollbackTransaction();
+
+            throw new OrderStorageException('Cannot issue the order email key.', 0, $error);
+        }
+    }
+
     /** @return array{ORDER_ID: int|string, EXPIRES_AT: string}|false */
     public function findActive(string $keyHash, string $now): array|false
     {

@@ -1,0 +1,24 @@
+{
+  "wave": "J2",
+  "status": "passed",
+  "fixture": "rabit-e2e-7f46ab85f418",
+  "head": "fdd104e",
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ],
+  "screenshots": [
+    {
+      "file": "docs/waves/j2/screenshots/j2-desktop-order-email.png",
+      "sha256": "3ad7a216a70a8e2412e379874cf90c013ced552b4cb53c9b4a57bf1292650ffb"
+    },
+    {
+      "file": "docs/waves/j2/screenshots/j2-mobile-order-email.png",
+      "sha256": "f33af9c794a74e6a63535de0bb2b7dbfb49f268931b7b23b5b2d7c3a6ec9dd96"
+    }
+  ],
+  "checks": [
+    "страница оплаченного заказа по ссылке из письма: файлы, «Отправляем ссылку на заказ на …», повтор заблокирован до срока",
+    "без горизонтальной прокрутки на 390 px"
+  ]
+}

@@ -5,6 +5,7 @@ import { useLiveOrder } from '../composables/useLiveOrder';
 import { orderQuoteAsCart } from '../live/rules';
 import BuyerGuideLink from '../../guide/BuyerGuideLink.vue';
 import OrderComposition from './OrderComposition.vue';
+import OrderEmailNotice from './OrderEmailNotice.vue';
 import OrderLiveFacts from './OrderLiveFacts.vue';
 import OrderLiveFiles from './OrderLiveFiles.vue';
 import OrderPaymentPanel from './OrderPaymentPanel.vue';
@@ -65,6 +66,8 @@ const route = useRoute();
             </div>
           </dl>
           <OrderPaymentPanel :order="order" :order-key="String(route.params.orderKey ?? '')" />
+          <!-- J2: the letter with the link to the paid order: where and when it went, and a repeat. -->
+          <OrderEmailNotice v-if="order.paymentStatus === 'paid'" :order-key="String(route.params.orderKey ?? '')" />
           <p class="order-note" data-testid="order-key-expiry">
             Личная ссылка открывает только этот заказ и действует до
             {{ formatMoment(order.accessKeyExpiresAt) }} мск. Номер заказа доступа не даёт.

@@ -126,6 +126,21 @@ if (1 > $dispatch->execute(100, true) || 1 > $recoveryPublisher->published) {
 }
 
 $connection = Application::getConnection();
+// J2: a final letter keeps no text (it may carry a private order link); an unknown outcome keeps it for a confirmed retry.
+$body = static fn(string $id): array|false => $connection->query("SELECT BODY,BODY_HTML FROM b_rebit_notification_operation WHERE ID='{$id}'")->fetchRaw();
+foreach ([$first->id, $failed->id] as $finalId) {
+    $row = $body($finalId);
+    if (!is_array($row) || '' !== $row['BODY'] || null !== $row['BODY_HTML']) {
+        throw new RuntimeException('A final letter kept its text.');
+    }
+}
+$row = $body($unknown->id);
+if (!is_array($row) || 'Проверка timeout' !== $row['BODY']) {
+    throw new RuntimeException('An unknown outcome lost its text.');
+}
+if ($queue->queue($input)->id !== $first->id) {
+    throw new RuntimeException('A repeated accepted letter did not resolve to its operation after the text was cleared.');
+}
 $operationCount = $connection->query("SELECT COUNT(*) AS CNT FROM b_rebit_notification_operation WHERE CONSUMER_KEY='e2e.contract'")->fetch();
 $attemptCount = $connection->query('SELECT COUNT(*) AS CNT FROM b_rebit_notification_attempt')->fetch();
 if (!is_array($operationCount) || 3 !== (int)$operationCount['CNT']

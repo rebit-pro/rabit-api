@@ -32,6 +32,6 @@ final readonly class GetStorefrontCatalogUseCase
             }
         }
 
-        return new CatalogOutputDto($products, $conditions->giftThreshold, $conditions->giftForStaff, $conditions->catalogRevision, $conditions->conditionsRevision, $this->checkout->enabled(), $this->checkout->receiptChannels());
+        return new CatalogOutputDto($products, $conditions->giftThreshold, $conditions->giftForStaff, $conditions->catalogRevision, $conditions->conditionsRevision, $this->checkout->enabled(), $this->checkout->receiptChannels(), $this->checkout->orderEmail());
     }
 }

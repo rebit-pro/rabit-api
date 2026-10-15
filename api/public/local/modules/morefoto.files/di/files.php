@@ -3,6 +3,13 @@
 declare(strict_types=1);
 
 use Bitrix\Main\DI\ServiceLocator;
+use Morefoto\Files\Application\Delivery\Contract\OrderEmailComposerInterface;
+use Morefoto\Files\Application\Delivery\Service\DeliveryView;
+use Morefoto\Files\Application\Delivery\Service\OrderEmailSender;
+use Morefoto\Files\Application\Delivery\UseCase\DispatchOrderEmailsUseCase;
+use Morefoto\Files\Application\Delivery\UseCase\GetFileDeliveryUseCase;
+use Morefoto\Files\Application\Delivery\UseCase\GetOrderEmailUseCase;
+use Morefoto\Files\Application\Delivery\UseCase\SendOrderEmailAgainUseCase;
 use Morefoto\Files\Application\Files\Contract\ArchiveBuilderInterface;
 use Morefoto\Files\Application\Files\Contract\DownloadIdGeneratorInterface;
 use Morefoto\Files\Application\Files\Contract\DownloadTokenInterface;
@@ -19,25 +26,35 @@ use Morefoto\Files\Application\Files\UseCase\GetOrderFilesUseCase;
 use Morefoto\Files\Application\Files\UseCase\OpenDownloadContentUseCase;
 use Morefoto\Files\Application\Files\UseCase\PurgeDownloadsUseCase;
 use Morefoto\Files\Application\Files\UseCase\RequestDownloadUseCase;
+use Morefoto\Files\Domain\Delivery\Repository\DeliveryRepositoryInterface;
+use Morefoto\Files\Domain\Delivery\Service\DeliveryPolicy;
 use Morefoto\Files\Domain\Download\Repository\DownloadRepositoryInterface;
 use Morefoto\Files\Domain\Download\Service\FileAccessPolicy;
+use Morefoto\Files\Infrastructure\Database\BitrixDeliveryRepository;
 use Morefoto\Files\Infrastructure\Database\BitrixDownloadRepository;
 use Morefoto\Files\Infrastructure\Database\MysqlOrderDownloadGuard;
 use Morefoto\Files\Infrastructure\File\LocalProtectedStorage;
 use Morefoto\Files\Infrastructure\File\ZipArchiveBuilder;
 use Morefoto\Files\Infrastructure\Id\DownloadIdGenerator;
+use Morefoto\Files\Infrastructure\Mail\OrderEmailComposer;
 use Morefoto\Files\Infrastructure\Messenger\FilesMessengerFactory;
 use Morefoto\Files\Infrastructure\Messenger\FilesPublisher;
 use Morefoto\Files\Infrastructure\Security\HmacDownloadToken;
 use Morefoto\Files\Presentation\Command\DispatchPendingDownloadsCommand;
 use Morefoto\Files\Presentation\Command\FilesConsumerCommand;
+use Morefoto\Files\Presentation\Command\OrderEmailsCommand;
 use Morefoto\Files\Presentation\Command\PurgeDownloadsCommand;
 use Morefoto\Files\Presentation\Controller\PublicFileController;
+use Morefoto\Files\Presentation\Controller\PublicFileDeliveryController;
+use Morefoto\Files\Presentation\Delivery\DeliveryInputMapper;
+use Morefoto\Files\Presentation\Delivery\DeliveryResultMapper;
 use Morefoto\Files\Presentation\Files\FilesInputMapper;
 use Morefoto\Files\Presentation\Files\FilesResultMapper;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
 use Rebit\Share\Application\Contract\Messenger\MessageConsumerRunnerInterface;
 use Rebit\Share\Application\Contract\Messenger\MessageTransportFactoryInterface;
+use Rebit\Share\Application\Contract\Notification\EmailNotificationInterface;
+use Rebit\Share\Contracts\Commerce\OrderEmailLinkInterface;
 use Rebit\Share\Contracts\Commerce\OrderEntitlementInterface;
 use Rebit\Share\Contracts\Media\ChildPhotosInterface;
 use Rebit\Share\Contracts\Media\OriginalFilesInterface;
@@ -193,6 +210,88 @@ return [
     DispatchPendingDownloadsCommand::class => [
         'className' => DispatchPendingDownloadsCommand::class,
         'constructorParams' => static fn(): array => [ServiceLocator::getInstance()->get(DispatchPendingDownloadsUseCase::class)],
+    ],
+    // J2: the letter with the link to the paid order.
+    DeliveryPolicy::class => ['className' => DeliveryPolicy::class],
+    DeliveryRepositoryInterface::class => ['className' => BitrixDeliveryRepository::class],
+    OrderEmailComposerInterface::class => [
+        'constructor' => static fn(): OrderEmailComposerInterface => new OrderEmailComposer(
+            (string)(getenv('MOREFOTO_APP_URL') ?: 'https://app.morefoto36.ru'),
+        ),
+    ],
+    DeliveryView::class => [
+        'className' => DeliveryView::class,
+        'constructorParams' => static fn(): array => [ServiceLocator::getInstance()->get(EmailNotificationInterface::class)],
+    ],
+    OrderEmailSender::class => [
+        'className' => OrderEmailSender::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(DeliveryRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(OrderEmailLinkInterface::class),
+            ServiceLocator::getInstance()->get(OrderFileAccess::class),
+            ServiceLocator::getInstance()->get(OrderEmailComposerInterface::class),
+            ServiceLocator::getInstance()->get(EmailNotificationInterface::class),
+            ServiceLocator::getInstance()->get(ClockInterface::class),
+            Log::channel(LogChannelEnum::files),
+        ],
+    ],
+    DispatchOrderEmailsUseCase::class => [
+        'className' => DispatchOrderEmailsUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(DeliveryRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(OrderEmailLinkInterface::class),
+            ServiceLocator::getInstance()->get(OrderEmailSender::class),
+            ServiceLocator::getInstance()->get(DownloadIdGeneratorInterface::class),
+            ServiceLocator::getInstance()->get(DeliveryPolicy::class),
+            ServiceLocator::getInstance()->get(ClockInterface::class),
+        ],
+    ],
+    SendOrderEmailAgainUseCase::class => [
+        'className' => SendOrderEmailAgainUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(OrderFileAccess::class),
+            ServiceLocator::getInstance()->get(OrderEmailLinkInterface::class),
+            ServiceLocator::getInstance()->get(DeliveryRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(OrderEmailSender::class),
+            ServiceLocator::getInstance()->get(DeliveryView::class),
+            ServiceLocator::getInstance()->get(DownloadIdGeneratorInterface::class),
+            ServiceLocator::getInstance()->get(DeliveryPolicy::class),
+            ServiceLocator::getInstance()->get(ClockInterface::class),
+        ],
+    ],
+    GetOrderEmailUseCase::class => [
+        'className' => GetOrderEmailUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(OrderFileAccess::class),
+            ServiceLocator::getInstance()->get(OrderEmailLinkInterface::class),
+            ServiceLocator::getInstance()->get(DeliveryRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(DeliveryView::class),
+            ServiceLocator::getInstance()->get(DeliveryPolicy::class),
+        ],
+    ],
+    GetFileDeliveryUseCase::class => [
+        'className' => GetFileDeliveryUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(OrderFileAccess::class),
+            ServiceLocator::getInstance()->get(DeliveryRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(DeliveryView::class),
+        ],
+    ],
+    DeliveryInputMapper::class => ['className' => DeliveryInputMapper::class],
+    DeliveryResultMapper::class => ['className' => DeliveryResultMapper::class],
+    PublicFileDeliveryController::class => [
+        'className' => PublicFileDeliveryController::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(GetOrderEmailUseCase::class),
+            ServiceLocator::getInstance()->get(SendOrderEmailAgainUseCase::class),
+            ServiceLocator::getInstance()->get(GetFileDeliveryUseCase::class),
+            ServiceLocator::getInstance()->get(DeliveryInputMapper::class),
+            ServiceLocator::getInstance()->get(DeliveryResultMapper::class),
+        ],
+    ],
+    OrderEmailsCommand::class => [
+        'className' => OrderEmailsCommand::class,
+        'constructorParams' => static fn(): array => [ServiceLocator::getInstance()->get(DispatchOrderEmailsUseCase::class)],
     ],
     PurgeDownloadsCommand::class => [
         'className' => PurgeDownloadsCommand::class,

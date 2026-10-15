@@ -2,7 +2,14 @@
 import { shallowRef } from 'vue';
 import type { BuyerFields, BuyerErrors } from '../types';
 import UiClearButton from '../../ui/components/UiClearButton.vue';
-const props = defineProps<{ draft: BuyerFields; errors: BuyerErrors; busy: boolean; maxAvailable: boolean; receiptAvailable: boolean }>();
+const props = defineProps<{
+  draft: BuyerFields;
+  errors: BuyerErrors;
+  busy: boolean;
+  maxAvailable: boolean;
+  receiptAvailable: boolean;
+  orderEmail?: boolean;
+}>();
 const emit = defineEmits<{ change: [patch: Partial<BuyerFields>] }>();
 // UI-DEC-04: the optional comment stays folded until the buyer asks for it or already wrote one.
 const commenting = shallowRef(props.draft.comment !== '' || !!props.errors.comment);
@@ -28,7 +35,11 @@ function channel(value: unknown) {
       :disabled="busy"
       :error-messages="errors.email"
       :aria-invalid="!!errors.email || undefined"
-      hint="Ссылку на заказ покажем после оформления — по ней оплата и файлы"
+      :hint="
+        orderEmail
+          ? 'Ссылку на заказ покажем после оформления. На этот адрес отправим ссылку на заказ после оплаты'
+          : 'Ссылку на заказ покажем после оформления — по ней оплата и файлы'
+      "
       persistent-hint
       clearable
       @update:model-value="text('email', $event)"
