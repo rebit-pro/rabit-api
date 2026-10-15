@@ -2,12 +2,16 @@
 import { useRoute } from 'vue-router';
 import { useGallery } from '../../gallery/composables/useGallery';
 import CartContents from './CartContents.vue';
+import BuyerGuideLink from '../../guide/BuyerGuideLink.vue';
 const route = useRoute();
 const { gallery, loading, error, unavailable, reload } = useGallery();
 </script>
 <template>
   <main class="mf-main cart-page">
-    <RouterLink :to="'/g/' + route.params.token" class="mf-back">← К фотографиям</RouterLink>
+    <nav class="cart-page__nav" aria-label="Навигация покупки">
+      <RouterLink :to="'/g/' + route.params.token" class="mf-back">← К фотографиям</RouterLink>
+      <BuyerGuideLink step="zakaz" />
+    </nav>
     <v-skeleton-loader v-if="loading" type="heading, article" class="mt-5" />
     <v-alert v-else-if="error" type="error" variant="tonal" class="mt-5"
       >{{ unavailable ? 'Ссылка на группу недействительна.' : error
@@ -28,5 +32,16 @@ const { gallery, loading, error, unavailable, reload } = useGallery();
 .cart-page {
   width: 100%;
   min-height: 100svh;
+}
+.cart-page__nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-top: 24px;
+}
+.cart-page__nav .mf-back {
+  margin-top: 0;
 }
 </style>

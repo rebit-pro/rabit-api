@@ -464,6 +464,8 @@ for (const viewport of [
     await expect(page.getByTestId('order-number')).toHaveText('Заказ ' + payload.data.number);
     await expect(page.getByTestId('order-payment-status')).toHaveText('Не оплачено');
     await expect(page.getByTestId('order-key-expiry')).toContainText('действует до');
+    // KK-T04 (#192): the unpaid order leads to the payment step of the parents' guide.
+    await expect(page.getByTestId('buyer-guide-link')).toHaveAttribute('href', '/kak-kupit/#oplata');
     await expect(page.getByTestId('order-line')).toHaveCount(1);
     await expect(page.getByTestId('order-contacts')).toContainText(viewport.name + '.e5@example.test');
     await expect(page.getByTestId('order-contacts')).not.toContainText('Телефон');

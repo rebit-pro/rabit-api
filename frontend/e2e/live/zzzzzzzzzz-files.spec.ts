@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { test, expect, type APIResponse, type Page } from '@playwright/test';
-import { orderConsents, payOnProvider, productRadio } from './helpers.js';
+import { orderConsents, payOnProvider } from './helpers.js';
 
 // J1: purchased originals of a paid order. The order is paid on the YooKassa test page like in G1; without the test
 // shop keys the spec proves only the honest unpaid state, and the gate accepts no skipped test.
@@ -136,7 +136,11 @@ const printGallery = '/api/v1/public/galleries/' + fixture.print.token;
 type Product = { id: string; kind: string; active: boolean; price: number; name: string };
 type Child = { code: string; photos: { id: string; assignmentId: string; code: string }[] };
 
-test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and never its neighbour', async ({ page }, testInfo) => {
+test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and never its neighbour', async ({
+  page,
+  browser,
+  baseURL
+}, testInfo) => {
   test.setTimeout(240000);
   const catalog = (await body(await page.request.get(printGallery + '/catalog'))).data as { products: Product[] };
   const prints = catalog.products.filter((item) => item.kind === 'physical' && item.active).sort((left, right) => left.price - right.price);
@@ -161,8 +165,8 @@ test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and nev
     await page.setViewportSize(viewport);
     await page.goto('/g/' + fixture.print.token);
     await page.getByRole('button', { name: 'Открыть кадр ' + photo('B', frames.B1).code, exact: true }).click();
-    await productRadio(page, digital!.name).check();
-    const hint = page.getByTestId('product-print-copy');
+    // #192: the hint stands under the digital row while the print of this frame is in the cart.
+    const hint = page.locator('[data-testid="product-option"]', { hasText: digital!.name }).getByTestId('product-print-copy');
     await expect(hint).toHaveText('Электронная копия этого кадра входит в печать вашей корзины.');
     await hint.scrollIntoViewIfNeeded();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -231,6 +235,8 @@ test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and nev
     const block = page.getByTestId('order-files');
     await expect(block.getByTestId('files-deadline')).toContainText('Доступны до');
     await expect(block.getByTestId('files-item')).toHaveCount(expected.length);
+    // #192: without a touch screen and a share sheet only the plain download is offered.
+    await expect(block.getByTestId('files-save')).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await block.scrollIntoViewIfNeeded();
     await page.screenshot({
@@ -249,6 +255,44 @@ test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and nev
   expect([zip.indexOf(printedA.bytes) > 0, zip.indexOf(printedB.bytes) > 0]).toEqual([true, true]);
   record.printCopy.archiveBytes = zip.length;
   save();
+
+  // #192: on a phone «Сохранить в телефон» hands the exact original to the share sheet, which saves it to the gallery.
+  const phone = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  try {
+    await phone.addInitScript(() => {
+      const shared: { name: string; type: string; size: number; head: string }[] = [];
+      Object.assign(window, { sharedFiles: shared });
+      Object.defineProperty(navigator, 'canShare', { value: (data: ShareData) => Array.isArray(data.files) });
+      Object.defineProperty(navigator, 'share', {
+        value: async (data: ShareData) => {
+          for (const file of data.files ?? []) {
+            const head = [...new Uint8Array(await file.slice(0, 16).arrayBuffer())]
+              .map((byte) => byte.toString(16).padStart(2, '0'))
+              .join('');
+            shared.push({ name: file.name, type: file.type, size: file.size, head });
+          }
+        }
+      });
+    });
+    const buyer = await phone.newPage();
+    await buyer.goto('/orders/access/' + created.accessKey);
+    const item = (state.items as { photoId: string; code: string; filename: string }[]).find((file) => file.photoId === frames.A1.photoId)!;
+    const store = buyer.getByRole('button', { name: 'Сохранить в телефон кадр ' + item.code, exact: true });
+    await store.scrollIntoViewIfNeeded();
+    expect(await buyer.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await buyer.screenshot({ path: testInfo.outputPath('j4-phone-save-files.png'), animations: 'disabled' });
+    await store.click();
+    const shared = () => buyer.evaluate(() => (window as unknown as { sharedFiles: unknown[] }).sharedFiles);
+    await expect.poll(async () => (await shared()).length).toBe(1);
+    expect((await shared())[0]).toEqual({
+      name: item.filename,
+      type: 'image/jpeg',
+      size: printedA.bytes.length,
+      head: printedA.bytes.subarray(0, 16).toString('hex')
+    });
+  } finally {
+    await phone.close();
+  }
 });
 
 if (sandbox) {

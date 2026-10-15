@@ -67,8 +67,9 @@ export async function acceptCheckoutDocuments(page: Page): Promise<void> {
   await page.getByLabel('Принимаю условия публичной оферты').check();
 }
 /** UI-DEC-06: a product of the frame dialog is a radio named «product, price». */
-export function productRadio(page: Page, name: string): Locator {
-  return page.getByRole('radio', { name: new RegExp('^' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ', ') });
+/** #192: every product of a frame has its own «+», named «Добавить в корзину: product, price». */
+export function productAdd(page: Page, name: string): Locator {
+  return page.getByRole('button', { name: new RegExp('^Добавить в корзину: ' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ', ') });
 }
 
 export async function token(page: Page): Promise<string> {

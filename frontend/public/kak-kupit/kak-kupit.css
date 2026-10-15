@@ -1,0 +1,59 @@
+/* #192 «Как купить фото»: шаги — отпечатки с белыми полями и номером-наклейкой. Телефон — колонкой, компьютер — коллажем.
+   Основа (цвета, шрифт, просмотр скриншотов) — общие стили базы знаний /guide/static/guide.css. */
+.kk-top { max-width: 1120px; margin: 0 auto; padding-top: max(16px, env(safe-area-inset-top)); }
+.kk-logo { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); font-size: 18px; font-weight: 600; letter-spacing: -.01em; }
+.kk-logo-wave { stroke: var(--sea); }
+.kk-logo b { color: var(--sea); }
+
+.kk-page { max-width: 1120px; margin: 0 auto; display: grid; gap: 32px; }
+.kk-hero { display: grid; gap: 8px; padding-top: 20px; }
+.kk-hero h1 { font-size: clamp(34px, 9vw, 52px); letter-spacing: -.02em; }
+.kk-lead { font-size: 17px; line-height: 1.5; color: var(--muted); max-width: 38ch; }
+
+.kk-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 32px; counter-reset: kk; }
+.kk-card {
+  counter-increment: kk; position: relative; display: grid; gap: 6px; align-content: start;
+  padding: 10px 10px 18px; border-radius: 6px; background: var(--surface);
+  box-shadow: 0 1px 2px rgb(21 33 43 / 8%), 0 12px 28px rgb(21 33 43 / 10%); scroll-margin-top: 24px;
+}
+/* The step number is a sticker on the print's corner. */
+.kk-card::before {
+  content: counter(kk); position: absolute; top: -14px; left: -6px; z-index: 1;
+  width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 23px; font-weight: 700; font-variant-numeric: tabular-nums; background: var(--sea); color: var(--sea-ink);
+  box-shadow: 0 0 0 4px var(--bg), 0 4px 10px rgb(21 33 43 / 18%); transform: rotate(-8deg);
+}
+.kk-card .shot a { border-radius: 3px; box-shadow: none; }
+.kk-card h2 { margin-top: 10px; padding-inline: 4px; font-size: 21px; line-height: 1.25; }
+.kk-card p { padding-inline: 4px; font-size: 16px; line-height: 1.45; color: var(--muted); }
+.kk-card p b { color: var(--ink); }
+
+.kk-tail { display: grid; gap: 24px; }
+.kk-note { display: grid; gap: 4px; padding: 16px 18px; border-radius: 6px; background: var(--warn-soft); font-size: 16px; line-height: 1.45; }
+.kk-note b { font-size: 18px; }
+
+.kk-help { gap: 10px; padding: 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.kk-help h2 { font-size: 21px; }
+.kk-help p { color: var(--muted); }
+.kk-links { display: flex; flex-wrap: wrap; gap: 0 24px; }
+.kk-links a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; text-decoration: none; }
+
+@media (min-width: 720px) {
+  .kk-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 32px; align-items: start; }
+  .kk-tail { max-width: 720px; }
+}
+/* A collage on a wide screen: prints lie at a slight angle and straighten under the pointer. */
+@media (min-width: 1100px) {
+  .kk-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px 40px; }
+  .kk-card { transform: rotate(-1.2deg); transition: transform .2s; }
+  .kk-card:nth-child(even) { transform: rotate(1deg); }
+  .kk-card:nth-child(3n) { transform: rotate(-.6deg); }
+  .kk-card:hover, .kk-card:focus-within { transform: none; }
+  .kk-tail { max-width: none; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+}
+@media (prefers-color-scheme: dark) {
+  .kk-card { box-shadow: 0 0 0 1px var(--line); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kk-card { transition: none; }
+}

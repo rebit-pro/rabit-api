@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { money } from '../../commerce/money';
 import { usePaymentReturn } from '../composables/usePaymentReturn';
 import { returnState } from '../live/payment-rules';
+import BuyerGuideLink from '../../guide/BuyerGuideLink.vue';
 const { attempt, orderKey, error, waitOver, recheck } = usePaymentReturn();
 const orderLink = computed(() => (orderKey.value ? '/orders/access/' + orderKey.value : null));
 const state = computed(() => returnState(attempt.value, waitOver.value));
@@ -70,6 +71,7 @@ const view = computed(() => views[state.value]);
           >Вернуться к заказу</v-btn
         >
       </div>
+      <BuyerGuideLink step="karta" label="Как оплатить заказ" />
     </section>
   </main>
 </template>

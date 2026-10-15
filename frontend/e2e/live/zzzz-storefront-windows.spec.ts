@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { test, expect, type APIResponse } from '@playwright/test';
-import { login, productRadio, token } from './helpers.js';
+import { login, productAdd, token } from './helpers.js';
 
 /** E7: a gallery whose print sales closed a day ago and whose digital sales go on for six more days. */
 type Fixture = Record<'digital' | 'closed', { token: string; groupId: string }>;
@@ -101,11 +101,11 @@ for (const viewport of [
     const code = gallery.children[0]!.photos[0]!.code;
     await page.getByRole('button', { name: 'Открыть кадр ' + code, exact: true }).click();
     await expect(page.getByTestId('selector-digital-only')).toBeVisible();
-    await expect(productRadio(page, 'E7 Печать 15×21')).toHaveCount(0);
-    await productRadio(page, 'E7 Электронный кадр').check();
+    await expect(productAdd(page, 'E7 Печать 15×21')).toHaveCount(0);
     const priced = page.waitForResponse((r) => r.url().endsWith('/quotes') && r.request().method() === 'POST');
-    await page.getByTestId('add-to-cart').click();
+    await productAdd(page, 'E7 Электронный кадр').click();
     expect((await priced).status()).toBe(200);
+    await expect(page.getByTestId('product-remove')).toHaveText('В корзине');
     await page.getByRole('button', { name: 'Закрыть просмотр', exact: true }).click();
     await page.getByRole('link', { name: 'Открыть корзину', exact: true }).click();
     await expect(page.getByTestId('cart-digital-only')).toContainText('Печатные позиции убраны из корзины: 1');

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { GallerySnapshot } from '../types';
+import BuyerGuideLink from '../../guide/BuyerGuideLink.vue';
 defineProps<{ gallery: GallerySnapshot; canAsk?: boolean }>();
 const emit = defineEmits<{ ask: [] }>();
 const open = defineModel<boolean>({ default: false });
@@ -11,6 +12,9 @@ const open = defineModel<boolean>({ default: false });
         <h2 id="gallery-help-title">Получение и помощь</h2>
         <v-btn icon="mdi-close" variant="text" aria-label="Закрыть помощь" @click="open = false" />
       </div>
+      <h3>Как купить</h3>
+      <p>Шесть шагов с картинками — от выбора фото до оплаты.</p>
+      <BuyerGuideLink class="gallery-help-card__guide" />
       <h3>Готовые фотографии</h3>
       <p>{{ gallery.delivery }} Дату выдачи сообщит ответственный группы.</p>
       <h3>Вопрос по съёмке</h3>
@@ -43,6 +47,9 @@ const open = defineModel<boolean>({ default: false });
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
+}
+.gallery-help-card__guide {
+  align-self: flex-start;
 }
 .gallery-help-card h2 {
   font-size: 22px;

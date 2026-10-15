@@ -3,6 +3,7 @@ import { money } from '../../commerce/money';
 import { formatMoment, livePaymentLabels as paymentLabels, productionLabels } from '../formatters';
 import { useLiveOrder } from '../composables/useLiveOrder';
 import { orderQuoteAsCart } from '../live/rules';
+import BuyerGuideLink from '../../guide/BuyerGuideLink.vue';
 import OrderComposition from './OrderComposition.vue';
 import OrderLiveFacts from './OrderLiveFacts.vue';
 import OrderLiveFiles from './OrderLiveFiles.vue';
@@ -28,6 +29,11 @@ const route = useRoute();
           {{ order.shootName }}
         </p>
         <p class="order-created">Создан {{ formatMoment(order.createdAt) }} мск</p>
+        <BuyerGuideLink
+          :step="order.paymentStatus === 'paid' ? 'gotovo' : 'oplata'"
+          :label="order.paymentStatus === 'paid' ? 'Как получить фото' : 'Как оплатить заказ'"
+          class="order-guide"
+        />
       </header>
       <v-alert type="info" variant="tonal" class="mb-6"
         >Деньги списываются только после оплаты на странице ЮKassa. Электронные фотографии и копии оплаченных печатных кадров появятся на
@@ -92,6 +98,9 @@ const route = useRoute();
   font-weight: 600;
   margin-top: 12px;
   color: var(--mf-color-link);
+}
+.order-guide {
+  margin-top: 12px;
 }
 .order-created {
   font-size: 13px;

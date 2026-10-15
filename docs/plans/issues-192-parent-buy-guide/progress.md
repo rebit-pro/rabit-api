@@ -1,0 +1,65 @@
+# #192 — гайд для родителей — прогресс
+
+## Точка продолжения
+
+- Дата: 15.10.2026. Ветка `codex/issues-192-parent-buy-guide` от main 60bd97f (main не сдвинулся); рабочая копия `/home/user/rabit-api-worktrees/issues-192-parent-buy-guide`. Issue #192, PR — открывается 15.10.2026.
+- Завершено: S0–S5.1 — страница `frontend/public/kak-kupit/` (6 шагов, `og.jpg`), ссылка `BuyerGuideLink` на шагах покупателя и в футере, nginx `absolute_redirect off`, «+» у каждого формата со счётчиками, «Сохранить в телефон», unit и live E2E; быстрые проверки зелёные (13.10.2026). Версия 2 согласована владельцем 13.10.2026.
+- 15.10.2026: на stage гайда нет (`/kak-kupit/` отдаёт SPA, `/guide` → `http://`) — ветка не была запушена. Владелец: «пушь гайд и делай PR».
+- PR #194; самопроверка без блокеров (комментарий в PR), неблокирующее — #195. Полный гейт `rabit-e2e-d0348f36a9ff` на ab46129 — PASS.
+- Сейчас: ждём команду владельца на merge и выкладку.
+- Следующий шаг: merge → выкладка только frontend (`switch-frontend.sh`) → `curl` KK-T06, `og.jpg` = image/jpeg, превью ссылки в мессенджере, «Сохранить в телефон» на реальном телефоне.
+- Связанное: #193 — замена шага оплаты на QR-код СБП.
+- Стенд снимков: scratchpad сессии 13.10 `kk/` (`run.sh <frontend> <script>`; `stubs.mjs`, `crops.mjs`, `page.mjs`, `inapp.mjs`, `og.mjs`). PNG → WebP q80 — PIL.
+- Блокеры: нет. Параллельно: #191 (миниатюры в заказе) — своя ветка, тоже не запушена; обе задачи дописывают `zzzzz-orders.spec.ts` и nginx frontend в соседних местах — второй слитой ветке нужна сверка с main. #188 приостановлена.
+
+## Журнал
+
+### 13.10.2026 — старт
+
+- Запрос владельца: гайд для родителей отдельной страницей-коллажем, мало текста, ссылка для чата и с каждого шага покупки, оплата с телефона. Issue #192.
+- Попутно найдено: `https://app.morefoto36.ru/guide` (без слэша) отвечает 301 на `http://app.morefoto36.ru/guide/` — абсолютный редирект nginx за TLS-прокси.
+
+### 13.10.2026 — реализация
+
+- Снимки: живой режим main 60bd97f с подменой API, телефон 390×844 ×2; кадры шагов с красной рамкой вокруг кнопки; корзина 300 + 600 + 350 = 1 250 ₽ под кадр ЮKassa (`p08` из базы знаний, обрезан без тестовой плашки). 6 WebP ≈ 200 КБ, `og.jpg` 1200×630 79 КБ (шрифт Golos Text из `src/assets/fonts`).
+- Страница `/kak-kupit/`: `guide.css` + `kak-kupit.css`, просмотр `guide.js`; карточки-отпечатки с номером-наклейкой, телефон — колонка, ≥720 px — 2 колонки, ≥1100 px — 3 с наклоном; тёмная тема из `guide.css`.
+- Приложение: `guide/buyerGuide.ts` (адрес и якоря шагов), `guide/BuyerGuideLink.vue` (новая вкладка); `GalleryHeader`, `GalleryHelp`, `ProductSelector` (#foto), `CartScreen` (#zakaz), `OrderLiveScreen` (#oplata / #gotovo), `PaymentReturnScreen` (#karta); футер «Как купить фото» → `/kak-kupit/`.
+- nginx frontend (production, development): `absolute_redirect off`.
+- Проверки 13.10.2026: обход страницы (телефон, компьютер, тёмная тема) — без горизонтальной прокрутки, 6/6 изображений, без ошибок и внешних запросов, просмотр открывается и закрывается Esc; `npm run check` (lint, stylelint, typecheck, typecheck:e2e, `test:ui` 94/94), `test:commerce` 239/239.
+
+### 13.10.2026 — замечания владельца к версии 1
+
+- Владелец: «родитель чаще загружает фотографию прям с телефона… функции скачать фото, скачать архив»; «По оплате. Будет qr-код. Потом заменим этот слайд»; «дать понять родителю, что после нажатия кнопки в корзину он может выбрать также другую печатную продукцию — радиокнопки подсказывают, что выбор один». Вопрос владельца: «Поделиться фото — это уже функция телефона?» — ответ: меню телефона, но открыть его может только кнопка сайта; iPhone кладёт обычное скачивание в «Файлы».
+- Выбор владельца: «+» в каждой строке; «Сохранить в телефон» — в этой задаче. #193 — слайд оплаты.
+- Реализация: `commerce/frame-lines.ts`, `ProductSelector` переписан (KK-DEC-07); `orders/live/share-files.ts`, `useLiveFiles` (`run`, `contentFor`, `save`, `share`), `OrderLiveFiles` — «Сохранить в телефон», иконка `mdi-cellphone-arrow-down`. Live E2E: `productRadio` → `productAdd` (`helpers.ts`), счётчик в `zzzz-storefront`, «В корзине» в `zzzz-storefront-windows`, подсказка J4 без выбора и проверка «Сохранить в телефон» на телефонном контексте с подменой меню в `zzzzzzzzzz-files` (J4).
+- Стенд: полностраничный снимок Chromium сбрасывает эмуляцию сенсорного экрана своей страницы — шаг 6 снимается на новой странице (в E2E кнопка проверяется до снимков).
+- Гайд: шаги 2 «Выберите фото и форматы» и 6 «Сохраните фото» пересняты; печать — в выноске; `og.jpg` — «Сохраните фото».
+- Проверки 13.10.2026: `npm run check` (`test:ui` 94/94), `test:commerce` 243/243 (+4: `frame-lines`, `share-files`); обход страницы 390/1280/тёмная — без прокрутки и ошибок.
+
+### 13.10.2026 — commit и PR
+
+- Владелец согласовал версию 2 и одобрил commit, PR и прогон тестов. Рабочее дерево разбито на коммиты: страница гайда, ссылка с шагов покупки, выбор форматов «+», «Сохранить в телефон», live E2E, документы задачи.
+
+### 15.10.2026 — push и PR
+
+- Проверка выкладки по вопросу владельца: stage `main-20261013161806-96b74b6` гайда не содержит — `curl https://app.morefoto36.ru/kak-kupit/` и `/kak-kupit/og.jpg` отдают `index.html` приложения (SPA-заглушка), `/guide` → 301 `http://app.morefoto36.ru/guide/`. Причина: ветка не была запушена, PR не открыт.
+- main не сдвинулся с 60bd97f — сверка с base не нужна. Владелец: «пушь гайд и делай PR».
+
+### 15.10.2026 — PR #194 и полный гейт
+
+- PR #194 открыт. Самопроверка diff: блокеров нет — адрес гайда в одной константе, новая вкладка, `fetch` файла с того же origin (`VITE_API_URL=/api`), отменённое меню — не ошибка, `absolute_redirect off` в обоих конфигах. Неблокирующее: #195 — описание продукции больше не видно в карточке кадра.
+- `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` — прогон `rabit-e2e-d0348f36a9ff`, PASS за 409,7 с: браузер 152 (a 81, b 71), 15 верификаторов MySQL, lint/stylelint/typecheck/typecheck:e2e/test:ui/test:commerce/build, php-lint, PHPStan, PHPUnit; тестовый магазин ЮKassa включён.
+
+## Тест-кейсы
+
+| ID | Статус | Дата | Команда / доказательство |
+| --- | --- | --- | --- |
+| KK-T01 | PASS | 15.10.2026 | стенд `kk/page.mjs` (13.10); live `zzzz-storefront` в гейте `rabit-e2e-d0348f36a9ff` |
+| KK-T02 | PASS (стенд) | 13.10.2026 | `kk/page.mjs`: просмотр открыт, Esc закрывает |
+| KK-T03 | PASS | 13.10.2026 | `tests/ui/buyer-guide.test.mjs` |
+| KK-T04 | PASS | 15.10.2026 | `buyer-guide.test.mjs`; live `zzzz-storefront`, `zzzzz-orders` в гейте `rabit-e2e-d0348f36a9ff` |
+| KK-T05 | PASS | 13.10.2026 | `buyer-guide.test.mjs` |
+| KK-T06 | PASS (конфиг, live), stage — PENDING | 15.10.2026 | `buyer-guide.test.mjs`; live `zzzz-storefront` в гейте; stage `curl` после выкладки |
+| KK-T07 | PASS | 13.10.2026 | `npm run check` (`test:ui` 94/94), `test:commerce` 243/243 |
+| KK-T08 | PASS | 15.10.2026 | `frame-lines.test.mjs`; live `zzzz-storefront`, `zzzz-storefront-windows` в гейте `rabit-e2e-d0348f36a9ff` |
+| KK-T09 | PASS (live с подменой меню), реальный телефон — PENDING | 15.10.2026 | `share-files.test.mjs`; live `zzzzzzzzzz-files` в гейте; телефон — на stage |
