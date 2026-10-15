@@ -53,7 +53,9 @@
       "J4",
       "F3"
     ],
-    "review": {},
+    "review": {
+      "L1": "https://github.com/rebit-pro/rabit-api/pull/196"
+    },
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
     "mergedPullRequests": {
       "B1": "https://github.com/rebit-pro/rabit-api/pull/8",
@@ -2207,7 +2209,7 @@
       "legacyIds": [
         "W29"
       ],
-      "deliveryState": "inProgress",
+      "deliveryState": "review",
       "unlocks": [
         "L2",
         "L3",

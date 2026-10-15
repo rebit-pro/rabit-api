@@ -2,7 +2,7 @@
 
 ## Точка продолжения
 
-- Дата: 15.10.2026. Ветка `codex/l1-print-archive`, base main cc92006; рабочая копия `/home/user/rabit-api-worktrees/l1-print-archive`. PR — открывается 15.10.2026. План: `docs/plans/L1_print-archive/plan.md`; README волны `docs/waves/l1/README.md`; патч MoreFoto `docs/waves/l1/morefoto-contract.patch`.
+- Дата: 15.10.2026. Ветка `codex/l1-print-archive`, base main cc92006; рабочая копия `/home/user/rabit-api-worktrees/l1-print-archive`. PR #196 (https://github.com/rebit-pro/rabit-api/pull/196); граф: L1 `review`. План: `docs/plans/L1_print-archive/plan.md`; README волны `docs/waves/l1/README.md`; патч MoreFoto `docs/waves/l1/morefoto-contract.patch`.
 - Завершено: S0–S7 — контракты Commerce/Organization, модуль `morefoto.production` (миграция 20261015120001, cron `app:production:run`, PRD-01/02/03/04/07/10 и перевыпуск ссылки), блок «Печать» в «Ссылках и сроках», unit, live E2E `zzzzzzzzzzzz-print-archive` и верификатор `verify-production.php` (написаны, не запускались), README, патч MoreFoto.
 - Сейчас: S8 — PR и ревью пользователя (большая волна: backend, миграция, новый модуль).
 - Следующий шаг: после ревью без блокеров — полный гейт `make test-e2e` (первый прогон нового E2E и верификатора).
