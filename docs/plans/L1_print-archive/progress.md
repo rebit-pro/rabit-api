@@ -2,16 +2,12 @@
 
 ## Точка продолжения
 
-- Дата: 15.10.2026. Ветка `codex/l1-print-archive`, base main cc92006; рабочая копия `/home/user/rabit-api-worktrees/l1-print-archive`. PR #196 (https://github.com/rebit-pro/rabit-api/pull/196); граф: L1 `review`. План: `docs/plans/L1_print-archive/plan.md`; README волны `docs/waves/l1/README.md`; патч MoreFoto `docs/waves/l1/morefoto-contract.patch`.
-- Завершено: S0–S7 — контракты Commerce/Organization, модуль `morefoto.production` (миграция 20261015120001, cron `app:production:run`, PRD-01/02/03/04/07/10 и перевыпуск ссылки), блок «Печать» в «Ссылках и сроках», unit, live E2E `zzzzzzzzzzzz-print-archive` и верификатор `verify-production.php` (написаны, не запускались), README, патч MoreFoto.
-- Сейчас: S8 — гейт PASS, самопроверка опубликована (по поручению владельца); merge и выкладка на stage по команде «Если гейт зелёный — мержи и выкладывай».
-- Следующий шаг: merge PR #196 → релиз stage по `docs/waves/l1/README.md` (симлинк, бэкап, миграция 20261015120001, DoInstall, backend, сервис `morefoto_stage_production_runner`, frontend).
-- Блокеры: нет.
-- Рабочее дерево: всё закоммичено.
-- Команды проверки:
-  - PHP: `docker run --rm --network none -u 1000:1000 -e XDEBUG_MODE=off -v $PWD/api:/app -v rabit-e7-vendor:/app/vendor:ro -w /app rabit-api-php-cli:d1-local php vendor/bin/phpunit`; PHPStan — то же с `-v rabit-l1-phpstan:/app/var/phpstan ... vendor/bin/phpstan analyse`;
-  - frontend: `docker run --rm --network none -v $PWD/frontend:/app -v rabit-e7-node:/app/node_modules -w /app mcr.microsoft.com/playwright:v1.52.0-jammy bash -c 'npm run check && npm run test:commerce'`;
-  - гейт: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
+- Дата: 15.10.2026. PR #196 слит в main 72aa95b и выложен на stage релизом `main-20261015141010-72aa95b` (журнал «выкладка»).
+- Сейчас: волна закрыта; на stage архив собирается сервисом `morefoto_stage_production_runner`.
+- Следующий шаг: живая проверка владельцем на ближайшей группе, у которой закроется печать (через час после срока архив соберётся сам); группы, закрытые до выкладки, — кнопкой «Собрать архив». Следующая волна записывает L1 `merged` в граф (PR #196, 72aa95b).
+- Блокеры: нет. Открыто: #197, #198, #199.
+- Для следующих релизов: `switch-backend.sh` включает **12** backend-сервисов — прежние 11 и `morefoto_stage_production_runner`; `backend.conf` берётся из этого релиза (строка map `production/archives`).
+- Откат stage: `docker service rm morefoto_stage_production_runner`; backend/воркеры — `docker service rollback` (прежний `/app` — `main-20261013161806-96b74b6`, спецификации в `services-before.json` релиза); frontend — `docker service rollback morefoto_frontend` (прежний `morefoto-frontend:main-20261015105755-6356e12`). Таблицы и модуль L1 можно оставить; `down` миграции не выполнять.
 
 ## Журнал
 
@@ -59,6 +55,19 @@
 
 - `make test-e2e` — прогон `rabit-e2e-961182e05ae4` на 357c64b — **PASS** за 384 с: браузер 153 (a 81, b 72), 16 верификаторов MySQL включая `verify-production.php`; быстрые проверки frontend/backend и сборка; тестовый магазин ЮKassa включён. Скриншоты desktop/mobile — `docs/waves/l1/screenshots/`, `visual.json`, `verification.json`.
 - Самопроверка по поручению владельца («потом сам сделай ревью»): review 5531966364 в PR #196 — три блокера в тредах к строкам (PRODUCT_FORMAT, плашка «Собирается», верификатор), все исправлены; неблокирующие — #197 (PRD-01 по запросу на группу), #198 (INSERT IGNORE и CHECK), #199 (адресация PRD-05/06/11 в L2/L3, куратор в E2E).
+
+### 15.10.2026 — выкладка
+
+- По команде владельца («Если гейт зелёный — мержи и выкладывай») после гейта PASS PR #196 слит: 72aa95b.
+- Релиз `/srv/morefoto/releases/main-20261015141010-72aa95b`: `git archive 72aa95b api`, образ `morefoto-frontend:main-20261015141010-72aa95b` (`VITE_API_MOCKS_ENABLED=false`, включает и гайд #192); vendor из `main-20261013161806-96b74b6` (composer.lock не менялся); `backend.conf` — прежний + строка map `~^/api/v1/public/production/archives/ 0;`.
+- `sha256sum --check` PASS; `prepare-release.sh` PASS; `l1-prepare.sh` — симлинк `runtime/public/local/modules/morefoto.production`; `backup.sh` — 274 240 байт; `restore-check.sh` — 176 таблиц PASS.
+- Preview (только чтение): переданных групп 5, из них печать закрыта у 2 (архив только кнопкой организатора, L1-DEC-08), открыта у 3; оплаченных заказов с печатью 1.
+- `migrate.sh up Version20261015120001` — success (только эта версия); `install-module.sh` — `morefoto.production installed`.
+- FPM первым: DI-smoke 15/15 (контроллеры и UseCase'ы L1, контракты Commerce/Organization, курсор планировщика). Затем backend (`nginx -t` OK) и 9 воркеров/диспетчеров.
+- Новый сервис `morefoto_stage_production_runner` (`production-service.sh`, клон `morefoto_stage_files_dispatcher` с его монтированиями, env и секретами, в том числе ключом подписи): `app:production:run --limit=20` раз в минуту; первый прогон — «Новых версий: 0, собрано архивов: 0, не собрано: 0, удалено по сроку: 0».
+- Frontend 2/2 `morefoto-frontend:main-20261015141010-72aa95b` (прежний `main-20261015105755-6356e12`). Все 13 stage-сервисов 1/1.
+- Живая проверка: `/`, `/login`, `/health`, `/kak-kupit/`, `/guide/`, `/cabinet/links` — 200; PRD-01 и PRD-02 без входа — 401 UNAUTHORIZED; PRD-10 с неверным и коротким токеном — 404 ARCHIVE_NOT_FOUND, `Cache-Control: no-store`; бандл `index-DSfoVWoI.js` совпадает со сборкой; адресов архива в логе backend нет; Playwright 390/1280 — без ошибок и горизонтальной прокрутки, кабинет без сессии ведёт на вход; ошибок в логах FPM, воркеров и сервиса архива за 20 минут нет (кроме собственных проверочных 401/404 в канале `production`).
+- Не проверено вживую под учётной записью: окно «Архив печати» и сборка на настоящей группе — покрыто гейтом, за владельцем на stage.
 
 ## Тест-кейсы
 

@@ -45,6 +45,8 @@
 
 ## Выкладка (stage)
 
+**Выложено на stage 15.10.2026** релизом `main-20261015141010-72aa95b` (main 72aa95b): миграция `20261015120001` адресно, модуль установлен, сервис `morefoto_stage_production_runner` создан; запись — `docs/plans/L1_print-archive/progress.md`, «15.10.2026 — выкладка». Следующие релизы переключают 12 backend-сервисов (с `morefoto_stage_production_runner`) и берут `backend.conf` с L1.
+
 Новый модуль — runtime-симлинк, адресная миграция и DoInstall, как у J1:
 
 1. `api` релиза; симлинк `runtime/public/local/modules/morefoto.production`.
