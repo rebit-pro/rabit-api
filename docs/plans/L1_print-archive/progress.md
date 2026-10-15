@@ -44,6 +44,12 @@
 - `npm run check` (lint, stylelint, typecheck, typecheck:e2e, `test:ui` 98/98) — exit 0; `npm run test:commerce` 243/243.
 - `python3 tools/verify-wave-graph.py docs/waves/graph.json` — exit 0.
 
+### 15.10.2026 — гейт 1 и самопроверка
+
+- `make test-e2e` (команда из «Точки продолжения»), прогон `rabit-e2e-c87bf170a344` на e62c4cc — FAIL: группа b 69 passed, 1 failed, 2 did not run; группа a отменена после падения b; верификаторы не запускались. Упал `zzzzzzzzz-payments` G1-T14 — тестовый магазин ЮKassa не перевёл СБП-попытку в «Оплата не прошла» за 10 с (известный внешний #174, к L1 не относится). `zzzzzzzzzzzz-print-archive` — PASS с первого прогона (12,9 с), скриншоты desktop/mobile сняты.
+- Самопроверка diff: блокер — `mf_production_line.PRODUCT_FORMAT VARCHAR(64)` уже `mf_order_line.PRODUCT_FORMAT VARCHAR(100)`: `INSERT IGNORE` молча обрезал бы длинный формат в снимке; исправлено до `VARCHAR(100)` (миграция ещё нигде не выполнялась). По скриншоту: после готовности в окне оставалась плашка «Архив собирается» — `useGroupArchive` снимает её, когда перезагрузка блока не видит сборки; E2E проверяет, что плашки нет.
+- После правок: `npm run check` — exit 0 (`test:ui` 98/98). Повторный полный гейт — следующий шаг.
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |

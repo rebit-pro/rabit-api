@@ -105,6 +105,7 @@ test('L1-T01, T06, T08…T11, T16: the paid print of a closed group becomes a ZI
   expect((await stand('run')).built as number).toBeGreaterThanOrEqual(1);
   await expect(dialog.getByTestId('print-archive-version')).toContainText('Готов', { timeout: 20000 });
   await expect(dialog.getByTestId('print-archive-download')).toBeVisible();
+  await expect(dialog.getByText('Архив собирается', { exact: false })).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('l1-desktop-print-archive.png'), animations: 'disabled' });
 

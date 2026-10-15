@@ -27,6 +27,8 @@ export function useGroupArchive() {
   const notice = shallowRef('');
   /** The link the clipboard refused: shown in a field to copy by hand. */
   const manualLink = shallowRef('');
+  /** «Собирается» notice of a build command: it goes away once the reloaded block has nothing left to build. */
+  let buildNotice = false;
   let groupId = '';
   let timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -45,6 +47,10 @@ export function useGroupArchive() {
       archive.value = next;
       error.value = '';
       if (isBuilding(next)) timer = setTimeout(() => void load(), POLL_MS);
+      else if (buildNotice) {
+        buildNotice = false;
+        notice.value = '';
+      }
     } catch (cause) {
       if (requested === groupId) error.value = problem(cause);
     } finally {
@@ -63,15 +69,17 @@ export function useGroupArchive() {
     groupId = '';
     stop();
   }
-  async function run(action: string, command: () => Promise<unknown>, done: string): Promise<void> {
+  async function run(action: string, command: () => Promise<unknown>, done: string, building = false): Promise<void> {
     if (busy.value) return;
     busy.value = action;
     error.value = '';
     notice.value = '';
     manualLink.value = '';
+    buildNotice = false;
     try {
       await command();
       notice.value = done;
+      buildNotice = building;
     } catch (cause) {
       error.value = problem(cause);
     } finally {
@@ -80,12 +88,18 @@ export function useGroupArchive() {
     }
   }
   const build = (kind: 'archive' | 'supplement') =>
-    run(kind, () => archiveApi.build(groupId), kind === 'archive' ? 'Архив собирается — это займёт до минуты.' : 'Дополнение собирается.');
+    run(
+      kind,
+      () => archiveApi.build(groupId),
+      kind === 'archive' ? 'Архив собирается — это займёт до минуты.' : 'Дополнение собирается.',
+      true
+    );
   const renew = (version: ArchiveVersion) =>
     run(
       'renew:' + version.id,
       () => archiveApi.renew(version.id),
-      version.status === 'ready' ? 'Новая ссылка готова. Прежняя ссылка больше не открывается.' : 'Архив собирается заново.'
+      version.status === 'ready' ? 'Новая ссылка готова. Прежняя ссылка больше не открывается.' : 'Архив собирается заново.',
+      version.status !== 'ready'
     );
   function href(version: ArchiveVersion): string {
     return version.archiveUrl ? archiveHref(version.archiveUrl, import.meta.env.VITE_API_URL, window.location.origin) : '';
