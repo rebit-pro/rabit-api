@@ -4,8 +4,8 @@
 
 - Дата: 15.10.2026. Ветка `codex/j2-buyer-files-email`, rebase на main d1741d5 (после L1 #196); рабочая копия `/home/user/rabit-api-worktrees/j2-buyer-files-email`. PR нет.
 - Завершено: план 12.10.2026; пауза снята пользователем 15.10.2026, DEC-01 — ссылка на страницу оплаченного заказа; граф: L1 `merged` (PR #196, 72aa95b), J2 `inProgress`.
-- Сейчас: S2/S3 — реализация (решения приняты 15.10.2026).
-- Следующий шаг: после ответа — S2/S3 (Commerce: ключ письма; Files: доставки, диспетчер, FIL-05/06; Notification: очистка тела).
+- Сейчас: S6 — документация, PR; затем S7 — полный гейт.
+- Следующий шаг: PR → `make test-e2e` → самопроверка; merge и выкладка — по команде владельца, отправка на stage остаётся выключенной до проверки почты (#161).
 - Блокеры: нет. Реальная доставка (#161) — соединение есть, письмо не проверено; отправка выключена флагом до проверки владельцем.
 - Проверка графа: `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
 
@@ -33,8 +33,33 @@
 
 - Пользователь: «Принимаю рекомендации» — DEC-03 (email заказа без подтверждения, видно на странице заказа), DEC-05 (флаг `MOREFOTO_ORDER_EMAIL_ENABLED`, по умолчанию выключен), DEC-06 (подсказка у email при включённой отправке), DEC-07 (повтор: 10 минут, 5 в сутки). Граф: `decisionEvidence.J2-DEC-01-07`.
 
+### 15.10.2026 — реализация
+
+- Инвентаризация (Explore): один действующий ключ на заказ (`ux_mf_order_key_active`), `findActive` не различает тип ключа; H1 `queue()` публикует в RabbitMQ сразу (внутри чужой транзакции — до commit), тело хранится открытым текстом; кода ошибки в статусе H1 нет; перевыпуска ключа сотрудником (D07) в коде нет; `verify-orders.php`/`verify-files.php` считали один действующий ключ на заказ.
+- Отличие от DEC-01 в реализации (T-05): ключ письма детерминированный (HMAC), повтор не отзывает ссылку — иначе «Отправить ещё раз» на странице, открытой по письму, закрыло бы её. Сообщается владельцу.
+- Commerce (da419c0): `OrderEmailLinkInterface` + `OrderEmailLinks`, `PAID_RECORDED_AT`, ключ `KIND=email`, флаг `MOREFOTO_ORDER_EMAIL_ENABLED`, `capabilities.orderEmail`; миграция 20261015180001; H1 очищает текст после `accepted`/`failed`.
+- Files (db1556e): журнал и курсор, `OrderEmailSender`, `DeliveryView`, 4 UseCase, `PublicFileDeliveryController`, `app:files:order-emails`, письмо `OrderEmailComposer` (`MOREFOTO_APP_URL`); frontend — блок письма на странице заказа и подсказка у email; E2E — спецификация, хук стенда `stand_requests` (обобщён из L1), `order-email-fixture.php`, `verify-order-email.php`, проверки очистки в `verify-notification.php`, фильтр `KIND='buyer'` в `verify-orders.php`/`verify-files.php`.
+
+### 15.10.2026 — быстрые проверки
+
+- PHPStan (основной и `tools/e2e/phpstan.neon`) — без ошибок; PHPUnit — OK, 1172 теста (+7 J2: `OrderEmailFlowTest` 6, архитектура контроллера 1); php-cs-fixer — 0 исправлений.
+- `npm run check` — exit 0 (`test:ui` 98/98); `npm run test:commerce` — 247/247 (+4 `order-email.test.mjs`).
+- Тесты раннера `python3 -m unittest discover -s tools/tests` — 25 OK, 1 FAIL `test_f2_prepares_first_and_reports_later_in_one_group` — существующий #163 (тот же сбой на main), не J2.
+- MoreFoto: FIL-05/06 в реестре, `validate.py` — passed (122 запроса); патч `docs/waves/j2/morefoto-contract.patch`.
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
 | --- | --- | --- | --- |
-| J2-T01…T12 | PENDING | — | реализация после согласования решений |
+| J2-T01 | PASS (unit), MySQL — PENDING | 15.10.2026 | `OrderEmailFlowTest::testDispatcherSendsOneLetterPerPaidOrderAndRepeatsNothing`; гейт: `verify-order-email.php` |
+| J2-T02 | PASS (unit) | 15.10.2026 | `testExpiredFilesOrUnpaidOrderGetNoLetter`; заказ до выкладки — нет `PAID_RECORDED_AT` (SQL Commerce) |
+| J2-T03 | PASS (unit), live — PENDING | 15.10.2026 | `testRepeatKeepsTheSameLinkWaitsTenMinutesAndStopsAtFivePerDay`; гейт: 429 |
+| J2-T04 | PASS (unit), live — PENDING | 15.10.2026 | `testStatusFollowsTheNotificationAndHidesForeignLetters`; гейт: 404 |
+| J2-T05 | PASS (unit) | 15.10.2026 | то же — pending/accepted/failed |
+| J2-T06 | PENDING (MySQL) | — | `verify-notification.php` — очистка текста в гейте |
+| J2-T07 | PASS | 15.10.2026 | `npm run check`, `test:commerce` 247 |
+| J2-T08 | PENDING | — | `zzzzzzzzzz-order-email` в гейте |
+| J2-T09 | PENDING | — | то же |
+| J2-T10 | PENDING | — | `verify-order-email.php` в гейте |
+| J2-T11 | PENDING | — | скриншоты desktop/mobile в гейте |
+| J2-T12 | PENDING | — | письмо владельцу на stage после включения флага (#161) |
