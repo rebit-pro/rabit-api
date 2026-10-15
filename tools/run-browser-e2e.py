@@ -76,11 +76,17 @@ VERIFIERS = [
     ("verify-files.php", "j1-files.json", "J1 files integration passed", ["zzzzzzzzzz-files"]),
     # L1: the print archive of the J4 paid print order — composition, disk, link hash, expiry and rebuild.
     ("verify-production.php", "l1-archive.json", "L1 production integration passed", ["zzzzzzzzzz-files", "zzzzzzzzzzzz-print-archive"]),
+    # J2: one automatic letter per paid order, the email key stored only as a hash, its link opens the order.
+    ("verify-order-email.php", "j2-email.json", "J2 order email integration passed", ["zzzzzzzzzz-files", "zzzzzzzzzz-order-email"]),
 ]
 # J4-DEC-04: the spec whose print order the stand pays with the fixture provider during the browser stage.
 PAY_FIXTURE_SPEC = "zzzzzzzzzz-files"
-# L1: the stand has no cron; the print archive spec asks the stand to close print sales and to run app:production:run.
-PRODUCTION_FIXTURE_SPEC = "zzzzzzzzzzzz-print-archive"
+# The stand has no cron: these specs ask the stand to act through numbered requests (spec: request prefix, stand script).
+# L1 closes print sales and runs app:production:run; J2 runs app:files:order-emails and reads the letter of an order.
+STAND_REQUEST_SPECS = {
+    "zzzzzzzzzzzz-print-archive": ("l1", "production-fixture.php"),
+    "zzzzzzzzzz-order-email": ("j2", "order-email-fixture.php"),
+}
 # The browser stage of a group; the opt-in media bench sets itself 45 minutes on top of the other files of its group.
 BROWSER_TIMEOUT = 900
 BENCH_TIMEOUT = 45 * 60
@@ -398,7 +404,7 @@ def open_stand(state, args, stand, notification):
     def serve():
         service(state, name + "-fpm", *network, "--network-alias", "api-php-fpm", "--user", "0", *PHP_ENV, "--entrypoint", "php-fpm",
                 *php_mounts(state, stand), "--env", "APP_ENV=test", "--env", "APP_DEBUG=0", "--env", "REBIT_GEETEST_ENABLED=0",
-                "--env", "REBIT_GEETEST_BYPASS=1", *amqp, *media, "--env", "MOREFOTO_CHECKOUT_ENABLED=1", *SUPPORT, *SELLER, *payment_env(), args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
+                "--env", "REBIT_GEETEST_BYPASS=1", *amqp, *media, "--env", "MOREFOTO_CHECKOUT_ENABLED=1", "--env", "MOREFOTO_ORDER_EMAIL_ENABLED=1", *SUPPORT, *SELLER, *payment_env(), args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
         if YOOKASSA_ENV.is_file():
             # Only php-fpm and the browser reach the provider; MySQL and RabbitMQ stay on the internal network.
             docker("network", "connect", state["browserNetwork"], name + "-fpm")
@@ -567,23 +573,23 @@ def pay_fixture(report, fpm, var, done):
         return
 
 
-def production_fixture(report, fpm, var, done):
-    """L1: answers every numbered request of the print archive spec (close print sales, run the archive) in order.
-    A failure is handed to the spec, which reports it instead of waiting for its timeout."""
+def stand_requests(report, fpm, var, done, prefix, script):
+    """Answers every numbered request of a spec in order (`<prefix>-request-N.json` → `<prefix>-answer-N.json`) by running
+    the stand script on `/runtime/<prefix>-request.json`. A failure is handed to the spec instead of its timeout."""
     answered = 0
     while not done.wait(0.5):
-        request = var / f"l1-request-{answered + 1}.json"
+        request = var / f"{prefix}-request-{answered + 1}.json"
         if not request.is_file():
             continue
-        answer = var / f"l1-answer-{answered + 1}.json.tmp"
+        answer = var / f"{prefix}-answer-{answered + 1}.json.tmp"
         try:
-            docker("cp", str(request), fpm + ":/runtime/l1-request.json")
-            docker("exec", fpm, "php", "/app/tools/e2e/production-fixture.php", log=report / "production-fixture.log")
-            docker("cp", fpm + ":/runtime/l1-answer.json", str(answer))
+            docker("cp", str(request), fpm + f":/runtime/{prefix}-request.json")
+            docker("exec", fpm, "php", "/app/tools/e2e/" + script, log=report / (prefix + "-fixture.log"))
+            docker("cp", fpm + f":/runtime/{prefix}-answer.json", str(answer))
         except Exception as error:  # noqa: BLE001 - the spec shows the reason
             answer.write_text(json.dumps({"error": str(error)}))
         answered += 1
-        os.replace(answer, var / f"l1-answer-{answered}.json")
+        os.replace(answer, var / f"{prefix}-answer-{answered}.json")
 
 
 def test_stand(state, stand):
@@ -616,17 +622,18 @@ def test_stand(state, stand):
         payer = threading.Thread(target=pay_fixture, args=(report, fpm, var, done), daemon=True) if PAY_FIXTURE_SPEC in GROUPS[group] else None
         if payer:
             payer.start()
-        producer = threading.Thread(target=production_fixture, args=(report, fpm, var, done), daemon=True) if PRODUCTION_FIXTURE_SPEC in GROUPS[group] else None
-        if producer:
-            producer.start()
+        requesters = [threading.Thread(target=stand_requests, args=(report, fpm, var, done, prefix, script), daemon=True)
+                      for spec, (prefix, script) in STAND_REQUEST_SPECS.items() if spec in GROUPS[group]]
+        for requester in requesters:
+            requester.start()
         try:
             result = stage(state, f"{stand['name']}: real browser group {group}", browser)
         finally:
             done.set()
             if payer:
                 payer.join()
-            if producer:
-                producer.join()
+            for requester in requesters:
+                requester.join()
         with LOCK:
             state["results"][group] = result
             save(state)

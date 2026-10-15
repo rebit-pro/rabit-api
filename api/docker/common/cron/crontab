@@ -22,3 +22,6 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # L1: через час после закрытия печати фиксирует и собирает архив оплаченной печати группы, удаляет архивы по сроку хранения.
 * * * * * cd /app/public && php local/bin/bitrix-console app:production:run --limit=20 2>&1
+
+# J2: письма родителям со ссылкой на оплаченный заказ; при выключенном MOREFOTO_ORDER_EMAIL_ENABLED только копит их.
+* * * * * cd /app/public && php local/bin/bitrix-console app:files:order-emails --limit=100 2>&1

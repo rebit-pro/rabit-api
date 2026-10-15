@@ -82,7 +82,7 @@ $proof[] = 'no raw secrets';
 if (0 !== $scalar('SELECT COUNT(*) FROM (SELECT QUOTE_HASH FROM mf_order GROUP BY QUOTE_HASH HAVING COUNT(*) > 1) duplicate')
     || 0 !== $scalar('SELECT COUNT(*) FROM mf_order_checkout WHERE ORDER_ID IS NULL')
     || 0 !== $scalar('SELECT COUNT(*) FROM mf_order o LEFT JOIN mf_order_checkout c ON c.ORDER_ID=o.ID WHERE c.ORDER_ID IS NULL')
-    || $scalar('SELECT COUNT(*) FROM mf_order') !== $scalar('SELECT COUNT(*) FROM mf_order_access_key WHERE REVOKED_AT IS NULL')
+    || $scalar('SELECT COUNT(*) FROM mf_order') !== $scalar("SELECT COUNT(*) FROM mf_order_access_key WHERE REVOKED_AT IS NULL AND KIND='buyer'")
     || count(array_unique($secrets['orderIds'])) !== $scalar('SELECT COUNT(*) FROM mf_order')) {
     throw new RuntimeException('Order, key and receipt invariants are broken.');
 }

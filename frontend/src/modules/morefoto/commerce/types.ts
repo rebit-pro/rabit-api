@@ -15,6 +15,8 @@ export interface Product {
 export interface CatalogCapabilities {
   receiptChannels: string[];
   purchaseEnabled: boolean;
+  /** J2: after the payment the server sends the link to the order to the order email. */
+  orderEmail?: boolean;
 }
 export interface Catalog {
   products: Product[];

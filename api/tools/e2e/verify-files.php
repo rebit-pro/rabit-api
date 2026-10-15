@@ -59,7 +59,7 @@ $check(is_array($print) && null !== $print['PAID_AT'], 'the print order is paid'
 $printId = (int)$print['ID'];
 $check(1 === $scalar("SELECT COUNT(*) FROM mf_payment_fact f JOIN mf_payment_attempt a ON a.ID=f.ATTEMPT_ID WHERE f.ORDER_ID={$printId} AND a.PROVIDER='e2e-fixture'"), 'the print order has the fixture money fact');
 $printUntil = new OrderCalendarPolicy()->filesAvailableUntil(new DateTimeImmutable((string)$print['PAID_AT'], new DateTimeZone('UTC')))->format('Y-m-d H:i:s');
-$check(1 === $scalar("SELECT COUNT(*) FROM mf_order_access_key WHERE ORDER_ID={$printId} AND REVOKED_AT IS NULL AND EXPIRES_AT>='{$printUntil}'"), 'the print order key was not extended');
+$check(1 === $scalar("SELECT COUNT(*) FROM mf_order_access_key WHERE ORDER_ID={$printId} AND KIND='buyer' AND REVOKED_AT IS NULL AND EXPIRES_AT>='{$printUntil}'"), 'the print order key was not extended');
 $check(1 === $scalar("SELECT COUNT(*) FROM mf_file_download WHERE PUBLIC_ID='" . $sql->forSql((string)$record['printCopy']['fileDownloadId']) . "' AND ORDER_ID={$printId} AND KIND='file' AND STATUS='ready'"), 'the print copy file download');
 $printArchive = $connection->query("SELECT ARCHIVE_PATH,BYTES FROM mf_file_download WHERE ORDER_ID={$printId} AND KIND='zip' AND STATUS='ready'")->fetch();
 $check(is_array($printArchive) && (int)$record['printCopy']['archiveBytes'] === (int)$printArchive['BYTES'] && is_file($root . '/' . $printArchive['ARCHIVE_PATH'])
@@ -72,7 +72,7 @@ if ($record['sandbox']) {
 
     // 2. D07/D10: the key of the paid order lasts at least until the end of the files month.
     $until = new OrderCalendarPolicy()->filesAvailableUntil(new DateTimeImmutable((string)$order['PAID_AT'], new DateTimeZone('UTC')))->format('Y-m-d H:i:s');
-    $check(1 === $scalar("SELECT COUNT(*) FROM mf_order_access_key WHERE ORDER_ID={$orderId} AND REVOKED_AT IS NULL AND EXPIRES_AT>='{$until}'"), 'the paid order key was not extended');
+    $check(1 === $scalar("SELECT COUNT(*) FROM mf_order_access_key WHERE ORDER_ID={$orderId} AND KIND='buyer' AND REVOKED_AT IS NULL AND EXPIRES_AT>='{$until}'"), 'the paid order key was not extended');
 
     // 3. The browser downloads agree with the journal and the disk.
     $download = static fn(string $id): array|false => $connection->query("SELECT KIND,STATUS,ARCHIVE_PATH,BYTES,ORDER_ID FROM mf_file_download WHERE PUBLIC_ID='" . $sql->forSql($id) . "'")->fetch();
