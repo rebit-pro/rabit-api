@@ -2,7 +2,7 @@
 
 ## Точка продолжения
 
-- Дата: 15.10.2026. Ветка `codex/j2-buyer-files-email`, rebase на main d1741d5 (после L1 #196); рабочая копия `/home/user/rabit-api-worktrees/j2-buyer-files-email`. PR нет.
+- Дата: 15.10.2026. Ветка `codex/j2-buyer-files-email`, rebase на main d1741d5 (после L1 #196); рабочая копия `/home/user/rabit-api-worktrees/j2-buyer-files-email`. PR #200 (https://github.com/rebit-pro/rabit-api/pull/200); граф: J2 `review`.
 - Завершено: план 12.10.2026; пауза снята пользователем 15.10.2026, DEC-01 — ссылка на страницу оплаченного заказа; граф: L1 `merged` (PR #196, 72aa95b), J2 `inProgress`.
 - Сейчас: S6 — документация, PR; затем S7 — полный гейт.
 - Следующий шаг: PR → `make test-e2e` → самопроверка; merge и выкладка — по команде владельца, отправка на stage остаётся выключенной до проверки почты (#161).
