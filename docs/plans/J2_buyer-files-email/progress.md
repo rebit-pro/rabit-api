@@ -47,6 +47,12 @@
 - Тесты раннера `python3 -m unittest discover -s tools/tests` — 25 OK, 1 FAIL `test_f2_prepares_first_and_reports_later_in_one_group` — существующий #163 (тот же сбой на main), не J2.
 - MoreFoto: FIL-05/06 в реестре, `validate.py` — passed (122 запроса); патч `docs/waves/j2/morefoto-contract.patch`.
 
+### 15.10.2026 — гейт 1
+
+- `make test-e2e` — прогон `rabit-e2e-33e93688a09d` на d3373e4 — FAIL: группа b 58 passed, 2 failed, 13 did not run; группа a отменена. «durable Notification contract on real MySQL» — PASS (очистка текста письма, сохранение у `unknown`, повтор после очистки).
+- Падение 1 (J2): `zzzzz-orders` E5 сравнивает `capabilities` каталога целиком; на стенде отправка включена — пришло `orderEmail: true`. Ожидание обновлено.
+- Падение 2 (не J2): G1-T14 — СБП тестового магазина ЮKassa (#174), как в гейте 1 L1.
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
