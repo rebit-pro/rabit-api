@@ -6,7 +6,7 @@
 
 ## Контекст
 
-- Ветка `codex/l1-print-archive` от main 60bd97f; рабочая копия `/home/user/rabit-api-worktrees/l1-print-archive`.
+- Ветка `codex/l1-print-archive` от main cc92006 (rebase 15.10.2026); рабочая копия `/home/user/rabit-api-worktrees/l1-print-archive`.
 - Граф: `docs/waves/graph.json`, волна L1 (`owners: morefoto.production`, API PRD-01/02/03/04/07/10, перепроверка COM-11/12/13, PAY-02/10, HND-02). Все зависимости D1, F2, E5, G1, E7 слиты; gate D10 принят, D06 подтверждён пользователем 15.10.2026 (`decisionEvidence.D06-2026-10-15`, MVP-D06-SYNC закрыт).
 - Планы-основания: `docs/plans/OPS-telemos-feedback-plan/plan.md` (R11, порядок MVP), `docs/plans/OPS-mvp-payment-print-email-plan/plan.md` (MVP-LATE-01, архив печати). Контракт PRD-10 и уточнения PRD-02/04 есть только в `docs/plans/OPS-telemos-feedback-plan/morefoto-plan-sync.patch`; в соседний MoreFoto переносятся патчем этой волны.
 - Модуля `morefoto.production` нет; frontend `modules/morefoto/production/*` — только демо на моках.
@@ -51,7 +51,9 @@
 - Обратная загрузка ретуши, приёмка партий, физическая передача — M1.
 - Новая страница/пункт навигации «Производство»; демо-модуль `production/*` не переписывается.
 
-## Решения на согласование
+## Решения (приняты пользователем 15.10.2026: «рекомендации L1 принимаю все»)
+
+Во всех строках принят рекомендованный вариант; запись — `decisionEvidence.L1-DEC-01-08` графа.
 
 | ID | Вопрос | Рекомендация | Альтернативы и последствия |
 | --- | --- | --- | --- |
@@ -75,7 +77,7 @@
 
 ## Зависимости и риски
 
-- Зависимости слиты; gate D06/D10 приняты. Решения L1-DEC-01…08 нужны до реализации.
+- Зависимости слиты; gate D06/D10 приняты; решения L1-DEC-01…08 приняты 15.10.2026.
 - Попытка оплаты в `unknown` дольше 24 ч остаётся открытой навсегда — в блоке это видно как «ждёт подтверждения», сборку не блокирует (L1-T-06).
 - Объём: модуль, 4 контракта, миграция, 6 API, UI-диалог, E2E — оценка 4–6 тыс. строк, одна волна.
 - Stage: новый consumer-сервис, `backend.conf` (alias и map для PRD-10), DoInstall модуля и адресная миграция — runbook в `docs/waves/l1/README.md`.
@@ -84,7 +86,7 @@
 ## Checklist
 
 - [x] S0. Ветка, worktree, инвентаризация, граф: D06 принят, F3 merged, L1 inProgress.
-- [ ] S1. Согласование L1-DEC-01…08.
+- [x] S1. Согласование L1-DEC-01…08 — приняты все рекомендации (15.10.2026).
 - [ ] S2. Контракты поставщиков (Commerce, Organization, Payment, Media) + реализация и DI у поставщиков, unit.
 - [ ] S3. Модуль `morefoto.production`: миграция, Domain, репозитории, DI, `prepare.php`.
 - [ ] S4. Сборка: dispatch/consume, ZIP + CSV, аренда/повтор/восстановление, удаление по сроку.
