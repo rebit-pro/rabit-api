@@ -4,9 +4,9 @@
 
 - Дата: 15.10.2026. Ветка `codex/l1-print-archive`, base main cc92006; рабочая копия `/home/user/rabit-api-worktrees/l1-print-archive`. PR #196 (https://github.com/rebit-pro/rabit-api/pull/196); граф: L1 `review`. План: `docs/plans/L1_print-archive/plan.md`; README волны `docs/waves/l1/README.md`; патч MoreFoto `docs/waves/l1/morefoto-contract.patch`.
 - Завершено: S0–S7 — контракты Commerce/Organization, модуль `morefoto.production` (миграция 20261015120001, cron `app:production:run`, PRD-01/02/03/04/07/10 и перевыпуск ссылки), блок «Печать» в «Ссылках и сроках», unit, live E2E `zzzzzzzzzzzz-print-archive` и верификатор `verify-production.php` (написаны, не запускались), README, патч MoreFoto.
-- Сейчас: S8 — PR и ревью пользователя (большая волна: backend, миграция, новый модуль).
-- Следующий шаг: после ревью без блокеров — полный гейт `make test-e2e` (первый прогон нового E2E и верификатора).
-- Блокеры: нет. Риск: новый E2E и верификатор ещё не запускались на стенде.
+- Сейчас: S8 — гейт PASS, самопроверка опубликована (по поручению владельца); merge и выкладка на stage по команде «Если гейт зелёный — мержи и выкладывай».
+- Следующий шаг: merge PR #196 → релиз stage по `docs/waves/l1/README.md` (симлинк, бэкап, миграция 20261015120001, DoInstall, backend, сервис `morefoto_stage_production_runner`, frontend).
+- Блокеры: нет.
 - Рабочее дерево: всё закоммичено.
 - Команды проверки:
   - PHP: `docker run --rm --network none -u 1000:1000 -e XDEBUG_MODE=off -v $PWD/api:/app -v rabit-e7-vendor:/app/vendor:ro -w /app rabit-api-php-cli:d1-local php vendor/bin/phpunit`; PHPStan — то же с `-v rabit-l1-phpstan:/app/var/phpstan ... vendor/bin/phpstan analyse`;
@@ -55,25 +55,30 @@
 - Прогон `rabit-e2e-3597a0d6a331` на 013433a — FAIL только на новом `verify-production.php`: `SqlQueryException (1525) Incorrect DATETIME value '15.10.2026 10:18:54'`. Bitrix `fetch()` превращает DATETIME из `SELECT *` в объект в формате сайта, верификатор подставлял его обратно в SQL. Ошибка верификатора, не продукта (репозиторий L1 читает даты через `DATE_FORMAT`). Группа b браузера — PASS целиком (включая G1-T14 и `zzzzzzzzzzzz-print-archive`), 13 прежних верификаторов — PASS; группа a отменена после падения.
 - Исправлено: `fetchRaw()` и `DATE_FORMAT(DEADLINE_AT)` в верификаторе. Следующий шаг — гейт 3.
 
+### 15.10.2026 — гейт 3 PASS и самопроверка
+
+- `make test-e2e` — прогон `rabit-e2e-961182e05ae4` на 357c64b — **PASS** за 384 с: браузер 153 (a 81, b 72), 16 верификаторов MySQL включая `verify-production.php`; быстрые проверки frontend/backend и сборка; тестовый магазин ЮKassa включён. Скриншоты desktop/mobile — `docs/waves/l1/screenshots/`, `visual.json`, `verification.json`.
+- Самопроверка по поручению владельца («потом сам сделай ревью»): review 5531966364 в PR #196 — три блокера в тредах к строкам (PRODUCT_FORMAT, плашка «Собирается», верификатор), все исправлены; неблокирующие — #197 (PRD-01 по запросу на группу), #198 (INSERT IGNORE и CHECK), #199 (адресация PRD-05/06/11 в L2/L3, куратор в E2E).
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
 | --- | --- | --- | --- |
-| L1-T01 | PASS (unit), live — PENDING | 15.10.2026 | `ProductionFlowTest::testRunBuildsOnlyPaidPrintAnHourAfterTheDeadlineAndOnlyOnce`; гейт: `zzzzzzzzzzzz-print-archive`, `verify-production.php` |
+| L1-T01 | PASS | 15.10.2026 | unit; гейт `rabit-e2e-961182e05ae4`: `zzzzzzzzzzzz-print-archive`, `verify-production.php` |
 | L1-T02 | PASS (unit) | 15.10.2026 | `testGroupWithoutPaidPrintGetsAnEmptyVersionWithoutZip` |
-| L1-T03 | PASS (unit), MySQL — PENDING | 15.10.2026 | повторный прогон в unit; уникальность на MySQL — `verify-production.php` |
+| L1-T03 | PASS | 15.10.2026 | unit; MySQL — `verify-production.php` (строка в одной версии, повторный прогон без новой версии) |
 | L1-T04 | PASS (unit) | 15.10.2026 | `testMissingOriginalFailsAtOnceAndBrokenWritesRetryThreeTimes` |
 | L1-T05 | PASS (unit) | 15.10.2026 | `ProductionRulesTest::testLayoutSeparatesProductsByIdAndSanitizesFolders` |
-| L1-T06 | PASS (unit), live — PENDING | 15.10.2026 | ZIP и `состав.csv` в unit; диск и байты — гейт |
+| L1-T06 | PASS | 15.10.2026 | unit; гейт: ZIP по ссылке, папки продукции, `состав.csv`; размер файла на диске — верификатор |
 | L1-T07 | PASS (unit) | 15.10.2026 | `testManifestIsExcelFriendlyAndDefusesFormulas` |
-| L1-T08 | PASS (unit), live — PENDING | 15.10.2026 | `testRolesSeeOnlyTheirScopeAndOnlyTheOrganizerManages`; E2E: воспитатель 403 |
-| L1-T09 | PASS (unit), live — PENDING | 15.10.2026 | то же; E2E: куратор на сборку 403 |
-| L1-T10 | PASS (unit), live — PENDING | 15.10.2026 | `testLinkOpensOnlyItsCurrentGenerationWithinRetention`; E2E: ZIP без входа, `no-store`; map access-лога — `ProductionArchitectureTest` |
-| L1-T11 | PASS (unit), live — PENDING | 15.10.2026 | то же; E2E: прежняя и неверная ссылка — 404 |
+| L1-T08 | PASS | 15.10.2026 | unit; гейт: воспитатель 403 |
+| L1-T09 | PASS | 15.10.2026 | unit; гейт: куратор на сборку 403 |
+| L1-T10 | PASS | 15.10.2026 | unit; гейт: ZIP без входа, `application/zip`, `no-store`, копирование ссылки |
+| L1-T11 | PASS | 15.10.2026 | unit; гейт: прежняя, неверная и короткая ссылка — 404 |
 | L1-T12 | PASS (unit) | 15.10.2026 | `testLateConfirmedPaymentGoesIntoASupplementWithOnlyNewLines` |
-| L1-T13 | PASS (unit), MySQL — PENDING | 15.10.2026 | фильтр контракта; SQL Commerce — `verify-production.php` |
-| L1-T14 | PASS (unit), live — PENDING | 15.10.2026 | `testGroupClosedBeforeTheReleaseWaitsForTheOrganizer`; E2E: кнопка «Собрать архив» |
-| L1-T15 | PASS (unit), MySQL — PENDING | 15.10.2026 | unit; `verify-production.php`: удаление по сроку и сборка заново |
-| L1-T16 | PENDING | — | E2E desktop/mobile + visual |
+| L1-T13 | PASS | 15.10.2026 | unit; MySQL: состав = оплаченные до срока печатные строки без поздних |
+| L1-T14 | PASS | 15.10.2026 | unit; гейт: «Собрать архив» в окне |
+| L1-T15 | PASS | 15.10.2026 | unit; MySQL: удаление по сроку, 404 ссылки, сборка заново с новым поколением |
+| L1-T16 | PASS | 15.10.2026 | гейт: desktop 1440 / mobile 390, `docs/waves/l1/screenshots/` |
 | L1-T17 | PASS | 15.10.2026 | быстрые проверки выше |
-| L1-T18 | PENDING | — | полный гейт после ревью |
+| L1-T18 | PASS | 15.10.2026 | `rabit-e2e-961182e05ae4` |

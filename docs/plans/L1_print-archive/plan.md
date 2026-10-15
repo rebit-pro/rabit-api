@@ -98,7 +98,7 @@
 - [x] S5. API PRD-01/02/03/04/07/10, ссылка (HMAC, поколение, отзыв), nginx-map.
 - [x] S6. Frontend: значок и диалог «Печать» в «Ссылках и сроках», unit.
 - [x] S7. Быстрые проверки, live E2E и верификатор, README волны, патч MoreFoto, PR.
-- [ ] S8. Самопроверка/ревью, полный гейт `make test-e2e`, visual desktop/mobile.
+- [x] S8. Самопроверка/ревью, полный гейт `make test-e2e` PASS (rabit-e2e-961182e05ae4), visual desktop/mobile.
 
 ## Критерии приёмки
 
