@@ -4,8 +4,8 @@
 
 - Дата: 15.10.2026. Ветка `codex/j2-buyer-files-email`, rebase на main d1741d5 (после L1 #196); рабочая копия `/home/user/rabit-api-worktrees/j2-buyer-files-email`. PR #200 (https://github.com/rebit-pro/rabit-api/pull/200); граф: J2 `review`.
 - Завершено: план 12.10.2026; пауза снята пользователем 15.10.2026, DEC-01 — ссылка на страницу оплаченного заказа; граф: L1 `merged` (PR #196, 72aa95b), J2 `inProgress`.
-- Сейчас: S6 — документация, PR; затем S7 — полный гейт.
-- Следующий шаг: PR → `make test-e2e` → самопроверка; merge и выкладка — по команде владельца, отправка на stage остаётся выключенной до проверки почты (#161).
+- Сейчас: гейт PASS, самопроверка опубликована; ждём команду владельца на merge и выкладку.
+- Следующий шаг: merge и выкладка по команде владельца (миграция 20261015180001 до backend, cron писем); отправка на stage выключена до штатного письма владельцу (#161).
 - Блокеры: нет. Реальная доставка (#161) — соединение есть, письмо не проверено; отправка выключена флагом до проверки владельцем.
 - Проверка графа: `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
 
@@ -53,19 +53,24 @@
 - Падение 1 (J2): `zzzzz-orders` E5 сравнивает `capabilities` каталога целиком; на стенде отправка включена — пришло `orderEmail: true`. Ожидание обновлено.
 - Падение 2 (не J2): G1-T14 — СБП тестового магазина ЮKassa (#174), как в гейте 1 L1.
 
+### 15.10.2026 — гейт 2 PASS и самопроверка
+
+- `make test-e2e` — прогон `rabit-e2e-7f46ab85f418` на fdd104e — **PASS** за 436 с: браузер 154 (a 81, b 73), 17 верификаторов MySQL включая `verify-order-email.php` и `verify-notification.php` (очистка текста); тестовый магазин ЮKassa включён. Скриншоты — `docs/waves/j2/screenshots/`, `visual.json`, `verification.json`.
+- Самопроверка diff: блокеров нет (формат Idempotency-Key 32 hex, старая колонка `ACTIVE_ORDER_ID` ключей нигде не читается, ключ письма открывает все публичные API заказа, H1 очищает только accepted/failed). Неблокирующее — #201 (номер выпуска в ключе письма для отзыва в J3).
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
 | --- | --- | --- | --- |
-| J2-T01 | PASS (unit), MySQL — PENDING | 15.10.2026 | `OrderEmailFlowTest::testDispatcherSendsOneLetterPerPaidOrderAndRepeatsNothing`; гейт: `verify-order-email.php` |
+| J2-T01 | PASS | 15.10.2026 | unit; `verify-order-email.php` в `rabit-e2e-7f46ab85f418` |
 | J2-T02 | PASS (unit) | 15.10.2026 | `testExpiredFilesOrUnpaidOrderGetNoLetter`; заказ до выкладки — нет `PAID_RECORDED_AT` (SQL Commerce) |
-| J2-T03 | PASS (unit), live — PENDING | 15.10.2026 | `testRepeatKeepsTheSameLinkWaitsTenMinutesAndStopsAtFivePerDay`; гейт: 429 |
-| J2-T04 | PASS (unit), live — PENDING | 15.10.2026 | `testStatusFollowsTheNotificationAndHidesForeignLetters`; гейт: 404 |
+| J2-T03 | PASS | 15.10.2026 | unit; гейт: 429 DELIVERY_TOO_SOON |
+| J2-T04 | PASS | 15.10.2026 | unit; гейт: чужой ключ и письмо — 404 |
 | J2-T05 | PASS (unit) | 15.10.2026 | то же — pending/accepted/failed |
-| J2-T06 | PENDING (MySQL) | — | `verify-notification.php` — очистка текста в гейте |
+| J2-T06 | PASS | 15.10.2026 | `verify-notification.php` в гейте — текст очищен после accepted/failed, сохранён у unknown |
 | J2-T07 | PASS | 15.10.2026 | `npm run check`, `test:commerce` 247 |
-| J2-T08 | PENDING | — | `zzzzzzzzzz-order-email` в гейте |
-| J2-T09 | PENDING | — | то же |
-| J2-T10 | PENDING | — | `verify-order-email.php` в гейте |
-| J2-T11 | PENDING | — | скриншоты desktop/mobile в гейте |
+| J2-T08 | PASS | 15.10.2026 | `zzzzzzzzzz-order-email`: ссылка из письма открывает оплаченный заказ и файлы, ссылка покупателя работает |
+| J2-T09 | PASS | 15.10.2026 | то же: 429, 422, 404 |
+| J2-T10 | PASS | 15.10.2026 | `verify-order-email.php` |
+| J2-T11 | PASS | 15.10.2026 | `docs/waves/j2/screenshots/` |
 | J2-T12 | PENDING | — | письмо владельцу на stage после включения флага (#161) |

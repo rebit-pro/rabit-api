@@ -75,8 +75,8 @@
 - [x] S3. Commerce-контракт; Notification — очистка тела.
 - [x] S4. Frontend.
 - [x] S5. Тесты и E2E.
-- [ ] S6. Документация, граф, PR.
-- [ ] S7. Полный `make test-e2e` и visual desktop/mobile.
+- [x] S6. Документация, граф, PR #200.
+- [x] S7. Полный `make test-e2e` PASS (rabit-e2e-7f46ab85f418) и visual desktop/mobile.
 
 ## Критерии приёмки
 
