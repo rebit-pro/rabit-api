@@ -37,7 +37,7 @@ const remaining = computed(() => {
             : 'Выберите код ребёнка и откройте понравившийся кадр.'
         }}
       </p>
-      <BuyerGuideLink class="gallery-heading__guide" />
+      <BuyerGuideLink class="gallery-heading__guide" label="Как купить фото — 6 шагов" prominent />
     </div>
     <aside class="gallery-conditions" aria-label="Условия съёмки">
       <div class="gallery-conditions__title">

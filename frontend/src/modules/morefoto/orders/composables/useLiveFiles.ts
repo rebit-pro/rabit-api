@@ -4,7 +4,7 @@ import { liveFilesApi } from '../live/files-api';
 import { ARCHIVE_WAIT_MS, contentHref, downloadBody, filesError, keepsRequestKey, pollDelay } from '../live/files-rules';
 import type { FileDownload, OrderFile, OrderFiles } from '../live/files-types';
 import { newRequestId } from '../live/rules';
-import { shareOutcome, sharesPhotos } from '../live/share-files';
+import { phoneSaveMode, shareOutcome } from '../live/share-files';
 
 /** A settled download that gave no link: the server failed or the link expired before it was used. */
 class NoContent extends Error {
@@ -26,7 +26,12 @@ export function useLiveFiles(orderKey: Ref<string>) {
   const error = shallowRef('');
   /** Photo whose file is ready but whose share sheet needs one more tap (the first tap expired while it loaded). */
   const sharePending = shallowRef('');
-  const canSave = sharesPhotos(globalThis.navigator, typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
+  const saveMode = phoneSaveMode(
+    globalThis.navigator,
+    typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches,
+    globalThis.navigator?.userAgent ?? ''
+  );
+  const canSave = saveMode === 'share';
   const keys = new Map<string, string>();
   const prepared = new Map<string, File>();
   let disposed = false;
@@ -126,5 +131,5 @@ export function useLiveFiles(orderKey: Ref<string>) {
   }
 
   watch(orderKey, load, { immediate: true });
-  return { files, loading, busy, preparing, error, load, download, canSave, save, sharePending };
+  return { files, loading, busy, preparing, error, load, download, canSave, saveMode, save, sharePending };
 }

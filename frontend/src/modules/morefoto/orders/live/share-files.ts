@@ -15,6 +15,18 @@ export function sharesPhotos(target: ShareTarget | undefined, coarsePointer: boo
   }
 }
 
+/**
+ * #204: how a phone saves a purchased photo into its gallery. An iPhone does it from the share sheet («Сохранить
+ * изображение»); Android's share sheet has no such target, while a plain download lands in «Загрузки», which the gallery
+ * shows — so Android downloads. A computer keeps the plain «Скачать».
+ */
+export type PhoneSaveMode = 'share' | 'download' | null;
+export function phoneSaveMode(target: ShareTarget | undefined, coarsePointer: boolean, userAgent: string): PhoneSaveMode {
+  if (!coarsePointer) return null;
+  if (/Android/i.test(userAgent)) return 'download';
+  return sharesPhotos(target, coarsePointer) ? 'share' : null;
+}
+
 /** A closed sheet is the buyer's choice; a sheet refused for an expired tap opens on the next tap with the file ready. */
 export function shareOutcome(cause: unknown): Exclude<ShareOutcome, 'shared'> {
   const name = cause instanceof Error ? cause.name : '';

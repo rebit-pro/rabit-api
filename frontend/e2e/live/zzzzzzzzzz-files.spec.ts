@@ -293,6 +293,34 @@ test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and nev
   } finally {
     await phone.close();
   }
+
+  // #204: Android has no «save to gallery» in its share sheet; the one button downloads the original into «Загрузки».
+  const android = await browser.newContext({
+    baseURL,
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    acceptDownloads: true,
+    userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36'
+  });
+  try {
+    const buyer = await android.newPage();
+    await buyer.goto('/orders/access/' + created.accessKey);
+    const item = (state.items as { photoId: string; code: string }[]).find((file) => file.photoId === frames.A1.photoId)!;
+    const files = buyer.getByTestId('order-files');
+    await expect(files.getByTestId('files-save-download')).toHaveCount(state.items.length);
+    await expect(files.getByTestId('files-download')).toHaveCount(0);
+    await expect(files.getByTestId('files-save')).toHaveCount(0);
+    await expect(files.getByTestId('files-save-gallery-hint')).toHaveText('Фото появится в галерее телефона, в альбоме «Загрузки».');
+    const [saved] = await Promise.all([
+      buyer.waitForEvent('download'),
+      files.getByRole('button', { name: 'Сохранить в телефон кадр ' + item.code, exact: true }).click()
+    ]);
+    expect(readFileSync(await saved.path()).equals(printedA.bytes)).toBe(true);
+    await buyer.screenshot({ path: testInfo.outputPath('issues204-android-save-files.png'), fullPage: true, animations: 'disabled' });
+  } finally {
+    await android.close();
+  }
 });
 
 if (sandbox) {
