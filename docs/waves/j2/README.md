@@ -37,6 +37,8 @@
 
 ## Выкладка (stage)
 
+**Выложено на stage 15.10.2026** релизом `main-20261015183234-eb7cfaf` (main eb7cfaf), отправка выключена; сервис `morefoto_stage_order_email_runner` создан. Запись — `docs/plans/J2_buyer-files-email/progress.md`, «15.10.2026 — выкладка». Следующие релизы переключают 13 backend-сервисов.
+
 1. Миграция адресно: `migrate.sh up Version20261015180001` — **до** переключения backend (новый Commerce пишет `PAID_RECORDED_AT` и `KIND`).
 2. Backend (12 сервисов, как после L1) + DI-smoke (`DispatchOrderEmailsUseCase`, `PublicFileDeliveryController`, `OrderEmailLinkInterface`).
 3. Cron `app:files:order-emails --limit=100` раз в минуту — в цикл `morefoto_stage_files_dispatcher` или отдельным циклом; контейнеру нужен `REBIT_ENCRYPTION_KEY` (есть у files_dispatcher).

@@ -2,12 +2,11 @@
 
 ## Точка продолжения
 
-- Дата: 15.10.2026. Ветка `codex/j2-buyer-files-email`, rebase на main d1741d5 (после L1 #196); рабочая копия `/home/user/rabit-api-worktrees/j2-buyer-files-email`. PR #200 (https://github.com/rebit-pro/rabit-api/pull/200); граф: J2 `review`.
-- Завершено: план 12.10.2026; пауза снята пользователем 15.10.2026, DEC-01 — ссылка на страницу оплаченного заказа; граф: L1 `merged` (PR #196, 72aa95b), J2 `inProgress`.
-- Сейчас: гейт PASS, самопроверка опубликована; ждём команду владельца на merge и выкладку.
-- Следующий шаг: merge и выкладка по команде владельца (миграция 20261015180001 до backend, cron писем); отправка на stage выключена до штатного письма владельцу (#161).
-- Блокеры: нет. Реальная доставка (#161) — соединение есть, письмо не проверено; отправка выключена флагом до проверки владельцем.
-- Проверка графа: `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
+- Дата: 15.10.2026. PR #200 слит в main eb7cfaf и выложен на stage релизом `main-20261015183234-eb7cfaf` (журнал «выкладка»). **Отправка писем выключена** (`MOREFOTO_ORDER_EMAIL_ENABLED` не задан): письма копятся `held`.
+- Следующий шаг: владелец получает штатное письмо (сброс пароля или приглашение) в свой ящик (#161) → добавить `MOREFOTO_ORDER_EMAIL_ENABLED=1` в env `morefoto_stage_fpm` и `morefoto_stage_order_email_runner` (`docker service update --env-add`); накопленные письма уйдут по заказам в сроке файлов. Следующая волна записывает J2 `merged` в граф (PR #200, eb7cfaf).
+- Для следующих релизов: backend-сервисов **13** — прежние 12 и `morefoto_stage_order_email_runner`.
+- Откат stage: `docker service rm morefoto_stage_order_email_runner`; backend/воркеры — `docker service rollback` (прежний `/app` — `main-20261015141010-72aa95b`, спецификации в `services-before.json`); frontend — `docker service rollback morefoto_frontend` (прежний `morefoto-frontend:main-20261015141010-72aa95b`). `down` миграции 20261015180001 после включения отправки не выполнять.
+- Открыто: #201 (номер выпуска ключа письма для J3), #163 (тест раннера).
 
 ## Журнал
 
@@ -57,6 +56,16 @@
 
 - `make test-e2e` — прогон `rabit-e2e-7f46ab85f418` на fdd104e — **PASS** за 436 с: браузер 154 (a 81, b 73), 17 верификаторов MySQL включая `verify-order-email.php` и `verify-notification.php` (очистка текста); тестовый магазин ЮKassa включён. Скриншоты — `docs/waves/j2/screenshots/`, `visual.json`, `verification.json`.
 - Самопроверка diff: блокеров нет (формат Idempotency-Key 32 hex, старая колонка `ACTIVE_ORDER_ID` ключей нигде не читается, ключ письма открывает все публичные API заказа, H1 очищает только accepted/failed). Неблокирующее — #201 (номер выпуска в ключе письма для отзыва в J3).
+
+### 15.10.2026 — выкладка
+
+- По команде владельца («Если гейт зелёный — мержи и выкладывай») PR #200 слит: eb7cfaf.
+- Релиз `/srv/morefoto/releases/main-20261015183234-eb7cfaf`: `git archive eb7cfaf api`, образ `morefoto-frontend:main-20261015183234-eb7cfaf`; vendor и `backend.conf` из `main-20261015141010-72aa95b`. `sha256sum --check`, `prepare-release.sh` PASS; `backup.sh` — 281 487 байт; `restore-check.sh` — 180 таблиц PASS.
+- `migrate.sh up Version20261015180001` — success (только эта версия). FPM первым: DI-smoke 12/12 (контроллер писем, UseCase'ы, контракт Commerce, курсор), «order email sending is off». Затем backend (`nginx -t` OK) и 10 воркеров/диспетчеров вместе с `morefoto_stage_production_runner`.
+- Новый сервис `morefoto_stage_order_email_runner` (клон `morefoto_stage_files_dispatcher`, `app:files:order-emails --limit=100` раз в минуту): первый прогон — «Новых писем: 0, поставлено в очередь: 0, отменено: 0».
+- Frontend 2/2 `morefoto-frontend:main-20261015183234-eb7cfaf` (прежний `main-20261015141010-72aa95b`). Все 14 сервисов stage 1/1 (медиа-воркер — штатный перезапуск раз в 5 минут).
+- Живая проверка: `/`, `/login`, `/health`, `/kak-kupit/`, `/cabinet/links` — 200; сводка писем без ключа и с неверным ключом — 404 ORDER_NOT_FOUND; бандл `index-B9qR0E_q.js` совпадает со сборкой.
+- Не проверено: реальная отправка — выключена до проверки почты владельцем (#161).
 
 ## Тест-кейсы
 
