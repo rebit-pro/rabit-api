@@ -22,6 +22,10 @@ import UiDataTable from '../../ui/components/UiDataTable.vue';
 import { clampTablePage, sortTableRows } from '../../ui/table-values';
 import type { UiTableColumn, UiTableRow, UiTableSort } from '../../ui/table-types';
 import { galleryPath, type GalleryStepKey } from '../galleryPath';
+import PrintArchiveDialog from '../../production/live/PrintArchiveDialog.vue';
+import { archiveApi } from '../../production/live/archive-api';
+import { archiveBadge } from '../../production/live/archive-rules';
+import type { ArchiveState } from '../../production/live/archive-types';
 /** Event titles of the link history: F2 delivery steps and the D4 markup correction that pauses the sales. */
 const linkEventTitles: Record<LinkEvent['kind'], string> = {
   prepared: 'Ссылка проверена',
@@ -205,7 +209,32 @@ function fix(g: LinkGroup): { to: string; label: string } | null {
   const step = g.sentAt ? undefined : galleryPath(g).find((item) => item.state === 'current');
   return (step && stepFix(g, step.key)) || stepFix(g, 'photos');
 }
-const hasMenu = (g: LinkGroup) => (!g.sentAt && canCopy(g)) || canCorrect(g) || hasHistory(g) || !!fix(g);
+/** L1-DEC-06/07: the organizer and the institution curator see the print archive of a group handed over to parents. */
+const canSeeArchive = (g: LinkGroup) => live && !!g.sentAt && ['organizer', 'curator'].includes(data.value?.role ?? '');
+const hasMenu = (g: LinkGroup) => (!g.sentAt && canCopy(g)) || canCorrect(g) || hasHistory(g) || !!fix(g) || canSeeArchive(g);
+const archiveStates = shallowRef(new Map<string, ArchiveState>());
+/** PRD-01 for the visible page only; the badge is a hint, so a failed request just leaves the rows without it. */
+async function loadArchiveStates(): Promise<void> {
+  const ids = pageRows.value.map((row) => row.id).filter((id) => canSeeArchive(group(id)));
+  if (!ids.length) return;
+  try {
+    const states = new Map(archiveStates.value);
+    for (const item of await archiveApi.statuses(ids)) states.set(item.groupId, item.state);
+    archiveStates.value = states;
+  } catch {
+    // The dialog shows the real state and its error when opened.
+  }
+}
+watch(
+  () => pageRows.value.map((row) => row.id).join(','),
+  () => void loadArchiveStates(),
+  { immediate: true }
+);
+const archiveGroup = shallowRef<LinkGroup | null>(null);
+function badge(id: string) {
+  const state = archiveStates.value.get(id);
+  return state ? archiveBadge(state) : null;
+}
 const url = (token: string) => window.location.origin + '/g/' + token;
 /** Live keys are requested per group on demand: the list never carries gallery tokens. */
 async function token(group: LinkGroup): Promise<string> {
@@ -431,6 +460,13 @@ async function openHistory(group: LinkGroup) {
           <small v-if="group(row.id).digitalSalesUntil" data-testid="links-digital-until"
             >электронные до {{ day(group(row.id).digitalSalesUntil) }}</small
           >
+          <small
+            v-if="badge(row.id)"
+            class="links-archive"
+            :class="'links-archive--' + badge(row.id)!.tone"
+            data-testid="links-print-archive"
+            ><v-icon icon="mdi-printer-outline" size="14" aria-hidden="true" />{{ badge(row.id)!.text }}</small
+          >
         </span>
       </template>
       <template #cell-deliveryAt="{ row }">{{ day(group(row.id).deliveryAt) }}</template>
@@ -497,6 +533,15 @@ async function openHistory(group: LinkGroup) {
                 >История изменений</v-btn
               >
               <v-btn
+                v-if="canSeeArchive(group(row.id))"
+                variant="text"
+                block
+                prepend-icon="mdi-printer-outline"
+                data-testid="links-print-archive-open"
+                @click="archiveGroup = group(row.id)"
+                >Архив печати</v-btn
+              >
+              <v-btn
                 v-if="fix(group(row.id))"
                 variant="text"
                 block
@@ -546,6 +591,12 @@ async function openHistory(group: LinkGroup) {
       </div>
     </v-card>
   </v-dialog>
+  <PrintArchiveDialog
+    :group-id="archiveGroup?.id ?? null"
+    :group-name="archiveGroup?.name ?? ''"
+    @close="archiveGroup = null"
+    @changed="loadArchiveStates"
+  />
   <AdminDialog
     :open="!!command"
     :title="command?.kind === 'link' ? titles[command.action] : ''"
@@ -612,6 +663,23 @@ async function openHistory(group: LinkGroup) {
 }
 .links-state .links-left {
   color: var(--mf-color-primary);
+  font-weight: 600;
+}
+.links-state .links-archive {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.links-state .links-archive--success {
+  color: var(--mf-tone-success-fg);
+  font-weight: 600;
+}
+.links-state .links-archive--warning {
+  color: var(--mf-tone-warning-fg);
+  font-weight: 600;
+}
+.links-state .links-archive--danger {
+  color: var(--mf-tone-danger-fg);
   font-weight: 600;
 }
 .links-check {
