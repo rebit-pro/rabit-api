@@ -2,15 +2,11 @@
 
 ## Точка продолжения
 
-- Дата: 15.10.2026. Ветка `codex/issues-192-parent-buy-guide` от main 60bd97f (main не сдвинулся); рабочая копия `/home/user/rabit-api-worktrees/issues-192-parent-buy-guide`. Issue #192, PR — открывается 15.10.2026.
-- Завершено: S0–S5.1 — страница `frontend/public/kak-kupit/` (6 шагов, `og.jpg`), ссылка `BuyerGuideLink` на шагах покупателя и в футере, nginx `absolute_redirect off`, «+» у каждого формата со счётчиками, «Сохранить в телефон», unit и live E2E; быстрые проверки зелёные (13.10.2026). Версия 2 согласована владельцем 13.10.2026.
-- 15.10.2026: на stage гайда нет (`/kak-kupit/` отдаёт SPA, `/guide` → `http://`) — ветка не была запушена. Владелец: «пушь гайд и делай PR».
-- PR #194; самопроверка без блокеров (комментарий в PR), неблокирующее — #195. Полный гейт `rabit-e2e-d0348f36a9ff` на ab46129 — PASS.
-- Сейчас: ждём команду владельца на merge и выкладку.
-- Следующий шаг: merge → выкладка только frontend (`switch-frontend.sh`) → `curl` KK-T06, `og.jpg` = image/jpeg, превью ссылки в мессенджере, «Сохранить в телефон» на реальном телефоне.
-- Связанное: #193 — замена шага оплаты на QR-код СБП.
-- Стенд снимков: scratchpad сессии 13.10 `kk/` (`run.sh <frontend> <script>`; `stubs.mjs`, `crops.mjs`, `page.mjs`, `inapp.mjs`, `og.mjs`). PNG → WebP q80 — PIL.
-- Блокеры: нет. Параллельно: #191 (миниатюры в заказе) — своя ветка, тоже не запушена; обе задачи дописывают `zzzzz-orders.spec.ts` и nginx frontend в соседних местах — второй слитой ветке нужна сверка с main. #188 приостановлена.
+- Дата: 15.10.2026. PR #194 слит в main 6356e12 и выложен на stage frontend-релизом `main-20261015105755-6356e12` (журнал «выкладка»).
+- Сейчас: задача закрыта; остаётся проверка владельцем на реальном телефоне — превью ссылки в Telegram/WhatsApp/MAX и «Сохранить в телефон» во встроенном браузере мессенджера.
+- Следующий шаг: #193 — шаг оплаты на QR-код СБП; #195 — описание продукции в карточке кадра.
+- Блокеры: нет.
+- Откат stage: `docker service rollback morefoto_frontend` (прежний образ `morefoto-frontend:main-20261013161806-96b74b6` в `frontend-before.txt` релиза). Backend и миграции не менялись.
 
 ## Журнал
 
@@ -50,6 +46,14 @@
 - PR #194 открыт. Самопроверка diff: блокеров нет — адрес гайда в одной константе, новая вкладка, `fetch` файла с того же origin (`VITE_API_URL=/api`), отменённое меню — не ошибка, `absolute_redirect off` в обоих конфигах. Неблокирующее: #195 — описание продукции больше не видно в карточке кадра.
 - `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` — прогон `rabit-e2e-d0348f36a9ff`, PASS за 409,7 с: браузер 152 (a 81, b 71), 15 верификаторов MySQL, lint/stylelint/typecheck/typecheck:e2e/test:ui/test:commerce/build, php-lint, PHPStan, PHPUnit; тестовый магазин ЮKassa включён.
 
+### 15.10.2026 — выкладка
+
+- По команде владельца («Мержи и выкладывай») PR #194 слит: 6356e12.
+- Только frontend: `git archive 6356e12 frontend` → образ `morefoto-frontend:main-20261015105755-6356e12` (`VITE_API_MOCKS_ENABLED=false`); в main после выложенного 96b74b6 из frontend изменился только #192. Локально: `/kak-kupit` → `Location: /kak-kupit/`, `og.jpg` — `image/jpeg`.
+- Релиз `/srv/morefoto/releases/main-20261015105755-6356e12`: `sha256sum --check` PASS, `switch-frontend.sh` — `morefoto_frontend` 2/2 на новом образе; прежний образ `main-20261013161806-96b74b6`.
+- Живая проверка: `/kak-kupit/`, `/kak-kupit/og.jpg` (image/jpeg), снимки WebP, `/`, `/login`, `/health`, `/guide/`, `/guide/parent/` — 200; `/kak-kupit` и `/guide` → относительный `Location` (больше не `http://`); `og:image` абсолютный; бандл `index-BMaw-Fyh.js` совпадает со сборкой. Playwright 390 и 1280 px: 6 шагов, 6/6 снимков, без горизонтальной прокрутки и ошибок, просмотр открывается и закрывается Esc, футер `/login` «Как купить фото» → `/kak-kupit/`.
+- Не проверено: превью ссылки в мессенджерах и «Сохранить в телефон» на реальном телефоне — за владельцем.
+
 ## Тест-кейсы
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -59,7 +63,7 @@
 | KK-T03 | PASS | 13.10.2026 | `tests/ui/buyer-guide.test.mjs` |
 | KK-T04 | PASS | 15.10.2026 | `buyer-guide.test.mjs`; live `zzzz-storefront`, `zzzzz-orders` в гейте `rabit-e2e-d0348f36a9ff` |
 | KK-T05 | PASS | 13.10.2026 | `buyer-guide.test.mjs` |
-| KK-T06 | PASS (конфиг, live), stage — PENDING | 15.10.2026 | `buyer-guide.test.mjs`; live `zzzz-storefront` в гейте; stage `curl` после выкладки |
+| KK-T06 | PASS | 15.10.2026 | `buyer-guide.test.mjs`; live `zzzz-storefront` в гейте; stage `curl -I /kak-kupit` → `Location: /kak-kupit/` |
 | KK-T07 | PASS | 13.10.2026 | `npm run check` (`test:ui` 94/94), `test:commerce` 243/243 |
 | KK-T08 | PASS | 15.10.2026 | `frame-lines.test.mjs`; live `zzzz-storefront`, `zzzz-storefront-windows` в гейте `rabit-e2e-d0348f36a9ff` |
 | KK-T09 | PASS (live с подменой меню), реальный телефон — PENDING | 15.10.2026 | `share-files.test.mjs`; live `zzzzzzzzzz-files` в гейте; телефон — на stage |
