@@ -41,6 +41,7 @@ use Rebit\Share\Application\Contract\Messenger\MessageTransportFactoryInterface;
 use Rebit\Share\Contracts\Commerce\OrderEntitlementInterface;
 use Rebit\Share\Contracts\Media\ChildPhotosInterface;
 use Rebit\Share\Contracts\Media\OriginalFilesInterface;
+use Rebit\Share\Infrastructure\File\AtomicZipWriter;
 use Rebit\Share\Infrastructure\Messenger\AmqpConnectionFactory;
 use Rebit\Share\Shared\Enum\LogChannelEnum;
 use Rebit\Share\Shared\Enum\MessengerQueueEnum;
@@ -51,7 +52,9 @@ return [
     FileAccessPolicy::class => ['className' => FileAccessPolicy::class],
     DownloadRepositoryInterface::class => ['className' => BitrixDownloadRepository::class],
     OrderDownloadGuardInterface::class => ['className' => MysqlOrderDownloadGuard::class],
-    ArchiveBuilderInterface::class => ['className' => ZipArchiveBuilder::class],
+    ArchiveBuilderInterface::class => [
+        'constructor' => static fn(): ArchiveBuilderInterface => new ZipArchiveBuilder(new AtomicZipWriter()),
+    ],
     DownloadIdGeneratorInterface::class => ['className' => DownloadIdGenerator::class],
     ProtectedStorageInterface::class => [
         'constructor' => static function(): ProtectedStorageInterface {

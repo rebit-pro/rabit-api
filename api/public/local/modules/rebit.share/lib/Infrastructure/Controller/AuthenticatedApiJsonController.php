@@ -14,8 +14,10 @@ use Rebit\Share\Infrastructure\Controller\Filters\BearerTokenFilter;
 use Rebit\Share\Infrastructure\Controller\Responses\ApiJsonExceptionResponse;
 use Rebit\Share\Application\Contract\File\Dto\ImageContentOutputDto;
 use Rebit\Share\Application\Contract\File\Dto\PreviewContentOutputDto;
+use Rebit\Share\Application\Contract\File\Dto\TextFileOutputDto;
 use Rebit\Share\Infrastructure\Controller\Responses\ImageResponse;
 use Rebit\Share\Infrastructure\Controller\Responses\PreviewResponse;
+use Rebit\Share\Infrastructure\Controller\Responses\TextFileResponse;
 
 /**
  * Централизует обязательную HTTP-обвязку защищённых JSON API.
@@ -64,5 +66,10 @@ abstract class AuthenticatedApiJsonController extends BaseJsonController impleme
         ?string $ifNoneMatch,
     ): ImageResponse {
         return new ImageResponse($image, $ifNoneMatch);
+    }
+
+    final protected function textFile(TextFileOutputDto $file): TextFileResponse
+    {
+        return new TextFileResponse($file);
     }
 }

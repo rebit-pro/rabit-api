@@ -1,0 +1,25 @@
+{
+  "wave": "L1",
+  "status": "passed",
+  "fixture": "rabit-e2e-961182e05ae4",
+  "head": "357c64b",
+  "viewports": [
+    "1440x1000",
+    "390x844"
+  ],
+  "screenshots": [
+    {
+      "file": "docs/waves/l1/screenshots/l1-desktop-print-archive.png",
+      "sha256": "3979fd097b9f065508d41a79dafd6f0473fb7834fa28d5c9cf9283d6a627fe14"
+    },
+    {
+      "file": "docs/waves/l1/screenshots/l1-mobile-print-archive.png",
+      "sha256": "551c8a9f2b1fe242d9a62c11136ed4cf87ad3e4d22142d223b6ec82f3b31d7db"
+    }
+  ],
+  "checks": [
+    "«Ссылки и сроки» → «Архив печати»: состояние, состав по продукции, «Скачать архив», «Скопировать ссылку», «Состав CSV», «Перевыпустить ссылку»",
+    "после сборки плашка «Архив собирается» снята, статус «Готов»",
+    "без горизонтальной прокрутки на 390 px"
+  ]
+}

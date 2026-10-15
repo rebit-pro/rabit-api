@@ -134,6 +134,11 @@ services:
           - type: bind
             source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/private-files
             target: /app/var/private/files
+          # L1: app:production:run reads paid originals into the print archive.
+          - type: bind
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/private-media
+            target: /app/var/private/media
+            read_only: true
         deploy:
           mode: replicated
           replicas: 1

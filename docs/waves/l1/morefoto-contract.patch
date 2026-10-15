@@ -1,0 +1,1043 @@
+diff -ruN a/docs/05-rest-api/README.md b/docs/05-rest-api/README.md
+--- a/docs/05-rest-api/README.md	2026-10-15 12:32:50.620943182 +0300
++++ b/docs/05-rest-api/README.md	2026-10-15 12:32:50.809080974 +0300
+@@ -485,26 +485,28 @@
+ 
+ | ID / статус | Метод и путь | Сценарий / доступ | Вход | Успешный ответ | Волна / область |
+ | --- | --- | --- | --- | --- | --- |
+-| PRD-01 · **П** | **GET** /production/groups | Очередь групп и планов печати; О/К | —; query: institutionId, shootId; page, pageSize | **200**; items&lt;ProductionGroup&gt;, editable, meta | L1; product |
+-| PRD-02 · **П** | **GET** /groups/{group_id}/production | Актуальный план, задание и история; О/К | — | **200**; plan, job, revision, signature, editable, archive?, emailDelivery? | L1; product |
+-| PRD-03 · **П** | **POST** /groups/{group_id}/production/versions | Сформировать новую версию задания; О | reason, confirmed, revision, signature | **201**; jobId, versionNumber, revision | L1; product |
+-| PRD-04 · **П** | **GET** /production/jobs/{production_job_id}/versions/{production_version} | Конкретная версия задания; О/К | — | **200**; jobId, versionNumber, plan, runRows, surplus, packages, revision, signature, archive? | L1; product |
++| PRD-01 · **П** | **GET** /production/groups | Состояние архива печати групп; О/К | —; query: groupIds | **200**; items&lt;{groupId,state,version?}&gt; | L1; product |
++| PRD-02 · **П** | **GET** /groups/{group_id}/production | Блок «Печать» группы: состояние, версии и ссылки; О/К | — | **200**; groupId, groupName, state, deadlineAt?, buildFrom?, canManage, outsideLines, outsidePrints, waitingOrders, versions&lt;Version&gt; | L1; product |
++| PRD-03 · **П** | **POST** /groups/{group_id}/production/versions | Собрать архив или дополнение; О | — | **201**; Version | L1; product |
++| PRD-04 · **П** | **GET** /production/versions/{production_version_id} | Конкретная версия архива печати; О/К | — | **200**; Version | L1; product |
+ | PRD-05 · **П** | **POST** /production/jobs/{production_job_id}/versions/{production_version}/starts | Передать версию в печать; О | reason, confirmed, revision, signature | **200**; jobId, versionNumber, revision, startedAt | L2; product |
+ | PRD-06 · **П** | **PUT** /production/jobs/{production_job_id}/versions/{production_version}/packages/{order_id} | Отметить или снять комплектацию заказа; О | reason, confirmed, revision, signature, packed | **200**; orderId, packed, revision | L2; product |
+-| PRD-07 · **П** | **GET** /production/jobs/{production_job_id}/versions/{production_version}/export | Экспорт задания печати; О/К | — | **200**; CSV UTF-8; Content-Disposition | L1; product |
++| PRD-07 · **П** | **GET** /production/versions/{production_version_id}/export | Состав версии в CSV; О/К | — | **200**; CSV UTF-8 с BOM, `;`, CRLF; Content-Disposition print-&lt;группа&gt;-v&lt;N&gt;.csv | L1; product |
+ | PRD-08 · **П** | **GET** /production/settings | Настройки отправки печати; О | — | **200**; email?, autoSend, ready | L3; product |
+ | PRD-09 · **П** | **PUT** /production/settings | Сохранить настройки отправки; О | email, autoSend | **200**; email, autoSend, ready | L3; product |
+-| PRD-10 · **П** | **GET** /public/production/archives/{production_archive_token} | Скачать готовый архив печати по ссылке; Токен архива печати | — | **200**; ZIP; Content-Type application/zip, Content-Disposition, Cache-Control private/no-store | L1; product |
++| PRD-10 · **П** | **GET** /public/production/archives/{production_archive_token} | Скачать готовый архив печати по ссылке; Токен архива печати | — | **200**; ZIP; Content-Type application/zip, Content-Disposition print-&lt;группа&gt;-v&lt;N&gt;.zip, Cache-Control no-store | L1; product |
+ | PRD-11 · **П** | **POST** /production/jobs/{production_job_id}/versions/{production_version}/email-deliveries | Отправить готовый архив в Сивму; О/К | reason, confirmed, revision, signature | **202**; deliveryId, status, versionNumber | L3; product |
+ 
+-- **PRD-02:** L1: physical rows, closed и archive{state,url?,expiresAt?,version}; ready выдаёт О/назначенному К ссылку PRD-10, до ready ссылки нет. Папки ZIP по названиям продукции оплаченного снимка, quantity×printCount в CSV. Дополнительная L3 emailDelivery: queued/sending/accepted/failed/unknown; accepted не означает принятие Сивмой.
+-- **PRD-03:** Только закрытая группа. Версия фиксирует снимок plan и разницу runRows/surplus; старые версии не переписываются.
++- **PRD-01:** L1: значок блока «Печать» для строк страницы «Ссылки и сроки» одним запросом. state: open | scheduled | manual | building | ready | failed | empty | expired. Группы вне области сотрудника и неизвестные не возвращаются; 422 INVALID_GROUPS при пустом списке, больше 100 или не UUID. Очередь по institutionId/shootId/page — вместе с экраном производства L2.
++- **PRD-02:** L1: versions по возрастанию номера; Version = id, groupId, number, status, lines, files, prints, waitingOrders, products<{name,format,files,prints}>, manual, createdAt, readyAt?, expiresAt?, bytes?, error?, archiveUrl?, exportUrl. archiveUrl — ссылка PRD-10 только у ready-версии в срок хранения (14 дней от сборки, L1-DEC-03/04) и одна и та же для текущего поколения. outsideLines/outsidePrints — оплаченная до срока печать вне версий (поздно подтверждённые оплаты, L1-DEC-02); waitingOrders — заказы с печатью и открытой попыткой оплаты. canManage только у организатора; куратор видит свои учреждения, чужая группа — 404 GROUP_NOT_FOUND, остальные роли — 403.
++- **PRD-03:** L1: без тела, обязателен Idempotency-Key (32 hex); повтор ключа возвращает ту же версию, другой запрос с ним — 409 IDEMPOTENCY_CONFLICT. Только закрытая печать (иначе 409 PRINT_SALES_OPEN). Версия 1 — вся оплаченная до срока печать (для групп, закрытых до выкладки L1, — только этой кнопкой, L1-DEC-08); дополнение — только строки вне прежних версий, без них 409 NOTHING_TO_BUILD. Собранные версии не меняются; ZIP собирает cron app:production:run. Автоматическая версия 1 — через час после закрытия печати (L1-DEC-01). Только организатор, иначе 403.
++- **PRD-04:** L1: версия по её ID (без job: задание печати появляется в L2). Область как у PRD-02, чужая версия — 404 VERSION_NOT_FOUND. Используется для ожидания сборки.
+ - **PRD-05:** Учитываются ранее напечатанные позиции, новые исправления/возвраты, hold и разрешение перепечатки. Повтор не запускает второй тираж.
+ - **PRD-06:** packed=false снимает отметку пока правила версии позволяют; только заказ этой версии, готовый физический состав.
+-- **PRD-07:** Экспорт конкретной версии не меняет статус и не запускает печать. prints=quantity×printCount. Сохранять связь с исходной группой сотрудников. Экранировать CSV-формулы.
++- **PRD-07:** L1: тот же состав.csv, что в корне ZIP: Продукция; Формат; Файл; Кадр; Ребёнок; Заказ; Оплачен (МСК); Количество; Отпечатков в единице; Отпечатков; Группа сотрудников. prints=quantity×printCount; значения-формулы начинаются с апострофа. Доступен и после удаления файла архива по сроку. Не меняет статус и не запускает печать.
+ - **PRD-08:** Дополнительная L3, только организатор. autoSend=false по умолчанию. Email не требуется ручному ZIP/скачиванию L1; SMTP-секреты не возвращаются. Runtime отсутствует.
+ - **PRD-09:** Только организатор; валидация email/autoSend. Сохранение настройки не отправляет письмо, не включает историческую рассылку и не меняет получателя созданной попытки. autoSend=false по умолчанию; рабочий архив доступен независимо от L3.
+-- **PRD-10:** Отдельный непредсказуемый токен конкретной ready-версии; без Bearer и X-Order-Key. Ограниченный срок/отзыв проверяются до выдачи байтов; неверный/истёкший/отозванный токен не выдаёт архив. Папки по продукции оплаченного снимка, оригиналы и CSV. URL выдаётся О/назначенному К через PRD-02/04; токен не логируется. Не меняет статус печати и не отправляет email. Runtime планируется в L1.
++- **PRD-10:** L1: токен — 43 символа base64url, HMAC версии и поколения ссылки на ключе из серверного секрета; в БД только SHA-256. Без Bearer и X-Order-Key. Неверный, истёкший, отозванный токен и токен другой версии — одинаково 404 ARCHIVE_NOT_FOUND до выдачи байтов. Байты отдаёт nginx через X-Accel-Redirect; адрес не пишется в access-лог. Внутри: папка на продукцию оплаченного снимка, файл `<код кадра>_x<отпечатков>` на ребёнка и кадр (L1-DEC-05), состав.csv. Перевыпуск — POST /production/versions/{production_version_id}/renewal (организатор, Idempotency-Key): новое поколение отключает прежнюю ссылку; удалённый по сроку или неудавшийся архив собирается заново. Не меняет статус печати и не отправляет email.
+ - **PRD-11:** Дополнительная L3, явная команда О/назначенного К своей группы. Только ready-архив и подтверждённый email из PRD-08/09; получатель/версия фиксируются. Idempotency-Key повторяет попытку без новой скрытой отправки. autoSend — отдельный режим, по умолчанию false. queued/accepted не означают принятие Сивмой; скачивание L1 не зависит от SMTP.
+ 
+ ### morefoto.shipping — Готовность и передача в учреждение
+diff -ruN a/docs/05-rest-api/build.py b/docs/05-rest-api/build.py
+--- a/docs/05-rest-api/build.py	2026-10-15 12:32:50.620943182 +0300
++++ b/docs/05-rest-api/build.py	2026-10-15 12:32:50.809080974 +0300
+@@ -463,28 +463,29 @@
+     "id, version, hold, needsReprint, decision",reason(version="{{order_version}}",supportId=None,decision="fulfil"),
+     save={"order_version":"version"},note="decision=fulfil/refund. Решение refund — основание запустить SET-04, само денег не возвращает. Pending возврат/нулевой остаток блокируют fulfil. Поздний платёж сохраняется paid + latePayment.")
+ # Production.
+-add("production","PRD-01","GET","/production/groups","Очередь групп и планов печати",OK,"items<ProductionGroup>, editable, meta",
+-    query=[("institutionId","","Учреждение"),("shootId","","Съёмка")],sample={"items":[],"editable":True})
+-add("production","PRD-02","GET","/groups/{group_id}/production","Актуальный план, задание и история",OK,
+-    "plan, job, revision, signature, editable, archive?, emailDelivery?",save={"production_revision":"revision","production_signature":"signature"},
+-    note="L1: physical rows, closed и archive{state,url?,expiresAt?,version}; ready выдаёт О/назначенному К ссылку PRD-10, до ready ссылки нет. Папки ZIP по названиям продукции оплаченного снимка, quantity×printCount в CSV. Дополнительная L3 emailDelivery: queued/sending/accepted/failed/unknown; accepted не означает принятие Сивмой.")
+-add("production","PRD-03","POST","/groups/{group_id}/production/versions","Сформировать новую версию задания",O,
+-    "jobId, versionNumber, revision",reason(revision=rev("production_revision"),signature="{{production_signature}}"),
+-    code=201,save={"production_job_id":"jobId","production_version":"versionNumber","production_revision":"revision"},
+-    sample={"jobId":"print-job-example","versionNumber":1,"revision":1},
+-    note="Только закрытая группа. Версия фиксирует снимок plan и разницу runRows/surplus; старые версии не переписываются.")
+-add("production","PRD-04","GET","/production/jobs/{production_job_id}/versions/{production_version}","Конкретная версия задания",OK,
+-    "jobId, versionNumber, plan, runRows, surplus, packages, revision, signature, archive?",
+-    save={"production_revision":"revision","production_signature":"signature"})
++add("production","PRD-01","GET","/production/groups","Состояние архива печати групп",OK,"items<{groupId,state,version?}>",
++    query=[("groupIds","{{group_id}}","Публичные ID групп через запятую, 1–100")],sample=[{"groupId":"group-example","state":"ready","version":1}],
++    note="L1: значок блока «Печать» для строк страницы «Ссылки и сроки» одним запросом. state: open | scheduled | manual | building | ready | failed | empty | expired. Группы вне области сотрудника и неизвестные не возвращаются; 422 INVALID_GROUPS при пустом списке, больше 100 или не UUID. Очередь по institutionId/shootId/page — вместе с экраном производства L2.")
++add("production","PRD-02","GET","/groups/{group_id}/production","Блок «Печать» группы: состояние, версии и ссылки",OK,
++    "groupId, groupName, state, deadlineAt?, buildFrom?, canManage, outsideLines, outsidePrints, waitingOrders, versions<Version>",
++    save={"production_version_id":"versions.0.id"},
++    note="L1: versions по возрастанию номера; Version = id, groupId, number, status, lines, files, prints, waitingOrders, products<{name,format,files,prints}>, manual, createdAt, readyAt?, expiresAt?, bytes?, error?, archiveUrl?, exportUrl. archiveUrl — ссылка PRD-10 только у ready-версии в срок хранения (14 дней от сборки, L1-DEC-03/04) и одна и та же для текущего поколения. outsideLines/outsidePrints — оплаченная до срока печать вне версий (поздно подтверждённые оплаты, L1-DEC-02); waitingOrders — заказы с печатью и открытой попыткой оплаты. canManage только у организатора; куратор видит свои учреждения, чужая группа — 404 GROUP_NOT_FOUND, остальные роли — 403.")
++add("production","PRD-03","POST","/groups/{group_id}/production/versions","Собрать архив или дополнение",O,
++    "Version",None,code=201,save={"production_version_id":"id"},
++    sample={"id":"version-example","number":1,"status":"pending"},
++    note="L1: без тела, обязателен Idempotency-Key (32 hex); повтор ключа возвращает ту же версию, другой запрос с ним — 409 IDEMPOTENCY_CONFLICT. Только закрытая печать (иначе 409 PRINT_SALES_OPEN). Версия 1 — вся оплаченная до срока печать (для групп, закрытых до выкладки L1, — только этой кнопкой, L1-DEC-08); дополнение — только строки вне прежних версий, без них 409 NOTHING_TO_BUILD. Собранные версии не меняются; ZIP собирает cron app:production:run. Автоматическая версия 1 — через час после закрытия печати (L1-DEC-01). Только организатор, иначе 403.")
++add("production","PRD-04","GET","/production/versions/{production_version_id}","Конкретная версия архива печати",OK,
++    "Version",
++    note="L1: версия по её ID (без job: задание печати появляется в L2). Область как у PRD-02, чужая версия — 404 VERSION_NOT_FOUND. Используется для ожидания сборки.")
+ add("production","PRD-05","POST","/production/jobs/{production_job_id}/versions/{production_version}/starts","Передать версию в печать",O,
+     "jobId, versionNumber, revision, startedAt",reason(revision=rev("production_revision"),signature="{{production_signature}}"),
+     save={"production_revision":"revision"},note="Учитываются ранее напечатанные позиции, новые исправления/возвраты, hold и разрешение перепечатки. Повтор не запускает второй тираж.")
+ add("production","PRD-06","PUT","/production/jobs/{production_job_id}/versions/{production_version}/packages/{order_id}","Отметить или снять комплектацию заказа",O,
+     "orderId, packed, revision",reason(revision=rev("production_revision"),signature="{{production_signature}}",packed=True),
+     save={"production_revision":"revision"},note="packed=false снимает отметку пока правила версии позволяют; только заказ этой версии, готовый физический состав.")
+-add("production","PRD-07","GET","/production/jobs/{production_job_id}/versions/{production_version}/export","Экспорт задания печати",OK,
+-    "CSV UTF-8; Content-Disposition",fmt="csv",
+-    note="Экспорт конкретной версии не меняет статус и не запускает печать. prints=quantity×printCount. Сохранять связь с исходной группой сотрудников. Экранировать CSV-формулы.")
++add("production","PRD-07","GET","/production/versions/{production_version_id}/export","Состав версии в CSV",OK,
++    "CSV UTF-8 с BOM, `;`, CRLF; Content-Disposition print-<группа>-v<N>.csv",fmt="csv",
++    note="L1: тот же состав.csv, что в корне ZIP: Продукция; Формат; Файл; Кадр; Ребёнок; Заказ; Оплачен (МСК); Количество; Отпечатков в единице; Отпечатков; Группа сотрудников. prints=quantity×printCount; значения-формулы начинаются с апострофа. Доступен и после удаления файла архива по сроку. Не меняет статус и не запускает печать.")
+ # Physical delivery.
+ # MVP L3: persisted laboratory destination; server role is organizer only.
+ add("production","PRD-08","GET","/production/settings","Настройки отправки печати",O,
+@@ -496,8 +497,8 @@
+ 
+ # L1 public archive capability is independent of gallery and customer order keys.
+ add("production","PRD-10","GET","/public/production/archives/{production_archive_token}","Скачать готовый архив печати по ссылке","Токен архива печати",
+-    "ZIP; Content-Type application/zip, Content-Disposition, Cache-Control private/no-store",fmt="binary",
+-    note="Отдельный непредсказуемый токен конкретной ready-версии; без Bearer и X-Order-Key. Ограниченный срок/отзыв проверяются до выдачи байтов; неверный/истёкший/отозванный токен не выдаёт архив. Папки по продукции оплаченного снимка, оригиналы и CSV. URL выдаётся О/назначенному К через PRD-02/04; токен не логируется. Не меняет статус печати и не отправляет email. Runtime планируется в L1.")
++    "ZIP; Content-Type application/zip, Content-Disposition print-<группа>-v<N>.zip, Cache-Control no-store",fmt="binary",
++    note="L1: токен — 43 символа base64url, HMAC версии и поколения ссылки на ключе из серверного секрета; в БД только SHA-256. Без Bearer и X-Order-Key. Неверный, истёкший, отозванный токен и токен другой версии — одинаково 404 ARCHIVE_NOT_FOUND до выдачи байтов. Байты отдаёт nginx через X-Accel-Redirect; адрес не пишется в access-лог. Внутри: папка на продукцию оплаченного снимка, файл `<код кадра>_x<отпечатков>` на ребёнка и кадр (L1-DEC-05), состав.csv. Перевыпуск — POST /production/versions/{production_version_id}/renewal (организатор, Idempotency-Key): новое поколение отключает прежнюю ссылку; удалённый по сроку или неудавшийся архив собирается заново. Не меняет статус печати и не отправляет email.")
+ add("production","PRD-11","POST","/production/jobs/{production_job_id}/versions/{production_version}/email-deliveries","Отправить готовый архив в Сивму",OK,
+     "deliveryId, status, versionNumber",reason(revision=rev("production_revision"),signature="{{production_signature}}"),code=202,
+     sample={"deliveryId":"print-email-example","status":"queued","versionNumber":1},
+@@ -607,7 +608,7 @@
+ "assignment_signature":"","link_signature":"","staff_transfer_signature":"","order_version":"",
+ "quote_token":"","payment_quote_token":"","payment_attempt_id":"","receipt_delivery_id":"",
+ "download_id":"","file_delivery_id":"","recovery_id":"","refund_id":"",
+-"production_job_id":"","production_archive_token":"","production_signature":"","delivery_group_signature":"","delivery_batch_id":"",
++"production_job_id":"","production_version_id":"","production_archive_token":"","production_signature":"","delivery_group_signature":"","delivery_batch_id":"",
+ "delivery_batch_signature":"","transfer_id":"","gallery_token":"","file_fingerprint":"",
+ "provider":"","provider_signature":"","provider_event_id":"","provider_object_id":"","provider_status":"",
+ "sent_at":"2026-10-01T12:00:00+03:00","extension_closes_at":"2026-10-09T12:00:00+03:00",
+diff -ruN a/docs/05-rest-api/endpoints.json b/docs/05-rest-api/endpoints.json
+--- a/docs/05-rest-api/endpoints.json	2026-10-15 12:32:50.624946114 +0300
++++ b/docs/05-rest-api/endpoints.json	2026-10-15 12:32:50.809080974 +0300
+@@ -4108,30 +4108,28 @@
+       "id": "PRD-01",
+       "method": "GET",
+       "path": "/production/groups",
+-      "title": "Очередь групп и планов печати",
++      "title": "Состояние архива печати групп",
+       "roles": "О/К",
+-      "output": "items<ProductionGroup>, editable, meta",
++      "output": "items<{groupId,state,version?}>",
+       "body": null,
+       "code": 200,
+       "query": [
+         [
+-          "institutionId",
+-          "",
+-          "Учреждение"
+-        ],
+-        [
+-          "shootId",
+-          "",
+-          "Съёмка"
++          "groupIds",
++          "{{group_id}}",
++          "Публичные ID групп через запятую, 1–100"
+         ]
+       ],
+-      "note": "",
++      "note": "L1: значок блока «Печать» для строк страницы «Ссылки и сроки» одним запросом. state: open | scheduled | manual | building | ready | failed | empty | expired. Группы вне области сотрудника и неизвестные не возвращаются; 422 INVALID_GROUPS при пустом списке, больше 100 или не UUID. Очередь по institutionId/shootId/page — вместе с экраном производства L2.",
+       "status": "П",
+       "save": {},
+-      "sample": {
+-        "items": [],
+-        "editable": true
+-      },
++      "sample": [
++        {
++          "groupId": "group-example",
++          "state": "ready",
++          "version": 1
++        }
++      ],
+       "source": "frontend/src/modules/morefoto/production/types.ts",
+       "format": "json",
+       "idem": false,
+@@ -4153,17 +4151,16 @@
+       "id": "PRD-02",
+       "method": "GET",
+       "path": "/groups/{group_id}/production",
+-      "title": "Актуальный план, задание и история",
++      "title": "Блок «Печать» группы: состояние, версии и ссылки",
+       "roles": "О/К",
+-      "output": "plan, job, revision, signature, editable, archive?, emailDelivery?",
++      "output": "groupId, groupName, state, deadlineAt?, buildFrom?, canManage, outsideLines, outsidePrints, waitingOrders, versions<Version>",
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "L1: physical rows, closed и archive{state,url?,expiresAt?,version}; ready выдаёт О/назначенному К ссылку PRD-10, до ready ссылки нет. Папки ZIP по названиям продукции оплаченного снимка, quantity×printCount в CSV. Дополнительная L3 emailDelivery: queued/sending/accepted/failed/unknown; accepted не означает принятие Сивмой.",
++      "note": "L1: versions по возрастанию номера; Version = id, groupId, number, status, lines, files, prints, waitingOrders, products<{name,format,files,prints}>, manual, createdAt, readyAt?, expiresAt?, bytes?, error?, archiveUrl?, exportUrl. archiveUrl — ссылка PRD-10 только у ready-версии в срок хранения (14 дней от сборки, L1-DEC-03/04) и одна и та же для текущего поколения. outsideLines/outsidePrints — оплаченная до срока печать вне версий (поздно подтверждённые оплаты, L1-DEC-02); waitingOrders — заказы с печатью и открытой попыткой оплаты. canManage только у организатора; куратор видит свои учреждения, чужая группа — 404 GROUP_NOT_FOUND, остальные роли — 403.",
+       "status": "П",
+       "save": {
+-        "production_revision": "revision",
+-        "production_signature": "signature"
++        "production_version_id": "versions.0.id"
+       },
+       "sample": {},
+       "source": "frontend/src/modules/morefoto/production/types.ts",
+@@ -4187,28 +4184,21 @@
+       "id": "PRD-03",
+       "method": "POST",
+       "path": "/groups/{group_id}/production/versions",
+-      "title": "Сформировать новую версию задания",
++      "title": "Собрать архив или дополнение",
+       "roles": "О",
+-      "output": "jobId, versionNumber, revision",
+-      "body": {
+-        "reason": "Проверка сценария на тестовом окружении",
+-        "confirmed": true,
+-        "revision": "{{production_revision}}",
+-        "signature": "{{production_signature}}"
+-      },
++      "output": "Version",
++      "body": null,
+       "code": 201,
+       "query": [],
+-      "note": "Только закрытая группа. Версия фиксирует снимок plan и разницу runRows/surplus; старые версии не переписываются.",
++      "note": "L1: без тела, обязателен Idempotency-Key (32 hex); повтор ключа возвращает ту же версию, другой запрос с ним — 409 IDEMPOTENCY_CONFLICT. Только закрытая печать (иначе 409 PRINT_SALES_OPEN). Версия 1 — вся оплаченная до срока печать (для групп, закрытых до выкладки L1, — только этой кнопкой, L1-DEC-08); дополнение — только строки вне прежних версий, без них 409 NOTHING_TO_BUILD. Собранные версии не меняются; ZIP собирает cron app:production:run. Автоматическая версия 1 — через час после закрытия печати (L1-DEC-01). Только организатор, иначе 403.",
+       "status": "П",
+       "save": {
+-        "production_job_id": "jobId",
+-        "production_version": "versionNumber",
+-        "production_revision": "revision"
++        "production_version_id": "id"
+       },
+       "sample": {
+-        "jobId": "print-job-example",
+-        "versionNumber": 1,
+-        "revision": 1
++        "id": "version-example",
++        "number": 1,
++        "status": "pending"
+       },
+       "source": "frontend/src/modules/morefoto/production/types.ts",
+       "format": "json",
+@@ -4227,19 +4217,16 @@
+       "module": "production",
+       "id": "PRD-04",
+       "method": "GET",
+-      "path": "/production/jobs/{production_job_id}/versions/{production_version}",
+-      "title": "Конкретная версия задания",
++      "path": "/production/versions/{production_version_id}",
++      "title": "Конкретная версия архива печати",
+       "roles": "О/К",
+-      "output": "jobId, versionNumber, plan, runRows, surplus, packages, revision, signature, archive?",
++      "output": "Version",
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "",
++      "note": "L1: версия по её ID (без job: задание печати появляется в L2). Область как у PRD-02, чужая версия — 404 VERSION_NOT_FOUND. Используется для ожидания сборки.",
+       "status": "П",
+-      "save": {
+-        "production_revision": "revision",
+-        "production_signature": "signature"
+-      },
++      "save": {},
+       "sample": {},
+       "source": "frontend/src/modules/morefoto/production/types.ts",
+       "format": "json",
+@@ -4325,14 +4312,14 @@
+       "module": "production",
+       "id": "PRD-07",
+       "method": "GET",
+-      "path": "/production/jobs/{production_job_id}/versions/{production_version}/export",
+-      "title": "Экспорт задания печати",
++      "path": "/production/versions/{production_version_id}/export",
++      "title": "Состав версии в CSV",
+       "roles": "О/К",
+-      "output": "CSV UTF-8; Content-Disposition",
++      "output": "CSV UTF-8 с BOM, `;`, CRLF; Content-Disposition print-<группа>-v<N>.csv",
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "Экспорт конкретной версии не меняет статус и не запускает печать. prints=quantity×printCount. Сохранять связь с исходной группой сотрудников. Экранировать CSV-формулы.",
++      "note": "L1: тот же состав.csv, что в корне ZIP: Продукция; Формат; Файл; Кадр; Ребёнок; Заказ; Оплачен (МСК); Количество; Отпечатков в единице; Отпечатков; Группа сотрудников. prints=quantity×printCount; значения-формулы начинаются с апострофа. Доступен и после удаления файла архива по сроку. Не меняет статус и не запускает печать.",
+       "status": "П",
+       "save": {},
+       "sample": {},
+@@ -4408,11 +4395,11 @@
+       "path": "/public/production/archives/{production_archive_token}",
+       "title": "Скачать готовый архив печати по ссылке",
+       "roles": "Токен архива печати",
+-      "output": "ZIP; Content-Type application/zip, Content-Disposition, Cache-Control private/no-store",
++      "output": "ZIP; Content-Type application/zip, Content-Disposition print-<группа>-v<N>.zip, Cache-Control no-store",
+       "body": null,
+       "code": 200,
+       "query": [],
+-      "note": "Отдельный непредсказуемый токен конкретной ready-версии; без Bearer и X-Order-Key. Ограниченный срок/отзыв проверяются до выдачи байтов; неверный/истёкший/отозванный токен не выдаёт архив. Папки по продукции оплаченного снимка, оригиналы и CSV. URL выдаётся О/назначенному К через PRD-02/04; токен не логируется. Не меняет статус печати и не отправляет email. Runtime планируется в L1.",
++      "note": "L1: токен — 43 символа base64url, HMAC версии и поколения ссылки на ключе из серверного секрета; в БД только SHA-256. Без Bearer и X-Order-Key. Неверный, истёкший, отозванный токен и токен другой версии — одинаково 404 ARCHIVE_NOT_FOUND до выдачи байтов. Байты отдаёт nginx через X-Accel-Redirect; адрес не пишется в access-лог. Внутри: папка на продукцию оплаченного снимка, файл `<код кадра>_x<отпечатков>` на ребёнка и кадр (L1-DEC-05), состав.csv. Перевыпуск — POST /production/versions/{production_version_id}/renewal (организатор, Idempotency-Key): новое поколение отключает прежнюю ссылку; удалённый по сроку или неудавшийся архив собирается заново. Не меняет статус печати и не отправляет email.",
+       "status": "П",
+       "save": {},
+       "sample": {},
+diff -ruN a/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json
+--- a/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json	2026-10-15 12:32:50.620943182 +0300
++++ b/docs/05-rest-api/postman/MoreFoto.backend-waves.postman_collection.json	2026-10-15 12:32:50.809080974 +0300
+@@ -11832,7 +11832,7 @@
+       "item": [
+         {
+           "id": "9b597cd3-46ec-574f-b4d7-389de9123b85",
+-          "name": "PRD-01 · Очередь групп и планов печати",
++          "name": "PRD-01 · Состояние архива печати групп",
+           "request": {
+             "method": "GET",
+             "auth": {
+@@ -11852,7 +11852,7 @@
+               }
+             ],
+             "url": {
+-              "raw": "{{base_url}}/{{api_prefix}}/production/groups?page={{page}}&pageSize={{page_size}}",
++              "raw": "{{base_url}}/{{api_prefix}}/production/groups",
+               "host": [
+                 "{{base_url}}"
+               ],
+@@ -11863,30 +11863,14 @@
+               ],
+               "query": [
+                 {
+-                  "key": "institutionId",
+-                  "value": "",
++                  "key": "groupIds",
++                  "value": "{{group_id}}",
+                   "disabled": true,
+-                  "description": "Учреждение"
+-                },
+-                {
+-                  "key": "shootId",
+-                  "value": "",
+-                  "disabled": true,
+-                  "description": "Съёмка"
+-                },
+-                {
+-                  "key": "page",
+-                  "value": "{{page}}",
+-                  "description": "Страница начиная с 1"
+-                },
+-                {
+-                  "key": "pageSize",
+-                  "value": "{{page_size}}",
+-                  "description": "1–100, по умолчанию 50"
++                  "description": "Публичные ID групп через запятую, 1–100"
+                 }
+               ]
+             },
+-            "description": "**PRD-01 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<ProductionGroup>, editable, meta.\n\n\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: L2, K2, M1, N1, N2, L3, N3."
++            "description": "**PRD-01 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<{groupId,state,version?}>.\n\nL1: значок блока «Печать» для строк страницы «Ссылки и сроки» одним запросом. state: open | scheduled | manual | building | ready | failed | empty | expired. Группы вне области сотрудника и неизвестные не возвращаются; 422 INVALID_GROUPS при пустом списке, больше 100 или не UUID. Очередь по institutionId/shootId/page — вместе с экраном производства L2.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: L2, K2, M1, N1, N2, L3, N3."
+           },
+           "event": [
+             {
+@@ -11909,11 +11893,6 @@
+                   "  const data = payload.data;",
+                   "  if (pm.response.code === expected && data !== undefined) {",
+                   "    pm.test('Список items', function () { pm.expect(data.items).to.be.an('array'); });",
+-                  "    pm.test('Пагинация meta', function () {",
+-                  "      pm.expect(payload.meta.page).to.be.a('number');",
+-                  "      pm.expect(payload.meta.pageSize).to.be.a('number');",
+-                  "      pm.expect(payload.meta.total).to.be.a('number');",
+-                  "    });",
+                   "    const forbidden = new Set(['accessKey', 'galleryToken', 'requestId', 'operations']);",
+                   "    function inspect(value) {",
+                   "      if (!value || typeof value !== 'object') return;",
+@@ -11948,7 +11927,7 @@
+                   }
+                 ],
+                 "url": {
+-                  "raw": "{{base_url}}/{{api_prefix}}/production/groups?page={{page}}&pageSize={{page_size}}",
++                  "raw": "{{base_url}}/{{api_prefix}}/production/groups",
+                   "host": [
+                     "{{base_url}}"
+                   ],
+@@ -11959,30 +11938,14 @@
+                   ],
+                   "query": [
+                     {
+-                      "key": "institutionId",
+-                      "value": "",
+-                      "disabled": true,
+-                      "description": "Учреждение"
+-                    },
+-                    {
+-                      "key": "shootId",
+-                      "value": "",
++                      "key": "groupIds",
++                      "value": "{{group_id}}",
+                       "disabled": true,
+-                      "description": "Съёмка"
+-                    },
+-                    {
+-                      "key": "page",
+-                      "value": "{{page}}",
+-                      "description": "Страница начиная с 1"
+-                    },
+-                    {
+-                      "key": "pageSize",
+-                      "value": "{{page_size}}",
+-                      "description": "1–100, по умолчанию 50"
++                      "description": "Публичные ID групп через запятую, 1–100"
+                     }
+                   ]
+                 },
+-                "description": "**PRD-01 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<ProductionGroup>, editable, meta.\n\n\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: L2, K2, M1, N1, N2, L3, N3."
++                "description": "**PRD-01 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<{groupId,state,version?}>.\n\nL1: значок блока «Печать» для строк страницы «Ссылки и сроки» одним запросом. state: open | scheduled | manual | building | ready | failed | empty | expired. Группы вне области сотрудника и неизвестные не возвращаются; 422 INVALID_GROUPS при пустом списке, больше 100 или не UUID. Очередь по institutionId/shootId/page — вместе с экраном производства L2.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: L2, K2, M1, N1, N2, L3, N3."
+               },
+               "status": "OK",
+               "code": 200,
+@@ -11993,13 +11956,13 @@
+                   "value": "application/json"
+                 }
+               ],
+-              "body": "{\n  \"data\": {\n    \"items\": [],\n    \"editable\": true\n  },\n  \"meta\": {\n    \"page\": 1,\n    \"pageSize\": 50,\n    \"total\": 0\n  }\n}"
++              "body": "{\n  \"data\": [\n    {\n      \"groupId\": \"group-example\",\n      \"state\": \"ready\",\n      \"version\": 1\n    }\n  ]\n}"
+             }
+           ]
+         },
+         {
+           "id": "7f97e998-3ed4-52a1-8c47-75ecacace147",
+-          "name": "PRD-02 · Актуальный план, задание и история",
++          "name": "PRD-02 · Блок «Печать» группы: состояние, версии и ссылки",
+           "request": {
+             "method": "GET",
+             "auth": {
+@@ -12030,7 +11993,7 @@
+                 "production"
+               ]
+             },
+-            "description": "**PRD-02 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: plan, job, revision, signature, editable, archive?, emailDelivery?.\n\nL1: physical rows, closed и archive{state,url?,expiresAt?,version}; ready выдаёт О/назначенному К ссылку PRD-10, до ready ссылки нет. Папки ZIP по названиям продукции оплаченного снимка, quantity×printCount в CSV. Дополнительная L3 emailDelivery: queued/sending/accepted/failed/unknown; accepted не означает принятие Сивмой.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: L2, K2, M1, N1, N2, L3, N3."
++            "description": "**PRD-02 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: groupId, groupName, state, deadlineAt?, buildFrom?, canManage, outsideLines, outsidePrints, waitingOrders, versions<Version>.\n\nL1: versions по возрастанию номера; Version = id, groupId, number, status, lines, files, prints, waitingOrders, products<{name,format,files,prints}>, manual, createdAt, readyAt?, expiresAt?, bytes?, error?, archiveUrl?, exportUrl. archiveUrl — ссылка PRD-10 только у ready-версии в срок хранения (14 дней от сборки, L1-DEC-03/04) и одна и та же для текущего поколения. outsideLines/outsidePrints — оплаченная до срока печать вне версий (поздно подтверждённые оплаты, L1-DEC-02); waitingOrders — заказы с печатью и открытой попыткой оплаты. canManage только у организатора; куратор видит свои учреждения, чужая группа — 404 GROUP_NOT_FOUND, остальные роли — 403.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: L2, K2, M1, N1, N2, L3, N3."
+           },
+           "event": [
+             {
+@@ -12053,14 +12016,9 @@
+                   "  const data = payload.data;",
+                   "  if (pm.response.code === expected && data !== undefined) {",
+                   "    {",
+-                  "      const value = \"revision\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
+-                  "      pm.test('Поле revision', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
+-                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_revision\", value);",
+-                  "    }",
+-                  "    {",
+-                  "      const value = \"signature\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
+-                  "      pm.test('Поле signature', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
+-                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_signature\", value);",
++                  "      const value = \"versions.0.id\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
++                  "      pm.test('Поле versions.0.id', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
++                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_version_id\", value);",
+                   "    }",
+                   "    const forbidden = new Set(['accessKey', 'galleryToken', 'requestId', 'operations']);",
+                   "    function inspect(value) {",
+@@ -12078,7 +12036,7 @@
+         },
+         {
+           "id": "fc10c092-1b21-5d5e-9e25-5fef42d26b2b",
+-          "name": "PRD-03 · Сформировать новую версию задания",
++          "name": "PRD-03 · Собрать архив или дополнение",
+           "request": {
+             "method": "POST",
+             "auth": {
+@@ -12099,10 +12057,6 @@
+               {
+                 "key": "Idempotency-Key",
+                 "value": "{{idem_prd_03}}"
+-              },
+-              {
+-                "key": "Content-Type",
+-                "value": "application/json"
+               }
+             ],
+             "url": {
+@@ -12118,16 +12072,7 @@
+                 "versions"
+               ]
+             },
+-            "description": "**PRD-03 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: jobId, versionNumber, revision.\n\nТолько закрытая группа. Версия фиксирует снимок plan и разницу runRows/surplus; старые версии не переписываются.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: K2, N2, L3, N3.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_prd_03. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+-            "body": {
+-              "mode": "raw",
+-              "raw": "{\n  \"reason\": \"Проверка сценария на тестовом окружении\",\n  \"confirmed\": true,\n  \"revision\": {{production_revision}},\n  \"signature\": \"{{production_signature}}\"\n}",
+-              "options": {
+-                "raw": {
+-                  "language": "json"
+-                }
+-              }
+-            }
++            "description": "**PRD-03 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: Version.\n\nL1: без тела, обязателен Idempotency-Key (32 hex); повтор ключа возвращает ту же версию, другой запрос с ним — 409 IDEMPOTENCY_CONFLICT. Только закрытая печать (иначе 409 PRINT_SALES_OPEN). Версия 1 — вся оплаченная до срока печать (для групп, закрытых до выкладки L1, — только этой кнопкой, L1-DEC-08); дополнение — только строки вне прежних версий, без них 409 NOTHING_TO_BUILD. Собранные версии не меняются; ZIP собирает cron app:production:run. Автоматическая версия 1 — через час после закрытия печати (L1-DEC-01). Только организатор, иначе 403.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: K2, N2, L3, N3.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_prd_03. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409."
+           },
+           "event": [
+             {
+@@ -12164,19 +12109,9 @@
+                   "  const data = payload.data;",
+                   "  if (pm.response.code === expected && data !== undefined) {",
+                   "    {",
+-                  "      const value = \"jobId\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
+-                  "      pm.test('Поле jobId', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
+-                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_job_id\", value);",
+-                  "    }",
+-                  "    {",
+-                  "      const value = \"versionNumber\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
+-                  "      pm.test('Поле versionNumber', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
+-                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_version\", value);",
+-                  "    }",
+-                  "    {",
+-                  "      const value = \"revision\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
+-                  "      pm.test('Поле revision', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
+-                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_revision\", value);",
++                  "      const value = \"id\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
++                  "      pm.test('Поле id', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
++                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_version_id\", value);",
+                   "    }",
+                   "    const forbidden = new Set(['accessKey', 'galleryToken', 'requestId', 'operations']);",
+                   "    function inspect(value) {",
+@@ -12213,10 +12148,6 @@
+                   {
+                     "key": "Idempotency-Key",
+                     "value": "{{idem_prd_03}}"
+-                  },
+-                  {
+-                    "key": "Content-Type",
+-                    "value": "application/json"
+                   }
+                 ],
+                 "url": {
+@@ -12232,16 +12163,7 @@
+                     "versions"
+                   ]
+                 },
+-                "description": "**PRD-03 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: jobId, versionNumber, revision.\n\nТолько закрытая группа. Версия фиксирует снимок plan и разницу runRows/surplus; старые версии не переписываются.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: K2, N2, L3, N3.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_prd_03. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+-                "body": {
+-                  "mode": "raw",
+-                  "raw": "{\n  \"reason\": \"Проверка сценария на тестовом окружении\",\n  \"confirmed\": true,\n  \"revision\": {{production_revision}},\n  \"signature\": \"{{production_signature}}\"\n}",
+-                  "options": {
+-                    "raw": {
+-                      "language": "json"
+-                    }
+-                  }
+-                }
++                "description": "**PRD-03 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: Version.\n\nL1: без тела, обязателен Idempotency-Key (32 hex); повтор ключа возвращает ту же версию, другой запрос с ним — 409 IDEMPOTENCY_CONFLICT. Только закрытая печать (иначе 409 PRINT_SALES_OPEN). Версия 1 — вся оплаченная до срока печать (для групп, закрытых до выкладки L1, — только этой кнопкой, L1-DEC-08); дополнение — только строки вне прежних версий, без них 409 NOTHING_TO_BUILD. Собранные версии не меняются; ZIP собирает cron app:production:run. Автоматическая версия 1 — через час после закрытия печати (L1-DEC-01). Только организатор, иначе 403.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: K2, N2, L3, N3.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_prd_03. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409."
+               },
+               "status": "Created",
+               "code": 201,
+@@ -12252,13 +12174,13 @@
+                   "value": "application/json"
+                 }
+               ],
+-              "body": "{\n  \"data\": {\n    \"jobId\": \"print-job-example\",\n    \"versionNumber\": 1,\n    \"revision\": 1\n  }\n}"
++              "body": "{\n  \"data\": {\n    \"id\": \"version-example\",\n    \"number\": 1,\n    \"status\": \"pending\"\n  }\n}"
+             }
+           ]
+         },
+         {
+           "id": "9776a087-924a-50a9-b7f4-52526c355a23",
+-          "name": "PRD-04 · Конкретная версия задания",
++          "name": "PRD-04 · Конкретная версия архива печати",
+           "request": {
+             "method": "GET",
+             "auth": {
+@@ -12278,20 +12200,18 @@
+               }
+             ],
+             "url": {
+-              "raw": "{{base_url}}/{{api_prefix}}/production/jobs/{{production_job_id}}/versions/{{production_version}}",
++              "raw": "{{base_url}}/{{api_prefix}}/production/versions/{{production_version_id}}",
+               "host": [
+                 "{{base_url}}"
+               ],
+               "path": [
+                 "{{api_prefix}}",
+                 "production",
+-                "jobs",
+-                "{{production_job_id}}",
+                 "versions",
+-                "{{production_version}}"
++                "{{production_version_id}}"
+               ]
+             },
+-            "description": "**PRD-04 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: jobId, versionNumber, plan, runRows, surplus, packages, revision, signature, archive?.\n\n\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: L2, M1, N2, L3, N3."
++            "description": "**PRD-04 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: Version.\n\nL1: версия по её ID (без job: задание печати появляется в L2). Область как у PRD-02, чужая версия — 404 VERSION_NOT_FOUND. Используется для ожидания сборки.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: L2, M1, N2, L3, N3."
+           },
+           "event": [
+             {
+@@ -12313,16 +12233,6 @@
+                   "  });",
+                   "  const data = payload.data;",
+                   "  if (pm.response.code === expected && data !== undefined) {",
+-                  "    {",
+-                  "      const value = \"revision\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
+-                  "      pm.test('Поле revision', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
+-                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_revision\", value);",
+-                  "    }",
+-                  "    {",
+-                  "      const value = \"signature\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
+-                  "      pm.test('Поле signature', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
+-                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_signature\", value);",
+-                  "    }",
+                   "    const forbidden = new Set(['accessKey', 'galleryToken', 'requestId', 'operations']);",
+                   "    function inspect(value) {",
+                   "      if (!value || typeof value !== 'object') return;",
+@@ -12339,7 +12249,7 @@
+         },
+         {
+           "id": "a3ccec1d-7777-57fc-9d45-8a2db1e1cb92",
+-          "name": "PRD-07 · Экспорт задания печати",
++          "name": "PRD-07 · Состав версии в CSV",
+           "request": {
+             "method": "GET",
+             "auth": {
+@@ -12359,21 +12269,19 @@
+               }
+             ],
+             "url": {
+-              "raw": "{{base_url}}/{{api_prefix}}/production/jobs/{{production_job_id}}/versions/{{production_version}}/export",
++              "raw": "{{base_url}}/{{api_prefix}}/production/versions/{{production_version_id}}/export",
+               "host": [
+                 "{{base_url}}"
+               ],
+               "path": [
+                 "{{api_prefix}}",
+                 "production",
+-                "jobs",
+-                "{{production_job_id}}",
+                 "versions",
+-                "{{production_version}}",
++                "{{production_version_id}}",
+                 "export"
+               ]
+             },
+-            "description": "**PRD-07 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: CSV UTF-8; Content-Disposition.\n\nЭкспорт конкретной версии не меняет статус и не запускает печать. prints=quantity×printCount. Сохранять связь с исходной группой сотрудников. Экранировать CSV-формулы.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: N2, L3, N3."
++            "description": "**PRD-07 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: CSV UTF-8 с BOM, `;`, CRLF; Content-Disposition print-<группа>-v<N>.csv.\n\nL1: тот же состав.csv, что в корне ZIP: Продукция; Формат; Файл; Кадр; Ребёнок; Заказ; Оплачен (МСК); Количество; Отпечатков в единице; Отпечатков; Группа сотрудников. prints=quantity×printCount; значения-формулы начинаются с апострофа. Доступен и после удаления файла архива по сроку. Не меняет статус и не запускает печать.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: N2, L3, N3."
+           },
+           "event": [
+             {
+@@ -12420,7 +12328,7 @@
+                 "{{production_archive_token}}"
+               ]
+             },
+-            "description": "**PRD-10 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Токен архива печати.\n\nОтвет: ZIP; Content-Type application/zip, Content-Disposition, Cache-Control private/no-store.\n\nОтдельный непредсказуемый токен конкретной ready-версии; без Bearer и X-Order-Key. Ограниченный срок/отзыв проверяются до выдачи байтов; неверный/истёкший/отозванный токен не выдаёт архив. Папки по продукции оплаченного снимка, оригиналы и CSV. URL выдаётся О/назначенному К через PRD-02/04; токен не логируется. Не меняет статус печати и не отправляет email. Runtime планируется в L1.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: N2, N3."
++            "description": "**PRD-10 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Токен архива печати.\n\nОтвет: ZIP; Content-Type application/zip, Content-Disposition print-<группа>-v<N>.zip, Cache-Control no-store.\n\nL1: токен — 43 символа base64url, HMAC версии и поколения ссылки на ключе из серверного секрета; в БД только SHA-256. Без Bearer и X-Order-Key. Неверный, истёкший, отозванный токен и токен другой версии — одинаково 404 ARCHIVE_NOT_FOUND до выдачи байтов. Байты отдаёт nginx через X-Accel-Redirect; адрес не пишется в access-лог. Внутри: папка на продукцию оплаченного снимка, файл `<код кадра>_x<отпечатков>` на ребёнка и кадр (L1-DEC-05), состав.csv. Перевыпуск — POST /production/versions/{production_version_id}/renewal (организатор, Idempotency-Key): новое поколение отключает прежнюю ссылку; удалённый по сроку или неудавшийся архив собирается заново. Не меняет статус печати и не отправляет email.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: N2, N3."
+           },
+           "event": [
+             {
+diff -ruN a/docs/05-rest-api/postman/MoreFoto.local.postman_environment.json b/docs/05-rest-api/postman/MoreFoto.local.postman_environment.json
+--- a/docs/05-rest-api/postman/MoreFoto.local.postman_environment.json	2026-10-15 12:32:50.620943182 +0300
++++ b/docs/05-rest-api/postman/MoreFoto.local.postman_environment.json	2026-10-15 12:32:50.809080974 +0300
+@@ -285,6 +285,12 @@
+       "type": "default"
+     },
+     {
++      "key": "production_version_id",
++      "value": "",
++      "enabled": true,
++      "type": "default"
++    },
++    {
+       "key": "production_archive_token",
+       "value": "",
+       "enabled": true,
+diff -ruN a/docs/05-rest-api/postman/MoreFoto.postman_collection.json b/docs/05-rest-api/postman/MoreFoto.postman_collection.json
+--- a/docs/05-rest-api/postman/MoreFoto.postman_collection.json	2026-10-15 12:32:50.620943182 +0300
++++ b/docs/05-rest-api/postman/MoreFoto.postman_collection.json	2026-10-15 12:32:50.809080974 +0300
+@@ -12534,7 +12534,7 @@
+       "item": [
+         {
+           "id": "9b597cd3-46ec-574f-b4d7-389de9123b85",
+-          "name": "PRD-01 · Очередь групп и планов печати",
++          "name": "PRD-01 · Состояние архива печати групп",
+           "request": {
+             "method": "GET",
+             "auth": {
+@@ -12554,7 +12554,7 @@
+               }
+             ],
+             "url": {
+-              "raw": "{{base_url}}/{{api_prefix}}/production/groups?page={{page}}&pageSize={{page_size}}",
++              "raw": "{{base_url}}/{{api_prefix}}/production/groups",
+               "host": [
+                 "{{base_url}}"
+               ],
+@@ -12565,30 +12565,14 @@
+               ],
+               "query": [
+                 {
+-                  "key": "institutionId",
+-                  "value": "",
++                  "key": "groupIds",
++                  "value": "{{group_id}}",
+                   "disabled": true,
+-                  "description": "Учреждение"
+-                },
+-                {
+-                  "key": "shootId",
+-                  "value": "",
+-                  "disabled": true,
+-                  "description": "Съёмка"
+-                },
+-                {
+-                  "key": "page",
+-                  "value": "{{page}}",
+-                  "description": "Страница начиная с 1"
+-                },
+-                {
+-                  "key": "pageSize",
+-                  "value": "{{page_size}}",
+-                  "description": "1–100, по умолчанию 50"
++                  "description": "Публичные ID групп через запятую, 1–100"
+                 }
+               ]
+             },
+-            "description": "**PRD-01 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<ProductionGroup>, editable, meta.\n\n\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: L2, K2, M1, N1, N2, L3, N3."
++            "description": "**PRD-01 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<{groupId,state,version?}>.\n\nL1: значок блока «Печать» для строк страницы «Ссылки и сроки» одним запросом. state: open | scheduled | manual | building | ready | failed | empty | expired. Группы вне области сотрудника и неизвестные не возвращаются; 422 INVALID_GROUPS при пустом списке, больше 100 или не UUID. Очередь по institutionId/shootId/page — вместе с экраном производства L2.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: L2, K2, M1, N1, N2, L3, N3."
+           },
+           "event": [
+             {
+@@ -12611,11 +12595,6 @@
+                   "  const data = payload.data;",
+                   "  if (pm.response.code === expected && data !== undefined) {",
+                   "    pm.test('Список items', function () { pm.expect(data.items).to.be.an('array'); });",
+-                  "    pm.test('Пагинация meta', function () {",
+-                  "      pm.expect(payload.meta.page).to.be.a('number');",
+-                  "      pm.expect(payload.meta.pageSize).to.be.a('number');",
+-                  "      pm.expect(payload.meta.total).to.be.a('number');",
+-                  "    });",
+                   "    const forbidden = new Set(['accessKey', 'galleryToken', 'requestId', 'operations']);",
+                   "    function inspect(value) {",
+                   "      if (!value || typeof value !== 'object') return;",
+@@ -12650,7 +12629,7 @@
+                   }
+                 ],
+                 "url": {
+-                  "raw": "{{base_url}}/{{api_prefix}}/production/groups?page={{page}}&pageSize={{page_size}}",
++                  "raw": "{{base_url}}/{{api_prefix}}/production/groups",
+                   "host": [
+                     "{{base_url}}"
+                   ],
+@@ -12661,30 +12640,14 @@
+                   ],
+                   "query": [
+                     {
+-                      "key": "institutionId",
+-                      "value": "",
++                      "key": "groupIds",
++                      "value": "{{group_id}}",
+                       "disabled": true,
+-                      "description": "Учреждение"
+-                    },
+-                    {
+-                      "key": "shootId",
+-                      "value": "",
+-                      "disabled": true,
+-                      "description": "Съёмка"
+-                    },
+-                    {
+-                      "key": "page",
+-                      "value": "{{page}}",
+-                      "description": "Страница начиная с 1"
+-                    },
+-                    {
+-                      "key": "pageSize",
+-                      "value": "{{page_size}}",
+-                      "description": "1–100, по умолчанию 50"
++                      "description": "Публичные ID групп через запятую, 1–100"
+                     }
+                   ]
+                 },
+-                "description": "**PRD-01 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<ProductionGroup>, editable, meta.\n\n\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: L2, K2, M1, N1, N2, L3, N3."
++                "description": "**PRD-01 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: items<{groupId,state,version?}>.\n\nL1: значок блока «Печать» для строк страницы «Ссылки и сроки» одним запросом. state: open | scheduled | manual | building | ready | failed | empty | expired. Группы вне области сотрудника и неизвестные не возвращаются; 422 INVALID_GROUPS при пустом списке, больше 100 или не UUID. Очередь по institutionId/shootId/page — вместе с экраном производства L2.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: L2, K2, M1, N1, N2, L3, N3."
+               },
+               "status": "OK",
+               "code": 200,
+@@ -12695,13 +12658,13 @@
+                   "value": "application/json"
+                 }
+               ],
+-              "body": "{\n  \"data\": {\n    \"items\": [],\n    \"editable\": true\n  },\n  \"meta\": {\n    \"page\": 1,\n    \"pageSize\": 50,\n    \"total\": 0\n  }\n}"
++              "body": "{\n  \"data\": [\n    {\n      \"groupId\": \"group-example\",\n      \"state\": \"ready\",\n      \"version\": 1\n    }\n  ]\n}"
+             }
+           ]
+         },
+         {
+           "id": "7f97e998-3ed4-52a1-8c47-75ecacace147",
+-          "name": "PRD-02 · Актуальный план, задание и история",
++          "name": "PRD-02 · Блок «Печать» группы: состояние, версии и ссылки",
+           "request": {
+             "method": "GET",
+             "auth": {
+@@ -12732,7 +12695,7 @@
+                 "production"
+               ]
+             },
+-            "description": "**PRD-02 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: plan, job, revision, signature, editable, archive?, emailDelivery?.\n\nL1: physical rows, closed и archive{state,url?,expiresAt?,version}; ready выдаёт О/назначенному К ссылку PRD-10, до ready ссылки нет. Папки ZIP по названиям продукции оплаченного снимка, quantity×printCount в CSV. Дополнительная L3 emailDelivery: queued/sending/accepted/failed/unknown; accepted не означает принятие Сивмой.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: L2, K2, M1, N1, N2, L3, N3."
++            "description": "**PRD-02 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: groupId, groupName, state, deadlineAt?, buildFrom?, canManage, outsideLines, outsidePrints, waitingOrders, versions<Version>.\n\nL1: versions по возрастанию номера; Version = id, groupId, number, status, lines, files, prints, waitingOrders, products<{name,format,files,prints}>, manual, createdAt, readyAt?, expiresAt?, bytes?, error?, archiveUrl?, exportUrl. archiveUrl — ссылка PRD-10 только у ready-версии в срок хранения (14 дней от сборки, L1-DEC-03/04) и одна и та же для текущего поколения. outsideLines/outsidePrints — оплаченная до срока печать вне версий (поздно подтверждённые оплаты, L1-DEC-02); waitingOrders — заказы с печатью и открытой попыткой оплаты. canManage только у организатора; куратор видит свои учреждения, чужая группа — 404 GROUP_NOT_FOUND, остальные роли — 403.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: L2, K2, M1, N1, N2, L3, N3."
+           },
+           "event": [
+             {
+@@ -12755,14 +12718,9 @@
+                   "  const data = payload.data;",
+                   "  if (pm.response.code === expected && data !== undefined) {",
+                   "    {",
+-                  "      const value = \"revision\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
+-                  "      pm.test('Поле revision', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
+-                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_revision\", value);",
+-                  "    }",
+-                  "    {",
+-                  "      const value = \"signature\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
+-                  "      pm.test('Поле signature', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
+-                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_signature\", value);",
++                  "      const value = \"versions.0.id\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
++                  "      pm.test('Поле versions.0.id', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
++                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_version_id\", value);",
+                   "    }",
+                   "    const forbidden = new Set(['accessKey', 'galleryToken', 'requestId', 'operations']);",
+                   "    function inspect(value) {",
+@@ -12780,7 +12738,7 @@
+         },
+         {
+           "id": "fc10c092-1b21-5d5e-9e25-5fef42d26b2b",
+-          "name": "PRD-03 · Сформировать новую версию задания",
++          "name": "PRD-03 · Собрать архив или дополнение",
+           "request": {
+             "method": "POST",
+             "auth": {
+@@ -12801,10 +12759,6 @@
+               {
+                 "key": "Idempotency-Key",
+                 "value": "{{idem_prd_03}}"
+-              },
+-              {
+-                "key": "Content-Type",
+-                "value": "application/json"
+               }
+             ],
+             "url": {
+@@ -12820,16 +12774,7 @@
+                 "versions"
+               ]
+             },
+-            "description": "**PRD-03 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: jobId, versionNumber, revision.\n\nТолько закрытая группа. Версия фиксирует снимок plan и разницу runRows/surplus; старые версии не переписываются.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: K2, N2, L3, N3.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_prd_03. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+-            "body": {
+-              "mode": "raw",
+-              "raw": "{\n  \"reason\": \"Проверка сценария на тестовом окружении\",\n  \"confirmed\": true,\n  \"revision\": {{production_revision}},\n  \"signature\": \"{{production_signature}}\"\n}",
+-              "options": {
+-                "raw": {
+-                  "language": "json"
+-                }
+-              }
+-            }
++            "description": "**PRD-03 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: Version.\n\nL1: без тела, обязателен Idempotency-Key (32 hex); повтор ключа возвращает ту же версию, другой запрос с ним — 409 IDEMPOTENCY_CONFLICT. Только закрытая печать (иначе 409 PRINT_SALES_OPEN). Версия 1 — вся оплаченная до срока печать (для групп, закрытых до выкладки L1, — только этой кнопкой, L1-DEC-08); дополнение — только строки вне прежних версий, без них 409 NOTHING_TO_BUILD. Собранные версии не меняются; ZIP собирает cron app:production:run. Автоматическая версия 1 — через час после закрытия печати (L1-DEC-01). Только организатор, иначе 403.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: K2, N2, L3, N3.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_prd_03. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409."
+           },
+           "event": [
+             {
+@@ -12866,19 +12811,9 @@
+                   "  const data = payload.data;",
+                   "  if (pm.response.code === expected && data !== undefined) {",
+                   "    {",
+-                  "      const value = \"jobId\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
+-                  "      pm.test('Поле jobId', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
+-                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_job_id\", value);",
+-                  "    }",
+-                  "    {",
+-                  "      const value = \"versionNumber\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
+-                  "      pm.test('Поле versionNumber', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
+-                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_version\", value);",
+-                  "    }",
+-                  "    {",
+-                  "      const value = \"revision\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
+-                  "      pm.test('Поле revision', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
+-                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_revision\", value);",
++                  "      const value = \"id\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
++                  "      pm.test('Поле id', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
++                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_version_id\", value);",
+                   "    }",
+                   "    const forbidden = new Set(['accessKey', 'galleryToken', 'requestId', 'operations']);",
+                   "    function inspect(value) {",
+@@ -12915,10 +12850,6 @@
+                   {
+                     "key": "Idempotency-Key",
+                     "value": "{{idem_prd_03}}"
+-                  },
+-                  {
+-                    "key": "Content-Type",
+-                    "value": "application/json"
+                   }
+                 ],
+                 "url": {
+@@ -12934,16 +12865,7 @@
+                     "versions"
+                   ]
+                 },
+-                "description": "**PRD-03 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: jobId, versionNumber, revision.\n\nТолько закрытая группа. Версия фиксирует снимок plan и разницу runRows/surplus; старые версии не переписываются.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: K2, N2, L3, N3.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_prd_03. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409.",
+-                "body": {
+-                  "mode": "raw",
+-                  "raw": "{\n  \"reason\": \"Проверка сценария на тестовом окружении\",\n  \"confirmed\": true,\n  \"revision\": {{production_revision}},\n  \"signature\": \"{{production_signature}}\"\n}",
+-                  "options": {
+-                    "raw": {
+-                      "language": "json"
+-                    }
+-                  }
+-                }
++                "description": "**PRD-03 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О.\n\nОтвет: Version.\n\nL1: без тела, обязателен Idempotency-Key (32 hex); повтор ключа возвращает ту же версию, другой запрос с ним — 409 IDEMPOTENCY_CONFLICT. Только закрытая печать (иначе 409 PRINT_SALES_OPEN). Версия 1 — вся оплаченная до срока печать (для групп, закрытых до выкладки L1, — только этой кнопкой, L1-DEC-08); дополнение — только строки вне прежних версий, без них 409 NOTHING_TO_BUILD. Собранные версии не меняются; ZIP собирает cron app:production:run. Автоматическая версия 1 — через час после закрытия печати (L1-DEC-01). Только организатор, иначе 403.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: K2, N2, L3, N3.\n\nIdempotency-Key автоматически создаётся один раз в переменной idem_prd_03. Повтор Send сохраняет ключ; для НОВОЙ операции очистите эту переменную. Изменённое тело со старым ключом должно вернуть 409."
+               },
+               "status": "Created",
+               "code": 201,
+@@ -12954,13 +12876,13 @@
+                   "value": "application/json"
+                 }
+               ],
+-              "body": "{\n  \"data\": {\n    \"jobId\": \"print-job-example\",\n    \"versionNumber\": 1,\n    \"revision\": 1\n  }\n}"
++              "body": "{\n  \"data\": {\n    \"id\": \"version-example\",\n    \"number\": 1,\n    \"status\": \"pending\"\n  }\n}"
+             }
+           ]
+         },
+         {
+           "id": "9776a087-924a-50a9-b7f4-52526c355a23",
+-          "name": "PRD-04 · Конкретная версия задания",
++          "name": "PRD-04 · Конкретная версия архива печати",
+           "request": {
+             "method": "GET",
+             "auth": {
+@@ -12980,20 +12902,18 @@
+               }
+             ],
+             "url": {
+-              "raw": "{{base_url}}/{{api_prefix}}/production/jobs/{{production_job_id}}/versions/{{production_version}}",
++              "raw": "{{base_url}}/{{api_prefix}}/production/versions/{{production_version_id}}",
+               "host": [
+                 "{{base_url}}"
+               ],
+               "path": [
+                 "{{api_prefix}}",
+                 "production",
+-                "jobs",
+-                "{{production_job_id}}",
+                 "versions",
+-                "{{production_version}}"
++                "{{production_version_id}}"
+               ]
+             },
+-            "description": "**PRD-04 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: jobId, versionNumber, plan, runRows, surplus, packages, revision, signature, archive?.\n\n\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: L2, M1, N2, L3, N3."
++            "description": "**PRD-04 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: Version.\n\nL1: версия по её ID (без job: задание печати появляется в L2). Область как у PRD-02, чужая версия — 404 VERSION_NOT_FOUND. Используется для ожидания сборки.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: L2, M1, N2, L3, N3."
+           },
+           "event": [
+             {
+@@ -13015,16 +12935,6 @@
+                   "  });",
+                   "  const data = payload.data;",
+                   "  if (pm.response.code === expected && data !== undefined) {",
+-                  "    {",
+-                  "      const value = \"revision\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
+-                  "      pm.test('Поле revision', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
+-                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_revision\", value);",
+-                  "    }",
+-                  "    {",
+-                  "      const value = \"signature\".split('.').reduce((o, k) => o == null ? undefined : o[k], data);",
+-                  "      pm.test('Поле signature', function () { pm.expect(value).not.to.eql(undefined); pm.expect(value).not.to.eql(null); });",
+-                  "      if (value !== undefined && value !== null) pm.environment.set(\"production_signature\", value);",
+-                  "    }",
+                   "    const forbidden = new Set(['accessKey', 'galleryToken', 'requestId', 'operations']);",
+                   "    function inspect(value) {",
+                   "      if (!value || typeof value !== 'object') return;",
+@@ -13258,7 +13168,7 @@
+         },
+         {
+           "id": "a3ccec1d-7777-57fc-9d45-8a2db1e1cb92",
+-          "name": "PRD-07 · Экспорт задания печати",
++          "name": "PRD-07 · Состав версии в CSV",
+           "request": {
+             "method": "GET",
+             "auth": {
+@@ -13278,21 +13188,19 @@
+               }
+             ],
+             "url": {
+-              "raw": "{{base_url}}/{{api_prefix}}/production/jobs/{{production_job_id}}/versions/{{production_version}}/export",
++              "raw": "{{base_url}}/{{api_prefix}}/production/versions/{{production_version_id}}/export",
+               "host": [
+                 "{{base_url}}"
+               ],
+               "path": [
+                 "{{api_prefix}}",
+                 "production",
+-                "jobs",
+-                "{{production_job_id}}",
+                 "versions",
+-                "{{production_version}}",
++                "{{production_version_id}}",
+                 "export"
+               ]
+             },
+-            "description": "**PRD-07 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: CSV UTF-8; Content-Disposition.\n\nЭкспорт конкретной версии не меняет статус и не запускает печать. prints=quantity×printCount. Сохранять связь с исходной группой сотрудников. Экранировать CSV-формулы.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: N2, L3, N3."
++            "description": "**PRD-07 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: О/К.\n\nОтвет: CSV UTF-8 с BOM, `;`, CRLF; Content-Disposition print-<группа>-v<N>.csv.\n\nL1: тот же состав.csv, что в корне ZIP: Продукция; Формат; Файл; Кадр; Ребёнок; Заказ; Оплачен (МСК); Количество; Отпечатков в единице; Отпечатков; Группа сотрудников. prints=quantity×printCount; значения-формулы начинаются с апострофа. Доступен и после удаления файла архива по сроку. Не меняет статус и не запускает печать.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: N2, L3, N3."
+           },
+           "event": [
+             {
+@@ -13506,7 +13414,7 @@
+                 "{{production_archive_token}}"
+               ]
+             },
+-            "description": "**PRD-10 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Токен архива печати.\n\nОтвет: ZIP; Content-Type application/zip, Content-Disposition, Cache-Control private/no-store.\n\nОтдельный непредсказуемый токен конкретной ready-версии; без Bearer и X-Order-Key. Ограниченный срок/отзыв проверяются до выдачи байтов; неверный/истёкший/отозванный токен не выдаёт архив. Папки по продукции оплаченного снимка, оригиналы и CSV. URL выдаётся О/назначенному К через PRD-02/04; токен не логируется. Не меняет статус печати и не отправляет email. Runtime планируется в L1.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: N2, N3."
++            "description": "**PRD-10 — morefoto.production**\n\nПроект по сценарию/фронтенду, HTTP не реализован\n\nДоступ: Токен архива печати.\n\nОтвет: ZIP; Content-Type application/zip, Content-Disposition print-<группа>-v<N>.zip, Cache-Control no-store.\n\nL1: токен — 43 символа base64url, HMAC версии и поколения ссылки на ключе из серверного секрета; в БД только SHA-256. Без Bearer и X-Order-Key. Неверный, истёкший, отозванный токен и токен другой версии — одинаково 404 ARCHIVE_NOT_FOUND до выдачи байтов. Байты отдаёт nginx через X-Accel-Redirect; адрес не пишется в access-лог. Внутри: папка на продукцию оплаченного снимка, файл `<код кадра>_x<отпечатков>` на ребёнка и кадр (L1-DEC-05), состав.csv. Перевыпуск — POST /production/versions/{production_version_id}/renewal (организатор, Idempotency-Key): новое поколение отключает прежнюю ссылку; удалённый по сроку или неудавшийся архив собирается заново. Не меняет статус печати и не отправляет email.\n\nИсточник: frontend/src/modules/morefoto/production/types.ts.\n\nОбласть: product. Основная волна: L1. Проверки: N2, N3."
+           },
+           "event": [
+             {
+diff -ruN a/docs/05-rest-api/postman/MoreFoto.stage.postman_environment.json b/docs/05-rest-api/postman/MoreFoto.stage.postman_environment.json
+--- a/docs/05-rest-api/postman/MoreFoto.stage.postman_environment.json	2026-10-15 12:32:50.620943182 +0300
++++ b/docs/05-rest-api/postman/MoreFoto.stage.postman_environment.json	2026-10-15 12:32:50.809080974 +0300
+@@ -285,6 +285,12 @@
+       "type": "default"
+     },
+     {
++      "key": "production_version_id",
++      "value": "",
++      "enabled": true,
++      "type": "default"
++    },
++    {
+       "key": "production_archive_token",
+       "value": "",
+       "enabled": true,
+diff -ruN a/docs/05-rest-api/verification.json b/docs/05-rest-api/verification.json
+--- a/docs/05-rest-api/verification.json	2026-10-15 12:32:50.624946114 +0300
++++ b/docs/05-rest-api/verification.json	2026-10-15 12:32:50.809080974 +0300
+@@ -28,7 +28,7 @@
+   ],
+   "liveApiRequestsExecuted": false,
+   "sha256": {
+-    "build.py": "3697127d0904fb57e189cc3f1cd4d12a08c14f278caa407799e2882c31913edd",
++    "build.py": "d9e24052c3f68c17d61ed2a2448811efc2d911ffcad38c55ae75019d6b5c2f5b",
+     "validate.py": "7bf233ed80992eb7392120b9ab6f34d83917f280efd5c3302e9bf17991b6ee89",
+     "validate-postman.cjs": "879a609e16602ab971c3296eacb0b0d0c702d840d842d8942c3b410240543877",
+     "../04-bitrix-modules/README.md": "c4a49f91a1beff119f3b8eaa910b24031d5cfb089375f093ef64486644d6c010",
+@@ -36,12 +36,12 @@
+     "../04-bitrix-modules/backend-waves.md": "e7f0dc77bb0e2ea0326afc667f3a741e9e3f6f0aead0821a024f7213bb3cea75",
+     "../04-bitrix-modules/render-waves.py": "e25b9a4de626c024cb814295ab9e9890995bdf35de8fcdf18a44009c7aa6660e",
+     "../04-bitrix-modules/wave_graph.py": "efe5c94bf5e643498db5dbf8c827296b47ecbd3a29f736695b3f55c5ebc7104b",
+-    "README.md": "2f420caba785f8b8dffa267993c67bbe340b54deffe62b344a01f99e9435de1c",
+-    "endpoints.json": "53ca1eaa6f0d0395c4094a8110c261f26aa89d4cecd426f68243686444010817",
+-    "postman/MoreFoto.postman_collection.json": "c8e504e0d88899e8ed8299b969a139d42a6220f80f9652d58f3a5835947fdfbf",
+-    "postman/MoreFoto.backend-waves.postman_collection.json": "d3065591f69d3703f450f319806ccf122ca8d96c3a8d7f8d85b9868966870a44",
+-    "postman/MoreFoto.local.postman_environment.json": "f5bf0c21369e679e198346d80abd73d48b91b0be465f0bc59093eb2bc3f9b554",
+-    "postman/MoreFoto.stage.postman_environment.json": "a19533be7dcc5809006a2ce33f3b00cb6ed6f5a5defc921e30f5087df7a8ff5f"
++    "README.md": "ee8e3f4949bdf21741f963126c82b6a7f37a72f2d762daaa249d7bc052664ec1",
++    "endpoints.json": "29621c450392d57bb04ab59a029916b0ffd4eecf14dbe950246ca155234305c6",
++    "postman/MoreFoto.postman_collection.json": "2884bc68e90e51286ded6a294ec10d134fa3203392326ae53ea7693a35d158a4",
++    "postman/MoreFoto.backend-waves.postman_collection.json": "6f400c7e17d4608aac3f3bad6f1e1adba96b45786b265d1c1231fad85bc43c1e",
++    "postman/MoreFoto.local.postman_environment.json": "2ae2f4bd388aad251c2ec52b8fcf22dedec50eace74acc6f2a98688b03df4f2b",
++    "postman/MoreFoto.stage.postman_environment.json": "9b8be68865bc53e1a66f231b235366af2c2e906d352582f53cfac1a510b18df5"
+   },
+   "sourceSha256": {
+     "../rebit-p2p/api/public/local/modules/rebit.notification/lib/Presentation/Controller/LeadController.php": "10c5f85fd19e52e5cf35178ed381c3846827b83334a88a55f78ab18a76e29438",
+@@ -63,14 +63,5 @@
+     "frontend/src/modules/morefoto/services/cabinet.ts": "51ad1a1bcf496257ec4371a4dbd318a76edaa8da2a3a50399cbdc6a0bea38d22",
+     "frontend/src/modules/morefoto/settlement/types.ts": "3854e2f3e5da27ac510ca3a96ce8d7487cbb528b56475dff6989918ff678118d",
+     "frontend/src/modules/morefoto/shipping/types.ts": "c73785f3e0a4652680f09e37e26413231af94bed517d0376c1460e30c914980d"
+-  },
+-  "postmanScriptValidation": {
+-    "scriptsParsed": 172,
+-    "positiveFixtures": 122,
+-    "negativeFixtures": 244,
+-    "idempotencyRepeatChecks": 48,
+-    "platformGuardChecks": 14,
+-    "platformContractNegativeFixtures": 2,
+-    "note": "Offline script fixtures only; no API requests or Postman UI import were executed."
+   }
+ }

@@ -22,6 +22,7 @@ enum LogChannelEnum: string
     case import = 'import'; // канал импортов
     case support = 'support'; // вопросы куратору через MAX
     case files = 'files'; // выдача купленных оригиналов и ZIP
+    case production = 'production'; // архив оплаченной печати для лаборатории (L1)
 
     /**
      * Определяет канал логирования по namespace класса.

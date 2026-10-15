@@ -1,0 +1,37 @@
+{
+  "wave": "L1",
+  "status": "passed",
+  "date": "2026-10-15",
+  "head": "357c64b",
+  "base": "cc92006",
+  "gate": {
+    "run": "rabit-e2e-961182e05ae4",
+    "browser": {
+      "a": 81,
+      "b": 72
+    },
+    "verifiers": 16,
+    "yookassaTestShop": "on",
+    "command": "make test-e2e"
+  },
+  "fast": {
+    "phpunit": "1165 tests",
+    "phpstan": "no errors",
+    "phpCsFixer": "0 fixable",
+    "frontendCheck": "exit 0, test:ui 98",
+    "testCommerce": "243",
+    "waveGraph": "exit 0"
+  },
+  "previousRuns": [
+    {
+      "run": "rabit-e2e-c87bf170a344",
+      "result": "failed",
+      "reason": "G1-T14 YooKassa sandbox SBP (#174), unrelated"
+    },
+    {
+      "run": "rabit-e2e-3597a0d6a331",
+      "result": "failed",
+      "reason": "verify-production.php read DATETIME via Bitrix fetch(); fixed in 357c64b"
+    }
+  ]
+}

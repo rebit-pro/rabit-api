@@ -74,9 +74,13 @@ VERIFIERS = [
     ("verify-photo-deletion.php", "i116-deletion.json", "#116 photo deletion integration passed", ["zz-media"]),
     # J1: downloads agree with archives on disk, the paid key lasts the files month, expired archives are purged.
     ("verify-files.php", "j1-files.json", "J1 files integration passed", ["zzzzzzzzzz-files"]),
+    # L1: the print archive of the J4 paid print order — composition, disk, link hash, expiry and rebuild.
+    ("verify-production.php", "l1-archive.json", "L1 production integration passed", ["zzzzzzzzzz-files", "zzzzzzzzzzzz-print-archive"]),
 ]
 # J4-DEC-04: the spec whose print order the stand pays with the fixture provider during the browser stage.
 PAY_FIXTURE_SPEC = "zzzzzzzzzz-files"
+# L1: the stand has no cron; the print archive spec asks the stand to close print sales and to run app:production:run.
+PRODUCTION_FIXTURE_SPEC = "zzzzzzzzzzzz-print-archive"
 # The browser stage of a group; the opt-in media bench sets itself 45 minutes on top of the other files of its group.
 BROWSER_TIMEOUT = 900
 BENCH_TIMEOUT = 45 * 60
@@ -563,6 +567,25 @@ def pay_fixture(report, fpm, var, done):
         return
 
 
+def production_fixture(report, fpm, var, done):
+    """L1: answers every numbered request of the print archive spec (close print sales, run the archive) in order.
+    A failure is handed to the spec, which reports it instead of waiting for its timeout."""
+    answered = 0
+    while not done.wait(0.5):
+        request = var / f"l1-request-{answered + 1}.json"
+        if not request.is_file():
+            continue
+        answer = var / f"l1-answer-{answered + 1}.json.tmp"
+        try:
+            docker("cp", str(request), fpm + ":/runtime/l1-request.json")
+            docker("exec", fpm, "php", "/app/tools/e2e/production-fixture.php", log=report / "production-fixture.log")
+            docker("cp", fpm + ":/runtime/l1-answer.json", str(answer))
+        except Exception as error:  # noqa: BLE001 - the spec shows the reason
+            answer.write_text(json.dumps({"error": str(error)}))
+        answered += 1
+        os.replace(answer, var / f"l1-answer-{answered}.json")
+
+
 def test_stand(state, stand):
     if state["stopped"]:
         raise RuntimeError("The E2E fixture has been stopped")
@@ -593,12 +616,17 @@ def test_stand(state, stand):
         payer = threading.Thread(target=pay_fixture, args=(report, fpm, var, done), daemon=True) if PAY_FIXTURE_SPEC in GROUPS[group] else None
         if payer:
             payer.start()
+        producer = threading.Thread(target=production_fixture, args=(report, fpm, var, done), daemon=True) if PRODUCTION_FIXTURE_SPEC in GROUPS[group] else None
+        if producer:
+            producer.start()
         try:
             result = stage(state, f"{stand['name']}: real browser group {group}", browser)
         finally:
             done.set()
             if payer:
                 payer.join()
+            if producer:
+                producer.join()
         with LOCK:
             state["results"][group] = result
             save(state)
