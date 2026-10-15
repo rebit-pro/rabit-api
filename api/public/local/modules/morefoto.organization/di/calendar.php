@@ -18,6 +18,7 @@ use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Contracts\Organization\GroupCalendarInterface;
 use Rebit\Share\Contracts\Organization\GroupDirectoryInterface;
 use Rebit\Share\Contracts\Organization\GroupMarkupCorrectionInterface;
+use Rebit\Share\Contracts\Organization\PrintClosedGroupsInterface;
 
 return [
     CalendarClockInterface::class => ['constructor' => static fn(): CalendarClockInterface => new ServerCalendarClock()],
@@ -41,6 +42,11 @@ return [
     ],
     GroupDirectoryInterface::class => [
         'constructor' => static fn(): GroupDirectoryInterface => new GroupDirectory(
+            ServiceLocator::getInstance()->get(CalendarClockInterface::class),
+        ),
+    ],
+    PrintClosedGroupsInterface::class => [
+        'constructor' => static fn(): PrintClosedGroupsInterface => new GroupDirectory(
             ServiceLocator::getInstance()->get(CalendarClockInterface::class),
         ),
     ],

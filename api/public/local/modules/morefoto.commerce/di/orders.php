@@ -38,6 +38,7 @@ use Morefoto\Commerce\Infrastructure\Files\OrderEntitlements;
 use Morefoto\Commerce\Infrastructure\Payment\OrderPayments;
 use Morefoto\Commerce\Domain\Storefront\Service\SalesWindowPolicy;
 use Morefoto\Commerce\Infrastructure\Correction\GroupOrders;
+use Morefoto\Commerce\Infrastructure\Production\GroupPrintOrders;
 use Morefoto\Commerce\Infrastructure\Transfer\ChildOrders;
 use Morefoto\Commerce\Presentation\Controller\OrderController;
 use Morefoto\Commerce\Presentation\Controller\StaffOrderController;
@@ -50,6 +51,7 @@ use Rebit\Share\Application\Contract\Consent\ConsentRecorderInterface;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Contracts\Commerce\ChildOrdersInterface;
 use Rebit\Share\Contracts\Commerce\GroupOrdersInterface;
+use Rebit\Share\Contracts\Commerce\GroupPrintOrdersInterface;
 use Rebit\Share\Contracts\Commerce\StructureSalesRemovalInterface;
 use Morefoto\Commerce\Infrastructure\Organization\StructureSalesRemoval;
 use Rebit\Share\Contracts\Commerce\OrderEntitlementInterface;
@@ -70,6 +72,9 @@ return [
     ],
     GroupOrdersInterface::class => [
         'constructor' => static fn(): GroupOrdersInterface => new GroupOrders(ServiceLocator::getInstance()->get(OrderRepository::class)),
+    ],
+    GroupPrintOrdersInterface::class => [
+        'constructor' => static fn(): GroupPrintOrdersInterface => new GroupPrintOrders(ServiceLocator::getInstance()->get(OrderRepository::class)),
     ],
     ChildOrdersInterface::class => [
         'constructor' => static fn(): ChildOrdersInterface => new ChildOrders(ServiceLocator::getInstance()->get(OrderRepository::class)),

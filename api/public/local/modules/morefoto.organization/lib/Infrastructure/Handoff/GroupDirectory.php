@@ -15,8 +15,9 @@ use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryPageOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryQueryInputDto;
 use Rebit\Share\Contracts\Organization\Dto\GroupDirectorySummaryOutputDto;
 use Rebit\Share\Contracts\Organization\GroupDirectoryInterface;
+use Rebit\Share\Contracts\Organization\PrintClosedGroupsInterface;
 
-final readonly class GroupDirectory implements GroupDirectoryInterface
+final readonly class GroupDirectory implements GroupDirectoryInterface, PrintClosedGroupsInterface
 {
     private const string UUID = '/^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/D';
     private const string FIELDS = "g.ID,g.UF_PUBLIC_ID,g.UF_NAME,g.UF_KIND,g.UF_TIMEZONE,
@@ -111,6 +112,30 @@ final readonly class GroupDirectory implements GroupDirectoryInterface
         }
 
         return $ids;
+    }
+
+    public function closedBetween(\DateTimeImmutable $after, int $afterGroupId, \DateTimeImmutable $until, int $limit): array
+    {
+        if (1 > $limit || 500 < $limit || 0 > $afterGroupId) {
+            throw new \InvalidArgumentException('Invalid print deadline window.');
+        }
+        $from = GroupStateSql::utc($after);
+        $to = GroupStateSql::utc($until);
+        try {
+            $result = Application::getConnection()->query('SELECT ' . self::FIELDS . self::SOURCE
+                . " WHERE g.UF_SENT_AT IS NOT NULL AND g.UF_CLOSES_AT<='{$to}'"
+                . " AND (g.UF_CLOSES_AT>'{$from}' OR (g.UF_CLOSES_AT='{$from}' AND g.ID>{$afterGroupId}))"
+                . " ORDER BY g.UF_CLOSES_AT ASC,g.ID ASC LIMIT {$limit}");
+            $now = $this->clock->now();
+            $items = [];
+            while (false !== ($row = $result->fetch())) {
+                $items[] = $this->item($row, $now);
+            }
+        } catch (\Throwable $error) {
+            throw new StructureStorageException('Cannot read groups with closed print.', 0, $error);
+        }
+
+        return $items;
     }
 
     private function where(GroupDirectoryQueryInputDto $query, string $now): string

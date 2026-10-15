@@ -200,11 +200,36 @@ final readonly class OrderRepository
     /** Хотя бы один заказ группы в любом статусе оплаты; чтение по индексу `ix_mf_order_group`. */
     public function groupHasOrders(string $groupPublicId): bool
     {
-        if (1 !== preg_match('/^[a-f0-9-]{36}$/D', $groupPublicId)) {
-            throw new \InvalidArgumentException('Invalid group ID.');
-        }
+        $group = $this->groupId($groupPublicId);
 
-        return false !== $this->query("SELECT 1 FROM mf_order WHERE GROUP_PUBLIC_ID='{$groupPublicId}' LIMIT 1")->fetch();
+        return false !== $this->query("SELECT 1 FROM mf_order WHERE GROUP_PUBLIC_ID='{$group}' LIMIT 1")->fetch();
+    }
+
+    /**
+     * L1: печатные строки заказов группы, оплаченных до срока печати; поздняя оплата (G1) в печать не идёт.
+     *
+     * @param string $deadline срок печати, UTC `Y-m-d H:i:s`
+     */
+    public function paidPrintLines(string $groupPublicId, string $deadline): Result
+    {
+        $group = $this->groupId($groupPublicId);
+        $until = Application::getConnection()->getSqlHelper()->forSql($deadline);
+
+        return $this->query("SELECT l.PUBLIC_ID,o.PUBLIC_ID AS ORDER_PUBLIC_ID,o.NUMBER,DATE_FORMAT(o.PAID_AT,'%Y-%m-%d %H:%i:%s') AS PAID_AT,
+            o.AUDIENCE,l.CHILD_CODE,l.PHOTO_PUBLIC_ID,l.PHOTO_CODE,l.PRODUCT_PUBLIC_ID,l.PRODUCT_NAME,l.PRODUCT_FORMAT,l.PRINT_COUNT,l.QUANTITY
+            FROM mf_order o INNER JOIN mf_order_line l ON l.ORDER_ID=o.ID
+            WHERE o.GROUP_PUBLIC_ID='{$group}' AND o.PAYMENT_STATUS='paid' AND o.LATE_PAYMENT=0 AND o.PAID_AT<'{$until}'
+            AND l.PRODUCT_KIND='physical' AND l.PHOTO_PUBLIC_ID IS NOT NULL ORDER BY o.ID,l.LINE_NO");
+    }
+
+    /** L1: заказы группы с печатью, у которых открыта попытка оплаты. */
+    public function waitingPrintOrders(string $groupPublicId): int
+    {
+        $group = $this->groupId($groupPublicId);
+        $row = $this->query("SELECT COUNT(*) AS TOTAL FROM mf_order o WHERE o.GROUP_PUBLIC_ID='{$group}' AND o.PAYMENT_STATUS='pending'
+            AND EXISTS (SELECT 1 FROM mf_order_line l WHERE l.ORDER_ID=o.ID AND l.PRODUCT_KIND='physical')")->fetch();
+
+        return false === $row ? 0 : (int)$row['TOTAL'];
     }
 
     public function page(OrderSearchCriteria $criteria, int $limit, int $offset, OrderSortEnum $sort = OrderSortEnum::CREATED_AT, bool $descending = true): Result
@@ -306,6 +331,15 @@ final readonly class OrderRepository
         }
 
         return [] === $institutionScope ? ' AND 1=0' : ' AND o.INSTITUTION_ID IN (' . implode(',', array_map('intval', $institutionScope)) . ')';
+    }
+
+    private function groupId(string $groupPublicId): string
+    {
+        if (1 !== preg_match('/^[a-f0-9-]{36}$/D', $groupPublicId)) {
+            throw new \InvalidArgumentException('Invalid group ID.');
+        }
+
+        return $groupPublicId;
     }
 
     private function query(string $sql): Result
