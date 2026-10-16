@@ -55,7 +55,9 @@
       "L1",
       "J2"
     ],
-    "review": {},
+    "review": {
+      "E9": "https://github.com/rebit-pro/rabit-api/pull/208"
+    },
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
     "mergedPullRequests": {
       "B1": "https://github.com/rebit-pro/rabit-api/pull/8",
@@ -3520,7 +3522,7 @@
       ],
       "activation": "Сразу после выкладки. Воспитателю нужен вход в кабинет: приглашение B2 и рабочая доставка письма (#161).",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "review",
       "unlocks": [
         "N3"
       ],

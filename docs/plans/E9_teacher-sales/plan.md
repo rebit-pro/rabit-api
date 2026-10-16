@@ -70,12 +70,12 @@
 ## Checklist
 
 - [x] S0. План, решения, граф: E9 inProgress.
-- [ ] S1. Backend: Application/Domain/Infrastructure/Presentation, DI, routes.
-- [ ] S2. PHPUnit: UseCase и архитектура.
-- [ ] S3. Frontend: API, `GroupSales.vue`, «Обзор», unit.
-- [ ] S4. Live E2E `zzzzzzzzzzzzz-teacher-sales.spec.ts`, groups.json.
-- [ ] S5. Быстрые проверки, phpstan/phpunit, PR, ревью.
-- [ ] S6. Полный гейт, visual, merge и выкладка (после «да» владельца).
+- [x] S1. Backend: Application/Domain/Infrastructure/Presentation, DI, routes.
+- [x] S2. PHPUnit: UseCase и архитектура.
+- [x] S3. Frontend: API, `GroupSales.vue`, «Обзор», unit.
+- [x] S4. Live E2E `zzzzzzzzzzzzz-teacher-sales.spec.ts`, groups.json.
+- [x] S5. Быстрые проверки, phpstan/phpunit, PR #208, саморевью без блокеров.
+- [~] S6. Полный гейт и visual — PASS; merge и выкладка — после «да» владельца.
 
 ## Критерии приёмки
 
