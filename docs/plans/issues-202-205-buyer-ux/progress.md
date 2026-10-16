@@ -2,10 +2,9 @@
 
 ## Точка продолжения
 
-- Дата: 15.10.2026. Ветка `codex/issues-202-205-buyer-ux` от main d4b3829. PR нет.
-- Сейчас: S5 — ветка запушена, гейт PASS. PR не создан: `gh pr create` отклонён классификатором auto mode.
-- Следующий шаг: создать PR (пользователь разрешает `gh pr create` или запускает его сам), затем merge и frontend-выкладка.
-- Блокеры: нет разрешения на создание PR из сессии.
+- PR [#206](https://github.com/rebit-pro/rabit-api/pull/206) merged a2f7efc (16.10.2026); выложен на stage frontend-only как `main-20261016103552-7f2e3ae`.
+- Задача завершена. Открыто: проверка владельцем на реальном Android-телефоне (сохранение в «Загрузки», кнопка заказа в окне кадра).
+- Блокеров нет. Откат: `docker service rollback morefoto_frontend` (прежний образ в `frontend-before.txt` релиза).
 
 ## Журнал
 
@@ -26,6 +25,12 @@
 
 - `make test-e2e …` (run `rabit-e2e-66c2e8433b2d`) — PASS, 377,6 с: группы a 312,7 с и b 288,6 с, все verify-*.php.
 - Визуально (390 px): в шапке галереи залитая кнопка «Как купить фото — 6 шагов» (`e4-mobile-gallery.png`); на Android-контексте у каждого кадра «Сохранить в телефон», «Скачать» нет, подсказка про «Загрузки» под списком (`issues204-android-save-files.png`). Окно кадра скриншотом не снималось — видимость «Оформить заказ» проверена `toBeInViewport` на 390 и 1440 px.
+
+### 16.10.2026 — merge и выкладка
+
+- PR #206 создан и смержен (a2f7efc) по подтверждению владельца; вместе с ним смержен docs-PR #207 (E9/J5 в графе), main 7f2e3ae.
+- Релиз `main-20261016103552-7f2e3ae`: только frontend-образ, `switch-frontend.sh` — сервис `morefoto_frontend` на новом образе.
+- Smoke stage: `/` и `/kak-kupit/` — 200; `2-photo.webp` 299×396, sha256 совпадает с репозиторием; в бандле есть `buyer-guide-link--prominent`, «6 шагов», `files-save-download`, `files-save-gallery-hint`, `frame-checkout`.
 
 ## Команды
 

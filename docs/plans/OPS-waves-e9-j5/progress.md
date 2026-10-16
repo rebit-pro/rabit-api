@@ -2,10 +2,10 @@
 
 ## Точка продолжения
 
-- Ветка `codex/ops-waves-e9-j5` от main d4b3829. PR нет.
+- Ветка `codex/ops-waves-e9-j5` от main d4b3829. PR [#207](https://github.com/rebit-pro/rabit-api/pull/207) merged 7f2e3ae (16.10.2026).
 - Завершено: граф (J2 merged, E9, J5, N3), README, план; валидатор PASS.
-- Следующий шаг: PR в main (docs-only). После merge — брать E9 и J5 отдельными волнами `codex/e9-…`, `codex/j5-…`, начиная с утверждения E9-DEC/J5-DEC.
-- Блокеры: создание PR из сессии отклоняет классификатор auto mode — PR создаёт пользователь или разрешает `gh pr create`.
+- Следующий шаг: брать E9 и J5 отдельными волнами `codex/e9-…`, `codex/j5-…`, начиная с утверждения E9-DEC/J5-DEC.
+- Блокеров нет.
 - Рабочее дерево: изменены `docs/waves/graph.json`, `docs/waves/README.md`, добавлены plan/progress.
 
 ## Журнал
