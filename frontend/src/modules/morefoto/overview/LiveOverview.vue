@@ -15,6 +15,7 @@ import { linkStatus, staffRequestTone } from '../ui/statusTone';
 import { requestStatus } from '../handoff/display';
 import { groupStateSegments } from '../ui/groupStates';
 import { useLiveOverview } from './useLiveOverview';
+import GroupSales from './GroupSales.vue';
 
 const auth = useAuthStore();
 const role = computed(() => (isStaffRole(auth.user?.role) ? auth.user.role : null));
@@ -142,6 +143,7 @@ const finance = ['Оплачено', 'Подтверждённые возвра�
           Вопросы по группе — куратору: <strong>{{ group.curatorName }}</strong>
         </p>
         <v-btn to="/cabinet/links" variant="outlined" class="overview-group__action">Ссылка и сроки</v-btn>
+        <GroupSales :group-id="group.groupId" />
       </article>
     </section>
     <section v-if="teacher.requests" class="mf-panel overview-requests" aria-labelledby="overview-requests-title">

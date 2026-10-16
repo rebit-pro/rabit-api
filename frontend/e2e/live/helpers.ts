@@ -14,7 +14,7 @@ export async function login(page: Page, account = 'organizer'): Promise<void> {
   }
   // U6: every staff role lands on the overview. Specs written before it start from the old home pages.
   await expect(page).toHaveURL(/\/cabinet\/overview$/);
-  if (account === 'teacher' || account === 'curator' || account === 'head') {
+  if (account === 'teacher' || account === 'another-teacher' || account === 'curator' || account === 'head') {
     await page.goto('/cabinet/profile');
     await expect(page.getByRole('heading', { name: 'Профиль', exact: true })).toBeVisible();
   } else {
