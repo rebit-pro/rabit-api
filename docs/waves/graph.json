@@ -6,7 +6,7 @@
   "backend": "RaBit API",
   "baseline": {
     "branch": "main",
-    "commit": "d4b38291f18e20143d4e79a741e84a3681cea3b4",
+    "commit": "e728d8c959d133a05145b68bc2c142feda163e93",
     "mergedWaves": [
       "A1",
       "A2",
@@ -3520,7 +3520,7 @@
       ],
       "activation": "Сразу после выкладки. Воспитателю нужен вход в кабинет: приглашение B2 и рабочая доставка письма (#161).",
       "legacyIds": [],
-      "deliveryState": "planned",
+      "deliveryState": "inProgress",
       "unlocks": [
         "N3"
       ],

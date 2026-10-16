@@ -6,6 +6,7 @@ use Bitrix\Main\Routing\RoutingConfigurator;
 use Morefoto\Commerce\Presentation\Controller\CatalogController;
 use Morefoto\Commerce\Presentation\Controller\CatalogRemovalController;
 use Morefoto\Commerce\Presentation\Controller\ConditionsController;
+use Morefoto\Commerce\Presentation\Controller\GroupSalesController;
 use Morefoto\Commerce\Presentation\Controller\OrderController;
 use Morefoto\Commerce\Presentation\Controller\StaffOrderController;
 use Morefoto\Commerce\Presentation\Controller\StaffOrderRemovalController;
@@ -27,4 +28,5 @@ return static function(RoutingConfigurator $routes): void {
     $routes->put('/api/v1/catalog/conditions', [ConditionsController::class, 'saveGlobalAction']);
     $routes->get('/api/v1/groups/{group_id}/conditions', [ConditionsController::class, 'groupAction']);
     $routes->put('/api/v1/groups/{group_id}/conditions', [ConditionsController::class, 'saveGroupAction']);
+    $routes->get('/api/v1/groups/{group_id}/sales-summary', [GroupSalesController::class, 'groupAction']);
 };
