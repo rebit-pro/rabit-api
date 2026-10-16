@@ -2,12 +2,10 @@
 
 ## Точка продолжения
 
-- Ветка `codex/e9-teacher-sales` (worktree `/home/user/rabit-api-worktrees/e9-teacher-sales`) от main e728d8c. PR [#208](https://github.com/rebit-pro/rabit-api/pull/208).
-- Завершено: S0–S5 — реализация, быстрые проверки, полный гейт PASS, visual desktop/mobile, PR, саморевью без блокеров.
-- Следующий шаг: по «да» владельца — merge PR #208 и выкладка backend + frontend (миграций нет): backend → DI smoke → frontend. Следующая волна отмечает E9 merged в графе.
-- Блокеры: нет. Открытых решений нет.
-- Рабочее дерево чистое после коммита документов.
-- Повтор гейта: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
+- PR [#208](https://github.com/rebit-pro/rabit-api/pull/208) merged d8236a4 (16.10.2026); выложен на stage как `main-20261016152109-d8236a4` (backend и frontend, без миграций).
+- Волна завершена. Следующая волна отмечает E9 merged в графе.
+- Открыто: проверка владельцем под реальным воспитателем — нужен вход в кабинет (приглашение B2, доставка писем #161).
+- Откат: `docker service rollback` для 13 backend-сервисов и `morefoto_frontend` (спецификации в `services-before.json` релиза).
 
 ## Журнал
 
@@ -36,6 +34,12 @@
 - `make test-e2e …` (run `rabit-e2e-26488bdb3641`) — PASS, 404,2 с. Группы a 317,8 с и b 299,8 с, 74 браузерных теста без skip/flaky, все verify-*.php. Спека `zzzzzzzzzzz-teacher-sales` — passed за 7,3 с.
 - Visual (`e9-desktop-teacher-sales.png`, `e9-mobile-teacher-sales.png`): в карточке «E4 print» блок «Продажи» — 550 ₽, 1 заказ, 2 семьи, 5 печатных фото, 0 цифровых (копии J4 не считаются, DEC-01), «E4 Печать 10×15 — 4 шт.» и «D3 Печать … — 1 шт.». На 390 px без горизонтальной прокрутки.
 - PR #208 создан; граф: E9 → review. Саморевью: блокеров нет. Заголовок «Продажи» визуально скромный — не дефект, issue не заведён.
+
+### 16.10.2026 — merge и выкладка
+
+- PR #208 смержен по «да» владельца (d8236a4).
+- Релиз `main-20261016152109-d8236a4`: `prepare-release.sh` (vendor и backend.conf из J2-релиза, composer.lock не менялся) → `switch-backend.sh morefoto_stage_fpm` → DI smoke 10/10 (`GroupSalesController`, `GetGroupSalesUseCase`, `SalesAccessInterface` и прежние; отправка писем выключена) → остальные 12 backend-сервисов, включая `order_email_runner` → `switch-frontend.sh`.
+- Smoke stage: COM-14 без Bearer — 401 (маршрут есть). Все 14 сервисов 1/1, frontend 2/2. В бандле есть блок «Продажи». В логах FPM и backend нет 5xx и fatal.
 
 ## Тест-кейсы
 

@@ -75,7 +75,7 @@
 - [x] S3. Frontend: API, `GroupSales.vue`, «Обзор», unit.
 - [x] S4. Live E2E `zzzzzzzzzzzzz-teacher-sales.spec.ts`, groups.json.
 - [x] S5. Быстрые проверки, phpstan/phpunit, PR #208, саморевью без блокеров.
-- [~] S6. Полный гейт и visual — PASS; merge и выкладка — после «да» владельца.
+- [x] S6. Полный гейт и visual — PASS; merge d8236a4, выкладка `main-20261016152109-d8236a4`.
 
 ## Критерии приёмки
 
