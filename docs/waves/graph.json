@@ -2,11 +2,11 @@
   "version": 2,
   "planStatus": "active",
   "date": "2026-10-11",
-  "endpointCount": 122,
+  "endpointCount": 123,
   "backend": "RaBit API",
   "baseline": {
     "branch": "main",
-    "commit": "d1741d5be8da14f4434161474203f8cee160f1c4",
+    "commit": "d4b38291f18e20143d4e79a741e84a3681cea3b4",
     "mergedWaves": [
       "A1",
       "A2",
@@ -52,11 +52,10 @@
       "E8",
       "J4",
       "F3",
-      "L1"
+      "L1",
+      "J2"
     ],
-    "review": {
-      "J2": "https://github.com/rebit-pro/rabit-api/pull/200"
-    },
+    "review": {},
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
     "mergedPullRequests": {
       "B1": "https://github.com/rebit-pro/rabit-api/pull/8",
@@ -97,7 +96,8 @@
       "E8": "https://github.com/rebit-pro/rabit-api/pull/181",
       "J4": "https://github.com/rebit-pro/rabit-api/pull/184",
       "F3": "https://github.com/rebit-pro/rabit-api/pull/186",
-      "L1": "https://github.com/rebit-pro/rabit-api/pull/196"
+      "L1": "https://github.com/rebit-pro/rabit-api/pull/196",
+      "J2": "https://github.com/rebit-pro/rabit-api/pull/200"
     },
     "mergeCommits": {
       "C4": "cfc334e5890dd51dfd6ff6638eac2cc3e436322b",
@@ -130,7 +130,8 @@
       "E8": "a302774e48b597f5017d3bbacafc082730d7d045",
       "J4": "b085e8e809367dea49b8ca0ba9219648738be4a7",
       "F3": "68355a0a0df15ed9f4188abdd3c989019a98182d",
-      "L1": "72aa95bbb1fedd9c055d910c7af192b9e160d0f2"
+      "L1": "72aa95bbb1fedd9c055d910c7af192b9e160d0f2",
+      "J2": "eb7cfaf0ac687a51927f0ffa9e6d6ada341f82de"
     },
     "decisionEvidence": {
       "D02-D05": "docs/waves/e3/README.md in rabit-api: user accepted rules before PR #20",
@@ -915,7 +916,8 @@
         "K3",
         "N1",
         "B4",
-        "B3"
+        "B3",
+        "E9"
       ],
       "inputBoundary": "Установленные и принятые в main контракты/схема: A3, B1, C3. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
       "outputBoundary": "Завершённые операции ACC-02, ACC-03, ACC-04, ACC-05, ACC-06; Управление учётками/областями влияет на действующие сессии.",
@@ -1300,6 +1302,7 @@
         "E7",
         "D4",
         "E8",
+        "E9",
         "J4"
       ],
       "inputBoundary": "Установленные и принятые в main контракты/схема: E4. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
@@ -1572,6 +1575,7 @@
         "L1",
         "E7",
         "E8",
+        "E9",
         "J4"
       ],
       "inputBoundary": "Установленные и принятые в main контракты/схема: E5, F2. Открытые decisionGates проверяются отдельно до начала зависимого участка.",
@@ -1978,10 +1982,11 @@
       "legacyIds": [
         "W26"
       ],
-      "deliveryState": "review",
+      "deliveryState": "merged",
       "unlocks": [
         "J3",
-        "N3"
+        "N3",
+        "J5"
       ],
       "inputBoundary": "Слитые H1/J1/E8/J4; рабочий SMTP/worker и подтверждённый paid от G1 через существующий контракт.",
       "outputBoundary": "Надёжное событие paid → письмо на email заказа → безопасное получение оплаченных цифровых и печатных кадров.",
@@ -3043,7 +3048,9 @@
       "legacyIds": [],
       "deliveryState": "merged",
       "deliveryBundle": "design-ux",
-      "unlocks": [],
+      "unlocks": [
+        "E9"
+      ],
       "inputBoundary": "Слитые в main: текущий frontend. Внутри пакета design-ux — предыдущие коммиты: U3, U4, U5. Решения: D01.",
       "outputBoundary": "Стартовый «Обзор» для четырёх ролей и плитки над списками на серверных сводках; финансы в состоянии «недоступно».",
       "mergeCheck": "Коммит волны в ветке codex/u-design-system: быстрые проверки на main + diff пакета до этой волны включительно. Merge только вместе с пакетом после финального make test-e2e, demo-регресса и визуальной проверки desktop/mobile.",
@@ -3287,7 +3294,9 @@
         "E8",
         "F3",
         "J4",
-        "J2"
+        "J2",
+        "E9",
+        "J5"
       ],
       "decisionGates": [
         "D07",
@@ -3472,6 +3481,55 @@
       "releaseStage": "mvp"
     },
     {
+      "id": "E9",
+      "title": "Продажи группы в кабинете воспитателя",
+      "kind": "implementation",
+      "owners": [
+        "morefoto.commerce"
+      ],
+      "dependsOn": [
+        "B2",
+        "E5",
+        "G1",
+        "U6"
+      ],
+      "decisionGates": [],
+      "endpointIds": [
+        "COM-14"
+      ],
+      "verifiesEndpointIds": [
+        "COM-12"
+      ],
+      "outcome": "Воспитатель входит в свой кабинет и по каждой назначенной группе видит, сколько продано: печатные фото по форматам, цифровые файлы, оплаченные заказы, купившие семьи и сумму оплат родителей.",
+      "scope": [
+        "COM-14 GET /api/v1/groups/{groupId}/sales-summary: одно агрегирующее SQL-чтение по заказам группы с подтверждённой оплатой G1; pending/unknown/unpaid/отменённые не считаются.",
+        "Показатели по неизменяемому снимку заказа: печатные фото — сумма quantity×printCount physical-строк с разбивкой по названию продукции; цифровые файлы — оплаченные digital-кадры, бесплатные копии печати J4 и подарок GIFTS отдельно не считаются продажей; оплаченные заказы; купившие семьи — уникальные дети группы с хотя бы одним оплаченным заказом; сумма — оплачено родителями в рублях. Точные определения фиксируются E9-DEC до реализации.",
+        "Область на сервере: teacher — только назначенные группы через Access, organizer — своя область, curator — назначенные учреждения; чужая группа не раскрывается. Ответ без персональных данных покупателей: ни email, ни номеров и ключей заказов.",
+        "UI: «Обзор» воспитателя (U6) — в карточке каждой группы блок «Продажи» с плитками и разбивкой печати по форматам; desktop/mobile. Нового меню нет; organizer/curator получают ту же сводку через API в своей области.",
+        "Деньги — только сумма оплат, без себестоимости, комиссий ЮKassa и вознаграждения. Возвратов до I2 нет; когда они появятся, подтверждённый возврат вычитается из суммы и показателей."
+      ],
+      "review": [
+        "Область проверяется сервером, а не фильтром UI; воспитатель не видит соседние группы и личные данные родителей.",
+        "Одно чтение на группу без N+1, деньги в копейках целым числом, итог сходится со списком заказов COM-12 той же области.",
+        "Нет зависимости от Settlement/N1: сводка — проекция Commerce по оплаченным снимкам, а не полный финансовый отчёт."
+      ],
+      "acceptance": [
+        "DB/HTTP: группы с paid/pending/unpaid/смешанными заказами, печать нескольких форматов и quantity>1, digital, подарок GIFTS, копия J4; числа совпадают с ручным расчётом и COM-12.",
+        "Роли: teacher своей и чужой группы, organizer, curator вне назначений; 403/404 без раскрытия.",
+        "Браузерный E2E и visual desktop/mobile «Обзора» воспитателя: блок «Продажи», пустая группа без продаж, длинные названия форматов."
+      ],
+      "activation": "Сразу после выкладки. Воспитателю нужен вход в кабинет: приглашение B2 и рабочая доставка письма (#161).",
+      "legacyIds": [],
+      "deliveryState": "planned",
+      "unlocks": [
+        "N3"
+      ],
+      "inputBoundary": "Слитые B2/E5/G1/U6: назначения воспитателя, неизменяемые снимки заказов, подтверждённая оплата и «Обзор» по ролям.",
+      "outputBoundary": "COM-14 и блок «Продажи» в «Обзоре» воспитателя: количество печати по форматам, цифровых файлов, оплаченных заказов, купивших семей и сумма оплат.",
+      "mergeCheck": "Отдельная ветка codex/<id>-... и PR от актуального main; все dependsOn уже merged. Проверки только main + собственный diff, после смены base повторить затронутые. Backend/frontend, HTTP/E2E и visual затронутого UI обязательны перед merge; E2E выполняет пользователь с другой моделью, Reviewer не запускает.",
+      "releaseStage": "mvp"
+    },
+    {
       "id": "F3",
       "title": "Короткая ссылка группы",
       "kind": "implementation",
@@ -3576,6 +3634,52 @@
       "outputBoundary": "Подтверждённая покупка печати даёт скачивание каждого оплаченного кадра по одному и в ZIP без дополнительной платы.",
       "mergeCheck": "Отдельная ветка codex/<id>-... и PR от актуального main; все dependsOn уже merged. Проверки только main + собственный diff, после смены base повторить затронутые. Backend/frontend, HTTP/E2E и visual затронутого UI обязательны перед merge; E2E выполняет пользователь с другой моделью, Reviewer не запускает.",
       "releaseStage": "mvp"
+    },
+    {
+      "id": "J5",
+      "title": "Оригиналы фото вложениями в письме заказа",
+      "kind": "implementation",
+      "owners": [
+        "morefoto.files",
+        "rebit.notification"
+      ],
+      "dependsOn": [
+        "J2"
+      ],
+      "decisionGates": [],
+      "endpointIds": [],
+      "verifiesEndpointIds": [
+        "FIL-05",
+        "FIL-06"
+      ],
+      "outcome": "После подтверждённой оплаты родитель получает на email заказа все оплаченные кадры оригиналами во вложениях; в каждом письме остаётся ссылка на заказ.",
+      "scope": [
+        "Письмо J2 дополняется вложениями: все кадры права Files (digital, подарок GIFTS, копии печати J4) исходными байтами оригинала с именами файлов, как на странице заказа.",
+        "Разбиение по размеру: лимит исходных байт вложений на письмо (рекомендация — до 18 МБ, около двух кадров по 8 МБ, около 24 МБ после base64), письма «k из n». Ожидаемый заказ — до 10 кадров (до 5 писем), жёсткого предела на число кадров нет. Кадр крупнее лимита уходит один; превышающий предел транспорта остаётся только по ссылке. Лимит и поведение фиксируются J5-DEC до реализации.",
+        "Notification отправляет вложения по ссылке на файл хранилища, а не байтами в outbox/RabbitMQ; чтение потоковое, память worker ограничена.",
+        "Надёжность J2 сохраняется для каждой части: дедупликация по заказу и номеру части, повтор только неотправленной части, статусы частей в истории FIL-06. Ручной повтор FIL-05 пересылает все части с прежним ограничением 10 минут.",
+        "Ошибка или отказ SMTP по размеру не отменяют оплату и скачивание: часть получает failed, ссылка на заказ работает. Отправка включается общим флагом J2 после #161."
+      ],
+      "review": [
+        "Во вложения попадают только кадры права этого заказа; соседние кадры ребёнка и неоплаченные заказы закрыты.",
+        "Оригиналы не копируются в outbox, очередь и логи; адрес и содержимое письма не логируются.",
+        "Реальная доставка проверена на контролируемых ящиках Яндекс, Mail.ru и Gmail, а не только по accepted транспорта."
+      ],
+      "acceptance": [
+        "Unit/DB: 1, 2, 10 кадров и кадр крупнее лимита — число писем и состав частей; байты вложения равны оригиналу.",
+        "Повтор webhook/worker, падение между частями, SMTP timeout и отказ по размеру, ручной повтор FIL-05/06, чужой ключ.",
+        "Реальные контролируемые ящики: письма приходят, вложения открываются и сохраняются в галерею телефона; ссылка на заказ работает."
+      ],
+      "activation": "Вместе с включением отправки J2 после проверки #161; до этого — только контролируемые ящики.",
+      "legacyIds": [],
+      "deliveryState": "planned",
+      "unlocks": [
+        "N3"
+      ],
+      "inputBoundary": "Слитая J2: надёжное письмо со ссылкой на оплаченный заказ, ручной повтор и история; рабочий SMTP H1.",
+      "outputBoundary": "Письма заказа с оригиналами всех оплаченных кадров во вложениях, разбитые по размеру, с историей частей и ссылкой на заказ.",
+      "mergeCheck": "Отдельная ветка codex/<id>-... и PR от актуального main; все dependsOn уже merged. Проверки только main + собственный diff, после смены base повторить затронутые. Backend/frontend, HTTP/E2E и visual затронутого UI обязательны перед merge; E2E выполняет пользователь с другой моделью, Reviewer не запускает.",
+      "releaseStage": "mvp"
     }
   ],
   "paymentIntegration": {
@@ -3675,7 +3779,9 @@
       "L1",
       "G2",
       "J2",
-      "N3"
+      "N3",
+      "E9",
+      "J5"
     ],
     "acceptanceWave": "N3",
     "postMvpWaves": [
@@ -3705,7 +3811,9 @@
       "printDigitalCopy": "each paid physical frame once; original price unchanged; J1 expiry",
       "buyerDelivery": "automatic protected email delivery after paid; reliable retry/dedup; J2 mandatory",
       "labelCorrection": "after handoff only without any orders; atomic with order creation; T0 unchanged",
-      "galleryLink": "saved unpredictable first-party alias; legacy capability compatible"
+      "galleryLink": "saved unpredictable first-party alias; legacy capability compatible",
+      "teacherSales": "teacher cabinet per assigned group: prints by format, digital files, paid orders, buying families, paid sum; no buyer personal data",
+      "buyerAttachments": "J5: all entitled originals attached to the J2 letters, split by size; the order link stays in every letter"
     },
     "openLaunchDecisions": [
       "MVP-SIVMA-01: рабочий каталог и ручной порядок передачи/доработки (операционно); срок архивной ссылки 14 дней принят L1-DEC-03; email/дополнения для L3 отдельно",
@@ -3722,6 +3830,17 @@
     "note": "requiredWaves — необходимый, но недостаточный критерий запуска: внешние условия, открытые решения и реальные проверки не подменяются статусом графа.",
     "optionalCapabilities": [
       "L3: явная email-отправка готовой версии и autoSend=false по умолчанию; не блокирует N3"
+    ],
+    "amendments": [
+      {
+        "date": "2026-10-16",
+        "plan": "docs/plans/OPS-waves-e9-j5/plan.md",
+        "waves": [
+          "E9",
+          "J5"
+        ],
+        "note": "Владелец: страница продаж для воспитателя и все фото на почту; обе волны в MVP до N3."
+      }
     ]
   }
 }
