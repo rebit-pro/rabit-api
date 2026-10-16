@@ -188,15 +188,27 @@ function change(row: Row, quantity: number): void {
     </p>
     <v-alert v-if="error" type="error" variant="tonal" density="compact" role="alert">{{ error }}</v-alert>
     <p class="product-notice" :class="{ 'mf-sr-only': !notice }" role="status">{{ notice }}</p>
-    <v-btn v-if="quote.count" :to="'/g/' + token + '/cart'" color="primary" block size="large" append-icon="mdi-arrow-right"
-      >Оформить заказ · {{ quote.count }} {{ plural(quote.count, ['позиция', 'позиции', 'позиций']) }}</v-btn
-    >
+    <!-- #205: the checkout stays at the bottom of the scrolling frame dialog, so a phone sees it right after «+». -->
+    <div v-if="quote.count" class="product-selector__checkout" data-testid="frame-checkout">
+      <v-btn :to="'/g/' + token + '/cart'" color="primary" block size="large" append-icon="mdi-arrow-right"
+        >Оформить заказ · {{ quote.count }} {{ plural(quote.count, ['позиция', 'позиции', 'позиций']) }}</v-btn
+      >
+    </div>
     <BuyerGuideLink step="foto" class="product-selector__guide" />
   </section>
 </template>
 <style scoped>
 .product-selector__guide {
   align-self: center;
+}
+.product-selector__checkout {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin: 0 calc(-1 * var(--mf-space-5));
+  padding: var(--mf-space-3) var(--mf-space-5);
+  background: rgb(var(--v-theme-surface));
+  box-shadow: 0 -8px 16px -12px rgb(0 0 0 / 35%);
 }
 .product-selector {
   padding: var(--mf-space-5);

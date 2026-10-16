@@ -167,6 +167,10 @@ for (const viewport of [
     await expect(guide.first()).toBeVisible();
     await expect(guide.first()).toHaveAttribute('href', '/kak-kupit/');
     await expect(guide.first()).toHaveAttribute('target', '_blank');
+    // #202: in the gallery header the guide is a filled button a parent notices, at least a finger tall.
+    await expect(guide.first()).toHaveClass(/buyer-guide-link--prominent/);
+    await expect(guide.first()).toHaveText(/Как купить фото — 6 шагов/);
+    expect((await guide.first().boundingBox())!.height).toBeGreaterThanOrEqual(44);
     await page.screenshot({
       path: info.outputPath('e4-' + viewport.name + '-gallery.png'),
       fullPage: true,
@@ -179,6 +183,8 @@ for (const viewport of [
     expect((await priced).status()).toBe(200);
     const count = page.getByRole('dialog').getByTestId('product-count');
     await expect(count).toHaveText('1');
+    // #205: right after «+» the checkout of the frame stays on screen, also on a phone.
+    await expect(page.getByRole('dialog').getByTestId('frame-checkout')).toBeInViewport();
     await page.getByRole('button', { name: 'Добавить ещё один: E4 Печать 10×15', exact: true }).click();
     await expect(count).toHaveText('2');
     await expect(page.getByTestId('frame-summary')).toContainText('В корзине из этого кадра: 2 шт.');

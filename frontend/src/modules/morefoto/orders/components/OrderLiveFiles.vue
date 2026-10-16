@@ -4,7 +4,9 @@ import { formatMoment } from '../formatters';
 import { useLiveFiles } from '../composables/useLiveFiles';
 import { fileSize, filesCount } from '../live/files-rules';
 const props = defineProps<{ orderKey: string }>();
-const { files, loading, busy, preparing, error, load, download, canSave, save, sharePending } = useLiveFiles(toRef(props, 'orderKey'));
+const { files, loading, busy, preparing, error, load, download, canSave, saveMode, save, sharePending } = useLiveFiles(
+  toRef(props, 'orderKey')
+);
 </script>
 <template>
   <section id="order-files" class="mf-panel downloads" aria-labelledby="downloads-title" data-testid="order-files">
@@ -69,7 +71,20 @@ const { files, loading, busy, preparing, error, load, download, canSave, save, s
                   @click="save(file)"
                   >Сохранить в телефон</v-btn
                 >
+                <!-- #204: Android saves a downloaded photo into «Загрузки», which its gallery shows: one button does it. -->
                 <v-btn
+                  v-if="saveMode === 'download'"
+                  color="primary"
+                  prepend-icon="mdi-cellphone-arrow-down"
+                  :aria-label="'Сохранить в телефон кадр ' + file.code"
+                  :loading="busy === file.photoId"
+                  :disabled="!!busy"
+                  data-testid="files-save-download"
+                  @click="download(file.photoId)"
+                  >Сохранить в телефон</v-btn
+                >
+                <v-btn
+                  v-else
                   variant="outlined"
                   color="primary"
                   :aria-label="'Скачать кадр ' + file.code"
@@ -85,6 +100,9 @@ const { files, loading, busy, preparing, error, load, download, canSave, save, s
               </p>
             </li>
           </ul>
+          <p v-if="saveMode === 'download'" class="mf-muted downloads__note mt-3" data-testid="files-save-gallery-hint">
+            Фото появится в галерее телефона, в альбоме «Загрузки».
+          </p>
         </template>
       </template>
     </template>

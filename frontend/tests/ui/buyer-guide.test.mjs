@@ -8,6 +8,17 @@ const root = new URL('../../', import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), 'utf8');
 const page = read('public/kak-kupit/index.html');
 const meta = (property) => page.match(new RegExp(`<meta (?:property|name)="${property}" content="([^"]*)"`))?.[1];
+/** Width and height of a lossy, lossless or extended WebP from its first chunk. */
+function webpSize(path) {
+  const file = readFileSync(new URL(path, root));
+  const chunk = file.toString('ascii', 12, 16);
+  if (chunk === 'VP8 ') return [file.readUInt16LE(26) & 0x3fff, file.readUInt16LE(28) & 0x3fff];
+  if (chunk === 'VP8L') {
+    const bits = file.readUInt32LE(21);
+    return [(bits & 0x3fff) + 1, ((bits >>> 14) & 0x3fff) + 1];
+  }
+  return [file.readUIntLE(24, 3) + 1, file.readUIntLE(27, 3) + 1];
+}
 
 test('KK-T03: the guide page carries a messenger preview with an absolute image that exists', () => {
   assert.match(page, /<html lang="ru">/);
@@ -27,9 +38,12 @@ test('KK-T01: six steps, each with an existing screenshot that opens in the shar
     ['rebenok', 'foto', 'zakaz', 'oplata', 'karta', 'gotovo']
   );
   for (const [card] of cards) {
-    const [, href, src, alt] = card.match(/<figure class="shot"><a href="([^"]+)"><img src="([^"]+)"[^>]* alt="([^"]+)"/) ?? [];
+    const [, href, src, width, height, alt] =
+      card.match(/<figure class="shot"><a href="([^"]+)"><img src="([^"]+)" width="(\d+)" height="(\d+)" alt="([^"]+)"/) ?? [];
     assert.equal(href, src);
     assert.ok(existsSync(new URL('public' + src, root)), src);
+    // #203: a replaced screenshot keeps width and height of its file, so the page does not jump while it loads.
+    assert.deepEqual(webpSize('public' + src), [Number(width), Number(height)], src);
     assert.match(alt, /^Шаг \d\. /);
   }
   for (const asset of [...page.matchAll(/(?:href|src)="(\/(?:guide|kak-kupit|icons)\/[^"?#]+)/g)].map((match) => match[1]))
@@ -54,7 +68,9 @@ test('KK-T04: every purchase step links to the guide, step anchors exist on the 
       if (step) assert.match(page, new RegExp(`id="${step}"`), screen);
   }
   const link = read('src/modules/morefoto/guide/BuyerGuideLink.vue');
-  assert.match(link, /target="_blank" rel="noopener"/);
+  assert.match(link, /target="_blank"\s+rel="noopener"/);
+  // #202: the gallery header shows the filled variant a parent notices at once.
+  assert.match(read('src/modules/morefoto/gallery/components/GalleryHeader.vue'), /<BuyerGuideLink\b[^>]*\bprominent\b/);
 });
 
 test('KK-T05: the buyer footer leads to the guide', () => {
