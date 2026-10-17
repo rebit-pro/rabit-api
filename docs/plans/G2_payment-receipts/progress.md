@@ -2,22 +2,19 @@
 
 ## Точка продолжения
 
-- Ветка `codex/g2-payment-receipts`, перемотана на `main` `b3e56a8` (своих коммитов не было); рабочая копия
-  `/home/user/rabit-api-worktrees/g2-payment-receipts`. PR ещё нет.
-- Завершено: ответы владельца по D09 (17.10.2026), сверка API ЮKassa по OpenAPI-спецификации, инвентаризация кода
-  `b3e56a8`, план переписан.
-- Решения G2-D09 и G2-DEC-01…12 приняты владельцем («Рекомендации принимаю»). S1–S2 завершены: граф (J5 merged,
-  G2 inProgress, D09 принят, PAY-12/13, PAY-05/06 → I1) и `docs/waves/g2/morefoto-contract.patch`.
-- S3–S10 выполнены: backend `1ccc96d`, frontend `7d6d537`; быстрые проверки PASS.
-- S12 (E2E) написан `1488144`, PR [#212](https://github.com/rebit-pro/rabit-api/pull/212), саморевью без блокеров;
-  неблокирующее — #213, #214; PR закрывает #120.
-- S13 завершён: гейт `rabit-e2e-4cbd704da394` PASS (158 тестов, все verify, тестовый магазин включён), visual,
-  G2 → review в графе.
-- Следующий шаг: по «да» владельца — merge PR #212 и выкладка: `migrate.sh up Version20261017180001` → backend (13
-  сервисов) с окружением чеков на `morefoto_stage_fpm` и `morefoto_stage_payment_reconciler` → DI smoke → frontend.
-- Блокеры: нет. Открытых решений нет.
-- Открыто: нет. Тестовый магазин с проверкой чеков включён владельцем.
-- Проверка графа: `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
+- PR #212 слит в main `65bd194` (17.10.2026) и выложен на stage релизом `main-20261017192004-65bd194` (журнал «Выкладка»).
+  Чеки включены на тестовом магазине; боевой ключ не подключён.
+- Следующий шаг: владелец проверяет на stage оплату тестовой картой (блок «Чеки» в заказе) и «Выдачу печати»; следующая
+  волна записывает G2 `merged` в граф (PR #212, `65bd194`). Переход на боевой магазин — после N3 по согласию владельца
+  (runbook в `docs/waves/g2/README.md`).
+- Для следующих релизов: на `morefoto_stage_fpm` и `morefoto_stage_payment_reconciler` есть окружение
+  `MOREFOTO_PAYMENT_RECEIPTS=yookassa`, `_RECEIPT_VAT_CODE=1`, `_RECEIPT_SUBJECT_PRINT/_DIGITAL=commodity` — переключение
+  только `/app` его сохраняет.
+- Откат stage: backend/воркеры — `docker service rollback` (прежний `/app` — `main-20261017121241-4fe304b`, спецификации в
+  `services-before.json` релиза; откат FPM и сверки снимает и окружение чеков — тогда оплата в тестовом магазине снова
+  отклоняется); frontend — `docker service rollback morefoto_frontend`. `down` миграции 20261017180001 при наличии чеков
+  отказывает.
+- Блокеры: нет.
 
 ## Тест-кейсы
 
@@ -139,4 +136,18 @@
 - Visual `docs/waves/g2/screenshots/`: блок «Чеки» (desktop/mobile), «Выдача печати» (desktop/mobile), «Чеки заказа»
   в карточке платежа; на 390 px без горизонтальной прокрутки. Названия товаров в кадрах — тестовый каталог стенда.
 - Граф: G2 → review (PR #212), `verify-wave-graph.py` PASS.
+
+### 17.10.2026 — merge и выкладка
+
+- Владелец: «Да, мержи и выкладывай». PR #212 слит merge-коммитом `65bd194` (head `6f7bc34`, MERGEABLE CLEAN, main был `b3e56a8`).
+- Релиз `/srv/morefoto/releases/main-20261017192004-65bd194`: `git archive 65bd194 api`, образ
+  `morefoto-frontend:main-20261017192004-65bd194` (`VITE_API_MOCKS_ENABLED=false`); vendor и `backend.conf` из
+  `main-20261017121241-4fe304b` (`composer.lock` не менялся). `sha256sum --check` и `prepare-release.sh` — PASS.
+- `backup.sh` — 284 093 байта; `restore-check.sh` — 183 таблицы PASS.
+- `migrate.sh up Version20261017180001` — success (только эта версия).
+- `switch-backend.sh morefoto_stage_fpm` (код + окружение чеков) → DI smoke в FPM: 21/21, `OK receipts on, channels
+  ["email"], test shop yes`, `OK order email sending is off`. Остальные 12 backend-сервисов переключены;
+  `morefoto_stage_payment_reconciler` с окружением чеков печатает «Сверено попыток: 0 …; чеков: 0, с ошибкой: 0».
+- Frontend 2/2 `morefoto-frontend:main-20261017192004-65bd194`. Все 14 сервисов 1/1 (frontend 2/2).
+- HTTP: `/` и `/legal` 200; PAY-04 без ключа — 404 `ORDER_NOT_FOUND`; PAY-12 без входа — 401; PAY-03 без ключа — 404.
 
