@@ -263,6 +263,10 @@ namespace Bitrix\Main\Config {
         /** @return array<string, mixed> */
         public function get(string $name): array {}
     }
+    class Option
+    {
+        public static function get(string $moduleId, string $name, string $default = '', bool|string $siteId = false): string {}
+    }
 }
 
 namespace Bitrix\Main\Web {
@@ -351,7 +355,7 @@ namespace {
          *     eventName: string,
          *     siteId: string|array,
          *     fields: array<string, mixed>,
-         *     filesContent: array<int, array<string, string>>,
+         *     filesContent: array<int, array<string, null|string>>,
          * }|null */
         public static ?array $lastSendImmediateCall = null;
         public static string|false $sendImmediateResult = 'Y';
@@ -359,7 +363,7 @@ namespace {
         /**
          * @param array<string, mixed>                  $fields
          * @param array<int, int|string>                $files
-         * @param array<int, array<string, string>>     $filesContent
+         * @param array<int, array<string, null|string>> $filesContent
          */
         public static function SendImmediate(
             string $eventName,

@@ -15,5 +15,9 @@ final readonly class FileDeliveryResultDto implements ResultDtoInterface
         public string $recipient,
         public string $createdAt,
         public ?string $acceptedAt,
+        public int $letters,
+        public int $acceptedLetters,
+        public int $photos,
+        public int $linkOnly,
     ) {}
 }

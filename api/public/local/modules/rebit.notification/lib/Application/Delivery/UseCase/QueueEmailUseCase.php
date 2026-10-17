@@ -8,6 +8,7 @@ use Psr\Log\LoggerInterface;
 use Rebit\Notification\Application\Delivery\Contract\DeliveryOperationRepositoryInterface;
 use Rebit\Notification\Application\Delivery\Contract\NotificationClockInterface;
 use Rebit\Notification\Application\Delivery\Contract\NotificationPublisherInterface;
+use Rebit\Share\Application\Contract\Notification\Dto\EmailAttachmentInputDto;
 use Rebit\Share\Application\Contract\Notification\Dto\EmailNotificationInputDto;
 use Rebit\Share\Application\Contract\Notification\Dto\NotificationOperationOutputDto;
 use Rebit\Share\Application\Contract\Notification\EmailNotificationInterface;
@@ -15,7 +16,8 @@ use Rebit\Share\Application\Contract\Notification\EmailNotificationInterface;
 /**
  * Создаёт или повторно использует идемпотентную операцию email-доставки и пытается немедленно поставить её в очередь.
  *
- * Возвращает безопасный статус операции, сохраняя pending-состояние при временном сбое публикации.
+ * Возвращает безопасный статус операции, сохраняя pending-состояние при временном сбое публикации. Вложения принимаются
+ * только ссылками на файлы в пределах лимита письма: байты читает транспорт в момент отправки (J5).
  */
 final readonly class QueueEmailUseCase implements EmailNotificationInterface
 {
@@ -28,7 +30,8 @@ final readonly class QueueEmailUseCase implements EmailNotificationInterface
 
     public function queue(EmailNotificationInputDto $input): NotificationOperationOutputDto
     {
-        // The HTML part joins the hash only when present, so plain-text operations keep their stored hashes.
+        $this->assertAttachments($input->attachments);
+        // The HTML part and the attachments join the hash only when present, so older operations keep their stored hashes.
         $payloadHash = hash('sha256', implode("\0", [
             'email',
             mb_strtolower($input->recipient),
@@ -36,6 +39,7 @@ final readonly class QueueEmailUseCase implements EmailNotificationInterface
             $input->body,
             (string)$input->maxAttempts,
             ...(null === $input->bodyHtml ? [] : ['html', $input->bodyHtml]),
+            ...([] === $input->attachments ? [] : ['attachments', json_encode($input->attachments, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)]),
         ]));
         $operation = $this->operations->createOrGet(
             id: $this->uuid(),
@@ -64,6 +68,26 @@ final readonly class QueueEmailUseCase implements EmailNotificationInterface
         }
 
         return $this->operations->find($operationId)?->output();
+    }
+
+    /** @param list<EmailAttachmentInputDto> $attachments */
+    private function assertAttachments(array $attachments): void
+    {
+        $total = 0;
+        foreach ($attachments as $attachment) {
+            // The name goes into a quoted MIME header; the path must be absolute and must not climb out of its directory.
+            if (1 !== preg_match('~^[^\x00-\x1F\x7F"\\\/]{1,128}$~uD', $attachment->name)
+                || 1 !== preg_match('~^[a-z]+/[a-z0-9.+-]{1,64}$~D', $attachment->contentType)
+                || 1 !== preg_match('~^/[^\x00]+$~D', $attachment->path)
+                || 1 === preg_match('~(?:^|/)\.\.(?:/|$)~', $attachment->path)
+                || 0 > $attachment->bytes) {
+                throw new \InvalidArgumentException('Invalid notification attachment.');
+            }
+            $total += $attachment->bytes;
+        }
+        if (EmailNotificationInterface::MAX_ATTACHMENT_BYTES < $total) {
+            throw new \InvalidArgumentException('Notification attachments exceed the letter limit.');
+        }
     }
 
     private function uuid(): string

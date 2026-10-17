@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Morefoto\Files\Domain\Delivery\Repository;
 
+use Morefoto\Files\Domain\Delivery\ValueObject\DeliveryPart;
 use Morefoto\Files\Domain\Delivery\ValueObject\FileDelivery;
+use Morefoto\Files\Domain\Delivery\ValueObject\LetterPlan;
 
-/** Журнал писем со ссылкой на заказ и курсор подтверждённых оплат. */
+/** Журнал отправок заказа на почту, их писем и курсор подтверждённых оплат. */
 interface DeliveryRepositoryInterface
 {
     /** @return array{at: \DateTimeImmutable, orderId: int} последнее подтверждение оплаты, уже разобранное диспетчером */
@@ -34,6 +36,22 @@ interface DeliveryRepositoryInterface
     /** @return list<FileDelivery> письма, ещё не поставленные в очередь H1 */
     public function held(int $limit): array;
 
+    /**
+     * J5: записывает план писем один раз вместе с их составом; повтор и параллельная отправка той же доставки получают
+     * уже записанный план.
+     */
+    public function plan(string $publicId, LetterPlan $plan, \DateTimeImmutable $now): void;
+
+    /**
+     * @return list<DeliveryPart> письма доставки по порядку; пусто, пока план не записан
+     *
+     * @phpstan-impure
+     */
+    public function parts(string $publicId): array;
+
+    public function markPartQueued(string $publicId, int $number, string $operationId, \DateTimeImmutable $now): void;
+
+    /** Все письма в очереди H1; $operationId — операция первого письма. */
     public function markQueued(string $publicId, string $operationId, \DateTimeImmutable $now): void;
 
     public function markCancelled(string $publicId, \DateTimeImmutable $now): void;

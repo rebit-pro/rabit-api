@@ -34,6 +34,8 @@ final class FilesFixture
 
     /** @var array<string, string> ID кадра → абсолютный путь оригинала */
     public array $paths = [];
+    /** @var array<string, int> ID кадра → размер оригинала, если файла нет на диске (J5: разбиение по письмам) */
+    public array $sizes = [];
 
     public function clock(): ClockInterface
     {
@@ -129,7 +131,8 @@ final class FilesFixture
                 foreach ($photoIds as $id) {
                     if (isset($this->fixture->paths[$id])) {
                         $path = $this->fixture->paths[$id];
-                        $originals[$id] = new OriginalFileOutputDto($id, 'image/jpeg', is_file($path) ? (int)filesize($path) : 1000, 'shoot/' . substr($id, 0, 2) . '/' . $id . '.jpg', $path);
+                        $bytes = is_file($path) ? (int)filesize($path) : $this->fixture->sizes[$id] ?? 1000;
+                        $originals[$id] = new OriginalFileOutputDto($id, 'image/jpeg', $bytes, 'shoot/' . substr($id, 0, 2) . '/' . $id . '.jpg', $path);
                     }
                 }
 

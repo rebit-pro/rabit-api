@@ -8,9 +8,10 @@ use Bitrix\Main\Loader;
 use Morefoto\Commerce\Domain\Order\Service\OrderCalendarPolicy;
 use Morefoto\Files\Application\Delivery\UseCase\DispatchOrderEmailsUseCase;
 
-// J2: MySQL trail of the letter with the link to the paid order — one automatic letter per order confirmed after the release,
-// queued once in H1 under its deduplication key; the email key is a separate active key stored only as SHA-256, it lasts the
-// files month and leaves the buyer key alone; a repeated dispatcher run adds nothing.
+// J2/J5: MySQL trail of the letters of the paid order — one automatic delivery per order confirmed after the release, its
+// letters planned once and each queued once in H1 under its own deduplication key; H1 keeps only references to the originals
+// and clears texts and references after the letter is accepted; the email key is a separate active key stored only as
+// SHA-256, it lasts the files month and leaves the buyer key alone; a repeated dispatcher run adds nothing.
 if ('test' !== getenv('APP_ENV') || !is_dir('/runtime/public/bitrix') || !is_file('/runtime/j2-email.json')) {
     throw new RuntimeException('Order email verification requires the disposable test runtime and browser results.');
 }
@@ -50,7 +51,7 @@ $check(0 === $scalar("SELECT COUNT(*) FROM (SELECT ORDER_ID FROM mf_file_deliver
 // 2. The letter of the order is queued once in H1 under its own deduplication key and goes to the order email.
 $letter = $connection->query("SELECT d.PUBLIC_ID,d.RECIPIENT,d.OPERATION_ID,n.CONSUMER_KEY,n.DEDUP_KEY,n.RECIPIENT AS TO_ADDRESS,n.MAX_ATTEMPTS
     FROM mf_file_delivery d JOIN b_rebit_notification_operation n ON n.ID=d.OPERATION_ID WHERE d.ORDER_ID={$orderId} AND d.KIND='auto' AND d.STATUS='queued'")->fetchRaw();
-$check(is_array($letter) && 'files-order-email' === $letter['CONSUMER_KEY'] && 'order-email:' . $letter['PUBLIC_ID'] === $letter['DEDUP_KEY'], 'the queued letter');
+$check(is_array($letter) && 'files-order-email' === $letter['CONSUMER_KEY'] && 'order-email:' . $letter['PUBLIC_ID'] . ':1' === $letter['DEDUP_KEY'], 'the queued letter');
 $check($order['BUYER_EMAIL'] === $letter['RECIPIENT'] && $letter['RECIPIENT'] === $letter['TO_ADDRESS'] && 10 === (int)$letter['MAX_ATTEMPTS'], 'the letter goes to the order email');
 
 // 3. The email key is a separate active key, stored only as SHA-256 and lasting the files month; the buyer key is intact.
@@ -61,7 +62,7 @@ $check(1 === $scalar("SELECT COUNT(*) FROM mf_order_access_key WHERE ORDER_ID={$
 $check(1 === $scalar("SELECT COUNT(*) FROM mf_order_access_key WHERE ORDER_ID={$orderId} AND KIND='buyer' AND REVOKED_AT IS NULL AND KEY_HASH='"
     . hash('sha256', (string)$record['buyerKey']) . "'"), 'the buyer key stays active');
 $dump = '';
-foreach (['mf_file_delivery', 'mf_order_access_key', 'mf_order'] as $table) {
+foreach (['mf_file_delivery', 'mf_file_delivery_part', 'mf_order_access_key', 'mf_order'] as $table) {
     $result = $connection->query('SELECT * FROM ' . $table);
     while (false !== ($row = $result->fetchRaw())) {
         $dump .= json_encode($row, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
@@ -69,9 +70,40 @@ foreach (['mf_file_delivery', 'mf_order_access_key', 'mf_order'] as $table) {
 }
 $check(!str_contains($dump, $key), 'a raw email key is stored');
 
-// 4. A repeated run adds no letter and keeps one H1 operation per letter.
-$before = $scalar('SELECT COUNT(*) FROM mf_file_delivery');
+// 4. J5: the automatic delivery and the repeat each planned one letter per frame (the stand limit), every letter queued once
+// under `order-email:<delivery>:<number>`, the first letter is the delivery operation; the same frames went both times.
+$photos = [];
+foreach ((array)$record['deliveries'] as $publicId) {
+    $delivery = $connection->query("SELECT ID,LETTERS,OPERATION_ID,STATUS,LINK_ONLY FROM mf_file_delivery WHERE ORDER_ID={$orderId} AND PUBLIC_ID='"
+        . $sql->forSql((string)$publicId) . "'")->fetchRaw();
+    $check(is_array($delivery) && 'queued' === $delivery['STATUS'] && (int)$record['letters'] === (int)$delivery['LETTERS'], 'the planned letters of ' . $publicId);
+    $check([] === json_decode((string)$delivery['LINK_ONLY'], true), 'a fixture frame is above the letter limit');
+    $parts = $connection->query('SELECT p.NUMBER,p.FILES,p.BYTES,p.OPERATION_ID,n.DEDUP_KEY,n.STATUS,n.BODY,n.ATTACHMENTS FROM mf_file_delivery_part p
+        JOIN b_rebit_notification_operation n ON n.ID=p.OPERATION_ID WHERE p.DELIVERY_ID=' . (int)$delivery['ID'] . ' ORDER BY p.NUMBER');
+    $ids = [];
+    while (false !== ($part = $parts->fetchRaw())) {
+        $files = json_decode((string)$part['FILES'], true, flags: JSON_THROW_ON_ERROR);
+        $check(1 === count($files) && (int)$files[0]['bytes'] === (int)$part['BYTES'] && str_starts_with((string)$files[0]['path'], '/'), 'a letter holds one frame by reference');
+        $check('order-email:' . $publicId . ':' . $part['NUMBER'] === $part['DEDUP_KEY'], 'the deduplication key of a letter');
+        // The letter is accepted: H1 no longer keeps its text, its link and the references to the originals.
+        $check('accepted' === $part['STATUS'] && '' === $part['BODY'] && null === $part['ATTACHMENTS'], 'an accepted letter keeps its text or attachments');
+        $ids[] = (string)$files[0]['photoId'];
+        if (1 === (int)$part['NUMBER']) {
+            $check($part['OPERATION_ID'] === $delivery['OPERATION_ID'], 'the delivery points to its first letter');
+        }
+    }
+    $check((int)$record['letters'] === count($ids) && count($ids) === count(array_unique($ids)), 'every frame is in one letter');
+    sort($ids);
+    $photos[] = $ids;
+}
+$check(2 === count($photos) && $photos[0] === $photos[1], 'the repeat sends the same frames (J5-DEC-03)');
+// Neither H1 nor the letters keep originals: only short references are stored.
+$check(0 === $scalar("SELECT COUNT(*) FROM b_rebit_notification_operation WHERE CONSUMER_KEY='files-order-email' AND (LENGTH(BODY)>65535 OR LENGTH(ATTACHMENTS)>8192)"), 'H1 stores file bytes');
+$check(0 === $scalar('SELECT COUNT(*) FROM mf_file_delivery_part WHERE LENGTH(FILES)>8192'), 'a letter stores file bytes');
+
+// 5. A repeated run adds no delivery and no letter and keeps one H1 operation per letter.
+$before = $scalar('SELECT COUNT(*) FROM mf_file_delivery') . ':' . $scalar('SELECT COUNT(*) FROM mf_file_delivery_part');
 ServiceLocator::getInstance()->get(DispatchOrderEmailsUseCase::class)->execute(100);
-$check($before === $scalar('SELECT COUNT(*) FROM mf_file_delivery'), 'a repeated run added a letter');
+$check($before === $scalar('SELECT COUNT(*) FROM mf_file_delivery') . ':' . $scalar('SELECT COUNT(*) FROM mf_file_delivery_part'), 'a repeated run added a letter');
 $check(0 === $scalar("SELECT COUNT(*) FROM (SELECT DEDUP_KEY FROM b_rebit_notification_operation WHERE CONSUMER_KEY='files-order-email' GROUP BY DEDUP_KEY HAVING COUNT(*)>1) d"), 'a letter queued twice');
 echo "J2 order email integration passed\n";

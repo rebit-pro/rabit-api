@@ -7,9 +7,11 @@ namespace Morefoto\Files\Tests\Unit\Support;
 use Morefoto\Files\Domain\Delivery\Enum\DeliveryKindEnum;
 use Morefoto\Files\Domain\Delivery\Enum\DeliveryStatusEnum;
 use Morefoto\Files\Domain\Delivery\Repository\DeliveryRepositoryInterface;
+use Morefoto\Files\Domain\Delivery\ValueObject\DeliveryPart;
 use Morefoto\Files\Domain\Delivery\ValueObject\FileDelivery;
+use Morefoto\Files\Domain\Delivery\ValueObject\LetterPlan;
 
-/** Журнал писем в памяти с теми же уникальностями, что у mf_file_delivery. */
+/** Журнал отправок в памяти с теми же уникальностями, что у mf_file_delivery, и письма отправок, как mf_file_delivery_part. */
 final class InMemoryDeliveries implements DeliveryRepositoryInterface
 {
     /** @var array<string, FileDelivery> */
@@ -20,6 +22,10 @@ final class InMemoryDeliveries implements DeliveryRepositoryInterface
     public int $cursorOrder = 0;
     /** Чтения журнала: методы помечены impure — каждое чтение видит текущее состояние. */
     public int $reads = 0;
+    /** @var array<string, array<int, DeliveryPart>> публичный ID → письма по номеру */
+    public array $parts = [];
+    /** Сколько раз план записывался впервые. */
+    public int $plans = 0;
 
     public function __construct(string $cursor = '2027-02-01 00:00:00')
     {
@@ -102,15 +108,43 @@ final class InMemoryDeliveries implements DeliveryRepositoryInterface
         return array_slice(array_values(array_filter($this->rows, static fn(FileDelivery $row): bool => DeliveryStatusEnum::HELD === $row->status)), 0, $limit);
     }
 
+    public function plan(string $publicId, LetterPlan $plan, \DateTimeImmutable $now): void
+    {
+        $row = $this->rows[$publicId];
+        if (DeliveryStatusEnum::HELD !== $row->status || null !== $row->letters) {
+            return;
+        }
+        ++$this->plans;
+        $this->rows[$publicId] = new FileDelivery($row->publicId, $row->orderId, $row->kind, $row->status, $row->recipient, null, $row->createdAt, null, count($plan->letters), $plan->linkOnly);
+        foreach ($plan->letters as $index => $files) {
+            $this->parts[$publicId][$index + 1] = new DeliveryPart($index + 1, $files, null);
+        }
+    }
+
+    public function parts(string $publicId): array
+    {
+        ++$this->reads;
+
+        return array_values($this->parts[$publicId] ?? []);
+    }
+
+    public function markPartQueued(string $publicId, int $number, string $operationId, \DateTimeImmutable $now): void
+    {
+        $part = $this->parts[$publicId][$number];
+        if (null === $part->operationId) {
+            $this->parts[$publicId][$number] = new DeliveryPart($number, $part->files, $operationId);
+        }
+    }
+
     public function markQueued(string $publicId, string $operationId, \DateTimeImmutable $now): void
     {
         $row = $this->rows[$publicId];
-        $this->rows[$publicId] = new FileDelivery($row->publicId, $row->orderId, $row->kind, DeliveryStatusEnum::QUEUED, $row->recipient, $operationId, $row->createdAt, $now);
+        $this->rows[$publicId] = new FileDelivery($row->publicId, $row->orderId, $row->kind, DeliveryStatusEnum::QUEUED, $row->recipient, $operationId, $row->createdAt, $now, $row->letters, $row->linkOnly);
     }
 
     public function markCancelled(string $publicId, \DateTimeImmutable $now): void
     {
         $row = $this->rows[$publicId];
-        $this->rows[$publicId] = new FileDelivery($row->publicId, $row->orderId, $row->kind, DeliveryStatusEnum::CANCELLED, $row->recipient, null, $row->createdAt, null);
+        $this->rows[$publicId] = new FileDelivery($row->publicId, $row->orderId, $row->kind, DeliveryStatusEnum::CANCELLED, $row->recipient, null, $row->createdAt, null, $row->letters, $row->linkOnly);
     }
 }

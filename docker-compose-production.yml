@@ -278,6 +278,11 @@ services:
           - type: bind
             source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/upload
             target: /app/public/upload
+          # J5: the letters of an order carry the originals; the consumer reads them at the path the sender recorded.
+          - type: bind
+            source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/private-media
+            target: /app/var/private/media
+            read_only: true
           - type: bind
             source: ${RUNTIME_DATA_DIR:?Select the existing runtime data directory}/logs
             target: /app/logs

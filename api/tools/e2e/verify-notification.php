@@ -18,6 +18,7 @@ use Rebit\Notification\Application\Delivery\UseCase\DeliverEmailUseCase;
 use Rebit\Notification\Application\Delivery\UseCase\DispatchPendingEmailUseCase;
 use Rebit\Notification\Application\Delivery\UseCase\QueueEmailUseCase;
 use Rebit\Notification\Infrastructure\Persistence\DeliveryOperationRepository;
+use Rebit\Share\Application\Contract\Notification\Dto\EmailAttachmentInputDto;
 use Rebit\Share\Application\Contract\Notification\Dto\EmailNotificationInputDto;
 use Rebit\Share\Application\Contract\Notification\NotificationDeduplicationConflictException;
 use Bitrix\Main\Application;
@@ -146,6 +147,32 @@ $attemptCount = $connection->query('SELECT COUNT(*) AS CNT FROM b_rebit_notifica
 if (!is_array($operationCount) || 3 !== (int)$operationCount['CNT']
     || !is_array($attemptCount) || 3 !== (int)$attemptCount['CNT']) {
     throw new RuntimeException('Persistent operation/attempt journal is incomplete.');
+}
+// J5: an operation keeps only references to its attachments; another set under the same key conflicts, and the accepted
+// letter drops the references together with its text.
+$photo = new EmailAttachmentInputDto('AB001.jpg', 'image/jpeg', '/app/var/private/media/e2e/ab001.jpg', 1234);
+$withFiles = static fn(array $attachments): EmailNotificationInputDto => new EmailNotificationInputDto(
+    consumer: 'e2e.attachments',
+    deduplicationKey: 'letter-1',
+    recipient: 'buyer@example.com',
+    subject: 'Фото',
+    body: 'Во вложении фото',
+    attachments: $attachments,
+);
+$attached = $queue->queue($withFiles([$photo]));
+$references = static fn(): mixed => $connection->query("SELECT ATTACHMENTS FROM b_rebit_notification_operation WHERE ID='{$attached->id}'")->fetchRaw()['ATTACHMENTS'] ?? null;
+if ([['name' => 'AB001.jpg', 'contentType' => 'image/jpeg', 'path' => $photo->path, 'bytes' => 1234]] != json_decode((string)$references(), true)
+    || [$photo] != $repository->find($attached->id)?->attachments) {
+    throw new RuntimeException('Attachment references were not stored.');
+}
+try {
+    $queue->queue($withFiles([new EmailAttachmentInputDto('AB002.jpg', 'image/jpeg', $photo->path, 1234)]));
+    throw new RuntimeException('Another attachment under the same key did not conflict.');
+} catch (NotificationDeduplicationConflictException) {
+}
+(new DeliverEmailUseCase($repository, $acceptedTransport, $clock))->execute($attached->id);
+if (null !== $references() || 'accepted' !== $queue->status($attached->id)?->status) {
+    throw new RuntimeException('An accepted letter kept its attachment references.');
 }
 
 $dsn = (string)getenv('MESSENGER_TRANSPORT_DSN');

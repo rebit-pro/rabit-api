@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Morefoto\Files\Tests\Unit;
 
+use Morefoto\Files\Application\Delivery\Dto\OrderLetterInputDto;
 use Morefoto\Files\Domain\Delivery\Enum\DeliveryKindEnum;
 use Morefoto\Files\Domain\Delivery\Enum\DeliveryStatusEnum;
 use Morefoto\Files\Infrastructure\Mail\OrderEmailComposer;
@@ -35,7 +36,8 @@ final class OrderEmailFlowTest extends TestCase
         self::assertCount(1, $f->queued);
         $letter = $f->queued[0];
         self::assertSame(['files-order-email', DeliveryFixture::EMAIL, 10], [$letter->consumer, $letter->recipient, $letter->maxAttempts]);
-        self::assertMatchesRegularExpression('/^order-email:[a-f0-9-]{36}$/D', $letter->deduplicationKey);
+        self::assertMatchesRegularExpression('/^order-email:[a-f0-9-]{36}:1$/D', $letter->deduplicationKey);
+        self::assertSame([], $letter->attachments, 'Заказ без готовых оригиналов получает одно письмо со ссылкой, как в J2.');
         self::assertStringContainsString('https://app.example.test/orders/access/' . DeliveryFixture::LINK_KEY, $letter->body);
         self::assertStringContainsString('Заказ №MF-0007 оплачен', $letter->body);
         self::assertStringContainsString('28.02.2027 10:00 (МСК)', $letter->body);
@@ -126,6 +128,7 @@ final class OrderEmailFlowTest extends TestCase
             new OrderEmailOutputDto(7, FilesFixture::ORDER, 'MF<1>', 'mama@example.test', '2027-01-31 07:00:00', '2027-01-31 07:00:01'),
             DeliveryFixture::LINK_KEY,
             new \DateTimeImmutable('2027-02-28 07:00:00', new \DateTimeZone('UTC')),
+            new OrderLetterInputDto(1, 1, [], 1, 0, []),
         );
 
         self::assertSame('Заказ №MF<1> оплачен — ссылка на ваши фото', $text->subject);

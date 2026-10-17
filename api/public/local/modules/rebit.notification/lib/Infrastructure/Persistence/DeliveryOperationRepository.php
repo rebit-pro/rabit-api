@@ -8,6 +8,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\DB\Connection;
 use Rebit\Notification\Application\Delivery\Contract\DeliveryOperationRepositoryInterface;
 use Rebit\Notification\Application\Delivery\Dto\DeliveryOperationDto;
+use Rebit\Share\Application\Contract\Notification\Dto\EmailAttachmentInputDto;
 use Rebit\Share\Application\Contract\Notification\Dto\EmailNotificationInputDto;
 use Rebit\Share\Application\Contract\Notification\NotificationDeduplicationConflictException;
 
@@ -25,8 +26,8 @@ final readonly class DeliveryOperationRepository implements DeliveryOperationRep
         return $this->transaction(function(Connection $connection) use ($id, $input, $payloadHash, $now): DeliveryOperationDto {
             $timestamp = $this->date($now);
             $connection->queryExecute(sprintf(
-                'INSERT INTO %s (ID,CONSUMER_KEY,DEDUP_KEY,PAYLOAD_HASH,CHANNEL,RECIPIENT,SUBJECT,BODY,BODY_HTML,STATUS,ATTEMPTS,MAX_ATTEMPTS,CREATED_AT,UPDATED_AT) '
-                . "VALUES(%s,%s,%s,%s,'email',%s,%s,%s,%s,'pending',0,%d,%s,%s) "
+                'INSERT INTO %s (ID,CONSUMER_KEY,DEDUP_KEY,PAYLOAD_HASH,CHANNEL,RECIPIENT,SUBJECT,BODY,BODY_HTML,ATTACHMENTS,STATUS,ATTEMPTS,MAX_ATTEMPTS,CREATED_AT,UPDATED_AT) '
+                . "VALUES(%s,%s,%s,%s,'email',%s,%s,%s,%s,%s,'pending',0,%d,%s,%s) "
                 . 'ON DUPLICATE KEY UPDATE ID=ID',
                 self::OPERATION_TABLE,
                 $this->quote($id),
@@ -37,6 +38,8 @@ final readonly class DeliveryOperationRepository implements DeliveryOperationRep
                 $this->quote($input->subject),
                 $this->quote($input->body),
                 null === $input->bodyHtml ? 'NULL' : $this->quote($input->bodyHtml),
+                // J5: only references to the files; the transport reads the bytes when it sends the letter.
+                [] === $input->attachments ? 'NULL' : $this->quote(json_encode($input->attachments, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)),
                 $input->maxAttempts,
                 $this->quote($timestamp),
                 $this->quote($timestamp),
@@ -245,8 +248,8 @@ final readonly class DeliveryOperationRepository implements DeliveryOperationRep
         $this->transaction(function(Connection $connection) use ($id, $attempt, $status, $errorCode, $nextAttemptAt, $now): void {
             $timestamp = $this->date($now);
             $attemptStatus = 'accepted' === $status ? 'accepted' : 'rejected';
-            // J2: a letter may carry a private link; once accepted by SMTP or finally failed its text is not needed and is cleared.
-            // The payload hash stays, so a repeated queue() with the same letter still resolves to this operation.
+            // J2: a letter may carry a private link; once accepted by SMTP or finally failed its text and its attachment list
+            // are not needed and are cleared. The payload hash stays, so a repeated queue() still resolves to this operation.
             $connection->queryExecute(sprintf(
                 'UPDATE %s SET STATUS=%s,NEXT_ATTEMPT_AT=%s,PROCESSING_STARTED_AT=NULL,ACCEPTED_AT=%s,LAST_ERROR_CODE=%s,UPDATED_AT=%s%s '
                 . "WHERE ID=%s AND STATUS='processing' AND ATTEMPTS=%d",
@@ -256,7 +259,7 @@ final readonly class DeliveryOperationRepository implements DeliveryOperationRep
                 'accepted' === $status ? $this->quote($timestamp) : 'NULL',
                 null === $errorCode ? 'NULL' : $this->quote($errorCode),
                 $this->quote($timestamp),
-                in_array($status, ['accepted', 'failed'], true) ? ",BODY='',BODY_HTML=NULL" : '',
+                in_array($status, ['accepted', 'failed'], true) ? ",BODY='',BODY_HTML=NULL,ATTACHMENTS=NULL" : '',
                 $this->quote($id),
                 $attempt,
             ));
@@ -317,6 +320,19 @@ final readonly class DeliveryOperationRepository implements DeliveryOperationRep
             nextAttemptAt: null === $row['NEXT_ATTEMPT_AT'] ? null : (string)$row['NEXT_ATTEMPT_AT'],
             acceptedAt: null === $row['ACCEPTED_AT'] ? null : (string)$row['ACCEPTED_AT'],
             bodyHtml: null === ($row['BODY_HTML'] ?? null) ? null : (string)$row['BODY_HTML'],
+            attachments: null === ($row['ATTACHMENTS'] ?? null) ? [] : $this->attachments((string)$row['ATTACHMENTS']),
+        );
+    }
+
+    /** @return list<EmailAttachmentInputDto> */
+    private function attachments(string $json): array
+    {
+        /** @var list<array{name: string, contentType: string, path: string, bytes: int}> $rows */
+        $rows = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
+
+        return array_map(
+            static fn(array $row): EmailAttachmentInputDto => new EmailAttachmentInputDto($row['name'], $row['contentType'], $row['path'], (int)$row['bytes']),
+            $rows,
         );
     }
 

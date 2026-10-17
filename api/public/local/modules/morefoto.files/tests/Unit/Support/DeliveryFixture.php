@@ -11,6 +11,7 @@ use Morefoto\Files\Application\Delivery\UseCase\GetFileDeliveryUseCase;
 use Morefoto\Files\Application\Delivery\UseCase\GetOrderEmailUseCase;
 use Morefoto\Files\Application\Delivery\UseCase\SendOrderEmailAgainUseCase;
 use Morefoto\Files\Application\Files\Contract\DownloadIdGeneratorInterface;
+use Morefoto\Files\Domain\Delivery\Service\AttachmentPlanner;
 use Morefoto\Files\Domain\Delivery\Service\DeliveryPolicy;
 use Morefoto\Files\Infrastructure\Mail\OrderEmailComposer;
 use Psr\Log\NullLogger;
@@ -21,7 +22,10 @@ use Rebit\Share\Contracts\Commerce\Dto\OrderEmailLinkOutputDto;
 use Rebit\Share\Contracts\Commerce\Dto\OrderEmailOutputDto;
 use Rebit\Share\Contracts\Commerce\OrderEmailLinkInterface;
 
-/** J2: заказ 7 FilesFixture оплачен и подтверждён в 2027-02-01 10:00; H1 и Commerce подменены, правила и письмо — настоящие. */
+/**
+ * J2/J5: заказ 7 FilesFixture оплачен и подтверждён в 2027-02-01 10:00; H1 и Commerce подменены, правила, разбиение по
+ * письмам и тексты — настоящие. H1 дедуплицирует по ключу, как b_rebit_notification_operation.
+ */
 final class DeliveryFixture implements OrderEmailLinkInterface, EmailNotificationInterface, DownloadIdGeneratorInterface
 {
     public const string EMAIL = 'mama@example.test';
@@ -36,6 +40,14 @@ final class DeliveryFixture implements OrderEmailLinkInterface, EmailNotificatio
     public array $queued = [];
     /** @var array<string, string> операция → статус H1 */
     public array $statuses = [];
+    /** @var array<string, string> ключ дедупликации → операция */
+    public array $operations = [];
+    /** Ключ дедупликации, на котором H1 «падает» один раз: падение между письмами. */
+    public ?string $failOn = null;
+    /** Вызовы queue(), включая повторы с уже известным ключом и сбой. */
+    public int $calls = 0;
+    /** Лимит части для разбиения; по умолчанию — J5-DEC-01. */
+    public int $partBytes = AttachmentPlanner::PART_BYTES;
     private int $sequence = 0;
 
     public function __construct()
@@ -51,22 +63,31 @@ final class DeliveryFixture implements OrderEmailLinkInterface, EmailNotificatio
 
     public function resend(): SendOrderEmailAgainUseCase
     {
-        return new SendOrderEmailAgainUseCase($this->files->access(), $this, $this->deliveries, $this->sender(), new DeliveryView($this), $this, new DeliveryPolicy(), $this->files->clock());
+        return new SendOrderEmailAgainUseCase($this->files->access(), $this, $this->deliveries, $this->sender(), new DeliveryView($this->deliveries, $this), $this, new DeliveryPolicy(), $this->files->clock());
     }
 
     public function summary(): GetOrderEmailUseCase
     {
-        return new GetOrderEmailUseCase($this->files->access(), $this, $this->deliveries, new DeliveryView($this), new DeliveryPolicy());
+        return new GetOrderEmailUseCase($this->files->access(), $this, $this->deliveries, new DeliveryView($this->deliveries, $this), new DeliveryPolicy());
     }
 
     public function delivery(): GetFileDeliveryUseCase
     {
-        return new GetFileDeliveryUseCase($this->files->access(), $this->deliveries, new DeliveryView($this));
+        return new GetFileDeliveryUseCase($this->files->access(), $this->deliveries, new DeliveryView($this->deliveries, $this));
     }
 
     private function sender(): OrderEmailSender
     {
-        return new OrderEmailSender($this->deliveries, $this, $this->files->access(), new OrderEmailComposer('https://app.example.test/'), $this, $this->files->clock(), new NullLogger());
+        return new OrderEmailSender(
+            $this->deliveries,
+            $this,
+            $this->files->access(),
+            new AttachmentPlanner($this->partBytes),
+            new OrderEmailComposer('https://app.example.test/'),
+            $this,
+            $this->files->clock(),
+            new NullLogger(),
+        );
     }
 
     public function enabled(): bool
@@ -96,11 +117,20 @@ final class DeliveryFixture implements OrderEmailLinkInterface, EmailNotificatio
 
     public function queue(EmailNotificationInputDto $input): NotificationOperationOutputDto
     {
-        $this->queued[] = $input;
-        $id = sprintf('cccccccc-cccc-4ccc-8ccc-%012d', count($this->queued));
-        $this->statuses[$id] = 'pending';
+        ++$this->calls;
+        if ($input->deduplicationKey === $this->failOn) {
+            $this->failOn = null;
+            throw new \RuntimeException('Notification storage is unavailable.');
+        }
+        $id = $this->operations[$input->deduplicationKey] ?? null;
+        if (null === $id) {
+            $this->queued[] = $input;
+            $id = sprintf('cccccccc-cccc-4ccc-8ccc-%012d', count($this->queued));
+            $this->operations[$input->deduplicationKey] = $id;
+            $this->statuses[$id] = 'pending';
+        }
 
-        return new NotificationOperationOutputDto($id, 'pending', 0, $input->maxAttempts, null, null);
+        return new NotificationOperationOutputDto($id, $this->statuses[$id], 0, $input->maxAttempts, null, null);
     }
 
     public function status(string $operationId): ?NotificationOperationOutputDto

@@ -404,7 +404,7 @@ def open_stand(state, args, stand, notification):
     def serve():
         service(state, name + "-fpm", *network, "--network-alias", "api-php-fpm", "--user", "0", *PHP_ENV, "--entrypoint", "php-fpm",
                 *php_mounts(state, stand), "--env", "APP_ENV=test", "--env", "APP_DEBUG=0", "--env", "REBIT_GEETEST_ENABLED=0",
-                "--env", "REBIT_GEETEST_BYPASS=1", *amqp, *media, "--env", "MOREFOTO_CHECKOUT_ENABLED=1", "--env", "MOREFOTO_ORDER_EMAIL_ENABLED=1", *SUPPORT, *SELLER, *payment_env(), args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
+                "--env", "REBIT_GEETEST_BYPASS=1", *amqp, *media, "--env", "MOREFOTO_CHECKOUT_ENABLED=1", "--env", "MOREFOTO_ORDER_EMAIL_ENABLED=1", "--env", "MOREFOTO_ORDER_EMAIL_PART_BYTES=1", *SUPPORT, *SELLER, *payment_env(), args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
         if YOOKASSA_ENV.is_file():
             # Only php-fpm and the browser reach the provider; MySQL and RabbitMQ stay on the internal network.
             docker("network", "connect", state["browserNetwork"], name + "-fpm")
