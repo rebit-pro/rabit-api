@@ -27,6 +27,7 @@ use Morefoto\Files\Application\Files\UseCase\OpenDownloadContentUseCase;
 use Morefoto\Files\Application\Files\UseCase\PurgeDownloadsUseCase;
 use Morefoto\Files\Application\Files\UseCase\RequestDownloadUseCase;
 use Morefoto\Files\Domain\Delivery\Repository\DeliveryRepositoryInterface;
+use Morefoto\Files\Domain\Delivery\Service\AttachmentPlanner;
 use Morefoto\Files\Domain\Delivery\Service\DeliveryPolicy;
 use Morefoto\Files\Domain\Download\Repository\DownloadRepositoryInterface;
 use Morefoto\Files\Domain\Download\Service\FileAccessPolicy;
@@ -211,7 +212,7 @@ return [
         'className' => DispatchPendingDownloadsCommand::class,
         'constructorParams' => static fn(): array => [ServiceLocator::getInstance()->get(DispatchPendingDownloadsUseCase::class)],
     ],
-    // J2: the letter with the link to the paid order.
+    // J2/J5: the letters with the originals of the paid order and the link to it.
     DeliveryPolicy::class => ['className' => DeliveryPolicy::class],
     DeliveryRepositoryInterface::class => ['className' => BitrixDeliveryRepository::class],
     OrderEmailComposerInterface::class => [
@@ -221,7 +222,15 @@ return [
     ],
     DeliveryView::class => [
         'className' => DeliveryView::class,
-        'constructorParams' => static fn(): array => [ServiceLocator::getInstance()->get(EmailNotificationInterface::class)],
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(DeliveryRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(EmailNotificationInterface::class),
+        ],
+    ],
+    // J5-DEC-01: 18 MiB of originals per letter; the stand lowers it to get several letters from small fixture photos.
+    AttachmentPlanner::class => [
+        'className' => AttachmentPlanner::class,
+        'constructorParams' => static fn(): array => [(int)(getenv('MOREFOTO_ORDER_EMAIL_PART_BYTES') ?: AttachmentPlanner::PART_BYTES)],
     ],
     OrderEmailSender::class => [
         'className' => OrderEmailSender::class,
@@ -229,6 +238,7 @@ return [
             ServiceLocator::getInstance()->get(DeliveryRepositoryInterface::class),
             ServiceLocator::getInstance()->get(OrderEmailLinkInterface::class),
             ServiceLocator::getInstance()->get(OrderFileAccess::class),
+            ServiceLocator::getInstance()->get(AttachmentPlanner::class),
             ServiceLocator::getInstance()->get(OrderEmailComposerInterface::class),
             ServiceLocator::getInstance()->get(EmailNotificationInterface::class),
             ServiceLocator::getInstance()->get(ClockInterface::class),

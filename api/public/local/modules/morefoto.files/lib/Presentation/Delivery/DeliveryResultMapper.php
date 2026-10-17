@@ -34,6 +34,10 @@ final readonly class DeliveryResultMapper
             recipient: $output->recipient,
             createdAt: (string)$this->moment($output->createdAt),
             acceptedAt: $this->moment($output->acceptedAt),
+            letters: $output->letters,
+            acceptedLetters: $output->acceptedLetters,
+            photos: $output->photos,
+            linkOnly: $output->linkOnly,
         );
     }
 

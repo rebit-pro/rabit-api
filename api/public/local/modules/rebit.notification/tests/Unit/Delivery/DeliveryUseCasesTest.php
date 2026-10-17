@@ -17,7 +17,9 @@ use Rebit\Notification\Application\Delivery\Exception\DefiniteDeliveryException;
 use Rebit\Notification\Application\Delivery\UseCase\DeliverEmailUseCase;
 use Rebit\Notification\Application\Delivery\UseCase\DispatchPendingEmailUseCase;
 use Rebit\Notification\Application\Delivery\UseCase\QueueEmailUseCase;
+use Rebit\Share\Application\Contract\Notification\Dto\EmailAttachmentInputDto;
 use Rebit\Share\Application\Contract\Notification\Dto\EmailNotificationInputDto;
+use Rebit\Share\Application\Contract\Notification\EmailNotificationInterface;
 use Rebit\Share\Application\Contract\Notification\NotificationDeduplicationConflictException;
 use Rebit\Share\Infrastructure\Logger\CommonLoggerProcessor;
 
@@ -90,6 +92,49 @@ final class DeliveryUseCasesTest extends TestCase
 
         $this->expectException(NotificationDeduplicationConflictException::class);
         $useCase->queue($input);
+    }
+
+    public function testAttachmentsAreReferencesThatJoinTheHashWithinTheLetterLimit(): void
+    {
+        $input = $this->input();
+        $letter = static fn(array $attachments): EmailNotificationInputDto => new EmailNotificationInputDto(
+            consumer: $input->consumer,
+            deduplicationKey: $input->deduplicationKey,
+            recipient: $input->recipient,
+            subject: $input->subject,
+            body: $input->body,
+            attachments: $attachments,
+        );
+        $photo = new EmailAttachmentInputDto('AB001.jpg', 'image/jpeg', '/app/var/private/media/shoot/ab/1.jpg', 8 * 1024 * 1024);
+        $repository = new InMemoryDeliveryRepository();
+        $useCase = new QueueEmailUseCase($repository, new RecordingPublisher(), new FixedNotificationClock(), new NullLogger());
+        $useCase->queue($letter([$photo]));
+
+        self::assertNotSame(hash('sha256', implode("\0", ['email', 'buyer@example.test', $input->subject, $input->body, '3'])), $repository->payloadHash);
+        self::assertEquals([$photo], $repository->operation?->attachments);
+        self::assertSame($repository->operation?->id, $useCase->queue($letter([$photo]))->id);
+        try {
+            $useCase->queue($letter([new EmailAttachmentInputDto('AB002.jpg', 'image/jpeg', $photo->path, $photo->bytes)]));
+            self::fail('Another attachment under the same key must conflict.');
+        } catch (NotificationDeduplicationConflictException) {
+        }
+
+        $limit = EmailNotificationInterface::MAX_ATTACHMENT_BYTES;
+        foreach ([
+            [new EmailAttachmentInputDto('AB 1.jpg', 'image/jpeg', $photo->path, 1)],
+            [new EmailAttachmentInputDto("AB\r\n.jpg", 'image/jpeg', $photo->path, 1)],
+            [new EmailAttachmentInputDto('AB001.jpg', 'image/jpeg; x', $photo->path, 1)],
+            [new EmailAttachmentInputDto('AB001.jpg', 'image/jpeg', 'media/1.jpg', 1)],
+            [new EmailAttachmentInputDto('AB001.jpg', 'image/jpeg', '/app/var/../etc/passwd', 1)],
+            [new EmailAttachmentInputDto('AB001.jpg', 'image/jpeg', $photo->path, 0)],
+            [new EmailAttachmentInputDto('AB001.jpg', 'image/jpeg', $photo->path, $limit), new EmailAttachmentInputDto('AB002.jpg', 'image/jpeg', $photo->path, 1)],
+        ] as $index => $attachments) {
+            try {
+                (new QueueEmailUseCase(new InMemoryDeliveryRepository(), new RecordingPublisher(), new FixedNotificationClock(), new NullLogger()))->queue($letter($attachments));
+                self::fail('Attachment set ' . $index . ' must be refused.');
+            } catch (\InvalidArgumentException) {
+            }
+        }
     }
 
     public function testAcceptedMeansTransportAcceptedNotRecipientDelivered(): void
@@ -291,6 +336,7 @@ final class InMemoryDeliveryRepository implements DeliveryOperationRepositoryInt
             attempts: 0,
             maxAttempts: $input->maxAttempts,
             bodyHtml: $input->bodyHtml,
+            attachments: $input->attachments,
         );
 
         return $this->operation;

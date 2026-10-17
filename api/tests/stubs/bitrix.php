@@ -237,6 +237,19 @@ if (!class_exists(Configuration::class)) {
     }
 }
 
+if (!class_exists(Option::class)) {
+    class Option
+    {
+        /** @var array<string, string> module option values by `module:name` */
+        public static array $values = [];
+
+        public static function get(string $moduleId, string $name, string $default = '', bool|string $siteId = false): string
+        {
+            return self::$values[$moduleId . ':' . $name] ?? $default;
+        }
+    }
+}
+
 namespace Bitrix\Main\ORM\Data;
 
 if (!class_exists(Result::class)) {

@@ -25,7 +25,7 @@ const wait = computed(() => (summary.value ? resendWait(summary.value, now.value
       :disabled="busy || !!wait"
       data-testid="order-email-resend"
       @click="resend"
-      >{{ summary.latest ? 'Отправить ещё раз' : 'Отправить ссылку на почту' }}</v-btn
+      >{{ summary.latest ? 'Отправить ещё раз' : 'Отправить на почту' }}</v-btn
     >
     <p v-if="wait" class="order-email__hint" data-testid="order-email-wait">{{ wait }}</p>
     <p v-if="error" class="order-email__error" role="alert">{{ error }}</p>

@@ -6,6 +6,9 @@ namespace Rebit\Share\Application\Contract\Notification\Dto;
 
 final readonly class EmailNotificationInputDto
 {
+    /**
+     * @param list<EmailAttachmentInputDto> $attachments files by reference; H1 checks them when queueing and reads them when sending
+     */
     public function __construct(
         public string $consumer,
         public string $deduplicationKey,
@@ -15,6 +18,7 @@ final readonly class EmailNotificationInputDto
         public int $maxAttempts = 3,
         /** Optional HTML variant built by the sender; the plain-text body stays the fallback. */
         public ?string $bodyHtml = null,
+        public array $attachments = [],
     ) {
         if (1 !== preg_match('/^[a-z0-9][a-z0-9._-]{1,63}$/D', $this->consumer)) {
             throw new \InvalidArgumentException('Invalid notification consumer.');
