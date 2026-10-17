@@ -22,6 +22,8 @@ use Rebit\Share\Application\Contract\Notification\Dto\EmailAttachmentInputDto;
 use Rebit\Share\Application\Contract\Notification\Dto\EmailNotificationInputDto;
 use Rebit\Share\Application\Contract\Notification\NotificationDeduplicationConflictException;
 use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
+use Rebit\Share\Application\Contract\Notification\EmailNotificationInterface;
 
 $_SERVER['DOCUMENT_ROOT'] = '/runtime/public';
 require '/runtime/public/bitrix/modules/main/include/prolog_before.php';
@@ -173,6 +175,12 @@ try {
 (new DeliverEmailUseCase($repository, $acceptedTransport, $clock))->execute($attached->id);
 if (null !== $references() || 'accepted' !== $queue->status($attached->id)?->status) {
     throw new RuntimeException('An accepted letter kept its attachment references.');
+}
+
+// J5: the Bitrix mail attachment limit fits the largest letter with photos; below it the transport refuses the letter.
+$limit = (int)Option::get('main', 'max_file_size');
+if (0 !== $limit && $limit < 4 * (int)ceil(EmailNotificationInterface::MAX_ATTACHMENT_BYTES / 3)) {
+    throw new RuntimeException('main.max_file_size is below a letter with photos: ' . $limit);
 }
 
 $dsn = (string)getenv('MESSENGER_TRANSPORT_DSN');
