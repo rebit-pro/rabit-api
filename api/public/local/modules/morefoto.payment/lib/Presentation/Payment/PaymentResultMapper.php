@@ -16,9 +16,12 @@ use Morefoto\Payment\Presentation\Payment\Result\Dto\PaymentFactResultDto;
 use Morefoto\Payment\Presentation\Payment\Result\Dto\PaymentItemResultDto;
 use Morefoto\Payment\Presentation\Payment\Result\Dto\PaymentListResultDto;
 use Morefoto\Payment\Presentation\Payment\Result\Dto\PaymentQuoteResultDto;
+use Morefoto\Payment\Presentation\Receipt\ReceiptResultMapper;
 
 final readonly class PaymentResultMapper
 {
+    public function __construct(private ReceiptResultMapper $receipts) {}
+
     public function quote(PaymentQuoteOutputDto $output): PaymentQuoteResultDto
     {
         return new PaymentQuoteResultDto(
@@ -29,6 +32,7 @@ final readonly class PaymentResultMapper
             precedingAttemptId: $output->precedingAttemptId,
             activeAttemptId: $output->activeAttemptId,
             paymentMethods: $output->paymentMethods,
+            testMode: $output->testMode,
         );
     }
 
@@ -82,6 +86,7 @@ final readonly class PaymentResultMapper
             nextCheckAt: $output->nextCheckAt,
             attempts: array_map($this->item(...), $output->attempts),
             facts: $facts,
+            receipts: array_map($this->receipts->receipt(...), $output->receipts),
         );
     }
 
@@ -102,6 +107,7 @@ final readonly class PaymentResultMapper
             latePayment: $item->latePayment,
             incomeAmount: $item->incomeAmount,
             cancelReason: $item->cancelReason,
+            receiptStatus: $item->receiptStatus,
         );
     }
 }

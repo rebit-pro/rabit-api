@@ -20,5 +20,6 @@ final readonly class PaymentQuoteResultDto implements ResultDtoInterface
         public ?string $precedingAttemptId,
         public ?string $activeAttemptId,
         public array $paymentMethods,
+        public bool $testMode,
     ) {}
 }

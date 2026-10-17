@@ -9,6 +9,7 @@ use Morefoto\Payment\Application\Payment\Dto\PaymentPageOutputDto;
 use Morefoto\Payment\Application\Payment\Dto\SearchPaymentsInputDto;
 use Morefoto\Payment\Application\Payment\Mapper\PaymentOutputMapper;
 use Morefoto\Payment\Domain\Payment\Repository\PaymentAttemptRepositoryInterface;
+use Morefoto\Payment\Domain\Receipt\Repository\PaymentReceiptRepositoryInterface;
 use Morefoto\Payment\Domain\Payment\ValueObject\PaymentSearchCriteria;
 
 /** Реестр попыток оплаты для сотрудника в его области заказов: фильтры и область применяются до страницы,
@@ -22,6 +23,7 @@ final readonly class ListPaymentsUseCase
         private PaymentStaffAccessInterface $access,
         private PaymentAttemptRepositoryInterface $attempts,
         private PaymentOutputMapper $mapper,
+        private PaymentReceiptRepositoryInterface $receipts,
     ) {}
 
     public function execute(int $actorId, SearchPaymentsInputDto $input): PaymentPageOutputDto
@@ -36,9 +38,11 @@ final readonly class ListPaymentsUseCase
             latePayment: $input->latePayment,
         );
         $total = $this->attempts->count($criteria);
+        $page = $this->attempts->page($criteria, $input->pageSize, ($input->page - 1) * $input->pageSize, $input->sort, $input->descending);
+        $receipts = $this->receipts->paymentStatuses(array_column($page, 'ID'));
         $items = [];
-        foreach ($this->attempts->page($criteria, $input->pageSize, ($input->page - 1) * $input->pageSize, $input->sort, $input->descending) as $attempt) {
-            $items[] = $this->mapper->item($attempt);
+        foreach ($page as $attempt) {
+            $items[] = $this->mapper->item($attempt, $receipts[$attempt['ID']] ?? null);
         }
         $this->access->assertUnchanged($actorId, $scope);
 

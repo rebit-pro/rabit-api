@@ -23,5 +23,6 @@ final readonly class PaymentItemResultDto implements ResultDtoInterface
         public bool $latePayment,
         public ?int $incomeAmount,
         public ?string $cancelReason,
+        public ?string $receiptStatus,
     ) {}
 }

@@ -13,7 +13,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-#[AsCommand(name: 'app:payment:reconcile', description: 'Сверка открытых попыток оплаты с провайдером')]
+#[AsCommand(name: 'app:payment:reconcile', description: 'Сверка открытых попыток оплаты и кассовых чеков с провайдером')]
 #[WithLock]
 final class ReconcilePaymentsCommand extends RebitCommand
 {
@@ -36,8 +36,9 @@ final class ReconcilePaymentsCommand extends RebitCommand
             return Command::INVALID;
         }
         $report = $this->reconcile->execute($limit);
-        $io->success('Сверено попыток: ' . $report->checked . ', с ошибкой: ' . $report->failed);
+        $io->success('Сверено попыток: ' . $report->checked . ', с ошибкой: ' . $report->failed
+            . '; чеков: ' . $report->receiptsChecked . ', с ошибкой: ' . $report->receiptsFailed);
 
-        return 0 === $report->failed ? Command::SUCCESS : Command::FAILURE;
+        return 0 === $report->failed + $report->receiptsFailed ? Command::SUCCESS : Command::FAILURE;
     }
 }

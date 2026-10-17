@@ -9,7 +9,7 @@ use Morefoto\Payment\Domain\Payment\ValueObject\AttemptOutcome;
 use Morefoto\Payment\Domain\Payment\ValueObject\PaymentSearchCriteria;
 
 /**
- * Попытки оплаты; моменты — UTC `Y-m-d H:i:s`. Хранилище не делает HTTP и не меняет заказ.
+ * Попытки оплаты; моменты — UTC `Y-m-d H:i:s`, RECEIPT — JSON снимка чека оплаты (G2). Хранилище не делает HTTP и не меняет заказ.
  *
  * @phpstan-type NewAttemptRecord array{
  *     PUBLIC_ID: string,
@@ -28,6 +28,7 @@ use Morefoto\Payment\Domain\Payment\ValueObject\PaymentSearchCriteria;
  *     CLIENT_KEY_HASH: string,
  *     REQUEST_HASH: string,
  *     PROVIDER_KEY: string,
+ *     RECEIPT: null|string,
  *     NEXT_CHECK_AT: string,
  *     CREATED_AT: string,
  * }
@@ -51,6 +52,7 @@ use Morefoto\Payment\Domain\Payment\ValueObject\PaymentSearchCriteria;
  *     CLIENT_KEY_HASH: string,
  *     REQUEST_HASH: string,
  *     PROVIDER_KEY: string,
+ *     RECEIPT: null|string,
  *     PROVIDER_PAYMENT_ID: null|string,
  *     CONFIRMATION_URL: null|string,
  *     CANCEL_REASON: null|string,

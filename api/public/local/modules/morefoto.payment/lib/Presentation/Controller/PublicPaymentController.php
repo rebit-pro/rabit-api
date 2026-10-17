@@ -7,11 +7,14 @@ namespace Morefoto\Payment\Presentation\Controller;
 use Morefoto\Payment\Application\Payment\UseCase\GetPaymentAttemptUseCase;
 use Morefoto\Payment\Application\Payment\UseCase\GetPaymentQuoteUseCase;
 use Morefoto\Payment\Application\Payment\UseCase\StartPaymentAttemptUseCase;
+use Morefoto\Payment\Application\Receipt\UseCase\GetOrderReceiptsUseCase;
 use Morefoto\Payment\Presentation\Payment\PaymentInputMapper;
 use Morefoto\Payment\Presentation\Payment\PaymentResultMapper;
 use Morefoto\Payment\Presentation\Payment\Request\Dto\PaymentAttemptRequestDto;
 use Morefoto\Payment\Presentation\Payment\Request\Dto\PaymentQuoteRequestDto;
 use Morefoto\Payment\Presentation\Payment\Request\Dto\StartPaymentRequestDto;
+use Morefoto\Payment\Presentation\Receipt\ReceiptResultMapper;
+use Morefoto\Payment\Presentation\Receipt\Request\Dto\OrderReceiptsRequestDto;
 use Rebit\Share\Infrastructure\Bitrix\ControllerJson;
 use Rebit\Share\Infrastructure\Controller\PrivateApiJsonController;
 
@@ -21,8 +24,10 @@ final class PublicPaymentController extends PrivateApiJsonController
         private readonly GetPaymentQuoteUseCase $quote,
         private readonly StartPaymentAttemptUseCase $start,
         private readonly GetPaymentAttemptUseCase $attempt,
+        private readonly GetOrderReceiptsUseCase $receipts,
         private readonly PaymentInputMapper $input,
         private readonly PaymentResultMapper $result,
+        private readonly ReceiptResultMapper $receiptResult,
     ) {
         parent::__construct();
     }
@@ -42,5 +47,10 @@ final class PublicPaymentController extends PrivateApiJsonController
     public function attemptAction(PaymentAttemptRequestDto $request): ControllerJson
     {
         return $this->json($this->result->attempt($this->attempt->execute($request->orderKey, $request->attemptId)));
+    }
+
+    public function receiptAction(OrderReceiptsRequestDto $request): ControllerJson
+    {
+        return $this->json($this->receiptResult->receipts($this->receipts->execute($request->orderKey)));
     }
 }

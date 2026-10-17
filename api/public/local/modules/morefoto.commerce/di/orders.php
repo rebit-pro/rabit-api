@@ -36,6 +36,7 @@ use Morefoto\Commerce\Infrastructure\Order\OrderTokenGenerator;
 use Morefoto\Commerce\Infrastructure\Order\OrderTransaction;
 use Morefoto\Commerce\Infrastructure\Files\OrderEntitlements;
 use Morefoto\Commerce\Infrastructure\Payment\OrderPayments;
+use Morefoto\Commerce\Infrastructure\Payment\OrderReceiptSource;
 use Morefoto\Commerce\Domain\Storefront\Service\SalesWindowPolicy;
 use Morefoto\Commerce\Infrastructure\Correction\GroupOrders;
 use Morefoto\Commerce\Infrastructure\Files\OrderEmailLinks;
@@ -58,6 +59,8 @@ use Rebit\Share\Contracts\Commerce\StructureSalesRemovalInterface;
 use Morefoto\Commerce\Infrastructure\Organization\StructureSalesRemoval;
 use Rebit\Share\Contracts\Commerce\OrderEntitlementInterface;
 use Rebit\Share\Contracts\Commerce\OrderPaymentInterface;
+use Rebit\Share\Contracts\Commerce\OrderReceiptSourceInterface;
+use Rebit\Share\Contracts\Payment\PaymentCapabilitiesInterface;
 use Rebit\Share\Contracts\Media\ChildPhotosInterface;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
 use Rebit\Share\Contracts\Organization\GroupCalendarInterface;
@@ -70,6 +73,8 @@ return [
         'constructor' => static fn(): CheckoutAvailability => new CheckoutAvailability(
             '1' === getenv('MOREFOTO_CHECKOUT_ENABLED'),
             '1' === getenv('MOREFOTO_ORDER_EMAIL_ENABLED'),
+            // G2: receipt channels come from Payment; without the payment module there are no receipts to offer.
+            ServiceLocator::getInstance()->has(PaymentCapabilitiesInterface::class) ? ServiceLocator::getInstance()->get(PaymentCapabilitiesInterface::class) : null,
         ),
     ],
     OrderTransactionInterface::class => [
@@ -97,6 +102,9 @@ return [
     ],
     StructureSalesRemovalInterface::class => [
         'constructor' => static fn(): StructureSalesRemovalInterface => new StructureSalesRemoval(),
+    ],
+    OrderReceiptSourceInterface::class => [
+        'constructor' => static fn(): OrderReceiptSourceInterface => new OrderReceiptSource(ServiceLocator::getInstance()->get(OrderRepository::class)),
     ],
     OrderPaymentInterface::class => [
         'constructor' => static fn(): OrderPaymentInterface => new OrderPayments(
