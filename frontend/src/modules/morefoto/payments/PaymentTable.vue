@@ -7,6 +7,7 @@ import type { AttemptStatus, StaffPayment } from '../orders/live/payment-types';
 import { money } from '../commerce/money';
 import { tableMoment } from '../ui/table-values';
 import { attemptStatusLabels, paymentMethodLabels } from '../orders/live/payment-rules';
+import { receiptShortLabels, receiptTones } from '../orders/live/receipt-rules';
 import MfStatus from '@/components/status/MfStatus.vue';
 import type { StatusTone } from '@/components/status/tones';
 /** The payment registry as a journal: server-side sort and pages, selection only for the CSV export (#92 DEC-03). */
@@ -87,6 +88,12 @@ const payment = (id: string) => byId.value.get(id)!;
       <span class="payment-states">
         <MfStatus :tone="tone[payment(row.id).status]">{{ attemptStatusLabels[payment(row.id).status] }}</MfStatus>
         <MfStatus v-if="payment(row.id).latePayment" tone="warning">Поздняя</MfStatus>
+        <MfStatus
+          v-if="payment(row.id).receiptStatus"
+          :tone="receiptTones[payment(row.id).receiptStatus!]"
+          data-testid="payment-receipt-status"
+          >{{ receiptShortLabels[payment(row.id).receiptStatus!] }}</MfStatus
+        >
       </span>
     </template>
     <template #cell-createdAt="{ row }">{{ tableMoment(String(row.createdAt)) }}</template>

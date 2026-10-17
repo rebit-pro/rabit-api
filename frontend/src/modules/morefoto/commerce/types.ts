@@ -17,6 +17,8 @@ export interface CatalogCapabilities {
   purchaseEnabled: boolean;
   /** J2: after the payment the server sends the link to the order to the order email. */
   orderEmail?: boolean;
+  /** G2, issue #120: the payment goes to the provider test shop — money is not charged. */
+  paymentTestMode?: boolean;
 }
 export interface Catalog {
   products: Product[];

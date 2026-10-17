@@ -86,6 +86,9 @@ async function reorder(): Promise<void> {
       >
     </template>
     <template v-else-if="quote?.canPay">
+      <v-alert v-if="quote.testMode" type="warning" variant="tonal" density="compact" class="mb-3" data-testid="payment-test-mode"
+        >Тестовый режим оплаты: деньги не списываются.</v-alert
+      >
       <p class="order-payment__note">
         К оплате <strong data-testid="payment-total">{{ money(quote.quote.total) }}</strong
         >. Вы перейдёте на защищённую страницу ЮKassa, а после оплаты вернётесь сюда. Оплачивая заказ, вы подтверждаете его на условиях

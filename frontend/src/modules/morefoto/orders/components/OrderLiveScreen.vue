@@ -9,6 +9,7 @@ import OrderEmailNotice from './OrderEmailNotice.vue';
 import OrderLiveFacts from './OrderLiveFacts.vue';
 import OrderLiveFiles from './OrderLiveFiles.vue';
 import OrderPaymentPanel from './OrderPaymentPanel.vue';
+import OrderReceipts from './OrderReceipts.vue';
 import { useRoute } from 'vue-router';
 const { order, loading, error, missing, copied, reload, copyLink } = useLiveOrder();
 const route = useRoute();
@@ -43,6 +44,8 @@ const route = useRoute();
       <div class="order-layout">
         <div class="order-sections">
           <OrderLiveFiles :order-key="String(route.params.orderKey ?? '')" />
+          <!-- G2: the payment receipt and, after the print handover, the closing receipt with their requisites. -->
+          <OrderReceipts v-if="order.paymentStatus === 'paid'" :order-key="String(route.params.orderKey ?? '')" />
           <OrderComposition :quote="orderQuoteAsCart(order.quote)" />
           <OrderLiveFacts :period="order.period" :buyer="order.buyer" />
         </div>

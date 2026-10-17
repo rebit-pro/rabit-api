@@ -9,6 +9,8 @@ const props = defineProps<{
   maxAvailable: boolean;
   receiptAvailable: boolean;
   orderEmail?: boolean;
+  /** G2: «Чеки от ЮKassa» send the receipt to the order email. */
+  receiptEmail?: boolean;
 }>();
 const emit = defineEmits<{ change: [patch: Partial<BuyerFields>] }>();
 // UI-DEC-04: the optional comment stays folded until the buyer asks for it or already wrote one.
@@ -46,6 +48,9 @@ function channel(value: unknown) {
     >
       <template #clear="{ props: clearProps }"><UiClearButton v-bind="clearProps" label="Очистить email" :disabled="busy" /></template>
     </v-text-field>
+    <p v-if="receiptEmail" class="checkout-contacts__receipt" data-testid="checkout-receipt-email">
+      <v-icon icon="mdi-receipt-text-outline" size="16" aria-hidden="true" />Чек об оплате придёт на этот e-mail от ЮKassa.
+    </p>
     <v-textarea
       v-if="commenting"
       :model-value="draft.comment"
@@ -89,5 +94,12 @@ function channel(value: unknown) {
 }
 .checkout-contacts__more {
   justify-self: start;
+}
+.checkout-contacts__receipt {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: var(--mf-text-sm);
+  color: var(--mf-color-text-secondary);
 }
 </style>
