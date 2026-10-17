@@ -5,10 +5,7 @@ declare(strict_types=1);
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Morefoto\Payment\Application\Payment\Contract\PaymentIdGeneratorInterface;
-use Morefoto\Payment\Application\Payment\Contract\PaymentProviderInterface;
 use Morefoto\Payment\Application\Payment\Contract\PaymentTransactionInterface;
-use Morefoto\Payment\Application\Payment\Dto\CreateProviderPaymentInputDto;
-use Morefoto\Payment\Application\Payment\Dto\ProviderPaymentOutputDto;
 use Morefoto\Payment\Application\Payment\Dto\StartPaymentInputDto;
 use Morefoto\Payment\Application\Payment\Mapper\PaymentOutputMapper;
 use Morefoto\Payment\Application\Payment\Service\PaymentQuoteToken;
@@ -16,6 +13,9 @@ use Morefoto\Payment\Application\Payment\Service\PaymentReconciler;
 use Morefoto\Payment\Application\Payment\Service\PaymentSettings;
 use Morefoto\Payment\Application\Payment\UseCase\GetPaymentQuoteUseCase;
 use Morefoto\Payment\Application\Payment\UseCase\StartPaymentAttemptUseCase;
+use Morefoto\Payment\Application\Receipt\Mapper\ReceiptSnapshotMapper;
+use Morefoto\Payment\Application\Receipt\Service\AttemptReceipt;
+use Morefoto\Payment\Application\Receipt\Service\ReceiptRegistrar;
 use Morefoto\Payment\Domain\Payment\Enum\ConfirmationSourceEnum;
 use Morefoto\Payment\Domain\Payment\Enum\PaymentMethodEnum;
 use Morefoto\Payment\Domain\Payment\Repository\PaymentAttemptRepositoryInterface;
@@ -43,35 +43,8 @@ if (!Loader::includeModule('morefoto.payment')) {
 $request = json_decode((string)file_get_contents('/runtime/j4-pay-request.json'), true, flags: JSON_THROW_ON_ERROR);
 $orderKey = (string)$request['orderKey'];
 
-// Creation answers like the provider page is waiting for the buyer; the status check reports the payment captured in full.
-$provider = new class implements PaymentProviderInterface {
-    /** @var array<string, ProviderPaymentOutputDto> */
-    private array $payments = [];
-
-    public function code(): string
-    {
-        return 'e2e-fixture';
-    }
-
-    public function shopId(): string
-    {
-        return 'e2e-fixture';
-    }
-
-    public function create(CreateProviderPaymentInputDto $input): ProviderPaymentOutputDto
-    {
-        $id = 'e2e-' . $input->attemptId;
-
-        return $this->payments[$id] = new ProviderPaymentOutputDto($id, 'pending', $input->amount, 'RUB', $this->shopId(), $input->attemptId, 'https://e2e.invalid/pay', null, null, null);
-    }
-
-    public function find(string $providerPaymentId): ProviderPaymentOutputDto
-    {
-        $payment = $this->payments[$providerPaymentId] ?? throw new RuntimeException('Unknown fixture payment.');
-
-        return new ProviderPaymentOutputDto($payment->id, 'succeeded', $payment->amount, 'RUB', $this->shopId(), $payment->attemptId, null, null, $payment->amount, null);
-    }
-};
+require __DIR__ . '/payment-fixture-provider.php';
+$provider = new E2eFixturePaymentProvider();
 $services = ServiceLocator::getInstance();
 $settings = new PaymentSettings(true, [PaymentMethodEnum::BANK_CARD], 'http://127.0.0.1');
 $attempts = $services->get(PaymentAttemptRepositoryInterface::class);
@@ -87,6 +60,9 @@ $reconciler = new PaymentReconciler(
     $settings,
     $clock,
     new NullLogger(),
+    // G2: with receipts on the stand the attempt fixes its receipt and the confirmed payment queues it for reconciliation.
+    $services->get(ReceiptRegistrar::class),
+    $services->get(ReceiptSnapshotMapper::class),
 );
 $quotes = new GetPaymentQuoteUseCase($orders, $attempts, $services->get(PaymentAttemptPolicy::class), $services->get(PaymentQuoteToken::class), $settings, $clock);
 $quote = $quotes->execute($orderKey);
@@ -102,6 +78,7 @@ $started = new StartPaymentAttemptUseCase(
     $services->get(PaymentIdGeneratorInterface::class),
     $services->get(PaymentOutputMapper::class),
     $clock,
+    $services->get(AttemptReceipt::class),
 )->execute($orderKey, new IdempotencyKey(bin2hex(random_bytes(16))), new StartPaymentInputDto($quote->orderVersion, $quote->precedingAttemptId, $quote->quoteToken, PaymentMethodEnum::BANK_CARD->value));
 // The buyer returns from the provider page: the server asks the provider and records the money.
 $attempt = $attempts->findPublic($started->id) ?? throw new RuntimeException('The fixture attempt is missing.');

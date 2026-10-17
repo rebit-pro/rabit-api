@@ -43,12 +43,18 @@ final class OrderBuyerPolicyTest extends TestCase
         yield 'email without domain' => [['buyer@', '', null, true], 'INVALID_BUYER_EMAIL'];
         yield 'too long email' => [[str_repeat('a', 250) . '@b.ru', '', null, true], 'INVALID_BUYER_EMAIL'];
         yield 'long comment' => [['a@b.ru', str_repeat('к', 1001), null, true], 'INVALID_BUYER_COMMENT'];
-        yield 'receipt channel before G2' => [['a@b.ru', '', 'email', true], 'RECEIPT_CHANNEL_UNAVAILABLE'];
+        yield 'receipt channel while receipts are off' => [['a@b.ru', '', 'email', true], 'RECEIPT_CHANNEL_UNAVAILABLE'];
         yield 'composition not reviewed' => [['a@b.ru', '', null, false], 'REVIEW_REQUIRED'];
     }
 
     public function testAcceptsOnlyConnectedReceiptChannel(): void
     {
         self::assertSame('email', (new BuyerPolicy())->accept('a@b.ru', '', 'email', true, ['email'])->receiptChannel);
+    }
+
+    public function testConnectedReceiptsGoToTheOrderEmailWithoutAChoice(): void
+    {
+        self::assertSame('email', (new BuyerPolicy())->accept('a@b.ru', '', null, true, ['email'])->receiptChannel);
+        self::assertNull((new BuyerPolicy())->accept('a@b.ru', '', null, true, [])->receiptChannel);
     }
 }

@@ -9,7 +9,7 @@ use Rebit\Share\Shared\Interface\ResponseDtoInterface;
 final readonly class StorefrontCatalogResultDto implements ResponseDtoInterface
 {
     /** @param list<array{id:string,name:string,description:string,kind:string,price:int,printCount:int,format:string,unit:string,staffDiscount:bool,active:bool}> $products
-     * @param array{receiptChannels:list<string>,purchaseEnabled:bool,orderEmail:bool} $capabilities
+     * @param array{receiptChannels:list<string>,purchaseEnabled:bool,orderEmail:bool,paymentTestMode:bool} $capabilities
      */
     public function __construct(
         public array $products,

@@ -78,6 +78,8 @@ VERIFIERS = [
     ("verify-production.php", "l1-archive.json", "L1 production integration passed", ["zzzzzzzzzz-files", "zzzzzzzzzzzz-print-archive"]),
     # J2: one automatic letter per paid order, the email key stored only as a hash, its link opens the order.
     ("verify-order-email.php", "j2-email.json", "J2 order email integration passed", ["zzzzzzzzzz-files", "zzzzzzzzzz-order-email"]),
+    # G2: one payment receipt per paid attempt with a receipt, one closing receipt per handed order and only for its print.
+    ("verify-receipts.php", "g2-receipts.json", "G2 receipts integration passed", ["zzzzzzzzzz-files", "zzzzzzzzzzzz-print-archive", "zzzzzzzzzzzzz-receipts"]),
 ]
 # J4-DEC-04: the spec whose print order the stand pays with the fixture provider during the browser stage.
 PAY_FIXTURE_SPEC = "zzzzzzzzzz-files"
@@ -86,6 +88,8 @@ PAY_FIXTURE_SPEC = "zzzzzzzzzz-files"
 STAND_REQUEST_SPECS = {
     "zzzzzzzzzzzz-print-archive": ("l1", "production-fixture.php"),
     "zzzzzzzzzz-order-email": ("j2", "order-email-fixture.php"),
+    # G2: reconciles the open receipts — fixture payments with the fixture provider, the test shop payment with the test shop.
+    "zzzzzzzzzzzzz-receipts": ("g2", "receipt-fixture.php"),
 }
 # The browser stage of a group; the opt-in media bench sets itself 45 minutes on top of the other files of its group.
 BROWSER_TIMEOUT = 900
@@ -97,6 +101,8 @@ SUPPORT = ["--env", "MOREFOTO_SUPPORT_NAME=Организатор E2E", "--env",
            "--env", "MOREFOTO_SUPPORT_MAX_WEBHOOK_SECRET=e2e_webhook_secret_0123456789abcdef",
            # Issue #111: the server secret that keys the hash of a guest's IP for the feedback limit.
            "--env", "REBIT_ENCRYPTION_KEY=e2e_encryption_key_0123456789abcdef0123456789"]
+# G2: «Чеки от ЮKassa» like the shops of the project: the test shop refuses a payment without a receipt since 17.10.2026.
+RECEIPTS = ["--env", "MOREFOTO_PAYMENT_RECEIPTS=yookassa", "--env", "MOREFOTO_PAYMENT_RECEIPT_VAT_CODE=1"]
 # OPS legal: test-only requisites of the individual entrepreneur shown in the footer, pages and documents.
 SELLER = ["--env", "MOREFOTO_SELLER_NAME=ИП Тестов Тест Тестович", "--env", "MOREFOTO_SELLER_INN=000000000000", "--env", "MOREFOTO_SELLER_OGRNIP=000000000000000",
           "--env", "MOREFOTO_SELLER_ADDRESS=Воронеж, тестовый адрес", "--env", "MOREFOTO_SELLER_EMAIL=pd@example.invalid"]
@@ -404,7 +410,7 @@ def open_stand(state, args, stand, notification):
     def serve():
         service(state, name + "-fpm", *network, "--network-alias", "api-php-fpm", "--user", "0", *PHP_ENV, "--entrypoint", "php-fpm",
                 *php_mounts(state, stand), "--env", "APP_ENV=test", "--env", "APP_DEBUG=0", "--env", "REBIT_GEETEST_ENABLED=0",
-                "--env", "REBIT_GEETEST_BYPASS=1", *amqp, *media, "--env", "MOREFOTO_CHECKOUT_ENABLED=1", "--env", "MOREFOTO_ORDER_EMAIL_ENABLED=1", "--env", "MOREFOTO_ORDER_EMAIL_PART_BYTES=1", *SUPPORT, *SELLER, *payment_env(), args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
+                "--env", "REBIT_GEETEST_BYPASS=1", *amqp, *media, "--env", "MOREFOTO_CHECKOUT_ENABLED=1", "--env", "MOREFOTO_ORDER_EMAIL_ENABLED=1", "--env", "MOREFOTO_ORDER_EMAIL_PART_BYTES=1", *SUPPORT, *SELLER, *RECEIPTS, *payment_env(), args.php_fpm, "-y", "/app/tools/e2e/fpm.conf")
         if YOOKASSA_ENV.is_file():
             # Only php-fpm and the browser reach the provider; MySQL and RabbitMQ stay on the internal network.
             docker("network", "connect", state["browserNetwork"], name + "-fpm")

@@ -10,6 +10,8 @@ use Morefoto\Payment\Application\Payment\Dto\CreateProviderPaymentInputDto;
 use Morefoto\Payment\Application\Payment\Dto\ProviderPaymentOutputDto;
 use Morefoto\Payment\Application\Payment\Exception\ProviderRejectedException;
 use Morefoto\Payment\Application\Payment\Exception\ProviderUnavailableException;
+use Morefoto\Payment\Application\Receipt\Mapper\ReceiptSnapshotMapper;
+use Morefoto\Payment\Application\Receipt\Service\ReceiptRegistrar;
 use Morefoto\Payment\Domain\Payment\Enum\AttemptStatusEnum;
 use Morefoto\Payment\Domain\Payment\Enum\ConfirmationSourceEnum;
 use Morefoto\Payment\Domain\Payment\Repository\PaymentAttemptRepositoryInterface;
@@ -23,7 +25,7 @@ use Rebit\Share\Contracts\Commerce\OrderPaymentInterface;
 
 /**
  * Приводит открытую попытку к состоянию провайдера: создаёт платёж с сохранённым ключом идемпотентности или
- * запрашивает его статус, затем в одной транзакции фиксирует исход попытки, денежный факт и статус заказа.
+ * запрашивает его статус, затем в одной транзакции фиксирует исход попытки, денежный факт, статус заказа и чек оплаты к сверке.
  * Возврат браузера, уведомление и cron — только поводы для сверки; оплату доказывает ответ провайдера.
  *
  * @phpstan-import-type AttemptRecord from PaymentAttemptRepositoryInterface
@@ -40,6 +42,8 @@ final readonly class PaymentReconciler
         private PaymentSettings $settings,
         private ClockInterface $clock,
         private LoggerInterface $logger,
+        private ReceiptRegistrar $receipts,
+        private ReceiptSnapshotMapper $snapshots,
     ) {}
 
     /** @return null|AttemptStatusEnum статус после сверки; null — попытки нет */
@@ -103,6 +107,7 @@ final readonly class PaymentReconciler
                 'CREATED_AT' => $outcome->checkedAt,
             ]);
             $this->orders->applyPayment(new OrderPaymentInputDto($attempt['ORDER_ID'], 'paid', $outcome->paidAt, $outcome->latePayment));
+            $this->receipts->paymentConfirmed($attempt, $outcome->providerPaymentId, $now);
             $this->logger->info('Payment confirmed.', ['attemptId' => $attempt['PUBLIC_ID'], 'orderNumber' => $attempt['ORDER_NUMBER'], 'latePayment' => $outcome->latePayment, 'source' => $source->value]);
         } elseif (AttemptStatusEnum::CANCELED === $outcome->status) {
             $this->orders->applyPayment(new OrderPaymentInputDto($attempt['ORDER_ID'], 'declined'));
@@ -179,6 +184,7 @@ final readonly class PaymentReconciler
             attemptId: $attempt['PUBLIC_ID'],
             orderId: $attempt['ORDER_PUBLIC_ID'],
             idempotenceKey: $attempt['PROVIDER_KEY'],
+            receipt: null === $attempt['RECEIPT'] ? null : $this->snapshots->decode($attempt['RECEIPT']),
         );
     }
 }

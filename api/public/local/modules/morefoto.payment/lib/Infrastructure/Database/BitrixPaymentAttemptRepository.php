@@ -19,7 +19,7 @@ final readonly class BitrixPaymentAttemptRepository implements PaymentAttemptRep
 {
     private const string COLUMNS = "a.ID,a.PUBLIC_ID,a.ORDER_ID,a.ORDER_PUBLIC_ID,a.ORDER_NUMBER,a.ORDER_VERSION,a.INSTITUTION_ID,a.INSTITUTION_NAME,
         a.GROUP_NAME,a.AMOUNT,a.CURRENCY,a.PAYMENT_METHOD,a.PROVIDER,a.SHOP_ID,a.STATUS,a.PRECEDING_ID,a.CLIENT_KEY_HASH,a.REQUEST_HASH,
-        a.PROVIDER_KEY,a.PROVIDER_PAYMENT_ID,a.CONFIRMATION_URL,a.CANCEL_REASON,DATE_FORMAT(a.PAID_AT,'%Y-%m-%d %H:%i:%s') AS PAID_AT,
+        a.PROVIDER_KEY,a.RECEIPT,a.PROVIDER_PAYMENT_ID,a.CONFIRMATION_URL,a.CANCEL_REASON,DATE_FORMAT(a.PAID_AT,'%Y-%m-%d %H:%i:%s') AS PAID_AT,
         a.INCOME_AMOUNT,a.LATE_PAYMENT,a.CHECK_COUNT,DATE_FORMAT(a.NEXT_CHECK_AT,'%Y-%m-%d %H:%i:%s') AS NEXT_CHECK_AT,
         DATE_FORMAT(a.LAST_CHECK_AT,'%Y-%m-%d %H:%i:%s') AS LAST_CHECK_AT,DATE_FORMAT(a.CREATED_AT,'%Y-%m-%d %H:%i:%s') AS CREATED_AT";
 
@@ -30,12 +30,12 @@ final readonly class BitrixPaymentAttemptRepository implements PaymentAttemptRep
         try {
             $connection->queryExecute('INSERT INTO mf_payment_attempt(PUBLIC_ID,ORDER_ID,ORDER_PUBLIC_ID,ORDER_NUMBER,ORDER_VERSION,INSTITUTION_ID,
                 INSTITUTION_NAME,GROUP_NAME,AMOUNT,CURRENCY,PAYMENT_METHOD,PROVIDER,SHOP_ID,STATUS,ACTIVE_ORDER_ID,PRECEDING_ID,CLIENT_KEY_HASH,
-                REQUEST_HASH,PROVIDER_KEY,NEXT_CHECK_AT,CREATED_AT,UPDATED_AT) VALUES(' . implode(',', [
+                REQUEST_HASH,PROVIDER_KEY,RECEIPT,NEXT_CHECK_AT,CREATED_AT,UPDATED_AT) VALUES(' . implode(',', [
                 $text($record['PUBLIC_ID']), $record['ORDER_ID'], $text($record['ORDER_PUBLIC_ID']), $text($record['ORDER_NUMBER']),
                 $text($record['ORDER_VERSION']), $record['INSTITUTION_ID'], $text($record['INSTITUTION_NAME']), $text($record['GROUP_NAME']),
                 $record['AMOUNT'], "'RUB'", $text($record['PAYMENT_METHOD']), $text($record['PROVIDER']), $text($record['SHOP_ID']), "'unknown'",
                 $record['ORDER_ID'], $record['PRECEDING_ID'] ?? 'NULL', $text($record['CLIENT_KEY_HASH']), $text($record['REQUEST_HASH']),
-                $text($record['PROVIDER_KEY']), $text($record['NEXT_CHECK_AT']), $text($record['CREATED_AT']), $text($record['CREATED_AT']),
+                $text($record['PROVIDER_KEY']), $text($record['RECEIPT']), $text($record['NEXT_CHECK_AT']), $text($record['CREATED_AT']), $text($record['CREATED_AT']),
             ]) . ')');
 
             return (int)$connection->getInsertedId();
@@ -220,6 +220,7 @@ final readonly class BitrixPaymentAttemptRepository implements PaymentAttemptRep
             'CLIENT_KEY_HASH' => (string)$row['CLIENT_KEY_HASH'],
             'REQUEST_HASH' => (string)$row['REQUEST_HASH'],
             'PROVIDER_KEY' => (string)$row['PROVIDER_KEY'],
+            'RECEIPT' => $optional('RECEIPT'),
             'PROVIDER_PAYMENT_ID' => $optional('PROVIDER_PAYMENT_ID'),
             'CONFIRMATION_URL' => $optional('CONFIRMATION_URL'),
             'CANCEL_REASON' => $optional('CANCEL_REASON'),

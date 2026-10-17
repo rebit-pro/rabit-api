@@ -1,3 +1,5 @@
+import type { Receipt, ReceiptStatus } from './receipt-types';
+
 /** G1: payment through the provider's own page; the server alone confirms the result. */
 export type PaymentMethod = 'sbp' | 'bank_card';
 export type AttemptStatus = 'unknown' | 'pending' | 'succeeded' | 'canceled';
@@ -10,6 +12,8 @@ export interface PaymentQuote {
   precedingAttemptId: string | null;
   activeAttemptId: string | null;
   paymentMethods: PaymentMethod[];
+  /** G2, issue #120: the provider test shop — money is not charged. */
+  testMode: boolean;
 }
 export interface PaymentAttempt {
   id: string;
@@ -42,6 +46,8 @@ export interface StaffPayment {
   latePayment: boolean;
   incomeAmount: number | null;
   cancelReason: string | null;
+  /** G2: the payment receipt of the attempt; null — paid without a receipt or not paid. */
+  receiptStatus: ReceiptStatus | null;
 }
 export interface StaffPaymentFact {
   attemptId: string;
@@ -59,6 +65,7 @@ export interface StaffPaymentCard {
   nextCheckAt: string | null;
   attempts: StaffPayment[];
   facts: StaffPaymentFact[];
+  receipts: Receipt[];
 }
 export interface PaymentFilters {
   status: string;

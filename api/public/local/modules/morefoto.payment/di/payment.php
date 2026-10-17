@@ -47,6 +47,29 @@ use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Contracts\Commerce\OrderPaymentInterface;
 use Rebit\Share\Shared\Enum\LogChannelEnum;
 use Rebit\Share\Shared\Facade\Log;
+use Morefoto\Payment\Application\Receipt\Mapper\ReceiptOutputMapper;
+use Morefoto\Payment\Application\Receipt\Mapper\ReceiptSnapshotMapper;
+use Morefoto\Payment\Application\Receipt\Service\AttemptReceipt;
+use Morefoto\Payment\Application\Receipt\Service\PrintHandoverView;
+use Morefoto\Payment\Application\Receipt\Service\ReceiptReconciler;
+use Morefoto\Payment\Application\Receipt\Service\ReceiptRegistrar;
+use Morefoto\Payment\Application\Receipt\Service\ReceiptSettings;
+use Morefoto\Payment\Application\Receipt\UseCase\GetOrderReceiptsUseCase;
+use Morefoto\Payment\Application\Receipt\UseCase\GetPrintHandoversUseCase;
+use Morefoto\Payment\Application\Receipt\UseCase\HandOverPrintUseCase;
+use Morefoto\Payment\Domain\Receipt\Repository\PaymentReceiptRepositoryInterface;
+use Morefoto\Payment\Domain\Receipt\Service\ReceiptComposer;
+use Morefoto\Payment\Domain\Receipt\Service\ReceiptPolicy;
+use Morefoto\Payment\Infrastructure\Config\ReceiptSettingsFactory;
+use Morefoto\Payment\Infrastructure\Commerce\PaymentCapabilities;
+use Morefoto\Payment\Infrastructure\Database\BitrixPaymentReceiptRepository;
+use Morefoto\Payment\Presentation\Controller\StaffPrintHandoverController;
+use Morefoto\Payment\Presentation\Receipt\ReceiptInputMapper;
+use Morefoto\Payment\Presentation\Receipt\ReceiptResultMapper;
+use Rebit\Share\Contracts\Commerce\GroupPrintOrdersInterface;
+use Rebit\Share\Contracts\Commerce\OrderReceiptSourceInterface;
+use Rebit\Share\Contracts\Organization\GroupDirectoryInterface;
+use Rebit\Share\Contracts\Payment\PaymentCapabilitiesInterface;
 
 return [
     PaymentConnectionConfig::class => [
@@ -57,9 +80,19 @@ return [
             trim((string)getenv('MOREFOTO_PAYMENT_YOOKASSA_SECRET_KEY')),
         ),
     ],
+    ReceiptSettings::class => [
+        // G2-DEC-03: «Чеки от ЮKassa» and the item tax parameters; the tax system itself lives in the shop settings.
+        'constructor' => static fn(): ReceiptSettings => new ReceiptSettingsFactory(Log::channel(LogChannelEnum::payment))->create(
+            (string)getenv('MOREFOTO_PAYMENT_RECEIPTS'),
+            (string)getenv('MOREFOTO_PAYMENT_RECEIPT_VAT_CODE'),
+            (string)getenv('MOREFOTO_PAYMENT_RECEIPT_SUBJECT_PRINT'),
+            (string)getenv('MOREFOTO_PAYMENT_RECEIPT_SUBJECT_DIGITAL'),
+        ),
+    ],
     PaymentSettings::class => [
         'constructor' => static function(): PaymentSettings {
             $connection = ServiceLocator::getInstance()->get(PaymentConnectionConfig::class);
+            $receipts = ServiceLocator::getInstance()->get(ReceiptSettings::class);
             $returnBaseUrl = trim((string)getenv('MOREFOTO_PAYMENT_RETURN_BASE_URL'));
             $methods = [];
             foreach (explode(',', (string)getenv('MOREFOTO_PAYMENT_METHODS')) as $code) {
@@ -69,7 +102,13 @@ return [
                 }
             }
 
-            return new PaymentSettings('' !== $connection->shopId && '' !== $connection->secretKey && 1 === preg_match('#^https?://#', $returnBaseUrl), $methods, $returnBaseUrl);
+            return new PaymentSettings(
+                '' !== $connection->shopId && '' !== $connection->secretKey && 1 === preg_match('#^https?://#', $returnBaseUrl) && !$receipts->misconfigured(),
+                $methods,
+                $returnBaseUrl,
+                // YooKassa test shop keys start with test_, live ones with live_ (issue #120).
+                str_starts_with($connection->secretKey, 'test_'),
+            );
         },
     ],
     PaymentClientFactory::class => [
@@ -88,6 +127,106 @@ return [
             ServiceLocator::getInstance()->get(YooKassaResponseMapper::class),
             ServiceLocator::getInstance()->get(PaymentConnectionConfig::class)->shopId,
         ),
+    ],
+    PaymentReceiptRepositoryInterface::class => [
+        'constructor' => static fn(): PaymentReceiptRepositoryInterface => new BitrixPaymentReceiptRepository(),
+    ],
+    PaymentCapabilitiesInterface::class => [
+        'constructor' => static fn(): PaymentCapabilitiesInterface => new PaymentCapabilities(
+            ServiceLocator::getInstance()->get(PaymentSettings::class),
+            ServiceLocator::getInstance()->get(ReceiptSettings::class),
+        ),
+    ],
+    ReceiptComposer::class => ['className' => ReceiptComposer::class],
+    ReceiptPolicy::class => ['className' => ReceiptPolicy::class],
+    ReceiptSnapshotMapper::class => ['className' => ReceiptSnapshotMapper::class],
+    ReceiptOutputMapper::class => [
+        'className' => ReceiptOutputMapper::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(ReceiptSnapshotMapper::class),
+            ServiceLocator::getInstance()->get(PaymentOutputMapper::class),
+        ],
+    ],
+    AttemptReceipt::class => [
+        'className' => AttemptReceipt::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(ReceiptSettings::class),
+            ServiceLocator::getInstance()->get(OrderReceiptSourceInterface::class),
+            ServiceLocator::getInstance()->get(ReceiptComposer::class),
+            ServiceLocator::getInstance()->get(ReceiptSnapshotMapper::class),
+        ],
+    ],
+    ReceiptRegistrar::class => [
+        'className' => ReceiptRegistrar::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(PaymentReceiptRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(PaymentIdGeneratorInterface::class),
+            ServiceLocator::getInstance()->get(ReceiptSnapshotMapper::class),
+            ServiceLocator::getInstance()->get(ReceiptComposer::class),
+            ServiceLocator::getInstance()->get(ReceiptPolicy::class),
+        ],
+    ],
+    ReceiptReconciler::class => [
+        'className' => ReceiptReconciler::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(PaymentReceiptRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(PaymentAttemptRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(PaymentProviderInterface::class),
+            ServiceLocator::getInstance()->get(PaymentTransactionInterface::class),
+            ServiceLocator::getInstance()->get(ReceiptSnapshotMapper::class),
+            ServiceLocator::getInstance()->get(ReceiptPolicy::class),
+            ServiceLocator::getInstance()->get(ClockInterface::class),
+            Log::channel(LogChannelEnum::payment),
+        ],
+    ],
+    PrintHandoverView::class => [
+        'className' => PrintHandoverView::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(GroupDirectoryInterface::class),
+            ServiceLocator::getInstance()->get(GroupPrintOrdersInterface::class),
+            ServiceLocator::getInstance()->get(PaymentReceiptRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(ReceiptSettings::class),
+            ServiceLocator::getInstance()->get(PaymentOutputMapper::class),
+        ],
+    ],
+    GetOrderReceiptsUseCase::class => [
+        'className' => GetOrderReceiptsUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(OrderPaymentInterface::class),
+            ServiceLocator::getInstance()->get(PaymentReceiptRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(ReceiptSettings::class),
+            ServiceLocator::getInstance()->get(ReceiptOutputMapper::class),
+        ],
+    ],
+    GetPrintHandoversUseCase::class => [
+        'className' => GetPrintHandoversUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(PaymentStaffAccessInterface::class),
+            ServiceLocator::getInstance()->get(PrintHandoverView::class),
+        ],
+    ],
+    HandOverPrintUseCase::class => [
+        'className' => HandOverPrintUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(PaymentStaffAccessInterface::class),
+            ServiceLocator::getInstance()->get(PrintHandoverView::class),
+            ServiceLocator::getInstance()->get(ReceiptRegistrar::class),
+            ServiceLocator::getInstance()->get(ReceiptSettings::class),
+            ServiceLocator::getInstance()->get(PaymentTransactionInterface::class),
+            ServiceLocator::getInstance()->get(ClockInterface::class),
+            Log::channel(LogChannelEnum::payment),
+        ],
+    ],
+    ReceiptInputMapper::class => ['className' => ReceiptInputMapper::class],
+    ReceiptResultMapper::class => ['className' => ReceiptResultMapper::class],
+    StaffPrintHandoverController::class => [
+        'className' => StaffPrintHandoverController::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(GetPrintHandoversUseCase::class),
+            ServiceLocator::getInstance()->get(HandOverPrintUseCase::class),
+            ServiceLocator::getInstance()->get(ReceiptInputMapper::class),
+            ServiceLocator::getInstance()->get(ReceiptResultMapper::class),
+        ],
     ],
     PaymentAttemptRepositoryInterface::class => [
         'constructor' => static fn(): PaymentAttemptRepositoryInterface => new BitrixPaymentAttemptRepository(),
@@ -124,6 +263,8 @@ return [
             ServiceLocator::getInstance()->get(PaymentSettings::class),
             ServiceLocator::getInstance()->get(ClockInterface::class),
             Log::channel(LogChannelEnum::payment),
+            ServiceLocator::getInstance()->get(ReceiptRegistrar::class),
+            ServiceLocator::getInstance()->get(ReceiptSnapshotMapper::class),
         ],
     ],
     GetPaymentQuoteUseCase::class => [
@@ -151,6 +292,7 @@ return [
             ServiceLocator::getInstance()->get(PaymentIdGeneratorInterface::class),
             ServiceLocator::getInstance()->get(PaymentOutputMapper::class),
             ServiceLocator::getInstance()->get(ClockInterface::class),
+            ServiceLocator::getInstance()->get(AttemptReceipt::class),
         ],
     ],
     GetPaymentAttemptUseCase::class => [
@@ -183,6 +325,8 @@ return [
             ServiceLocator::getInstance()->get(PaymentAttemptPolicy::class),
             ServiceLocator::getInstance()->get(ClockInterface::class),
             Log::channel(LogChannelEnum::payment),
+            ServiceLocator::getInstance()->get(PaymentReceiptRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(ReceiptReconciler::class),
         ],
     ],
     ListPaymentsUseCase::class => [
@@ -191,6 +335,7 @@ return [
             ServiceLocator::getInstance()->get(PaymentStaffAccessInterface::class),
             ServiceLocator::getInstance()->get(PaymentAttemptRepositoryInterface::class),
             ServiceLocator::getInstance()->get(PaymentOutputMapper::class),
+            ServiceLocator::getInstance()->get(PaymentReceiptRepositoryInterface::class),
         ],
     ],
     GetPaymentUseCase::class => [
@@ -200,18 +345,27 @@ return [
             ServiceLocator::getInstance()->get(PaymentAttemptRepositoryInterface::class),
             ServiceLocator::getInstance()->get(PaymentFactRepositoryInterface::class),
             ServiceLocator::getInstance()->get(PaymentOutputMapper::class),
+            ServiceLocator::getInstance()->get(PaymentReceiptRepositoryInterface::class),
+            ServiceLocator::getInstance()->get(ReceiptOutputMapper::class),
         ],
     ],
     PaymentInputMapper::class => ['className' => PaymentInputMapper::class],
-    PaymentResultMapper::class => ['className' => PaymentResultMapper::class],
+    PaymentResultMapper::class => [
+        'className' => PaymentResultMapper::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(ReceiptResultMapper::class),
+        ],
+    ],
     PublicPaymentController::class => [
         'className' => PublicPaymentController::class,
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(GetPaymentQuoteUseCase::class),
             ServiceLocator::getInstance()->get(StartPaymentAttemptUseCase::class),
             ServiceLocator::getInstance()->get(GetPaymentAttemptUseCase::class),
+            ServiceLocator::getInstance()->get(GetOrderReceiptsUseCase::class),
             ServiceLocator::getInstance()->get(PaymentInputMapper::class),
             ServiceLocator::getInstance()->get(PaymentResultMapper::class),
+            ServiceLocator::getInstance()->get(ReceiptResultMapper::class),
         ],
     ],
     PaymentWebhookController::class => [

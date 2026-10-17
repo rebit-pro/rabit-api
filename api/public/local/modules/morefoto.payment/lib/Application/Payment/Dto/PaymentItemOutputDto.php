@@ -6,7 +6,10 @@ namespace Morefoto\Payment\Application\Payment\Dto;
 
 final readonly class PaymentItemOutputDto
 {
-    /** @param string $createdAt бизнес-время Europe/Moscow ATOM */
+    /**
+     * @param string      $createdAt     бизнес-время Europe/Moscow ATOM
+     * @param null|string $receiptStatus чек оплаты попытки: pending | sent | failed; null — чека нет
+     */
     public function __construct(
         public string $id,
         public string $orderId,
@@ -22,5 +25,6 @@ final readonly class PaymentItemOutputDto
         public bool $latePayment,
         public ?int $incomeAmount,
         public ?string $cancelReason,
+        public ?string $receiptStatus = null,
     ) {}
 }

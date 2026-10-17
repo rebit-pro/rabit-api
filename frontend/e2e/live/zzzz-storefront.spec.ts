@@ -145,8 +145,9 @@ test('E4: quote rejects amount, identity and quantity tampering', async ({ reque
   ])
     await body(await request.post(path() + '/quotes', { data }), 422);
   const catalog = (await body(await request.get(path() + '/catalog'))).data;
-  expect(catalog.capabilities.receiptChannels).toEqual([]);
-  // E5 enables checkout by server flag only on this isolated stand; fiscal receipt channels stay absent until G2.
+  // G2: the stand turns «Чеки от ЮKassa» on; the email receipt is declared only while the test shop takes payments.
+  expect(catalog.capabilities.receiptChannels).toEqual(process.env.E2E_YOOKASSA ? ['email'] : []);
+  // E5 enables checkout by server flag only on this isolated stand.
   expect(catalog.capabilities.purchaseEnabled).toBe(true);
 });
 

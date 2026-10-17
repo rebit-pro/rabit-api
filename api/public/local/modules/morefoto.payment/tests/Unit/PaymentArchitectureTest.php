@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Rebit\Share\Shared\Enum\LogChannelEnum;
 
 /**
- * G1-T12: чистые контроллеры, канал логов и граница с Commerce.
+ * G1-T12, G2-T13: чистые контроллеры, канал логов и граница с Commerce.
  *
  * @internal
  */
@@ -28,11 +28,13 @@ final class PaymentArchitectureTest extends TestCase
                 $name = ltrim($token[1], '\\');
                 self::assertTrue(
                     'Morefoto\Payment\Presentation\Controller' === $name
-                    || (str_starts_with($name, 'Morefoto\Payment\Application\Payment\UseCase\\') && str_ends_with($name, 'UseCase'))
-                    || (str_starts_with($name, 'Morefoto\Payment\Presentation\Payment\Request\Dto\\') && str_ends_with($name, 'RequestDto'))
+                    || (1 === preg_match('/^Morefoto\\\Payment\\\Application\\\(Payment|Receipt)\\\UseCase\\\\\w+UseCase$/', $name))
+                    || (1 === preg_match('/^Morefoto\\\Payment\\\Presentation\\\(Payment|Receipt)\\\Request\\\Dto\\\\\w+RequestDto$/', $name))
                     || in_array($name, [
                         'Morefoto\Payment\Presentation\Payment\PaymentInputMapper',
                         'Morefoto\Payment\Presentation\Payment\PaymentResultMapper',
+                        'Morefoto\Payment\Presentation\Receipt\ReceiptInputMapper',
+                        'Morefoto\Payment\Presentation\Receipt\ReceiptResultMapper',
                         'Rebit\Share\Infrastructure\Bitrix\ControllerJson',
                         $base,
                     ], true),
@@ -51,9 +53,10 @@ final class PaymentArchitectureTest extends TestCase
 
     public static function controllers(): iterable
     {
-        yield 'buyer' => ['PublicPaymentController', 'Rebit\Share\Infrastructure\Controller\PrivateApiJsonController', 3];
+        yield 'buyer' => ['PublicPaymentController', 'Rebit\Share\Infrastructure\Controller\PrivateApiJsonController', 4];
         yield 'provider' => ['PaymentWebhookController', 'Rebit\Share\Infrastructure\Controller\PrivateApiJsonController', 1];
         yield 'staff' => ['StaffPaymentController', 'Rebit\Share\Infrastructure\Controller\AuthenticatedApiJsonController', 2];
+        yield 'print handover' => ['StaffPrintHandoverController', 'Rebit\Share\Infrastructure\Controller\AuthenticatedApiJsonController', 2];
     }
 
     public function testPaymentsNeverTouchCommerceStorageDirectly(): void

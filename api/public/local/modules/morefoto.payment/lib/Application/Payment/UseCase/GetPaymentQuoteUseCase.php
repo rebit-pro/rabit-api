@@ -46,6 +46,7 @@ final readonly class GetPaymentQuoteUseCase
             precedingAttemptId: $latest['PUBLIC_ID'] ?? null,
             activeAttemptId: $open ? $latest['PUBLIC_ID'] : null,
             paymentMethods: array_map(static fn(PaymentMethodEnum $method): string => $method->value, $this->settings->methods()),
+            testMode: $this->settings->testMode(),
         );
     }
 }

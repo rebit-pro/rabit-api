@@ -35,6 +35,7 @@ function place(): void {
         :max-available="capabilities.maxAvailable"
         :receipt-available="capabilities.receiptAvailable"
         :order-email="catalog.capabilities?.orderEmail === true"
+        :receipt-email="catalog.capabilities?.receiptChannels?.includes('email') === true"
         @change="Object.assign(draft, $event)"
       />
       <div v-if="consents && consentDocument && offerDocument" class="checkout-panel__consents">
@@ -57,6 +58,9 @@ function place(): void {
           :disabled="busy"
         />
       </div>
+      <v-alert v-if="catalog.capabilities?.paymentTestMode" type="warning" variant="tonal" density="compact" data-testid="payment-test-mode"
+        >Тестовый режим оплаты: деньги не списываются.</v-alert
+      >
       <v-btn type="submit" color="primary" block size="large" :loading="busy" :disabled="busy || !canSubmit" data-testid="create-order"
         >Оформить заказ · {{ money(quote.total) }}</v-btn
       >

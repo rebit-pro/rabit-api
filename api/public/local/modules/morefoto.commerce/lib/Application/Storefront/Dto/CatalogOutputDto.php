@@ -12,6 +12,7 @@ final readonly class CatalogOutputDto
      * @param list<ProductOutputDto> $products
      * @param list<string>           $receiptChannels
      * @param bool                   $orderEmail      J2: после оплаты придёт письмо со ссылкой на заказ
+     * @param bool                   $paymentTestMode G2: тестовый магазин оплаты, деньги не списываются
      */
     public function __construct(
         public array $products,
@@ -22,5 +23,6 @@ final readonly class CatalogOutputDto
         public bool $purchaseEnabled,
         public array $receiptChannels,
         public bool $orderEmail = false,
+        public bool $paymentTestMode = false,
     ) {}
 }

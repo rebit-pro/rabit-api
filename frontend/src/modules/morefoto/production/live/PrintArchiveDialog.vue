@@ -7,6 +7,7 @@ import { fileSize } from '../../orders/live/files-rules';
 import { buildAction, versionErrorText, versionTitle } from './archive-rules';
 import type { ArchiveVersion } from './archive-types';
 import { useGroupArchive } from './useGroupArchive';
+import PrintHandoverSection from './PrintHandoverSection.vue';
 const props = defineProps<{ groupId: string | null; groupName: string }>();
 const emit = defineEmits<{ close: []; changed: [] }>();
 const { archive, loading, busy, error, notice, manualLink, open, close, load, build, renew, href, copy, manifest } = useGroupArchive();
@@ -144,6 +145,8 @@ function renewLabel(version: ArchiveVersion): string {
             </template>
           </li>
         </ol>
+        <!-- G2: the print of each paid order is marked as handed over; that sends its closing receipt. -->
+        <PrintHandoverSection v-if="groupId" :group-id="groupId" />
         <p class="mf-muted print-archive__note">
           Ссылку можно отправить лаборатории: она открывает только этот архив, без входа. «Перевыпустить ссылку» отключает прежнюю.
         </p>

@@ -6,8 +6,8 @@ namespace Morefoto\Payment\Application\Payment\Service;
 
 use Morefoto\Payment\Domain\Payment\Enum\PaymentMethodEnum;
 
-/** Хранит серверное решение о приёме оплаты: включена ли она, какие способы показывать покупателю и куда
- * провайдер возвращает браузер. Без настроенного магазина оплата выключена, а не имитируется.
+/** Хранит серверное решение о приёме оплаты: включена ли она, какие способы показывать покупателю, куда провайдер
+ * возвращает браузер и тестовый ли магазин (issue #120). Без настроенного магазина оплата выключена, а не имитируется.
  */
 final readonly class PaymentSettings
 {
@@ -16,6 +16,7 @@ final readonly class PaymentSettings
         private bool $enabled,
         private array $methods,
         private string $returnBaseUrl,
+        private bool $testMode = false,
     ) {}
 
     public function enabled(): bool
@@ -27,6 +28,12 @@ final readonly class PaymentSettings
     public function methods(): array
     {
         return $this->enabled ? $this->methods : [];
+    }
+
+    /** Подключён тестовый магазин провайдера: деньги не списываются. */
+    public function testMode(): bool
+    {
+        return $this->enabled() && $this->testMode;
     }
 
     /** Адрес возврата без личного ключа заказа (G1-DEC-04). */

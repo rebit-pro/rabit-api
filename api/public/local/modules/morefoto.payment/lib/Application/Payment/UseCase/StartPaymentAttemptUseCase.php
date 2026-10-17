@@ -13,6 +13,7 @@ use Morefoto\Payment\Application\Payment\Mapper\PaymentOutputMapper;
 use Morefoto\Payment\Application\Payment\Service\PaymentQuoteToken;
 use Morefoto\Payment\Application\Payment\Service\PaymentReconciler;
 use Morefoto\Payment\Application\Payment\Service\PaymentSettings;
+use Morefoto\Payment\Application\Receipt\Service\AttemptReceipt;
 use Morefoto\Payment\Domain\Payment\Enum\AttemptStatusEnum;
 use Morefoto\Payment\Domain\Payment\Enum\ConfirmationSourceEnum;
 use Morefoto\Payment\Domain\Payment\Enum\PaymentMethodEnum;
@@ -26,8 +27,8 @@ use Rebit\Share\Shared\Exception\HttpException;
 
 /** Начинает оплату заказа выбранным способом: резервирует единственную открытую попытку под блокировкой заказа,
  * затем вне транзакции создаёт платёж у провайдера. Двойной клик и вторая вкладка получают ту же попытку только до
- * срока продаж состава заказа (E7), а точный повтор ключа после срока отдаёт её без страницы провайдера.
- * Браузер не может объявить заказ оплаченным.
+ * срока продаж состава заказа (E7), а точный повтор ключа после срока отдаёт её без страницы провайдера. При включённых
+ * чеках попытка фиксирует чек оплаты (G2). Браузер не может объявить заказ оплаченным.
  */
 final readonly class StartPaymentAttemptUseCase
 {
@@ -43,6 +44,7 @@ final readonly class StartPaymentAttemptUseCase
         private PaymentIdGeneratorInterface $ids,
         private PaymentOutputMapper $mapper,
         private ClockInterface $clock,
+        private AttemptReceipt $receipt,
     ) {}
 
     public function execute(?string $orderKey, IdempotencyKey $key, StartPaymentInputDto $input): PaymentAttemptOutputDto
@@ -116,6 +118,8 @@ final readonly class StartPaymentAttemptUseCase
             'CLIENT_KEY_HASH' => $clientKeyHash,
             'REQUEST_HASH' => $requestHash,
             'PROVIDER_KEY' => $this->ids->uuid(),
+            // G2-DEC-04: the receipt is fixed with the attempt and repeated with every creation request.
+            'RECEIPT' => $this->receipt->snapshot($order->id, $order->total),
             // A crash before the provider call is picked up by the scheduled check with the same provider key.
             'NEXT_CHECK_AT' => $this->policy->nextCheckAt(AttemptStatusEnum::UNKNOWN, 1, $now) ?? $createdAt,
             'CREATED_AT' => $createdAt,

@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import { money } from '../commerce/money';
 import { formatMoment } from '../orders/formatters';
 import { attemptStatusLabels, confirmationLabels, paymentMethodLabels } from '../orders/live/payment-rules';
+import { receiptKindTitles, receiptShortLabels, receiptStatusLabels, receiptTones } from '../orders/live/receipt-rules';
 import type { AttemptStatus } from '../orders/live/payment-types';
 import MfStatus from '@/components/status/MfStatus.vue';
 import type { StatusTone } from '@/components/status/tones';
@@ -33,7 +34,7 @@ function select(ids: string[]): void {
   for (const id of [...picked.keys()]) if (!ids.includes(id)) picked.delete(id);
   selected.value = ids;
 }
-const csvHeader = ['Заказ', 'Учреждение', 'Группа', 'Способ', 'Сумма, ₽', 'Статус', 'Поздняя', 'Начат (мск)', 'Оплачен (мск)'];
+const csvHeader = ['Заказ', 'Учреждение', 'Группа', 'Способ', 'Сумма, ₽', 'Статус', 'Поздняя', 'Начат (мск)', 'Оплачен (мск)', 'Чек'];
 function exportRows(payments: StaffPayment[]): void {
   const rows = payments.map((payment) => [
     payment.orderNumber,
@@ -44,7 +45,8 @@ function exportRows(payments: StaffPayment[]): void {
     attemptStatusLabels[payment.status],
     payment.latePayment ? 'да' : '',
     formatMoment(payment.createdAt),
-    payment.paidAt ? formatMoment(payment.paidAt) : ''
+    payment.paidAt ? formatMoment(payment.paidAt) : '',
+    payment.receiptStatus ? receiptShortLabels[payment.receiptStatus] : ''
   ]);
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(new Date());
   downloadCsv('payments-' + today + '.csv', csvText(csvHeader, rows));
@@ -115,6 +117,19 @@ function exportRows(payments: StaffPayment[]): void {
             {{ money(fact.amount) }} · {{ formatMoment(fact.paidAt) }} мск · подтверждено {{ confirmationLabels[fact.confirmedBy] }}
             <template v-if="fact.incomeAmount !== null"> · к зачислению {{ money(fact.incomeAmount) }}</template>
             <template v-if="fact.latePayment"> · поздняя оплата</template>
+          </li>
+        </ul>
+      </section>
+      <section v-if="card.receipts.length" class="mf-panel" data-testid="payment-receipts">
+        <h3 class="payments__title">Чеки заказа</h3>
+        <ul class="payments__plain">
+          <li v-for="receipt in card.receipts" :key="receipt.id">
+            {{ receiptKindTitles[receipt.kind] }} · {{ money(receipt.amount) }} ·
+            <MfStatus :tone="receiptTones[receipt.status]">{{ receiptStatusLabels[receipt.status] }}</MfStatus>
+            <template v-if="receipt.fiscalDocumentNumber">
+              · ФН {{ receipt.fiscalStorageNumber }}, ФД {{ receipt.fiscalDocumentNumber }}, ФП {{ receipt.fiscalAttribute }}</template
+            >
+            <template v-if="receipt.handedAt"> · печать выдана {{ formatMoment(receipt.handedAt) }} мск</template>
           </li>
         </ul>
       </section>

@@ -8,7 +8,8 @@ use Morefoto\Commerce\Domain\Order\ValueObject\OrderBuyer;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /** Проверяет контакт покупателя по правилам оформления E8: единственный обязательный контакт — email, имя и телефон
- * заказ не хранит. Канал чека принимается только из реально подключённых каналов, подтверждение состава обязательно.
+ * заказ не хранит. Канал чека принимается только из реально подключённых каналов; при подключённых чеках без выбора
+ * чек уходит на email заказа (G2-DEC-12). Подтверждение состава обязательно.
  */
 final readonly class BuyerPolicy
 {
@@ -29,6 +30,7 @@ final readonly class BuyerPolicy
         if (!$reviewed) {
             throw new HttpException('REVIEW_REQUIRED', 422);
         }
+        $receiptChannel ??= in_array('email', $receiptChannels, true) ? 'email' : null;
 
         return new OrderBuyer($email, $comment, $receiptChannel);
     }

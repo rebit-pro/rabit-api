@@ -215,7 +215,7 @@ final class PaymentReconcilerTest extends TestCase
     public function testScheduledReconciliationPicksOnlyDueAttempts(): void
     {
         $scenario = $this->pending();
-        $reconcile = new ReconcilePaymentsUseCase($scenario->attempts, $scenario->reconciler(), $scenario->policy, $scenario->clock(), new NullLogger());
+        $reconcile = new ReconcilePaymentsUseCase($scenario->attempts, $scenario->reconciler(), $scenario->policy, $scenario->clock(), new NullLogger(), $scenario->receipts, $scenario->receiptReconciler());
 
         self::assertSame(0, $reconcile->execute(100)->checked, 'The first check waits for its pause.');
         $scenario->advance(60);

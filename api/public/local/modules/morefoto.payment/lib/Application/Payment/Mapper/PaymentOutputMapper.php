@@ -8,6 +8,7 @@ use Morefoto\Payment\Application\Payment\Dto\PaymentAttemptOutputDto;
 use Morefoto\Payment\Application\Payment\Dto\PaymentFactOutputDto;
 use Morefoto\Payment\Application\Payment\Dto\PaymentItemOutputDto;
 use Morefoto\Payment\Domain\Payment\Enum\AttemptStatusEnum;
+use Morefoto\Payment\Domain\Receipt\Enum\ReceiptStatusEnum;
 use Morefoto\Payment\Domain\Payment\Repository\PaymentAttemptRepositoryInterface;
 use Morefoto\Payment\Domain\Payment\Repository\PaymentFactRepositoryInterface;
 
@@ -40,8 +41,11 @@ final readonly class PaymentOutputMapper
         );
     }
 
-    /** @param AttemptRecord $attempt */
-    public function item(array $attempt): PaymentItemOutputDto
+    /**
+     * @param AttemptRecord $attempt
+     * @param null|string   $receiptStatus статус чека оплаты попытки в хранилище (G2); null — чека нет
+     */
+    public function item(array $attempt, ?string $receiptStatus = null): PaymentItemOutputDto
     {
         return new PaymentItemOutputDto(
             id: $attempt['PUBLIC_ID'],
@@ -58,6 +62,7 @@ final readonly class PaymentOutputMapper
             latePayment: $attempt['LATE_PAYMENT'],
             incomeAmount: $attempt['INCOME_AMOUNT'],
             cancelReason: $attempt['CANCEL_REASON'],
+            receiptStatus: null === $receiptStatus ? null : ReceiptStatusEnum::from($receiptStatus)->visible(),
         );
     }
 

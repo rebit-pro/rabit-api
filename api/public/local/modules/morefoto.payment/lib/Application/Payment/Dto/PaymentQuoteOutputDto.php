@@ -10,6 +10,7 @@ final readonly class PaymentQuoteOutputDto
      * @param null|string  $precedingAttemptId последняя попытка заказа — её ID передаётся в новую попытку
      * @param null|string  $activeAttemptId    открытая попытка, результат которой нужно дождаться
      * @param list<string> $paymentMethods     способы оплаты магазина в порядке показа
+     * @param bool         $testMode           тестовый магазин: деньги не списываются (issue #120)
      */
     public function __construct(
         public int $subtotal,
@@ -22,5 +23,6 @@ final readonly class PaymentQuoteOutputDto
         public ?string $precedingAttemptId,
         public ?string $activeAttemptId,
         public array $paymentMethods,
+        public bool $testMode = false,
     ) {}
 }
