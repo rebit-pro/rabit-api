@@ -75,11 +75,12 @@ final readonly class QueueEmailUseCase implements EmailNotificationInterface
     {
         $total = 0;
         foreach ($attachments as $attachment) {
-            if (1 !== preg_match('/^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$/D', $attachment->name)
+            // The name goes into a quoted MIME header; the path must be absolute and must not climb out of its directory.
+            if (1 !== preg_match('~^[^\x00-\x1F\x7F"\\\/]{1,128}$~uD', $attachment->name)
                 || 1 !== preg_match('~^[a-z]+/[a-z0-9.+-]{1,64}$~D', $attachment->contentType)
-                || 1 !== preg_match('~^(?:/[A-Za-z0-9_.-]+)+$~D', $attachment->path)
-                || str_contains($attachment->path, '..')
-                || 1 > $attachment->bytes) {
+                || 1 !== preg_match('~^/[^\x00]+$~D', $attachment->path)
+                || 1 === preg_match('~(?:^|/)\.\.(?:/|$)~', $attachment->path)
+                || 0 > $attachment->bytes) {
                 throw new \InvalidArgumentException('Invalid notification attachment.');
             }
             $total += $attachment->bytes;

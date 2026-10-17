@@ -113,6 +113,11 @@ final class DeliveryUseCasesTest extends TestCase
         self::assertNotSame(hash('sha256', implode("\0", ['email', 'buyer@example.test', $input->subject, $input->body, '3'])), $repository->payloadHash);
         self::assertEquals([$photo], $repository->operation?->attachments);
         self::assertSame($repository->operation?->id, $useCase->queue($letter([$photo]))->id);
+        // Real names of frames are accepted: codes with a dash, a suffix, Cyrillic or a space, an empty original.
+        (new QueueEmailUseCase(new InMemoryDeliveryRepository(), new RecordingPublisher(), new FixedNotificationClock(), new NullLogger()))->queue($letter([
+            new EmailAttachmentInputDto('-AB_1-2.jpeg', 'image/jpeg', '/app/var/private/media/my shoot/..x/1.jpg', 0),
+            new EmailAttachmentInputDto('Фото 1.png', 'image/png', $photo->path, 1),
+        ]));
         try {
             $useCase->queue($letter([new EmailAttachmentInputDto('AB002.jpg', 'image/jpeg', $photo->path, $photo->bytes)]));
             self::fail('Another attachment under the same key must conflict.');
@@ -121,12 +126,14 @@ final class DeliveryUseCasesTest extends TestCase
 
         $limit = EmailNotificationInterface::MAX_ATTACHMENT_BYTES;
         foreach ([
-            [new EmailAttachmentInputDto('AB 1.jpg', 'image/jpeg', $photo->path, 1)],
+            [new EmailAttachmentInputDto('AB"1.jpg', 'image/jpeg', $photo->path, 1)],
             [new EmailAttachmentInputDto("AB\r\n.jpg", 'image/jpeg', $photo->path, 1)],
+            [new EmailAttachmentInputDto('../AB001.jpg', 'image/jpeg', $photo->path, 1)],
+            [new EmailAttachmentInputDto('', 'image/jpeg', $photo->path, 1)],
             [new EmailAttachmentInputDto('AB001.jpg', 'image/jpeg; x', $photo->path, 1)],
             [new EmailAttachmentInputDto('AB001.jpg', 'image/jpeg', 'media/1.jpg', 1)],
             [new EmailAttachmentInputDto('AB001.jpg', 'image/jpeg', '/app/var/../etc/passwd', 1)],
-            [new EmailAttachmentInputDto('AB001.jpg', 'image/jpeg', $photo->path, 0)],
+            [new EmailAttachmentInputDto('AB001.jpg', 'image/jpeg', $photo->path, -1)],
             [new EmailAttachmentInputDto('AB001.jpg', 'image/jpeg', $photo->path, $limit), new EmailAttachmentInputDto('AB002.jpg', 'image/jpeg', $photo->path, 1)],
         ] as $index => $attachments) {
             try {
