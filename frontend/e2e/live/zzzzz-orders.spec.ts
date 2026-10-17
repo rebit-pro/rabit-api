@@ -150,7 +150,8 @@ test('E5: checkout is idempotent, keeps one order per quote and hides secrets', 
     phone: null,
     email: 'order.e5@example.test',
     comment: 'E5 проверка',
-    receiptChannel: null
+    // G2-DEC-12: with receipts of the test shop the server sends the receipt to the order email without a choice.
+    receiptChannel: process.env.E2E_YOOKASSA ? 'email' : null
   });
   expect(created.quote.total).toBe(priced.quote.total);
   expect(created.quote.lines[0].id).toMatch(/^[a-f0-9-]{36}$/);
