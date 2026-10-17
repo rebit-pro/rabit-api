@@ -56,7 +56,9 @@
       "J2",
       "E9"
     ],
-    "review": {},
+    "review": {
+      "J5": "https://github.com/rebit-pro/rabit-api/pull/209"
+    },
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
     "mergedPullRequests": {
       "B1": "https://github.com/rebit-pro/rabit-api/pull/8",
@@ -3676,7 +3678,7 @@
       ],
       "activation": "Вместе с включением отправки J2 после проверки #161; до этого — только контролируемые ящики.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "review",
       "unlocks": [
         "N3"
       ],

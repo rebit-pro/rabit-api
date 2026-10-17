@@ -2,13 +2,14 @@
 
 ## Точка продолжения
 
-- Ветка `codex/j5-order-email-attachments` (worktree `/home/user/rabit-api-worktrees/j5-order-email-attachments`) от main 1a28aa7. PR — создаётся.
+- Ветка `codex/j5-order-email-attachments` (worktree `/home/user/rabit-api-worktrees/j5-order-email-attachments`) от main 1a28aa7. PR [#209](https://github.com/rebit-pro/rabit-api/pull/209).
 - Завершено:
   - S0–S5: план, решения, граф;
   - H1 вложения ссылками, Files — план писем, письма «k из n», статус по письмам;
   - frontend, unit, E2E-спека и верификаторы;
   - быстрые проверки PASS.
-- Сейчас: S6 — PR и саморевью. Следующий шаг после саморевью без блокеров — полный гейт `make test-e2e` (S7).
+- S6–S7 завершены: саморевью без блокеров, полный гейт PASS (`rabit-e2e-86465c5e7533`), visual desktop/mobile, J5 → review в графе.
+- Следующий шаг: по «да» владельца — merge PR #209 и выкладка: миграция `up 20261017100001` → backend (с notification consumer/dispatcher, order_email_runner) → DI smoke → frontend. Отправка остаётся выключенной до #161; перед включением — проверить `main.max_file_size`.
 - Блокеры: нет. Открытых решений нет.
 - Повтор гейта: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
 
@@ -47,7 +48,23 @@
   - `verify-order-email.php` и `verify-notification.php` дополнены.
 - Найдено попутно (не по теме):
   - `EmailLeadNotifier` передаёт вложению `METHOD=''` и `CHARSET=''`, Bitrix тогда пишет `method=; charset=` в Content-Type вложения заявки — проверить отдельно;
-  - `tools/tests/test_run_browser_e2e.py::test_f2_prepares_first_and_reports_later_in_one_group` падает и на main 1a28aa7 (порядок групп).
+  - `tools/tests/test_run_browser_e2e.py::test_f2_prepares_first_and_reports_later_in_one_group` падает и на main 1a28aa7 (порядок групп) — это уже #163.
+
+### 17.10.2026 — PR и саморевью
+
+- PR #209. Саморевью — блокеров нет. Исправлено по ходу:
+  - H1 отвергал бы настоящие имена кадров (код с дефисом в начале, кириллица) и пустой файл — дефект застопорил бы отправку. Проверка сведена к безопасности: имя без кавычек, слэшей и управляющих символов; путь абсолютный без `..`; размер ≥ 0. Unit дополнен;
+  - пока план писем ещё не записан (до минуты после оплаты), блок говорил «Отправляем ссылку». Теперь «Готовим письмо с заказом».
+- Неблокирующее — issue #210 (вложение заявки с пустыми `method=`/`charset=`); падение теста раннера — уже #163.
+- Инструкция для родителей `/kak-kupit/` про письма не дополнялась: отправка выключена до #161.
+
+### 17.10.2026 — полный гейт
+
+- Прогон 1 `rabit-e2e-68b832413fea` — FAIL только G1-T14 (тестовый магазин ЮKassa: СБП не ответил, страница осталась «Проверяем оплату», известная #174). Спека `zzzzzzzzzz-order-email` прошла (6,1 с); группа a отменена раннером.
+- Прогон 2 `rabit-e2e-86465c5e7533` — **PASS**, 418,8 с, ЮKassa включена:
+  - 155 браузерных тестов (a 81, b 74), все verify-*.php, включая `verify-order-email.php` и `verify-notification.php` (durable Notification contract);
+  - G1-T14 прошёл (24,1 с), `zzzzzzzzzz-order-email` — 6,9 с.
+- Visual `docs/waves/j5/screenshots/j5-{desktop,mobile}-order-email.png`: «Фото и ссылка на заказ отправлены на print.j4@example.test … — 2 письма, 2 фото. Если писем нет — проверьте папку «Спам»». На 390 px без горизонтальной прокрутки.
 
 ### Проверки
 
@@ -72,12 +89,12 @@
 | J5-T04 | PASS | 17.10.2026 | `OrderEmailAttachmentsTest::testAFailureBetweenLettersRepeatsOnlyTheLetterThatIsNotQueued` |
 | J5-T05 | PASS | 17.10.2026 | `OrderEmailAttachmentsTest` (тексты, кадры по ссылке, письмо без файлов), `OrderEmailFlowTest` |
 | J5-T06 | PASS | 17.10.2026 | `OrderEmailAttachmentsTest::testTheStatusCountsEveryLetter` |
-| J5-T07 | PASS / PENDING | 17.10.2026 | unit `DeliveryUseCasesTest`, `BitrixEmailTransportTest`; MySQL `verify-notification.php` — в гейте |
+| J5-T07 | PASS | 17.10.2026 | unit `DeliveryUseCasesTest`, `BitrixEmailTransportTest`; MySQL `verify-notification.php` в гейте `rabit-e2e-86465c5e7533` |
 | J5-T08 | PASS | 17.10.2026 | `FilesArchitectureTest`, `AttachmentPlannerTest` (предел = H1) |
 | J5-T09 | PASS | 17.10.2026 | `tests/commerce/order-email.test.mjs` |
-| J5-T10 | PENDING | | гейт `make test-e2e` |
-| J5-T11 | PENDING | | гейт `make test-e2e` |
-| J5-T12 | PENDING | | гейт → `verify-order-email.php` |
-| J5-T13 | PENDING | | гейт → `j5-*-order-email.png` |
-| J5-T14 | PENDING | | быстрые PASS, гейт ждёт |
+| J5-T10 | PASS | 17.10.2026 | гейт `rabit-e2e-86465c5e7533`: письмо на кадр, реальный MIME Bitrix, sha256 вложений = оригиналы, ссылка в каждом письме |
+| J5-T11 | PASS | 17.10.2026 | тот же гейт: статус accepted, «2 письма», повтор после сдвига времени — 202 и все письма снова, сразу — 429 |
+| J5-T12 | PASS | 17.10.2026 | тот же гейт: `verify-order-email.php` PASS |
+| J5-T13 | PASS | 17.10.2026 | тот же гейт: `j5-desktop/mobile-order-email.png` |
+| J5-T14 | PASS | 17.10.2026 | быстрые проверки и `make test-e2e` PASS |
 | J5-T15 | PENDING | | ручная проверка после #161 |
