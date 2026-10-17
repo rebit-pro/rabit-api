@@ -9,8 +9,13 @@
 - Решения G2-D09 и G2-DEC-01…12 приняты владельцем («Рекомендации принимаю»). S1–S2 завершены: граф (J5 merged,
   G2 inProgress, D09 принят, PAY-12/13, PAY-05/06 → I1) и `docs/waves/g2/morefoto-contract.patch`.
 - S3–S10 выполнены: backend `1ccc96d`, frontend `7d6d537`; быстрые проверки PASS.
-- Сейчас: S12 — E2E (фикстура чеков, спецификация, `verify-receipts.php`, окружение стенда).
-- Следующий шаг: `api/tools/e2e/receipt-fixture.php` и спецификация `zzzzzzzzzzzzz-receipts`.
+- S12 (E2E) написан `1488144`, PR [#212](https://github.com/rebit-pro/rabit-api/pull/212), саморевью без блокеров;
+  неблокирующее — #213, #214; PR закрывает #120.
+- S13 завершён: гейт `rabit-e2e-4cbd704da394` PASS (158 тестов, все verify, тестовый магазин включён), visual,
+  G2 → review в графе.
+- Следующий шаг: по «да» владельца — merge PR #212 и выкладка: `migrate.sh up Version20261017180001` → backend (13
+  сервисов) с окружением чеков на `morefoto_stage_fpm` и `morefoto_stage_payment_reconciler` → DI smoke → frontend.
+- Блокеры: нет. Открытых решений нет.
 - Открыто: нет. Тестовый магазин с проверкой чеков включён владельцем.
 - Проверка графа: `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
 
@@ -18,7 +23,24 @@
 
 | ID | Статус | Дата | Команда / доказательство |
 | --- | --- | --- | --- |
-| G2-T01…T18 | PENDING | — | — |
+| G2-T01 | PASS | 17.10.2026 | `verify-wave-graph.py` PASS (61 волна, 125 ID); MoreFoto `validate.py` passed, 124 запроса |
+| G2-T02 | PASS | 17.10.2026 | `ReceiptComposerTest` (смешанный заказ, подарок, скидка сотрудника, признаки) |
+| G2-T03 | PASS | 17.10.2026 | `ReceiptComposerTest::testMismatchAndTooManyItemsNeverReachTheProvider` |
+| G2-T04 | PASS | 17.10.2026 | `ReceiptFlowTest::testAttemptFixesTheReceiptAndRepeatsItWithEveryCreation`, `YooKassaReceiptClientTest` |
+| G2-T05 | PASS | 17.10.2026 | `ReceiptSettingsTest`, `ReceiptFlowTest::testReceiptsOffKeepTheRequestOfG1` |
+| G2-T06 | PASS | 17.10.2026 | `ReceiptFlowTest` (реквизиты, canceled, 72 ч, сверка по расписанию) |
+| G2-T07 | PASS | 17.10.2026 | `PrintHandoverTest`; гейт: повтор PAY-13, HANDOVER_CONFLICT, INVALID_ORDERS, CONFIRMATION_REQUIRED, 401 |
+| G2-T08 | PASS | 17.10.2026 | `ReceiptFlowTest` (ожидание чека оплаты, тот же ключ, срок ключа, отказ); гейт: `settlements` = сумма печати |
+| G2-T09 | PASS | 17.10.2026 | `PrintHandoverTest::testBuyerSeesTheReceiptsOfTheOrderByItsKey`; гейт: чужой ключ — 404 |
+| G2-T10 | PASS | 17.10.2026 | `ReceiptSettingsTest`, `CheckoutAvailabilityTest`; гейт: `paymentTestMode` в COM-08 |
+| G2-T11 | PASS | 17.10.2026 | `OrderBuyerPolicyTest`; гейт: `receiptChannels=["email"]`, `receiptChannel='email'` у нового заказа |
+| G2-T12 | PASS | 17.10.2026 | гейт: «Чек отправлен» в строке реестра, «Чеки заказа» в карточке |
+| G2-T13 | PASS | 17.10.2026 | `PaymentArchitectureTest` (контроллеры, граница с Commerce, phpDoc) |
+| G2-T14 | PASS | 17.10.2026 | гейт с тестовым магазином: чек оплаты `succeeded`, закрывающий чек принят `pending` без ошибки |
+| G2-T15 | PASS | 17.10.2026 | гейт: блок «Чеки» с реквизитами, после выдачи — закрывающий чек; `g2-*-order-receipts.png` |
+| G2-T16 | PASS | 17.10.2026 | гейт: «Выдача печати» desktop/mobile, `g2-*-print-handover.png`, `g2-desktop-payment-receipts.png` |
+| G2-T17 | PASS | 17.10.2026 | PHPUnit, PHPStan, php-cs-fixer, `npm run check`, `test:commerce` |
+| G2-T18 | PASS | 17.10.2026 | `verify-receipts.php` в гейте `rabit-e2e-4cbd704da394` |
 
 ## Журнал
 
@@ -90,4 +112,31 @@
 | `npm run check` (playwright v1.52.0, том `rabit-e7-node`) | PASS (`check=0`), test:ui 100/100 после замены иконки на зарегистрированную |
 | `npm run test:commerce` | PASS, 253/253 (новый `receipts.test.mjs`) |
 | `python3 tools/verify-wave-graph.py docs/waves/graph.json` | PASS |
+
+### 17.10.2026 — S12–S13: E2E, PR, саморевью
+
+- Стенд E2E: `MOREFOTO_PAYMENT_RECEIPTS=yookassa`, `VAT_CODE=1` (тестовый магазин без чека отклоняет платёж).
+  Фикстура `receipt-fixture.php` (действие `reconcile`: подставной провайдер — чеки платежей `e2e-fixture`, настоящий
+  тестовый магазин — платёж G1), общий `payment-fixture-provider.php` для `pay-fixture.php`.
+- Спецификация `zzzzzzzzzzzzz-receipts` (группа b после L1): чек оплаты заказа J4, «Выдача печати» в блоке «Печать»,
+  закрывающий чек, реестр, отказы PAY-13; с ключами тестового магазина — чеки платежа G1 и закрывающий чек в нём.
+  `verify-receipts.php`: чек оплаты ↔ снимок, закрывающий только по выданной печати, CHECK и уникальность, нет email,
+  `down()` отказывает. `zzzz-storefront`/`zzzzz-orders`: каналы чека и `paymentTestMode` зависят от ключей магазина.
+- Scope п. 8 изменён до реализации: production compose сервисов оплаты не содержит — runbook в `docs/waves/g2/README.md`.
+- PR #212 открыт; ветка отправлена по HTTPS (`ssh` к github.com:22 — таймаут). Саморевью: блокеров нет. Issues #213
+  (устаревшая плашка о печати), #214 (канонический план MoreFoto отстаёт); #120 закрывается PR.
+- `python3 -m unittest tools/tests/test_run_browser_e2e.py` — 21/22, падает `test_f2_…` (есть на main, #163).
+
+### 17.10.2026 — S13: гейт и visual
+
+- Прогон 1 `rabit-e2e-f7427f5af1ce` — FAIL: `zzzzz-orders` ждал `receiptChannel: null`, а по G2-DEC-12 сервер ставит
+  `email` при включённых чеках. Спецификация поправлена (`email` при ключах тестового магазина).
+- Прогон 2 `rabit-e2e-4cbd704da394` — **PASS**: 158 браузерных тестов (a 81, b 77), все `verify-*.php`, включая
+  `verify-receipts.php`; тестовый магазин включён. `zzzzzzzzzzzzz-receipts`: T15 3,8 с, T07/T16 7,8 с, T14 4,3 с.
+- Тестовый магазин (настоящие запросы): два платежа G1 с чеком — чеки оплаты `succeeded` с ФД; закрывающий чек
+  `POST /v3/receipts` принят, `ra-…`, статус `pending`, без ошибки. Подставной провайдер: `settlements` 55000 = сумма
+  печати, позиции `full_payment`.
+- Visual `docs/waves/g2/screenshots/`: блок «Чеки» (desktop/mobile), «Выдача печати» (desktop/mobile), «Чеки заказа»
+  в карточке платежа; на 390 px без горизонтальной прокрутки. Названия товаров в кадрах — тестовый каталог стенда.
+- Граф: G2 → review (PR #212), `verify-wave-graph.py` PASS.
 

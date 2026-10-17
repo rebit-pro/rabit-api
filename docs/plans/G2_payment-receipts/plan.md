@@ -159,17 +159,17 @@
 
 - [x] S1. План и журнал; согласование G2-D09 и G2-DEC-01…12.
 - [x] S2. Графы: J5 `merged`, G2 `inProgress`, D09, PAY-12/13, PAY-05/06/09; канонический план и patch; проверки DAG/ID.
-- [ ] S3. Контракты Commerce/Payment, реализации и DI.
-- [ ] S4. Миграция foundation и репозитории чеков.
-- [ ] S5. Domain/Application: состав и признаки, настройки, снимок в попытке, `receipt` в платеже.
-- [ ] S6. Клиент ЮKassa: `POST/GET receipts`, `receipt_registration`; сверка чеков в `app:payment:reconcile`.
-- [ ] S7. PAY-12/13 выдача печати и закрывающие чеки.
-- [ ] S8. PAY-04, PAY-03 `testMode`, PAY-10/11.
-- [ ] S9. COM-08, `RECEIPT_CHANNEL`, оформление.
-- [ ] S10. Frontend покупателя и сотрудника.
-- [ ] S11. Быстрые проверки: php-cs-fixer, PHPStan, PHPUnit, frontend check/build.
-- [ ] S12. E2E-спецификация, фикстура чеков и `verify-receipts.php`; ручная проверка тестового магазина.
-- [ ] S13. PR, ревью, затем `make test-e2e` и визуальная проверка desktop/mobile.
+- [x] S3. Контракты Commerce/Payment, реализации и DI.
+- [x] S4. Миграция foundation и репозитории чеков.
+- [x] S5. Domain/Application: состав и признаки, настройки, снимок в попытке, `receipt` в платеже.
+- [x] S6. Клиент ЮKassa: `POST/GET receipts`, `receipt_registration`; сверка чеков в `app:payment:reconcile`.
+- [x] S7. PAY-12/13 выдача печати и закрывающие чеки.
+- [x] S8. PAY-04, PAY-03 `testMode`, PAY-10/11.
+- [x] S9. COM-08, `RECEIPT_CHANNEL`, оформление.
+- [x] S10. Frontend покупателя и сотрудника.
+- [x] S11. Быстрые проверки: php-cs-fixer, PHPStan, PHPUnit, frontend check/build.
+- [x] S12. E2E-спецификация, фикстура чеков и `verify-receipts.php`; ручная проверка тестового магазина.
+- [x] S13. PR, ревью, затем `make test-e2e` и визуальная проверка desktop/mobile.
 
 ## Критерии приёмки
 
