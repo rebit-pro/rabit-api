@@ -8,8 +8,9 @@
   `b3e56a8`, план переписан.
 - Решения G2-D09 и G2-DEC-01…12 приняты владельцем («Рекомендации принимаю»). S1–S2 завершены: граф (J5 merged,
   G2 inProgress, D09 принят, PAY-12/13, PAY-05/06 → I1) и `docs/waves/g2/morefoto-contract.patch`.
-- Сейчас: S3–S6 — контракты Commerce/Payment, миграция, состав чека, клиент ЮKassa, сверка.
-- Следующий шаг: контракты `OrderReceiptSourceInterface` и `PaymentCapabilitiesInterface`.
+- S3–S10 выполнены: backend `1ccc96d`, frontend `7d6d537`; быстрые проверки PASS.
+- Сейчас: S12 — E2E (фикстура чеков, спецификация, `verify-receipts.php`, окружение стенда).
+- Следующий шаг: `api/tools/e2e/receipt-fixture.php` и спецификация `zzzzzzzzzzzzz-receipts`.
 - Открыто: нет. Тестовый магазин с проверкой чеков включён владельцем.
 - Проверка графа: `python3 tools/verify-wave-graph.py docs/waves/graph.json`.
 
@@ -62,4 +63,31 @@
   `paymentTestMode`/`receiptChannels` COM-08; чеки PAY-10/11) и `backend-waves.json` (G2/I1, D09; `deliveryState`
   канонического плана не трогается — он отстаёт с E7). `render-waves.py`, `build.py`, `validate.py` — passed,
   124 запроса. Патч `docs/waves/g2/morefoto-contract.patch` накладывается после J2.
+
+### 17.10.2026 — S3–S11: реализация
+
+- Backend `1ccc96d`:
+  - контракты `OrderReceiptSourceInterface` (Commerce) и `PaymentCapabilitiesInterface` (Payment);
+  - Domain `Receipt`: `ReceiptComposer` (группировка, бесплатное вне чека, ≤80, сумма = платёж, признаки расчёта),
+    `ReceiptPolicy` (1/2/5/15 мин, потом час; 72 ч — `timeout`; ключ закрывающего чека — сутки от `SENT_AT`);
+  - Application: `AttemptReceipt` (снимок в попытке), `ReceiptRegistrar`, `ReceiptReconciler`, `PrintHandoverView`,
+    UseCase PAY-04/12/13; сверка чеков в `app:payment:reconcile`;
+  - ЮKassa: `receipt` в `POST /payments` (`measure=piece`, без `tax_system_code`), `POST /receipts` с `settlements`
+    prepayment, `GET /receipts?payment_id=`, `GET /receipts/{id}`;
+  - настройки `MOREFOTO_PAYMENT_RECEIPTS` (`off|yookassa`), `_RECEIPT_VAT_CODE` (1), `_RECEIPT_SUBJECT_PRINT/_DIGITAL`
+    (`commodity`) — `ReceiptSettingsFactory`; неверные значения выключают оплату; `testMode` по префиксу ключа `test_`;
+  - миграция `20261017180001` (`RECEIPT` в попытке, `mf_payment_receipt`), добавлена в `prepare.php`.
+- Frontend `7d6d537`: блок «Чеки» заказа, строка о чеке и плашка тестового режима на оформлении и в оплате,
+  «Выдача печати» в диалоге «Печать», чек в строке/CSV/карточке реестра.
+
+### Проверки
+
+| Команда | Результат |
+| --- | --- |
+| `phpunit --testsuite unit` (php-cli d1-local, vendor `rabit-e7-vendor`) | PASS, 1027 тестов, 50252 проверки |
+| `phpstan analyse` (весь проект) | PASS |
+| `php-cs-fixer fix` по 97 изменённым PHP-файлам | исправлено 3 файла (форматирование) |
+| `npm run check` (playwright v1.52.0, том `rabit-e7-node`) | PASS (`check=0`), test:ui 100/100 после замены иконки на зарегистрированную |
+| `npm run test:commerce` | PASS, 253/253 (новый `receipts.test.mjs`) |
+| `python3 tools/verify-wave-graph.py docs/waves/graph.json` | PASS |
 
