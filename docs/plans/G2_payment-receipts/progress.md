@@ -3,10 +3,9 @@
 ## Точка продолжения
 
 - PR #212 слит в main `65bd194` (17.10.2026) и выложен на stage релизом `main-20261017192004-65bd194` (журнал «Выкладка»).
-  Чеки включены на тестовом магазине; боевой ключ не подключён.
-- Следующий шаг: владелец проверяет на stage оплату тестовой картой (блок «Чеки» в заказе) и «Выдачу печати»; следующая
-  волна записывает G2 `merged` в граф (PR #212, `65bd194`). Переход на боевой магазин — после N3 по согласию владельца
-  (runbook в `docs/waves/g2/README.md`).
+  17.10.2026 по указанию владельца stage переключён на боевой магазин 1491261, только СБП (журнал «Боевой режим»).
+- Следующий шаг: владелец проверяет боевую оплату СБП на небольшую сумму, чек в заказе и «Выдачу печати»; возврат — в
+  кабинете ЮKassa. Следующая волна записывает G2 `merged` в граф (PR #212, `65bd194`).
 - Для следующих релизов: на `morefoto_stage_fpm` и `morefoto_stage_payment_reconciler` есть окружение
   `MOREFOTO_PAYMENT_RECEIPTS=yookassa`, `_RECEIPT_VAT_CODE=1`, `_RECEIPT_SUBJECT_PRINT/_DIGITAL=commodity` — переключение
   только `/app` его сохраняет.
@@ -150,4 +149,19 @@
   `morefoto_stage_payment_reconciler` с окружением чеков печатает «Сверено попыток: 0 …; чеков: 0, с ошибкой: 0».
 - Frontend 2/2 `morefoto-frontend:main-20261017192004-65bd194`. Все 14 сервисов 1/1 (frontend 2/2).
 - HTTP: `/` и `/legal` 200; PAY-04 без ключа — 404 `ORDER_NOT_FOUND`; PAY-12 без входа — 401; PAY-03 без ключа — 404.
+
+### 17.10.2026 — боевой режим
+
+- Владелец: «Переключи на боевой режим оплату. Буду начинать тестировать. … Нам надо СБП оплату» — переход раньше N3 по
+  его решению.
+- Спецификации до переключения: `/srv/morefoto/releases/main-20261017192004-65bd194/live-switch-before.json`.
+- `morefoto_stage_fpm` и `morefoto_stage_payment_reconciler`: secret `morefoto_yookassa_secret_key_test_20260925` →
+  `morefoto_yookassa_secret_key_live_20261017` (target `morefoto_yookassa_secret_key`),
+  `MOREFOTO_PAYMENT_YOOKASSA_SHOP_ID=1491261`, `MOREFOTO_PAYMENT_METHODS=sbp`. Оба 1/1.
+- Проверка в FPM (`live-smoke.php`, без платежей): оплата включена, способы `sbp`, тестовый режим — нет, каналы чека
+  `["email"]`, магазин 1491261, ключ `live_`; `GET /v3/me` с ключом сервера — account 1491261, `test=false`, `enabled`,
+  `fiscalization.provider=yoo_receipt`, СБП доступна. Сверка: «Сверено попыток: 0 …; чеков: 0, с ошибкой: 0».
+- Откат на тестовый магазин: тот же `docker service update` обратно (`--secret-rm …live_20261017 --secret-add
+  source=morefoto_yookassa_secret_key_test_20260925,target=morefoto_yookassa_secret_key`,
+  `MOREFOTO_PAYMENT_YOOKASSA_SHOP_ID=1476254`, `MOREFOTO_PAYMENT_METHODS=bank_card`) или `docker service rollback` обоих сервисов.
 
