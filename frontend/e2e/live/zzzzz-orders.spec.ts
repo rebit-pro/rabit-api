@@ -87,7 +87,14 @@ test.beforeAll(async ({ browser }) => {
     const catalog = (await body(await page.request.get(gallery() + '/catalog'))).data;
     printId = catalog.products.find((p: { kind: string }) => p.kind === 'physical').id;
     // J2: the stand sends the link to the order after the payment, so the checkout announces it.
-    expect(catalog.capabilities).toEqual({ receiptChannels: [], purchaseEnabled: true, orderEmail: true });
+    // G2: the email receipt and the test shop plate come with the test shop keys of the run.
+    const shop = !!process.env.E2E_YOOKASSA;
+    expect(catalog.capabilities).toEqual({
+      receiptChannels: shop ? ['email'] : [],
+      purchaseEnabled: true,
+      orderEmail: true,
+      paymentTestMode: shop
+    });
     expect(catalog.purchaseTerms).toBeNull();
     const photos = (await body(await page.request.get(gallery()))).data.children.flatMap(
       (child: { photos: { assignmentId: string }[] }) => child.photos
@@ -185,7 +192,8 @@ test('E5: checkout rejects closed, unready, revoked, invalid and repriced reques
   for (const [patch, code] of [
     [{ buyer: { ...buyer, email: 'broken' } }, 'INVALID_BUYER_EMAIL'],
     [{ buyer: { ...buyer, reviewed: false } }, 'REVIEW_REQUIRED'],
-    [{ buyer: { ...buyer, receiptChannel: 'email' } }, 'RECEIPT_CHANNEL_UNAVAILABLE'],
+    // MAX never carries receipts; email is accepted once receipts are on (G2-DEC-12).
+    [{ buyer: { ...buyer, receiptChannel: 'max' } }, 'RECEIPT_CHANNEL_UNAVAILABLE'],
     // OPS legal: without the separate consent and offer, or with an outdated version, nothing is stored.
     [{ consents: [] }, 'CONSENT_REQUIRED'],
     [{ consents: data.consents.map((consent) => ({ ...consent, version: '2000-01-01' })) }, 'CONSENT_REQUIRED'],
