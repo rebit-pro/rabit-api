@@ -74,6 +74,8 @@ export function orderEmailText(summary: OrderEmailSummary): { text: string; tone
       tone: 'warning'
     };
   }
+  // The letters are planned within a minute after the payment; until then it is not known yet what they carry.
+  if (latest.letters === 0) return { text: 'Готовим письмо с заказом на ' + latest.recipient + '.', tone: 'info' };
   if (latest.photos === 0) return { text: 'Отправляем ссылку на заказ на ' + latest.recipient + '.' + largeText(latest), tone: 'info' };
   return {
     text:

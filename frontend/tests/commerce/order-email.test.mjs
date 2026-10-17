@@ -44,6 +44,10 @@ test('each state of the letter has its own sentence with the address', () => {
 });
 
 test('J5-T09: the letters with photos tell how many letters and photos went out', () => {
+  assert.deepEqual(orderEmailText(summary({ latest: letter('pending', { letters: 0 }) })), {
+    text: 'Готовим письмо с заказом на mama@example.test.',
+    tone: 'info'
+  });
   assert.deepEqual(orderEmailText(summary({ latest: letter('pending', { photos: 1 }) })), {
     text: 'Отправляем 1 фото на mama@example.test.',
     tone: 'info'
