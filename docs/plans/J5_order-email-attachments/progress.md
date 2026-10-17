@@ -5,7 +5,7 @@
 - PR [#209](https://github.com/rebit-pro/rabit-api/pull/209) merged 4fe304b (17.10.2026); выложен на stage как `main-20261017121241-4fe304b`: миграция `20261017100001`, backend, frontend. Отправка писем выключена.
 - Волна завершена. Следующая волна отмечает J5 merged в графе (PR #209, 4fe304b37be34c067a0b2a9cae2294399a579e07).
 - Открыто:
-  - на stage `main.max_file_size` = 20 000 000 (Bitrix по умолчанию): письма с фото больше ≈14 МБ будут отклонены (`attachment_limit`). Владелец 17.10.2026 решил поднять до 30 МБ — миграция `20261017150001`, ветка `codex/ops-mail-attachment-limit` (`docs/plans/OPS-mail-attachment-limit/`);
+  - лимит вложений Bitrix `main.max_file_size` на stage поднят до 30 000 000 (PR #211, миграция `20261017150001`, 17.10.2026) — письма J5 с фото его проходят;
   - ручная проверка J5-T15 в реальных ящиках после #161.
 - Откат: `docker service rollback` для 13 backend-сервисов и `morefoto_frontend` (спецификации в `services-before.json` релиза). Миграция совместима с кодом J2; резервная копия базы — `database-before.sql.gz` релиза.
 
