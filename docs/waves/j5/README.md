@@ -67,7 +67,7 @@
    - на stage все сервисы монтируют общий `runtime/var`;
    - в `docker-compose-production.yml` добавлен read-only mount `private-media`.
 3. `MOREFOTO_ORDER_EMAIL_PART_BYTES` на stage не задавать: по умолчанию 18 MiB. Стенд E2E ставит 1 байт, чтобы получить письмо на каждый кадр.
-4. Перед включением отправки (#161) проверить `main.max_file_size`: 0 или не меньше 25 МБ.
+4. Перед включением отправки (#161) — `main.max_file_size` (лимит вложений писем Bitrix): 0 или не меньше 28 000 000 байт. Кадр 20 МБ после base64 ≈ 27,96 МБ. На stage сейчас стоит 20 000 000 — значение Bitrix по умолчанию.
 
 Откат: `docker service rollback` для backend. Миграция совместима с кодом J2: колонки и таблица не мешают, `OPERATION_ID` указывает первое письмо.
 

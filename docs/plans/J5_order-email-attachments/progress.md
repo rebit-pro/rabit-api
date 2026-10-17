@@ -2,16 +2,12 @@
 
 ## Точка продолжения
 
-- Ветка `codex/j5-order-email-attachments` (worktree `/home/user/rabit-api-worktrees/j5-order-email-attachments`) от main 1a28aa7. PR [#209](https://github.com/rebit-pro/rabit-api/pull/209).
-- Завершено:
-  - S0–S5: план, решения, граф;
-  - H1 вложения ссылками, Files — план писем, письма «k из n», статус по письмам;
-  - frontend, unit, E2E-спека и верификаторы;
-  - быстрые проверки PASS.
-- S6–S7 завершены: саморевью без блокеров, полный гейт PASS (`rabit-e2e-86465c5e7533`), visual desktop/mobile, J5 → review в графе.
-- Следующий шаг: по «да» владельца — merge PR #209 и выкладка: миграция `up 20261017100001` → backend (с notification consumer/dispatcher, order_email_runner) → DI smoke → frontend. Отправка остаётся выключенной до #161; перед включением — проверить `main.max_file_size`.
-- Блокеры: нет. Открытых решений нет.
-- Повтор гейта: `make test-e2e E2E_PHP_CLI_IMAGE=rabit-api-php-cli:d1-local E2E_PHP_FPM_IMAGE=rabit-api-php-fpm:d1-local E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`.
+- PR [#209](https://github.com/rebit-pro/rabit-api/pull/209) merged 4fe304b (17.10.2026); выложен на stage как `main-20261017121241-4fe304b`: миграция `20261017100001`, backend, frontend. Отправка писем выключена.
+- Волна завершена. Следующая волна отмечает J5 merged в графе (PR #209, 4fe304b37be34c067a0b2a9cae2294399a579e07).
+- Открыто:
+  - на stage `main.max_file_size` = 20 000 000 (Bitrix по умолчанию): письма с фото больше ≈14 МБ будут отклонены (`attachment_limit`). Решение владельца — поднять опцию или уменьшить лимит J5 — до включения отправки (#161);
+  - ручная проверка J5-T15 в реальных ящиках после #161.
+- Откат: `docker service rollback` для 13 backend-сервисов и `morefoto_frontend` (спецификации в `services-before.json` релиза). Миграция совместима с кодом J2; резервная копия базы — `database-before.sql.gz` релиза.
 
 ## Журнал
 
@@ -65,6 +61,27 @@
   - 155 браузерных тестов (a 81, b 74), все verify-*.php, включая `verify-order-email.php` и `verify-notification.php` (durable Notification contract);
   - G1-T14 прошёл (24,1 с), `zzzzzzzzzz-order-email` — 6,9 с.
 - Visual `docs/waves/j5/screenshots/j5-{desktop,mobile}-order-email.png`: «Фото и ссылка на заказ отправлены на print.j4@example.test … — 2 письма, 2 фото. Если писем нет — проверьте папку «Спам»». На 390 px без горизонтальной прокрутки.
+
+### 17.10.2026 — merge и выкладка
+
+- PR #209 смержен по «да» владельца (4fe304b).
+- Релиз `main-20261017121241-4fe304b` (генератор — scratchpad `j5rel/mkrelease.sh`):
+  - `prepare-release.sh` — vendor и backend.conf из E9-релиза, composer.lock не менялся;
+  - `backup.sh` — 283 473 байт, `restore-check.sh` — 182 таблицы;
+  - `migrate.sh up Version20261017100001` — success, Installed 38 → 39.
+- Переключение:
+  - `switch-backend.sh morefoto_stage_fpm`, DI smoke 17/17 — сервисы J5 и H1, схема `mf_file_delivery_part`, `LETTERS`, `ATTACHMENTS`; отправка выключена;
+  - остальные 12 backend-сервисов; `attachments-check.sh`: потребитель уведомлений читает оригиналы (root);
+  - `switch-frontend.sh` — прежний образ `main-20261016152109-d8236a4` в `frontend-before.txt`.
+- Smoke stage:
+  - `/` и `/kak-kupit/` — 200;
+  - сводка писем с чужим ключом — 404 `ORDER_NOT_FOUND`;
+  - чанки `OrderPage`/`CartPage` с новыми текстами отдаются;
+  - все 14 сервисов 1/1, frontend 2/2; в логах FPM, backend, notification consumer и order_email_runner за 4 минуты нет ошибок и 5xx.
+- **Найдено при выкладке:** DI smoke показал `main.max_file_size=20000000`. Это лимит вложений писем Bitrix, значение по умолчанию.
+  - При нём письмо с 18 МБ фото (≈24 МБ после base64) Bitrix подменил бы заглушкой; транспорт J5 вместо этого отказывает (`attachment_limit`).
+  - До включения отправки опцию нужно поднять до 0 или ≥ 28 000 000 байт, либо уменьшить лимит J5 до ≈14 МБ (одно фото на письмо).
+  - Опцию не меняли: решение владельца.
 
 ### Проверки
 
