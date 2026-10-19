@@ -44,3 +44,10 @@
   Xdebug уже в #61, тест F2 — в #163.
 - На хосте также 0/1: `admin_api-postgres` (стек admin, on-failure), из-за него `admin_api` с `/health` 503 перезапускается;
   `admin_api-purge-tokens` (none), `cronjob_cronjob` (on-failure). Это другие проекты, записано в #217.
+
+### 19.10.2026 11:47 UTC — проверка после команды владельца
+
+- RRP-T02/T03 FAIL: `docker service inspect site_rabbitmq` — RestartPolicy прежняя (`on-failure`, MaxAttempts 3), Version 11001721,
+  UpdateStatus null; `docker events --since 90m --filter type=service` — событий нет. Обновление до сервера не дошло.
+- load average 6,0; теперь падают все четыре consumer (`notification`, `media`, `files`, `support`) с «Could not connect to the AMQP server».
+- Следующий шаг: владелец повторяет команду с `ConnectTimeout=60` и присылает её вывод.
