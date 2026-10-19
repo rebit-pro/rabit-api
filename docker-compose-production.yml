@@ -331,6 +331,9 @@ services:
 
     rabbitmq:
         image: rabbitmq:3.13-management-alpine
+        # The node is rabbit@<hostname> and its vhosts and queues live in the volume under that name; a Swarm default
+        # hostname (the container id) starts an empty node on every new task.
+        hostname: ${RABBITMQ_HOSTNAME:?Select the RabbitMQ node hostname stored in the RabbitMQ volume}
         entrypoint:
           - /bin/sh
           - -c

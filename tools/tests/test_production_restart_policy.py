@@ -20,6 +20,15 @@ class ProductionRestartPolicy(unittest.TestCase):
                 self.assertEqual("any", policy.get("condition", "any"))
                 self.assertNotIn("max_attempts", policy)
 
+    def test_rabbitmq_keeps_its_node_across_tasks(self):
+        # The node name follows the hostname; it must come from the deploy, like the volume that holds the node.
+        compose = (ROOT / "docker-compose-production.yml").read_text()
+        rabbitmq = yaml.safe_load(compose)["services"]["rabbitmq"]
+        self.assertRegex(rabbitmq["hostname"], r"^\$\{RABBITMQ_HOSTNAME:\?.+\}$")
+        makefile = (ROOT / "Makefile").read_text()
+        self.assertIn("\tguard-RABBITMQ_HOSTNAME \\\n", makefile)
+        self.assertIn("RABBITMQ_HOSTNAME=%s\\n", makefile)
+
 
 if __name__ == "__main__":
     unittest.main()

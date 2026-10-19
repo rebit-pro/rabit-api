@@ -4,11 +4,14 @@
 
 - Ветка `codex/ops-rabbitmq-restart-policy` от main 8e2433c; worktree `/home/user/rabit-api-worktrees/ops-rabbitmq-restart-policy`.
 - PR #215; issues #216 (галерея Xiaomi), #217 (сервисы после перезагрузки); падающий тест F2 — #163.
-- Завершено: диагностика 19.10.2026, план, compose и тест, быстрые проверки (RRP-T01, RRP-T04 PASS).
-- Сейчас: ждём runtime update `site_rabbitmq` от владельца; merge PR — по команде владельца.
-- Следующий шаг: владелец запускает runtime update `site_rabbitmq`, затем проверка RRP-T02/T03.
-- Блокер: автоматический режим агента запрещает запись на сервере — runtime update `site_rabbitmq` запускает владелец.
-- Тест-кейсы: RRP-T01 PASS, RRP-T04 PASS, RRP-T02/T03 PENDING (runtime на stage).
+- Завершено: диагностика, compose (`any` + обязательный `RABBITMQ_HOSTNAME`), Makefile, тест, быстрые проверки;
+  runtime на stage: `any` и hostname `01a8af19c94b`, MoreFoto consumers работают.
+- Сейчас: PR #215 на ревью; merge — по команде владельца.
+- Следующий шаг: ревью PR #215. При деплое стека `site` передавать `RABBITMQ_HOSTNAME=01a8af19c94b`.
+- Блокеров нет. Запись на сервере агенту запрещена автоматическим режимом — runtime-команды запускает владелец.
+- Тест-кейсы: RRP-T01…T06 PASS (19.10.2026).
+- Swarm UpdateStatus `site_rabbitmq` = paused: первая задача с новым hostname получила `Canceled: context canceled`
+  на подготовке (нагрузка), задача-замена работает с новой спецификацией. Следующий `docker service update` сбросит статус.
 - Бэкап спецификации `site_rabbitmq` до изменения: root-only `/root/morefoto-ops/rabbitmq-restart-20261019T1013*Z/service-before.json`.
 
 ## Журнал
@@ -62,3 +65,25 @@
   рабочий — `rabbit@01a8af19c94b` (vhost `morefoto_stage`, 4 очереди; `rebit`, 0 очередей). Приложения объявляют очереди сами (`auto_setup`).
 - Решение (предложено владельцу): закрепить hostname `01a8af19c94b` — узел поднимется со старыми vhost, правами и очередями,
   следующие перезапуски сохранят имя. В PR — стабильный hostname в compose (scope расширяется, план обновить до кода).
+
+### 19.10.2026 12:24 UTC — старый узел RabbitMQ возвращён
+
+- Владелец: `docker service update --hostname 01a8af19c94b --detach=false site_rabbitmq` → `update paused due to failure or early
+  termination of task wxw6vrxqrpoxxptg5l89hcbht`. Задача отклонена на `preparing` (`Canceled: context canceled`), RabbitMQ не стартовал;
+  по политике `any` Swarm запустил задачу-замену `w6kzvo8yaeyel8er2lu0k2il5` с новой спецификацией.
+- Контейнер `1ac387f3be22`, hostname `01a8af19c94b`, `rabbitmq-diagnostics check_running` OK; `list_vhosts` → `morefoto_stage`, `rebit`;
+  очереди `mediaProcessing`, `filesArchive`, `notificationEmail`, `supportMax` — 0 сообщений.
+- RRP-T02 PASS (12:29 UTC): все четыре consumer 1/1, работают 4+ мин без ошибок; `list_connections` — 4 × `rebit`/`morefoto_stage`/running;
+  ошибок `[error]` в RabbitMQ с 12:24 — 0. `consumers=0` в очередях — норма: Messenger AMQP забирает сообщения через `basic_get`.
+- Диспетчеры notification/media/support/files с 12:20: «Опубликовано: 0» — накопленных операций нет. FPM с 12:24: ошибок публикации 0.
+- Load average 6,3 → 2,1 после остановки циклов перезапуска.
+
+### 19.10.2026 — стабильное имя узла в compose
+
+- План обновлён до кода (S5, RRP-T05/T06). `rabbitmq.hostname: ${RABBITMQ_HOSTNAME:?...}`; `Makefile`: `RABBITMQ_HOSTNAME ?=`,
+  `guard-RABBITMQ_HOSTNAME`, строка в `.env`.
+- RRP-T01/T05 PASS: `python3 -m unittest tools/tests/test_production_restart_policy.py -v` → 2 OK.
+- `python3 -m unittest discover -s tools/tests` → 28 тестов, единственный FAIL — `test_f2_...` (#163, есть на main).
+- RRP-T04 PASS: `docker compose ... config` с `RABBITMQ_HOSTNAME=01a8af19c94b` → 7 × `condition: any`, `hostname: 01a8af19c94b`.
+- RRP-T06 PASS: без переменной — `required variable RABBITMQ_HOSTNAME is missing a value: Select the RabbitMQ node hostname stored in the RabbitMQ volume`;
+  `make deploy-check-env` без неё → `Required variable RABBITMQ_HOSTNAME is not set`, с ней — OK. `git diff --check` — OK.
