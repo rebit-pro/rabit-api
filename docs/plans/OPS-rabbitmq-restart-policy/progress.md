@@ -51,3 +51,14 @@
   UpdateStatus null; `docker events --since 90m --filter type=service` — событий нет. Обновление до сервера не дошло.
 - load average 6,0; теперь падают все четыре consumer (`notification`, `media`, `files`, `support`) с «Could not connect to the AMQP server».
 - Следующий шаг: владелец повторяет команду с `ConnectTimeout=60` и присылает её вывод.
+
+### 19.10.2026 11:49 UTC — RabbitMQ запущен, но с пустым узлом
+
+- Владелец выполнил `docker service update --restart-condition any --restart-max-attempts 0 --detach=false site_rabbitmq` → converged.
+  RRP-T03 PASS: RestartPolicy `{"Condition":"any","MaxAttempts":0}`, UpdateStatus completed 11:49:10 UTC, `site_rabbitmq` 1/1.
+- RRP-T02 FAIL: notification/support consumers падают дальше; лог RabbitMQ — `vhost morefoto_stage not found`.
+- Причина: имя узла `rabbit@<hostname>`, hostname контейнера Swarm = ID контейнера, в спецификации hostname не задан.
+  Новый контейнер `74d483c21a28` создал пустой узел (vhost только `rebit`). В томе `site_rabbitmq-data` 20 каталогов узлов с 28.03.2026;
+  рабочий — `rabbit@01a8af19c94b` (vhost `morefoto_stage`, 4 очереди; `rebit`, 0 очередей). Приложения объявляют очереди сами (`auto_setup`).
+- Решение (предложено владельцу): закрепить hostname `01a8af19c94b` — узел поднимется со старыми vhost, правами и очередями,
+  следующие перезапуски сохранят имя. В PR — стабильный hostname в compose (scope расширяется, план обновить до кода).
