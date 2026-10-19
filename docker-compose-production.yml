@@ -147,9 +147,9 @@ services:
             delay: 5s
             order: stop-first
           restart_policy:
-            condition: on-failure
+            # A clean exit on host shutdown is not a failure: on-failure would leave cron stopped after a reboot.
+            condition: any
             delay: 5s
-            max_attempts: 3
     api-audit-consumer:
         image: ${REGISTRY}/rabit-api-php-cli:${IMAGE_TAG}
         command: ["php", "public/local/bin/bitrix-console", "app:audit:consume"]
@@ -351,9 +351,9 @@ services:
           placement:
             constraints: [node.labels.db == db]
           restart_policy:
-            condition: on-failure
+            # 18.10.2026: RabbitMQ exited cleanly on host shutdown and on-failure kept it down after the reboot.
+            condition: any
             delay: 10s
-            max_attempts: 3
     api-memcached:
         image: memcached:1.6-alpine
         command: memcached -m 64
