@@ -2,8 +2,8 @@
 
 ## Точка продолжения
 
-- Дата: 15.10.2026. PR #200 слит в main eb7cfaf и выложен на stage релизом `main-20261015183234-eb7cfaf` (журнал «выкладка»). **Отправка писем выключена** (`MOREFOTO_ORDER_EMAIL_ENABLED` не задан): письма копятся `held`.
-- Следующий шаг: владелец получает штатное письмо (сброс пароля или приглашение) в свой ящик (#161) → добавить `MOREFOTO_ORDER_EMAIL_ENABLED=1` в env `morefoto_stage_fpm` и `morefoto_stage_order_email_runner` (`docker service update --env-add`); накопленные письма уйдут по заказам в сроке файлов. Следующая волна записывает J2 `merged` в граф (PR #200, eb7cfaf).
+- Дата: 19.10.2026. PR #200 слит в main eb7cfaf и выложен на stage релизом `main-20261015183234-eb7cfaf` (журнал «выкладка»). **Отправка писем включена 19.10.2026** по указанию владельца: `MOREFOTO_ORDER_EMAIL_ENABLED=1` на `morefoto_stage_fpm` и `morefoto_stage_order_email_runner` (журнал «Отправка включена»).
+- Следующий шаг: владелец подтверждает получение письма заказа во входящих vk.com. Следующая волна записывает J2 `merged` в граф (PR #200, eb7cfaf). Релизы обязаны сохранять env `MOREFOTO_ORDER_EMAIL_ENABLED=1` на обоих сервисах.
 - Для следующих релизов: backend-сервисов **13** — прежние 12 и `morefoto_stage_order_email_runner`.
 - Откат stage: `docker service rm morefoto_stage_order_email_runner`; backend/воркеры — `docker service rollback` (прежний `/app` — `main-20261015141010-72aa95b`, спецификации в `services-before.json`); frontend — `docker service rollback morefoto_frontend` (прежний `morefoto-frontend:main-20261015141010-72aa95b`). `down` миграции 20261015180001 после включения отправки не выполнять.
 - Открыто: #201 (номер выпуска ключа письма для J3), #163 (тест раннера).
@@ -83,3 +83,18 @@
 | J2-T10 | PASS | 15.10.2026 | `verify-order-email.php` |
 | J2-T11 | PASS | 15.10.2026 | `docs/waves/j2/screenshots/` |
 | J2-T12 | PENDING | — | письмо владельцу на stage после включения флага (#161) |
+
+### 19.10.2026 — Отправка включена
+
+- Повод: владелец оплатил электронный кадр в боевом магазине, письмо не пришло. Причины: письмо было `held` (флаг не задан) и
+  `site_rabbitmq` не работал после перезагрузки хоста 18.10 — восстановлен, см. PR #215 и `docs/plans/OPS-rabbitmq-restart-policy/` в его ветке.
+- Владелец: «Включай отправку писем заказа». До изменения: TLS `ssl://smtp.yandex.ru:465` из `notification_consumer` — OK, 0,08 с, ответ 220,
+  без отправки; `/app/var/private/media` виден обработчику. Спецификации обоих сервисов — root-only `/root/morefoto-ops/order-email-enable-*/`.
+- `docker service update --env-add MOREFOTO_ORDER_EMAIL_ENABLED=1 --detach=false` для `morefoto_stage_fpm` и `morefoto_stage_order_email_runner`:
+  UpdateStatus completed у обоих.
+- 13:54:22 UTC раннер: «Новых писем: 0, поставлено в очередь: 2, отменено: 0» — письмо этого заказа и ещё одного оплаченного заказа из `held`.
+  Обработчик забрал оба сообщения в 13:54:25 и 13:54:28 UTC, очередь `notificationEmail` пуста.
+- `GET /api/v1/public/orders/current/file-deliveries` по ключу заказа владельца: `enabled=true`, `status=accepted`, `acceptedAt` 13:54:25 UTC,
+  1 письмо, 1 фото во вложении, получатель — адрес владельца на vk.com. `accepted` = SMTP Яндекса принял письмо; попадание во входящие
+  подтверждает владелец.
+- msmtp пишет только в syslog контейнера — журнал SMTP-сессии не сохраняется.
