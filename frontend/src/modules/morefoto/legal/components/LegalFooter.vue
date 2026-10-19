@@ -8,7 +8,7 @@ const { catalog } = useLegalCatalog();
 const seller = computed(() => sellerLine(catalog.value?.seller ?? null));
 </script>
 <template>
-  <!-- UI-DEC-07: brand and the buyer's navigation first, the seller's requisites and the developer below. -->
+  <!-- UI-DEC-07: brand and the buyer's navigation first, the seller's requisites below; #219: no developer credit. -->
   <footer class="mf-legal-footer" data-testid="legal-footer">
     <div class="mf-legal-footer__inner">
       <div class="mf-legal-footer__brand">
@@ -28,8 +28,6 @@ const seller = computed(() => sellerLine(catalog.value?.seller ?? null));
       </nav>
       <div class="mf-legal-footer__base">
         <p>{{ seller }}</p>
-        <!-- Developer of the application; the seller line keeps its legal role (E7). -->
-        <p data-testid="footer-developer">Разработано в <a href="https://rebit-pro.ru" target="_blank" rel="noopener">ReBit Studio</a></p>
       </div>
     </div>
   </footer>
@@ -84,9 +82,6 @@ const seller = computed(() => sellerLine(catalog.value?.seller ?? null));
 }
 .mf-legal-footer__base p {
   overflow-wrap: anywhere;
-}
-.mf-legal-footer__base a {
-  color: var(--mf-color-link);
 }
 @media (max-width: 767px) {
   .mf-legal-footer__inner {
