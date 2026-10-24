@@ -76,5 +76,6 @@
 | php-cs-fixer | PASS | 2026-10-24 | dry-run по 49 изменённым файлам → 0 |
 | E10-T08 | PASS | 2026-10-24 | `node --test tests/ui/sales-report.test.mjs` (6), навигация |
 | Frontend check | PASS | 2026-10-24 | `npm run check` (lint, stylelint, typecheck, typecheck:e2e, 106 UI) и `npm run test:commerce` (253) в playwright:v1.52.0 с томом `rabit-issues219-node` |
+| SQL на MySQL 8 | PASS | 2026-10-24 | временный `mysql:8.0` (ONLY_FULL_GROUP_BY): 10 запросов `SalesReportRepository`/`GroupChildRepository`, собранных самим кодом, на выборке из 5 заказов — уровни, статусы, нули без области, первый готовый кадр без чужой группы совпали с ручным расчётом |
 | E10-T09…T12 | PENDING | — | спека написана, lint и typecheck:e2e PASS; прогон — в полном гейте после ревью |
 | E10-T14 | PENDING | — | полный `make test-e2e` после ревью без блокеров |
