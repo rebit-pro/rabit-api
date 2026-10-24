@@ -107,7 +107,7 @@
 - [x] S5. PHPUnit: UseCase/область/статусы/маппинг/PDF; архитектура.
 - [x] S6. Frontend: API, раздел «Отчёты», меню, PDF, unit.
 - [x] S7. Live E2E-спека, `groups.json`, DB-сверка.
-- [ ] S8. Быстрые проверки (phpstan, phpunit, cs-fixer, `npm run check`), PR, саморевью.
+- [x] S8. Быстрые проверки (phpstan, phpunit, cs-fixer, `npm run check`), PR, саморевью.
 - [ ] S9. После ревью без блокеров — полный гейт и visual desktop/mobile.
 
 ## Критерии приёмки

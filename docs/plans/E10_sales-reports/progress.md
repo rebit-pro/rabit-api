@@ -2,7 +2,7 @@
 
 ## Точка продолжения
 
-- Ветка `codex/e10-sales-reports`, worktree `/home/user/rabit-api-worktrees/e10-sales-reports`, база main 463d1f9. PR ещё нет.
+- Ветка `codex/e10-sales-reports`, worktree `/home/user/rabit-api-worktrees/e10-sales-reports`, база main 463d1f9. PR [#221](https://github.com/rebit-pro/rabit-api/pull/221).
 - Документы: [план](plan.md), граф `docs/waves/graph.json` (E10 inProgress, G2 merged).
 - **Готово:**
   - S0 — план, граф;
@@ -10,8 +10,11 @@
   - S2–S5 — COM-15/16/17, PDF, PHPUnit (96bfdee);
   - S6 — раздел «Отчёты» (b8c75be);
   - S7 — live E2E-спека, README волны.
-- **Сейчас:** S8 — push ветки и PR, саморевью.
+  - S8 — PR #221, саморевью (ключ таблицы уровня), SQL на MySQL 8.
+- **Сейчас:** ждём ревью PR #221.
 - **Следующий шаг:** после ревью без блокеров — полный гейт `make test-e2e` (S9) и visual desktop/mobile.
+  - Локальных образов `rabit-api-php-cli:d1-local` и `-fpm:d1-local` больше нет: перед гейтом их нужно собрать.
+  - Push идёт через HTTPS + `gh auth git-credential`: SSH к github.com сейчас зависает.
 - Блокеров нет. Уточнения E10-DEC-05…09 приняты как рамка принятых решений; при расхождении спросить владельца.
 - Рабочее дерево: чистое после коммита S7.
 - **Следующая проверка:** PHPUnit в образе с vendor-томом:
