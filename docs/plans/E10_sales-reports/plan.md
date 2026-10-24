@@ -99,12 +99,12 @@
 
 ## Checklist
 
-- [ ] S0. План и решения; граф: E10 inProgress, G2 merged; README волн.
-- [ ] S1. Контракт Media и его реализация, DI.
-- [ ] S2. Commerce: область с руководителем, репозиторий отчёта, UseCase уровней, COM-15, DI, маршруты.
-- [ ] S3. COM-17 миниатюры.
-- [ ] S4. COM-16 PDF: шаблон, шрифты, логотип, рендерер в Infrastructure.
-- [ ] S5. PHPUnit: UseCase/область/статусы/маппинг/PDF; архитектура.
+- [x] S0. План и решения; граф: E10 inProgress, G2 merged; README волн.
+- [x] S1. Контракт Media и его реализация, DI.
+- [x] S2. Commerce: область с руководителем, репозиторий отчёта, UseCase уровней, COM-15, DI, маршруты.
+- [x] S3. COM-17 миниатюры.
+- [x] S4. COM-16 PDF: шаблон, шрифты, логотип, рендерер в Infrastructure.
+- [x] S5. PHPUnit: UseCase/область/статусы/маппинг/PDF; архитектура.
 - [ ] S6. Frontend: API, раздел «Отчёты», меню, PDF, unit.
 - [ ] S7. Live E2E-спека, `groups.json`, DB-сверка.
 - [ ] S8. Быстрые проверки (phpstan, phpunit, cs-fixer, `npm run check`), PR, саморевью.
