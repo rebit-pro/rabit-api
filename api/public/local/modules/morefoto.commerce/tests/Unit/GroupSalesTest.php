@@ -62,7 +62,9 @@ final class GroupSalesTest extends TestCase
         yield 'teacher of the group' => ['teacher', [], [11, 21], null];
         yield 'teacher of another group' => ['teacher', [], [12], 'GROUP_NOT_FOUND'];
         yield 'teacher without groups' => ['teacher', [], [], 'GROUP_NOT_FOUND'];
-        yield 'head has no sales' => ['head', [7], [], 'FORBIDDEN'];
+        yield 'head of the institution (E10)' => ['head', [7], [], null];
+        yield 'head of another institution' => ['head', [4], [], 'GROUP_NOT_FOUND'];
+        yield 'unknown role' => ['parent', [], [], 'FORBIDDEN'];
     }
 
     public function testAMissingGroupLooksLikeAForeignOne(): void

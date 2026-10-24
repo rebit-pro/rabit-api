@@ -9,7 +9,7 @@ use Morefoto\Commerce\Application\Sales\Dto\SalesScopeOutputDto;
 use Rebit\Share\Contracts\Access\StaffRequestAccessInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
-/** Переводит подтверждённые Access роль и назначения в область сводки продаж E9; Access перечитывается на каждый запрос. */
+/** Переводит подтверждённые Access роль и назначения в область продаж E9/E10; Access перечитывается на каждый запрос. */
 final readonly class SalesAccess implements SalesAccessInterface
 {
     public function __construct(private StaffRequestAccessInterface $access) {}
@@ -20,7 +20,7 @@ final readonly class SalesAccess implements SalesAccessInterface
 
         return match ($actor->role) {
             'organizer' => new SalesScopeOutputDto($actor->role, null, null),
-            'curator' => new SalesScopeOutputDto($actor->role, $actor->institutionIds, null),
+            'curator', 'head' => new SalesScopeOutputDto($actor->role, $actor->institutionIds, null),
             'teacher' => new SalesScopeOutputDto($actor->role, null, $actor->groupIds),
             default => throw new HttpException('FORBIDDEN', 403),
         };
