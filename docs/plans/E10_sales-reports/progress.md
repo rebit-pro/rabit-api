@@ -4,11 +4,16 @@
 
 - Ветка `codex/e10-sales-reports`, worktree `/home/user/rabit-api-worktrees/e10-sales-reports`, база main 463d1f9. PR ещё нет.
 - Документы: [план](plan.md), граф `docs/waves/graph.json` (E10 inProgress, G2 merged).
-- **Готово:** S0 (план, граф), S1 (контракт Media, 1e46de2), S2–S5 (COM-15/16/17, PDF, PHPUnit; 96bfdee).
-- **Сейчас:** S6 — frontend: раздел «Отчёты», меню, скачивание PDF.
-- **Следующий шаг:** API-клиент `modules/morefoto/reports`, страница `/cabinet/reports`, пункт меню для четырёх ролей.
+- **Готово:**
+  - S0 — план, граф;
+  - S1 — контракт Media (1e46de2);
+  - S2–S5 — COM-15/16/17, PDF, PHPUnit (96bfdee);
+  - S6 — раздел «Отчёты» (b8c75be);
+  - S7 — live E2E-спека, README волны.
+- **Сейчас:** S8 — push ветки и PR, саморевью.
+- **Следующий шаг:** после ревью без блокеров — полный гейт `make test-e2e` (S9) и visual desktop/mobile.
 - Блокеров нет. Уточнения E10-DEC-05…09 приняты как рамка принятых решений; при расхождении спросить владельца.
-- Рабочее дерево: чистое после 96bfdee.
+- Рабочее дерево: чистое после коммита S7.
 - **Следующая проверка:** PHPUnit в образе с vendor-томом:
   `docker run --rm --network none -u 1000:1000 -e XDEBUG_MODE=off -v $PWD/api:/app -v rabit-j1-vendor:/app/vendor -w /app --entrypoint php rabit-api-php-fpm:20260911-074507 vendor/bin/phpunit --testsuite unit`
 
@@ -45,6 +50,15 @@
   - обёртка `file://` из `dg/bypass-finals` ломает чтение TTF в mpdf под PHPUnit, поэтому тест PDF временно возвращает штатную обёртку.
 - Визуальная проверка PDF: образцы группы (28 детей, 2 страницы, шапка таблицы повторяется) и съёмки отрисованы в PNG и просмотрены. Поправлены плитки, заголовок, цвет словесного знака.
 
+- S6:
+  - frontend-модуль `sales-report` — каталог `reports` игнорируется `frontend/.gitignore`, поэтому переименован;
+  - composable с переходом по уровням, таблицы на `UiDataTable`, миниатюры через `useProtectedImage`, скачивание PDF;
+  - пункт меню «Отчёты» для четырёх ролей.
+- Суммы в кабинете показывают копейки двумя цифрами, как в PDF («1 234,50 ₽»).
+- S7:
+  - спека `zzzzzzzzzzzzzz-sales-report` — последняя в группе b;
+  - в E9-спеке убрана проверка «head → 403», её заменяет E10-спека (head назначается на учреждение печатной группы).
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -60,4 +74,7 @@
 | Unit целиком | PASS* | 2026-10-24 | 1055 тестов; 2 ошибки `GdAvatarRendererTest` — окружение (GD без WebP), так же на main |
 | PHPStan | PASS | 2026-10-24 | `vendor/bin/phpstan analyse` → No errors |
 | php-cs-fixer | PASS | 2026-10-24 | dry-run по 49 изменённым файлам → 0 |
-| E10-T08…T12, T14 | PENDING | — | frontend и live E2E |
+| E10-T08 | PASS | 2026-10-24 | `node --test tests/ui/sales-report.test.mjs` (6), навигация |
+| Frontend check | PASS | 2026-10-24 | `npm run check` (lint, stylelint, typecheck, typecheck:e2e, 106 UI) и `npm run test:commerce` (253) в playwright:v1.52.0 с томом `rabit-issues219-node` |
+| E10-T09…T12 | PENDING | — | спека написана, lint и typecheck:e2e PASS; прогон — в полном гейте после ревью |
+| E10-T14 | PENDING | — | полный `make test-e2e` после ревью без блокеров |

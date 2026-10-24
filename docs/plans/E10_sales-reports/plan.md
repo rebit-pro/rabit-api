@@ -105,8 +105,8 @@
 - [x] S3. COM-17 миниатюры.
 - [x] S4. COM-16 PDF: шаблон, шрифты, логотип, рендерер в Infrastructure.
 - [x] S5. PHPUnit: UseCase/область/статусы/маппинг/PDF; архитектура.
-- [ ] S6. Frontend: API, раздел «Отчёты», меню, PDF, unit.
-- [ ] S7. Live E2E-спека, `groups.json`, DB-сверка.
+- [x] S6. Frontend: API, раздел «Отчёты», меню, PDF, unit.
+- [x] S7. Live E2E-спека, `groups.json`, DB-сверка.
 - [ ] S8. Быстрые проверки (phpstan, phpunit, cs-fixer, `npm run check`), PR, саморевью.
 - [ ] S9. После ревью без блокеров — полный гейт и visual desktop/mobile.
 
