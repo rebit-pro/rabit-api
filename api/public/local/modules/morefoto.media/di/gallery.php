@@ -8,12 +8,14 @@ use Morefoto\Media\Application\Gallery\Mapper\GalleryAssignmentMapper;
 use Morefoto\Media\Application\Gallery\Service\ChildPhotos;
 use Morefoto\Media\Application\Gallery\Service\GalleryAccess;
 use Morefoto\Media\Application\Gallery\Service\GalleryCapabilityLifecycle;
+use Morefoto\Media\Application\Gallery\Service\GroupChildren;
 use Morefoto\Media\Application\Gallery\UseCase\GetGalleryPreviewUseCase;
 use Morefoto\Media\Application\Gallery\UseCase\GetGalleryUseCase;
 use Morefoto\Media\Application\Gallery\UseCase\GetManagedPreviewUseCase;
 use Morefoto\Media\Application\Photo\UseCase\GetPhotoUseCase;
 use Morefoto\Media\Domain\Gallery\Repository\GalleryCapabilityRepository;
 use Morefoto\Media\Domain\Gallery\Repository\GalleryPhotoRepository;
+use Morefoto\Media\Domain\Gallery\Repository\GroupChildRepository;
 use Morefoto\Media\Domain\Gallery\Service\GalleryAvailability;
 use Morefoto\Media\Infrastructure\File\PreviewContent;
 use Morefoto\Media\Presentation\Controller\GalleryController;
@@ -22,6 +24,7 @@ use Morefoto\Media\Presentation\Gallery\GalleryResultMapper;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
 use Rebit\Share\Contracts\Media\ChildPhotosInterface;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
+use Rebit\Share\Contracts\Media\GroupChildrenInterface;
 use Rebit\Share\Contracts\Organization\GalleryGroupInterface;
 use Rebit\Share\Infrastructure\Clock\SystemClock;
 
@@ -69,6 +72,13 @@ return [
         'constructor' => static fn(): ChildPhotosInterface => new ChildPhotos(
             ServiceLocator::getInstance()->get(GalleryPhotoRepository::class),
             ServiceLocator::getInstance()->get(GalleryAssignmentMapper::class),
+        ),
+    ],
+    GroupChildRepository::class => ['className' => GroupChildRepository::class],
+    GroupChildrenInterface::class => [
+        'constructor' => static fn(): GroupChildrenInterface => new GroupChildren(
+            ServiceLocator::getInstance()->get(GroupChildRepository::class),
+            ServiceLocator::getInstance()->get(PreviewContentInterface::class),
         ),
     ],
     GetGalleryUseCase::class => [
