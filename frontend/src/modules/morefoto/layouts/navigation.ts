@@ -70,6 +70,8 @@ export function cabinetNavigation({ role, permissions, demo, counters = {} }: Na
         item('Платежи', '/cabinet/payments', 'mdi-credit-card-outline')
       );
     }
+    // E10: every staff role reads the sales of its own area and downloads them as a PDF.
+    work.push(item('Отчёты', '/cabinet/reports', 'mdi-file-chart-outline'));
     // K3: the institution's staff write to the curators; curators answer in MAX.
     if ('head' === role || 'teacher' === role) work.push(item('Вопрос куратору', '/cabinet/questions', 'mdi-message-text-outline'));
     if (can('catalog.manage')) settings.push(item('Каталог и цены', '/cabinet/catalog', 'mdi-tag-outline'));
