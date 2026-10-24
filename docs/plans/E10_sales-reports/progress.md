@@ -10,13 +10,14 @@
   - S2–S5 — COM-15/16/17, PDF, PHPUnit (96bfdee);
   - S6 — раздел «Отчёты» (b8c75be);
   - S7 — live E2E-спека, README волны.
-  - S8 — PR #221, саморевью (ключ таблицы уровня), SQL на MySQL 8.
-- **Сейчас:** ждём ревью PR #221.
-- **Следующий шаг:** после ревью без блокеров — полный гейт `make test-e2e` (S9) и visual desktop/mobile.
+  - S8 — PR #221, саморевью (ключ таблицы уровня), SQL на MySQL 8;
+  - ревью PR #221 (review 5639604691): 7 блокеров исправлены, неблокирующие — issues #222, #223.
+- **Сейчас:** ответ в тредах review после push исправлений.
+- **Следующий шаг:** полный гейт `make test-e2e` (S9) и visual desktop/mobile — блокеров ревью больше нет.
   - Локальных образов `rabit-api-php-cli:d1-local` и `-fpm:d1-local` больше нет: перед гейтом их нужно собрать.
   - Push идёт через HTTPS + `gh auth git-credential`: SSH к github.com сейчас зависает.
 - Блокеров нет. Уточнения E10-DEC-05…09 приняты как рамка принятых решений; при расхождении спросить владельца.
-- Рабочее дерево: чистое после коммита S7.
+- Рабочее дерево: чистое после коммита исправлений ревью.
 - **Следующая проверка:** PHPUnit в образе с vendor-томом:
   `docker run --rm --network none -u 1000:1000 -e XDEBUG_MODE=off -v $PWD/api:/app -v rabit-j1-vendor:/app/vendor -w /app --entrypoint php rabit-api-php-fpm:20260911-074507 vendor/bin/phpunit --testsuite unit`
 
@@ -62,6 +63,28 @@
   - спека `zzzzzzzzzzzzzz-sales-report` — последняя в группе b;
   - в E9-спеке убрана проверка «head → 403», её заменяет E10-спека (head назначается на учреждение печатной группы).
 
+### 2026-10-24 — ревью PR #221
+
+- **Как проводилось:** три независимых субагента без истории реализации (Fable 5.1, high), сведение — автор.
+- **Опубликовано:** блокеры — review 5639604691; неблокирующие — #222 (одно определение «продано» для E9/E10) и #223 (текст ошибки 404 в разделе). LOW — в отчёте ревью, не публиковались.
+- **Исправлены блокеры:**
+  1. Авто-спуск воспитателя останавливался на учреждении: watch сбрасывал флаг после первого `router.replace`. Правило `keepsDescending` вынесено в `rules.ts`: спуск продолжается только по адресу, который он сам подставил. Unit-тест добавлен.
+  2. Ответ после ухода со страницы возвращал пользователя в отчёт: `onScopeDispose` инвалидирует запрос.
+  3. UUID без версии 1–5 или варианта 8–b давал 503 (исключение справочника вне try). Шаблон `SalesReportScope` теперь как у справочника; unit-тест проверяет 404 без обращения к справочнику.
+  4. Вход под `c4-head` в E2E шёл в ветку организатора: хелпер `login` знает `c4-curator`/`c4-head`.
+  5. E2E дополнена:
+     - вход без фильтров (head → своё учреждение, teacher → единственная группа);
+     - хлебные крошки и шаг назад без повторного спуска;
+     - curator и organizer на 1440/390;
+     - миниатюра обязательна, чужой воспитатель получает 404.
+     - Заодно исправлена скрытая ошибка спеки: вторая роль в том же browser context не могла войти — сессия в localStorage, guard уводит с `/login`. Теперь у каждой роли свой контекст.
+  6. В E9-спеку возвращена проверка руководителя чужого учреждения: `head → 404 GROUP_NOT_FOUND`.
+  7. Статусы T04/T05/T07 приведены к доказанному:
+     - T04 — добавлены «неизвестный ребёнок», «нет готового кадра», «нет файла превью»;
+     - T05 — ожидание плана переписано: проверяется разметка, а не извлечённый текст PDF;
+     - T07 — unit покрывает маппинг, SQL — ручной прогон.
+- План: исправлена строка про временный каталог mpdf (было «в var»), уточнены T04/T05/T07/T08/T12.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -70,15 +93,16 @@
 | E10-T01 | PASS | 2026-10-24 | PHPUnit `SalesReportTest` (8 ролей, несогласованные предки, съёмка воспитателя) |
 | E10-T02 | PASS | 2026-10-24 | `SalesReportTest::testGroupChildrenKeepStatusesCodesAndTransferredOrders`, политика статусов |
 | E10-T03 | PASS | 2026-10-24 | `SalesReportTest`: съёмка с нулевой строкой, «все» с сортировкой по-русски |
-| E10-T04 | PASS | 2026-10-24 | `SalesReportTest::testThePreviewNeedsTheAreaAndATransmittedGroup` |
-| E10-T05 | PASS | 2026-10-24 | `SalesReportPdfTest`: разметка без ПДн, `%PDF-`, встроенные Manrope и GolosText |
+| E10-T04 | PASS | 2026-10-24 | `SalesReportTest::testThePreviewNeedsTheAreaAndATransmittedGroup` (своя переданная / чужая группа / чужое учреждение / не передана) и `testAMissingChildOrFrameIsNotFound` (неизвестный ребёнок / нет готового кадра / нет файла); live-часть — PENDING в гейте |
+| E10-T05 | PASS | 2026-10-24 | `SalesReportPdfTest`: разметка группы содержит заголовок, область, дату МСК, рубли, коды и статусы детей, без `@`; mpdf собрал PDF с `%PDF-`/`%%EOF` и `/BaseFont …+Manrope`/`…+GolosText`. Текст из PDF не извлекается (план уточнён) |
 | E10-T06 | PASS | 2026-10-24 | `SalesReportArchitectureTest`, `GroupSalesArchitectureTest` |
-| E10-T07 | PASS | 2026-10-24 | `GroupChildrenTest` (4) |
+| E10-T07 | PASS | 2026-10-24 | Маппинг: `GroupChildrenTest` (4, репозиторий застаблен). SQL выбора первого готового кадра — только ручной прогон на MySQL 8 (строка «SQL на MySQL 8»), из репозитория не воспроизводится |
 | Unit целиком | PASS* | 2026-10-24 | 1055 тестов; 2 ошибки `GdAvatarRendererTest` — окружение (GD без WebP), так же на main |
 | PHPStan | PASS | 2026-10-24 | `vendor/bin/phpstan analyse` → No errors |
 | php-cs-fixer | PASS | 2026-10-24 | dry-run по 49 изменённым файлам → 0 |
-| E10-T08 | PASS | 2026-10-24 | `node --test tests/ui/sales-report.test.mjs` (6), навигация |
+| E10-T08 | PASS | 2026-10-24 | `node --test tests/ui/sales-report.test.mjs` (7, в т.ч. `keepsDescending`), навигация |
 | Frontend check | PASS | 2026-10-24 | `npm run check` (lint, stylelint, typecheck, typecheck:e2e, 106 UI) и `npm run test:commerce` (253) в playwright:v1.52.0 с томом `rabit-issues219-node` |
-| SQL на MySQL 8 | PASS | 2026-10-24 | временный `mysql:8.0` (ONLY_FULL_GROUP_BY): 10 запросов `SalesReportRepository`/`GroupChildRepository`, собранных самим кодом, на выборке из 5 заказов — уровни, статусы, нули без области, первый готовый кадр без чужой группы совпали с ручным расчётом |
-| E10-T09…T12 | PENDING | — | спека написана, lint и typecheck:e2e PASS; прогон — в полном гейте после ревью |
+| SQL на MySQL 8 | PASS (ручная) | 2026-10-24 | временный `mysql:8.0` (ONLY_FULL_GROUP_BY): 10 запросов `SalesReportRepository`/`GroupChildRepository`, собранных самим кодом, на выборке из 5 заказов — уровни, статусы, нули без области, первый готовый кадр без чужой группы совпали с ручным расчётом |
+| Исправления ревью | PASS | 2026-10-24 | PHPUnit `SalesReport|GroupSales|GroupChildren` → OK 44/221; PHPStan → No errors; cs-fixer dry-run → 0; `npm run check` → 107 UI PASS (lint, stylelint, typecheck, typecheck:e2e) |
+| E10-T09…T12 | PENDING | — | спека дополнена по ревью, lint и typecheck:e2e PASS; прогон — в полном гейте |
 | E10-T14 | PENDING | — | полный `make test-e2e` после ревью без блокеров |

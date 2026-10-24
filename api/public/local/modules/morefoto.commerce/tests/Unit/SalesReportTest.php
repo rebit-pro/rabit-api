@@ -99,6 +99,28 @@ final class SalesReportTest extends TestCase
         }
     }
 
+    public function testAnIdTheDirectoryWouldRejectIsNotFoundWithoutReadingTheDirectory(): void
+    {
+        $directory = $this->createMock(GroupDirectoryInterface::class);
+        $directory->expects(self::never())->method('page');
+        $directory->expects(self::never())->method('find');
+        $useCase = $this->useCase($this->actor('organizer', [], []), $directory, $this->sales([]), $this->media([], []));
+
+        // Hex-shaped but neither UUID version 1–5 nor variant 8–b: Organization would throw on it outside its try.
+        foreach ([
+            [new SalesReportInputDto(institutionId: '00000000-0000-0000-0000-000000000000'), 'INSTITUTION_NOT_FOUND'],
+            [new SalesReportInputDto(shootId: '7c9e6679-7425-90de-944b-e07fc1f90ae7'), 'SHOOT_NOT_FOUND'],
+            [new SalesReportInputDto(groupId: '0f8fad5b-d9cb-469f-c165-70867728950e'), 'GROUP_NOT_FOUND'],
+        ] as [$input, $code]) {
+            try {
+                $useCase->execute(5, $input);
+                self::fail($code);
+            } catch (HttpException $exception) {
+                self::assertSame([$code, 404], [$exception->getMessage(), $exception->getCode()]);
+            }
+        }
+    }
+
     public function testTheTeacherShootReportHasOnlyTheTeacherGroupsWithZeroRows(): void
     {
         $queries = [];
@@ -208,6 +230,28 @@ final class SalesReportTest extends TestCase
             try {
                 (new GetChildPreviewUseCase(new SalesAccess($actor), $directory, $media))->execute(5, 'child-a');
                 self::fail($code);
+            } catch (HttpException $exception) {
+                self::assertSame([$code, 404], [$exception->getMessage(), $exception->getCode()]);
+            }
+        }
+    }
+
+    public function testAMissingChildOrFrameIsNotFound(): void
+    {
+        $sent = $this->directory([$this->group(sentAt: '2026-10-01T10:00:00+03:00')]);
+        $organizer = new SalesAccess($this->actor('organizer', [], []));
+        $cases = [
+            'unknown child' => [null, new PreviewContentOutputDto('webp'), 'CHILD_NOT_FOUND'],
+            'child without a ready frame' => [new GroupChildOutputDto(100, 'child-a', 11, 'A', null), new PreviewContentOutputDto('webp'), 'PREVIEW_UNAVAILABLE'],
+            'frame without a preview file' => [new GroupChildOutputDto(100, 'child-a', 11, 'A', 'photo-a'), null, 'PREVIEW_UNAVAILABLE'],
+        ];
+        foreach ($cases as $name => [$child, $thumbnail, $code]) {
+            $media = $this->createStub(GroupChildrenInterface::class);
+            $media->method('find')->willReturn($child);
+            $media->method('thumbnail')->willReturn($thumbnail);
+            try {
+                (new GetChildPreviewUseCase($organizer, $sent, $media))->execute(5, 'child-a');
+                self::fail($name);
             } catch (HttpException $exception) {
                 self::assertSame([$code, 404], [$exception->getMessage(), $exception->getCode()]);
             }

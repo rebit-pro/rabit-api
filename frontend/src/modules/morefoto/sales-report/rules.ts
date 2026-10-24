@@ -90,6 +90,14 @@ export function descendFilter(report: SalesReport, role: ReportRole | null): Sal
   return null;
 }
 
+/**
+ * Whether the report of a new address keeps descending: entering the section without filters starts the descent for
+ * the head and the teacher, and only the address the descent replaced itself continues it.
+ */
+export function keepsDescending(key: string, descending: boolean, descentKey: string, role: ReportRole | null): boolean {
+  return '{}' === key ? 'head' === role || 'teacher' === role : descending && key === descentKey;
+}
+
 export interface ReportFigure {
   key: string;
   value: string;

@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { test, expect, type APIResponse, type Page } from '@playwright/test';
+import { test, expect, type APIResponse, type Browser, type Page } from '@playwright/test';
 import { login, token } from './helpers.js';
 
 // E10: the sales report of each staff role and its PDF. Runs last in group B, after the print group got its paid,
@@ -81,11 +81,65 @@ async function assignHead(page: Page, institutionId: string) {
   );
 }
 
+/** The title the section shows for a report level. */
+const title = (level: Report): string =>
+  'group' === level.level
+    ? level.group!.name
+    : 'shoot' === level.level
+      ? level.shoot!.name
+      : 'institution' === level.level
+        ? level.institution!.name
+        : 'Все учреждения';
+
+/** Where entering the section without filters must land, walked through the API: single rows lead the teacher down,
+ * the head only leaves the list of institutions. */
+async function landing(staff: Page, role: 'head' | 'teacher'): Promise<Report> {
+  let level = (await report(staff)).data;
+  while (1 === level.rows.length && 'group' !== level.level && ('teacher' === role || 'all' === level.level)) {
+    const id = level.rows[0]!.id;
+    const params: Record<string, string> =
+      'all' === level.level
+        ? { institutionId: id }
+        : 'institution' === level.level
+          ? { institutionId: level.institution!.id, shootId: id }
+          : { institutionId: level.institution!.id, shootId: level.shoot!.id, groupId: id };
+    level = (await report(staff, params)).data;
+  }
+  return level;
+}
+
+type Viewport = { name: string; width: number; height: number };
+
+/** Each role gets its own browser context: the session lives in localStorage, and a second login in one context is
+ * sent away from /login by the router guard. */
+async function asStaff(
+  browser: Browser,
+  baseURL: string | undefined,
+  account: string,
+  viewport: Viewport,
+  check: (staff: Page) => Promise<void>
+) {
+  const mobile = viewport.width < 500;
+  const context = await browser.newContext({
+    baseURL,
+    viewport: { width: viewport.width, height: viewport.height },
+    isMobile: mobile,
+    hasTouch: mobile
+  });
+  try {
+    const staff = await context.newPage();
+    await login(staff, account);
+    await check(staff);
+  } finally {
+    await context.close();
+  }
+}
+
 test.describe.configure({ mode: 'serial' });
 test.use({ locale: 'ru-RU' });
 
 test('E10-T09…T12: each role reads the sales of its own area and downloads the PDF', async ({ page, browser, baseURL }, testInfo) => {
-  test.setTimeout(240000);
+  test.setTimeout(420000);
   await login(page);
 
   // E10-T10: the group level equals COM-14 and the COM-12 orders of the group.
@@ -123,6 +177,43 @@ test('E10-T09…T12: each role reads the sales of its own area and downloads the
   // E10-T09: roles. Unknown or malformed IDs look like foreign ones; no Bearer is 401.
   expect((await page.request.get('/api/v1/sales-report')).status()).toBe(401);
   expect((await report(page, { groupId: 'not-a-group' }, 404)).error!.code).toBe('GROUP_NOT_FOUND');
+  // E10-T12: entering the section without filters. In group b the head has only the F2 institution and «another-teacher»
+  // only the print group (E9), so the head lands on the institution and the teacher goes down to the group.
+  for (const [account, role, level] of [
+    ['head', 'head', 'institution'],
+    ['another-teacher', 'teacher', 'group']
+  ] as const) {
+    await asStaff(browser, baseURL, account, { name: 'desktop', width: 1440, height: 1000 }, async (staff) => {
+      const target = await landing(staff, role);
+      expect(target.level).toBe(level);
+      await staff.getByRole('link', { name: 'Отчёты' }).first().click();
+      await expect(staff.getByTestId('report-title')).toHaveText(title(target));
+      await expect(staff).toHaveURL(
+        'group' === level ? new RegExp('groupId=' + target.group!.id) : new RegExp('institutionId=' + target.institution!.id + '$')
+      );
+      const crumbs = staff.getByRole('navigation', { name: 'Хлебные крошки' });
+      if ('group' === level) {
+        await expect(crumbs).toContainText(target.institution!.name);
+        await expect(crumbs).toContainText(target.shoot!.name);
+        await expect(crumbs).not.toContainText('Все учреждения');
+        await staff.screenshot({
+          path: testInfo.outputPath('e10-desktop-' + account + '-entry.png'),
+          fullPage: true,
+          animations: 'disabled'
+        });
+        await crumbs.getByRole('link', { name: target.shoot!.name }).click();
+        // A step back is the user's choice: the single-row shoot stays open instead of descending again.
+        await expect(staff.getByTestId('report-title')).toHaveText(target.shoot!.name);
+      } else {
+        await expect(crumbs).toHaveCount(0);
+        await staff.screenshot({
+          path: testInfo.outputPath('e10-desktop-' + account + '-entry.png'),
+          fullPage: true,
+          animations: 'disabled'
+        });
+      }
+    });
+  }
   await assignHead(page, institutionId);
   for (const [account, params, status, code] of [
     ['another-teacher', { groupId }, 200, null],
@@ -161,6 +252,7 @@ test('E10-T09…T12: each role reads the sales of its own area and downloads the
     ).data.items[0];
     const assigned = (await body(await page.request.get('/api/v1/users/' + detail.id, { headers: await bearer(page) }))).data
       .institutionIds as string[];
+    expect(own.rows.length).toBeGreaterThan(0);
     expect(own.rows.every((row) => assigned.includes(row.id))).toBe(true);
   } finally {
     await curatorContext.close();
@@ -177,60 +269,74 @@ test('E10-T09…T12: each role reads the sales of its own area and downloads the
 
   // E10-T04: the child's frame is shown only inside the area of the report.
   const framed = group.children.find((child) => child.hasPreview);
-  if (framed) {
-    const preview = await page.request.get('/api/v1/sales-report/children/' + framed.id + '/preview', { headers: await bearer(page) });
-    expect([preview.status(), preview.headers()['content-type']]).toEqual([200, 'image/webp']);
+  expect(framed, 'the print group was handed over and its children have ready frames').toBeDefined();
+  const preview = await page.request.get('/api/v1/sales-report/children/' + framed!.id + '/preview', { headers: await bearer(page) });
+  expect([preview.status(), preview.headers()['content-type']]).toEqual([200, 'image/webp']);
+  const foreign = await browser.newContext({ baseURL });
+  try {
+    const teacher = await foreign.newPage();
+    await login(teacher, 'teacher');
+    expect(
+      (await teacher.request.get('/api/v1/sales-report/children/' + framed!.id + '/preview', { headers: await bearer(teacher) })).status()
+    ).toBe(404);
+  } finally {
+    await foreign.close();
   }
 
-  // E10-T12: the section for the teacher on desktop and phone, the head's institution level, and the PDF download.
+  // E10-T12: the section for every role on desktop and phone, the head's institution level, and the PDF download.
+  const total = new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: 'RUB',
+    maximumFractionDigits: group.totals.paidTotal % 100 ? 2 : 0,
+    minimumFractionDigits: group.totals.paidTotal % 100 ? 2 : 0
+  }).format(group.totals.paidTotal / 100);
+  const fits = (staff: Page) => staff.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
   for (const viewport of [
     { name: 'desktop', width: 1440, height: 1000 },
     { name: 'mobile', width: 390, height: 844 }
   ]) {
-    const context = await browser.newContext({ baseURL, viewport, isMobile: viewport.width < 500, hasTouch: viewport.width < 500 });
-    try {
-      const teacher = await context.newPage();
-      await login(teacher, 'another-teacher');
+    const shot = (staff: Page, name: string) =>
+      staff.screenshot({ path: testInfo.outputPath('e10-' + viewport.name + '-' + name + '.png'), fullPage: true, animations: 'disabled' });
+    await asStaff(browser, baseURL, 'another-teacher', viewport, async (teacher) => {
       await teacher.goto('/cabinet/reports?' + new URLSearchParams({ institutionId, shootId, groupId }));
       await expect(teacher.getByTestId('report-title')).toHaveText(group.group!.name);
-      await expect(teacher.getByTestId('report-figure-total').locator('dd')).toHaveText(
-        new Intl.NumberFormat('ru-RU', {
-          style: 'currency',
-          currency: 'RUB',
-          maximumFractionDigits: group.totals.paidTotal % 100 ? 2 : 0,
-          minimumFractionDigits: group.totals.paidTotal % 100 ? 2 : 0
-        }).format(group.totals.paidTotal / 100)
-      );
-      const statusChips = teacher.getByTestId('report-child-status').filter({ visible: true });
-      await expect(statusChips).toHaveCount(Math.min(group.children.length, 50));
+      await expect(teacher.getByTestId('report-figure-total').locator('dd')).toHaveText(total);
+      await expect(teacher.getByTestId('report-child-status').filter({ visible: true })).toHaveCount(Math.min(group.children.length, 50));
       await expect(teacher.getByTestId('report-format')).toHaveCount(group.products.length);
-      if (framed) await expect(teacher.locator('[data-testid="report-children"] img').filter({ visible: true }).first()).toBeVisible();
-      expect(await teacher.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      await teacher.screenshot({
-        path: testInfo.outputPath('e10-' + viewport.name + '-teacher-group.png'),
-        fullPage: true,
-        animations: 'disabled'
-      });
+      await expect(teacher.locator('[data-testid="report-children"] img').filter({ visible: true }).first()).toBeVisible();
+      expect(await fits(teacher)).toBe(true);
+      await shot(teacher, 'teacher-group');
       const download = teacher.waitForEvent('download');
       await teacher.getByTestId('report-pdf').click();
       expect((await download).suggestedFilename()).toMatch(/^morefoto-otchet-group-\d{4}-\d{2}-\d{2}\.pdf$/);
-
-      const head = await context.newPage();
-      await login(head, 'head');
+    });
+    await asStaff(browser, baseURL, 'head', viewport, async (head) => {
       await head.goto('/cabinet/reports?' + new URLSearchParams({ institutionId }));
       await expect(head.getByTestId('report-title')).toHaveText(institution.institution!.name);
-      await expect(head.getByTestId('report-row-link').filter({ visible: true }).filter({ hasText: shoot.shoot!.name })).toHaveCount(1);
-      await head.getByTestId('report-row-link').filter({ visible: true }).filter({ hasText: shoot.shoot!.name }).click();
+      const row = head.getByTestId('report-row-link').filter({ visible: true }).filter({ hasText: shoot.shoot!.name });
+      await expect(row).toHaveCount(1);
+      await row.click();
       await expect(head.getByTestId('report-title')).toHaveText(shoot.shoot!.name);
-      expect(await head.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      await head.screenshot({
-        path: testInfo.outputPath('e10-' + viewport.name + '-head-shoot.png'),
-        fullPage: true,
-        animations: 'disabled'
-      });
-    } finally {
-      await context.close();
-    }
+      expect(await fits(head)).toBe(true);
+      await shot(head, 'head-shoot');
+    });
+    // The curator stays on the assigned institutions; the organizer sees the whole path in the breadcrumbs.
+    await asStaff(browser, baseURL, 'curator', viewport, async (curator) => {
+      await curator.goto('/cabinet/reports');
+      await expect(curator.getByTestId('report-title')).toHaveText('Все учреждения');
+      await expect(curator.getByTestId('report-row-link').filter({ visible: true })).toHaveCount((await report(curator)).data.rows.length);
+      expect(await fits(curator)).toBe(true);
+      await shot(curator, 'curator-all');
+    });
+    await asStaff(browser, baseURL, 'organizer', viewport, async (organizer) => {
+      await organizer.goto('/cabinet/reports?' + new URLSearchParams({ groupId }));
+      await expect(organizer.getByTestId('report-title')).toHaveText(group.group!.name);
+      const path = organizer.getByRole('navigation', { name: 'Хлебные крошки' });
+      await expect(path.getByRole('link', { name: 'Все учреждения' })).toBeVisible();
+      await expect(path).toContainText(group.institution!.name);
+      expect(await fits(organizer)).toBe(true);
+      await shot(organizer, 'organizer-group');
+    });
   }
 
   // The organizer starts at all institutions; the menu leads every role to the section.

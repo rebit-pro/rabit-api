@@ -1,8 +1,18 @@
-import { computed, shallowRef, watch } from 'vue';
+import { computed, onScopeDispose, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { reportsApi, type SalesReport, type SalesReportFilter } from './api';
-import { descendFilter, pdfError, pdfFileName, reportCrumbs, reportFilter, reportLoadError, rowFilter, type ReportRole } from './rules';
+import {
+  descendFilter,
+  keepsDescending,
+  pdfError,
+  pdfFileName,
+  reportCrumbs,
+  reportFilter,
+  reportLoadError,
+  rowFilter,
+  type ReportRole
+} from './rules';
 
 const PATH = '/cabinet/reports';
 
@@ -39,8 +49,14 @@ export function useSalesReport() {
         }))
       : []
   );
+  // The address the descent replaced last: only this step continues it, any other address is the user's choice.
   let descending = false;
+  let descentKey = '';
   let request = 0;
+  // A report that answers after the page is gone must neither render nor send the user back to the section.
+  onScopeDispose(() => {
+    request++;
+  });
 
   async function load(): Promise<void> {
     const current = ++request;
@@ -51,6 +67,7 @@ export function useSalesReport() {
       if (current !== request) return;
       const down = descending ? descendFilter(next, role.value) : null;
       if (down) {
+        descentKey = JSON.stringify(reportFilter(reportQuery(down)));
         await router.replace({ path: PATH, query: reportQuery(down) });
         return;
       }
@@ -92,7 +109,7 @@ export function useSalesReport() {
   watch(
     () => JSON.stringify(filter.value),
     (key) => {
-      descending = '{}' === key && ('head' === role.value || 'teacher' === role.value);
+      descending = keepsDescending(key, descending, descentKey, role.value);
       void load();
     },
     { immediate: true }

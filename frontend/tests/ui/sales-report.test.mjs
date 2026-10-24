@@ -4,6 +4,7 @@ import {
   CHILD_STATUS,
   childOrdersText,
   descendFilter,
+  keepsDescending,
   pdfFileName,
   reportCrumbs,
   reportFigures,
@@ -57,6 +58,17 @@ test('the head lands on the institution, the teacher goes down to the only group
   assert.equal(descendFilter(report('shoot', [G, 'other']), 'teacher'), null);
   assert.equal(descendFilter(report('all', [I]), 'organizer'), null);
   assert.equal(descendFilter(report('group'), 'teacher'), null);
+});
+
+test('the descent goes on only through its own addresses', () => {
+  const institution = JSON.stringify({ institutionId: I });
+  const shoot = JSON.stringify({ institutionId: I, shootId: S });
+  assert.equal(keepsDescending('{}', false, '', 'teacher'), true);
+  assert.equal(keepsDescending('{}', false, '', 'head'), true);
+  assert.equal(keepsDescending('{}', true, '', 'curator'), false);
+  assert.equal(keepsDescending(institution, true, institution, 'teacher'), true);
+  assert.equal(keepsDescending(shoot, true, institution, 'teacher'), false);
+  assert.equal(keepsDescending(institution, false, institution, 'teacher'), false);
 });
 
 test('figures read like the PDF', () => {
