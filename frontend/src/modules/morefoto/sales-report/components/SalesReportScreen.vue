@@ -14,6 +14,7 @@ const area = computed(() => {
   if (!value || 'group' !== value.level) return 'Оплаченные заказы родителей по вашей области';
   return [value.institution?.name, value.shoot ? `съёмка «${value.shoot.name}»` : ''].filter(Boolean).join(' · ');
 });
+const levelKey = computed(() => [report.value?.level, report.value?.institution?.id, report.value?.shoot?.id].join(':'));
 const number = new Intl.NumberFormat('ru-RU');
 </script>
 
@@ -55,8 +56,9 @@ const number = new Intl.NumberFormat('ru-RU');
 
     <section class="report-section" aria-labelledby="report-rows-title">
       <h2 id="report-rows-title">{{ rowsTitle(report.level) }}</h2>
-      <ReportChildrenTable v-if="'group' === report.level" :items="report.children" />
-      <ReportRowsTable v-else :report="report" :title="rowsTitle(report.level)" :row-href="rowHref" />
+      <!-- A new level starts with its own sort and first page. -->
+      <ReportChildrenTable v-if="'group' === report.level" :key="report.group?.id" :items="report.children" />
+      <ReportRowsTable v-else :key="levelKey" :report="report" :title="rowsTitle(report.level)" :row-href="rowHref" />
     </section>
 
     <section v-if="report.products.length" class="report-section" aria-labelledby="report-formats-title">
