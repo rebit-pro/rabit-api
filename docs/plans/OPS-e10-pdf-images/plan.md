@@ -33,7 +33,7 @@ PDF отчёта группы (COM-16) собирается на настоящ�
 - [x] S1. Writer + HTML на imageVars; тесты.
 - [x] S2. Быстрые проверки: PHPUnit, PHPStan, cs-fixer.
 - [x] S3. Полный гейт (`make test-e2e`, ЮKassa OFF по #174).
-- [ ] S4. PR; merge и выкладка — по решению владельца; после выкладки — DI smoke с PDF группы на stage.
+- [x] S4. PR; merge и выкладка — по решению владельца; после выкладки — DI smoke с PDF группы на stage.
 
 ## Тест-кейсы
 

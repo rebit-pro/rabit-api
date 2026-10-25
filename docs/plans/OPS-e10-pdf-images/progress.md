@@ -3,8 +3,8 @@
 ## Точка продолжения
 
 - Ветка `codex/ops-e10-pdf-images`, worktree `/home/user/rabit-api-worktrees/ops-e10-pdf-images`, база main 8e3855e. PR ещё нет.
-- Готово: S1–S3, PR [#224](https://github.com/rebit-pro/rabit-api/pull/224). Сейчас: ждём решения владельца о merge и выкладке (S4).
-- Stage: FPM на `main-20261017192004-65bd194` (откат после smoke), релиз `main-20261025130650-8e3855e` подготовлен, но не включён.
+- Готово: S1–S4. PR [#224](https://github.com/rebit-pro/rabit-api/pull/224) слит `40b44df`, на stage релиз `main-20261025141159-40b44df` (25.10.2026).
+- Stage: все сервисы на `main-20261025141159-40b44df`; подробности — журнал E10 «merge и выкладка на stage».
 
 ## Журнал
 
@@ -26,4 +26,4 @@
 | OPS-T02 | PASS | 2026-10-25 | `testTheGroupPageShowsChildrenStatusesAndRoubles`: `<img src="var:child0">`, нет data URI |
 | OPS-T03 | PASS | 2026-10-25 | PHPUnit 45/226, PHPStan, cs-fixer |
 | OPS-T04 | PASS | 2026-10-25 | `E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env make test-e2e …` → `rabit-e2e-be76c1d7d68d` на fd59f80: a 81, b 75, все верификаторы PASS, 388 с |
-| OPS-T05 | PENDING | — | после выкладки |
+| OPS-T05 | PASS | 2026-10-25 | DI smoke в FPM под `www-data`: PDF «все» 46 189 байт; PDF оплаченной группы с 12 миниатюрами 286 525 байт, 0,9 с |

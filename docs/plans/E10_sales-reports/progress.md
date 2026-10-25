@@ -13,10 +13,16 @@
   - S8 — PR #221, саморевью (ключ таблицы уровня), SQL на MySQL 8;
   - ревью PR #221 (review 5639604691): 7 блокеров исправлены, неблокирующие — issues #222, #223.
   - S9 — полный гейт PASS (`rabit-e2e-2c525d639406` на c52ac3b, ЮKassa OFF по #174), visual desktop/mobile по скриншотам E10.
-- **Сейчас:** волна готова к merge; merge и выкладка — по решению владельца.
-- **Следующий шаг:** после merge — выкладка по рецепту stage: backend → DI smoke `SalesReportController`, `GetSalesReportUseCase`, `ExportSalesReportPdfUseCase`, `GetChildPreviewUseCase`, `GroupChildrenInterface` → пробный PDF → frontend. Следующая волна отмечает E10 merged в графе.
-  - Локальных образов `rabit-api-php-cli:d1-local` и `-fpm:d1-local` больше нет: перед гейтом их нужно собрать.
-  - Push идёт через HTTPS + `gh auth git-credential`: SSH к github.com сейчас зависает.
+- **Merge и выкладка:**
+  - PR #221 слит `8e3855e`; OPS PR #224 (миниатюры PDF через imageVars) слит `40b44df`;
+  - на stage релиз `main-20261025141159-40b44df` (25.10.2026), см. «Выкладка».
+- **Следующий шаг:**
+  - владелец проверяет раздел «Отчёты» на stage под своими ролями и скачивает PDF;
+  - следующая волна записывает E10 `merged` в граф (PR #221, `8e3855e`);
+  - неблокирующее — #222, #223.
+- **Откат:**
+  - backend и воркеры — `docker service rollback <service>` (прежний `/app` — `main-20261017192004-65bd194`, спецификации в `services-before.json` релиза);
+  - frontend — `docker service rollback morefoto_frontend` (прежний образ в `frontend-before.txt`).
 - Блокеров нет. Уточнения E10-DEC-05…09 приняты как рамка принятых решений; при расхождении спросить владельца.
 - Рабочее дерево: чистое после коммита исправлений ревью.
 - **Гейт:** `E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env make test-e2e E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` (образы раннер собирает сам).
@@ -131,6 +137,39 @@
   - наложение липкой шапки посередине полностраничного мобильного снимка — артефакт съёмки.
 - Граф: E10 → `review`, `baseline.review.E10` = PR #221.
 
+### 2026-10-25 — merge и выкладка на stage
+
+- Владелец: «смержи и выложи на stage». PR #221 слит merge-коммитом `8e3855e` (head `f1f9d2c`, MERGEABLE CLEAN, main был `463d1f9`).
+- **Первая попытка, релиз `main-20261025130650-8e3855e`:**
+  - `prepare-release.sh`, `backup.sh` и `restore-check.sh` (184 таблицы) — PASS;
+  - FPM переключён, DI smoke под `www-data`: 17/17 сервисов, отчёт и PDF «все» OK (46 КБ, 0,7 с), отчёт группы OK;
+  - **PDF группы с 12 миниатюрами — FAIL:** `pcre.backtrack_limit 100000` — base64 миниатюр в HTML;
+  - FPM откатан `docker service rollback`, сайт 200, frontend не переключался.
+- **Исправление OPS PR #224** (`docs/plans/OPS-e10-pdf-images/`):
+  - миниатюры передаются через `imageVars` mpdf;
+  - регрессионный тест на 30 детей с кадрами ≈20 КБ;
+  - гейт `rabit-e2e-be76c1d7d68d` PASS;
+  - слит владельцем («да, мержи и выкладывай») merge-коммитом `40b44df`.
+- **Релиз `/srv/morefoto/releases/main-20261025141159-40b44df`:**
+  - `git archive 40b44df api`; frontend-образ тот же, что собран из `8e3855e` (frontend не менялся), тег `morefoto-frontend:main-20261025141159-40b44df`;
+  - vendor и `backend.conf` из `main-20261017192004-65bd194` (`composer.lock` не менялся);
+  - миграций и новых сервисов нет;
+  - `prepare-release.sh` — PASS; `backup.sh` — 297 777 байт; `restore-check.sh` — 184 таблицы PASS.
+- **Переключение:**
+  - `switch-backend.sh` меняет только `/app`, окружение чеков, магазина и писем сохраняется;
+  - FPM → DI smoke под `www-data`: 17/17 сервисов;
+  - отчёт «все» — 3 строки, 9 оплаченных заказов; PDF 46 189 байт, 0,61 с;
+  - отчёт оплаченной группы — 12 детей, 12 с кадром; PDF 286 525 байт, 0,9 с;
+  - `/tmp/morefoto-mpdf` принадлежит `www-data`;
+  - остальные 12 backend-сервисов переключены, frontend 2/2, все 14 сервисов 1/1.
+- **HTTP:**
+  - `/`, `/legal`, `/cabinet/reports` — 200;
+  - `GET /api/v1/sales-report` и `/pdf` без входа — 401 `UNAUTHORIZED`;
+  - бандл содержит маршрут `SalesReports` в списке live-guard;
+  - окружение FPM: чеки, магазин и письма на месте;
+  - сверка платежей: «Сверено попыток: 0, с ошибкой: 0».
+- Подготовленный и не включённый каталог `main-20261025130650-8e3855e` оставлен на сервере как артефакт первой попытки.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -152,4 +191,5 @@
 | Исправления ревью | PASS | 2026-10-24 | PHPUnit `SalesReport|GroupSales|GroupChildren` → OK 44/221; PHPStan → No errors; cs-fixer dry-run → 0; `npm run check` → 107 UI PASS (lint, stylelint, typecheck, typecheck:e2e) |
 | E10-T09…T12 | PASS | 2026-10-25 | `zzzzzzzzzzzzzz-sales-report` в прогонах 4 и 5 (`rabit-e2e-2c525d639406`) |
 | Visual E10 | PASS | 2026-10-25 | скриншоты `e10-{desktop,mobile}-*.png` прогона 4 просмотрены |
+| Stage DI smoke | PASS | 2026-10-25 | релиз `main-20261025141159-40b44df`: PDF «все» и PDF группы с 12 миниатюрами на реальных данных |
 | E10-T14 | PASS | 2026-10-25 | `rabit-e2e-2c525d639406` на c52ac3b: a 81, b 75, 19 верификаторов, магазин ЮKassa OFF (#174, прецедент D4). Прогоны 1–4 — FAIL (live-guard, две ошибки спеки, #174), см. журнал |
