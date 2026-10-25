@@ -245,11 +245,12 @@ test('E10-T09…T12: each role reads the sales of its own area and downloads the
     const curator = await curatorContext.newPage();
     await login(curator, 'curator');
     const own = (await report(curator)).data;
+    // The search matches substrings: «c4-curator@…» comes first by name, so the account is picked by its exact email.
     const detail = (
       await body(
         await page.request.get('/api/v1/users?q=' + encodeURIComponent('curator@example.invalid'), { headers: await bearer(page) })
       )
-    ).data.items[0];
+    ).data.items.find((item: { email: string }) => item.email === 'curator@example.invalid');
     const assigned = (await body(await page.request.get('/api/v1/users/' + detail.id, { headers: await bearer(page) }))).data
       .institutionIds as string[];
     expect(own.rows.length).toBeGreaterThan(0);
@@ -261,7 +262,7 @@ test('E10-T09…T12: each role reads the sales of its own area and downloads the
   // E10-T11: the PDF of the group for the organizer.
   const pdf = await page.request.get('/api/v1/sales-report/pdf', { headers: await bearer(page), params: { groupId } });
   expect(pdf.status(), await pdf.text()).toBe(200);
-  expect(pdf.headers()['content-type']).toBe('application/pdf');
+  expect(pdf.headers()['content-type']).toMatch(/^application\/pdf\b/);
   expect(pdf.headers()['content-disposition']).toMatch(/^attachment; filename="morefoto-otchet-group-\d{4}-\d{2}-\d{2}\.pdf"$/);
   const bytes = await pdf.body();
   expect(bytes.subarray(0, 5).toString()).toBe('%PDF-');
