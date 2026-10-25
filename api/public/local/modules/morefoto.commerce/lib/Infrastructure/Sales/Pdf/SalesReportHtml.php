@@ -70,15 +70,15 @@ final readonly class SalesReportHtml
             . '<td style="text-align: right">Стр. {PAGENO} из {nbpg}</td></tr></table>';
     }
 
-    /** @param array<string, string> $thumbnails */
-    public function body(SalesReportOutputDto $report, array $thumbnails): string
+    /** @param array<string, string> $images имя переменной mpdf `imageVars` по публичному ID ребёнка */
+    public function body(SalesReportOutputDto $report, array $images): string
     {
         $html = '<p class="kind">' . $this->escape($this->kind($report->level)) . '</p>'
             . '<h1>' . $this->escape($this->title($report)) . '</h1>'
             . '<p class="area">' . $this->escape($this->area($report)) . '</p>'
             . $this->tiles($report->totals);
         if (SalesReportLevelEnum::GROUP === $report->level) {
-            $html .= '<h2>Дети группы</h2>' . $this->children($report, $thumbnails);
+            $html .= '<h2>Дети группы</h2>' . $this->children($report, $images);
         } else {
             $html .= '<h2>' . $this->escape($this->rowsTitle($report->level)) . '</h2>' . $this->rows($report);
         }
@@ -180,8 +180,8 @@ final readonly class SalesReportHtml
             . '<td class="num">' . $this->escape($this->money($totals->paidTotal)) . '</td></tr>';
     }
 
-    /** @param array<string, string> $thumbnails */
-    private function children(SalesReportOutputDto $report, array $thumbnails): string
+    /** @param array<string, string> $images */
+    private function children(SalesReportOutputDto $report, array $images): string
     {
         $html = '<table class="rows"><thead><tr><th></th><th>Ребёнок</th><th>Статус</th><th class="num">Заказов</th>'
             . '<th class="num">Печать</th><th class="num">Цифровые</th><th class="num">Сумма</th></tr></thead><tbody>';
@@ -189,8 +189,9 @@ final readonly class SalesReportHtml
             return $html . '<tr><td colspan="7" class="muted">В группе пока нет детей</td></tr></tbody></table>';
         }
         foreach ($report->children as $child) {
-            $thumbnail = $thumbnails[$child->id] ?? null;
-            $html .= '<tr><td width="11mm">' . (null === $thumbnail ? '' : '<img src="data:' . $this->mime($thumbnail) . ';base64,' . base64_encode($thumbnail) . '" width="9mm">') . '</td>'
+            // The bytes stay in mpdf imageVars: base64 frames inside the HTML exceed the PCRE limit of mpdf on a real group.
+            $image = $images[$child->id] ?? null;
+            $html .= '<tr><td width="11mm">' . (null === $image ? '' : '<img src="var:' . $this->escape($image) . '" width="9mm">') . '</td>'
                 . '<td class="code">' . $this->escape($child->code) . '</td>'
                 . '<td><span class="status status-' . $child->status->value . '">' . $this->escape($this->status($child)) . '</span></td>'
                 . '<td class="num">' . $this->number($child->paidOrders) . ($child->orders > $child->paidOrders ? ' <span class="muted">из ' . $this->number($child->orders) . '</span>' : '') . '</td>'
@@ -217,16 +218,6 @@ final readonly class SalesReportHtml
             ChildSalesStatusEnum::LATE => 'Поздняя оплата',
             ChildSalesStatusEnum::UNPAID => 'Заказ без оплаты',
             ChildSalesStatusEnum::NONE => 'Нет заказа',
-        };
-    }
-
-    /** Превью Media — WebP; тип определяется по сигнатуре, чтобы mpdf не принял другой формат за WebP. */
-    private function mime(string $image): string
-    {
-        return match (true) {
-            str_starts_with($image, "\xFF\xD8") => 'image/jpeg',
-            str_starts_with($image, "\x89PNG") => 'image/png',
-            default => 'image/webp',
         };
     }
 
