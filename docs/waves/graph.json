@@ -58,7 +58,9 @@
       "J5",
       "G2"
     ],
-    "review": {},
+    "review": {
+      "E10": "https://github.com/rebit-pro/rabit-api/pull/221"
+    },
     "note": "Снимок состояния, не автоматическая проверка GitHub; перед стартом и merge сверять актуальный main.",
     "mergedPullRequests": {
       "B1": "https://github.com/rebit-pro/rabit-api/pull/8",
@@ -3599,7 +3601,7 @@
       ],
       "activation": "Сразу после выкладки: миграции нет, право задаётся политикой Access в коде. Шрифты PDF поставляются в модуле.",
       "legacyIds": [],
-      "deliveryState": "inProgress",
+      "deliveryState": "review",
       "unlocks": [
         "N2"
       ],

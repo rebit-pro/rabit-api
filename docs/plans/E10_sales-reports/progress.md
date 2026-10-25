@@ -3,7 +3,7 @@
 ## Точка продолжения
 
 - Ветка `codex/e10-sales-reports`, worktree `/home/user/rabit-api-worktrees/e10-sales-reports`, база main 463d1f9. PR [#221](https://github.com/rebit-pro/rabit-api/pull/221).
-- Документы: [план](plan.md), граф `docs/waves/graph.json` (E10 inProgress, G2 merged).
+- Документы: [план](plan.md), граф `docs/waves/graph.json` (E10 review, PR #221; G2 merged).
 - **Готово:**
   - S0 — план, граф;
   - S1 — контракт Media (1e46de2);
@@ -12,13 +12,15 @@
   - S7 — live E2E-спека, README волны.
   - S8 — PR #221, саморевью (ключ таблицы уровня), SQL на MySQL 8;
   - ревью PR #221 (review 5639604691): 7 блокеров исправлены, неблокирующие — issues #222, #223.
-- **Сейчас:** ответ в тредах review после push исправлений.
-- **Следующий шаг:** полный гейт `make test-e2e` (S9) и visual desktop/mobile — блокеров ревью больше нет.
+  - S9 — полный гейт PASS (`rabit-e2e-2c525d639406` на c52ac3b, ЮKassa OFF по #174), visual desktop/mobile по скриншотам E10.
+- **Сейчас:** волна готова к merge; merge и выкладка — по решению владельца.
+- **Следующий шаг:** после merge — выкладка по рецепту stage: backend → DI smoke `SalesReportController`, `GetSalesReportUseCase`, `ExportSalesReportPdfUseCase`, `GetChildPreviewUseCase`, `GroupChildrenInterface` → пробный PDF → frontend. Следующая волна отмечает E10 merged в графе.
   - Локальных образов `rabit-api-php-cli:d1-local` и `-fpm:d1-local` больше нет: перед гейтом их нужно собрать.
   - Push идёт через HTTPS + `gh auth git-credential`: SSH к github.com сейчас зависает.
 - Блокеров нет. Уточнения E10-DEC-05…09 приняты как рамка принятых решений; при расхождении спросить владельца.
 - Рабочее дерево: чистое после коммита исправлений ревью.
-- **Следующая проверка:** PHPUnit в образе с vendor-томом:
+- **Гейт:** `E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env make test-e2e E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` (образы раннер собирает сам).
+- **Быстрая проверка:** PHPUnit в образе с vendor-томом:
   `docker run --rm --network none -u 1000:1000 -e XDEBUG_MODE=off -v $PWD/api:/app -v rabit-j1-vendor:/app/vendor -w /app --entrypoint php rabit-api-php-fpm:20260911-074507 vendor/bin/phpunit --testsuite unit`
 
 ## Журнал
@@ -111,6 +113,24 @@
   - последний шаг упал по таймауту теста: главная страница организатора получила `/login?reason=revoked`, потому что новый вход организатора в отдельном контексте отзывает его прежнюю сессию. Исправлено: проверка «меню → Отчёты» организатора идёт в его собственном контексте;
   - G1-T14 и G2-T14 снова упали по #174 (создание СБП-платежа в тестовом магазине не отвечает 9 с, повторы — 400). 2 теста payments не запускались из-за serial-режима после падения G1-T14.
 
+### 2026-10-25 — полный гейт, прогоны 4 и 5
+
+- **Прогон 4 `rabit-e2e-d765cec03cd7` (c52ac3b), магазин ЮKassa ON:**
+  - группа a — PASS, группа b — 74 passed;
+  - E10-спека PASS целиком;
+  - упали только G1-T14 и G2-T14 по #174 (`payment.ERROR: HTTP Request failed {"durationMs":10447…}` на создании СБП-платежа, затем 400); 2 теста payments не запускались.
+- **Прогон 5 `rabit-e2e-2c525d639406` (c52ac3b), `E2E_YOOKASSA_ENV=/nonexistent/...` — прецедент D4 по #174:**
+  - **PASS**, 412 с;
+  - группа a — 81 passed, группа b — 75 passed;
+  - верификаторы: a — access, support, photo-deletion; b — storefront, sales-windows, handoff, orders, markup-correction, email-only-orders, links, transfers, avatar, payment-costs, payments, files, production, order-email, receipts — все PASS.
+- **Visual** по скриншотам прогона 4 (`api/var/e2e/rabit-e2e-d765cec03cd7/b/b/artifacts/zzzzzzzzzzzzzz-sales-repor-*/e10-*.png`):
+  - воспитатель — группа 1440/390 (миниатюры, статусы, плитки, крошки, «Скачать PDF»);
+  - организатор — «Все учреждения»;
+  - руководитель — съёмка 390, куратор — 1440/390;
+  - без горизонтальной прокрутки;
+  - наложение липкой шапки посередине полностраничного мобильного снимка — артефакт съёмки.
+- Граф: E10 → `review`, `baseline.review.E10` = PR #221.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -130,5 +150,6 @@
 | Frontend check | PASS | 2026-10-24 | `npm run check` (lint, stylelint, typecheck, typecheck:e2e, 106 UI) и `npm run test:commerce` (253) в playwright:v1.52.0 с томом `rabit-issues219-node` |
 | SQL на MySQL 8 | PASS (ручная) | 2026-10-24 | временный `mysql:8.0` (ONLY_FULL_GROUP_BY): 10 запросов `SalesReportRepository`/`GroupChildRepository`, собранных самим кодом, на выборке из 5 заказов — уровни, статусы, нули без области, первый готовый кадр без чужой группы совпали с ручным расчётом |
 | Исправления ревью | PASS | 2026-10-24 | PHPUnit `SalesReport|GroupSales|GroupChildren` → OK 44/221; PHPStan → No errors; cs-fixer dry-run → 0; `npm run check` → 107 UI PASS (lint, stylelint, typecheck, typecheck:e2e) |
-| E10-T09…T12 | PENDING | — | спека дополнена по ревью, lint и typecheck:e2e PASS; прогон — в полном гейте |
-| E10-T14 | FAIL | 2026-10-25 | прогон `rabit-e2e-68c363cba874`: E10 — дефект live-guard (исправлен), G1-T14/G2-T14 — тестовый магазин ЮKassa (#174); нужен повтор |
+| E10-T09…T12 | PASS | 2026-10-25 | `zzzzzzzzzzzzzz-sales-report` в прогонах 4 и 5 (`rabit-e2e-2c525d639406`) |
+| Visual E10 | PASS | 2026-10-25 | скриншоты `e10-{desktop,mobile}-*.png` прогона 4 просмотрены |
+| E10-T14 | PASS | 2026-10-25 | `rabit-e2e-2c525d639406` на c52ac3b: a 81, b 75, 19 верификаторов, магазин ЮKassa OFF (#174, прецедент D4). Прогоны 1–4 — FAIL (live-guard, две ошибки спеки, #174), см. журнал |
