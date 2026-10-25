@@ -13,9 +13,11 @@ use Rebit\Share\Infrastructure\Controller\Auth\AuthenticatedControllerTrait;
 use Rebit\Share\Infrastructure\Controller\Filters\BearerTokenFilter;
 use Rebit\Share\Infrastructure\Controller\Responses\ApiJsonExceptionResponse;
 use Rebit\Share\Application\Contract\File\Dto\ImageContentOutputDto;
+use Rebit\Share\Application\Contract\File\Dto\PdfFileOutputDto;
 use Rebit\Share\Application\Contract\File\Dto\PreviewContentOutputDto;
 use Rebit\Share\Application\Contract\File\Dto\TextFileOutputDto;
 use Rebit\Share\Infrastructure\Controller\Responses\ImageResponse;
+use Rebit\Share\Infrastructure\Controller\Responses\PdfFileResponse;
 use Rebit\Share\Infrastructure\Controller\Responses\PreviewResponse;
 use Rebit\Share\Infrastructure\Controller\Responses\TextFileResponse;
 
@@ -71,5 +73,10 @@ abstract class AuthenticatedApiJsonController extends BaseJsonController impleme
     final protected function textFile(TextFileOutputDto $file): TextFileResponse
     {
         return new TextFileResponse($file);
+    }
+
+    final protected function pdfFile(PdfFileOutputDto $file): PdfFileResponse
+    {
+        return new PdfFileResponse($file);
     }
 }

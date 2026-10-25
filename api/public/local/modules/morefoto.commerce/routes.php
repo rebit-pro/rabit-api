@@ -8,6 +8,7 @@ use Morefoto\Commerce\Presentation\Controller\CatalogRemovalController;
 use Morefoto\Commerce\Presentation\Controller\ConditionsController;
 use Morefoto\Commerce\Presentation\Controller\GroupSalesController;
 use Morefoto\Commerce\Presentation\Controller\OrderController;
+use Morefoto\Commerce\Presentation\Controller\SalesReportController;
 use Morefoto\Commerce\Presentation\Controller\StaffOrderController;
 use Morefoto\Commerce\Presentation\Controller\StaffOrderRemovalController;
 use Morefoto\Commerce\Presentation\Controller\StorefrontController;
@@ -29,4 +30,7 @@ return static function(RoutingConfigurator $routes): void {
     $routes->get('/api/v1/groups/{group_id}/conditions', [ConditionsController::class, 'groupAction']);
     $routes->put('/api/v1/groups/{group_id}/conditions', [ConditionsController::class, 'saveGroupAction']);
     $routes->get('/api/v1/groups/{group_id}/sales-summary', [GroupSalesController::class, 'groupAction']);
+    $routes->get('/api/v1/sales-report', [SalesReportController::class, 'reportAction']);
+    $routes->get('/api/v1/sales-report/pdf', [SalesReportController::class, 'pdfAction']);
+    $routes->get('/api/v1/sales-report/children/{child_id}/preview', [SalesReportController::class, 'childPreviewAction']);
 };

@@ -8,6 +8,6 @@ use Morefoto\Commerce\Application\Sales\Dto\SalesScopeOutputDto;
 
 interface SalesAccessInterface
 {
-    /** Область сводки продаж E9: организатор — всё, куратор — свои учреждения, воспитатель — свои группы; остальным FORBIDDEN. */
+    /** Область продаж E9/E10: организатор — всё, куратор и руководитель — свои учреждения, воспитатель — свои группы; остальным FORBIDDEN. */
     public function scope(int $actorId): SalesScopeOutputDto;
 }

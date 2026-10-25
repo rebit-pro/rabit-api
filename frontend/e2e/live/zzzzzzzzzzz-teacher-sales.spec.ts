@@ -145,7 +145,9 @@ test('E9-T05…T08: the teacher of the group sees its paid sales; other roles an
   await placeUnpaidOrder(page);
   expect(await sales(page)).toEqual(before);
 
-  // E9-T05: roles. The owner of another group and the head learn nothing; a broken ID is an unknown group.
+  // E9-T05: roles. The owner of another group learns nothing; a broken ID is an unknown group. Since E10 the head reads
+  // the groups of their own institutions only: here the head has just the F2 institution, so this group stays hidden.
+  // The E10 spec assigns the head to this institution later and checks the allowed answer.
   await assignTeacher(page, 'another-teacher@example.invalid');
   expect((await page.request.get(summary)).status()).toBe(401);
   expect(
@@ -153,7 +155,7 @@ test('E9-T05…T08: the teacher of the group sees its paid sales; other roles an
   ).toBe('GROUP_NOT_FOUND');
   for (const [account, status, code] of [
     ['teacher', 404, 'GROUP_NOT_FOUND'],
-    ['head', 403, 'FORBIDDEN']
+    ['head', 404, 'GROUP_NOT_FOUND']
   ] as const) {
     const context = await browser.newContext({ baseURL });
     try {

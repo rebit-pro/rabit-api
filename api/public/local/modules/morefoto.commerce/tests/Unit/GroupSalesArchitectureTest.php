@@ -30,7 +30,8 @@ final class GroupSalesArchitectureTest extends TestCase
     public function testSalesDtosHaveNoBehaviour(): void
     {
         $files = array_merge(glob(self::MODULE . '/Application/Sales/Dto/*.php') ?: [], glob(self::MODULE . '/Presentation/Sales/Dto/*.php') ?: []);
-        self::assertCount(6, $files);
+        // E9 and the E10 report share the Sales DTO directories.
+        self::assertCount(20, $files);
         foreach ($files as $file) {
             $source = (string)file_get_contents($file);
             self::assertMatchesRegularExpression('/function __construct\([\s\S]*?\)\s*\{\s*\}\s*\}\s*$/', $source, $file);

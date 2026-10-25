@@ -113,6 +113,12 @@ const MainRoutes: RouteRecordRaw = {
       meta: { title: 'Условия группы', staffRoles: ['organizer'] }
     },
     {
+      name: 'SalesReports',
+      path: 'reports',
+      component: () => import('@/modules/morefoto/views/ReportsPage.vue'),
+      meta: { title: 'Отчёты', staffRoles: ['organizer', 'curator', 'head', 'teacher'] }
+    },
+    {
       name: 'CabinetOverview',
       path: 'overview',
       component: () => import('@/modules/morefoto/views/OverviewPage.vue'),

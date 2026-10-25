@@ -1,0 +1,155 @@
+# E10 — журнал
+
+## Точка продолжения
+
+- Ветка `codex/e10-sales-reports`, worktree `/home/user/rabit-api-worktrees/e10-sales-reports`, база main 463d1f9. PR [#221](https://github.com/rebit-pro/rabit-api/pull/221).
+- Документы: [план](plan.md), граф `docs/waves/graph.json` (E10 review, PR #221; G2 merged).
+- **Готово:**
+  - S0 — план, граф;
+  - S1 — контракт Media (1e46de2);
+  - S2–S5 — COM-15/16/17, PDF, PHPUnit (96bfdee);
+  - S6 — раздел «Отчёты» (b8c75be);
+  - S7 — live E2E-спека, README волны.
+  - S8 — PR #221, саморевью (ключ таблицы уровня), SQL на MySQL 8;
+  - ревью PR #221 (review 5639604691): 7 блокеров исправлены, неблокирующие — issues #222, #223.
+  - S9 — полный гейт PASS (`rabit-e2e-2c525d639406` на c52ac3b, ЮKassa OFF по #174), visual desktop/mobile по скриншотам E10.
+- **Сейчас:** волна готова к merge; merge и выкладка — по решению владельца.
+- **Следующий шаг:** после merge — выкладка по рецепту stage: backend → DI smoke `SalesReportController`, `GetSalesReportUseCase`, `ExportSalesReportPdfUseCase`, `GetChildPreviewUseCase`, `GroupChildrenInterface` → пробный PDF → frontend. Следующая волна отмечает E10 merged в графе.
+  - Локальных образов `rabit-api-php-cli:d1-local` и `-fpm:d1-local` больше нет: перед гейтом их нужно собрать.
+  - Push идёт через HTTPS + `gh auth git-credential`: SSH к github.com сейчас зависает.
+- Блокеров нет. Уточнения E10-DEC-05…09 приняты как рамка принятых решений; при расхождении спросить владельца.
+- Рабочее дерево: чистое после коммита исправлений ревью.
+- **Гейт:** `E2E_YOOKASSA_ENV=/nonexistent/yookassa-test.env make test-e2e E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor` (образы раннер собирает сам).
+- **Быстрая проверка:** PHPUnit в образе с vendor-томом:
+  `docker run --rm --network none -u 1000:1000 -e XDEBUG_MODE=off -v $PWD/api:/app -v rabit-j1-vendor:/app/vendor -w /app --entrypoint php rabit-api-php-fpm:20260911-074507 vendor/bin/phpunit --testsuite unit`
+
+## Журнал
+
+### 2026-10-24
+
+- Локальный `main` обновлён до origin 463d1f9 через HTTPS + `gh`: SSH к github.com обрывается.
+- Состояние графа до правки:
+  - G2 слита (65bd194), но в графе была `review`;
+  - готовы от main: N3 (MVP) и L3;
+  - I1 и вся цепочка I2–N2 заблокированы решением D12.
+- Владелец передал запрос заказчика: отчёты воспитателю (группа, съёмка), руководителю (учреждение), куратору (все учреждения), организатору (уже есть таблица заказов) и выгрузка PDF «Море фото».
+- Разведка кода:
+  - E9 COM-14 (`GroupSalesRepository`, `SalesAccess`: руководитель получает 403);
+  - дети в Media — только буквенный код;
+  - превью Media закрыто для teacher и head;
+  - `mpdf` 8.3.1 в lock, но не используется;
+  - фирменные шрифты — переменные woff2.
+- Решения владельца (рекомендации): код и миниатюра ребёнка без ПДн; куратор — назначенные учреждения; PDF на сервере (mpdf); организатор тоже получает отчёт и PDF.
+- Отклонён вариант с эндпоинтом миниатюр в Media (MED-08) и новым правом Access. Миниатюра отдаётся Commerce (COM-17) по тому же правилу области, что и отчёт; Media поставляет данные через контракт. Так правило области одно.
+- Граф: E10 добавлена (`postMvp`, dependsOn B2/D2/E9, COM-15/16/17, N2 зависит от E10), G2 → merged, `endpointCount` 128, amendment и `decisionEvidence` E10-2026-10-24.
+
+- S1: контракт `GroupChildrenInterface` (дети групп, счётчики, поиск ребёнка, миниатюра) и реализация в Media; первый готовый кадр берётся подзапросом по `ux_mf_photo_assignment_sequence`.
+- S2–S4:
+  - `SalesAccess` расширен руководителем; COM-14 теперь тоже открыт head в его учреждении, тесты E9 обновлены;
+  - `SalesReportRepository` — один агрегат на разбивку и итог, деньги по сумме строк заказа;
+  - `SalesReportScope` листает справочник групп по 100;
+  - PDF: mpdf, статические TTF Manrope 500/600 и Golos Text 400/600 собраны fonttools из woff2 frontend (OFL рядом).
+- Наблюдения окружения:
+  - образа `rabit-api-php-cli:d1-local` больше нет; проверки идут в `rabit-api-php-fpm:20260911-074507`;
+  - в этом образе GD без WebP, поэтому 2 теста `GdAvatarRendererTest` падают и на чистом main;
+  - production/development Dockerfile собирают GD с WebP, так что миниатюры в PDF рассчитаны на них; тип картинки определяется по сигнатуре;
+  - обёртка `file://` из `dg/bypass-finals` ломает чтение TTF в mpdf под PHPUnit, поэтому тест PDF временно возвращает штатную обёртку.
+- Визуальная проверка PDF: образцы группы (28 детей, 2 страницы, шапка таблицы повторяется) и съёмки отрисованы в PNG и просмотрены. Поправлены плитки, заголовок, цвет словесного знака.
+
+- S6:
+  - frontend-модуль `sales-report` — каталог `reports` игнорируется `frontend/.gitignore`, поэтому переименован;
+  - composable с переходом по уровням, таблицы на `UiDataTable`, миниатюры через `useProtectedImage`, скачивание PDF;
+  - пункт меню «Отчёты» для четырёх ролей.
+- Суммы в кабинете показывают копейки двумя цифрами, как в PDF («1 234,50 ₽»).
+- S7:
+  - спека `zzzzzzzzzzzzzz-sales-report` — последняя в группе b;
+  - в E9-спеке убрана проверка «head → 403», её заменяет E10-спека (head назначается на учреждение печатной группы).
+
+### 2026-10-24 — ревью PR #221
+
+- **Как проводилось:** три независимых субагента без истории реализации (Fable 5.1, high), сведение — автор.
+- **Опубликовано:** блокеры — review 5639604691; неблокирующие — #222 (одно определение «продано» для E9/E10) и #223 (текст ошибки 404 в разделе). LOW — в отчёте ревью, не публиковались.
+- **Исправлены блокеры:**
+  1. Авто-спуск воспитателя останавливался на учреждении: watch сбрасывал флаг после первого `router.replace`. Правило `keepsDescending` вынесено в `rules.ts`: спуск продолжается только по адресу, который он сам подставил. Unit-тест добавлен.
+  2. Ответ после ухода со страницы возвращал пользователя в отчёт: `onScopeDispose` инвалидирует запрос.
+  3. UUID без версии 1–5 или варианта 8–b давал 503 (исключение справочника вне try). Шаблон `SalesReportScope` теперь как у справочника; unit-тест проверяет 404 без обращения к справочнику.
+  4. Вход под `c4-head` в E2E шёл в ветку организатора: хелпер `login` знает `c4-curator`/`c4-head`.
+  5. E2E дополнена:
+     - вход без фильтров (head → своё учреждение, teacher → единственная группа);
+     - хлебные крошки и шаг назад без повторного спуска;
+     - curator и organizer на 1440/390;
+     - миниатюра обязательна, чужой воспитатель получает 404.
+     - Заодно исправлена скрытая ошибка спеки: вторая роль в том же browser context не могла войти — сессия в localStorage, guard уводит с `/login`. Теперь у каждой роли свой контекст.
+  6. В E9-спеку возвращена проверка руководителя чужого учреждения: `head → 404 GROUP_NOT_FOUND`.
+  7. Статусы T04/T05/T07 приведены к доказанному:
+     - T04 — добавлены «неизвестный ребёнок», «нет готового кадра», «нет файла превью»;
+     - T05 — ожидание плана переписано: проверяется разметка, а не извлечённый текст PDF;
+     - T07 — unit покрывает маппинг, SQL — ручной прогон.
+- План: исправлена строка про временный каталог mpdf (было «в var»), уточнены T04/T05/T07/T08/T12.
+
+### 2026-10-25 — полный гейт, прогон 1
+
+- `make test-e2e E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`:
+  - раннер сам собрал `rabit-api-e2e-{php-cli,php-fpm,nginx}:local` (~6 мин);
+  - прогон `rabit-e2e-68c363cba874`, 909 с; **FAIL**.
+- **Группа a:** PASS (314 с), верификаторы access/support/photo-deletion PASS. Все статические стадии PASS.
+- **Группа b:** 73 passed, 3 failed.
+  1. **E10 — настоящий дефект.** Белый список live-маршрутов в `frontend/src/router/index.ts` не содержал `SalesReports`. Guard уводил любую роль из «Отчётов» на «Обзор»: раздел был недоступен в live. Unit, typecheck и ревью этого не ловили.
+     - Исправлено: маршрут добавлен в список.
+     - Добавлен тест навигации «каждый пункт live-меню ведёт на маршрут из списка guard». На старом guard он падает с `/cabinet/reports (SalesReports) is not in the live guard list`.
+  2. **G1-T14 — внешнее, #174.** В логе FPM `payment.ERROR: HTTP Request failed {"durationMs":9041…}` на создании СБП-платежа в тестовом магазине ЮKassa, затем повторы с тем же ключом получают 400. Экран остался на «Проверяем оплату».
+  3. **G2-T14 — следствие G1-T14.** Спека берёт оплаченный заказ G1 из `var/g1-payments.json`; чек платежа не найден, `provider` = undefined.
+
+### 2026-10-25 — полный гейт, прогоны 2 и 3
+
+- **Прогон 2 `rabit-e2e-89a96da2ef1c` (3a06e1d), 401 с:**
+  - группа a — PASS; группа b — 77 passed, 1 failed;
+  - G1-T14 и G2-T14 прошли — тестовый магазин ЮKassa ответил;
+  - вход head и teacher через меню прошёл;
+  - упала проверка куратора — ошибка спеки: поиск `?q=curator@…` по подстроке вернул первым `c4-curator`. Исправлено: аккаунт выбирается по точному email (2036849).
+- **Прогон 3 `rabit-e2e-3891a6105b94` (2036849), 960 с:**
+  - группа a — PASS;
+  - E10: все проверки до последнего шага прошли, включая роли, PDF, миниатюру и экраны 1440/390 для teacher, head, curator, organizer;
+  - последний шаг упал по таймауту теста: главная страница организатора получила `/login?reason=revoked`, потому что новый вход организатора в отдельном контексте отзывает его прежнюю сессию. Исправлено: проверка «меню → Отчёты» организатора идёт в его собственном контексте;
+  - G1-T14 и G2-T14 снова упали по #174 (создание СБП-платежа в тестовом магазине не отвечает 9 с, повторы — 400). 2 теста payments не запускались из-за serial-режима после падения G1-T14.
+
+### 2026-10-25 — полный гейт, прогоны 4 и 5
+
+- **Прогон 4 `rabit-e2e-d765cec03cd7` (c52ac3b), магазин ЮKassa ON:**
+  - группа a — PASS, группа b — 74 passed;
+  - E10-спека PASS целиком;
+  - упали только G1-T14 и G2-T14 по #174 (`payment.ERROR: HTTP Request failed {"durationMs":10447…}` на создании СБП-платежа, затем 400); 2 теста payments не запускались.
+- **Прогон 5 `rabit-e2e-2c525d639406` (c52ac3b), `E2E_YOOKASSA_ENV=/nonexistent/...` — прецедент D4 по #174:**
+  - **PASS**, 412 с;
+  - группа a — 81 passed, группа b — 75 passed;
+  - верификаторы: a — access, support, photo-deletion; b — storefront, sales-windows, handoff, orders, markup-correction, email-only-orders, links, transfers, avatar, payment-costs, payments, files, production, order-email, receipts — все PASS.
+- **Visual** по скриншотам прогона 4 (`api/var/e2e/rabit-e2e-d765cec03cd7/b/b/artifacts/zzzzzzzzzzzzzz-sales-repor-*/e10-*.png`):
+  - воспитатель — группа 1440/390 (миниатюры, статусы, плитки, крошки, «Скачать PDF»);
+  - организатор — «Все учреждения»;
+  - руководитель — съёмка 390, куратор — 1440/390;
+  - без горизонтальной прокрутки;
+  - наложение липкой шапки посередине полностраничного мобильного снимка — артефакт съёмки.
+- Граф: E10 → `review`, `baseline.review.E10` = PR #221.
+
+## Результаты тест-кейсов
+
+| ID | Статус | Дата | Команда / доказательство |
+| --- | --- | --- | --- |
+| E10-T13 | PASS | 2026-10-24 | `python3 tools/verify-wave-graph.py docs/waves/graph.json` → 62 волны, 128 ID, ready `L3`, `N3`, `E10`, 17 негативных сценариев |
+| E10-T01 | PASS | 2026-10-24 | PHPUnit `SalesReportTest` (8 ролей, несогласованные предки, съёмка воспитателя) |
+| E10-T02 | PASS | 2026-10-24 | `SalesReportTest::testGroupChildrenKeepStatusesCodesAndTransferredOrders`, политика статусов |
+| E10-T03 | PASS | 2026-10-24 | `SalesReportTest`: съёмка с нулевой строкой, «все» с сортировкой по-русски |
+| E10-T04 | PASS | 2026-10-24 | `SalesReportTest::testThePreviewNeedsTheAreaAndATransmittedGroup` (своя переданная / чужая группа / чужое учреждение / не передана) и `testAMissingChildOrFrameIsNotFound` (неизвестный ребёнок / нет готового кадра / нет файла); live-часть — PENDING в гейте |
+| E10-T05 | PASS | 2026-10-24 | `SalesReportPdfTest`: разметка группы содержит заголовок, область, дату МСК, рубли, коды и статусы детей, без `@`; mpdf собрал PDF с `%PDF-`/`%%EOF` и `/BaseFont …+Manrope`/`…+GolosText`. Текст из PDF не извлекается (план уточнён) |
+| E10-T06 | PASS | 2026-10-24 | `SalesReportArchitectureTest`, `GroupSalesArchitectureTest` |
+| E10-T07 | PASS | 2026-10-24 | Маппинг: `GroupChildrenTest` (4, репозиторий застаблен). SQL выбора первого готового кадра — только ручной прогон на MySQL 8 (строка «SQL на MySQL 8»), из репозитория не воспроизводится |
+| Unit целиком | PASS* | 2026-10-24 | 1055 тестов; 2 ошибки `GdAvatarRendererTest` — окружение (GD без WebP), так же на main |
+| PHPStan | PASS | 2026-10-24 | `vendor/bin/phpstan analyse` → No errors |
+| php-cs-fixer | PASS | 2026-10-24 | dry-run по 49 изменённым файлам → 0 |
+| E10-T08 | PASS | 2026-10-24 | `node --test tests/ui/sales-report.test.mjs` (7, в т.ч. `keepsDescending`), навигация |
+| Frontend check | PASS | 2026-10-24 | `npm run check` (lint, stylelint, typecheck, typecheck:e2e, 106 UI) и `npm run test:commerce` (253) в playwright:v1.52.0 с томом `rabit-issues219-node` |
+| SQL на MySQL 8 | PASS (ручная) | 2026-10-24 | временный `mysql:8.0` (ONLY_FULL_GROUP_BY): 10 запросов `SalesReportRepository`/`GroupChildRepository`, собранных самим кодом, на выборке из 5 заказов — уровни, статусы, нули без области, первый готовый кадр без чужой группы совпали с ручным расчётом |
+| Исправления ревью | PASS | 2026-10-24 | PHPUnit `SalesReport|GroupSales|GroupChildren` → OK 44/221; PHPStan → No errors; cs-fixer dry-run → 0; `npm run check` → 107 UI PASS (lint, stylelint, typecheck, typecheck:e2e) |
+| E10-T09…T12 | PASS | 2026-10-25 | `zzzzzzzzzzzzzz-sales-report` в прогонах 4 и 5 (`rabit-e2e-2c525d639406`) |
+| Visual E10 | PASS | 2026-10-25 | скриншоты `e10-{desktop,mobile}-*.png` прогона 4 просмотрены |
+| E10-T14 | PASS | 2026-10-25 | `rabit-e2e-2c525d639406` на c52ac3b: a 81, b 75, 19 верификаторов, магазин ЮKassa OFF (#174, прецедент D4). Прогоны 1–4 — FAIL (live-guard, две ошибки спеки, #174), см. журнал |
