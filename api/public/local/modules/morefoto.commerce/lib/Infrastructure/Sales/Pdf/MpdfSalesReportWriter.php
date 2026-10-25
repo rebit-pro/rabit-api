@@ -12,7 +12,10 @@ use Mpdf\Config\FontVariables;
 use Mpdf\HTMLParserMode;
 use Mpdf\Mpdf;
 
-/** Собирает PDF отчёта mpdf: A4, фирменные Manrope и Golos Text из ресурсов модуля, временные файлы вне публичной части. */
+/**
+ * Собирает PDF отчёта mpdf: A4, фирменные Manrope и Golos Text из ресурсов модуля, временные файлы вне публичной части.
+ * Миниатюры передаются через `imageVars`, а не внутри HTML: тип mpdf определяет по байтам.
+ */
 final readonly class MpdfSalesReportWriter implements SalesReportPdfWriterInterface
 {
     public function __construct(
@@ -47,7 +50,13 @@ final readonly class MpdfSalesReportWriter implements SalesReportPdfWriterInterf
             $mpdf->SetHTMLHeader($this->html->header());
             $mpdf->SetHTMLFooter($this->html->footer($report));
             $mpdf->WriteHTML($this->html->css(), HTMLParserMode::HEADER_CSS);
-            $mpdf->WriteHTML($this->html->body($report, $thumbnails), HTMLParserMode::HTML_BODY);
+            $images = [];
+            foreach ($thumbnails as $childId => $thumbnail) {
+                $name = 'child' . count($images);
+                $mpdf->imageVars[$name] = $thumbnail;
+                $images[$childId] = $name;
+            }
+            $mpdf->WriteHTML($this->html->body($report, $images), HTMLParserMode::HTML_BODY);
 
             return $mpdf->OutputBinaryData();
         } catch (\Throwable $error) {
