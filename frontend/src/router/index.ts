@@ -61,7 +61,8 @@ router.beforeEach(async (to) => {
         'WorkPayments',
         'WorkPayment',
         'Links',
-        'Questions'
+        'Questions',
+        'SalesReports'
       ].includes(String(to.name))
     )
       return auth.homePath;

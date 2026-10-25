@@ -85,6 +85,19 @@
      - T07 — unit покрывает маппинг, SQL — ручной прогон.
 - План: исправлена строка про временный каталог mpdf (было «в var»), уточнены T04/T05/T07/T08/T12.
 
+### 2026-10-25 — полный гейт, прогон 1
+
+- `make test-e2e E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor`:
+  - раннер сам собрал `rabit-api-e2e-{php-cli,php-fpm,nginx}:local` (~6 мин);
+  - прогон `rabit-e2e-68c363cba874`, 909 с; **FAIL**.
+- **Группа a:** PASS (314 с), верификаторы access/support/photo-deletion PASS. Все статические стадии PASS.
+- **Группа b:** 73 passed, 3 failed.
+  1. **E10 — настоящий дефект.** Белый список live-маршрутов в `frontend/src/router/index.ts` не содержал `SalesReports`. Guard уводил любую роль из «Отчётов» на «Обзор»: раздел был недоступен в live. Unit, typecheck и ревью этого не ловили.
+     - Исправлено: маршрут добавлен в список.
+     - Добавлен тест навигации «каждый пункт live-меню ведёт на маршрут из списка guard». На старом guard он падает с `/cabinet/reports (SalesReports) is not in the live guard list`.
+  2. **G1-T14 — внешнее, #174.** В логе FPM `payment.ERROR: HTTP Request failed {"durationMs":9041…}` на создании СБП-платежа в тестовом магазине ЮKassa, затем повторы с тем же ключом получают 400. Экран остался на «Проверяем оплату».
+  3. **G2-T14 — следствие G1-T14.** Спека берёт оплаченный заказ G1 из `var/g1-payments.json`; чек платежа не найден, `provider` = undefined.
+
 ## Результаты тест-кейсов
 
 | ID | Статус | Дата | Команда / доказательство |
@@ -105,4 +118,4 @@
 | SQL на MySQL 8 | PASS (ручная) | 2026-10-24 | временный `mysql:8.0` (ONLY_FULL_GROUP_BY): 10 запросов `SalesReportRepository`/`GroupChildRepository`, собранных самим кодом, на выборке из 5 заказов — уровни, статусы, нули без области, первый готовый кадр без чужой группы совпали с ручным расчётом |
 | Исправления ревью | PASS | 2026-10-24 | PHPUnit `SalesReport|GroupSales|GroupChildren` → OK 44/221; PHPStan → No errors; cs-fixer dry-run → 0; `npm run check` → 107 UI PASS (lint, stylelint, typecheck, typecheck:e2e) |
 | E10-T09…T12 | PENDING | — | спека дополнена по ревью, lint и typecheck:e2e PASS; прогон — в полном гейте |
-| E10-T14 | PENDING | — | полный `make test-e2e` после ревью без блокеров |
+| E10-T14 | FAIL | 2026-10-25 | прогон `rabit-e2e-68c363cba874`: E10 — дефект live-guard (исправлен), G1-T14/G2-T14 — тестовый магазин ЮKassa (#174); нужен повтор |

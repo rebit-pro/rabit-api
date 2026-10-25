@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { cabinetNavigation } from '../../src/modules/morefoto/layouts/navigation.ts';
 
 const titles = (groups) => groups.map((group) => [group.title, group.items.map((item) => item.title)]);
@@ -40,4 +41,29 @@ test('demo mode keeps the product screens without live API', () => {
 
 test('no role, no menu', () => {
   assert.deepEqual(cabinetNavigation({ role: null, permissions: organizerPermissions, demo: false }), []);
+});
+
+test('every live menu item leads to a route the live guard lets through', () => {
+  const source = (path) => readFileSync(new URL('../../src/' + path, import.meta.url), 'utf8');
+  // E10: a new section missing from the guard's list redirected every role back to the overview.
+  const allowed = new Set(
+    [
+      ...source('router/index.ts')
+        .match(/!\s*\[([^\]]+)\]\.includes\(String\(to\.name\)\)/)[1]
+        .matchAll(/'([^']+)'/g)
+    ].map((m) => m[1])
+  );
+  const routes = new Map(
+    [...source('router/MainRoutes.ts').matchAll(/name: '([^']+)',\s*path: '([^']*)'/g)].map((m) => ['/cabinet/' + m[2], m[1]])
+  );
+  const permissions = ['catalog.manage', 'staff.manage', 'order.read', 'media.manage'];
+  for (const role of ['organizer', 'curator', 'head', 'teacher']) {
+    for (const group of cabinetNavigation({ role, permissions, demo: false })) {
+      for (const item of group.items) {
+        const name = routes.get(item.to);
+        assert.ok(name, role + ': no route for ' + item.to);
+        assert.ok(allowed.has(name), role + ': ' + item.to + ' (' + name + ') is not in the live guard list');
+      }
+    }
+  }
 });
