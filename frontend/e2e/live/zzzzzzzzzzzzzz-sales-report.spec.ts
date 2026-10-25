@@ -329,7 +329,16 @@ test('E10-T09…T12: each role reads the sales of its own area and downloads the
       expect(await fits(curator)).toBe(true);
       await shot(curator, 'curator-all');
     });
+    // A new login of the organizer revokes the session of the main page, so the organizer's screens use this context only.
     await asStaff(browser, baseURL, 'organizer', viewport, async (organizer) => {
+      if ('desktop' === viewport.name) {
+        // The organizer starts at all institutions; the menu leads to the section.
+        await organizer.goto('/cabinet/overview');
+        await organizer.getByRole('link', { name: 'Отчёты' }).first().click();
+        await expect(organizer).toHaveURL(/\/cabinet\/reports$/);
+        await expect(organizer.getByTestId('report-title')).toHaveText('Все учреждения');
+        await shot(organizer, 'organizer-all');
+      }
       await organizer.goto('/cabinet/reports?' + new URLSearchParams({ groupId }));
       await expect(organizer.getByTestId('report-title')).toHaveText(group.group!.name);
       const path = organizer.getByRole('navigation', { name: 'Хлебные крошки' });
@@ -339,12 +348,4 @@ test('E10-T09…T12: each role reads the sales of its own area and downloads the
       await shot(organizer, 'organizer-group');
     });
   }
-
-  // The organizer starts at all institutions; the menu leads every role to the section.
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto('/cabinet/overview');
-  await page.getByRole('link', { name: 'Отчёты' }).first().click();
-  await expect(page).toHaveURL(/\/cabinet\/reports$/);
-  await expect(page.getByTestId('report-title')).toHaveText('Все учреждения');
-  await page.screenshot({ path: testInfo.outputPath('e10-desktop-organizer-all.png'), fullPage: true, animations: 'disabled' });
 });
