@@ -14,6 +14,7 @@ import PhotoPreview from './PhotoPreview.vue';
 import ChildMoveDialog from './ChildMoveDialog.vue';
 import PhotoDeleteDialog from './PhotoDeleteDialog.vue';
 import GalleryImage from '../../gallery/components/GalleryImage.vue';
+import PhotoZoomDialog from '../../gallery/components/PhotoZoomDialog.vue';
 import MfBreadcrumbs from '@/components/navigation/MfBreadcrumbs.vue';
 import ShootTabs from '../../structure/components/ShootTabs.vue';
 import PhotoStats from './PhotoStats.vue';
@@ -113,6 +114,7 @@ const crumbs = computed(() => [
   { title: 'Фотографии' }
 ]);
 const preview = shallowRef(false);
+const enlargedCover = shallowRef<NonNullable<typeof cover.value> | null>(null);
 const previewChild = shallowRef('');
 const previewPhotos = shallowRef<ManagedPhoto[]>([]);
 const previewLoading = shallowRef(false);
@@ -236,10 +238,18 @@ async function confirmMove(toId: string, code: string) {
               {{ mediaLoading ? 'Загружаем кадры группы…' : 'Кадры группы не загружены.' }}
             </p>
           </div>
-          <GalleryImage v-if="cover" :src="cover.thumbSrc" alt="Обложка группы" class="group-cover" />
+          <button v-if="cover" type="button" class="group-cover-open" aria-label="Увеличить обложку группы" @click="enlargedCover = cover">
+            <GalleryImage :src="cover.thumbSrc" alt="Обложка группы" class="group-cover" />
+          </button>
         </div>
         <PhotoStats v-if="stats" :stats="stats" class="mt-5" />
       </section>
+      <PhotoZoomDialog
+        :open="enlargedCover !== null"
+        :src="enlargedCover?.previewSrc ?? ''"
+        :label="'Обложка группы ' + group.name"
+        @close="enlargedCover = null"
+      />
       <section v-if="pathSteps" class="mf-panel photo-path mb-6" aria-labelledby="photo-path-heading" data-testid="photo-gallery-path">
         <h2 id="photo-path-heading">Путь к галерее</h2>
         <p class="mf-muted mt-2 mb-4">Родители увидят кадры группы только после отметки передачи ссылки.</p>
@@ -401,5 +411,16 @@ async function confirmMove(toId: string, code: string) {
 .group-cover {
   width: 120px;
   height: 90px;
+}
+.group-cover-open {
+  padding: 0;
+  border: 0;
+  border-radius: var(--mf-radius-sm);
+  background: transparent;
+  cursor: zoom-in;
+}
+.group-cover-open:focus-visible {
+  outline: 2px solid var(--mf-color-focus);
+  outline-offset: 2px;
 }
 </style>

@@ -136,6 +136,13 @@ test('D1/D2: приватное фото получает M:N-разметку �
   });
   expect(preview.status()).toBe(200);
   expect(preview.headers()['content-type']).toContain('image/webp');
+  const photoOpenButton = page.getByRole('button', { name: 'Увеличить кадр portrait.png' });
+  await photoOpenButton.click();
+  await expect(page.getByRole('dialog').getByTestId('photo-zoom-level')).toHaveText('100%');
+  await page.getByRole('dialog').getByRole('button', { name: 'Увеличить фото' }).click();
+  await expect(page.getByRole('dialog').getByTestId('photo-zoom-level')).toHaveText('150%');
+  await page.getByRole('dialog').getByRole('button', { name: 'Закрыть фото' }).click();
+  await expect(photoOpenButton).toBeFocused();
   await page.screenshot({ path: testInfo.outputPath('d1-desktop-media.png'), fullPage: true });
 
   await page.getByTestId('photo-card').getByRole('checkbox').check();
@@ -256,6 +263,22 @@ test('D1/D2: приватное фото получает M:N-разметку �
   await page.getByRole('button', { name: 'Сделать обложкой', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Обложка группы сохранена.' })).toBeVisible();
   await expect(page.getByTestId('photo-card')).toContainText('Обложка');
+
+  const coverButton = page.getByRole('button', { name: 'Увеличить обложку группы' });
+  await coverButton.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog').getByTestId('photo-zoom-level')).toHaveText('100%');
+  await page.getByRole('dialog').getByRole('button', { name: 'Увеличить фото' }).click();
+  await expect(page.getByRole('dialog').getByTestId('photo-zoom-level')).toHaveText('150%');
+  await page.screenshot({ path: testInfo.outputPath('d1-desktop-cover-zoom.png') });
+  await page.getByRole('dialog').getByRole('button', { name: 'Закрыть фото' }).click();
+  await expect(coverButton).toBeFocused();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await coverButton.click();
+  await expect(page.getByRole('dialog').getByTestId('photo-zoom-level')).toHaveText('100%');
+  await page.screenshot({ path: testInfo.outputPath('d1-mobile-cover-zoom.png') });
+  await page.getByRole('dialog').getByRole('button', { name: 'Закрыть фото' }).click();
+  await page.setViewportSize({ width: 1440, height: 1000 });
 
   const afterCover = await result(
     await page.request.get('/api/v1/shoots/' + shoot.id + '/photos', {

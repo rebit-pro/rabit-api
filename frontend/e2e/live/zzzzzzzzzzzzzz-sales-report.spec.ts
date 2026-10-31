@@ -273,12 +273,26 @@ test('E10-T09…T12: each role reads the sales of its own area and downloads the
   expect(framed, 'the print group was handed over and its children have ready frames').toBeDefined();
   const preview = await page.request.get('/api/v1/sales-report/children/' + framed!.id + '/preview', { headers: await bearer(page) });
   expect([preview.status(), preview.headers()['content-type']]).toEqual([200, 'image/webp']);
+  const enlargedPreview = await page.request.get('/api/v1/sales-report/children/' + framed!.id + '/preview?variant=preview', {
+    headers: await bearer(page)
+  });
+  expect([enlargedPreview.status(), enlargedPreview.headers()['content-type']]).toEqual([200, 'image/webp']);
+  expect((await enlargedPreview.body()).length).toBeGreaterThan((await preview.body()).length);
+  expect(
+    (
+      await page.request.get('/api/v1/sales-report/children/' + framed!.id + '/preview?variant=original', { headers: await bearer(page) })
+    ).status()
+  ).toBe(422);
   const foreign = await browser.newContext({ baseURL });
   try {
     const teacher = await foreign.newPage();
     await login(teacher, 'teacher');
     expect(
-      (await teacher.request.get('/api/v1/sales-report/children/' + framed!.id + '/preview', { headers: await bearer(teacher) })).status()
+      (
+        await teacher.request.get('/api/v1/sales-report/children/' + framed!.id + '/preview?variant=preview', {
+          headers: await bearer(teacher)
+        })
+      ).status()
     ).toBe(404);
   } finally {
     await foreign.close();
@@ -305,6 +319,14 @@ test('E10-T09…T12: each role reads the sales of its own area and downloads the
       await expect(teacher.getByTestId('report-child-status').filter({ visible: true })).toHaveCount(Math.min(group.children.length, 50));
       await expect(teacher.getByTestId('report-format')).toHaveCount(group.products.length);
       await expect(teacher.locator('[data-testid="report-children"] img').filter({ visible: true }).first()).toBeVisible();
+      await teacher
+        .getByRole('button', { name: /^Увеличить фото ребёнка/ })
+        .first()
+        .click();
+      await expect(teacher.getByRole('dialog').getByTestId('photo-zoom-level')).toHaveText('100%');
+      await teacher.getByRole('dialog').getByRole('button', { name: 'Увеличить фото' }).click();
+      await expect(teacher.getByRole('dialog').getByTestId('photo-zoom-level')).toHaveText('150%');
+      await teacher.getByRole('dialog').getByRole('button', { name: 'Закрыть фото' }).click();
       expect(await fits(teacher)).toBe(true);
       await shot(teacher, 'teacher-group');
       const download = teacher.waitForEvent('download');

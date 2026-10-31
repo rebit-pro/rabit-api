@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, shallowRef, watch } from 'vue';
 import GalleryImage from '../../gallery/components/GalleryImage.vue';
+import PhotoZoomStage from '../../gallery/components/PhotoZoomStage.vue';
 import type { ManagedPhoto } from '../types';
 let returnFocus: HTMLElement | null = null;
 function restoreFocus() {
@@ -74,15 +75,9 @@ watch(
       </div>
       <v-alert v-else-if="error" type="error" variant="tonal" role="alert" class="mt-4">{{ error }}</v-alert>
       <template v-else-if="photo">
-        <GalleryImage
-          :key="photo.id"
-          :src="photo.previewSrc"
-          :alt="'Кадр ' + code"
-          :width="photo.width"
-          :height="photo.height"
-          eager
-          class="preview-image mt-4"
-        />
+        <PhotoZoomStage :key="photo.id + ':' + open" class="preview-image mt-4">
+          <GalleryImage :src="photo.previewSrc" :alt="'Кадр ' + code" eager />
+        </PhotoZoomStage>
         <div class="preview-navigation mt-4">
           <v-btn variant="outlined" :disabled="index === 0" aria-label="Предыдущий кадр" @click="index--">←</v-btn>
           <p role="status" data-testid="preview-position">{{ code }} · {{ index + 1 }} из {{ bundle.length }}</p>

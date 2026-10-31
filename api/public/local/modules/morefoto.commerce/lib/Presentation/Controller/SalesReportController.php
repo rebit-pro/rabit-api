@@ -38,6 +38,6 @@ final class SalesReportController extends AuthenticatedApiJsonController
 
     public function childPreviewAction(ChildPreviewRequestDto $request): PreviewResponse
     {
-        return $this->preview($this->preview->execute($this->getAuthUserId(), $request->childId));
+        return $this->preview($this->preview->execute($this->getAuthUserId(), $request->childId, $request->variant));
     }
 }

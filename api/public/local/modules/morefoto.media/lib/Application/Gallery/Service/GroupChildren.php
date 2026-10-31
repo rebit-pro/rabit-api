@@ -13,7 +13,7 @@ use Rebit\Share\Shared\Exception\HttpException;
 
 /**
  * Отдаёт отчётам продаж детей разметки по их текущим группам: код и первый готовый кадр ребёнка, который служит
- * миниатюрой. Права сотрудника на группу здесь не проверяются — это делает модуль отчёта.
+ * миниатюрой или водяным превью. Права сотрудника на группу проверяет модуль отчёта.
  */
 final readonly class GroupChildren implements GroupChildrenInterface
 {
@@ -58,8 +58,18 @@ final readonly class GroupChildren implements GroupChildrenInterface
 
     public function thumbnail(string $photoId): ?PreviewContentOutputDto
     {
+        return $this->content($photoId, 'thumb');
+    }
+
+    public function preview(string $photoId): ?PreviewContentOutputDto
+    {
+        return $this->content($photoId, 'preview');
+    }
+
+    private function content(string $photoId, string $variant): ?PreviewContentOutputDto
+    {
         try {
-            return $this->previews->read($photoId, 'thumb');
+            return $this->previews->read($photoId, $variant);
         } catch (HttpException) {
             return null;
         }

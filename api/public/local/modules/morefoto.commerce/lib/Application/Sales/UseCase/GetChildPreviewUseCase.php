@@ -12,8 +12,8 @@ use Rebit\Share\Contracts\Organization\GroupDirectoryInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /**
- * COM-17: показывает в отчёте миниатюру ребёнка — первый готовый кадр — только сотруднику, чья область отчёта
- * включает группу ребёнка, и только после передачи ссылки группе, когда эти кадры уже видят родители.
+ * Показывает в отчёте первый готовый кадр ребёнка как миниатюру или водяное превью только сотруднику своей области.
+ * Кадр доступен после передачи ссылки группе, когда его уже могут видеть родители.
  */
 final readonly class GetChildPreviewUseCase
 {
@@ -23,7 +23,7 @@ final readonly class GetChildPreviewUseCase
         private GroupChildrenInterface $media,
     ) {}
 
-    public function execute(int $actorId, string $childId): PreviewContentOutputDto
+    public function execute(int $actorId, string $childId, string $variant = 'thumb'): PreviewContentOutputDto
     {
         $scope = $this->access->scope($actorId);
         $child = $this->media->find($childId);
@@ -34,7 +34,13 @@ final readonly class GetChildPreviewUseCase
         if (null === $group || $group->nativeId !== $child->groupId) {
             throw new HttpException('CHILD_NOT_FOUND', 404);
         }
-        $preview = null === $child->photoId || null === $group->calendar->sentAt ? null : $this->media->thumbnail($child->photoId);
+        if (!in_array($variant, ['thumb', 'preview'], true)) {
+            throw new HttpException('INVALID_PREVIEW_VARIANT', 422);
+        }
+        $preview = null === $child->photoId || null === $group->calendar->sentAt ? null : match ($variant) {
+            'preview' => $this->media->preview($child->photoId),
+            default => $this->media->thumbnail($child->photoId),
+        };
 
         return $preview ?? throw new HttpException('PREVIEW_UNAVAILABLE', 404);
     }

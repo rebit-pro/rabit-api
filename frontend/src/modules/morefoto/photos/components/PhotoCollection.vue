@@ -2,6 +2,7 @@
 import { computed, shallowRef, useTemplateRef, watch } from 'vue';
 import { useDisplay } from 'vuetify';
 import GalleryImage from '../../gallery/components/GalleryImage.vue';
+import PhotoZoomDialog from '../../gallery/components/PhotoZoomDialog.vue';
 import { validChildCode } from '../rules';
 import { failedPreviews, retryFailedPreviews } from '../previews';
 import type { ManagedPhoto } from '../types';
@@ -31,6 +32,7 @@ const emit = defineEmits<{
   remove: [ids: string[]];
 }>();
 const code = shallowRef(props.suggestedCode);
+const enlarged = shallowRef<ManagedPhoto | null>(null);
 const codeError = computed(() =>
   code.value.trim() && !validChildCode(code.value.trim().toUpperCase())
     ? 'Код ребёнка — от 1 до 3 латинских букв. Код кадра A001 появится автоматически для ребёнка A.'
@@ -159,13 +161,24 @@ function changePage(value: number) {
         :key="photo.id"
         :class="[
           'photo-card',
-          { 'photo-card--unassigned': !photo.assignments.length, 'photo-card--selected': selected.includes(photo.id) }
+          {
+            'photo-card--unassigned': !photo.assignments.length,
+            'photo-card--selected': selected.includes(photo.id)
+          }
         ]"
         :data-photo-id="photo.id"
         data-testid="photo-card"
       >
         <div class="photo-card-media">
           <GalleryImage :src="photo.thumbSrc" :alt="'Кадр ' + photoLabel(photo)" :width="photo.width" :height="photo.height" />
+          <v-btn
+            icon="mdi-magnify"
+            variant="elevated"
+            size="small"
+            class="photo-card-open"
+            :aria-label="'Увеличить кадр ' + photoLabel(photo)"
+            @click="enlarged = photo"
+          />
           <div v-if="!disabled" class="photo-card-check">
             <v-checkbox-btn
               :model-value="selected.includes(photo.id)"
@@ -217,6 +230,12 @@ function changePage(value: number) {
         </div>
       </article>
     </div>
+    <PhotoZoomDialog
+      :open="enlarged !== null"
+      :src="enlarged?.previewSrc ?? ''"
+      :label="'Кадр ' + (enlarged ? photoLabel(enlarged) : '')"
+      @close="enlarged = null"
+    />
     <v-pagination
       v-if="pages > 1"
       class="mt-6"
@@ -300,6 +319,14 @@ function changePage(value: number) {
 }
 .photo-card-media {
   position: relative;
+}
+.photo-card-open {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 1;
+  min-width: 44px;
+  min-height: 44px;
 }
 .photo-card :deep(.gallery-image) {
   aspect-ratio: 4/3;

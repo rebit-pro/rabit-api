@@ -219,20 +219,29 @@ final class SalesReportTest extends TestCase
         $media = $this->createStub(GroupChildrenInterface::class);
         $media->method('find')->willReturn(new GroupChildOutputDto(100, 'child-a', 11, 'A', 'photo-a'));
         $media->method('thumbnail')->willReturn(new PreviewContentOutputDto('webp'));
+        $media->method('preview')->willReturn(new PreviewContentOutputDto('large-webp'));
         $sent = $this->directory([$this->group(sentAt: '2026-10-01T10:00:00+03:00')]);
 
-        self::assertSame('webp', (new GetChildPreviewUseCase(new SalesAccess($this->actor('teacher', [], [11])), $sent, $media))->execute(5, 'child-a')->content);
+        $viewer = new GetChildPreviewUseCase(new SalesAccess($this->actor('teacher', [], [11])), $sent, $media);
+        self::assertSame('webp', $viewer->execute(5, 'child-a')->content);
+        self::assertSame('large-webp', $viewer->execute(5, 'child-a', 'preview')->content);
         foreach ([
             [$this->actor('teacher', [], [12]), $sent, 'CHILD_NOT_FOUND'],
             [$this->actor('head', [4], []), $this->directory([]), 'CHILD_NOT_FOUND'],
             [$this->actor('organizer', [], []), $this->directory([$this->group()]), 'PREVIEW_UNAVAILABLE'],
         ] as [$actor, $directory, $code]) {
             try {
-                (new GetChildPreviewUseCase(new SalesAccess($actor), $directory, $media))->execute(5, 'child-a');
+                (new GetChildPreviewUseCase(new SalesAccess($actor), $directory, $media))->execute(5, 'child-a', 'preview');
                 self::fail($code);
             } catch (HttpException $exception) {
                 self::assertSame([$code, 404], [$exception->getMessage(), $exception->getCode()]);
             }
+        }
+        try {
+            $viewer->execute(5, 'child-a', 'original');
+            self::fail('Unexpected original variant.');
+        } catch (HttpException $exception) {
+            self::assertSame(['INVALID_PREVIEW_VARIANT', 422], [$exception->getMessage(), $exception->getCode()]);
         }
     }
 

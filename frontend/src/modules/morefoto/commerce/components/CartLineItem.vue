@@ -1,10 +1,17 @@
 <script setup lang="ts">
+import { shallowRef } from 'vue';
 import PhotoImage from '../../photos/components/PhotoImage.vue';
+import PhotoZoomDialog from '../../gallery/components/PhotoZoomDialog.vue';
 import type { CartQuoteLine } from '../types';
 import { money } from '../money';
 import UiQuantityField from '../../ui/components/UiQuantityField.vue';
-const props = defineProps<{ line: CartQuoteLine; busy: boolean; closed: boolean }>();
+const props = defineProps<{
+  line: CartQuoteLine;
+  busy: boolean;
+  closed: boolean;
+}>();
 const emit = defineEmits<{ change: [id: string, quantity: number] }>();
+const open = shallowRef(false);
 function change(quantity: number) {
   if (quantity !== props.line.quantity) emit('change', props.line.id, quantity);
 }
@@ -12,15 +19,18 @@ function change(quantity: number) {
 <template>
   <!-- UI-DEC-04: one compact row per line — frame, product, quantity, sum and removal on one line on desktop. -->
   <article class="cart-line" data-testid="cart-line">
-    <PhotoImage
+    <button
       v-if="line.photo"
-      :src="line.photo.thumbSrc"
-      :alt="'Кадр ' + line.photo.code"
-      width="48"
-      height="64"
-      class="cart-line__thumb"
-    />
-    <div v-else class="cart-line__thumb cart-line__bundle"><v-icon icon="mdi-image-multiple-outline" size="24" /></div>
+      type="button"
+      class="cart-line__thumb cart-line__open"
+      :aria-label="'Увеличить кадр ' + line.photo.code"
+      @click="open = true"
+    >
+      <PhotoImage :src="line.photo.thumbSrc" :alt="'Кадр ' + line.photo.code" />
+    </button>
+    <div v-else class="cart-line__thumb cart-line__bundle">
+      <v-icon icon="mdi-image-multiple-outline" size="24" />
+    </div>
     <div class="cart-line__copy">
       <strong>{{ line.product.name }}</strong>
       <span class="mf-muted"
@@ -51,6 +61,7 @@ function change(quantity: number) {
       :disabled="busy || closed"
       @click="$emit('change', line.id, 0)"
     />
+    <PhotoZoomDialog :open="open" :src="line.photo?.previewSrc ?? ''" :label="'Кадр ' + (line.photo?.code ?? '')" @close="open = false" />
   </article>
 </template>
 <style scoped>
@@ -70,6 +81,19 @@ function change(quantity: number) {
   height: 64px;
   object-fit: cover;
   border-radius: var(--mf-radius-sm);
+}
+.cart-line__open {
+  padding: 0;
+  cursor: zoom-in;
+}
+.cart-line__open img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cart-line__open:focus-visible {
+  outline: 2px solid var(--mf-color-focus);
+  outline-offset: 2px;
 }
 .cart-line__bundle {
   display: grid;
