@@ -1,0 +1,47 @@
+# Прогресс: ФИО ребёнка в заказе
+
+## Точка продолжения
+
+- Ветка: `codex/ops-child-name-report`, base/head `b57581611fa253dacac9480b84e4e44b78b3b948`; отдельный worktree `/tmp/rabit-api-ops-child-name-report`. PR/issue задачи пока нет. Связанная документация: план рядом, `api/public/local/modules/morefoto.legal/documents/`.
+- Завершено: миграция, DTO, сохранение и чтение имени, проекции API, форма live/demo, строки заказов в отчёте JSON/UI/PDF, новые версии политики и согласия. Финальный полный `make test-e2e` прошёл, включая 159 браузерных сценариев и все SQL-верификаторы; desktop/mobile визуально проверены.
+- Следующий шаг: самопроверка diff, commit и отдельный draft PR в `main`.
+- Блокеры/открытые решения: одно ФИО на заказ подтверждено; уточнения о виде отчёта и обязательности ещё могут изменить рабочее решение. Правовое основание обработки имени ребёнка и порядок подтверждения полномочий представителя требуют проверки ответственным за документы до выкладки. Технический gate выполняется.
+- Рабочее дерево: незакоммичены файлы плана, изменения `morefoto.commerce`, `morefoto.legal`, frontend, `api/tools/e2e/` и миграция; точный список — `git status --short`.
+- Следующие проверки: при замечаниях review повторить затронутые проверки и полный `make test-e2e` после изменения base.
+
+## Журнал
+
+- 2026-10-31: создан отдельный worktree от локального `main`; открытые PR/issues проверены через GitHub CLI ранее в этой сессии.
+- 2026-10-31: изучены checkout live/demo, `mf_order`, идемпотентный хеш, отчёт по детям и документы. Пользователь подтвердил одно ФИО на заказ. Два уточнения отправлены асинхронно.
+- 2026-10-31: в текущей политике указано, что имена детей в сервис не вносятся, согласие покупателя описывает его собственные данные; это требует новых версий документов до включения функции.
+- 2026-10-31: после ожидания уточнений принято рабочее решение: одно обязательное имя и одна обязательная фамилия на заказ, отчёт на уровне группы показывает строки заказов. Об этом сообщено пользователю; план обновлён до кода.
+- 2026-10-31: добавлены nullable-колонки имени/фамилии, типизированные DTO и правило проверки, сохранение и чтение на уровне заказа. Хеш старого запроса остаётся прежним при отсутствии нового поля, проверка новых полей выполняется после обнаружения подтверждённого повтора.
+- 2026-10-31: расширены JSON проекции заказа, форма live/demo и отдельная таблица заказов в отчёте JSON/UI/PDF. Строки детей по кодам сохранены отдельно; имя не копируется в них.
+- 2026-10-31: `docker run ... node:24-alpine ./node_modules/.bin/vue-tsc --noEmit` в worktree — PASS. Первый локальный PHPUnit не имел автозагрузки `Rebit\\Share` из-за symlink vendor в отдельном worktree; повтор с временным auto-prepend для путей worktree — PASS, 35 тестов, 143 assertions.
+- 2026-10-31: добавлены проверки обязательных полей, хеша повтора и исторических NULL, проверки JSON/PDF заказа в отчёте и реальные браузерные утверждения для оформления и отчёта. Все 10 прямых оформлений в live E2E теперь передают ФИО; UI сценарии заполняют два поля.
+- 2026-10-31: новые файлы `privacy/2026-10-31.md` и `buyer-consent/2026-10-31.md` и реестр отражают хранение имени ребёнка на заказе и видимость в отчёте. Старые опубликованные файлы не изменялись. Текст нуждается в предметной проверке перед production.
+- 2026-10-31: PHPStan `php vendor/bin/phpstan analyse --configuration=phpstan.neon --no-progress --autoload-file=/tmp/worktree-autoload.php ... morefoto.commerce/lib ... morefoto.legal/lib` — PASS. Первый запуск через `auto_prepend_file` вызвал конфликт функций PHPStan; параметр `--autoload-file` устранил проблему.
+- 2026-10-31: `phpunit -c phpunit.xml public/local/modules/morefoto.commerce/tests/Unit public/local/modules/morefoto.legal/tests/Unit` в PHP 8.4 Docker с временной автозагрузкой worktree — PASS, 299 тестов, 42130 assertions. Первый широкий прогон выявил жёстко зафиксированные числа DTO/Service и запрет номера заказа в архитектурных тестах; правило обновлено для согласованной проекции. Временная автозагрузка дополнена тестовыми классами Share.
+- 2026-10-31: php-cs-fixer по 39 изменённым PHP файлам — PASS, 0 исправлений после правки четырёх форматных отклонений. `npm run lint` — PASS, `npm run typecheck:e2e` — PASS, Vue typecheck в Node 24 Docker — PASS, `npm run test:commerce` — PASS (32 файла). Локальный `npm run build-only` не смог записать Vite temp в общий symlink `node_modules` (EACCES); сборку проверит изолированный E2E pipeline.
+- 2026-10-31: первый запуск полного E2E в worktree остановился до проверки: путь Bitrix kernel в основном checkout пустой. Повтор запущен с существующим kernel `/home/user/rebit-p2p/api/public/bitrix` и vendor основного checkout; второй запуск остановился на `vue-tsc: not found`, потому что `npm ci` заменил временный symlink `node_modules` реальным каталогом. Третий запуск прошёл frontend lint/style/typecheck/e2e typecheck/build/unit, backend lint/PHPStan/PHPUnit (1283 теста, 51352 assertions) и создание изолированной схемы/фикстур; выполняются browser group a/b. Артефакты `api/var/e2e/rabit-e2e-54fe50261438/`.
+- 2026-10-31: повторный точечный `php-cs-fixer fix --config=public/local/php-cs-fixer.php --dry-run --diff --using-cache=no` по 39 изменённым PHP файлам в PHP 8.4 Docker: PASS, 0 исправлений.
+- 2026-10-31: browser group b обнаружила 503 `SERVICE_UNAVAILABLE` при создании заказов; список миграций `api/tools/e2e/prepare.php` заканчивается до новой `Version20261031120001`. Прогон остановлен после выявления причины, снимки checkout desktop/mobile визуально проверены: два поля и пояснение видны без переполнения. План обновлён до исправления стенда.
+- 2026-10-31: по официальному тексту статьи 9 закона № 152-ФЗ на сайте Минтруда проверены требования к отдельному согласию и полномочиям представителя. Риск правового основания для имени ребёнка и проверки полномочий оставлен для ответственного за документы до production; PR будет черновиком до этого решения.
+- 2026-10-31: после подключения миграции полный gate прошёл frontend lint/style/typecheck/build/unit, backend lint/PHPStan/PHPUnit и обе браузерные группы: 159 сценариев PASS. Затем `b: verify-orders.php` остановился с `INVALID_CHILD_FIRST_NAME`: в прямых вызовах UseCase этого верификатора нет обязательного нового поля. План обновлён до исправления. Просмотрены снимки desktop заказа и mobile карточки сотрудника: ФИО видно, горизонтального переполнения нет. Артефакты `api/var/e2e/rabit-e2e-bcaf1a12b400/`.
+- 2026-10-31: добавлено ФИО в прямые вызовы `CreateOrderInputDto` в `verify-orders.php` и `verify-markup-correction.php`; других таких вызовов в `api/tools/e2e` нет. Точечный PHP CS Fixer по трём затронутым файлам и `git diff --check` — PASS. Запущен финальный полный `make test-e2e`, артефакты `api/var/e2e/rabit-e2e-8a2267ae1c89/`; frontend/backend проверки и подготовка стенда уже PASS, выполняются browser group a/b.
+- 2026-10-31: визуально просмотрены desktop/mobile снимки отчёта предыдущего прогона: строки заказов с ФИО читаются, у детей остались коды и суммы, горизонтального переполнения нет. Результат browser group b предыдущего прогона: 78 PASS; group a: 81 PASS.
+- 2026-10-31: финальный `E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor E2E_PHP_CLI_IMAGE=rabit-api-e2e-php-cli:local E2E_PHP_FPM_IMAGE=rabit-api-e2e-php-fpm:local E2E_NGINX_IMAGE=rabit-api-e2e-nginx:local make test-e2e` с изолированной БД — PASS. Frontend lint/style/typecheck/e2e typecheck/build/UI/commerce unit PASS; backend php-lint/PHPStan/PHPUnit (1283 теста, 51352 assertions) PASS; браузерные группы a/b 81+78 = 159 PASS; все SQL-верификаторы PASS. Артефакты `api/var/e2e/rabit-e2e-8a2267ae1c89/`.
+- 2026-10-31: `/home/user/.local/bin/gh api repos/rebit-pro/rabit-api/commits/main --jq .sha` вернул `b57581611fa253dacac9480b84e4e44b78b3b948`, совпадает с base. `git diff --check` PASS; PHP CS Fixer по 40 изменённым PHP файлам и точечно по трём итоговым E2E-скриптам — PASS, 0 исправлений.
+
+## Проверки
+
+| ID | Статус | Дата | Команда | Доказательство |
+|---|---|---|---|---|
+| N01 | PASS | 2026-10-31 | `make test-e2e` | E5 live HTTP создаёт заказ с ФИО; браузер показывает поля на форме и в заказе |
+| N02 | PASS | 2026-10-31 | `OrderMapperTest`; `make test-e2e` | Unit: две строки разных детей, одна пара ФИО только в записи заказа; live отчёт выдаёт строки по заказам, UI отдельно от таблицы детей |
+| N03 | PASS | 2026-10-31 | PHPUnit; `make test-e2e` | ChildNamePolicyTest и E5 HTTP: отсутствие имени/фамилии даёт 422 с кодом поля; старый replay проверен unit |
+| N04 | PASS | 2026-10-31 | PHPUnit; `make test-e2e` | E5: прежнее тело и ключ возвращают тот же заказ, другое имя под ключом даёт 409; unit хеша старого тела PASS |
+| N05 | PASS | 2026-10-31 | PHPUnit; `make test-e2e` | Unit OrderMapperTest/SalesReportTest/SalesReportPdfTest: исторические NULL остаются NULL/«Не указано»; live стенд проверил совместимость новых заказов, исторический DB сценарий отдельно не создавался |
+| N06 | PASS | 2026-10-31 | `make test-e2e` | E5/E10 live: чужая область 404, аноним 401; персональный ключ открывает только свой заказ |
+| N07 | PASS | 2026-10-31 | `make test-e2e`; просмотр PNG | Desktop/mobile checkout, заказ, карточка сотрудника и отчёт просмотрены; горизонтального переполнения нет |
+| N08 | PASS | 2026-10-31 | `make test-e2e`; php-cs-fixer | Full gate PASS, backend 1283/1283; CS Fixer 0/40 и точечно 0/3 |

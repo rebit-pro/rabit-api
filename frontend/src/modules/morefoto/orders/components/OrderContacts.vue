@@ -3,13 +3,17 @@ import { computed } from 'vue';
 import { currentBuyer } from '../../settlement/rules';
 import { formatPhone } from '../../ui/field-values';
 import type { OrderSnapshot } from '../types';
-const props = defineProps<{ order: Pick<OrderSnapshot, 'buyer' | 'settlement'> }>();
+const props = defineProps<{ order: Pick<OrderSnapshot, 'buyer' | 'settlement' | 'childFirstName' | 'childLastName'> }>();
 const buyer = computed(() => currentBuyer(props.order));
 </script>
 <template>
   <section class="mf-panel">
-    <h2 class="order-contacts__title">Контакты и получение</h2>
+    <h2 class="order-contacts__title">Ребёнок, контакты и получение</h2>
     <dl class="order-contacts">
+      <div v-if="order.childFirstName && order.childLastName" class="order-contacts__row">
+        <dt>Ребёнок в заказе</dt>
+        <dd>{{ order.childLastName }} {{ order.childFirstName }}</dd>
+      </div>
       <div v-if="buyer.name" class="order-contacts__row">
         <dt>Покупатель</dt>
         <dd>{{ buyer.name }}</dd>

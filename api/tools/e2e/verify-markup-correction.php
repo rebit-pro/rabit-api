@@ -7,6 +7,7 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Morefoto\Commerce\Application\Order\Dto\CreateOrderInputDto;
 use Morefoto\Commerce\Application\Order\Dto\OrderBuyerInputDto;
+use Morefoto\Commerce\Application\Order\Dto\OrderChildNameInputDto;
 use Morefoto\Commerce\Application\Order\UseCase\CreateOrderUseCase;
 use Morefoto\Commerce\Application\Storefront\Dto\QuoteLineInputDto;
 use Morefoto\Commerce\Application\Storefront\UseCase\CreateQuoteUseCase;
@@ -105,6 +106,7 @@ foreach ([LegalDocumentEnum::BUYER_CONSENT, LegalDocumentEnum::OFFER] as $docume
     $consents[] = new AcceptedDocumentDto($document->value, $legal->current($document)->version);
 }
 $buyer = new OrderBuyerInputDto('Проверка исправления', '+79005551616', 'markup.d4@example.test', '', null, true);
+$child = new OrderChildNameInputDto('Иван', 'Иванов');
 
 // 3. Serialization with order creation, proved with a second MySQL connection holding the group row.
 [$host, $port] = array_pad(explode(':', (string)$connection->getHost(), 2), 2, '3306');
@@ -146,7 +148,7 @@ $check(null !== $started->startedAt && null !== $paused['UF_MARKUP_CORRECTION_AT
 $check((int)$paused['UF_REVISION'] === (int)$before['UF_REVISION'] + 1, 'the group revision grows once');
 $check($paused['SENT_AT'] === $before['SENT_AT'] && $paused['CLOSES_AT'] === $before['CLOSES_AT'], 'T0 and the print deadline stay');
 $expect('GALLERY_UPDATING', static fn(): object => $quotes->execute($token, $oldLines));
-$expect('GALLERY_UPDATING', static fn(): object => $orders->execute($token, new OrderKey(bin2hex(random_bytes(16))), new CreateOrderInputDto($oldQuote->quoteToken, $oldLines, $buyer, $consents)));
+$expect('GALLERY_UPDATING', static fn(): object => $orders->execute($token, new OrderKey(bin2hex(random_bytes(16))), new CreateOrderInputDto($oldQuote->quoteToken, $oldLines, $buyer, $consents, $child)));
 $check(0 === (int)$connection->query("SELECT COUNT(*) AS N FROM mf_order WHERE GROUP_PUBLIC_ID='{$groupId}'")->fetch()['N'], 'a paused group gets no order');
 $proof[] = 'pause refuses quote and order';
 
@@ -166,9 +168,9 @@ $check(in_array('C', $codes, true), 'the gallery shows the corrected markup');
 $proof[] = 'correction published';
 
 // 6. The old quote is stale; a fresh quote places an order, and then the correction is closed for good.
-$expect('QUOTE_STALE', static fn(): object => $orders->execute($token, new OrderKey(bin2hex(random_bytes(16))), new CreateOrderInputDto($oldQuote->quoteToken, $oldLines, $buyer, $consents)));
+$expect('QUOTE_STALE', static fn(): object => $orders->execute($token, new OrderKey(bin2hex(random_bytes(16))), new CreateOrderInputDto($oldQuote->quoteToken, $oldLines, $buyer, $consents, $child)));
 $freshQuote = $quotes->execute($token, $oldLines);
-$orders->execute($token, new OrderKey(bin2hex(random_bytes(16))), new CreateOrderInputDto($freshQuote->quoteToken, $oldLines, $buyer, $consents));
+$orders->execute($token, new OrderKey(bin2hex(random_bytes(16))), new CreateOrderInputDto($freshQuote->quoteToken, $oldLines, $buyer, $consents, $child));
 $afterOrder = $read->execute($organizer, $groupId);
 $check(!$afterOrder->markupCorrectable, 'a group with an order is no longer correctable');
 $expect('GROUP_HAS_ORDERS', static fn(): object => $start->execute($organizer, $groupId, $linkKey(), new MarkupCorrectionStartInputDto($afterOrder->revision)));

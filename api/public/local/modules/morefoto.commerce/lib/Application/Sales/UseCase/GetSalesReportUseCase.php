@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Morefoto\Commerce\Application\Sales\UseCase;
 
 use Morefoto\Commerce\Application\Sales\Dto\ChildSalesOutputDto;
+use Morefoto\Commerce\Application\Sales\Dto\OrderNameSalesOutputDto;
 use Morefoto\Commerce\Application\Sales\Dto\ProductSalesOutputDto;
 use Morefoto\Commerce\Application\Sales\Dto\SalesReportAreaOutputDto;
 use Morefoto\Commerce\Application\Sales\Dto\SalesReportInputDto;
@@ -24,7 +25,7 @@ use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryItemOutputDto;
 /**
  * COM-15: отчёт продаж для воспитателя, руководителя, куратора и организатора в их области — по детям группы со
  * статусом оплаты или по группам, съёмкам и учреждениям, с итогом и печатью по форматам. Отчёт собирается тремя
- * агрегирующими чтениями заказов и одним чтением детей Media, без запросов на строку.
+ * агрегирующими чтениями заказов, чтением заказов группы и одним чтением детей Media, без запросов на строку.
  */
 final readonly class GetSalesReportUseCase
 {
@@ -42,10 +43,23 @@ final readonly class GetSalesReportUseCase
         $first = $scope->groups[0] ?? null;
         $children = [];
         $rows = [];
+        $orders = [];
         if (SalesReportLevelEnum::GROUP === $scope->level && null !== $first) {
             $current = $this->media->children([$first->nativeId]);
             $children = $this->children($scope, $current, null !== $first->calendar->sentAt);
             $childCount = count($current);
+            $result = $this->sales->orders($scope->area);
+            while (false !== ($row = $result->fetch())) {
+                $orders[] = new OrderNameSalesOutputDto(
+                    (string)$row['PUBLIC_ID'],
+                    (string)$row['NUMBER'],
+                    null === $row['CHILD_FIRST_NAME'] ? null : (string)$row['CHILD_FIRST_NAME'],
+                    null === $row['CHILD_LAST_NAME'] ? null : (string)$row['CHILD_LAST_NAME'],
+                    (string)$row['PAYMENT_STATUS'],
+                    1 === (int)$row['LATE_PAYMENT'],
+                    (int)$row['TOTAL'],
+                );
+            }
         } else {
             $counts = $this->media->counts(array_map(static fn(GroupDirectoryItemOutputDto $group): int => $group->nativeId, $scope->groups));
             $rows = $this->rows($scope, $counts);
@@ -68,6 +82,7 @@ final readonly class GetSalesReportUseCase
             rows: $rows,
             children: $children,
             generatedAt: $this->clock->now(),
+            orders: $orders,
         );
     }
 

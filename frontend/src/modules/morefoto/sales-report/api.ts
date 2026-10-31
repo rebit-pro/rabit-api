@@ -36,6 +36,16 @@ export interface ChildSales {
   hasPreview: boolean;
 }
 
+export interface OrderNameSales {
+  id: string;
+  number: string;
+  firstName: string | null;
+  lastName: string | null;
+  paymentStatus: string;
+  latePayment: boolean;
+  total: number;
+}
+
 /** E10 (COM-15): the sales of the staff member's area at one level; no buyer data, children by code only. */
 export interface SalesReport {
   level: SalesReportLevel;
@@ -48,6 +58,8 @@ export interface SalesReport {
   rows: (SalesReportNode & { totals: SalesTotals })[];
   /** Children of a group; empty for the other levels. */
   children: ChildSales[];
+  /** One name belongs to the whole order, including an order with photos of several children. */
+  orders: OrderNameSales[];
   generatedAt: string;
 }
 

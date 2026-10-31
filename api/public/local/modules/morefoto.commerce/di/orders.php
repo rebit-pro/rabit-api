@@ -29,6 +29,7 @@ use Morefoto\Commerce\Domain\Order\Repository\OrderAccessKeyRepository;
 use Morefoto\Commerce\Domain\Order\Repository\OrderCheckoutRepository;
 use Morefoto\Commerce\Domain\Order\Repository\OrderRepository;
 use Morefoto\Commerce\Domain\Order\Service\BuyerPolicy;
+use Morefoto\Commerce\Domain\Order\Service\ChildNamePolicy;
 use Morefoto\Commerce\Domain\Order\Service\OrderCalendarPolicy;
 use Morefoto\Commerce\Infrastructure\Order\CheckoutKeySeal;
 use Morefoto\Commerce\Infrastructure\Order\OrderStaffAccess;
@@ -139,6 +140,7 @@ return [
     OrderAccessKeyRepository::class => ['className' => OrderAccessKeyRepository::class],
     OrderCheckoutRepository::class => ['className' => OrderCheckoutRepository::class],
     BuyerPolicy::class => ['className' => BuyerPolicy::class],
+    ChildNamePolicy::class => ['className' => ChildNamePolicy::class],
     OrderCalendarPolicy::class => ['className' => OrderCalendarPolicy::class],
     CheckoutRequestHash::class => ['className' => CheckoutRequestHash::class],
     OrderRecordMapper::class => ['className' => OrderRecordMapper::class],
@@ -203,6 +205,7 @@ return [
             ServiceLocator::getInstance()->get(GalleryAccessInterface::class),
             ServiceLocator::getInstance()->get(CheckoutReceipts::class),
             ServiceLocator::getInstance()->get(BuyerPolicy::class),
+            ServiceLocator::getInstance()->get(ChildNamePolicy::class),
             ServiceLocator::getInstance()->get(ValidateQuoteUseCase::class),
             ServiceLocator::getInstance()->get(CreateQuoteUseCase::class),
             ServiceLocator::getInstance()->get(OrderPlacement::class),

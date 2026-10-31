@@ -7,6 +7,7 @@ namespace Morefoto\Commerce\Tests\Unit;
 use Bitrix\Main\DB\Result;
 use Morefoto\Commerce\Application\Order\Dto\CreateOrderInputDto;
 use Morefoto\Commerce\Application\Order\Dto\OrderBuyerInputDto;
+use Morefoto\Commerce\Application\Order\Dto\OrderChildNameInputDto;
 use Morefoto\Commerce\Application\Order\Dto\OrderStaffScopeOutputDto;
 use Morefoto\Commerce\Application\Order\Mapper\OrderRowMapper;
 use Morefoto\Commerce\Application\Order\Service\CheckoutReceipts;
@@ -48,6 +49,17 @@ final class OrderReceiptsAndAccessTest extends TestCase
     {
         // E8-T02: the hashed tuple still holds the raw name and phone, so an old key with its old body returns its order.
         self::assertSame('507e22ab8bb386f9d10546bf63329c32f2b6ee94390d27ce97957b6cf71854a7', (new CheckoutRequestHash())->hash($this->input([self::LINE_A])));
+    }
+
+    public function testChangingTheChildNameWithTheSameKeyChangesTheRequestHash(): void
+    {
+        $old = $this->input([self::LINE_A]);
+        $named = new CreateOrderInputDto($old->quoteToken, $old->lines, $old->buyer, $old->consents, new OrderChildNameInputDto('Иван', 'Иванов'));
+        $changed = new CreateOrderInputDto($old->quoteToken, $old->lines, $old->buyer, $old->consents, new OrderChildNameInputDto('Пётр', 'Иванов'));
+        $hash = new CheckoutRequestHash();
+
+        self::assertNotSame($hash->hash($old), $hash->hash($named));
+        self::assertNotSame($hash->hash($named), $hash->hash($changed));
     }
 
     public function testSameKeyWithAnotherBodyIsConflict(): void

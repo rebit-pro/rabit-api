@@ -180,6 +180,9 @@ final class SalesReportTest extends TestCase
             $this->row('100', 'A', orders: 2, paidOrders: 1, prints: 4, total: 90_050) + ['CHILD_PUBLIC_ID' => 'child-a'],
             $this->row('103', 'C', orders: 1, late: 1) + ['CHILD_PUBLIC_ID' => 'child-c'],
             $this->row('104', 'D', orders: 1) + ['CHILD_PUBLIC_ID' => 'child-moved'],
+        ], 'orders' => [
+            ['PUBLIC_ID' => 'order-1', 'NUMBER' => 'MF-000001', 'CHILD_FIRST_NAME' => 'Иван', 'CHILD_LAST_NAME' => 'Иванов', 'PAYMENT_STATUS' => 'paid', 'LATE_PAYMENT' => 0, 'TOTAL' => 90_050],
+            ['PUBLIC_ID' => 'order-2', 'NUMBER' => 'MF-000002', 'CHILD_FIRST_NAME' => null, 'CHILD_LAST_NAME' => null, 'PAYMENT_STATUS' => 'unpaid', 'LATE_PAYMENT' => 0, 'TOTAL' => 0],
         ]]);
 
         foreach ([null => [null, null, null], '2026-10-01T10:00:00+03:00' => ['photo-a', null, 'photo-aa']] as $sentAt => $photos) {
@@ -194,6 +197,8 @@ final class SalesReportTest extends TestCase
             );
             self::assertSame($photos, [$report->children[0]->photoId, $report->children[3]->photoId, $report->children[4]->photoId]);
             self::assertSame(['child-moved', 4], [$report->children[3]->id, $report->totals->children]);
+            self::assertSame(['Иван', 'Иванов'], [$report->orders[0]->firstName, $report->orders[0]->lastName]);
+            self::assertNull($report->orders[1]->firstName);
         }
 
         $result = (new SalesReportResultMapper())->report($report);
@@ -202,6 +207,7 @@ final class SalesReportTest extends TestCase
             array_keys(get_object_vars($result->children[0])),
         );
         self::assertSame(['paid', true, 90_050], [$result->children[0]->status, $result->children[0]->hasPreview, $result->children[0]->paidTotal]);
+        self::assertSame(['MF-000001', 'Иван', 'Иванов'], [$result->orders[0]->number, $result->orders[0]->firstName, $result->orders[0]->lastName]);
     }
 
     public function testTheStatusPolicyPrefersPaymentOverLatenessOverAnUnpaidOrder(): void
@@ -323,12 +329,13 @@ final class SalesReportTest extends TestCase
         return $directory;
     }
 
-    /** @param array<string, list<array<string, int|string>>> $rows keyed by breakdown value or `total` */
+    /** @param array<string, list<array<string, null|int|string>>> $rows keyed by breakdown value, `total` or `orders` */
     private function sales(array $rows): SalesReportRepository
     {
         $sales = $this->createStub(SalesReportRepository::class);
         $sales->method('aggregate')->willReturnCallback(fn(SalesArea $area, ?SalesBreakdownEnum $breakdown): Result => $this->fetched($rows[$breakdown->value ?? 'total'] ?? []));
         $sales->method('products')->willReturnCallback(fn(): Result => $this->fetched([]));
+        $sales->method('orders')->willReturnCallback(fn(): Result => $this->fetched($rows['orders'] ?? []));
 
         return $sales;
     }
@@ -372,11 +379,11 @@ final class SalesReportTest extends TestCase
         );
     }
 
-    /** @param list<array<string, int|string>> $rows */
+    /** @param list<array<string, null|int|string>> $rows */
     private function fetched(array $rows): Result
     {
         return new class($rows) extends Result {
-            /** @param list<array<string, int|string>> $rows */
+            /** @param list<array<string, null|int|string>> $rows */
             public function __construct(private array $rows) {}
 
             public function fetch(): array|false

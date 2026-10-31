@@ -26,6 +26,8 @@ export interface BuyerFields {
   comment: string;
   receiptChannel: ReceiptChannel;
   reviewed: boolean;
+  childFirstName: string;
+  childLastName: string;
 }
 export interface CheckoutDraft extends BuyerFields {
   requestId: string;
@@ -47,7 +49,9 @@ export interface OrderSnapshot {
   createdAt: string;
   closesAt: string;
   /** Demo orders placed before E8 may still carry a name and a phone. */
-  buyer: Omit<BuyerFields, 'reviewed'> & { name?: string; phone?: string };
+  buyer: Pick<BuyerFields, 'email' | 'comment' | 'receiptChannel'> & { name?: string; phone?: string };
+  childFirstName?: string | null;
+  childLastName?: string | null;
   quote: CartQuote;
   digitalPhotos: GalleryPhoto[];
   paymentStatus: 'unpaid' | 'pending' | 'declined' | 'paid';

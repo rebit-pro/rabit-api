@@ -47,6 +47,8 @@ final readonly class OrderRowMapper
                 (string)$row['BUYER_COMMENT'],
                 null === $row['RECEIPT_CHANNEL'] ? null : (string)$row['RECEIPT_CHANNEL'],
             ),
+            childFirstName: null === ($row['CHILD_FIRST_NAME'] ?? null) ? null : (string)$row['CHILD_FIRST_NAME'],
+            childLastName: null === ($row['CHILD_LAST_NAME'] ?? null) ? null : (string)$row['CHILD_LAST_NAME'],
             quote: [
                 'lines' => $quoteLines,
                 'total' => (int)$row['TOTAL'],

@@ -15,7 +15,7 @@ const props = defineProps<{
 const emit = defineEmits<{ change: [patch: Partial<BuyerFields>] }>();
 // UI-DEC-04: the optional comment stays folded until the buyer asks for it or already wrote one.
 const commenting = shallowRef(props.draft.comment !== '' || !!props.errors.comment);
-function text(field: 'email' | 'comment', value: string | null) {
+function text(field: 'email' | 'comment' | 'childFirstName' | 'childLastName', value: string | null) {
   emit('change', { [field]: value ?? '' });
 }
 function channel(value: unknown) {
@@ -24,7 +24,34 @@ function channel(value: unknown) {
 </script>
 <template>
   <fieldset class="checkout-contacts" :disabled="busy">
-    <legend class="mf-sr-only">Контакт покупателя</legend>
+    <legend class="mf-sr-only">Данные заказа и контакт покупателя</legend>
+    <div class="checkout-contacts__child">
+      <v-text-field
+        :model-value="draft.childFirstName"
+        name="buyer-childFirstName"
+        label="Имя ребёнка"
+        required
+        autocomplete="off"
+        maxlength="100"
+        :disabled="busy"
+        :error-messages="errors.childFirstName"
+        :aria-invalid="!!errors.childFirstName || undefined"
+        @update:model-value="text('childFirstName', $event)"
+      />
+      <v-text-field
+        :model-value="draft.childLastName"
+        name="buyer-childLastName"
+        label="Фамилия ребёнка"
+        required
+        autocomplete="off"
+        maxlength="100"
+        :disabled="busy"
+        :error-messages="errors.childLastName"
+        :aria-invalid="!!errors.childLastName || undefined"
+        @update:model-value="text('childLastName', $event)"
+      />
+    </div>
+    <p class="checkout-contacts__child-note">Одно имя и фамилия на весь заказ, даже если в корзине фото нескольких детей.</p>
     <v-text-field
       :model-value="draft.email"
       name="buyer-email"
@@ -91,6 +118,15 @@ function channel(value: unknown) {
   gap: var(--mf-space-3);
   min-width: 0;
   border: 0;
+}
+.checkout-contacts__child {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--mf-space-3);
+}
+.checkout-contacts__child-note {
+  font-size: var(--mf-text-sm);
+  color: var(--mf-color-text-secondary);
 }
 .checkout-contacts__more {
   justify-self: start;
