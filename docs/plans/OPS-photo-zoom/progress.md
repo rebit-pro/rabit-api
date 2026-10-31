@@ -2,12 +2,12 @@
 
 ## Точка продолжения
 
-- Ветка: `codex/ops-photo-zoom`. Base/head: `b57581611fa253dacac9480b84e4e44b78b3b948`; PR/issue по этой задаче нет. Связанный #191 относится к отсутствующим миниатюрам live-заказа.
+- Ветка: `codex/ops-photo-zoom`. Base `b57581611fa253dacac9480b84e4e44b78b3b948`, head `fe7e5f4` перед финальным обновлением журнала; PR #226. Связанный #191 относится к отсутствующим миниатюрам live-заказа.
 - Завершено: общий просмотр с масштабом подключён к родительской галерее, кабинету и отчёту; повторный полный `make test-e2e` прошёл, 159 браузерных сценариев PASS. Desktop/mobile снимки отчёта и окна увеличения просмотрены. Текущий main на GitHub совпадает с base.
-- Следующий шаг: зафиксировать diff и открыть PR в `main`.
+- Следующий шаг: review PR #226; после одобрения отдельно выполнить merge и deployment.
 - Блокеры/решения: блокеров нет. Первый полный прогон выявил нестабильность двух сценариев оплаты вне diff, повторный прогон прошёл. Локальный PHP 8.3 заменён PHP 8.4 Docker. Typecheck Vue выполнен в Node 24 Docker.
-- Рабочее дерево: незакоммичены файлы галереи, кабинета, отчёта, API, live E2E и два файла плана.
-- Следующие проверки: `cd frontend && npm run typecheck:e2e`; ESLint изменённых файлов; PHPUnit архитектуры; `make test-e2e` по `docs/waves/a8/README.md`.
+- Рабочее дерево: продуктовый код, тесты и план закоммичены; это обновление журнала ещё не зафиксировано.
+- Следующие проверки: при замечаниях review повторить затронутые проверки и `make test-e2e` по `docs/waves/a8/README.md`.
 
 ## Журнал
 
@@ -27,6 +27,7 @@
 - 2026-10-31: в родительский live E2E добавлены проверка перемещения указателем при 150% и снимки модального окна для desktop/mobile; целевые ESLint и typecheck:e2e прошли.
 - 2026-10-31: повторный полный `E2E_PHP_CLI_IMAGE=rabit-api-e2e-php-cli:local E2E_PHP_FPM_IMAGE=rabit-api-e2e-php-fpm:local E2E_NGINX_IMAGE=rabit-api-e2e-nginx:local make test-e2e` с изолированной БД прошёл: frontend lint/style/typecheck/build/unit, backend lint/PHPStan/PHPUnit, browser group a/b — 159 PASS (81+78). Артефакты `api/var/e2e/rabit-e2e-ed2bb7e028cc/`.
 - 2026-10-31: просмотрены `e4-desktop-zoom.png` и `e4-mobile-zoom.png`: кнопки масштаба, переключения и заказа доступны, модальное окно помещается по ширине. `git diff --check` PASS.
+- 2026-10-31: продуктовый diff и план зафиксированы коммитом `fe7e5f4`; SSH GitHub на порту 22 завершился таймаутом, ветка отправлена по HTTPS через credential helper GitHub CLI. Открыт PR #226 в `main`; merge не выполнялся.
 
 ## Проверки
 
