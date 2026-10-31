@@ -2,14 +2,30 @@
 
 ## Точка продолжения
 
-- Ветка: `codex/ops-photo-zoom`. Base `b57581611fa253dacac9480b84e4e44b78b3b948`, head `0ed20cb` до дополнения плана релиза; PR #226. Связанный #191 относится к отсутствующим миниатюрам live-заказа.
-- Завершено: общий просмотр с масштабом подключён к родительской галерее, кабинету и отчёту; повторный полный `make test-e2e` прошёл, 159 браузерных сценариев PASS. Desktop/mobile снимки отчёта и окна увеличения просмотрены. Текущий main на GitHub совпадает с base.
-- Следующий шаг: получить review PR #226 и рабочий SSH-доступ к stage, затем выполнить ручную выкладку по плану.
-- Блокеры/решения: review PR #226 отсутствует; SSH к `rebit-pro:22` завершается таймаутом. HTTP stage отвечает 200. Первый полный прогон выявил нестабильность двух сценариев оплаты вне diff, повторный прогон прошёл.
-- Рабочее дерево: продуктовый код и тесты закоммичены; дополнение плана/журнала релиза ещё не зафиксировано.
-- Следующие проверки: при замечаниях review повторить затронутые проверки и `make test-e2e` по `docs/waves/a8/README.md`.
+- Ветка: `codex/ops-photo-zoom`. Base `b57581611fa253dacac9480b84e4e44b78b3b948`, head перед исправлением `7b61690ceffaa9535c30a69e501f740b7c0934d6`; текущий head после записи определять `git rev-parse HEAD`. PR #226, review 5722655023; #191 относится к отсутствующим миниатюрам live-заказа.
+- Завершено: увеличение доступно и для обложки группы, а общий диалог возвращает фокус открывшей кнопке. Финальный полный `make test-e2e` на исправленном коде прошёл: frontend/backend проверки, 159 браузерных сценариев и SQL-верификаторы PASS; новые desktop/mobile снимки просмотрены.
+- Сейчас: исправление и проверки завершены. Один следующий шаг: финальная сверка diff/main, commit и push в PR #226, затем повторная проверка review.
+- Блокеры/решения: исходное замечание review исправлено, но повторная проверка ещё не опубликована; SSH к `rebit-pro:22` снова завершился таймаутом на этапе banner exchange. Выкладка на stage не начата.
+- Рабочее дерево: изменены `plan.md`, `progress.md`, `zz-media.spec.ts`, `PhotoZoomDialog.vue`, `PhotoWorkspace.vue`, `usePhotoWorkspace.ts`; всё ещё не закоммичено.
+- Следующие проверки: `git diff --check`, сверка удалённого `main`/PR; если base изменился — повторить затронутые проверки до merge.
 
 ## Журнал
+
+- 2026-10-31: прочитан опубликованный review PR #226 на head `7b61690c`; пользователь поручил исправить замечание, выполнить тесты и выкладку. План дополнен тест-кейсом Z07 до изменения кода.
+- 2026-10-31: обложка группы в `PhotoWorkspace.vue` открывает общий `PhotoZoomDialog` с `previewSrc`; кнопка доступна клавиатурой. В существующий live-сценарий добавлены открытие Enter, увеличение до 150%, возврат фокуса и снимки desktop/mobile. Проверки пока не запускались; Z07 остаётся PENDING.
+- 2026-10-31: `git diff --check` PASS. `cd frontend && ./node_modules/.bin/eslint src/modules/morefoto/photos/components/PhotoWorkspace.vue e2e/live/zz-media.spec.ts && npm run typecheck:e2e` остановился на одном правиле Prettier для переноса тега кнопки; разметка исправлена, требуется повторить.
+- 2026-10-31: повторный `./node_modules/.bin/eslint ... && npm run typecheck:e2e` PASS; `git diff --check` PASS. При проверке типовой модели найдено, что `cover` содержит только `thumbSrc`, поскольку обложка может быть вне текущей страницы. План обновлён до правки composable; следующий шаг — добавить `previewSrc` через действующий источник защищённых превью.
+- 2026-10-31: `usePhotoWorkspace` дополнен `previewSrc` для обложки на текущей странице и вне её; для demo сохранён прежний пустой fallback при отсутствующем фото. Первый точечный ESLint остановился на переносе длинной строки, исправлено; проверку повторить.
+- 2026-10-31: точечный ESLint трёх изменённых frontend-файлов PASS; `npm run typecheck:e2e` PASS; `git diff --check` PASS. Локальный `npm run typecheck` остановлен известным EACCES при записи `node_modules/.vue-global-types`, поэтому результат не считается проверкой типов приложения. `docker run ... node:24-alpine ... vue-tsc --noEmit` в sandbox не получил доступ к Docker socket; следующий шаг — повторить в разрешённой Docker-среде.
+- 2026-10-31: `docker run --rm -v "$PWD:/work" -w /work --user 0:0 node:24-alpine ./node_modules/.bin/vue-tsc --noEmit` в разрешённой Docker-среде PASS. Полный `E2E_PHP_CLI_IMAGE=rabit-api-e2e-php-cli:local E2E_PHP_FPM_IMAGE=rabit-api-e2e-php-fpm:local E2E_NGINX_IMAGE=rabit-api-e2e-nginx:local make test-e2e` прошёл frontend lint/style/typecheck/build/unit и backend lint/PHPStan/PHPUnit. Браузерная группа `a`: 80 PASS, 1 FAIL в Z07 — после закрытия обложки фокус не вернулся на кнопку; группа `b` отменена runner. Артефакты `api/var/e2e/rabit-e2e-c42002dc0b4b/`, лог `a/a/browser.log`. Z07 = FAIL, Z01–Z06 по этому прогону не считать полным PASS.
+- 2026-10-31: просмотрен исходник Vuetify `VDialog`: без заданного activator после закрытия он фокусирует только отсутствующий `overlay.activatorEl`. Решение — событие `closed` после `afterLeave` в общем PhotoZoomDialog и явный возврат фокуса экраном обложки.
+- 2026-10-31: `PhotoZoomDialog` теперь сообщает `closed` после `afterLeave`, а `PhotoWorkspace` возвращает фокус на кнопку обложки. Точечный `./node_modules/.bin/eslint` для четырёх изменённых frontend-файлов PASS; `npm run typecheck:e2e` PASS; `git diff --check` PASS. Для экономии прогонов после конкретного исправления сразу запускается обязательный полный gate, без отдельного частичного E2E.
+- 2026-10-31: повторный gate остановлен вручную до получения итогового результата (exit 130), так как обнаружен общий риск потери фокуса в остальных потребителях `PhotoZoomDialog`. Это не PASS и не FAIL продукта. План уточнён до кода: восстановление фокуса переносится внутрь общего диалога, а Z08 проверит другую точку входа.
+- 2026-10-31: восстановление фокуса перенесено в `PhotoZoomDialog` для всех потребителей; `PhotoWorkspace` больше не содержит отдельной логики фокуса. В Z08 добавлена проверка обычного кадра сотрудника. Первый точечный ESLint остановился только на формате тега кнопки после удаления `ref`; тег исправлен, повтор обязателен.
+- 2026-10-31: точечный ESLint четырёх изменённых frontend-файлов PASS, `npm run typecheck:e2e` PASS и `git diff --check` PASS. Финальный `E2E_PHP_CLI_IMAGE=rabit-api-e2e-php-cli:local E2E_PHP_FPM_IMAGE=rabit-api-e2e-php-fpm:local E2E_NGINX_IMAGE=rabit-api-e2e-nginx:local make test-e2e` — PASS: frontend lint/style/typecheck/build/UI/commerce unit, backend php-lint/PHPStan/PHPUnit, browser `a` 81/81 и `b` 78/78, все SQL-верификаторы. Артефакты `api/var/e2e/rabit-e2e-379da4baecd3/`.
+- 2026-10-31: визуально просмотрены `d1-desktop-cover-zoom.png` и `d1-mobile-cover-zoom.png` финального прогона: заголовок, кадр и кнопки масштаба/закрытия помещаются, горизонтального переполнения нет. На синтетическом широком кадре mobile оставляет свободное место сверху/снизу при `object-fit: contain`; это ожидаемое сохранение пропорций.
+- 2026-10-31: `timeout 15 ssh -o BatchMode=yes -o ConnectTimeout=7 -o ConnectionAttempts=1 rebit-pro 'printf stage-ssh-ready'` не дошёл до команды: `Connection timed out during banner exchange` к `37.143.8.221:22`. Запрошен актуальный способ доступа; server state не менялся.
+- 2026-10-31: `/home/user/.local/bin/gh api repos/rebit-pro/rabit-api/commits/main --jq .sha` вернул `b57581611fa253dacac9480b84e4e44b78b3b948`, совпадает с base PR #226 и #227. PR #226 открыт на прежнем head `7b61690c`, PR #227 открыт как draft на документационном head `eae5fc9`.
 
 - 2026-10-31: изучены AGENTS.md, CLAUDE.md, проектные навыки; базовая ветка `main` чистая на `b575816`.
 - 2026-10-31: GitHub CLI показал пять открытых PR без продуктового пересечения и не нашёл issue с прямым дублем. #191 затрагивает миниатюры заказа.
@@ -34,9 +50,11 @@
 
 | ID | Статус | Дата | Команда | Доказательство |
 |---|---|---|---|---|
-| Z01 | PASS | 2026-10-31 | `make test-e2e` | `zzzz-storefront` в browser group b: масштаб 100→150→100, перемещение указателем и смена просмотра |
-| Z02 | PASS | 2026-10-31 | `make test-e2e` | `zz-media` в browser group a: просмотр сотрудника и масштаб 100→150; ограничения API проверены |
-| Z03 | PASS | 2026-10-31 | `make test-e2e` | `zzzzzzzzzzzzzz-sales-report` в browser group b: `?variant=preview` больше thumbnail, UI масштаб 100→150 |
-| Z04 | PASS | 2026-10-31 | `make test-e2e` | В том же сценарии чужая область 404, `original` 422; unit SalesReportTest 17/17, 63 assertions |
-| Z05 | PASS | 2026-10-31 | `make test-e2e`; просмотр PNG | Desktop/mobile browser проверки прошли; визуально просмотрены снимки отчёта и окна увеличения |
-| Z06 | PASS | 2026-10-31 | `make test-e2e`; целевой php-cs-fixer | Общие frontend lint/style/typecheck/build/unit и backend lint/PHPStan/PHPUnit прошли; полный browser gate 159 PASS |
+| Z01 | PASS | 2026-10-31 | `make test-e2e` | Run `rabit-e2e-379da4baecd3`, `zzzz-storefront` browser `b`: масштаб 100→150→100, перемещение указателем и смена просмотра |
+| Z02 | PASS | 2026-10-31 | `make test-e2e` | Тот же run, `zz-media` browser `a`: просмотр сотрудника и масштаб 100→150; ограничения API проверены |
+| Z03 | PASS | 2026-10-31 | `make test-e2e` | Тот же run, `zzzzzzzzzzzzzz-sales-report` browser `b`: `?variant=preview` больше thumbnail, UI масштаб 100→150 |
+| Z04 | PASS | 2026-10-31 | `make test-e2e` | Тот же run: чужая область 404, `original` 422; backend PHPUnit PASS |
+| Z05 | PASS | 2026-10-31 | `make test-e2e`; просмотр PNG | Тот же run: desktop/mobile browser проверки PASS; просмотрены снимки отчёта и увеличенной обложки |
+| Z06 | PASS | 2026-10-31 | `make test-e2e` | Тот же run: frontend lint/style/typecheck/build/unit и backend lint/PHPStan/PHPUnit PASS; browser 159/159 PASS. PHP CS Fixer по ранее изменённым PHP файлам PASS до этого frontend-only исправления |
+| Z07 | PASS | 2026-10-31 | `make test-e2e`, `zz-media.spec.ts`; просмотр PNG | Обложка открылась Enter, увеличилась 100→150%, после закрытия фокус вернулся; desktop/mobile снимки просмотрены, run `rabit-e2e-379da4baecd3` |
+| Z08 | PASS | 2026-10-31 | `make test-e2e`, `zz-media.spec.ts` | Обычный кадр сотрудника после закрытия общего диалога вернул фокус открывшей кнопке; browser `a` 81/81 |

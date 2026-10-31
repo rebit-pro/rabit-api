@@ -84,7 +84,7 @@ export function usePhotoWorkspace() {
   const summary = shallowRef<PhotoGroupSummary>(emptySummary);
   // Live only: the demo keeps ready frames in the browser and has nothing in processing.
   const stats = shallowRef<ServerPhotoStats | null>(null);
-  const cover = shallowRef<{ id: string; thumbSrc: string }>();
+  const cover = shallowRef<Pick<ManagedPhoto, 'id' | 'thumbSrc' | 'previewSrc'>>();
   // The group the page data above belongs to: data of another group is never shown under the selected one.
   const pageGroupId = shallowRef('');
   const mediaRevision = shallowRef(1);
@@ -140,10 +140,14 @@ export function usePhotoWorkspace() {
   const pages = computed(() => photoPages(total.value));
   // Everything that defines the shown page: a change reloads it and is written to the URL.
   const pageKey = computed(() => (group.value ? [group.value.id, filter.value, page.value].join('|') : ''));
-  function coverSource(id: string, shown: ManagedPhoto[]): string {
-    const onPage = shown.find((item) => item.id === id)?.thumbSrc;
-    if (onPage) return onPage;
-    return isMockApiEnabled ? (readPhotos().photos.find((item) => item.id === id)?.thumbSrc ?? '') : managedPreviewSource(id, 'thumb');
+  function coverPhoto(id: string, shown: ManagedPhoto[]): Pick<ManagedPhoto, 'id' | 'thumbSrc' | 'previewSrc'> {
+    const photo =
+      shown.find((item) => item.id === id) ?? (isMockApiEnabled ? readPhotos().photos.find((item) => item.id === id) : undefined);
+    return {
+      id,
+      thumbSrc: photo?.thumbSrc ?? (isMockApiEnabled ? '' : managedPreviewSource(id, 'thumb')),
+      previewSrc: photo?.previewSrc ?? (isMockApiEnabled ? '' : managedPreviewSource(id, 'preview'))
+    };
   }
   function applyPage(groupId: string, next: PageData) {
     const coverId = next.covers[groupId];
@@ -152,7 +156,7 @@ export function usePhotoWorkspace() {
     total.value = next.total;
     summary.value = next.summary;
     stats.value = next.stats ?? null;
-    cover.value = coverId ? { id: coverId, thumbSrc: coverSource(coverId, next.items) } : undefined;
+    cover.value = coverId ? coverPhoto(coverId, next.items) : undefined;
     selected.value = selected.value.filter((id) => next.items.some((item) => item.id === id));
     // A page emptied by labelling or a child moved to another group must not leave the screen on an empty view.
     if (page.value > photoPages(next.total)) setPage(photoPages(next.total));
