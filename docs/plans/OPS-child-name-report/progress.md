@@ -2,14 +2,18 @@
 
 ## Точка продолжения
 
-- Ветка: `codex/ops-child-name-report`, base `b57581611fa253dacac9480b84e4e44b78b3b948`, последний продуктовый commit `9f0d88de27b028f6d62f514d9985d7b51ef80b5a`, документационный head перед этой записью `85677c50cf7b62d12839f357caa095ce76ccd792`; текущий head после записи определять `git rev-parse HEAD`. Отдельный worktree `/tmp/rabit-api-ops-child-name-report`, draft PR #227, review 5722655944; связанная документация — план рядом и `api/public/local/modules/morefoto.legal/documents/`.
-- Завершено: миграция, DTO, сохранение и чтение имени, проекции API, форма live/demo, строки заказов в отчёте JSON/UI/PDF, новые версии политики и согласия. Финальный полный `make test-e2e` прошёл, включая 159 браузерных сценариев и все SQL-верификаторы; desktop/mobile визуально проверены.
-- Сейчас: авторская техническая проверка опубликована, кодовых замечаний нет. Один следующий шаг: дождаться результата согласования документов, пока отдельно исправляется PR #226.
-- Блокеры/открытые решения: PR #227 остаётся draft до проверки правового основания обработки имени ребёнка и полномочий представителя ответственным за документы; независимый review не получен; SSH к `rebit-pro:22` ранее завершился таймаутом. HTTP stage отвечал 200. Полный технический gate до изменения base PASS.
-- Рабочее дерево: после публикации `85677c5` чистое; эта запись является единственным изменением до завершающего документационного коммита. При возобновлении проверить `git status --short`.
-- Следующие проверки при изменении base или кода: `E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor E2E_PHP_CLI_IMAGE=rabit-api-e2e-php-cli:local E2E_PHP_FPM_IMAGE=rabit-api-e2e-php-fpm:local E2E_NGINX_IMAGE=rabit-api-e2e-nginx:local make test-e2e`; PHP CS Fixer по изменённым PHP файлам.
+- Ветка: `codex/ops-child-name-report`, base `a5533da338d45c50b7a27a2cf975c2d8892a0daf` после merge PR #226, локальный head перед записью `65a3c26`; текущий head определять `git rev-parse HEAD`. Отдельный worktree `/tmp/rabit-api-ops-child-name-report`, draft PR #227, review 5722655944; связанная документация — план рядом и `api/public/local/modules/morefoto.legal/documents/`.
+- Завершено: миграция, DTO, сохранение и чтение имени, проекции API, форма live/demo, строки заказов в отчёте JSON/UI/PDF, новые версии политики и согласия. Полный `make test-e2e` на новой базе прошёл: 159 браузерных сценариев и все SQL-верификаторы PASS; desktop/mobile визуально проверены.
+- Сейчас: gate на слитом PR #226 плюс diff PR #227 завершён. Один следующий шаг: зафиксировать журнал и обновить draft PR #227 после rebase.
+- Блокеры/открытые решения: PR #227 остаётся draft до проверки правового основания обработки имени ребёнка и полномочий представителя ответственным за документы; независимый review не получен; SSH к `rebit-pro:22` повторно завершился таймаутом. HTTP stage ранее отвечал 200. Технический gate на новой базе PASS.
+- Рабочее дерево: после rebase изменены только `plan.md` и `progress.md` для новой базы и результата gate, до следующего коммита.
+- Следующие проверки: `git diff --check`, сверка удалённого PR после push; повторить затронутые проверки только при новом изменении base или кода.
 
 ## Журнал
+
+- 2026-10-31: PR #226 слит в `main` как `a5533da338d45c50b7a27a2cf975c2d8892a0daf`. `git fetch` через HTTPS и `git rebase FETCH_HEAD` для PR #227 прошли без конфликтов; head до этой записи `65a3c26`. Полный gate на новой базе ещё не запускался. Повторный SSH к stage: таймаут SSH banner на `37.143.8.221:22`, server state не изменён.
+- 2026-10-31: `E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor E2E_PHP_CLI_IMAGE=rabit-api-e2e-php-cli:local E2E_PHP_FPM_IMAGE=rabit-api-e2e-php-fpm:local E2E_NGINX_IMAGE=rabit-api-e2e-nginx:local make test-e2e` на новом base — PASS за 646,4 с: frontend lint/style/typecheck/e2e typecheck/build/UI/commerce unit, backend php-lint/PHPStan/PHPUnit (1283 теста, 51354 assertions), browser a 81/81 и b 78/78, все SQL-верификаторы. Артефакты `api/var/e2e/rabit-e2e-0079cab3fb4b/`.
+- 2026-10-31: просмотрены final desktop/mobile снимки checkout и отчёта из этого run: поля имени и фамилии и строки заказов читаются, нет горизонтального переполнения. На полностраничном mobile снимке отчёта липкая шапка попала посередине страницы как артефакт съёмки.
 
 - 2026-10-31: авторская техническая проверка опубликована в PR #227 на head `9f0d88d` (review 5722655944), кодовых блокеров не выявлено. Reviewer указал на устаревшую «Точку продолжения» и обязательное предметное согласование документов. Пользователь поручил правки, проверки и выкладку; запрос о состоянии согласования отправлен, релизный блокер пока сохраняется.
 - 2026-10-31: `git diff --check` по двум изменённым Markdown-файлам PASS; продуктовый код не менялся, E2E повторно не запускался. Журнал и план подготовлены к отдельному документационному коммиту; draft сохраняется до решения по документам.
@@ -43,11 +47,11 @@
 
 | ID | Статус | Дата | Команда | Доказательство |
 |---|---|---|---|---|
-| N01 | PASS | 2026-10-31 | `make test-e2e` | E5 live HTTP создаёт заказ с ФИО; браузер показывает поля на форме и в заказе |
-| N02 | PASS | 2026-10-31 | `OrderMapperTest`; `make test-e2e` | Unit: две строки разных детей, одна пара ФИО только в записи заказа; live отчёт выдаёт строки по заказам, UI отдельно от таблицы детей |
-| N03 | PASS | 2026-10-31 | PHPUnit; `make test-e2e` | ChildNamePolicyTest и E5 HTTP: отсутствие имени/фамилии даёт 422 с кодом поля; старый replay проверен unit |
-| N04 | PASS | 2026-10-31 | PHPUnit; `make test-e2e` | E5: прежнее тело и ключ возвращают тот же заказ, другое имя под ключом даёт 409; unit хеша старого тела PASS |
-| N05 | PASS | 2026-10-31 | PHPUnit; `make test-e2e` | Unit OrderMapperTest/SalesReportTest/SalesReportPdfTest: исторические NULL остаются NULL/«Не указано»; live стенд проверил совместимость новых заказов, исторический DB сценарий отдельно не создавался |
-| N06 | PASS | 2026-10-31 | `make test-e2e` | E5/E10 live: чужая область 404, аноним 401; персональный ключ открывает только свой заказ |
-| N07 | PASS | 2026-10-31 | `make test-e2e`; просмотр PNG | Desktop/mobile checkout, заказ, карточка сотрудника и отчёт просмотрены; горизонтального переполнения нет |
-| N08 | PASS | 2026-10-31 | `make test-e2e`; php-cs-fixer | Full gate PASS, backend 1283/1283; CS Fixer 0/40 и точечно 0/3 |
+| N01 | PASS | 2026-10-31 | `make test-e2e` | Run `rabit-e2e-0079cab3fb4b`: E5 live HTTP создаёт заказ с ФИО; браузер показывает поля на форме и в заказе |
+| N02 | PASS | 2026-10-31 | `OrderMapperTest`; `make test-e2e` | Run `rabit-e2e-0079cab3fb4b`: unit и live отчёт дают ФИО только на уровне заказа; UI отдельно от таблицы детей |
+| N03 | PASS | 2026-10-31 | PHPUnit; `make test-e2e` | Run `rabit-e2e-0079cab3fb4b`: ChildNamePolicyTest и E5 HTTP проверяют 422 с кодом поля; старый replay проверен unit |
+| N04 | PASS | 2026-10-31 | PHPUnit; `make test-e2e` | Run `rabit-e2e-0079cab3fb4b`: прежнее тело и ключ возвращают тот же заказ, другое имя под ключом даёт 409; unit хеша PASS |
+| N05 | PASS | 2026-10-31 | PHPUnit; `make test-e2e` | Run `rabit-e2e-0079cab3fb4b`: unit сохраняют исторические NULL/«Не указано»; live стенд проверил новые заказы, исторический DB сценарий отдельно не создавался |
+| N06 | PASS | 2026-10-31 | `make test-e2e` | Run `rabit-e2e-0079cab3fb4b`: E5/E10 live дают чужой области 404, анониму 401; персональный ключ открывает только свой заказ |
+| N07 | PASS | 2026-10-31 | `make test-e2e`; просмотр PNG | Run `rabit-e2e-0079cab3fb4b`: desktop/mobile checkout и отчёт просмотрены, горизонтального переполнения нет; заказ и карточка сотрудника проверены ранее |
+| N08 | PASS | 2026-10-31 | `make test-e2e`; php-cs-fixer | Run `rabit-e2e-0079cab3fb4b`: full gate PASS, backend PHPUnit PASS; CS Fixer 0/40 и точечно 0/3 на том же продуктовом diff до rebase |
