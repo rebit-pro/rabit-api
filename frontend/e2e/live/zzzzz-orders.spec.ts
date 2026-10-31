@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { test, expect, type APIResponse, type Browser, type Page } from '@playwright/test';
-import { acceptCheckoutDocuments, login, orderConsents, password, token } from './helpers.js';
+import { acceptCheckoutDocuments, fillCheckoutChild, login, orderConsents, password, token } from './helpers.js';
 
 /** Visible rows of the orders table: the desktop row and the mobile card of one order share its ID. */
 const rows = (scope: Page) => scope.locator('[data-row-id]').filter({ visible: true });
@@ -12,6 +12,7 @@ const gallery = (kind: keyof Fixture = 'open') => '/api/v1/public/galleries/' + 
 const key = () => crypto.randomUUID().replace(/-/g, '');
 // E8: email is the only contact of the buyer.
 const buyer = { email: 'Order.E5@Example.test', comment: 'E5 проверка', reviewed: true };
+const child = { firstName: 'Иван', lastName: 'Иванов' };
 // The verifier proves that none of these secrets is stored in clear text.
 const secrets = { accessKeys: [] as string[], idempotencyKeys: [] as string[], galleryToken: fixture.open.token, orderIds: [] as string[] };
 let printId = '';
@@ -134,7 +135,7 @@ test.beforeAll(async ({ browser }) => {
 test('E5: checkout is idempotent, keeps one order per quote and hides secrets', async ({ page }) => {
   const lines = [{ assignmentId: assignment, productId: printId, quantity: 1 }];
   const priced = await quote(page, lines);
-  const data = { lines, buyer, quoteToken: priced.quoteToken, consents: await orderConsents(page) };
+  const data = { lines, buyer, child, quoteToken: priced.quoteToken, consents: await orderConsents(page) };
   await body(await page.request.post(gallery() + '/orders', { data }), 422);
   const replayKey = key();
   const response = await order(page, data, replayKey);
@@ -145,6 +146,7 @@ test('E5: checkout is idempotent, keeps one order per quote and hides secrets', 
   expect(created.number).toMatch(/^MF-\d{6,}$/);
   expect(created.accessKey).toMatch(/^[a-f0-9]{64}$/);
   expect(created).toMatchObject({ paymentStatus: 'unpaid', productionStatus: 'not-started', groupId: fixture.open.groupId });
+  expect([created.childFirstName, created.childLastName]).toEqual(['Иван', 'Иванов']);
   expect(created.buyer).toEqual({
     name: null,
     phone: null,
@@ -160,6 +162,9 @@ test('E5: checkout is idempotent, keeps one order per quote and hides secrets', 
   const replay = (await body(await order(page, data, replayKey), 201)).data;
   expect([replay.id, replay.number, replay.accessKey]).toEqual([created.id, created.number, created.accessKey]);
   expect((await body(await order(page, { ...data, buyer: { ...buyer, name: 'Другое имя' } }, replayKey), 409)).error.code).toBe(
+    'IDEMPOTENCY_CONFLICT'
+  );
+  expect((await body(await order(page, { ...data, child: { ...child, firstName: 'Пётр' } }, replayKey), 409)).error.code).toBe(
     'IDEMPOTENCY_CONFLICT'
   );
   expect((await body(await order(page, data), 409)).error.code).toBe('QUOTE_ALREADY_USED');
@@ -186,7 +191,9 @@ test('E5: checkout is idempotent, keeps one order per quote and hides secrets', 
 test('E5: checkout rejects closed, unready, revoked, invalid and repriced requests', async ({ page }) => {
   const lines = [{ assignmentId: assignment, productId: printId, quantity: 2 }];
   const priced = await quote(page, lines);
-  const data = { lines, buyer, quoteToken: priced.quoteToken, consents: await orderConsents(page) };
+  const data = { lines, buyer, child, quoteToken: priced.quoteToken, consents: await orderConsents(page) };
+  expect((await body(await order(page, { ...data, child: undefined }), 422)).error.code).toBe('INVALID_CHILD_FIRST_NAME');
+  expect((await body(await order(page, { ...data, child: { ...child, lastName: '' } }), 422)).error.code).toBe('INVALID_CHILD_LAST_NAME');
   expect((await body(await order(page, data, key(), 'closed'), 409)).error.code).toBe('GALLERY_CLOSED');
   expect((await body(await order(page, data, key(), 'preparing'), 409)).error.code).toBe('GALLERY_NOT_READY');
   expect((await body(await order(page, data, key(), 'revoked'), 404)).error.code).toBe('GALLERY_NOT_FOUND');
@@ -462,6 +469,7 @@ for (const viewport of [
     // E8: the form asks only for the email; UI-DEC-05: no separate «reviewed» checkbox.
     await expect(page.locator('[name="buyer-name"], [name="buyer-phone"], [name="buyer-reviewed"]')).toHaveCount(0);
     await page.getByRole('textbox', { name: 'Email', exact: true }).fill(viewport.name + '.e5@example.test');
+    await fillCheckoutChild(page);
     await acceptCheckoutDocuments(page);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: info.outputPath('e5-' + viewport.name + '-checkout.png'), fullPage: true, animations: 'disabled' });
@@ -531,6 +539,7 @@ async function fillCheckout(page: Page, email: string, quantity: number) {
   await page.goto('/g/' + fixture.open.token + '/checkout');
   await expect(page).toHaveURL(new RegExp('/g/' + fixture.open.token + '/cart$'));
   await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
+  await fillCheckoutChild(page);
   await acceptCheckoutDocuments(page);
 }
 /**
@@ -665,6 +674,7 @@ test('E5: changed price at checkout asks the buyer to confirm the new total', as
   });
   await page.goto('/g/' + fixture.open.token + '/cart');
   await page.getByRole('textbox', { name: 'Email', exact: true }).fill('price.e5@example.test');
+  await fillCheckoutChild(page);
   await acceptCheckoutDocuments(page);
   const context = await browser.newContext({ baseURL });
   const organizer = await context.newPage();

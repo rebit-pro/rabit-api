@@ -8,6 +8,7 @@ use Morefoto\Commerce\Application\Order\Contract\OrderTransactionInterface;
 use Morefoto\Commerce\Application\Order\Dto\CreatedOrderOutputDto;
 use Morefoto\Commerce\Application\Order\Dto\CreateOrderInputDto;
 use Morefoto\Commerce\Application\Order\Dto\OrderBuyerInputDto;
+use Morefoto\Commerce\Application\Order\Dto\OrderChildNameInputDto;
 use Morefoto\Commerce\Application\Order\Dto\OrderBuyerOutputDto;
 use Morefoto\Commerce\Application\Order\Dto\OrderOutputDto;
 use Morefoto\Commerce\Application\Order\Dto\PlacedOrderOutputDto;
@@ -21,6 +22,7 @@ use Morefoto\Commerce\Application\Storefront\Dto\ValidatedQuoteOutputDto;
 use Morefoto\Commerce\Application\Storefront\UseCase\CreateQuoteUseCase;
 use Morefoto\Commerce\Application\Storefront\UseCase\ValidateQuoteUseCase;
 use Morefoto\Commerce\Domain\Order\Service\BuyerPolicy;
+use Morefoto\Commerce\Domain\Order\Service\ChildNamePolicy;
 use Morefoto\Commerce\Domain\Order\ValueObject\IdempotencyKey;
 use Morefoto\Commerce\Domain\Storefront\Service\SalesWindowPolicy;
 use Morefoto\Commerce\Domain\Storefront\Exception\QuotePriceChangedException;
@@ -101,7 +103,9 @@ final class OrderCheckoutUseCaseTest extends TestCase
         $quotes = $this->createMock(ValidateQuoteUseCase::class);
         $quotes->expects(self::never())->method('executeWithinTransaction');
 
-        $result = $this->useCase(state: 'closed', receipts: $receipts, quotes: $quotes)->execute(str_repeat('a', 64), new IdempotencyKey(str_repeat('b', 32)), $this->input());
+        $old = $this->input();
+        $inputWithoutChildName = new CreateOrderInputDto($old->quoteToken, $old->lines, $old->buyer, $old->consents);
+        $result = $this->useCase(state: 'closed', receipts: $receipts, quotes: $quotes)->execute(str_repeat('a', 64), new IdempotencyKey(str_repeat('b', 32)), $inputWithoutChildName);
 
         self::assertSame($original, $result);
     }
@@ -205,6 +209,7 @@ final class OrderCheckoutUseCaseTest extends TestCase
             $gallery,
             $receipts ?? $this->createStub(CheckoutReceipts::class),
             new BuyerPolicy(),
+            new ChildNamePolicy(),
             $quotes ?? $this->createStub(ValidateQuoteUseCase::class),
             $freshQuotes ?? $this->createStub(CreateQuoteUseCase::class),
             $placement ?? $this->createStub(OrderPlacement::class),
@@ -221,6 +226,7 @@ final class OrderCheckoutUseCaseTest extends TestCase
             [new QuoteLineInputDto('11111111-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 1)],
             new OrderBuyerInputDto('Анна', '+79001234567', 'buyer@example.test', '', null, true),
             [new AcceptedDocumentDto('buyer-consent', '2026-09-25'), new AcceptedDocumentDto('offer', '2026-09-25')],
+            new OrderChildNameInputDto('Иван', 'Иванов'),
         );
     }
 

@@ -34,5 +34,7 @@ final readonly class StaffOrderDetailResultDto implements ResultDtoInterface
         public string $version,
         public OrderPeriodResultDto $period,
         public array $correctionPhotos,
+        public ?string $childFirstName = null,
+        public ?string $childLastName = null,
     ) {}
 }

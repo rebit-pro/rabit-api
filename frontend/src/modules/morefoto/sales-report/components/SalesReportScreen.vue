@@ -4,6 +4,7 @@ import MfBreadcrumbs from '@/components/navigation/MfBreadcrumbs.vue';
 import { levelKind, reportFigures, reportTitle, rowsTitle } from '../rules';
 import { useSalesReport } from '../useSalesReport';
 import ReportChildrenTable from './ReportChildrenTable.vue';
+import ReportOrdersTable from './ReportOrdersTable.vue';
 import ReportRowsTable from './ReportRowsTable.vue';
 
 // E10: the sales of the staff member's area — children of a group or groups, shoots and institutions — and its PDF.
@@ -59,6 +60,12 @@ const number = new Intl.NumberFormat('ru-RU');
       <!-- A new level starts with its own sort and first page. -->
       <ReportChildrenTable v-if="'group' === report.level" :key="report.group?.id" :items="report.children" />
       <ReportRowsTable v-else :key="levelKey" :report="report" :title="rowsTitle(report.level)" :row-href="rowHref" />
+    </section>
+
+    <section v-if="'group' === report.level" class="report-section" aria-labelledby="report-orders-title">
+      <h2 id="report-orders-title">Заказы с ФИО ребёнка</h2>
+      <p class="mf-muted">Покупатель указал имя и фамилию для заказа целиком. В одном заказе могут быть фото нескольких детей.</p>
+      <ReportOrdersTable :items="report.orders" />
     </section>
 
     <section v-if="report.products.length" class="report-section" aria-labelledby="report-formats-title">

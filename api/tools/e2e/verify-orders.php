@@ -8,6 +8,7 @@ use Bitrix\Main\Loader;
 use Morefoto\Commerce\Application\Order\Contract\OrderStaffAccessInterface;
 use Morefoto\Commerce\Application\Order\Dto\CreateOrderInputDto;
 use Morefoto\Commerce\Application\Order\Dto\OrderBuyerInputDto;
+use Morefoto\Commerce\Application\Order\Dto\OrderChildNameInputDto;
 use Morefoto\Commerce\Application\Order\Dto\SearchOrdersInputDto;
 use Morefoto\Commerce\Application\Order\Service\OrderAccessKeys;
 use Morefoto\Commerce\Application\Order\UseCase\CreateOrderUseCase;
@@ -155,7 +156,8 @@ $consents = [];
 foreach ([LegalDocumentEnum::BUYER_CONSENT, LegalDocumentEnum::OFFER] as $document) {
     $consents[] = new AcceptedDocumentDto($document->value, $legal->current($document)->version);
 }
-$input = new CreateOrderInputDto($quote->quoteToken, $lines, new OrderBuyerInputDto('Проверка повтора', '+79005550909', 'replay.e5@example.test', '', null, true), $consents);
+$child = new OrderChildNameInputDto('Иван', 'Иванов');
+$input = new CreateOrderInputDto($quote->quoteToken, $lines, new OrderBuyerInputDto('Проверка повтора', '+79005550909', 'replay.e5@example.test', '', null, true), $consents, $child);
 $replayKey = new IdempotencyKey(bin2hex(random_bytes(16)));
 $checkout = $services->get(CreateOrderUseCase::class);
 $created = $checkout->execute($fixture['open']['token'], $replayKey, $input);
@@ -192,7 +194,7 @@ $connection->queryExecute("UPDATE mf_cart_quote SET EXPIRES_AT=UTC_TIMESTAMP()-I
 $expect('QUOTE_EXPIRED', static fn() => $checkout->execute(
     $fixture['open']['token'],
     new IdempotencyKey(bin2hex(random_bytes(16))),
-    new CreateOrderInputDto($expired->quoteToken, $lines, $input->buyer, $consents),
+    new CreateOrderInputDto($expired->quoteToken, $lines, $input->buyer, $consents, $child),
 ));
 $proof[] = 'replay after closure, closed print, closed group and expired quote';
 
@@ -209,6 +211,7 @@ $digitalOrder = $checkout->execute($fixture['digital']['token'], new Idempotency
     $digitalLines,
     new OrderBuyerInputDto('Проверка электронных', '+79005551414', 'digital.e7@example.test', '', null, true),
     $consents,
+    $child,
 ));
 $digitalPayable = $services->get(OrderPaymentInterface::class)->byKey($digitalOrder->accessKey);
 $digitalUntil = (string)$connection->query("SELECT DATE_FORMAT(UF_DIGITAL_SALES_UNTIL,'%Y-%m-%d %H:%i:%s') AS D FROM b_hlbd_mf_group WHERE UF_PUBLIC_ID='{$fixture['digital']['groupId']}'")->fetch()['D'];

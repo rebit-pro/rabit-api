@@ -89,6 +89,18 @@ final readonly class SalesReportHtml
             }
             $html .= '</tbody></table>';
         }
+        if (SalesReportLevelEnum::GROUP === $report->level) {
+            $html .= '<h2>Заказы с ФИО ребёнка</h2><p class="muted">ФИО указано покупателем для заказа целиком; в заказе могут быть фото нескольких детей.</p>'
+                . '<table class="rows"><thead><tr><th>Заказ</th><th>Имя и фамилия ребёнка</th><th>Оплата</th><th class="num">Сумма заказа</th></tr></thead><tbody>';
+            foreach ($report->orders as $order) {
+                $name = null === $order->firstName || null === $order->lastName ? 'Не указано' : $order->lastName . ' ' . $order->firstName;
+                $html .= '<tr><td>' . $this->escape($order->number) . '</td><td>' . $this->escape($name) . '</td><td>'
+                    . $this->escape($order->latePayment ? 'Поздняя оплата' : match ($order->paymentStatus) {
+                        'paid' => 'Оплачен', 'pending' => 'Ожидает оплаты', 'declined' => 'Оплата отклонена', default => 'Не оплачен',
+                    }) . '</td><td class="num">' . $this->escape($this->money($order->total)) . '</td></tr>';
+            }
+            $html .= '</tbody></table>';
+        }
 
         return $html . '<p class="note">Проданным считается только подтверждённая оплата. Оплата после закрытия продаж ждёт решения'
             . ' и в суммы не входит. Бесплатные копии печати и подарок не считаются продажей. Данные покупателей в отчёт не включаются.</p>';

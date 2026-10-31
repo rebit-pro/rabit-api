@@ -20,7 +20,8 @@ use Rebit\Share\Shared\Exception\HttpException;
  *     INSTITUTION_ID: int, INSTITUTION_PUBLIC_ID: string, SHOOT_ID: int, SHOOT_PUBLIC_ID: string,
  *     GROUP_ID: int, GROUP_PUBLIC_ID: string, AUDIENCE: string,
  *     INSTITUTION_NAME: string, SHOOT_NAME: string, GROUP_NAME: string,
- *     BUYER_NAME: null|string, BUYER_PHONE: null|string, BUYER_EMAIL: string, BUYER_COMMENT: string, RECEIPT_CHANNEL: null|string,
+ *     BUYER_NAME: null|string, BUYER_PHONE: null|string, CHILD_FIRST_NAME: string, CHILD_LAST_NAME: string,
+ *     BUYER_EMAIL: string, BUYER_COMMENT: string, RECEIPT_CHANNEL: null|string,
  *     SUBTOTAL: int, DISCOUNT: int, GIFT_SAVING: int, TOTAL: int, ITEM_COUNT: int, GIFTS: string,
  *     CATALOG_REVISION: int, CONDITIONS_REVISION: int, PAYMENT_STATUS: string, PRODUCTION_STATUS: string, CREATED_AT: string,
  * }
@@ -35,7 +36,8 @@ use Rebit\Share\Shared\Exception\HttpException;
 final readonly class OrderRepository
 {
     private const string COLUMNS = "o.ID,o.PUBLIC_ID,o.NUMBER,o.INSTITUTION_ID,o.INSTITUTION_PUBLIC_ID,o.SHOOT_ID,o.SHOOT_PUBLIC_ID,
-        o.GROUP_ID,o.GROUP_PUBLIC_ID,o.AUDIENCE,o.INSTITUTION_NAME,o.SHOOT_NAME,o.GROUP_NAME,o.BUYER_NAME,o.BUYER_PHONE,o.BUYER_EMAIL,
+        o.GROUP_ID,o.GROUP_PUBLIC_ID,o.AUDIENCE,o.INSTITUTION_NAME,o.SHOOT_NAME,o.GROUP_NAME,o.BUYER_NAME,o.BUYER_PHONE,
+        o.CHILD_FIRST_NAME,o.CHILD_LAST_NAME,o.BUYER_EMAIL,
         o.BUYER_COMMENT,o.RECEIPT_CHANNEL,o.SUBTOTAL,o.DISCOUNT,o.GIFT_SAVING,o.TOTAL,o.ITEM_COUNT,o.GIFTS,o.CATALOG_REVISION,
         o.CONDITIONS_REVISION,o.PAYMENT_STATUS,o.PRODUCTION_STATUS,o.VERSION,DATE_FORMAT(o.CREATED_AT,'%Y-%m-%d %H:%i:%s') AS CREATED_AT,
         DATE_FORMAT(o.PAID_AT,'%Y-%m-%d %H:%i:%s') AS PAID_AT,o.LATE_PAYMENT";
@@ -53,7 +55,7 @@ final readonly class OrderRepository
         $text = static fn(?string $value): string => null === $value ? 'NULL' : "'" . $helper->forSql($value) . "'";
         try {
             $connection->queryExecute('INSERT INTO mf_order(PUBLIC_ID,GALLERY_HASH,QUOTE_HASH,INSTITUTION_ID,INSTITUTION_PUBLIC_ID,SHOOT_ID,SHOOT_PUBLIC_ID,
-                GROUP_ID,GROUP_PUBLIC_ID,AUDIENCE,INSTITUTION_NAME,SHOOT_NAME,GROUP_NAME,BUYER_NAME,BUYER_PHONE,BUYER_EMAIL,BUYER_COMMENT,
+                GROUP_ID,GROUP_PUBLIC_ID,AUDIENCE,INSTITUTION_NAME,SHOOT_NAME,GROUP_NAME,BUYER_NAME,BUYER_PHONE,CHILD_FIRST_NAME,CHILD_LAST_NAME,BUYER_EMAIL,BUYER_COMMENT,
                 RECEIPT_CHANNEL,SUBTOTAL,DISCOUNT,GIFT_SAVING,TOTAL,ITEM_COUNT,GIFTS,CATALOG_REVISION,CONDITIONS_REVISION,PAYMENT_STATUS,
                 PRODUCTION_STATUS,VERSION,CREATED_AT,UPDATED_AT) VALUES('
                 . implode(',', [
@@ -61,7 +63,8 @@ final readonly class OrderRepository
                     $order['INSTITUTION_ID'], $text($order['INSTITUTION_PUBLIC_ID']), $order['SHOOT_ID'], $text($order['SHOOT_PUBLIC_ID']),
                     $order['GROUP_ID'], $text($order['GROUP_PUBLIC_ID']), $text($order['AUDIENCE']),
                     $text($order['INSTITUTION_NAME']), $text($order['SHOOT_NAME']), $text($order['GROUP_NAME']),
-                    $text($order['BUYER_NAME']), $text($order['BUYER_PHONE']), $text($order['BUYER_EMAIL']), $text($order['BUYER_COMMENT']),
+                    $text($order['BUYER_NAME']), $text($order['BUYER_PHONE']), $text($order['CHILD_FIRST_NAME']), $text($order['CHILD_LAST_NAME']),
+                    $text($order['BUYER_EMAIL']), $text($order['BUYER_COMMENT']),
                     $text($order['RECEIPT_CHANNEL']), $order['SUBTOTAL'], $order['DISCOUNT'], $order['GIFT_SAVING'], $order['TOTAL'],
                     $order['ITEM_COUNT'], $text($order['GIFTS']), $order['CATALOG_REVISION'], $order['CONDITIONS_REVISION'],
                     $text($order['PAYMENT_STATUS']), $text($order['PRODUCTION_STATUS']), 1, $text($order['CREATED_AT']), $text($order['CREATED_AT']),

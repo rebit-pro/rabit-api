@@ -29,5 +29,7 @@ final readonly class BuyerOrderResultDto implements ResultDtoInterface
         public OrderPeriodResultDto $period,
         public string $accessKeyExpiresAt,
         public string $createdAt,
+        public ?string $childFirstName = null,
+        public ?string $childLastName = null,
     ) {}
 }

@@ -66,6 +66,10 @@ export async function acceptCheckoutDocuments(page: Page): Promise<void> {
   await page.getByLabel('Даю согласие на обработку персональных данных').check();
   await page.getByLabel('Принимаю условия публичной оферты').check();
 }
+export async function fillCheckoutChild(page: Page): Promise<void> {
+  await page.getByRole('textbox', { name: 'Имя ребёнка' }).fill('Иван');
+  await page.getByRole('textbox', { name: 'Фамилия ребёнка' }).fill('Иванов');
+}
 /** UI-DEC-06: a product of the frame dialog is a radio named «product, price». */
 /** #192: every product of a frame has its own «+», named «Добавить в корзину: product, price». */
 export function productAdd(page: Page, name: string): Locator {

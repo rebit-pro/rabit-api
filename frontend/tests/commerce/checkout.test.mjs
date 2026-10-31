@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { validateBuyer, normalizeBuyer } from '../../src/modules/morefoto/orders/services/validation.ts';
 const valid = {
+  childFirstName: 'Иван',
+  childLastName: 'Иванов',
   email: 'TEST@example.test',
   comment: '',
   receiptChannel: 'email',

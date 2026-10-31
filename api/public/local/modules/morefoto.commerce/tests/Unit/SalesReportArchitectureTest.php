@@ -51,7 +51,7 @@ final class SalesReportArchitectureTest extends TestCase
         }
     }
 
-    public function testTheAnswerAndThePdfCarryNoBuyerData(): void
+    public function testTheAnswerAndThePdfCarryOnlyOrderIdentifiersAndChildNames(): void
     {
         $files = array_merge(
             glob(self::MODULE . '/Presentation/Sales/Dto/*Result*.php') ?: [],
@@ -59,7 +59,7 @@ final class SalesReportArchitectureTest extends TestCase
         );
         foreach ($files as $file) {
             $source = (string)file_get_contents($file);
-            self::assertDoesNotMatchRegularExpression('/\$(email|buyer\w*|phone|number|accessKey|orderId|orderKey|photoId)\b|BUYER_|o\.NUMBER|PHOTO_PUBLIC_ID AS/i', $source, $file);
+            self::assertDoesNotMatchRegularExpression('/\$(email|buyer\w*|phone|accessKey|orderId|orderKey|photoId)\b|BUYER_|PHOTO_PUBLIC_ID AS/i', $source, $file);
         }
     }
 }

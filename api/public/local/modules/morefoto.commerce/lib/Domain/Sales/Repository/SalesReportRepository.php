@@ -60,6 +60,13 @@ final readonly class SalesReportRepository
             GROUP BY l.PRODUCT_PUBLIC_ID ORDER BY PRINTS DESC,NAME,l.PRODUCT_PUBLIC_ID");
     }
 
+    /** Одна строка на заказ в разрешённой области; ФИО принадлежит заказу, а не детям его строк. */
+    public function orders(SalesArea $area): Result
+    {
+        return $this->query("SELECT o.PUBLIC_ID,o.NUMBER,o.CHILD_FIRST_NAME,o.CHILD_LAST_NAME,o.PAYMENT_STATUS,o.LATE_PAYMENT,o.TOTAL
+            FROM mf_order o WHERE {$this->where($area)} ORDER BY o.CREATED_AT DESC,o.ID DESC");
+    }
+
     private function where(SalesArea $area): string
     {
         $conditions = ['1=1'];

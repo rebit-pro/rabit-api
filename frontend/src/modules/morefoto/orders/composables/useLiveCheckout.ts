@@ -36,6 +36,8 @@ function readDraft(groupId: string): LiveDraft {
   if (pending === null && !isDraftFresh(stored.savedAt, Date.now())) stored = {};
   return {
     email: typeof stored.email === 'string' ? stored.email : '',
+    childFirstName: typeof stored.childFirstName === 'string' ? stored.childFirstName : '',
+    childLastName: typeof stored.childLastName === 'string' ? stored.childLastName : '',
     comment: typeof stored.comment === 'string' ? stored.comment : '',
     receiptChannel: 'email',
     reviewed: false,
@@ -84,6 +86,7 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
     return {
       lines: state.lines.map(({ assignmentId, productId, quantity }) => ({ assignmentId, productId, quantity })),
       buyer: { email: draft.email, comment: draft.comment, reviewed: draft.reviewed },
+      child: { firstName: draft.childFirstName, lastName: draft.childLastName },
       quoteToken: state.quoteToken ?? '',
       consents: acceptedDocuments(legal.value, ORDER_DOCUMENTS) ?? []
     };

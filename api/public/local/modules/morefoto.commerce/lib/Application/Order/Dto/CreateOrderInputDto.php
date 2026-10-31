@@ -13,5 +13,11 @@ final readonly class CreateOrderInputDto
      * @param list<QuoteLineInputDto>   $lines
      * @param list<AcceptedDocumentDto> $consents принятые покупателем редакции согласия и оферты
      */
-    public function __construct(public string $quoteToken, public array $lines, public OrderBuyerInputDto $buyer, public array $consents) {}
+    public function __construct(
+        public string $quoteToken,
+        public array $lines,
+        public OrderBuyerInputDto $buyer,
+        public array $consents,
+        public ?OrderChildNameInputDto $child = null,
+    ) {}
 }

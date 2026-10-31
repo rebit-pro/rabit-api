@@ -9,6 +9,7 @@ use Morefoto\Commerce\Domain\Order\Enum\PaymentStatusEnum;
 use Morefoto\Commerce\Domain\Order\Enum\ProductionStatusEnum;
 use Morefoto\Commerce\Domain\Order\Repository\OrderRepository;
 use Morefoto\Commerce\Domain\Order\ValueObject\OrderBuyer;
+use Morefoto\Commerce\Domain\Order\ValueObject\OrderChildName;
 use Rebit\Share\Contracts\Media\Dto\GalleryAssignmentOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\MediaScopeOutputDto;
 use Rebit\Share\Shared\Exception\HttpException;
@@ -29,6 +30,7 @@ final readonly class OrderRecordMapper
     public function records(
         ValidatedQuoteOutputDto $validated,
         OrderBuyer $buyer,
+        OrderChildName $child,
         MediaScopeOutputDto $scope,
         string $orderId,
         array $lineIds,
@@ -97,6 +99,8 @@ final readonly class OrderRecordMapper
             // E8: a new order stores the email only; the name and phone of earlier orders stay in their rows.
             'BUYER_NAME' => null,
             'BUYER_PHONE' => null,
+            'CHILD_FIRST_NAME' => $child->firstName,
+            'CHILD_LAST_NAME' => $child->lastName,
             'BUYER_EMAIL' => $buyer->email,
             'BUYER_COMMENT' => $buyer->comment,
             'RECEIPT_CHANNEL' => $buyer->receiptChannel,

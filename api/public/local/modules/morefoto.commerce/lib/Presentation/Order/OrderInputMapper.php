@@ -6,6 +6,7 @@ namespace Morefoto\Commerce\Presentation\Order;
 
 use Morefoto\Commerce\Application\Order\Dto\CreateOrderInputDto;
 use Morefoto\Commerce\Application\Order\Dto\OrderBuyerInputDto;
+use Morefoto\Commerce\Application\Order\Dto\OrderChildNameInputDto;
 use Morefoto\Commerce\Application\Order\Dto\SearchOrdersInputDto;
 use Morefoto\Commerce\Domain\Order\Enum\OrderSortEnum;
 use Morefoto\Commerce\Domain\Order\Enum\PaymentStatusEnum;
@@ -37,6 +38,7 @@ final readonly class OrderInputMapper
             $this->storefront->lines($request->lines),
             new OrderBuyerInputDto($buyer->name, $buyer->phone, $buyer->email, $buyer->comment, $buyer->receiptChannel, $buyer->reviewed),
             $this->consents->documents($request->consents),
+            null === $request->child ? null : new OrderChildNameInputDto($request->child->firstName, $request->child->lastName),
         );
     }
 
