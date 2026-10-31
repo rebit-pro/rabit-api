@@ -2,11 +2,11 @@
 
 ## Точка продолжения
 
-- Ветка: `codex/ops-child-name-report`, base `b57581611fa253dacac9480b84e4e44b78b3b948`, head `565f899` перед финальным обновлением журнала; отдельный worktree `/tmp/rabit-api-ops-child-name-report`. Draft PR #227, issue задачи нет. Связанная документация: план рядом, `api/public/local/modules/morefoto.legal/documents/`.
+- Ветка: `codex/ops-child-name-report`, base `b57581611fa253dacac9480b84e4e44b78b3b948`, head `0e1df9d` до дополнения плана релиза; отдельный worktree `/tmp/rabit-api-ops-child-name-report`. Draft PR #227, issue задачи нет. Связанная документация: план рядом, `api/public/local/modules/morefoto.legal/documents/`.
 - Завершено: миграция, DTO, сохранение и чтение имени, проекции API, форма live/demo, строки заказов в отчёте JSON/UI/PDF, новые версии политики и согласия. Финальный полный `make test-e2e` прошёл, включая 159 браузерных сценариев и все SQL-верификаторы; desktop/mobile визуально проверены.
-- Следующий шаг: технический review PR #227 и проверка новой редакции согласия ответственным за документы; затем отдельно решить готовность к merge/deployment.
-- Блокеры/открытые решения: одно ФИО на заказ подтверждено; уточнения о виде отчёта и обязательности ещё могут изменить рабочее решение. Правовое основание обработки имени ребёнка и порядок подтверждения полномочий представителя требуют проверки ответственным за документы до выкладки. Технический gate выполняется.
-- Рабочее дерево: продуктовый код, тесты и план закоммичены; это обновление журнала ещё не зафиксировано.
+- Следующий шаг: получить технический review и проверку согласия PR #227, рабочий SSH-доступ к stage; после merge PR #226 обновить base и повторить затронутые проверки.
+- Блокеры/открытые решения: review отсутствует, PR #227 остаётся draft; правовое основание обработки имени ребёнка и подтверждение полномочий представителя требуют проверки ответственным за документы; SSH к `rebit-pro:22` завершается таймаутом. HTTP stage отвечает 200. Полный технический gate PASS.
+- Рабочее дерево: продуктовый код и тесты закоммичены; дополнение плана/журнала релиза ещё не зафиксировано.
 - Следующие проверки при изменении base или кода: `E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor E2E_PHP_CLI_IMAGE=rabit-api-e2e-php-cli:local E2E_PHP_FPM_IMAGE=rabit-api-e2e-php-fpm:local E2E_NGINX_IMAGE=rabit-api-e2e-nginx:local make test-e2e`; PHP CS Fixer по изменённым PHP файлам.
 
 ## Журнал
@@ -33,6 +33,7 @@
 - 2026-10-31: финальный `E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor E2E_PHP_CLI_IMAGE=rabit-api-e2e-php-cli:local E2E_PHP_FPM_IMAGE=rabit-api-e2e-php-fpm:local E2E_NGINX_IMAGE=rabit-api-e2e-nginx:local make test-e2e` с изолированной БД — PASS. Frontend lint/style/typecheck/e2e typecheck/build/UI/commerce unit PASS; backend php-lint/PHPStan/PHPUnit (1283 теста, 51352 assertions) PASS; браузерные группы a/b 81+78 = 159 PASS; все SQL-верификаторы PASS. Артефакты `api/var/e2e/rabit-e2e-8a2267ae1c89/`.
 - 2026-10-31: `/home/user/.local/bin/gh api repos/rebit-pro/rabit-api/commits/main --jq .sha` вернул `b57581611fa253dacac9480b84e4e44b78b3b948`, совпадает с base. `git diff --check` PASS; PHP CS Fixer по 40 изменённым PHP файлам и точечно по трём итоговым E2E-скриптам — PASS, 0 исправлений.
 - 2026-10-31: продуктовый diff и план зафиксированы коммитом `565f899`, ветка отправлена по HTTPS через credential helper GitHub CLI. Открыт draft PR #227 в `main` с отмеченной необходимостью правовой проверки новых редакций документов и применения миграции до подключения frontend; merge не выполнялся.
+- 2026-10-31: владелец поручил ручную выкладку. `gh pr view 227`: PR открыт как draft, review отсутствует, checks в GitHub пусты (Actions отключены), base актуален. `ssh -o BatchMode=yes -o ConnectTimeout=7 rebit-pro ...` завершился таймаутом SSH banner к `37.143.8.221:22`; `https://app.morefoto36.ru/health` и `/api/v1/health` отвечают 200. Release на сервере не начат. План дополнен порядком миграции, проверок и отката; открыты технический review и правовая проверка согласия.
 
 ## Проверки
 
