@@ -2,12 +2,12 @@
 
 ## Точка продолжения
 
-- Ветка: `codex/ops-child-name-report`, base/head `b57581611fa253dacac9480b84e4e44b78b3b948`; отдельный worktree `/tmp/rabit-api-ops-child-name-report`. PR/issue задачи пока нет. Связанная документация: план рядом, `api/public/local/modules/morefoto.legal/documents/`.
+- Ветка: `codex/ops-child-name-report`, base `b57581611fa253dacac9480b84e4e44b78b3b948`, head `565f899` перед финальным обновлением журнала; отдельный worktree `/tmp/rabit-api-ops-child-name-report`. Draft PR #227, issue задачи нет. Связанная документация: план рядом, `api/public/local/modules/morefoto.legal/documents/`.
 - Завершено: миграция, DTO, сохранение и чтение имени, проекции API, форма live/demo, строки заказов в отчёте JSON/UI/PDF, новые версии политики и согласия. Финальный полный `make test-e2e` прошёл, включая 159 браузерных сценариев и все SQL-верификаторы; desktop/mobile визуально проверены.
-- Следующий шаг: самопроверка diff, commit и отдельный draft PR в `main`.
+- Следующий шаг: технический review PR #227 и проверка новой редакции согласия ответственным за документы; затем отдельно решить готовность к merge/deployment.
 - Блокеры/открытые решения: одно ФИО на заказ подтверждено; уточнения о виде отчёта и обязательности ещё могут изменить рабочее решение. Правовое основание обработки имени ребёнка и порядок подтверждения полномочий представителя требуют проверки ответственным за документы до выкладки. Технический gate выполняется.
-- Рабочее дерево: незакоммичены файлы плана, изменения `morefoto.commerce`, `morefoto.legal`, frontend, `api/tools/e2e/` и миграция; точный список — `git status --short`.
-- Следующие проверки: при замечаниях review повторить затронутые проверки и полный `make test-e2e` после изменения base.
+- Рабочее дерево: продуктовый код, тесты и план закоммичены; это обновление журнала ещё не зафиксировано.
+- Следующие проверки при изменении base или кода: `E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor E2E_PHP_CLI_IMAGE=rabit-api-e2e-php-cli:local E2E_PHP_FPM_IMAGE=rabit-api-e2e-php-fpm:local E2E_NGINX_IMAGE=rabit-api-e2e-nginx:local make test-e2e`; PHP CS Fixer по изменённым PHP файлам.
 
 ## Журнал
 
@@ -32,6 +32,7 @@
 - 2026-10-31: визуально просмотрены desktop/mobile снимки отчёта предыдущего прогона: строки заказов с ФИО читаются, у детей остались коды и суммы, горизонтального переполнения нет. Результат browser group b предыдущего прогона: 78 PASS; group a: 81 PASS.
 - 2026-10-31: финальный `E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor E2E_PHP_CLI_IMAGE=rabit-api-e2e-php-cli:local E2E_PHP_FPM_IMAGE=rabit-api-e2e-php-fpm:local E2E_NGINX_IMAGE=rabit-api-e2e-nginx:local make test-e2e` с изолированной БД — PASS. Frontend lint/style/typecheck/e2e typecheck/build/UI/commerce unit PASS; backend php-lint/PHPStan/PHPUnit (1283 теста, 51352 assertions) PASS; браузерные группы a/b 81+78 = 159 PASS; все SQL-верификаторы PASS. Артефакты `api/var/e2e/rabit-e2e-8a2267ae1c89/`.
 - 2026-10-31: `/home/user/.local/bin/gh api repos/rebit-pro/rabit-api/commits/main --jq .sha` вернул `b57581611fa253dacac9480b84e4e44b78b3b948`, совпадает с base. `git diff --check` PASS; PHP CS Fixer по 40 изменённым PHP файлам и точечно по трём итоговым E2E-скриптам — PASS, 0 исправлений.
+- 2026-10-31: продуктовый diff и план зафиксированы коммитом `565f899`, ветка отправлена по HTTPS через credential helper GitHub CLI. Открыт draft PR #227 в `main` с отмеченной необходимостью правовой проверки новых редакций документов и применения миграции до подключения frontend; merge не выполнялся.
 
 ## Проверки
 
