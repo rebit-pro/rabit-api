@@ -4,6 +4,7 @@ import type { GalleryPhoto, GallerySnapshot } from '../types';
 import { galleryBuys } from '../../commerce/sales-windows';
 import ProductSelector from '../../commerce/components/ProductSelector.vue';
 import GalleryImage from './GalleryImage.vue';
+import PhotoZoomStage from './PhotoZoomStage.vue';
 const props = defineProps<{
   photo: GalleryPhoto | null;
   index: number;
@@ -44,7 +45,9 @@ watch(
       <div class="photo-viewer__body" :class="{ 'photo-viewer__body--shopping': galleryBuys(gallery) }">
         <div class="photo-viewer__media">
           <div class="photo-viewer__stage">
-            <GalleryImage :key="photo.id" :src="photo.previewSrc" :alt="'Крупный кадр ' + photo.code" eager />
+            <PhotoZoomStage :key="photo.id" class="photo-viewer__zoom">
+              <GalleryImage :src="photo.previewSrc" :alt="'Крупный кадр ' + photo.code" eager />
+            </PhotoZoomStage>
             <v-btn
               class="photo-viewer__nav photo-viewer__nav--previous"
               icon="mdi-chevron-left"
@@ -113,6 +116,9 @@ watch(
   height: min(64svh, 760px);
   min-height: 180px;
   background: var(--mf-color-surface-2);
+}
+.photo-viewer__zoom {
+  height: 100%;
 }
 .photo-viewer .photo-viewer__nav {
   position: absolute;

@@ -178,6 +178,21 @@ for (const viewport of [
       animations: 'disabled'
     });
     await page.getByRole('button', { name: 'Открыть кадр A001', exact: true }).click();
+    const photoViewer = page.getByRole('dialog');
+    await expect(photoViewer.getByTestId('photo-zoom-level')).toHaveText('100%');
+    await photoViewer.getByRole('button', { name: 'Увеличить фото' }).click();
+    await expect(photoViewer.getByTestId('photo-zoom-level')).toHaveText('150%');
+    const stage = photoViewer.getByTestId('photo-zoom-stage');
+    const frame = (await stage.boundingBox())!;
+    const initialTransform = await stage.locator('.photo-zoom__canvas').evaluate((node) => (node as HTMLElement).style.transform);
+    await page.mouse.move(frame.x + frame.width / 2, frame.y + frame.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(frame.x + frame.width / 2 + 40, frame.y + frame.height / 2 + 20);
+    await page.mouse.up();
+    expect(await stage.locator('.photo-zoom__canvas').evaluate((node) => (node as HTMLElement).style.transform)).not.toBe(initialTransform);
+    await page.screenshot({ path: info.outputPath('e4-' + viewport.name + '-zoom.png'), animations: 'disabled' });
+    await photoViewer.getByRole('button', { name: 'Сбросить' }).click();
+    await expect(photoViewer.getByTestId('photo-zoom-level')).toHaveText('100%');
     // #192: each product has its own «+»; an added print turns into a counter, the frame shows its sum.
     const priced = page.waitForResponse((r) => r.url().endsWith('/quotes') && r.request().method() === 'POST');
     await productAdd(page, 'E4 Печать 10×15').click();
@@ -197,6 +212,9 @@ for (const viewport of [
     await expect(page.getByTestId('cart-total')).toContainText('100');
     // UI-DEC-04: the order is placed from the cart itself.
     await expect(page.getByTestId('create-order')).toBeVisible();
+    await page.getByRole('button', { name: 'Увеличить кадр A001' }).click();
+    await expect(page.getByRole('dialog').getByTestId('photo-zoom-level')).toHaveText('100%');
+    await page.getByRole('dialog').getByRole('button', { name: 'Закрыть фото' }).click();
     await expect(guide).toHaveAttribute('href', '/kak-kupit/#zakaz');
     await expect(guide).toBeInViewport();
     await page.reload();

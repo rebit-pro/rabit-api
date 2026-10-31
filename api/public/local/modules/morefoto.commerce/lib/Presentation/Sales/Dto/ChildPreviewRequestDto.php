@@ -14,5 +14,6 @@ final readonly class ChildPreviewRequestDto implements RequestDtoInterface
     public function __construct(
         #[RouteParameter(name: 'child_id', pattern: '/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/D', errorCode: 'CHILD_NOT_FOUND', errorStatus: 404)]
         public string $childId,
+        public string $variant = 'thumb',
     ) {}
 }

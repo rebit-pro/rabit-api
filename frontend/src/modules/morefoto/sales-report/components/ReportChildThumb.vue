@@ -1,19 +1,36 @@
 <script setup lang="ts">
+import { shallowRef } from 'vue';
 import { useProtectedImage } from '@/composables/useProtectedImage';
 import { childPreviewSource } from '../api';
+import PhotoZoomDialog from '../../gallery/components/PhotoZoomDialog.vue';
 
 // E10-DEC-08: the first ready frame of the child; the server shows it only after the group got its gallery link.
-const props = defineProps<{ childId: string; code: string; hasPreview: boolean }>();
+const props = defineProps<{
+  childId: string;
+  code: string;
+  hasPreview: boolean;
+}>();
 const { source, failed } = useProtectedImage(() => (props.hasPreview ? childPreviewSource(props.childId) : null));
+const open = shallowRef(false);
+const { source: enlarged, failed: enlargedFailed } = useProtectedImage(() =>
+  open.value && props.hasPreview ? childPreviewSource(props.childId, 'preview') : null
+);
 </script>
 
 <template>
   <span class="report-child">
-    <span class="report-child__thumb" aria-hidden="true">
-      <img v-if="source && !failed" :src="source" alt="" />
-      <v-icon v-else icon="mdi-image-outline" size="18" />
-    </span>
+    <button
+      v-if="source && !failed"
+      type="button"
+      class="report-child__thumb report-child__button"
+      :aria-label="'Увеличить фото ребёнка ' + code"
+      @click="open = true"
+    >
+      <img :src="source" alt="" />
+    </button>
+    <span v-else class="report-child__thumb" aria-hidden="true"><v-icon icon="mdi-image-outline" size="18" /></span>
     <span class="report-child__code">{{ code }}</span>
+    <PhotoZoomDialog :open="open" :src="enlarged ?? ''" :label="'Ребёнок ' + code" :error="enlargedFailed" @close="open = false" />
   </span>
 </template>
 
@@ -28,8 +45,8 @@ const { source, failed } = useProtectedImage(() => (props.hasPreview ? childPrev
   display: inline-grid;
   flex: 0 0 auto;
   place-items: center;
-  width: 40px;
-  height: 52px;
+  width: 44px;
+  height: 56px;
   overflow: hidden;
   border-radius: var(--mf-radius-xs);
   background: var(--mf-color-surface-2);
@@ -39,6 +56,14 @@ const { source, failed } = useProtectedImage(() => (props.hasPreview ? childPrev
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+.report-child__button {
+  padding: 0;
+  cursor: zoom-in;
+}
+.report-child__button:focus-visible {
+  outline: 2px solid var(--mf-color-focus);
+  outline-offset: 2px;
 }
 .report-child__code {
   font-family: var(--mf-font-display);

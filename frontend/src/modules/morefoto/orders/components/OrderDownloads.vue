@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, shallowRef } from 'vue';
 import { availablePhotos } from '../../settlement/rules';
 import PhotoImage from '../../photos/components/PhotoImage.vue';
+import PhotoZoomDialog from '../../gallery/components/PhotoZoomDialog.vue';
+import type { GalleryPhoto } from '../../gallery/types';
 import type { OrderSnapshot } from '../types';
 import type { downloadAccess } from '../delivery/rules';
 import { formatMoment } from '../formatters';
@@ -11,6 +13,7 @@ const props = defineProps<{
   busy: string;
 }>();
 const photos = computed(() => availablePhotos(props.order));
+const enlarged = shallowRef<GalleryPhoto | null>(null);
 defineEmits<{ download: [photoId?: string] }>();
 </script>
 <template>
@@ -57,7 +60,9 @@ defineEmits<{ download: [photoId?: string] }>();
         </p>
         <ul class="downloads__list">
           <li v-for="photo in photos" :key="photo.id" class="downloads__file">
-            <PhotoImage :src="photo.thumbSrc" :alt="'Кадр ' + photo.code" width="48" height="64" loading="lazy" />
+            <button type="button" class="downloads__open" :aria-label="'Увеличить кадр ' + photo.code" @click="enlarged = photo">
+              <PhotoImage :src="photo.thumbSrc" :alt="'Кадр ' + photo.code" loading="lazy" />
+            </button>
             <div class="downloads__name">
               <strong>{{ photo.code }}</strong
               ><span class="mf-muted downloads__note">WebP · тестовый файл</span>
@@ -73,6 +78,12 @@ defineEmits<{ download: [photoId?: string] }>();
             >
           </li>
         </ul>
+        <PhotoZoomDialog
+          :open="enlarged !== null"
+          :src="enlarged?.previewSrc ?? ''"
+          :label="'Кадр ' + (enlarged?.code ?? '')"
+          @close="enlarged = null"
+        />
       </template>
     </template>
     <a href="#order-help" class="downloads__help">Нужна помощь с фотографиями</a>
@@ -109,10 +120,22 @@ defineEmits<{ download: [photoId?: string] }>();
   border-top: 1px solid rgba(var(--v-theme-on-surface), 0.12);
   padding-top: var(--mf-space-3);
 }
-.downloads__file img {
+.downloads__open {
+  width: 48px;
+  height: 64px;
+  padding: 0;
+  cursor: zoom-in;
+}
+.downloads__open img {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   border-radius: var(--mf-radius-field);
   background: rgb(var(--v-theme-surface));
+}
+.downloads__open:focus-visible {
+  outline: 2px solid var(--mf-color-focus);
+  outline-offset: 2px;
 }
 .downloads__name {
   display: grid;

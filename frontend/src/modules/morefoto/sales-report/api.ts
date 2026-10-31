@@ -63,11 +63,17 @@ export const reportsApi = {
   },
   /** COM-16: the same report as a branded PDF; the server builds it, so it may take longer than a JSON read. */
   async pdf(filter: SalesReportFilter): Promise<Blob> {
-    return (await api.get<Blob>('/api/v1/sales-report/pdf', { params: filter, responseType: 'blob', timeout: 60_000 })).data;
+    return (
+      await api.get<Blob>('/api/v1/sales-report/pdf', {
+        params: filter,
+        responseType: 'blob',
+        timeout: 60_000
+      })
+    ).data;
   }
 };
 
 /** COM-17: the child's first ready frame; loaded with the staff token through useProtectedImage. */
-export function childPreviewSource(childId: string): string {
-  return '/api/v1/sales-report/children/' + encodeURIComponent(childId) + '/preview';
+export function childPreviewSource(childId: string, variant: 'thumb' | 'preview' = 'thumb'): string {
+  return '/api/v1/sales-report/children/' + encodeURIComponent(childId) + '/preview?variant=' + variant;
 }

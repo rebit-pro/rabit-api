@@ -136,6 +136,11 @@ test('D1/D2: приватное фото получает M:N-разметку �
   });
   expect(preview.status()).toBe(200);
   expect(preview.headers()['content-type']).toContain('image/webp');
+  await page.getByRole('button', { name: 'Увеличить кадр portrait.png' }).click();
+  await expect(page.getByRole('dialog').getByTestId('photo-zoom-level')).toHaveText('100%');
+  await page.getByRole('dialog').getByRole('button', { name: 'Увеличить фото' }).click();
+  await expect(page.getByRole('dialog').getByTestId('photo-zoom-level')).toHaveText('150%');
+  await page.getByRole('dialog').getByRole('button', { name: 'Закрыть фото' }).click();
   await page.screenshot({ path: testInfo.outputPath('d1-desktop-media.png'), fullPage: true });
 
   await page.getByTestId('photo-card').getByRole('checkbox').check();

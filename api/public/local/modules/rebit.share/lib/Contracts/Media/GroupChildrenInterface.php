@@ -28,4 +28,7 @@ interface GroupChildrenInterface
 
     /** Миниатюра готового кадра; null — производной нет. */
     public function thumbnail(string $photoId): ?PreviewContentOutputDto;
+
+    /** Водяное превью готового кадра для крупного просмотра; null — производной нет. */
+    public function preview(string $photoId): ?PreviewContentOutputDto;
 }
