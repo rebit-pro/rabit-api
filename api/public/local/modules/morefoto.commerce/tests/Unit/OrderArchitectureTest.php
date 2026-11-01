@@ -32,7 +32,7 @@ final class OrderArchitectureTest extends TestCase
 
     public function testOrderDtosHaveNoBehaviour(): void
     {
-        foreach (['/Application/Order/Dto', '/Presentation/Order/Dto', '/Domain/Order/ValueObject/OrderBuyer.php', '/Domain/Order/ValueObject/OrderSearchCriteria.php', '/Application/Storefront/Dto'] as $path) {
+        foreach (['/Application/Order/Dto', '/Presentation/Order/Dto', '/Domain/Order/ValueObject/OrderBuyer.php', '/Domain/Order/ValueObject/OrderChildName.php', '/Domain/Order/ValueObject/OrderSearchCriteria.php', '/Application/Storefront/Dto'] as $path) {
             $files = str_ends_with($path, '.php') ? [self::MODULE . $path] : (glob(self::MODULE . $path . '/*.php') ?: []);
             self::assertNotEmpty($files, $path);
             foreach ($files as $file) {
@@ -52,7 +52,7 @@ final class OrderArchitectureTest extends TestCase
             glob(self::MODULE . '/Domain/Order/Service/*.php') ?: [],
             [self::MODULE . '/Application/Storefront/UseCase/ValidateQuoteUseCase.php', self::MODULE . '/Application/Storefront/UseCase/GetStorefrontCatalogUseCase.php'],
         );
-        self::assertCount(16, $files);
+        self::assertCount(17, $files);
         foreach ($files as $file) {
             $source = (string)file_get_contents($file);
             // BypassFinals may strip modifiers on read; the class-level docblock itself must stay right before the class.

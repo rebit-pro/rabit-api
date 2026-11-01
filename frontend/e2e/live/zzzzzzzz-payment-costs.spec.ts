@@ -197,7 +197,13 @@ test('E6: расходы на оплату меняют цену витрины,
   const changed = await body(
     await page.request.post(gallery + '/orders', {
       headers: { 'Idempotency-Key': orderKey },
-      data: { lines, buyer, quoteToken: stale.quoteToken, consents: await orderConsents(page) }
+      data: {
+        lines,
+        buyer,
+        child: { firstName: 'Иван', lastName: 'Иванов' },
+        quoteToken: stale.quoteToken,
+        consents: await orderConsents(page)
+      }
     }),
     409
   );
@@ -209,7 +215,13 @@ test('E6: расходы на оплату меняют цену витрины,
     await body(
       await page.request.post(gallery + '/orders', {
         headers: { 'Idempotency-Key': createKey },
-        data: { lines, buyer, quoteToken: changed.error.details.quoteToken, consents: await orderConsents(page) }
+        data: {
+          lines,
+          buyer,
+          child: { firstName: 'Иван', lastName: 'Иванов' },
+          quoteToken: changed.error.details.quoteToken,
+          consents: await orderConsents(page)
+        }
       }),
       201
     )

@@ -31,5 +31,7 @@ final readonly class CreateOrderRequestDto implements RequestDtoInterface
         public string $idempotencyKey,
         /** @var AcceptedDocumentRequestDto[] */
         public array $consents = [],
+        /** null only for an attempt started before child names were collected. */
+        public ?OrderChildNameRequestDto $child = null,
     ) {}
 }

@@ -58,7 +58,13 @@ async function placeOrder(page: Page, path: string, lines: Line[], email: string
     await body(
       await page.request.post(path + '/orders', {
         headers: { 'Idempotency-Key': idempotencyKey },
-        data: { lines, buyer: { email, comment: '', reviewed: true }, quoteToken: priced.quoteToken, consents: await orderConsents(page) }
+        data: {
+          lines,
+          buyer: { email, comment: '', reviewed: true },
+          child: { firstName: 'Иван', lastName: 'Иванов' },
+          quoteToken: priced.quoteToken,
+          consents: await orderConsents(page)
+        }
       }),
       201
     )

@@ -6,6 +6,7 @@ namespace Morefoto\Commerce\Tests\Unit;
 
 use DG\BypassFinals;
 use Morefoto\Commerce\Application\Sales\Dto\ChildSalesOutputDto;
+use Morefoto\Commerce\Application\Sales\Dto\OrderNameSalesOutputDto;
 use Morefoto\Commerce\Application\Sales\Dto\ProductSalesOutputDto;
 use Morefoto\Commerce\Application\Sales\Dto\SalesReportNodeOutputDto;
 use Morefoto\Commerce\Application\Sales\Dto\SalesReportOutputDto;
@@ -41,6 +42,11 @@ final class SalesReportPdfTest extends TestCase
         self::assertStringNotContainsString('data:image/webp', $body);
         self::assertStringContainsString('2 / 1', $body);
         self::assertStringContainsString('из 4 детей', $body);
+        self::assertStringContainsString('Заказы с ФИО ребёнка', $body);
+        self::assertStringContainsString('Иванов Иван', $body);
+        self::assertStringContainsString('Не указано', $body);
+        self::assertStringContainsString('&lt;script&gt;', $body);
+        self::assertStringNotContainsString('<script>', $body);
         self::assertStringNotContainsString('@', $body);
         self::assertStringContainsString('24.10.2026 15:00 (МСК)', $html->footer($this->groupReport()));
     }
@@ -166,6 +172,11 @@ final class SalesReportPdfTest extends TestCase
                 $child('child-aa', 'AA', ChildSalesStatusEnum::UNPAID, 1, 0, 0, 'photo-aa'),
             ],
             generatedAt: new \DateTimeImmutable('2026-10-24T12:00:00+00:00'),
+            orders: [
+                new OrderNameSalesOutputDto('order-1', 'MF-000001', 'Иван', 'Иванов', 'paid', false, 123_450),
+                new OrderNameSalesOutputDto('order-2', 'MF-000002', null, null, 'unpaid', false, 0),
+                new OrderNameSalesOutputDto('order-3', 'MF-000003', '<script>', 'Тест', 'unpaid', false, 0),
+            ],
         );
     }
 }

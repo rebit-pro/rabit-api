@@ -13,6 +13,7 @@ final readonly class SalesReportResultDto implements ResultDtoInterface
      * @param list<ProductSalesResultDto>   $products
      * @param list<SalesReportRowResultDto> $rows
      * @param list<ChildSalesResultDto>     $children
+     * @param list<OrderNameSalesResultDto> $orders
      * @param string                        $generatedAt ATOM
      */
     public function __construct(
@@ -25,5 +26,6 @@ final readonly class SalesReportResultDto implements ResultDtoInterface
         public array $rows,
         public array $children,
         public string $generatedAt,
+        public array $orders = [],
     ) {}
 }

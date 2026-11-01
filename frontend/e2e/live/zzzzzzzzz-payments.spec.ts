@@ -63,7 +63,13 @@ async function placeOrder(page: Page): Promise<Created> {
     await body(
       await page.request.post(gallery + '/orders', {
         headers: { 'Idempotency-Key': idempotencyKey },
-        data: { lines, buyer, quoteToken: priced.quoteToken, consents: await orderConsents(page) }
+        data: {
+          lines,
+          buyer,
+          child: { firstName: 'Иван', lastName: 'Иванов' },
+          quoteToken: priced.quoteToken,
+          consents: await orderConsents(page)
+        }
       }),
       201
     )

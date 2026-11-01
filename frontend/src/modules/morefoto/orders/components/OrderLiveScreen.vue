@@ -47,7 +47,12 @@ const route = useRoute();
           <!-- G2: the payment receipt and, after the print handover, the closing receipt with their requisites. -->
           <OrderReceipts v-if="order.paymentStatus === 'paid'" :order-key="String(route.params.orderKey ?? '')" />
           <OrderComposition :quote="orderQuoteAsCart(order.quote)" />
-          <OrderLiveFacts :period="order.period" :buyer="order.buyer" />
+          <OrderLiveFacts
+            :period="order.period"
+            :buyer="order.buyer"
+            :child-first-name="order.childFirstName"
+            :child-last-name="order.childLastName"
+          />
         </div>
         <aside class="mf-panel order-summary">
           <p class="mf-eyebrow">ИТОГ ЗАКАЗА</p>

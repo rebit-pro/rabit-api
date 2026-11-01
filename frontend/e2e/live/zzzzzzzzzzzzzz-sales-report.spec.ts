@@ -25,6 +25,15 @@ type Report = {
   products: { id: string; name: string; prints: number }[];
   rows: (Node & { totals: Totals })[];
   children: { id: string; code: string; status: string; orders: number; paidOrders: number; paidTotal: number; hasPreview: boolean }[];
+  orders: {
+    id: string;
+    number: string;
+    firstName: string | null;
+    lastName: string | null;
+    paymentStatus: string;
+    latePayment: boolean;
+    total: number;
+  }[];
   generatedAt: string;
 };
 type Order = { paymentStatus: string; latePayment: boolean; quote: { lines: { childCode: string }[] } };
@@ -160,7 +169,9 @@ test('E10-T09…T12: each role reads the sales of its own area and downloads the
   const statuses = await expectedStatuses(page);
   for (const child of group.children) expect([child.code, child.status]).toEqual([child.code, statuses.get(child.code) ?? 'none']);
   expect(group.children.some((child) => child.status === 'paid')).toBe(true);
-  expect(JSON.stringify(group)).not.toMatch(/@|accessKey|MF-\d|photoId|buyer/i);
+  expect(JSON.stringify(group)).not.toMatch(/@|accessKey|photoId|buyer/i);
+  expect(group.orders.some((order) => order.firstName === 'Иван' && order.lastName === 'Иванов')).toBe(true);
+  expect(group.orders.every((order) => order.number.startsWith('MF-'))).toBe(true);
   const institutionId = group.institution!.id;
   const shootId = group.shoot!.id;
 
@@ -318,6 +329,8 @@ test('E10-T09…T12: each role reads the sales of its own area and downloads the
       await expect(teacher.getByTestId('report-figure-total').locator('dd')).toHaveText(total);
       await expect(teacher.getByTestId('report-child-status').filter({ visible: true })).toHaveCount(Math.min(group.children.length, 50));
       await expect(teacher.getByTestId('report-format')).toHaveCount(group.products.length);
+      await expect(teacher.getByTestId('report-order')).toHaveCount(group.orders.length);
+      await expect(teacher.getByTestId('report-orders')).toContainText('Иванов Иван');
       await expect(teacher.locator('[data-testid="report-children"] img').filter({ visible: true }).first()).toBeVisible();
       await teacher
         .getByRole('button', { name: /^Увеличить фото ребёнка/ })

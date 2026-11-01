@@ -2,7 +2,7 @@
 import { formatMoment } from '../formatters';
 import { formatPhone } from '../../ui/field-values';
 import type { LiveBuyer, OrderPeriod } from '../live/types';
-defineProps<{ period: OrderPeriod; buyer: LiveBuyer }>();
+defineProps<{ period: OrderPeriod; buyer: LiveBuyer; childFirstName: string | null; childLastName: string | null }>();
 const states = {
   preparing: 'Ещё не открыт',
   open: 'Идёт приём заказов',
@@ -33,8 +33,12 @@ const states = {
     </dl>
   </section>
   <section class="mf-panel order-facts" data-testid="order-contacts">
-    <h2>Контакты покупателя</h2>
+    <h2>Ребёнок и контакты покупателя</h2>
     <dl>
+      <div v-if="childFirstName && childLastName">
+        <dt>Ребёнок в заказе</dt>
+        <dd>{{ childLastName }} {{ childFirstName }}</dd>
+      </div>
       <!-- E8: orders since E8 have the email only; earlier ones keep the name and the phone. -->
       <div v-if="buyer.name">
         <dt>Покупатель</dt>

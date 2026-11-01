@@ -34,7 +34,13 @@ async function placeOrder(page: Page, tag: string, quantity: number): Promise<{ 
     await body(
       await page.request.post(gallery + '/orders', {
         headers: { 'Idempotency-Key': crypto.randomUUID().replace(/-/g, '') },
-        data: { lines, buyer, quoteToken: priced.quoteToken, consents: await orderConsents(page) }
+        data: {
+          lines,
+          buyer,
+          child: { firstName: 'Иван', lastName: 'Иванов' },
+          quoteToken: priced.quoteToken,
+          consents: await orderConsents(page)
+        }
       }),
       201
     )

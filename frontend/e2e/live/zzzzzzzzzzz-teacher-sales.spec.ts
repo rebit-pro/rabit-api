@@ -106,6 +106,7 @@ async function placeUnpaidOrder(page: Page) {
         data: {
           lines,
           buyer: { email: 'sales.e9@example.test', comment: '', reviewed: true },
+          child: { firstName: 'Иван', lastName: 'Иванов' },
           quoteToken: priced.quoteToken,
           consents: await orderConsents(page)
         }

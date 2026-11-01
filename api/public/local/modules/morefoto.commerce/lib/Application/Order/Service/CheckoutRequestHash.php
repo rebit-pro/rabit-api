@@ -8,7 +8,7 @@ use Morefoto\Commerce\Application\Order\Dto\CreateOrderInputDto;
 
 /** Считает хеш нормализованного тела оформления, чтобы отличить повтор от другого запроса с тем же Idempotency-Key.
  * Порядок строк и принятых документов не влияет на хеш; расчёт, состав, поля покупателя и версии документов
- * сравниваются в присланном виде.
+ * и имя ребёнка сравниваются в присланном виде; отсутствие имени в старом теле не меняет прежний хеш.
  */
 final readonly class CheckoutRequestHash
 {
@@ -26,11 +26,16 @@ final readonly class CheckoutRequestHash
         }
         sort($consents);
 
-        return hash('sha256', json_encode([
+        $body = [
             'quoteToken' => $input->quoteToken,
             'lines' => $lines,
             'buyer' => [$buyer->name, $buyer->phone, $buyer->email, $buyer->comment, $buyer->receiptChannel, $buyer->reviewed],
             'consents' => $consents,
-        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        ];
+        if (null !== $input->child) {
+            $body['child'] = [$input->child->firstName, $input->child->lastName];
+        }
+
+        return hash('sha256', json_encode($body, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 }

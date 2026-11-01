@@ -38,6 +38,8 @@ final readonly class OrderResultMapper
             buyer: $this->buyer($order->buyer),
             version: $order->version,
             createdAt: $order->createdAt,
+            childFirstName: $order->childFirstName,
+            childLastName: $order->childLastName,
         );
     }
 
@@ -68,6 +70,8 @@ final readonly class OrderResultMapper
             period: $this->period($output->period),
             accessKeyExpiresAt: $output->accessKeyExpiresAt,
             createdAt: $order->createdAt,
+            childFirstName: $order->childFirstName,
+            childLastName: $order->childLastName,
         );
     }
 
@@ -133,6 +137,8 @@ final readonly class OrderResultMapper
             version: $order->version,
             period: $this->period($output->period),
             correctionPhotos: $photos,
+            childFirstName: $order->childFirstName,
+            childLastName: $order->childLastName,
         );
     }
 
@@ -156,6 +162,8 @@ final readonly class OrderResultMapper
             latePayment: $order->latePayment,
             productionStatus: $order->productionStatus,
             version: $order->version,
+            childFirstName: $order->childFirstName,
+            childLastName: $order->childLastName,
         );
     }
 

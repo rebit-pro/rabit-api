@@ -166,7 +166,12 @@ function lastDays(days: number): void {
         </div>
       </header>
       <OrderComposition :quote="orderQuoteAsCart(card.quote, thumb)" />
-      <OrderLiveFacts :period="card.period" :buyer="card.buyer" />
+      <OrderLiveFacts
+        :period="card.period"
+        :buyer="card.buyer"
+        :child-first-name="card.childFirstName"
+        :child-last-name="card.childLastName"
+      />
       <section class="mf-panel" data-testid="correction-photos">
         <h2 class="staff-order__title">Кадры детей заказа</h2>
         <p class="mf-muted">

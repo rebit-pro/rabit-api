@@ -23,5 +23,7 @@ final readonly class CreatedOrderResultDto implements ResultDtoInterface
         public OrderBuyerResultDto $buyer,
         public string $version,
         public string $createdAt,
+        public ?string $childFirstName = null,
+        public ?string $childLastName = null,
     ) {}
 }

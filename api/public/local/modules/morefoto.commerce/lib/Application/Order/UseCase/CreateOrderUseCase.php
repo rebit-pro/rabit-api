@@ -13,6 +13,7 @@ use Morefoto\Commerce\Application\Order\Service\OrderPlacement;
 use Morefoto\Commerce\Application\Storefront\UseCase\CreateQuoteUseCase;
 use Morefoto\Commerce\Application\Storefront\UseCase\ValidateQuoteUseCase;
 use Morefoto\Commerce\Domain\Order\Service\BuyerPolicy;
+use Morefoto\Commerce\Domain\Order\Service\ChildNamePolicy;
 use Morefoto\Commerce\Domain\Order\ValueObject\IdempotencyKey;
 use Morefoto\Commerce\Domain\Storefront\Exception\QuotePriceChangedException;
 use Morefoto\Commerce\Domain\Storefront\Service\SalesWindowPolicy;
@@ -25,7 +26,7 @@ use Rebit\Share\Shared\Exception\HttpException;
  * Повтор с тем же Idempotency-Key возвращает исходный заказ даже после закрытия приёма; новый заказ создаётся
  * только в открытом сроке продаж его состава (печать — до +7, электронные — до +14) вне паузы исправления разметки (D4)
  * по актуальному расчёту и с принятыми действующими редакциями согласия и оферты, а изменение цены возвращает новый
- * расчёт для подтверждения.
+ * расчёт для подтверждения. Новые заказы требуют имя и фамилию ребёнка на уровне заказа.
  */
 final readonly class CreateOrderUseCase
 {
@@ -34,6 +35,7 @@ final readonly class CreateOrderUseCase
         private GalleryAccessInterface $gallery,
         private CheckoutReceipts $receipts,
         private BuyerPolicy $buyers,
+        private ChildNamePolicy $childNames,
         private ValidateQuoteUseCase $quotes,
         private CreateQuoteUseCase $freshQuotes,
         private OrderPlacement $placement,
@@ -72,9 +74,10 @@ final readonly class CreateOrderUseCase
         // D4: the group row read here serializes the order with the start of a markup correction.
         $this->windows->assertNotPaused($context->group->markupCorrectionAt);
         $buyer = $input->buyer;
-        // E8: the name and the phone of the request are not part of the order.
+        // E8: the buyer's name and phone are not part of the order; the child's name is a separate field.
         $accepted = $this->buyers->accept($buyer->email, $buyer->comment, $buyer->receiptChannel, $buyer->reviewed, $this->availability->receiptChannels());
-        $placed = $this->placement->place($this->quotes->executeWithinTransaction($galleryToken, $input->quoteToken, $input->lines), $accepted, $galleryToken, $input->quoteToken);
+        $child = $this->childNames->accept($input->child?->firstName, $input->child?->lastName);
+        $placed = $this->placement->place($this->quotes->executeWithinTransaction($galleryToken, $input->quoteToken, $input->lines), $accepted, $child, $galleryToken, $input->quoteToken);
         // A missing or outdated document rolls the whole checkout back together with the order.
         $this->consents->record(ConsentContextEnum::ORDER, $placed->orderId, $input->consents);
         $this->receipts->complete($galleryToken, $key, $placed);

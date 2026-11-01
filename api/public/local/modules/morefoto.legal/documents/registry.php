@@ -9,6 +9,7 @@ return [
         'title' => 'Политика обработки персональных данных',
         'versions' => [
             ['version' => '2026-09-25', 'effectiveFrom' => '2026-09-25', 'reconsent' => false],
+            ['version' => '2026-10-31', 'effectiveFrom' => '2026-10-31', 'reconsent' => false],
         ],
     ],
     'offer' => [
@@ -25,6 +26,7 @@ return [
         'title' => 'Согласие покупателя на обработку персональных данных',
         'versions' => [
             ['version' => '2026-09-25', 'effectiveFrom' => '2026-09-25', 'reconsent' => true],
+            ['version' => '2026-10-31', 'effectiveFrom' => '2026-10-31', 'reconsent' => true],
         ],
     ],
     'staff-consent' => [

@@ -396,7 +396,13 @@ test('D3: куратор переносит детей сотрудника по
     const created = await body(
       await page.request.post(path + '/orders', {
         headers: { 'Idempotency-Key': idempotencyKey },
-        data: { lines, buyer, quoteToken: priced.quoteToken, consents: await orderConsents(page) }
+        data: {
+          lines,
+          buyer,
+          child: { firstName: 'Иван', lastName: 'Иванов' },
+          quoteToken: priced.quoteToken,
+          consents: await orderConsents(page)
+        }
       }),
       201
     );
@@ -540,7 +546,13 @@ test('D3: куратор переносит детей сотрудника по
     ]);
     const staleCart = await page.request.post(gallery + '/orders', {
       headers: { 'Idempotency-Key': key() },
-      data: { lines: cartLines, buyer, quoteToken: cart.quoteToken, consents: await orderConsents(page) }
+      data: {
+        lines: cartLines,
+        buyer,
+        child: { firstName: 'Иван', lastName: 'Иванов' },
+        quoteToken: cart.quoteToken,
+        consents: await orderConsents(page)
+      }
     });
     expect([409, 422]).toContain(staleCart.status());
     expect(['INVALID_CART', 'QUOTE_STALE']).toContain((await staleCart.json()).error.code);

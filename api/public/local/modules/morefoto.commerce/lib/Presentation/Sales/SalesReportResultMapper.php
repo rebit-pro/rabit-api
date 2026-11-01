@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Morefoto\Commerce\Presentation\Sales;
 
 use Morefoto\Commerce\Application\Sales\Dto\ChildSalesOutputDto;
+use Morefoto\Commerce\Application\Sales\Dto\OrderNameSalesOutputDto;
 use Morefoto\Commerce\Application\Sales\Dto\ProductSalesOutputDto;
 use Morefoto\Commerce\Application\Sales\Dto\SalesReportInputDto;
 use Morefoto\Commerce\Application\Sales\Dto\SalesReportNodeOutputDto;
@@ -12,6 +13,7 @@ use Morefoto\Commerce\Application\Sales\Dto\SalesReportOutputDto;
 use Morefoto\Commerce\Application\Sales\Dto\SalesReportRowOutputDto;
 use Morefoto\Commerce\Application\Sales\Dto\SalesTotalsOutputDto;
 use Morefoto\Commerce\Presentation\Sales\Dto\ChildSalesResultDto;
+use Morefoto\Commerce\Presentation\Sales\Dto\OrderNameSalesResultDto;
 use Morefoto\Commerce\Presentation\Sales\Dto\ProductSalesResultDto;
 use Morefoto\Commerce\Presentation\Sales\Dto\SalesReportNodeResultDto;
 use Morefoto\Commerce\Presentation\Sales\Dto\SalesReportRequestDto;
@@ -59,6 +61,18 @@ final readonly class SalesReportResultMapper
                 $report->children,
             ),
             generatedAt: $report->generatedAt->format(DATE_ATOM),
+            orders: array_map(
+                static fn(OrderNameSalesOutputDto $order): OrderNameSalesResultDto => new OrderNameSalesResultDto(
+                    $order->id,
+                    $order->number,
+                    $order->firstName,
+                    $order->lastName,
+                    $order->paymentStatus,
+                    $order->latePayment,
+                    $order->total,
+                ),
+                $report->orders,
+            ),
         );
     }
 

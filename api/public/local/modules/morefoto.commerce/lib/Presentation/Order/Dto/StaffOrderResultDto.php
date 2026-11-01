@@ -29,5 +29,7 @@ final readonly class StaffOrderResultDto implements ResultDtoInterface
         public bool $latePayment,
         public string $productionStatus,
         public string $version,
+        public ?string $childFirstName = null,
+        public ?string $childLastName = null,
     ) {}
 }

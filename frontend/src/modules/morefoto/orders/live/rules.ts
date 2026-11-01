@@ -13,6 +13,8 @@ export type CheckoutOutcome =
 const fieldCodes: Record<string, [keyof BuyerErrors, string]> = {
   INVALID_BUYER_EMAIL: ['email', 'Укажите email в формате name@example.ru.'],
   INVALID_BUYER_COMMENT: ['comment', 'Комментарий — не более 1000 символов.'],
+  INVALID_CHILD_FIRST_NAME: ['childFirstName', 'Укажите имя ребёнка (до 100 символов).'],
+  INVALID_CHILD_LAST_NAME: ['childLastName', 'Укажите фамилию ребёнка (до 100 символов).'],
   REVIEW_REQUIRED: ['reviewed', 'Подтвердите, что проверили состав и условия заказа.'],
   RECEIPT_CHANNEL_UNAVAILABLE: ['receiptChannel', 'Этот канал чека сейчас не подключён.'],
   // The server rolls the order back, so the key stays unused; the documents are reloaded for a fresh acceptance.

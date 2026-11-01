@@ -66,6 +66,8 @@ export interface CreatedOrder {
   productionStatus: ProductionStatus;
   quote: LiveOrderQuote;
   buyer: LiveBuyer;
+  childFirstName: string | null;
+  childLastName: string | null;
   version: string;
   createdAt: string;
 }
@@ -78,6 +80,8 @@ export interface BuyerOrder {
   groupName: string;
   audience: 'regular' | 'staff';
   buyer: LiveBuyer;
+  childFirstName: string | null;
+  childLastName: string | null;
   quote: LiveOrderQuote;
   paymentStatus: PaymentStatus;
   /** G1: confirmed payment moment; late — confirmed after the sales deadline of the order composition (E7). */
@@ -101,6 +105,8 @@ export interface StaffOrder {
   audience: 'regular' | 'staff';
   createdAt: string;
   buyer: LiveBuyer;
+  childFirstName: string | null;
+  childLastName: string | null;
   quote: LiveOrderQuote;
   paymentStatus: PaymentStatus;
   paidAt: string | null;
@@ -148,6 +154,7 @@ export interface StaffOrderPage {
 export interface CheckoutBody {
   lines: { assignmentId: string; productId: string; quantity: number }[];
   buyer: { email: string; comment: string; reviewed: boolean };
+  child?: { firstName: string; lastName: string };
   quoteToken: string;
   /** Current versions of the buyer consent and the offer, accepted with separate checkboxes. */
   consents: { code: string; version: string }[];

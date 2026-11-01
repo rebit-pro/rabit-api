@@ -10,6 +10,7 @@ use Morefoto\Commerce\Application\Storefront\Dto\QuoteOutputDto;
 use Morefoto\Commerce\Application\Storefront\Dto\ValidatedQuoteOutputDto;
 use Morefoto\Commerce\Domain\Order\Service\OrderCalendarPolicy;
 use Morefoto\Commerce\Domain\Order\ValueObject\OrderBuyer;
+use Morefoto\Commerce\Domain\Order\ValueObject\OrderChildName;
 use PHPUnit\Framework\TestCase;
 use Rebit\Share\Contracts\Media\Dto\GalleryAccessOutputDto;
 use Rebit\Share\Contracts\Media\Dto\GalleryAssignmentOutputDto;
@@ -32,6 +33,7 @@ final class OrderMapperTest extends TestCase
         $records = (new OrderRecordMapper())->records(
             $this->validated(),
             new OrderBuyer('buyer@example.test', '', null),
+            new OrderChildName('Иван', 'Иванов'),
             new MediaScopeOutputDto(5, 2, 'shoot-id', 1, 'group-id', false, 'institution-id', 'regular'),
             'order-id',
             ['line-1', 'line-2'],
@@ -43,6 +45,7 @@ final class OrderMapperTest extends TestCase
         self::assertSame('2026-09-22 10:00:00', $records['order']['CREATED_AT']);
         self::assertSame(5, $records['order']['INSTITUTION_ID']);
         self::assertSame('unpaid', $records['order']['PAYMENT_STATUS']);
+        self::assertSame(['Иван', 'Иванов'], [$records['order']['CHILD_FIRST_NAME'], $records['order']['CHILD_LAST_NAME']]);
         self::assertSame('["A"]', $records['order']['GIFTS']);
         self::assertSame(['line-1', 'line-2'], array_column($records['lines'], 'PUBLIC_ID'));
         self::assertSame([12, 12], array_column($records['lines'], 'CHILD_ID'));
@@ -61,6 +64,7 @@ final class OrderMapperTest extends TestCase
         (new OrderRecordMapper())->records(
             new ValidatedQuoteOutputDto(new QuoteOutputDto($quote, str_repeat('c', 64), 'x'), $validated->gallery),
             new OrderBuyer('buyer@example.test', '', null),
+            new OrderChildName('Иван', 'Иванов'),
             new MediaScopeOutputDto(5, 2, 'shoot-id', 1, 'group-id', false, 'institution-id', 'regular'),
             'order-id',
             ['line-1', 'line-2'],
@@ -68,6 +72,38 @@ final class OrderMapperTest extends TestCase
             str_repeat('c', 64),
             new \DateTimeImmutable(),
         );
+    }
+
+    public function testOneChildNameBelongsToTheOrderWithLinesForTwoChildren(): void
+    {
+        $validated = $this->validated();
+        $quote = $validated->quote->quote;
+        $secondAssignmentId = '22222222-2222-4222-8222-222222222222';
+        $quote['lines'][1]['assignmentId'] = $secondAssignmentId;
+        $quote['lines'][1]['childCode'] = 'B';
+        $second = new GalleryAssignmentOutputDto($secondAssignmentId, self::PHOTO, 'child-b', 13, 'B', 'B001', 1200, 800, 1);
+        $gallery = $validated->gallery;
+        $mixed = new ValidatedQuoteOutputDto(
+            new QuoteOutputDto($quote, str_repeat('c', 64), '2026-09-22T10:15:00+00:00'),
+            new GalleryAccessOutputDto($gallery->group, $gallery->state, $gallery->referenceNow, $gallery->capabilityRevision, [$gallery->assignments[0], $second]),
+        );
+
+        $records = (new OrderRecordMapper())->records(
+            $mixed,
+            new OrderBuyer('buyer@example.test', '', null),
+            new OrderChildName('Иван', 'Иванов'),
+            new MediaScopeOutputDto(5, 2, 'shoot-id', 1, 'group-id', false, 'institution-id', 'regular'),
+            'order-id',
+            ['line-1', 'line-2'],
+            str_repeat('a', 64),
+            str_repeat('c', 64),
+            new \DateTimeImmutable('2026-09-22T13:00:00+03:00'),
+        );
+
+        self::assertSame([12, 13], array_column($records['lines'], 'CHILD_ID'));
+        self::assertSame(['Иван', 'Иванов'], [$records['order']['CHILD_FIRST_NAME'], $records['order']['CHILD_LAST_NAME']]);
+        self::assertArrayNotHasKey('CHILD_FIRST_NAME', $records['lines'][0]);
+        self::assertArrayNotHasKey('CHILD_FIRST_NAME', $records['lines'][1]);
     }
 
     public function testRowsBecomeBuyerFacingOrderWithoutInternalIds(): void
@@ -81,6 +117,7 @@ final class OrderMapperTest extends TestCase
         self::assertSame(['id' => self::PHOTO, 'assignmentId' => self::ASSIGNMENT, 'code' => 'A003', 'width' => 1200, 'height' => 800], $order->quote['lines'][0]['photo']);
         self::assertTrue($order->quote['lines'][0]['product']['staffDiscount']);
         self::assertSame('1', $order->version);
+        self::assertSame(['Иван', 'Иванов'], [$order->childFirstName, $order->childLastName]);
         self::assertSame(['Анна', '+79001234567'], [$order->buyer->name, $order->buyer->phone], 'An order placed before E8 keeps its contacts.');
     }
 
@@ -92,6 +129,17 @@ final class OrderMapperTest extends TestCase
         self::assertSame([null, null, 'buyer@example.test'], [$order->buyer->name, $order->buyer->phone, $order->buyer->email]);
     }
 
+    public function testHistoricalOrderHasNoInventedChildName(): void
+    {
+        $order = (new OrderRowMapper(new OrderCalendarPolicy()))->order(
+            ['CHILD_FIRST_NAME' => null, 'CHILD_LAST_NAME' => null] + self::row(),
+            [self::line()],
+        );
+
+        self::assertNull($order->childFirstName);
+        self::assertNull($order->childLastName);
+    }
+
     /** @return array<string, mixed> */
     public static function row(): array
     {
@@ -100,6 +148,7 @@ final class OrderMapperTest extends TestCase
             'SHOOT_ID' => '2', 'SHOOT_PUBLIC_ID' => 'shoot-id', 'GROUP_ID' => '1', 'GROUP_PUBLIC_ID' => 'group-id', 'AUDIENCE' => 'regular',
             'INSTITUTION_NAME' => 'Institution', 'SHOOT_NAME' => 'Shoot', 'GROUP_NAME' => 'Group', 'BUYER_NAME' => 'Анна',
             'BUYER_PHONE' => '+79001234567', 'BUYER_EMAIL' => 'buyer@example.test', 'BUYER_COMMENT' => '', 'RECEIPT_CHANNEL' => null,
+            'CHILD_FIRST_NAME' => 'Иван', 'CHILD_LAST_NAME' => 'Иванов',
             'SUBTOTAL' => '50000', 'DISCOUNT' => '0', 'GIFT_SAVING' => '25000', 'TOTAL' => '25000', 'ITEM_COUNT' => '2', 'GIFTS' => '["A"]',
             'CATALOG_REVISION' => '3', 'CONDITIONS_REVISION' => '4', 'PAYMENT_STATUS' => 'unpaid', 'PRODUCTION_STATUS' => 'not-started',
             'VERSION' => '1', 'CREATED_AT' => '2026-09-22 10:00:00',

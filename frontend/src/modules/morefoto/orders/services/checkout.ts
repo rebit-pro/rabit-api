@@ -17,6 +17,8 @@ export function readCheckoutDraft(groupId: string): CheckoutDraft {
   const stored = readDemo<Partial<CheckoutDraft>>('checkout:' + groupId, {});
   const draft: CheckoutDraft = {
     email: typeof stored.email === 'string' ? stored.email : '',
+    childFirstName: typeof stored.childFirstName === 'string' ? stored.childFirstName : '',
+    childLastName: typeof stored.childLastName === 'string' ? stored.childLastName : '',
     comment: typeof stored.comment === 'string' ? stored.comment : '',
     receiptChannel: stored.receiptChannel === 'max' ? 'max' : 'email',
     reviewed: false,
@@ -68,6 +70,8 @@ export async function createOrder(token: string, fields: BuyerFields, requestId:
       createdAt: gallery.referenceNow,
       closesAt: gallery.closesAt,
       buyer: normalizeBuyer(fields),
+      childFirstName: fields.childFirstName.trim(),
+      childLastName: fields.childLastName.trim(),
       quote,
       digitalPhotos,
       paymentStatus: 'unpaid',
