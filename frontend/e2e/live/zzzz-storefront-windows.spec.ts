@@ -79,7 +79,7 @@ for (const viewport of [
   { name: 'desktop', width: 1440, height: 1000 },
   { name: 'mobile', width: 390, height: 844 }
 ]) {
-  test('E7: digital-only gallery, cart and developer credit on ' + viewport.name, async ({ page }, info) => {
+  test('E7: digital-only gallery, cart and footer without developer credit on ' + viewport.name, async ({ page }, info) => {
     await page.setViewportSize(viewport);
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
@@ -93,9 +93,11 @@ for (const viewport of [
     await expect(page.getByText('Печать закрыта', { exact: true })).toBeVisible();
     await expect(page.getByTestId('gallery-deadlines')).toContainText('Электронные фото');
     await expect(page.getByTestId('gallery-digital-only')).toBeVisible();
-    const footer = page.getByTestId('footer-developer');
-    await expect(footer).toHaveText('Разработано в ReBit Studio');
-    await expect(footer.getByRole('link', { name: 'ReBit Studio' })).toHaveAttribute('href', 'https://rebit-pro.ru');
+    // #219: the footer keeps the seller line and no longer credits or links the developer studio.
+    const footer = page.getByTestId('legal-footer');
+    await expect(footer).toBeVisible();
+    await expect(footer).not.toContainText('ReBit Studio');
+    await expect(footer.locator('a[href*="rebit-pro.ru"]')).toHaveCount(0);
     await page.screenshot({ path: info.outputPath('e7-' + viewport.name + '-gallery.png'), fullPage: true, animations: 'disabled' });
 
     const code = gallery.children[0]!.photos[0]!.code;
