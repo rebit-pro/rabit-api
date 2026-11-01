@@ -2,11 +2,11 @@
 
 ## Точка продолжения
 
-- Ветка журнала codex/ops-manual-release-20261101; worktree /home/user/rabit-api/.worktrees/ops-manual-release-20261101; base a5533da338d45c50b7a27a2cf975c2d8892a0daf, предыдущий зафиксированный head 9624d42c7a07c14ded9967e92bd2d98300892c41; текущий head показывает `git rev-parse HEAD`.
+- Ветка журнала codex/ops-manual-release-20261101; worktree /home/user/rabit-api/.worktrees/ops-manual-release-20261101; base a5533da338d45c50b7a27a2cf975c2d8892a0daf, предыдущий зафиксированный head 7ecbfd3; текущий head показывает `git rev-parse HEAD`. Документационный PR #229 в main.
 - Рабочий checkout стенда /home/user/rabit-api: ветка main, head 9b89f306905bf64e21013305844051145706e16a, дерево чистое; дерево совпадает с кандидатом 1e79abe.
 - PR #215, #220, #225, #227 MERGED; merge SHA f220e99, 0cb6da7, 66736a6, 9b89f30 соответственно; follow-up issue #228. Документы docs/waves/a8/README.md и docs/deployments/2026-09-11-rabit-api.md.
 - Завершено: кандидат и точный main прошли полный gate и visual; четыре PR влиты; release `main-20261101121402-9b89f30` выкачен на rebit-pro, миграция применена, HTTP/Swarm/Rabbit smoke PASS.
-- Сейчас: техническая выкладка завершена, итоговый журнал актуализирован. Один следующий шаг после сохранения журнала: выполнить юридический follow-up по issue #228.
+- Сейчас: техническая выкладка завершена, итоговый журнал опубликован в документационном PR #229. Один следующий шаг: review/merge #229; отдельно выполнить юридический follow-up по issue #228.
 - Открытые решения: последующая правка юридических редакций в issue #228; платёжный sandbox YooKassa не подключён, поэтому его внешняя часть не проверялась. Блокеров для текущего релиза нет.
 - Рабочее дерево журнала: изменения plan.md и progress.md входят в итоговый commit этой ветки; основной checkout чист на main 9b89f30.
 - Следующие проверки при необходимости: `ssh rebit-pro 'docker service ls'`; `curl -I https://app.morefoto36.ru/health`; `sha256sum --check /srv/morefoto/releases/main-20261101121402-9b89f30/database-before.sql.gz.sha256` на сервере.
@@ -54,6 +54,7 @@
 - 2026-11-01. `switch-frontend.sh`: checksum двух архивов PASS, образ `morefoto-frontend:main-20261101121402-9b89f30` загружен, `morefoto_frontend` 2/2. Сохранён `frontend-before.txt` с предыдущим образом.
 - 2026-11-01. `docker service inspect site_rabbitmq site_api-cron > runtime-services-before.json`, затем `docker service update --detach=false --quiet --restart-condition any --restart-max-attempts 0 site_api-cron` PASS. RabbitMQ ServiceSpec идентичен снимку, hostname `01a8af19c94b`, ping succeeded, vhost `morefoto_stage` и `rebit`; cron `any/0`, 1/1.
 - 2026-11-01. Production HTTP smoke: `/health`, `/api/v1/health`, `/guide/reports/`, все 8 WebP, `/legal`, `/cabinet/reports`, публичные privacy/buyer-consent — 200; оба документа показывают текущую версию `2026-10-31`; `/api/v1/me`, `/api/v1/sales-report`, `/api/v1/sales-report/pdf` без авторизации — 401. Реальный Chromium mobile `/login`: footer есть, ссылок на `rebit-pro.ru` нет; `/legal/privacy` имеет правильный заголовок. Все MoreFoto-сервисы converged.
+- 2026-11-01. Итоговые plan.md и progress.md зафиксированы commit `7ecbfd3` и опубликованы в ветке задачи. `git diff origin/main...HEAD --stat`: только эти два файла. Открыт документационный PR #229 (`https://github.com/rebit-pro/rabit-api/pull/229`) для хранения истории релиза в main; продуктовый код в нём отсутствует. Этот PR не сливался автоматически.
 
 ## Точка отката
 
