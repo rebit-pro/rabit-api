@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Отчёты о продажах — база знаний «Море фото»</title>
+<link rel="icon" href="/favicon.ico?v=morefoto-1" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/icons/morefoto-v1.svg">
+<link rel="stylesheet" href="/guide/static/guide.css">
+</head>
+<body>
+<nav class="topnav" aria-label="Навигация"><div class="topnav-in">
+  <a href="/guide/">База знаний</a><span class="sep">/</span><span class="here">Отчёты о продажах</span><span class="spacer"></span><a href="/login">Войти в кабинет →</a>
+</div></nav>
+
+<main class="page narrow">
+  <header class="hero">
+    <p class="eyebrow">Для всех ролей</p>
+    <h1>Отчёты о продажах</h1>
+    <p class="lead">Раздел «Отчёты» показывает, что заказали и оплатили родители. По группе видно каждого ребёнка, по съёмке и учреждению — сводку. Любой отчёт можно скачать в PDF с логотипом «Море фото».</p>
+    <div class="roles"><span class="role role-team">Ответственный группы</span><span class="role role-team">Руководитель учреждения</span><span class="role role-cur">Куратор</span><span class="role role-org">Организатор</span></div>
+  </header>
+
+  <nav class="toc" aria-label="Шаги">
+    <b>Что внутри</b>
+    <ol>
+      <li><a href="#who">Кто что видит</a></li>
+      <li><a href="#open">Открыть отчёт</a></li>
+      <li><a href="#totals">Итоги наверху</a></li>
+      <li><a href="#children">Дети группы и статусы</a></li>
+      <li><a href="#levels">Съёмки, группы, учреждения</a></li>
+      <li><a href="#pdf">Скачать PDF</a></li>
+      <li><a href="#rules">Что считается продажей</a></li>
+    </ol>
+  </nav>
+
+  <p class="note tip"><span class="k">Как читать</span><span>Красной рамкой обведено то, куда нажимать. Нажмите на скриншот, чтобы открыть его крупно. Названия и цифры на скриншотах — демонстрационные.</span></p>
+
+  <ol class="steps">
+    <li class="step" id="who">
+      <div class="step-head"><div><h2>Кто что видит</h2><p class="muted">Область отчёта проверяет сервер — чужие группы и учреждения не откроются даже по ссылке</p></div></div>
+      <div class="step-body">
+        <div class="table">
+          <table>
+            <thead><tr><th>Роль</th><th>Что в отчёте</th><th>Куда попадает при входе</th></tr></thead>
+            <tbody>
+              <tr><td>Ответственный группы</td><td>Свои группы: каждый ребёнок; съёмка — только свои группы в ней</td><td>Сразу в свою группу, если она одна</td></tr>
+              <tr><td>Руководитель учреждения</td><td>Своё учреждение: съёмки, группы, дети</td><td>В своё учреждение</td></tr>
+              <tr><td>Куратор</td><td>Назначенные учреждения</td><td>«Все учреждения» — список назначенных</td></tr>
+              <tr><td>Организатор</td><td>Все учреждения</td><td>«Все учреждения»</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note"><span class="k">Без личных данных</span><span>Дети в отчёте обозначены кодом (A, B, C…) и миниатюрой — как в галерее. Имени, телефона и почты родителей, номеров заказов в отчёте и PDF нет.</span></p>
+      </div>
+    </li>
+
+    <li class="step" id="open">
+      <div class="step-head"><div><h2>Открыть отчёт</h2><p class="muted">Меню → Отчёты</p></div></div>
+      <div class="step-body">
+        <p>Нажмите <span class="ui">Отчёты</span> в меню слева (на телефоне — кнопка меню ☰). Отчёт открывается на верхнем уровне вашей области. Если на уровне одна строка, воспитателя кабинет ведёт дальше сам — до единственной группы.</p>
+        <p>Строка вверху — «хлебные крошки»: учреждение → съёмка → группа. Нажмите на любое звено, чтобы подняться на уровень выше.</p>
+        <div class="shots">
+          <figure class="shot"><a href="/guide/img/r01-teacher-group.webp" target="_blank"><img src="/guide/img/r01-teacher-group.webp" width="1280" height="800" loading="lazy" alt="Отчёт группы у ответственного: пункт меню Отчёты, крошки, плитки итогов и таблица детей"></a><figcaption>Пункт меню «Отчёты»</figcaption></figure>
+          <figure class="shot"><a href="/guide/img/r05-organizer-shoot.webp" target="_blank"><img src="/guide/img/r05-organizer-shoot.webp" width="1280" height="800" loading="lazy" alt="Отчёт съёмки у организатора: хлебные крошки Все учреждения — учреждение — съёмка"></a><figcaption>Хлебные крошки — подняться выше</figcaption></figure>
+        </div>
+      </div>
+    </li>
+
+    <li class="step" id="totals">
+      <div class="step-head"><div><h2>Итоги наверху</h2><p class="muted">Плитки над таблицей — по всему открытому уровню</p></div></div>
+      <div class="step-body">
+        <div class="table">
+          <table>
+            <thead><tr><th>Плитка</th><th>Что значит</th></tr></thead>
+            <tbody>
+              <tr><td>Оплачено родителями</td><td>Сумма подтверждённых оплат в рублях</td></tr>
+              <tr><td>Оплаченных заказов</td><td>Сколько заказов оплачено</td></tr>
+              <tr><td>Заказали / оплатили, из N детей</td><td>Сколько детей с хотя бы одним заказом, сколько из них оплатили, и сколько всего детей в разметке</td></tr>
+              <tr><td>Печатных фото</td><td>Отпечатки в оплаченных заказах: количество × число фото в продукции</td></tr>
+              <tr><td>Цифровых файлов и комплектов</td><td>Купленные электронные фото и комплекты «все фото ребёнка»</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </li>
+
+    <li class="step" id="children">
+      <div class="step-head"><div><h2>Дети группы и статусы</h2><p class="muted">Уровень группы</p></div></div>
+      <div class="step-body">
+        <p>На уровне группы — строка на каждого ребёнка: код и миниатюра, статус, оплаченные заказы, печать, цифровые файлы и сумма. Таблицу можно отсортировать по любой колонке.</p>
+        <div class="table">
+          <table>
+            <thead><tr><th>Статус</th><th>Что значит</th></tr></thead>
+            <tbody>
+              <tr><td>Оплатил</td><td>Есть хотя бы один оплаченный заказ</td></tr>
+              <tr><td>Заказ без оплаты</td><td>Заказ оформлен, но не оплачен или оплата не прошла. Можно напомнить родителям</td></tr>
+              <tr><td>Поздняя оплата</td><td>Оплата пришла после закрытия продаж — ждёт решения организатора и в суммы не входит</td></tr>
+              <tr><td>Нет заказа</td><td>Ребёнок есть в разметке, заказов нет</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>«1 из 2» в колонке заказов: из двух оформленных заказов оплачен один.</p>
+        <div class="shots">
+          <figure class="shot"><a href="/guide/img/r02-group-children.webp" target="_blank"><img src="/guide/img/r02-group-children.webp" width="1280" height="800" loading="lazy" alt="Таблица детей группы: коды, миниатюры, статусы Оплатил, Нет заказа, Заказ без оплаты, Поздняя оплата"></a><figcaption>Статусы детей группы</figcaption></figure>
+          <figure class="shot phone"><a href="/guide/img/r07-teacher-mobile-children.webp" target="_blank"><img src="/guide/img/r07-teacher-mobile-children.webp" width="600" height="1298" loading="lazy" alt="Дети группы на телефоне: карточки с кодом, статусом и суммой"></a><figcaption>На телефоне — карточки, сортировка сверху</figcaption></figure>
+        </div>
+        <p class="note"><span class="k">Миниатюры</span><span>Это первый готовый кадр ребёнка. Миниатюры появляются после передачи ссылки родителям. Ребёнок, переведённый в другую группу после заказа, остаётся в отчёте прежней группы под старым кодом.</span></p>
+      </div>
+    </li>
+
+    <li class="step" id="levels">
+      <div class="step-head"><div><h2>Съёмки, группы, учреждения</h2><p class="muted">Уровни выше группы</p></div></div>
+      <div class="step-body">
+        <p>Выше группы отчёт показывает строки: у руководителя — съёмки учреждения, в съёмке — группы, у куратора и организатора — учреждения. В каждой строке: детей, заказали, оплатили, заказов, печать, цифровые и сумма. Нажмите на название, чтобы открыть уровень ниже.</p>
+        <div class="shots">
+          <figure class="shot"><a href="/guide/img/r03-head-institution.webp" target="_blank"><img src="/guide/img/r03-head-institution.webp" width="1280" height="800" loading="lazy" alt="Отчёт учреждения у руководителя: список съёмок, название съёмки — ссылка"></a><figcaption>Название — открыть уровень ниже</figcaption></figure>
+          <figure class="shot phone"><a href="/guide/img/r06-teacher-mobile.webp" target="_blank"><img src="/guide/img/r06-teacher-mobile.webp" width="600" height="1298" loading="lazy" alt="Отчёт группы на телефоне: крошки, кнопка Скачать PDF и плитки итогов"></a><figcaption>Тот же отчёт на телефоне</figcaption></figure>
+        </div>
+      </div>
+    </li>
+
+    <li class="step" id="pdf">
+      <div class="step-head"><div><h2>Скачать PDF</h2><p class="muted">Кнопка справа от заголовка</p></div></div>
+      <div class="step-body">
+        <p>Нажмите <span class="ui">Скачать PDF</span> — файл сохранится с именем вида <code>morefoto-otchet-group-2026-10-25.pdf</code>. В PDF тот же открытый уровень: логотип «Море фото», заголовок и область, плитки итогов, таблица (у группы — с миниатюрами детей), печать по форматам, дата формирования и номера страниц. Файл можно переслать или распечатать.</p>
+        <div class="shots">
+          <figure class="shot"><a href="/guide/img/r04-curator-all.webp" target="_blank"><img src="/guide/img/r04-curator-all.webp" width="1280" height="800" loading="lazy" alt="Отчёт Все учреждения у куратора, кнопка Скачать PDF"></a><figcaption>Кнопка «Скачать PDF»</figcaption></figure>
+          <figure class="shot"><a href="/guide/img/r08-pdf-group.webp" target="_blank"><img src="/guide/img/r08-pdf-group.webp" width="910" height="1287" loading="lazy" alt="Первая страница PDF отчёта группы: логотип, плитки, дети с миниатюрами и статусами"></a><figcaption>Так выглядит PDF отчёта группы</figcaption></figure>
+        </div>
+        <p class="note"><span class="k">Не скачивается?</span><span>Отчёт собирается на сервере — подождите несколько секунд. Если появилась ошибка, повторите через минуту; если не помогло — напишите куратору или организатору.</span></p>
+      </div>
+    </li>
+
+    <li class="step" id="rules">
+      <div class="step-head"><div><h2>Что считается продажей</h2><p class="muted">Чтобы цифры не удивляли</p></div></div>
+      <div class="step-body">
+        <ul>
+          <li>Считается только оплата, подтверждённая ЮKassa. Оформленный, но не оплаченный заказ в суммы и «продано» не входит — такой ребёнок отмечен «Заказ без оплаты».</li>
+          <li>Оплата после закрытия продаж ждёт решения и в суммы не входит.</li>
+          <li>Бесплатные электронные копии к оплаченной печати и подарок за крупный заказ продажей не считаются.</li>
+          <li>В таблицах колонка «Цифровые» — электронные фото вместе с комплектами «все фото ребёнка»; в плитке они показаны раздельно.</li>
+          <li>Отчёт всегда свежий: он собирается в момент открытия или скачивания.</li>
+        </ul>
+        <p class="note warn"><span class="k">Не видите отчёт</span><span>Раздел показывает только вашу область. Если нет нужной группы или учреждения — попросите организатора проверить назначения в карточке сотрудника и войдите заново.</span></p>
+      </div>
+    </li>
+  </ol>
+
+  <nav class="next" aria-label="Дальше">
+    <a href="/guide/team/"><small>Ответственный и руководитель</small><b>Что им доступно →</b></a>
+    <a href="/guide/faq/#h-reports"><small>Если что-то не так</small><b>Частые вопросы →</b></a>
+  </nav>
+  <footer class="foot"><a href="/guide/">← Все статьи</a><span>Кабинет на 25.10.2026, демонстрационные данные</span></footer>
+</main>
+<script src="/guide/static/guide.js" defer></script>
+</body>
+</html>

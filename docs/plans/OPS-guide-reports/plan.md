@@ -46,8 +46,8 @@
 ## Checklist
 
 - [x] S1. Скриншоты и образец PDF.
-- [x] S2. Статья и ссылки из других страниц.
-- [ ] S3. Проверки: unit на ссылки guide, `npm run check`, гейт.
+- [x] S2. Статья и ссылки из других страниц: добавить `frontend/public/guide/reports/index.html` принудительно, потому что правило `reports` в `frontend/.gitignore` скрыло файл из PR.
+- [ ] S3. Проверки на чистом составе PR: unit на ссылки guide, `npm run check`, гейт и `git ls-tree` для статьи.
 - [ ] S4. PR, merge, frontend-only выкладка, проверка `/guide/reports/` на stage.
 
 ## Тест-кейсы
