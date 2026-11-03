@@ -4,6 +4,8 @@ import { computed, nextTick, onScopeDispose, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { GalleryUnavailableError, loadGallery } from '../services/gallery';
 import type { GalleryPhoto, GallerySnapshot } from '../types';
+import { filterGalleryPhotos } from '../filter';
+import { sortGalleryChildren } from '../series';
 
 export function useGallery() {
   const route = useRoute();
@@ -37,7 +39,7 @@ export function useGallery() {
         });
         return;
       }
-      gallery.value = result;
+      gallery.value = { ...result, children: sortGalleryChildren(result.children) };
     } catch (cause) {
       if (id !== requestId) return;
       unavailable.value = cause instanceof GalleryUnavailableError;
@@ -64,7 +66,7 @@ export function useGallery() {
   });
   const code = computed(() => (typeof route.query.child === 'string' ? route.query.child.trim().toUpperCase() : ''));
   const allPhotos = computed(() => gallery.value?.children.flatMap((child) => child.photos) ?? []);
-  const photos = computed(() => allPhotos.value.filter((photo) => photo.code.includes(code.value)));
+  const photos = computed(() => filterGalleryPhotos(gallery.value?.children ?? [], code.value));
   const activeIndex = computed(() => photos.value.findIndex((photo) => (photo.assignmentId ?? photo.id) === route.query.photo));
   const activePhoto = computed(() => photos.value[activeIndex.value] ?? null);
   const missingPhoto = computed(() => !!route.query.photo && !activePhoto.value && !!gallery.value);
