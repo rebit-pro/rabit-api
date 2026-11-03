@@ -2,15 +2,16 @@
 
 ## Точка продолжения
 
-- 03.11.2026, codex/ops-gallery-child-filter от main 9b89f306905bf64e21013305844051145706e16a; main проверен gh API.
-- Завершено: исправление, PR #231 и frontend-only публикация на app.morefoto36.ru. Продуктовый commit fc1e88bd1e270dc90655a382ac0ac51c28969cae. Фильтр подтверждён пользователем. Сейчас добавляется порядок серий A-Z, AA-AK; следующий шаг - production build и повторная публикация.
-- Проверки GF-01..GF-06 PASS. После публикации 37 серий/148 назначений сохранены, каждый код возвращает 4 кадра. Приватная ссылка и изображения не публиковались в GitHub.
-- E2E не запускаются. БД/галерея/фотографии не меняются. Отступы из опубликованного PR #230 сохраняются только в release-сборке.
-- Рабочее дерево: продуктовый код закоммичен; финальное изменение - только plan/progress. Прежний untracked docs/plans/OPS-stage-gallery-cleanup/ не включать. PR открыт, merge не выполняется. Продолжение при необходимости: gh pr view 231 --repo rebit-pro/rabit-api; git status --short.
+- 03.11.2026, codex/ops-gallery-child-filter от main 9b89f306905bf64e21013305844051145706e16a.
+- Выполнено: точный фильтр любого кода и естественный порядок серий A-Z, AA-AK в кнопках и общем списке фото; оба исправления опубликованы на app.morefoto36.ru.
+- PR https://github.com/rebit-pro/rabit-api/pull/231 открыт, merge не выполнялся. Продуктовый commit текущей публикации 31c302c36b1cbf7785a23715c6ae45775abba231. Последующий commit только документация.
+- GF-01..GF-07 PASS; 20 unit-тестов, lint, typecheck и production build PASS. E2E не запускались согласно действующему указанию пользователя.
+- Блокеров и обязательных следующих действий агента нет. Следующий шаг - пользователь обновляет открытую галерею. БД, 37 серий/148 фотографий и исходные назначения не менялись; отступы из PR #230 сохранены в release-only сборке.
+- Рабочее дерево перед финальным commit: только plan/progress; прежний untracked docs/plans/OPS-stage-gallery-cleanup/ не включать. Продолжение при необходимости: git status --short; gh pr view 231 --repo rebit-pro/rabit-api.
 
 ## Проверки
 
-GF-01 PASS; GF-02 PASS; GF-03 PASS; GF-04 PASS; GF-05 PASS; GF-06 PASS.
+GF-01 PASS; GF-02 PASS; GF-03 PASS; GF-04 PASS; GF-05 PASS; GF-06 PASS; GF-07 PASS.
 
 ## 03.11.2026 - диагностика
 
@@ -62,3 +63,12 @@ GalleryFilters передаёт один код через query.child. GalleryS
 - GF-07 unit PASS: node --experimental-strip-types --test tests/ui/gallery-series.test.mjs tests/ui/gallery-filter.test.mjs tests/ui/gallery-path.test.mjs tests/commerce/photo-paging.test.mjs - 20/20. Проверены A/B, Z/AA и ZZ/AAA; исходный массив заморожен и остаётся неизменным, объекты серий/фото сохраняют идентичность.
 - npm run typecheck (WSL Node 24.15.0) - PASS. ESLint изменённых TS/MJS - PASS. Первый git diff --check выявил лишнюю пустую строку в конце progress; перед commit окончания строк нормализованы и проверка повторена.
 - Сортировка использует копию массива и обычный sort, без новых требований к версии браузера. Применена к snapshot в useGallery, поэтому кнопки и общий просмотр имеют один порядок. API, БД, номера серий и порядок кадров внутри ребёнка не меняются.
+
+## Повторная публикация - порядок серий, 03.11.2026
+
+- Production npm run build (typecheck + Vite) PASS с VITE_API_URL=/api, VITE_API_MOCKS_ENABLED=false и версией pr-231-31c302c. 837 tracked-файлов release-only дерева сверены по SHA-256 с текущим commit, кроме ранее одобренного StaffConsentDialog.vue из #230. Никакие дополнительные продуктовые изменения не переносились.
+- Опубликован `morefoto-frontend:pr-231-31c302c`, image ID `sha256:5a9f675825c2e39cd3bb216b1a3f482351ca7c07ec5752c32fdf702f33c0b65a`. Rollout completed, frontend 2/2. Спецификация frontend кроме image и все соседние service Spec сохранены.
+- Публичные HTTPS-артефакты `CabinetLayout-BgTgyCJ3.css, GalleryPage-DmeW39lS.js` совпали по SHA-256 с локальной сборкой. /health 200, /api/v1/institutions без токена 401.
+- GF-07 PASS на read-only метаданных текущей галереи после публикации: A-Z, AA-AK; все 37 серий по 4 кадра, всего 148. Точный фильтр сохранён. SHA исходного состава назначений до/после совпал: c9911cf515ada77ea6568bbc954b93fbd56831623d87afab9d3d221ce87a0173. API продолжает отдавать исходный порядок, отображение нормализует frontend, БД/файлы не менялись.
+- Автоматический rollback не понадобился. Прежний image сохранён: `morefoto-frontend:pr-231-fc1e88b`. Откат: ssh photo.rebit-pro 'docker service update --no-resolve-image --image morefoto-frontend:pr-231-fc1e88b --detach=false morefoto_frontend'.
+- Самопроверка: сортировка только копии массива, стабильные коды/объекты/назначения и порядок кадров внутри ребёнка сохранены. Новых браузерных API и зависимостей нет. CSS/шаблоны не менялись; E2E и браузерные стенды не запускались.
