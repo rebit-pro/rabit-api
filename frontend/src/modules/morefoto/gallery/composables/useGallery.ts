@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { GalleryUnavailableError, loadGallery } from '../services/gallery';
 import type { GalleryPhoto, GallerySnapshot } from '../types';
 import { filterGalleryPhotos } from '../filter';
+import { sortGalleryChildren } from '../series';
 
 export function useGallery() {
   const route = useRoute();
@@ -38,7 +39,7 @@ export function useGallery() {
         });
         return;
       }
-      gallery.value = result;
+      gallery.value = { ...result, children: sortGalleryChildren(result.children) };
     } catch (cause) {
       if (id !== requestId) return;
       unavailable.value = cause instanceof GalleryUnavailableError;

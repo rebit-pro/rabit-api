@@ -3,7 +3,7 @@
 ## Точка продолжения
 
 - 03.11.2026, codex/ops-gallery-child-filter от main 9b89f306905bf64e21013305844051145706e16a; main проверен gh API.
-- Завершено: исправление, PR #231 и frontend-only публикация на app.morefoto36.ru. Продуктовый commit fc1e88bd1e270dc90655a382ac0ac51c28969cae. Следующий шаг - пользователь обновляет открытую галерею. Обязательных действий агента не осталось.
+- Завершено: исправление, PR #231 и frontend-only публикация на app.morefoto36.ru. Продуктовый commit fc1e88bd1e270dc90655a382ac0ac51c28969cae. Фильтр подтверждён пользователем. Сейчас добавляется порядок серий A-Z, AA-AK; следующий шаг - production build и повторная публикация.
 - Проверки GF-01..GF-06 PASS. После публикации 37 серий/148 назначений сохранены, каждый код возвращает 4 кадра. Приватная ссылка и изображения не публиковались в GitHub.
 - E2E не запускаются. БД/галерея/фотографии не меняются. Отступы из опубликованного PR #230 сохраняются только в release-сборке.
 - Рабочее дерево: продуктовый код закоммичен; финальное изменение - только plan/progress. Прежний untracked docs/plans/OPS-stage-gallery-cleanup/ не включать. PR открыт, merge не выполняется. Продолжение при необходимости: gh pr view 231 --repo rebit-pro/rabit-api; git status --short.
@@ -51,3 +51,14 @@ GalleryFilters передаёт один код через query.child. GalleryS
 - E2E не запускались. Это unit-проверки чистого фильтра и read-only проверка артефактов/JSON; браузерного прогона и тестового стенда не было.
 - Автоматический rollback предусматривался и не потребовался. Старый image сохранён. Команда отката: ssh photo.rebit-pro 'docker service update --no-resolve-image --image morefoto-frontend:pr-230-71918f5 --detach=false morefoto_frontend'.
 - PR https://github.com/rebit-pro/rabit-api/pull/231 открыт. Final docs-only commit не меняет frontend-дерево опубликованного продуктового commit.
+
+## Дополнение 03.11.2026 - порядок серий
+
+- Пользователь подтвердил фильтр, затем сообщил B перед A. API возвращает массив в порядке создания/загрузки; useGallery и GalleryFilters сохраняли этот порядок.
+- PR #231 остаётся открытым, ветка f61825bc641e2711f98f12fa90595aa5262de79d. Main 9b89f306905bf64e21013305844051145706e16a повторно проверен через gh API.
+- Текущий шаг: сортировка копии children в useGallery (A-Z, AA-AK) реализована, unit GF-07 PASS. Production build и повторная публикация PENDING. Затем проверки и повторная frontend-only публикация с сохранением #230 и точного фильтра.
+
+
+- GF-07 unit PASS: node --experimental-strip-types --test tests/ui/gallery-series.test.mjs tests/ui/gallery-filter.test.mjs tests/ui/gallery-path.test.mjs tests/commerce/photo-paging.test.mjs - 20/20. Проверены A/B, Z/AA и ZZ/AAA; исходный массив заморожен и остаётся неизменным, объекты серий/фото сохраняют идентичность.
+- npm run typecheck (WSL Node 24.15.0) - PASS. ESLint изменённых TS/MJS - PASS. Первый git diff --check выявил лишнюю пустую строку в конце progress; перед commit окончания строк нормализованы и проверка повторена.
+- Сортировка использует копию массива и обычный sort, без новых требований к версии браузера. Применена к snapshot в useGallery, поэтому кнопки и общий просмотр имеют один порядок. API, БД, номера серий и порядок кадров внутри ребёнка не меняются.
