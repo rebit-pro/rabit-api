@@ -2,15 +2,25 @@
 
 ## Точка продолжения
 
-- Ветка: `codex/ops-gallery-lifecycle-232`; base `9b89f306`, head — последний коммит ветки (`git rev-parse --short HEAD`); issue [#232](https://github.com/rebit-pro/rabit-api/issues/232), PR [#234](https://github.com/rebit-pro/rabit-api/pull/234). Связанные: #167, F2/F3/E7, граф K2.
-- Завершено: решения владельца зафиксированы; короткий URL, продление, расписание, worker, ручная отметка передачи и UI реализованы; полный двухстендовый E2E, 161 browser scenario, все verifiers и visual desktop/mobile прошли.
-- Сейчас: владелец поручил merge PR #234 и выкладку на `app.morefoto36.ru`; stage доступен по SSH, план релиза M1–D4 добавлен. До merge сверяется живой frontend PR #231, чтобы его не откатить.
-- Следующий шаг: завершить preflight release, затем слить PR #234 и подготовить артефакты из итогового `main`.
-- Блокеры/решения: продуктовых решений нет. Stage frontend использует ещё открытый PR #231, который необходимо сохранить в артефакте выкладки; migration должна предшествовать новому backend. Системный PHP 8.3, локальные проверки ранее выполнялись в PHP 8.4 Docker.
-- Рабочее дерево: изменены только план и этот журнал release; чужая незакоммиченная `docs/plans/OPS-stage-gallery-cleanup/` оставлена вне PR.
-- Следующая проверка: `gh pr view 234` и `gh api commits/main`, затем stage preflight/backup; полный E2E предыдущего code head — `api/var/e2e/rabit-e2e-aad2dd33b408/`.
+- Ветка checkout: `codex/ops-gallery-lifecycle-232`, head `5229213`; PR [#234](https://github.com/rebit-pro/rabit-api/pull/234) слит в `main` commit `6564f88`, issue [#232](https://github.com/rebit-pro/rabit-api/issues/232) закрыт. Связанные: #167, F2/F3/E7, граф K2.
+- Завершено: функциональность #232 реализована, полный двухстендовый E2E до merge прошёл 161 browser scenario; 04.11.2026 stage `app.morefoto36.ru` выложен из `main` `6564f88`, миграция и smoke PASS.
+- Сейчас: пользователь проверяет авторизованный сценарий вручную; release `/home/deploy/morefoto-release-20261104-6564f88-issue232` активен, frontend `morefoto-frontend:issue232-6564f88-pr231-31c302c` сохраняет изменения открытого PR #231.
+- Следующий шаг: получить обратную связь пользователя по ручной проверке; при дефекте сначала собрать точные шаги/время и проверить stage логи.
+- Блокеры/решения: блокеров выкладки нет. E2E после самопроверки и при выкладке не запускался по указанию владельца; браузерный авторизованный smoke остаётся за пользователем.
+- Рабочее дерево: изменены только `plan.md` и этот журнал для результата релиза; чужая незакоммиченная `docs/plans/OPS-stage-gallery-cleanup/` не тронута.
+- Следующая проверка: `ssh photo.rebit-pro 'docker service ls --format "{{.Name}} {{.Replicas}}"'` и ручная проверка `https://app.morefoto36.ru`; ServiceSpec и восстановимая копия БД находятся в каталоге релиза.
 
 ## Хронология
+
+### 04.11.2026 — merge и stage deploy
+
+- `gh pr merge 234 --merge --match-head-commit 5229213...`: PASS. GitHub API подтвердил merge commit `6564f88c6c0519bbcc02d026f99b9174bbecdf20`; `git fetch ... main` вернул тот же commit. Issue #232 автоматически закрыт.
+- Backend артефакт `git archive FETCH_HEAD api`: SHA256 `803b238090cf67455773962ed12360878cf32e18938c10f0db7941ab1de65f41`, checksum на stage совпал. `composer.lock` совпал с текущим runtime; vendor перенесён без установки. Frontend собран из слитого `main` с точными stage изменениями PR #231: `npm run typecheck` PASS, `npm run test:ui` PASS 26/26, `npm run build` PASS. HTML SHA256 локально и через HTTPS stage одинаков: `f14130f590386c10d9fd0fdc0988747c904699711f5121e93692a2309ace7273`.
+- `docker service inspect` 14 затрагиваемых сервисов сохранён в `services-before.json` (SHA256 `13cc65f3b2817112359beb172e5f9e13c941cc3dde260149ac59cef49694e9af`). `./backup.sh` PASS: `database-before.sql.gz` SHA256 `0dd5c9ac74bc676e2d7537e85b823e727066f99388bcfee6c1b4440650af4aec`; `./restore-check.sh` PASS: восстановились 184 таблицы в одноразовом MySQL-контейнере.
+- Первый `./migrate.sh up Version20261104100001` остановился на проверке доступа пользователя deploy к закрытому каталогу runtime на хосте, до подключения к БД. Проверку пути убрали только в копии release-скрипта: Docker daemon уже монтирует тот же runtime в FPM. Повтор `./migrate.sh up Version20261104100001` PASS; `./migrate.sh ls` показывает версию выполненной. SQL проверка: `mf_gallery_opening` содержит 9 колонок и 1 внешний ключ.
+- `./switch-backend.sh` переключил FPM, nginx и 11 фоновых сервисов на новый `/app`: PASS, каждый контейнер видит миграцию. `docker service update --args ... morefoto_stage_production_runner` включил `app:gallery:open-scheduled --limit=100` после миграции и backend; команда зарегистрирована в CLI. Frontend image `morefoto-frontend:issue232-6564f88-pr231-31c302c` (digest `sha256:90983ba3fb45c4b781abefded9fb119608cced27ddf778b831468369274bfc24`) включён, реплики 2/2. Все stage сервисы 1/1.
+- HTTP smoke: `/health` 200, `/cabinet` 200, несуществующая публичная галерея 404 JSON `GALLERY_NOT_FOUND`, защищённые список ссылок и расписание без Bearer 401 JSON `UNAUTHORIZED`. В FPM логах за период smoke только эти ожидаемые HTTP_EXCEPTION 404/401; Fatal/Uncaught/Failed нет, backend/worker/frontend без критических совпадений. Полный E2E на этом этапе не запускался по указанию владельца.
+- Откат: исходные ServiceSpec и БД сохранены в каталоге релиза; для сервисов доступен `docker service rollback`. Миграцию `down()` автоматически не выполнять, чтобы не потерять созданные расписания.
 
 ### 04.11.2026 — поручение merge и deploy
 
