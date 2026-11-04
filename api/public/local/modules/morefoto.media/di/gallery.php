@@ -25,6 +25,7 @@ use Rebit\Share\Application\Contract\Clock\ClockInterface;
 use Rebit\Share\Contracts\Media\ChildPhotosInterface;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
 use Rebit\Share\Contracts\Media\GroupChildrenInterface;
+use Rebit\Share\Contracts\Handoff\GalleryOpeningInterface;
 use Rebit\Share\Contracts\Organization\GalleryGroupInterface;
 use Rebit\Share\Infrastructure\Clock\SystemClock;
 
@@ -63,6 +64,7 @@ return [
             ServiceLocator::getInstance()->get(GalleryAvailability::class),
             ServiceLocator::getInstance()->get(ClockInterface::class),
             ServiceLocator::getInstance()->get(GalleryAssignmentMapper::class),
+            ServiceLocator::getInstance()->get(GalleryOpeningInterface::class),
         ],
     ],
     GalleryAssignmentMapper::class => [

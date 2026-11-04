@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Contracts\Organization\Dto\CalendarCommandInputDto;
 use Rebit\Share\Contracts\Organization\GroupCalendarInterface;
+use Rebit\Share\Shared\Exception\HttpException;
 
 require_once __DIR__ . '/../bootstrap.php';
 
@@ -113,6 +114,23 @@ final class CalendarCommandValidatorTest extends TestCase
         (new GroupCalendar($calendars, $operations, $this->createStub(CalendarClockInterface::class), new CalendarCommandValidator()))
             ->confirmLinkSent($this->command(groupId: 'group-1'))
         ;
+    }
+
+    public function testExtendMapsSubsecondDeadlineToValidationResponseBeforeRepositories(): void
+    {
+        $calendars = $this->createMock(GroupCalendarRepository::class);
+        $calendars->expects(self::never())->method(self::anything());
+        $operations = $this->createMock(InstitutionOperationRepository::class);
+        $operations->expects(self::never())->method(self::anything());
+
+        try {
+            (new GroupCalendar($calendars, $operations, $this->createStub(CalendarClockInterface::class), new CalendarCommandValidator()))
+                ->extend($this->command(), new \DateTimeImmutable('2026-10-01T12:00:00.123456+03:00'))
+            ;
+            self::fail('A subsecond deadline must be rejected.');
+        } catch (HttpException $error) {
+            self::assertSame(['INVALID_CALENDAR_DEADLINE', 422], [$error->getMessage(), $error->getCode()]);
+        }
     }
 
     private function command(string $groupId = self::GROUP, int $actor = 1, int $revision = 1, string $key = self::KEY, string $reason = 'Подтверждение'): CalendarCommandInputDto

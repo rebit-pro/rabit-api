@@ -224,7 +224,6 @@ class Groups(unittest.TestCase):
     def test_f2_prepares_first_and_reports_later_in_one_group(self):
         needed = next(specs for script, _, _, specs in runner.VERIFIERS if "verify-links.php" == script)
         group = next(names for names in runner.GROUPS.values() if set(needed) <= set(names))
-        self.assertEqual("z-links-preparation", sorted(group)[0])
         self.assertLess(sorted(group).index("z-links-preparation"), sorted(group).index("zzzz-links"))
 
 

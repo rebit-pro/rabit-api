@@ -29,5 +29,6 @@ final readonly class GalleryResultDto implements ResponseDtoInterface
         public string $delivery,
         public bool $updating = false,
         public string $token = '',
+        public ?string $scheduledOpenAt = null,
     ) {}
 }

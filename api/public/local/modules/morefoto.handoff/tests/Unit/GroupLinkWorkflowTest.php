@@ -25,6 +25,7 @@ use Morefoto\Handoff\Application\Link\UseCase\TransmitGroupLinkUseCase;
 use Morefoto\Handoff\Application\Request\Contract\HandoffTransactionInterface;
 use Morefoto\Handoff\Domain\Link\Enum\LinkEventKindEnum;
 use Morefoto\Handoff\Domain\Link\Repository\GroupLinkRepositoryInterface;
+use Morefoto\Handoff\Domain\Link\Repository\OpeningScheduleRepositoryInterface;
 use Morefoto\Handoff\Domain\Link\Service\LinkDeliveryPolicy;
 use Morefoto\Handoff\Domain\Link\Service\LinkPermissionPolicy;
 use Morefoto\Handoff\Domain\Link\Service\LinkReadinessPolicy;
@@ -113,17 +114,18 @@ final class GroupLinkWorkflowTest extends TestCase
         $readiness = new GroupLinkReadiness($this->materials, $sales, $teachers, $this->links, new LinkReadinessPolicy());
         $session = new GroupLinkCommandSession($access, $this->calendar, $this->directory, $this->links, $readiness, new LinkPermissionPolicy());
         $mapper = new GroupLinkOutputMapper();
+        $openings = $this->createStub(OpeningScheduleRepositoryInterface::class);
         $this->orders = $this->orders();
         $corrections = $this->corrections($this->directory);
-        $this->read = new GetGroupLinkUseCase($access, $this->directory, $readiness, $this->links, $this->gallery, new LinkPermissionPolicy(), new LinkReadinessPolicy(), $mapper, $clock, $this->orders, new MarkupCorrectionAvailability());
+        $this->read = new GetGroupLinkUseCase($access, $this->directory, $readiness, $this->links, $this->gallery, new LinkPermissionPolicy(), new LinkReadinessPolicy(), $mapper, $clock, $this->orders, new MarkupCorrectionAvailability(), $openings);
         $this->startMarkup = new StartMarkupCorrectionUseCase($transaction, $session, $this->links, $this->orders, $corrections, $mapper);
         $this->finishMarkup = new FinishMarkupCorrectionUseCase($transaction, $session, $this->links, $corrections, $mapper);
         $this->prepare = new PrepareGroupLinkUseCase($transaction, $session, $this->links, $this->gallery, $mapper);
-        $this->transmit = new TransmitGroupLinkUseCase($transaction, $session, $this->links, $this->gallery, $this->calendar, new LinkReadinessPolicy(), new LinkDeliveryPolicy(), $mapper);
+        $this->transmit = new TransmitGroupLinkUseCase($transaction, $session, $this->links, $this->gallery, $this->calendar, new LinkReadinessPolicy(), new LinkDeliveryPolicy(), $mapper, $openings);
         $institutions = $this->createStub(InstitutionAccessInterface::class);
         $institutions->method('assignments')->willReturn([3 => new InstitutionAssignmentOutputDto(curatorId: self::CURATOR, headId: self::HEAD, curatorName: 'Мария Иванова')]);
-        $this->list = new ListGroupLinksUseCase($access, $this->directory, $readiness, $this->links, new LinkPermissionPolicy(), new LinkReadinessPolicy(), $mapper, $institutions);
-        $this->correct = new CorrectGroupLinkDateUseCase($transaction, $session, $this->links, $this->gallery, $this->calendar, new LinkDeliveryPolicy(), $mapper);
+        $this->list = new ListGroupLinksUseCase($access, $this->directory, $readiness, $this->links, new LinkPermissionPolicy(), new LinkReadinessPolicy(), $mapper, $institutions, $openings);
+        $this->correct = new CorrectGroupLinkDateUseCase($transaction, $session, $this->links, $this->gallery, $this->calendar, new LinkDeliveryPolicy(), $mapper, $openings);
     }
 
     public function testOrganizerPreparesThenTeacherTransmitsAndRepeatKeepsDeadlines(): void
@@ -438,6 +440,11 @@ final class GroupLinkWorkflowTest extends TestCase
             }
 
             public function extend(CalendarCommandInputDto $input, \DateTimeImmutable $newClosesAt): CalendarMutationOutputDto
+            {
+                throw new \LogicException('Not used by link commands.');
+            }
+
+            public function extendDays(CalendarCommandInputDto $input, int $days): CalendarMutationOutputDto
             {
                 throw new \LogicException('Not used by link commands.');
             }

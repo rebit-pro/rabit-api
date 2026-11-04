@@ -72,6 +72,9 @@ final readonly class GroupLinkResultMapper
             referenceNow: $output->referenceNow,
             history: array_map($this->event(...), $output->history),
             markupCorrectable: $output->markupCorrectable,
+            openingStatus: $output->openingStatus,
+            scheduledOpenAt: $output->scheduledOpenAt,
+            manualSentAt: $output->manualSentAt,
         );
     }
 
@@ -114,6 +117,9 @@ final readonly class GroupLinkResultMapper
             childCount: $output->childCount,
             markupCorrectionAt: $output->markupCorrectionAt,
             curatorName: $output->curatorName,
+            openingStatus: $output->openingStatus,
+            scheduledOpenAt: $output->scheduledOpenAt,
+            manualSentAt: $output->manualSentAt,
         );
     }
 

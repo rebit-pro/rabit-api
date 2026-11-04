@@ -13,6 +13,8 @@ export function useGallery() {
   const error = shallowRef('');
   const unavailable = shallowRef(false);
   let requestId = 0;
+  let lastRouteToken: string | null = null;
+  let scheduledRefresh: number | null = null;
   let returnFocus: HTMLElement | null = null;
 
   async function reload() {
@@ -20,33 +22,31 @@ export function useGallery() {
     loading.value = true;
     error.value = '';
     unavailable.value = false;
-    gallery.value = null;
-    let moved = false;
+    const requested = String(route.params.token ?? '');
+    if (requested !== lastRouteToken) {
+      gallery.value = null;
+      lastRouteToken = requested;
+    }
     try {
-      const requested = String(route.params.token ?? '');
       const result = await loadGallery(requested);
       if (id !== requestId) return;
-      if (result.token && result.token !== requested) {
-        // F3-DEC-04: the address becomes the long link; the token watcher reloads the gallery by it, still loading.
-        moved = true;
-        await router.replace({
-          name: route.name ?? undefined,
-          params: { ...route.params, token: result.token },
-          query: route.query,
-          hash: route.hash
-        });
-        return;
-      }
       gallery.value = result;
     } catch (cause) {
       if (id !== requestId) return;
       unavailable.value = cause instanceof GalleryUnavailableError;
       error.value = cause instanceof Error ? cause.message : 'Не удалось загрузить галерею.';
     } finally {
-      if (id === requestId && !moved) loading.value = false;
+      if (id === requestId) loading.value = false;
     }
   }
   watch(() => route.params.token, reload, { immediate: true });
+  watch(
+    () => gallery.value?.state,
+    (state) => {
+      if (scheduledRefresh !== null) window.clearInterval(scheduledRefresh);
+      scheduledRefresh = state === 'scheduled' ? window.setInterval(() => void reload(), 30000) : null;
+    }
+  );
   const changed = () => {
     void reload();
   };
@@ -60,6 +60,7 @@ export function useGallery() {
     window.removeEventListener(photosChangedEvent, changed);
     window.removeEventListener(organizationChangedEvent, changed);
     window.removeEventListener('storage', storageChanged);
+    if (scheduledRefresh !== null) window.clearInterval(scheduledRefresh);
     requestId++;
   });
   const code = computed(() => (typeof route.query.child === 'string' ? route.query.child.trim().toUpperCase() : ''));

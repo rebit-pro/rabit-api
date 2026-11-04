@@ -29,5 +29,8 @@ final readonly class GroupLinkSummaryOutputDto
         public int $childCount,
         public ?string $markupCorrectionAt,
         public ?string $curatorName = null,
+        public ?string $openingStatus = null,
+        public ?string $scheduledOpenAt = null,
+        public ?string $manualSentAt = null,
     ) {}
 }

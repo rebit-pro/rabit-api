@@ -13,6 +13,7 @@ use Morefoto\Handoff\Application\Link\Mapper\GroupLinkOutputMapper;
 use Morefoto\Handoff\Application\Link\Service\GroupLinkReadiness;
 use Morefoto\Handoff\Domain\Link\Enum\LinkActionEnum;
 use Morefoto\Handoff\Domain\Link\Repository\GroupLinkRepositoryInterface;
+use Morefoto\Handoff\Domain\Link\Repository\OpeningScheduleRepositoryInterface;
 use Morefoto\Handoff\Domain\Link\Service\LinkPermissionPolicy;
 use Morefoto\Handoff\Domain\Link\Service\LinkReadinessPolicy;
 use Morefoto\Handoff\Domain\Link\ValueObject\LinkState;
@@ -40,6 +41,7 @@ final readonly class ListGroupLinksUseCase
         private LinkReadinessPolicy $policy,
         private GroupLinkOutputMapper $mapper,
         private InstitutionAccessInterface $institutions,
+        private OpeningScheduleRepositoryInterface $openings,
     ) {}
 
     public function execute(int $actorId, GroupLinkListInputDto $input): GroupLinkPageOutputDto
@@ -60,13 +62,14 @@ final readonly class ListGroupLinksUseCase
         ));
         $assessments = $this->readiness->assess($page->items);
         $states = $this->links->states(array_keys($assessments));
+        $openings = $this->openings->forGroups(array_keys($assessments));
         $curators = $this->curators($page->items);
         $items = [];
         foreach ($page->items as $group) {
             $state = $states[$group->nativeId] ?? new LinkState();
             $assessment = $assessments[$group->nativeId];
             $prepared = $this->policy->prepared(null !== $group->calendar->sentAt, $state, $assessment->readiness);
-            $items[] = $this->mapper->summary($group, $assessment, $state->revision, $prepared, $curators[$group->institutionNativeId] ?? null);
+            $items[] = $this->mapper->summary($group, $assessment, $state->revision, $prepared, $curators[$group->institutionNativeId] ?? null, $openings[$group->nativeId] ?? null);
         }
 
         return new GroupLinkPageOutputDto(

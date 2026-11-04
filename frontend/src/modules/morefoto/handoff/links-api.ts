@@ -26,6 +26,9 @@ export interface LiveLinkItem {
   childCount: number;
   /** D4: start of the markup correction that pauses the sales; null while the group sells normally. */
   markupCorrectionAt: string | null;
+  openingStatus?: LinkGroup['openingStatus'];
+  scheduledOpenAt?: string | null;
+  manualSentAt?: string | null;
   /** Curator of the group's institution, whom the teacher asks about the group (INF-11); only in the list. */
   curatorName?: string | null;
 }
@@ -60,15 +63,28 @@ export interface LinkCounters {
 }
 export interface LinkPage {
   items: LiveLinkItem[];
-  meta: { page: number; pageSize: number; total: number; totalPages: number; summary?: LinkCounters };
+  meta: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    summary?: LinkCounters;
+  };
 }
 const key = (value: string) => value.replace(/-/g, '');
 const path = (groupId: string) => '/api/v1/groups/' + encodeURIComponent(groupId);
 
 export const linksApi = {
   async list(page = 1, filters: { state?: LiveLinkItem['state']; pageSize?: number } = {}): Promise<LinkPage> {
-    const response = await api.get<{ data: { items: LiveLinkItem[] }; meta: LinkPage['meta'] }>('/api/v1/group-links', {
-      params: { page, pageSize: filters.pageSize ?? 100, ...(filters.state ? { state: filters.state } : {}) },
+    const response = await api.get<{
+      data: { items: LiveLinkItem[] };
+      meta: LinkPage['meta'];
+    }>('/api/v1/group-links', {
+      params: {
+        page,
+        pageSize: filters.pageSize ?? 100,
+        ...(filters.state ? { state: filters.state } : {})
+      },
       unwrapEnvelope: false
     });
     return { items: response.data.data.items, meta: response.data.meta };
@@ -91,16 +107,25 @@ export const linksApi = {
         },
         config
       );
-    } else if (command.action === 'transmit') {
+    } else if (command.action === 'transmit' || command.action === 'manual') {
       await api.post(
-        path(command.groupId) + '/link-transmissions',
-        { ...base, sentAt: serverMoment(command.sentAt), confirmed: command.confirmed },
+        path(command.groupId) + (command.action === 'manual' ? '/manual-link-deliveries' : '/link-transmissions'),
+        {
+          ...base,
+          sentAt: serverMoment(command.sentAt),
+          confirmed: command.confirmed
+        },
         config
       );
     } else {
       await api.post(
         path(command.groupId) + '/link-date-corrections',
-        { ...base, sentAt: serverMoment(command.sentAt), confirmed: command.confirmed, reason: command.reason.trim() },
+        {
+          ...base,
+          sentAt: serverMoment(command.sentAt),
+          confirmed: command.confirmed,
+          reason: command.reason.trim()
+        },
         config
       );
     }
@@ -135,6 +160,9 @@ export function toLinkGroup(item: LiveLinkItem, detail?: LiveLinkDetail): LinkGr
     kind: item.kind,
     revision: item.revision,
     state: item.state,
+    openingStatus: item.openingStatus,
+    scheduledOpenAt: item.scheduledOpenAt,
+    manualSentAt: item.manualSentAt,
     sentAt: item.sentAt,
     closesAt: item.closesAt,
     digitalSalesUntil: item.digitalSalesUntil,

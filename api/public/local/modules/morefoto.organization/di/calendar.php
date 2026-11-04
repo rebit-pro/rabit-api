@@ -8,6 +8,8 @@ use Morefoto\Organization\Application\Calendar\Service\CalendarCommandValidator;
 use Morefoto\Organization\Application\Calendar\Service\GroupCalendar;
 use Morefoto\Organization\Application\Calendar\Service\GroupMarkupCorrection;
 use Morefoto\Organization\Application\Calendar\UseCase\ChangeGroupCalendarUseCase;
+use Morefoto\Organization\Application\Calendar\UseCase\GetGroupCalendarUseCase;
+use Morefoto\Organization\Application\Calendar\Mapper\CalendarExtensionHistoryMapper;
 use Morefoto\Organization\Application\Institution\Contract\InstitutionTransactionInterface;
 use Morefoto\Organization\Domain\Calendar\Repository\GroupCalendarRepository;
 use Morefoto\Organization\Domain\Calendar\Service\MarkupCorrectionPolicy;
@@ -15,6 +17,7 @@ use Morefoto\Organization\Domain\Institution\Repository\InstitutionOperationRepo
 use Morefoto\Organization\Infrastructure\Calendar\ServerCalendarClock;
 use Morefoto\Organization\Infrastructure\Handoff\GroupDirectory;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
+use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
 use Rebit\Share\Contracts\Organization\GroupCalendarInterface;
 use Rebit\Share\Contracts\Organization\GroupDirectoryInterface;
 use Rebit\Share\Contracts\Organization\GroupMarkupCorrectionInterface;
@@ -23,6 +26,7 @@ use Rebit\Share\Contracts\Organization\PrintClosedGroupsInterface;
 return [
     CalendarClockInterface::class => ['constructor' => static fn(): CalendarClockInterface => new ServerCalendarClock()],
     CalendarCommandValidator::class => ['className' => CalendarCommandValidator::class],
+    CalendarExtensionHistoryMapper::class => ['className' => CalendarExtensionHistoryMapper::class],
     GroupCalendarRepository::class => ['className' => GroupCalendarRepository::class],
     MarkupCorrectionPolicy::class => ['className' => MarkupCorrectionPolicy::class],
     GroupMarkupCorrectionInterface::class => [
@@ -57,6 +61,16 @@ return [
             ServiceLocator::getInstance()->get(InstitutionAccessInterface::class),
             ServiceLocator::getInstance()->get(InstitutionTransactionInterface::class),
             ServiceLocator::getInstance()->get(CalendarCommandValidator::class),
+        ],
+    ],
+    GetGroupCalendarUseCase::class => [
+        'className' => GetGroupCalendarUseCase::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(GroupCalendarInterface::class),
+            ServiceLocator::getInstance()->get(InstitutionAccessInterface::class),
+            ServiceLocator::getInstance()->get(TokenResolverInterface::class),
+            ServiceLocator::getInstance()->get(GroupCalendarRepository::class),
+            ServiceLocator::getInstance()->get(CalendarExtensionHistoryMapper::class),
         ],
     ],
 ];

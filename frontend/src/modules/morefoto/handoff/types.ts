@@ -50,7 +50,13 @@ export interface StaffRequest {
   status: 'submitted' | 'clarification' | 'transferred';
   rows: SubmittedRow[];
   comment: string;
-  history: { actorName?: string; kind: 'submitted' | 'clarification' | 'transferred'; actorId: number; at: string; comment: string }[];
+  history: {
+    actorName?: string;
+    kind: 'submitted' | 'clarification' | 'transferred';
+    actorId: number;
+    at: string;
+    comment: string;
+  }[];
   results?: TransferResult[];
   staffEligibility?: {
     eligible: boolean;
@@ -75,6 +81,9 @@ export interface LinkGroup {
   digitalSalesUntil: string | null;
   deliveryAt: string | null;
   extensionClosesAt?: string;
+  openingStatus?: 'scheduled' | 'opened' | 'blocked' | 'cancelled' | null;
+  scheduledOpenAt?: string | null;
+  manualSentAt?: string | null;
   signature: string;
   prepared: boolean;
   problems: string[];
@@ -96,7 +105,7 @@ export interface HandoffWorkspace {
 }
 export interface LinkCommand {
   kind: 'link';
-  action: 'prepare' | 'transmit' | 'correct';
+  action: 'prepare' | 'transmit' | 'manual' | 'correct';
   requestId: string;
   groupId: string;
   revision: number;

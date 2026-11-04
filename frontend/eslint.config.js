@@ -8,7 +8,7 @@ import prettierConfig from '@vue/eslint-config-prettier';
 export default [
   {
     name: 'app/files-to-ignore',
-    ignores: ['**/dist/**', '**/coverage/**', '**/node_modules/**', '**/reports/**']
+    ignores: ['**/dist/**', '**/coverage/**', '**/node_modules/**', '**/reports/**', '**/var/**']
   },
   {
     name: 'app/files-to-lint',

@@ -13,5 +13,6 @@ final readonly class GalleryContextOutputDto
         public string $state,
         public string $referenceNow,
         public int $capabilityRevision,
+        public ?string $scheduledOpenAt = null,
     ) {}
 }

@@ -38,5 +38,8 @@ final readonly class GroupLinkResultDto implements ResultDtoInterface
         public string $referenceNow,
         public array $history,
         public bool $markupCorrectable,
+        public ?string $openingStatus = null,
+        public ?string $scheduledOpenAt = null,
+        public ?string $manualSentAt = null,
     ) {}
 }

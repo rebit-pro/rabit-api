@@ -60,7 +60,10 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
   const error = shallowRef('');
   const errors = shallowRef<BuyerErrors>({});
   const oldTotal = shallowRef<number | null>(null);
-  const capabilities = shallowRef({ maxAvailable: false, receiptAvailable: false });
+  const capabilities = shallowRef({
+    maxAvailable: false,
+    receiptAvailable: false
+  });
   const previous = shallowRef(null);
   const { catalog: legal, reload: reloadLegal } = useLegalCatalog();
   // Separate unticked checkboxes for the consent and the offer; they are never stored with the draft.
@@ -84,8 +87,16 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
   }
   function body(): CheckoutBody {
     return {
-      lines: state.lines.map(({ assignmentId, productId, quantity }) => ({ assignmentId, productId, quantity })),
-      buyer: { email: draft.email, comment: draft.comment, reviewed: draft.reviewed },
+      lines: state.lines.map(({ assignmentId, productId, quantity }) => ({
+        assignmentId,
+        productId,
+        quantity
+      })),
+      buyer: {
+        email: draft.email,
+        comment: draft.comment,
+        reviewed: draft.reviewed
+      },
       child: { firstName: draft.childFirstName, lastName: draft.childLastName },
       quoteToken: state.quoteToken ?? '',
       consents: acceptedDocuments(legal.value, ORDER_DOCUMENTS) ?? []
@@ -117,7 +128,7 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
     const attempt = draft.pending ?? body();
     draft.pending = attempt;
     try {
-      const order: unknown = await liveOrdersApi.create(token, attempt, draft.requestId);
+      const order: unknown = await liveOrdersApi.create(gallery.token ?? token, attempt, draft.requestId);
       if (!isCreatedOrder(order)) throw new Error('Unconfirmed order response.');
       forgetLiveCart(gallery.groupId);
       localStorage.removeItem(storageKey(gallery.groupId));
@@ -155,5 +166,20 @@ export function useLiveCheckout(gallery: GallerySnapshot, token: string) {
       submission.value = 'idle';
     }
   }
-  return { quote, catalog, draft, busy, error, errors, oldTotal, capabilities, previous, canSubmit, recovering, submit, consents, legal };
+  return {
+    quote,
+    catalog,
+    draft,
+    busy,
+    error,
+    errors,
+    oldTotal,
+    capabilities,
+    previous,
+    canSubmit,
+    recovering,
+    submit,
+    consents,
+    legal
+  };
 }

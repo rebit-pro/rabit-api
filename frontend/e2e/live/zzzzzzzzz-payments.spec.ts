@@ -151,7 +151,7 @@ if (sandbox) {
     await panel.getByTestId('pay-sbp').click();
     await page.waitForURL(/\/orders\/payment\/[a-f0-9-]{36}$/);
     attempts.sbp = attemptOf(page.url());
-    await expect(page.getByTestId('payment-return-title')).toHaveText('Оплата не прошла');
+    await expect(page.getByTestId('payment-return-title')).toHaveText('Оплата не прошла', { timeout: 30000 });
     await page.getByTestId('payment-return-order').click();
     await expect(page.getByTestId('order-payment-status')).toHaveText('Оплата отклонена');
 

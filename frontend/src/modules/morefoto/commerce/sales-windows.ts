@@ -1,7 +1,7 @@
 import type { ProductKind } from './types.js';
 
 /** E7: a group sells print and digital until print closes (T0+7), then digital only until T0+14. */
-export type SalesState = 'preparing' | 'open' | 'digital' | 'closed';
+export type SalesState = 'preparing' | 'scheduled' | 'open' | 'digital' | 'closed';
 
 export interface SalesLine {
   assignmentId: string;
@@ -45,7 +45,11 @@ export function mergeCartLines(current: SalesLine[], added: SalesLine[]): SalesL
     const id = line.assignmentId + ':' + line.productId;
     if (!present.has(id)) {
       present.add(id);
-      merged.push({ assignmentId: line.assignmentId, productId: line.productId, quantity: line.quantity });
+      merged.push({
+        assignmentId: line.assignmentId,
+        productId: line.productId,
+        quantity: line.quantity
+      });
     }
   }
 
@@ -66,6 +70,7 @@ export function quoteErrorMessage(code: string): string | null {
 export function salesStateTitle(state: SalesState): string {
   return {
     preparing: 'Готовим фотографии',
+    scheduled: 'Открытие запланировано',
     open: 'Приём открыт',
     digital: 'Печать закрыта',
     closed: 'Приём завершён'

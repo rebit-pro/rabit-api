@@ -56,6 +56,9 @@ final readonly class GroupLinkCommandSession
             LinkActionEnum::CORRECT => 'link-date-corrections',
             LinkActionEnum::START_MARKUP_CORRECTION => 'markup-corrections',
             LinkActionEnum::FINISH_MARKUP_CORRECTION => 'markup-correction-completions',
+            LinkActionEnum::SCHEDULE_OPENING => 'opening-schedules',
+            LinkActionEnum::CANCEL_OPENING => 'opening-cancellations',
+            LinkActionEnum::RECORD_MANUAL_DELIVERY => 'manual-link-deliveries',
             LinkActionEnum::READ => throw new \InvalidArgumentException('Reading is not a command.'),
         };
         $payloadHash = hash('sha256', json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));

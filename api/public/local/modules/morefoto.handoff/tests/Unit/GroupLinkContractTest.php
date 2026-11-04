@@ -120,12 +120,12 @@ final class GroupLinkContractTest extends TestCase
             'previousClosesAt' => '2026-09-29T10:45:00+03:00', 'previousDeliveryAt' => '2026-10-06T10:45:00+03:00', 'reason' => 'Ошибка в дате'];
         $detail = new GroupLinkOutputDto(...$summary, galleryToken: str_repeat('f', 64), galleryAlias: 'k3m9x2q7v4', referenceNow: '2026-09-22T08:00:00+00:00', history: [new LinkEventOutputDto(...$event)], markupCorrectable: false);
         self::assertSame(
-            $summary + ['galleryToken' => str_repeat('f', 64), 'galleryAlias' => 'k3m9x2q7v4', 'referenceNow' => '2026-09-22T08:00:00+00:00', 'history' => [$event], 'markupCorrectable' => false],
+            $summary + ['galleryToken' => str_repeat('f', 64), 'galleryAlias' => 'k3m9x2q7v4', 'referenceNow' => '2026-09-22T08:00:00+00:00', 'history' => [$event], 'markupCorrectable' => false, 'openingStatus' => null, 'scheduledOpenAt' => null, 'manualSentAt' => null],
             json_decode($serializer->serialize($mapper->detail($detail)), true, 16, JSON_THROW_ON_ERROR),
         );
         $page = new GroupLinkPageOutputDto([new GroupLinkSummaryOutputDto(...$summary, curatorName: 'Мария Иванова')], 1, 25, 1, 1, new GroupLinkCountersOutputDto('2026-09-22T08:00:00+00:00', 2, 1, 3, 0, 1, 1));
         self::assertSame(
-            ['data' => ['items' => [$summary + ['curatorName' => 'Мария Иванова']]], 'meta' => ['page' => 1, 'pageSize' => 25, 'total' => 1, 'totalPages' => 1, 'summary' => [
+            ['data' => ['items' => [$summary + ['curatorName' => 'Мария Иванова', 'openingStatus' => null, 'scheduledOpenAt' => null, 'manualSentAt' => null]]], 'meta' => ['page' => 1, 'pageSize' => 25, 'total' => 1, 'totalPages' => 1, 'summary' => [
                 'referenceNow' => '2026-09-22T08:00:00+00:00', 'byState' => ['preparing' => 2, 'open' => 1, 'digital' => 3, 'closed' => 0], 'closingSoon' => 1, 'prepared' => 1,
             ]]],
             json_decode($serializer->serialize(['data' => $mapper->list($page), 'meta' => $mapper->meta($page)]), true, 16, JSON_THROW_ON_ERROR),

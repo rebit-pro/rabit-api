@@ -26,6 +26,8 @@ import PrintArchiveDialog from '../../production/live/PrintArchiveDialog.vue';
 import { archiveApi } from '../../production/live/archive-api';
 import { archiveBadge } from '../../production/live/archive-rules';
 import type { ArchiveState } from '../../production/live/archive-types';
+import CalendarExtensionDialog from './CalendarExtensionDialog.vue';
+import OpeningScheduleDialog from './OpeningScheduleDialog.vue';
 /** Event titles of the link history: F2 delivery steps and the D4 markup correction that pauses the sales. */
 const linkEventTitles: Record<LinkEvent['kind'], string> = {
   prepared: 'Ссылка проверена',
@@ -52,7 +54,11 @@ function stepFix(group: LinkGroup, key: GalleryStepKey): { to: string; label: st
   const query = '?group=' + encodeURIComponent(group.id);
   if (key === 'photos' || key === 'assign') return { to: shoot + '/photos' + query, label: 'К фотографиям' };
   if (key === 'conditions') return { to: shoot + '/conditions' + query, label: 'К условиям' };
-  if (key === 'staff') return { to: '/cabinet/staff-requests?shoot=' + encodeURIComponent(group.shootId), label: 'К спискам' };
+  if (key === 'staff')
+    return {
+      to: '/cabinet/staff-requests?shoot=' + encodeURIComponent(group.shootId),
+      label: 'К спискам'
+    };
   return null;
 }
 const editor = useHandoffEditor(() => {
@@ -65,7 +71,9 @@ const { command, busy, errors, restored, stale, error: saveError } = editor;
 const routeGroup = computed(() => (typeof route.query.group === 'string' ? route.query.group : ''));
 const routeShoot = computed(() => (typeof route.query.shoot === 'string' ? route.query.shoot : ''));
 function showAll(): void {
-  void router.replace({ query: { ...route.query, group: undefined, shoot: undefined } });
+  void router.replace({
+    query: { ...route.query, group: undefined, shoot: undefined }
+  });
 }
 const groups = computed(
   () =>
@@ -76,7 +84,12 @@ const groups = computed(
 const current = computed(() =>
   command.value?.kind === 'link' ? data.value?.groups.find((g) => g.id === (command.value as LinkCommand).groupId) : undefined
 );
-const titles = { prepare: 'Проверить ссылку', transmit: 'Отметить передачу ссылки', correct: 'Исправить дату передачи' };
+const titles = {
+  prepare: 'Проверить ссылку',
+  transmit: 'Отметить передачу ссылки',
+  manual: 'Отметить отправку ссылки',
+  correct: 'Исправить дату передачи'
+};
 function open(group: LinkGroup, action: LinkCommand['action']) {
   editor.open(
     () => {
@@ -105,6 +118,7 @@ function change(value: Partial<LinkCommand>) {
 const tiles = [
   { text: 'Требует проверки', icon: 'mdi-alert-circle-outline', pastel: 4 },
   { text: 'Готова к передаче', icon: 'mdi-send-check-outline', pastel: 3 },
+  { text: 'Открытие назначено', icon: 'mdi-clock-outline', pastel: 3 },
   { text: 'Приём открыт', icon: 'mdi-cart-outline', pastel: 2 },
   { text: 'Только электронные', icon: 'mdi-image-multiple-outline', pastel: 5 },
   { text: 'Приём завершён', icon: 'mdi-check-all', pastel: 7 }
@@ -112,10 +126,36 @@ const tiles = [
 type LinkState = (typeof tiles)[number]['text'];
 const columns: UiTableColumn[] = [
   { key: 'name', label: 'Группа', sortable: true, primary: true, width: '28%' },
-  { key: 'status', label: 'Состояние', sortable: true, mobile: true, width: '19%' },
-  { key: 'sentAt', label: 'Передана', type: 'date', sortable: true, mobile: true, width: '11%' },
-  { key: 'closesAt', label: 'Печать до', type: 'date', sortable: true, mobile: true, width: '14%' },
-  { key: 'deliveryAt', label: 'Доставка', type: 'date', sortable: true, width: '11%' }
+  {
+    key: 'status',
+    label: 'Состояние',
+    sortable: true,
+    mobile: true,
+    width: '19%'
+  },
+  {
+    key: 'sentAt',
+    label: 'Старт продаж',
+    type: 'date',
+    sortable: true,
+    mobile: true,
+    width: '11%'
+  },
+  {
+    key: 'closesAt',
+    label: 'Печать до',
+    type: 'date',
+    sortable: true,
+    mobile: true,
+    width: '14%'
+  },
+  {
+    key: 'deliveryAt',
+    label: 'Доставка',
+    type: 'date',
+    sortable: true,
+    width: '11%'
+  }
 ];
 const stateFilter = shallowRef<LinkState | null>(null);
 const institutionFilter = shallowRef<string | null>(null);
@@ -129,6 +169,7 @@ const counts = computed(() => {
   const result: Record<LinkState, number> = {
     'Требует проверки': 0,
     'Готова к передаче': 0,
+    'Открытие назначено': 0,
     'Приём открыт': 0,
     'Только электронные': 0,
     'Приём завершён': 0
@@ -139,7 +180,10 @@ const counts = computed(() => {
 const institutionName = computed(() => new Map((data.value?.scope.institutions ?? []).map((i) => [i.id, i.name])));
 const institutionItems = computed(() => [
   { title: 'Все учреждения', value: null },
-  ...(data.value?.scope.institutions ?? []).map((i) => ({ title: i.name, value: i.id }))
+  ...(data.value?.scope.institutions ?? []).map((i) => ({
+    title: i.name,
+    value: i.id
+  }))
 ]);
 const stateItems = [{ title: 'Все состояния', value: null }, ...tiles.map((tile) => ({ title: tile.text, value: tile.text }))];
 const filtered = computed(() => !!(stateFilter.value || institutionFilter.value || query.value.trim()));
@@ -177,13 +221,36 @@ function group(id: string): LinkGroup {
 }
 /** What stands before the gallery: live readiness codes become steps, demo problems are already sentences. */
 function stateNote(g: LinkGroup): { text: string; hint: string } | null {
+  if (g.openingStatus === 'scheduled')
+    return {
+      text:
+        'Откроется ' +
+        formatMoment(g.scheduledOpenAt ?? null) +
+        (g.manualSentAt ? ' · Ссылка отправлена ' + formatMoment(g.manualSentAt) : ''),
+      hint: 'Сроки продаж начнутся после автоматического открытия.'
+    };
+  if (g.openingStatus === 'blocked')
+    return {
+      text: 'План остановлен: требуется повторная проверка',
+      hint: 'Готовность группы изменилась.'
+    };
+  if (g.openingStatus === 'opened')
+    return {
+      text: g.manualSentAt ? 'Ссылка отправлена ' + formatMoment(g.manualSentAt) : 'Открыта автоматически; отправка ссылки не отмечена',
+      hint: ''
+    };
+  if (g.manualSentAt)
+    return { text: 'Ссылка отправлена ' + formatMoment(g.manualSentAt), hint: 'Дата открытия и сроки продаж ещё не назначены.' };
   if (g.sentAt) return null;
   if (!live && g.problems.length) return { text: g.problems.map(problemText).join(' '), hint: '' };
   const steps = galleryPath(g);
   const index = steps.findIndex((step) => step.state === 'current');
   if (index < 0) return null;
   const step = steps[index]!;
-  return { text: 'шаг ' + (index + 1) + ' из ' + steps.length + ': ' + step.title.toLowerCase(), hint: step.hint };
+  return {
+    text: 'шаг ' + (index + 1) + ' из ' + steps.length + ': ' + step.title.toLowerCase(),
+    hint: step.hint
+  };
 }
 /** Why the organizer cannot check the link yet: the hint of the step that blocks it. */
 function checkBlocker(g: LinkGroup): string | undefined {
@@ -194,15 +261,23 @@ function left(g: LinkGroup): string {
   const result = countdown(g.sentAt, g.closesAt, data.value.now);
   return result.days !== null && result.days > 0 ? result.label : '';
 }
-const shortDate = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', timeZone: 'Europe/Moscow' });
+const shortDate = new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'Europe/Moscow'
+});
 function day(value: string | null): string {
   return value ? shortDate.format(new Date(value)) : '—';
 }
 const canCopy = (g: LinkGroup) => !live || g.prepared || !!g.sentAt;
 const canCheck = (g: LinkGroup) => data.value?.role === 'organizer' && !g.sentAt && !g.prepared;
-const canTransmit = (g: LinkGroup) => data.value?.role !== 'head' && !g.sentAt && g.prepared;
+const canTransmit = (g: LinkGroup) =>
+  data.value?.role !== 'head' &&
+  !g.manualSentAt &&
+  (g.openingStatus === 'scheduled' || g.openingStatus === 'opened' || (!g.sentAt && g.prepared));
 // E7: the date is corrected only while print sales are open; afterwards the server refuses it (PRINT_SALES_CLOSED).
-const canCorrect = (g: LinkGroup) => !!g.sentAt && g.state === 'open' && ['curator', 'organizer'].includes(data.value?.role ?? '');
+const canCorrect = (g: LinkGroup) =>
+  !!g.sentAt && g.state === 'open' && g.openingStatus !== 'opened' && ['curator', 'organizer'].includes(data.value?.role ?? '');
 const hasHistory = (g: LinkGroup) => live || g.history.length > 0;
 /** The page where the organizer fixes the current step; after the transmission — the photos of the group. */
 function fix(g: LinkGroup): { to: string; label: string } | null {
@@ -211,7 +286,18 @@ function fix(g: LinkGroup): { to: string; label: string } | null {
 }
 /** L1-DEC-06/07: the organizer and the institution curator see the print archive of a group handed over to parents. */
 const canSeeArchive = (g: LinkGroup) => live && !!g.sentAt && ['organizer', 'curator'].includes(data.value?.role ?? '');
-const hasMenu = (g: LinkGroup) => (!g.sentAt && canCopy(g)) || canCorrect(g) || hasHistory(g) || !!fix(g) || canSeeArchive(g);
+const canOpenCalendar = (g: LinkGroup) => live && data.value?.role === 'organizer' && !!g.sentAt;
+const canSchedule = (g: LinkGroup) =>
+  live && data.value?.role === 'organizer' && !g.sentAt && (g.prepared || g.openingStatus === 'scheduled' || g.openingStatus === 'blocked');
+const hasMenu = (g: LinkGroup) =>
+  (!g.sentAt && canCopy(g)) || canCorrect(g) || canOpenCalendar(g) || canSchedule(g) || hasHistory(g) || !!fix(g) || canSeeArchive(g);
+const extensionGroup = shallowRef<LinkGroup | null>(null);
+const openingGroup = shallowRef<LinkGroup | null>(null);
+function extensionSaved(): void {
+  extensionGroup.value = null;
+  notice.value = 'Галерея продлена. Сроки обновлены.';
+  void reload();
+}
 const archiveStates = shallowRef(new Map<string, ArchiveState>());
 /** PRD-01 for the visible page only; the badge is a hint, so a failed request just leaves the rows without it. */
 async function loadArchiveStates(): Promise<void> {
@@ -346,7 +432,7 @@ async function openHistory(group: LinkGroup) {
     <div>
       <p class="mf-eyebrow">ПЕРЕДАЧА РОДИТЕЛЯМ</p>
       <h1>Ссылки и сроки</h1>
-      <p class="mf-muted">Семь дней на заказ — с фактической передачи ссылки.</p>
+      <p class="mf-muted">Семь дней на заказ — с передачи ссылки или автоматического открытия.</p>
       <MfStatus v-if="data?.role === 'head'" tone="neutral" icon="mdi-eye-outline" class="mt-3">Только просмотр</MfStatus>
     </div>
     <v-btn variant="outlined" :loading="loading" @click="reload">Обновить</v-btn>
@@ -472,7 +558,7 @@ async function openHistory(group: LinkGroup) {
       <template #cell-deliveryAt="{ row }">{{ day(group(row.id).deliveryAt) }}</template>
       <template #actions="{ row }">
         <div class="links-actions">
-          <template v-if="group(row.id).sentAt">
+          <template v-if="group(row.id).sentAt || group(row.id).openingStatus === 'scheduled'">
             <v-btn
               v-tooltip="'Копировать ссылку'"
               icon="mdi-content-copy"
@@ -509,8 +595,15 @@ async function openHistory(group: LinkGroup) {
             density="compact"
             color="primary"
             :aria-label="'Передать ссылку: ' + row.name"
-            @click="open(group(row.id), 'transmit')"
-            >Передать</v-btn
+            @click="
+              open(
+                group(row.id),
+                group(row.id).openingStatus === 'scheduled' || group(row.id).openingStatus === 'opened' ? 'manual' : 'transmit'
+              )
+            "
+            >{{
+              group(row.id).openingStatus === 'scheduled' || group(row.id).openingStatus === 'opened' ? 'Отметить отправку' : 'Передать'
+            }}</v-btn
           >
           <v-menu v-if="hasMenu(group(row.id))" location="bottom end" content-class="morefoto-app mf-ui-overlay">
             <template #activator="{ props: menuProps }">
@@ -529,6 +622,24 @@ async function openHistory(group: LinkGroup) {
                 @click="open(group(row.id), 'correct')"
                 >Исправить дату передачи</v-btn
               >
+              <v-btn
+                v-if="canOpenCalendar(group(row.id))"
+                variant="text"
+                block
+                prepend-icon="mdi-calendar-edit-outline"
+                @click="extensionGroup = group(row.id)"
+              >
+                {{ group(row.id).state === 'open' ? 'Продлить галерею' : 'Сроки и история продлений' }}
+              </v-btn>
+              <v-btn
+                v-if="canSchedule(group(row.id))"
+                variant="text"
+                block
+                prepend-icon="mdi-clock-outline"
+                @click="openingGroup = group(row.id)"
+              >
+                {{ group(row.id).openingStatus === 'scheduled' ? 'Перенести или отменить открытие' : 'Назначить открытие' }}
+              </v-btn>
               <v-btn v-if="hasHistory(group(row.id))" variant="text" block prepend-icon="mdi-history" @click="openHistory(group(row.id))"
                 >История изменений</v-btn
               >
@@ -555,9 +666,28 @@ async function openHistory(group: LinkGroup) {
       </template>
     </UiDataTable>
     <p class="mf-muted links-footnote mt-4">
-      До отметки передачи родители видят «Фотографии ещё готовятся». Копирование ссылки не запускает срок.
+      До отметки передачи родители видят «Фотографии ещё готовятся». При расписании время открытия показывается отдельно. Копирование ссылки
+      не запускает срок.
     </p>
   </template>
+  <CalendarExtensionDialog
+    v-if="extensionGroup"
+    :group-id="extensionGroup.id"
+    :group-name="extensionGroup.name"
+    @close="extensionGroup = null"
+    @saved="extensionSaved"
+  />
+  <OpeningScheduleDialog
+    v-if="openingGroup && data"
+    :group="openingGroup"
+    :now="data.now"
+    @close="openingGroup = null"
+    @saved="
+      openingGroup = null;
+      notice = 'Время открытия обновлено.';
+      reload();
+    "
+  />
   <v-dialog v-model="showHistory" max-width="640" aria-labelledby="links-history-title">
     <v-card v-if="historyGroup" class="morefoto-app mf-panel links-history" data-testid="links-history">
       <h2 id="links-history-title">История изменений · {{ historyGroup.name }}</h2>

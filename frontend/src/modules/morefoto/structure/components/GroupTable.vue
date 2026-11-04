@@ -22,20 +22,53 @@ const props = defineProps<{
   now: string;
   emptyDescription: string;
 }>();
-const emit = defineEmits<{ page: [page: number]; pageSize: [size: number]; edit: [group: Group]; retry: [] }>();
+const emit = defineEmits<{
+  page: [page: number];
+  pageSize: [size: number];
+  edit: [group: Group];
+  retry: [];
+}>();
 const sort = shallowRef<UiTableSort>({ key: 'name', direction: 'asc' });
 const statuses = {
   preparing: { label: 'Готовится', tone: 'neutral' },
+  scheduled: { label: 'Открытие назначено', tone: 'info' },
   open: { label: 'Приём открыт', tone: 'success' },
   digital: { label: 'Только электронные', tone: 'info' },
   closed: { label: 'Приём завершён', tone: 'neutral' }
 } as const;
 const columns: UiTableColumn[] = [
   { key: 'name', label: 'Группа', sortable: true, primary: true, width: '16%' },
-  { key: 'status', label: 'Приём', type: 'status', statuses, sortable: true, mobile: true, width: '20%' },
-  { key: 'closesAt', label: 'Печать до', type: 'date', sortable: true, mobile: true, width: '12%' },
-  { key: 'digitalSalesUntil', label: 'Электронные до', type: 'date', sortable: true, width: '13%' },
-  { key: 'deliveryDueAt', label: 'Доставка до', type: 'date', sortable: true, width: '12%' },
+  {
+    key: 'status',
+    label: 'Приём',
+    type: 'status',
+    statuses,
+    sortable: true,
+    mobile: true,
+    width: '20%'
+  },
+  {
+    key: 'closesAt',
+    label: 'Печать до',
+    type: 'date',
+    sortable: true,
+    mobile: true,
+    width: '12%'
+  },
+  {
+    key: 'digitalSalesUntil',
+    label: 'Электронные до',
+    type: 'date',
+    sortable: true,
+    width: '13%'
+  },
+  {
+    key: 'deliveryDueAt',
+    label: 'Доставка до',
+    type: 'date',
+    sortable: true,
+    width: '12%'
+  },
   { key: 'teacher', label: 'Ответственный', sortable: true }
 ];
 const byId = computed(() => new Map(props.groups.map((group) => [group.id, group])));

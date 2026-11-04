@@ -28,7 +28,15 @@ export type Link = {
   galleryToken?: string | null;
   /** F3: the short alias staff copy. */
   galleryAlias?: string | null;
-  history?: { kind: string; at: string; reason: string | null; previousSentAt: string | null }[];
+  openingStatus?: string | null;
+  scheduledOpenAt?: string | null;
+  manualSentAt?: string | null;
+  history?: {
+    kind: string;
+    at: string;
+    reason: string | null;
+    previousSentAt: string | null;
+  }[];
 };
 
 export const key = () => crypto.randomUUID().replace(/-/g, '');
@@ -38,10 +46,19 @@ export async function body(response: APIResponse, status = 200) {
   return response.json();
 }
 export async function auth(page: Page, idempotencyKey = key()) {
-  return { Authorization: 'Bearer ' + (await token(page)), 'Idempotency-Key': idempotencyKey };
+  return {
+    Authorization: 'Bearer ' + (await token(page)),
+    'Idempotency-Key': idempotencyKey
+  };
 }
 export async function link(page: Page, groupId: string): Promise<Link> {
-  return (await body(await page.request.get('/api/v1/groups/' + groupId + '/link', { headers: await auth(page) }))).data;
+  return (
+    await body(
+      await page.request.get('/api/v1/groups/' + groupId + '/link', {
+        headers: await auth(page)
+      })
+    )
+  ).data;
 }
 export async function command(
   page: Page,
@@ -52,7 +69,10 @@ export async function command(
   idempotencyKey = key()
 ) {
   return body(
-    await page.request.post('/api/v1/groups/' + groupId + '/' + action, { headers: await auth(page, idempotencyKey), data }),
+    await page.request.post('/api/v1/groups/' + groupId + '/' + action, {
+      headers: await auth(page, idempotencyKey),
+      data
+    }),
     status
   );
 }

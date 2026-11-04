@@ -19,7 +19,7 @@ test('every labelled domain status has a tone', () => {
   assert.deepEqual(keys(productionTone), keys(productionLabels));
   assert.deepEqual(keys(staffRequestTone), keys(requestStatus));
   assert.deepEqual(keys(accountStatusTone), ['active', 'blocked', 'pending']);
-  assert.deepEqual(keys(groupStateTone), ['closed', 'digital', 'open', 'preparing']);
+  assert.deepEqual(keys(groupStateTone), ['closed', 'digital', 'open', 'preparing', 'scheduled']);
   for (const map of [paymentTone, productionTone, staffRequestTone, accountStatusTone, groupStateTone]) {
     for (const tone of Object.values(map)) assert.ok(STATUS_TONES.includes(tone), tone);
   }
@@ -40,11 +40,24 @@ test('unknown values are neutral', () => {
 });
 
 test('link card status follows closing, handover and preparation', () => {
-  assert.deepEqual(linkStatus({ state: 'closed', sentAt: '2026-09-01T10:00:00Z', prepared: true }), {
-    tone: 'neutral',
-    text: 'Приём завершён'
-  });
+  assert.deepEqual(
+    linkStatus({
+      state: 'closed',
+      sentAt: '2026-09-01T10:00:00Z',
+      prepared: true
+    }),
+    {
+      tone: 'neutral',
+      text: 'Приём завершён'
+    }
+  );
   assert.deepEqual(linkStatus({ state: 'open', sentAt: '2026-09-01T10:00:00Z' }), { tone: 'success', text: 'Приём открыт' });
-  assert.deepEqual(linkStatus({ state: 'preparing', prepared: true }), { tone: 'info', text: 'Готова к передаче' });
-  assert.deepEqual(linkStatus({ state: 'preparing', prepared: false }), { tone: 'warning', text: 'Требует проверки' });
+  assert.deepEqual(linkStatus({ state: 'preparing', prepared: true }), {
+    tone: 'info',
+    text: 'Готова к передаче'
+  });
+  assert.deepEqual(linkStatus({ state: 'preparing', prepared: false }), {
+    tone: 'warning',
+    text: 'Требует проверки'
+  });
 });

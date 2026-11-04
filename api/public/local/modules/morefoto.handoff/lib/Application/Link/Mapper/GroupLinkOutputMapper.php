@@ -12,6 +12,8 @@ use Morefoto\Handoff\Application\Link\Dto\LinkEventOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkMarkupCorrectionOutputDto;
 use Morefoto\Handoff\Application\Link\Dto\LinkPreparationOutputDto;
 use Morefoto\Handoff\Domain\Link\Enum\LinkProblemEnum;
+use Morefoto\Handoff\Domain\Link\Enum\OpeningStatusEnum;
+use Morefoto\Handoff\Domain\Link\ValueObject\OpeningSchedule;
 use Rebit\Share\Contracts\Organization\Dto\GroupCalendarOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryItemOutputDto;
 
@@ -24,8 +26,15 @@ final readonly class GroupLinkOutputMapper
         int $revision,
         bool $prepared,
         ?string $curatorName = null,
+        ?OpeningSchedule $opening = null,
     ): GroupLinkSummaryOutputDto {
-        return new GroupLinkSummaryOutputDto(...$this->fields($group, $assessment, $revision, $prepared), curatorName: $curatorName);
+        return new GroupLinkSummaryOutputDto(
+            ...$this->fields($group, $assessment, $revision, $prepared, $opening),
+            curatorName: $curatorName,
+            openingStatus: $opening?->status->value,
+            scheduledOpenAt: $opening?->openAt->format(\DateTimeInterface::ATOM),
+            manualSentAt: $opening?->manualSentAt?->format(\DateTimeInterface::ATOM),
+        );
     }
 
     /**
@@ -53,6 +62,7 @@ final readonly class GroupLinkOutputMapper
         \DateTimeImmutable $now,
         array $history,
         bool $markupCorrectable = false,
+        ?OpeningSchedule $opening = null,
     ): GroupLinkOutputDto {
         $zone = new \DateTimeZone($group->calendar->timezone);
         $events = [];
@@ -73,12 +83,15 @@ final readonly class GroupLinkOutputMapper
         }
 
         return new GroupLinkOutputDto(
-            ...$this->fields($group, $assessment, $revision, $prepared),
+            ...$this->fields($group, $assessment, $revision, $prepared, $opening),
             galleryToken: $galleryToken,
             galleryAlias: $galleryAlias,
             referenceNow: $now->format(\DateTimeInterface::ATOM),
             history: $events,
             markupCorrectable: $markupCorrectable,
+            openingStatus: $opening?->status->value,
+            scheduledOpenAt: $opening?->openAt->format(\DateTimeInterface::ATOM),
+            manualSentAt: $opening?->manualSentAt?->format(\DateTimeInterface::ATOM),
         );
     }
 
@@ -145,7 +158,7 @@ final readonly class GroupLinkOutputMapper
      *     digitalSalesUntil: ?string, deliveryAt: ?string, photoCount: int, childCount: int, markupCorrectionAt: ?string,
      * }
      */
-    private function fields(GroupDirectoryItemOutputDto $group, LinkAssessmentOutputDto $assessment, int $revision, bool $prepared): array
+    private function fields(GroupDirectoryItemOutputDto $group, LinkAssessmentOutputDto $assessment, int $revision, bool $prepared, ?OpeningSchedule $opening = null): array
     {
         return [
             'groupId' => $group->id,
@@ -159,7 +172,7 @@ final readonly class GroupLinkOutputMapper
             'signature' => $assessment->readiness->signature,
             'prepared' => $prepared,
             'problems' => array_map(static fn(LinkProblemEnum $problem): string => $problem->value, $assessment->readiness->problems),
-            'state' => $group->calendar->status,
+            'state' => null === $group->calendar->sentAt && OpeningStatusEnum::SCHEDULED === $opening?->status ? 'scheduled' : $group->calendar->status,
             'timezone' => $group->calendar->timezone,
             'sentAt' => $group->calendar->sentAt,
             'closesAt' => $group->calendar->closesAt,

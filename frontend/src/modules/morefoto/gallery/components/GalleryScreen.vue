@@ -36,8 +36,9 @@ const route = useRoute();
 const helpOpen = shallowRef(false);
 const questionOpen = shallowRef(false);
 const token = computed(() => String(route.params.token));
+const questionToken = computed(() => gallery.value?.token ?? token.value);
 // Demo mode has no server conversation: the curator channel exists only against the real API.
-const questions = isMockApiEnabled ? null : useGalleryQuestion(token, questionOpen, questionsApi);
+const questions = isMockApiEnabled ? null : useGalleryQuestion(questionToken, questionOpen, questionsApi);
 
 function askCurator(): void {
   helpOpen.value = false;
@@ -51,7 +52,11 @@ function askCurator(): void {
     <header class="gallery-topbar">
       <MfLogo :size="24" mono class="gallery-brand" />
       <span class="gallery-topbar__caption">Фотографии ваших детей</span>
-      <CartEntry v-if="gallery && gallery.state !== 'preparing'" :gallery="gallery" :token="String(route.params.token)" />
+      <CartEntry
+        v-if="gallery && gallery.state !== 'preparing' && gallery.state !== 'scheduled'"
+        :gallery="gallery"
+        :token="String(route.params.token)"
+      />
       <v-btn
         v-if="gallery && questions"
         class="gallery-question-top"
@@ -110,12 +115,22 @@ function askCurator(): void {
         </v-alert>
         <v-alert v-if="gallery.state === 'digital'" type="info" variant="tonal" class="mb-6" data-testid="gallery-digital-only">
           Приём заказов на печать завершён. Электронные фотографии можно купить до
-          {{ gallery.digitalSalesUntil ? formatMoment(gallery.digitalSalesUntil) : 'окончания приёма' }} мск.
+          {{ gallery.digitalSalesUntil ? formatMoment(gallery.digitalSalesUntil) : 'окончания приёма' }}
+          мск.
         </v-alert>
         <v-alert v-if="gallery.state === 'closed'" type="info" variant="tonal" class="mb-6">
           Приём заказов завершён. Фотографии можно посмотреть; новые заказы сейчас не принимаются.
         </v-alert>
-        <section v-if="gallery.state === 'preparing'" class="mf-panel gallery-empty">
+        <section v-if="gallery.state === 'scheduled'" class="mf-panel gallery-empty" data-testid="gallery-scheduled">
+          <v-icon icon="mdi-calendar-clock-outline" size="40" color="primary" />
+          <h2>Галерея откроется по расписанию</h2>
+          <p class="mf-muted">
+            Открытие
+            {{ gallery.scheduledOpenAt ? formatMoment(gallery.scheduledOpenAt) : 'скоро' }}. Сохраните эту ссылку: после открытия фотографии
+            и покупка появятся здесь автоматически.
+          </p>
+        </section>
+        <section v-else-if="gallery.state === 'preparing'" class="mf-panel gallery-empty">
           <v-icon icon="mdi-timer-sand" size="40" color="primary" />
           <h2>Фотографии ещё готовятся</h2>
           <p class="mf-muted">
@@ -169,7 +184,7 @@ function askCurator(): void {
           :submit="questions.send"
           @reload="questions.reload()"
         />
-        <CartBar v-if="gallery.state !== 'preparing'" :gallery="gallery" :token="token" />
+        <CartBar v-if="gallery.state !== 'preparing' && gallery.state !== 'scheduled'" :gallery="gallery" :token="token" />
       </template>
     </main>
   </div>

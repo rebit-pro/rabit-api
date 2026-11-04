@@ -61,7 +61,7 @@ function store(name: string, value: string): boolean {
 export function rememberedGallery(groupId: string): string | null {
   try {
     const token = localStorage.getItem(galleryKey(groupId));
-    return token && /^[a-f0-9]{64}$/.test(token) ? token : null;
+    return token && (/^[a-f0-9]{64}$/.test(token) || /^[a-km-np-z2-9]{10}$/.test(token)) ? token : null;
   } catch {
     return null;
   }
@@ -101,17 +101,20 @@ function message(cause: unknown): string {
   return cause instanceof Error ? cause.message : 'Не удалось рассчитать корзину.';
 }
 async function calculate(state: State, lines: Line[]): Promise<Calculation> {
-  const { data } = await api.post<Calculation>('/api/v1/public/galleries/' + state.token + '/quotes', {
-    lines: lines.map(({ assignmentId, productId, quantity }) => ({
-      assignmentId,
-      productId,
-      quantity
-    }))
-  });
+  const { data } = await api.post<Calculation>(
+    '/api/v1/public/galleries/' + encodeURIComponent(state.gallery.token ?? state.token) + '/quotes',
+    {
+      lines: lines.map(({ assignmentId, productId, quantity }) => ({
+        assignmentId,
+        productId,
+        quantity
+      }))
+    }
+  );
   return { quote: data.quote, quoteToken: data.quoteToken };
 }
 export async function loadStorefront(token: string, gallery: GallerySnapshot): Promise<void> {
-  if (gallery.state === 'preparing') {
+  if (gallery.state === 'preparing' || gallery.state === 'scheduled') {
     states.set(
       gallery.groupId,
       shallowReactive<State>({
@@ -136,14 +139,19 @@ export async function loadStorefront(token: string, gallery: GallerySnapshot): P
   store(galleryKey(gallery.groupId), token);
   let catalog: Catalog;
   try {
-    ({ data: catalog } = await api.get<Catalog>('/api/v1/public/galleries/' + token + '/catalog'));
+    ({ data: catalog } = await api.get<Catalog>('/api/v1/public/galleries/' + encodeURIComponent(gallery.token ?? token) + '/catalog'));
   } catch (cause) {
     states.set(
       gallery.groupId,
       shallowReactive<State>({
         gallery,
         token,
-        catalog: { products: [], giftThreshold: 0, giftForStaff: false, revision: 0 },
+        catalog: {
+          products: [],
+          giftThreshold: 0,
+          giftForStaff: false,
+          revision: 0
+        },
         lines: read(gallery.groupId),
         quote: null,
         quoteToken: null,

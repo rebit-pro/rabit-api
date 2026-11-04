@@ -21,6 +21,7 @@ export interface GallerySnapshot {
   shootName: string;
   audience: 'regular' | 'staff';
   state: GalleryState;
+  scheduledOpenAt?: string | null;
   sentAt: string | null;
   /** Print sales close (T0+7). */
   closesAt: string | null;
@@ -28,7 +29,7 @@ export interface GallerySnapshot {
   digitalSalesUntil: string | null;
   /** D4: the markup is being corrected — frames can be viewed, buying is paused until the correction ends. */
   updating?: boolean;
-  /** F3: the long key of the gallery; a short link is replaced by it, so the cart and orders keep working by it. */
+  /** Internal key for public API calls; the browser keeps the original short address. */
   token?: string;
   referenceNow: string;
   delivery: string;

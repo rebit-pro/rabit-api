@@ -1,7 +1,7 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { login, token } from './helpers.js';
-import { auth, body, command, link, moscow, preparedLinkPath, type PreparedLink } from './f2-links.js';
+import { auth, body, command, key, link, moscow, preparedLinkPath, type PreparedLink } from './f2-links.js';
 
 // F2, part one: first in group B, so the minute of preparation is over when zzzz-links reports the delivery.
 const png = Buffer.from(
@@ -11,10 +11,26 @@ const png = Buffer.from(
 /** A row of the links table (#92); the desktop row and the mobile card share the group ID, only the shown one counts. */
 const row = (page: Page, groupId: string) => page.locator('[data-row-id="' + groupId + '"]').filter({ visible: true });
 async function assign(page: Page, email: string, role: 'teacher' | 'curator' | 'head', institutionId: string, groupId: string) {
-  const listing = await body(await page.request.get('/api/v1/users?q=' + encodeURIComponent(email), { headers: await auth(page) }));
+  const listing = await body(
+    await page.request.get('/api/v1/users?q=' + encodeURIComponent(email), {
+      headers: await auth(page)
+    })
+  );
   const staff = listing.data.items.find((item: { email: string }) => item.email === email);
-  const detail = (await body(await page.request.get('/api/v1/users/' + staff.id, { headers: await auth(page) }))).data;
-  const options = (await body(await page.request.get('/api/v1/users/assignment-options', { headers: await auth(page) }))).data;
+  const detail = (
+    await body(
+      await page.request.get('/api/v1/users/' + staff.id, {
+        headers: await auth(page)
+      })
+    )
+  ).data;
+  const options = (
+    await body(
+      await page.request.get('/api/v1/users/assignment-options', {
+        headers: await auth(page)
+      })
+    )
+  ).data;
   await body(
     await page.request.patch('/api/v1/users/' + staff.id, {
       headers: await auth(page),
@@ -40,9 +56,15 @@ test('F2: организатор проверяет ссылку группы и
   const suffix = crypto.randomUUID().slice(0, 8);
   const create = async (path: string, data: Record<string, unknown>) =>
     (await body(await page.request.post(path, { headers: await auth(page), data }), 201)).data;
-  const institution = await create('/api/v1/institutions', { name: 'F2 Детский сад ' + suffix, address: 'Москва' });
+  const institution = await create('/api/v1/institutions', {
+    name: 'F2 Детский сад ' + suffix,
+    address: 'Москва'
+  });
   const shoot = await create('/api/v1/institutions/' + institution.id + '/shoots', { name: 'F2 Съёмка', date: '2026-10-21' });
-  const group = await create('/api/v1/shoots/' + shoot.id + '/groups', { name: 'F2 Ромашки ' + suffix, groupKind: 'regular' });
+  const group = await create('/api/v1/shoots/' + shoot.id + '/groups', {
+    name: 'F2 Ромашки ' + suffix,
+    groupKind: 'regular'
+  });
   await create('/api/v1/catalog/products', {
     name: 'F2 Печать ' + suffix,
     description: '',
@@ -57,7 +79,10 @@ test('F2: организатор проверяет ссылку группы и
   const upload = await body(
     await page.request.post('/api/v1/shoots/' + shoot.id + '/photos', {
       headers: { Authorization: 'Bearer ' + (await token(page)) },
-      multipart: { groupId: group.id, file: { name: 'f2-child.png', mimeType: 'image/png', buffer: png } }
+      multipart: {
+        groupId: group.id,
+        file: { name: 'f2-child.png', mimeType: 'image/png', buffer: png }
+      }
     }),
     202
   );
@@ -65,7 +90,11 @@ test('F2: организатор проверяет ссылку группы и
   await expect
     .poll(
       async () => {
-        const media = await body(await page.request.get('/api/v1/shoots/' + shoot.id + '/photos', { headers: await auth(page) }));
+        const media = await body(
+          await page.request.get('/api/v1/shoots/' + shoot.id + '/photos', {
+            headers: await auth(page)
+          })
+        );
         revision = media.data.revision;
         return media.data.items.find((item: { id: string }) => item.id === upload.data.id)?.status;
       },
@@ -76,7 +105,12 @@ test('F2: организатор проверяет ссылку группы и
   await body(
     await page.request.post('/api/v1/groups/' + group.id + '/photo-assignments', {
       headers: await auth(page),
-      data: { shootId: shoot.id, revision, photoIds: [upload.data.id], childCode: 'A' }
+      data: {
+        shootId: shoot.id,
+        revision,
+        photoIds: [upload.data.id],
+        childCode: 'A'
+      }
     })
   );
   await assign(page, 'teacher@example.invalid', 'teacher', institution.id, group.id);
@@ -91,13 +125,27 @@ test('F2: организатор проверяет ссылку группы и
     null,
     'preparing'
   ]);
-  const list = await body(await page.request.get('/api/v1/group-links?shootId=' + shoot.id, { headers: await auth(page) }));
+  const list = await body(
+    await page.request.get('/api/v1/group-links?shootId=' + shoot.id, {
+      headers: await auth(page)
+    })
+  );
   const { summary, ...paging } = list.meta;
   expect(paging).toEqual({ page: 1, pageSize: 25, total: 1, totalPages: 1 });
-  expect(summary.byState).toEqual({ preparing: 1, open: 0, digital: 0, closed: 0 });
+  expect(summary.byState).toEqual({
+    preparing: 1,
+    open: 0,
+    digital: 0,
+    closed: 0
+  });
   expect(list.data.items[0].groupId).toBe(group.id);
   expect(list.data.items[0]).not.toHaveProperty('galleryToken');
-  const review = { photosReviewed: true, conditionsReviewed: true, staffReviewed: true, confirmed: true };
+  const review = {
+    photosReviewed: true,
+    conditionsReviewed: true,
+    staffReviewed: true,
+    confirmed: true
+  };
   expect(
     (await command(page, group.id, 'link-preparations', { ...review, revision: 2, signature: initial.signature }, 409)).error.code
   ).toBe('REVISION_CONFLICT');
@@ -110,7 +158,12 @@ test('F2: организатор проверяет ссылку группы и
         page,
         group.id,
         'link-preparations',
-        { ...review, staffReviewed: false, revision: 1, signature: initial.signature },
+        {
+          ...review,
+          staffReviewed: false,
+          revision: 1,
+          signature: initial.signature
+        },
         422
       )
     ).error.code
@@ -155,7 +208,11 @@ test('F2: организатор проверяет ссылку группы и
   expect((await repeatedPreparation).headers()['idempotency-key']).toBe(lostKey);
   expect((await prepared).status()).toBe(200);
   await expect(card.getByText('Готова к передаче', { exact: true })).toBeVisible();
-  await page.screenshot({ path: testInfo.outputPath('f2-desktop-prepared.png'), fullPage: true, animations: 'disabled' });
+  await page.screenshot({
+    path: testInfo.outputPath('f2-desktop-prepared.png'),
+    fullPage: true,
+    animations: 'disabled'
+  });
 
   const ready = await link(page, group.id);
   expect(ready.galleryToken).toMatch(/^[a-f0-9]{64}$/);
@@ -178,16 +235,69 @@ test('F2: организатор проверяет ссылку группы и
   );
   const renamed = await link(page, group.id);
   expect(renamed.prepared).toBe(false);
-  const later = { revision: 2, confirmed: true, sentAt: moscow(Date.now()) + ':00+03:00' };
+  const later = {
+    revision: 2,
+    confirmed: true,
+    sentAt: moscow(Date.now()) + ':00+03:00'
+  };
   expect((await command(page, group.id, 'link-transmissions', { ...later, signature: ready.signature }, 409)).error.code).toBe(
     'SIGNATURE_CONFLICT'
   );
   expect((await command(page, group.id, 'link-transmissions', { ...later, signature: renamed.signature }, 409)).error.code).toBe(
     'LINK_NOT_PREPARED'
   );
-  await command(page, group.id, 'link-preparations', { ...review, revision: 2, signature: renamed.signature });
+  await command(page, group.id, 'link-preparations', {
+    ...review,
+    revision: 2,
+    signature: renamed.signature
+  });
   // F3: a repeated preparation keeps the same short link.
   expect((await link(page, group.id)).galleryAlias).toBe(ready.galleryAlias);
+  // #232: a prepared link can be scheduled, stays short in the browser and cannot start F2 sales early.
+  const openAt = moscow(Date.now() + 2 * 3600000) + ':00+03:00';
+  const planned = (
+    await command(page, group.id, 'opening-schedules', {
+      revision: 3,
+      signature: renamed.signature,
+      openAt,
+      confirmed: true
+    })
+  ).data;
+  expect([planned.revision, planned.status]).toEqual([4, 'scheduled']);
+  const scheduled = await link(page, group.id);
+  expect([scheduled.state, scheduled.sentAt, scheduled.openingStatus]).toEqual(['scheduled', null, 'scheduled']);
+  expect((await body(await page.request.get(galleryPath))).data.state).toBe('scheduled');
+  expect(
+    (await command(page, group.id, 'link-transmissions', { ...later, revision: 4, signature: renamed.signature }, 409)).error.code
+  ).toBe('MANUAL_DELIVERY_SEPARATE');
+  await page.goto('/g/' + ready.galleryAlias);
+  await expect(page).toHaveURL(new RegExp('/g/' + ready.galleryAlias + '$'));
+  await expect(page.getByTestId('gallery-scheduled')).toContainText('Галерея откроется по расписанию');
+  await expect(page.getByRole('button', { name: /Корзина/ })).toHaveCount(0);
+  await page.screenshot({
+    path: testInfo.outputPath('issue232-scheduled-desktop.png'),
+    fullPage: true,
+    animations: 'disabled'
+  });
+  await page.goto('/cabinet/links?group=' + group.id);
+  await row(page, group.id)
+    .getByRole('button', { name: /^Действия: / })
+    .click();
+  await page.getByRole('button', { name: 'Перенести или отменить открытие' }).click();
+  const openingDialog = page.getByTestId('opening-schedule-dialog');
+  await expect(openingDialog.getByText('Сейчас назначено:')).toBeVisible();
+  await openingDialog.screenshot({ path: testInfo.outputPath('issue232-opening-dialog-desktop.png'), animations: 'disabled' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileDialog = await openingDialog.boundingBox();
+  expect(mobileDialog).not.toBeNull();
+  expect(mobileDialog!.x).toBeGreaterThanOrEqual(0);
+  expect(mobileDialog!.x + mobileDialog!.width).toBeLessThanOrEqual(390);
+  await openingDialog.screenshot({ path: testInfo.outputPath('issue232-opening-dialog-mobile.png'), animations: 'disabled' });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openingDialog.getByRole('button', { name: 'Закрыть' }).click();
+  const cancelled = (await command(page, group.id, 'opening-cancellations', { revision: 4 })).data;
+  expect([cancelled.revision, cancelled.status]).toEqual([5, 'cancelled']);
+  expect((await link(page, group.id)).state).toBe('preparing');
   const record: PreparedLink = {
     groupId: group.id,
     shootId: shoot.id,
@@ -207,9 +317,15 @@ test('#127: путь к галерее ведёт от кадров до пер�
   const suffix = crypto.randomUUID().slice(0, 8);
   const create = async (path: string, data: Record<string, unknown>) =>
     (await body(await page.request.post(path, { headers: await auth(page), data }), 201)).data;
-  const institution = await create('/api/v1/institutions', { name: 'I127 Детский сад ' + suffix, address: 'Москва' });
+  const institution = await create('/api/v1/institutions', {
+    name: 'I127 Детский сад ' + suffix,
+    address: 'Москва'
+  });
   const shoot = await create('/api/v1/institutions/' + institution.id + '/shoots', { name: 'I127 Съёмка', date: '2026-10-22' });
-  const group = await create('/api/v1/shoots/' + shoot.id + '/groups', { name: 'I127 Ромашки ' + suffix, groupKind: 'regular' });
+  const group = await create('/api/v1/shoots/' + shoot.id + '/groups', {
+    name: 'I127 Ромашки ' + suffix,
+    groupKind: 'regular'
+  });
   // No new product here: the catalog is shared, a new one would change the sales signature of the F2 group that
   // zzzz-links expects to stay prepared. The F2 test above has already published an active product.
   const step = (scope: Locator, key: string) => scope.getByTestId('gallery-path').locator('[data-step="' + key + '"]');
@@ -230,14 +346,21 @@ test('#127: путь к галерее ведёт от кадров до пер�
   const upload = await body(
     await page.request.post('/api/v1/shoots/' + shoot.id + '/photos', {
       headers: { Authorization: 'Bearer ' + (await token(page)) },
-      multipart: { groupId: group.id, file: { name: 'i127-child.png', mimeType: 'image/png', buffer: png } }
+      multipart: {
+        groupId: group.id,
+        file: { name: 'i127-child.png', mimeType: 'image/png', buffer: png }
+      }
     }),
     202
   );
   await expect
     .poll(
       async () => {
-        const media = await body(await page.request.get('/api/v1/shoots/' + shoot.id + '/photos', { headers: await auth(page) }));
+        const media = await body(
+          await page.request.get('/api/v1/shoots/' + shoot.id + '/photos', {
+            headers: await auth(page)
+          })
+        );
         return media.data.items.find((item: { id: string }) => item.id === upload.data.id)?.status;
       },
       { timeout: 30000 }
@@ -253,8 +376,17 @@ test('#127: путь к галерее ведёт от кадров до пер�
   await page.getByLabel('Код ребёнка', { exact: true }).fill('A');
   await page.getByRole('button', { name: 'Назначить ребёнку', exact: true }).click();
   await expect(step(photoPath, 'prepare')).toHaveAttribute('aria-current', 'step');
-  await expect(step(photoPath, 'prepare').getByRole('link', { name: 'К ссылкам и срокам', exact: true })).toBeVisible();
-  await page.screenshot({ path: testInfo.outputPath('i127-desktop-photos-path.png'), fullPage: true, animations: 'disabled' });
+  await expect(
+    step(photoPath, 'prepare').getByRole('link', {
+      name: 'К ссылкам и срокам',
+      exact: true
+    })
+  ).toBeVisible();
+  await page.screenshot({
+    path: testInfo.outputPath('i127-desktop-photos-path.png'),
+    fullPage: true,
+    animations: 'disabled'
+  });
 
   const initial = await link(page, group.id);
   await command(page, group.id, 'link-preparations', {
@@ -266,7 +398,9 @@ test('#127: путь к галерее ведёт от кадров до пер�
     signature: initial.signature
   });
   await step(photoPath, 'prepare').getByRole('link', { name: 'К ссылкам и срокам', exact: true }).click();
-  const transmitNote = card.getByText('шаг 5 из 5: отметить передачу ссылки', { exact: true });
+  const transmitNote = card.getByText('шаг 5 из 5: отметить передачу ссылки', {
+    exact: true
+  });
   await expect(transmitNote).toBeVisible();
   await expect(transmitNote).toHaveAttribute('title', /Родители увидят кадры только после этой отметки/);
   await expect(page.getByText(/До отметки передачи родители видят «Фотографии ещё готовятся»/)).toBeVisible();
@@ -274,19 +408,70 @@ test('#127: путь к галерее ведёт от кадров до пер�
   await card.getByRole('button', { name: actions, exact: true }).click();
   await expect(page.getByRole('button', { name: 'Страница родителей', exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
-  await card.screenshot({ path: testInfo.outputPath('i127-desktop-links-card.png'), animations: 'disabled' });
+  await card.screenshot({
+    path: testInfo.outputPath('i127-desktop-links-card.png'),
+    animations: 'disabled'
+  });
   await page.setViewportSize({ width: 390, height: 844 });
   await card.scrollIntoViewIfNeeded();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  await page.screenshot({ path: testInfo.outputPath('i127-mobile-links-card.png'), animations: 'disabled' });
+  await page.screenshot({
+    path: testInfo.outputPath('i127-mobile-links-card.png'),
+    animations: 'disabled'
+  });
 
   // The parent page of a prepared, not transmitted group explains the wait instead of inviting to pick a child code.
   const prepared = await link(page, group.id);
   await page.goto('/g/' + prepared.galleryToken);
-  await expect(page.getByRole('heading', { name: 'Фотографии ещё готовятся', exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('heading', {
+      name: 'Фотографии ещё готовятся',
+      exact: true
+    })
+  ).toBeVisible();
   await expect(page.getByText('Фотографии появятся на этой странице, как только их подготовят.', { exact: true })).toBeVisible();
   await expect(page.getByText(/новую ссылку просить не нужно/)).toBeVisible();
   await expect(page.getByText('Выберите код ребёнка и откройте понравившийся кадр.')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  await page.screenshot({ path: testInfo.outputPath('i127-mobile-gallery-preparing.png'), fullPage: true, animations: 'disabled' });
+  await page.screenshot({
+    path: testInfo.outputPath('i127-mobile-gallery-preparing.png'),
+    fullPage: true,
+    animations: 'disabled'
+  });
+
+  // #232: staff may record sending the short link before the planned opening without starting sales.
+  const openAt = moscow(Date.now() + 2 * 3600000) + ':00+03:00';
+  const scheduled = (
+    await command(page, group.id, 'opening-schedules', {
+      revision: prepared.revision,
+      signature: prepared.signature,
+      openAt,
+      confirmed: true
+    })
+  ).data;
+  expect(scheduled.status).toBe('scheduled');
+  const sentAt = moscow(Date.now()) + ':00+03:00';
+  const idempotencyKey = key();
+  const manualCommand = { revision: scheduled.revision, signature: prepared.signature, sentAt, confirmed: true };
+  const manual = (await command(page, group.id, 'manual-link-deliveries', manualCommand, 200, idempotencyKey)).data;
+  expect((await command(page, group.id, 'manual-link-deliveries', manualCommand, 200, idempotencyKey)).data).toEqual(manual);
+  expect(
+    (await command(page, group.id, 'manual-link-deliveries', { ...manualCommand, sentAt: openAt }, 409, idempotencyKey)).error.code
+  ).toBe('IDEMPOTENCY_CONFLICT');
+  const recorded = await link(page, group.id);
+  expect([recorded.state, recorded.sentAt, recorded.openingStatus, recorded.revision]).toEqual([
+    'scheduled',
+    null,
+    'scheduled',
+    manual.revision
+  ]);
+  expect(recorded.manualSentAt).toBeTruthy();
+  expect((await body(await page.request.get('/api/v1/public/galleries/' + prepared.galleryToken))).data.state).toBe('scheduled');
+  await page.goto('/cabinet/links?group=' + group.id);
+  await expect(row(page, group.id)).toContainText('Ссылка отправлена');
+  await page.screenshot({ path: testInfo.outputPath('issue232-manual-before-opening-mobile.png'), fullPage: true, animations: 'disabled' });
+  const cancelled = (await command(page, group.id, 'opening-cancellations', { revision: manual.revision })).data;
+  expect(cancelled.status).toBe('cancelled');
+  expect((await command(page, group.id, 'link-transmissions', manualCommand, 409)).error.code).toBe('MANUAL_DELIVERY_SEPARATE');
+  writeFileSync('var/i232-opening.json', JSON.stringify({ groupId: group.id, galleryToken: prepared.galleryToken }));
 });
