@@ -4,13 +4,19 @@
 
 - Ветка: `codex/ops-gallery-lifecycle-232`; base `9b89f306`, head — последний коммит ветки (`git rev-parse --short HEAD`); issue [#232](https://github.com/rebit-pro/rabit-api/issues/232), PR [#234](https://github.com/rebit-pro/rabit-api/pull/234). Связанные: #167, F2/F3/E7, граф K2.
 - Завершено: решения владельца зафиксированы; короткий URL, продление, расписание, worker, ручная отметка передачи и UI реализованы; полный двухстендовый E2E, 161 browser scenario, все verifiers и visual desktop/mobile прошли.
-- Сейчас: PR #234 открыт в `main`; код и проверки готовы к review, план S0–S8 закрыт.
-- Следующий шаг: ревью PR #234; merge и deployment — отдельные действия после ревью.
-- Блокеры/решения: владелец подтвердил немедленную фиксацию ручной отправки до открытия без изменения T0; открытых продуктовых решений нет. Системный PHP 8.3 вместо требуемого 8.4, проверки выполняются в PHP 8.4 Docker.
-- Рабочее дерево: код и план #232 сохранены в ветке; чужая незакоммиченная `docs/plans/OPS-stage-gallery-cleanup/` оставлена вне PR.
-- Следующая проверка: перед merge выполнить актуальные проверки PR и браузерный E2E по инструкции волн; текущий полный отчёт — `api/var/e2e/rabit-e2e-aad2dd33b408/`.
+- Сейчас: владелец поручил merge PR #234 и выкладку на `app.morefoto36.ru`; stage доступен по SSH, план релиза M1–D4 добавлен. До merge сверяется живой frontend PR #231, чтобы его не откатить.
+- Следующий шаг: завершить preflight release, затем слить PR #234 и подготовить артефакты из итогового `main`.
+- Блокеры/решения: продуктовых решений нет. Stage frontend использует ещё открытый PR #231, который необходимо сохранить в артефакте выкладки; migration должна предшествовать новому backend. Системный PHP 8.3, локальные проверки ранее выполнялись в PHP 8.4 Docker.
+- Рабочее дерево: изменены только план и этот журнал release; чужая незакоммиченная `docs/plans/OPS-stage-gallery-cleanup/` оставлена вне PR.
+- Следующая проверка: `gh pr view 234` и `gh api commits/main`, затем stage preflight/backup; полный E2E предыдущего code head — `api/var/e2e/rabit-e2e-aad2dd33b408/`.
 
 ## Хронология
+
+### 04.11.2026 — поручение merge и deploy
+
+- Владелец разрешил слить PR #234 и затем выложить для ручной проверки. `gh pr view 234`: OPEN, MERGEABLE, base `9b89f306`, head `acbd7a6`, checks пусты из-за отключённых Actions; локальный полный gate ранее PASS 161/161. Самопроверка критических путей не выявила доказанных блокеров, независимым review не объявляется.
+- SSH `photo.rebit-pro` работает; `docker service ls`: `morefoto_stage_backend`, FPM и фоновые CLI 1/1; `morefoto_frontend` 2/2. Backend/FPM монтируют `/srv/morefoto/releases/main-20261101121402-9b89f30/app`; frontend запущен из `morefoto-frontend:pr-231-31c302c`, PR #231 ещё OPEN и меняет фильтр/сортировку серий. Свободно около 12 ГБ. Обычный `make deploy` для stage не подходит: проектный runbook указывает на иной стек/пути. Релизный план обновлён до merge; данные чужой папки OPS-stage-gallery-cleanup не менялись.
+- Прочитаны действующие stage runbook-скрипты `prepare-release.sh`, `backup.sh`, `restore-check.sh`, `migrate.sh`, `switch-backend.sh`, `switch-frontend.sh` из текущего bind-релиза. FPM содержит 21 env и 4 Swarm secrets; их значения не выводились. Миграцию можно выполнить проверенным one-shot `docker run` с новой `/app` и сетью FPM. `git diff main...31c302c` показал 3 frontend-файла фильтра/серий и 2 теста уже работающего PR #231; новую frontend-сборку stage подготовить поверх слитого main с этими точными файлами, не добавляя их в PR #234. Удалённый `main` повторно `9b89f306`, PR #234 MERGEABLE; M1 PASS.
 
 ### 04.11.2026 — старт
 
