@@ -2,12 +2,12 @@
 
 ## Точка продолжения
 
-- Ветка checkout: `codex/ops-gallery-lifecycle-232`, head `5229213`; PR [#234](https://github.com/rebit-pro/rabit-api/pull/234) слит в `main` commit `6564f88`, issue [#232](https://github.com/rebit-pro/rabit-api/issues/232) закрыт. Связанные: #167, F2/F3/E7, граф K2.
+- Ветка checkout: `codex/ops-gallery-lifecycle-232`, code head `5229213`, текущий head журнала — `git rev-parse HEAD`; PR [#234](https://github.com/rebit-pro/rabit-api/pull/234) слит в `main` commit `6564f88`, issue [#232](https://github.com/rebit-pro/rabit-api/issues/232) закрыт. Связанные: #167, F2/F3/E7, граф K2.
 - Завершено: функциональность #232 реализована, полный двухстендовый E2E до merge прошёл 161 browser scenario; 04.11.2026 stage `app.morefoto36.ru` выложен из `main` `6564f88`, миграция и smoke PASS.
 - Сейчас: пользователь проверяет авторизованный сценарий вручную; release `/home/deploy/morefoto-release-20261104-6564f88-issue232` активен, frontend `morefoto-frontend:issue232-6564f88-pr231-31c302c` сохраняет изменения открытого PR #231.
 - Следующий шаг: получить обратную связь пользователя по ручной проверке; при дефекте сначала собрать точные шаги/время и проверить stage логи.
 - Блокеры/решения: блокеров выкладки нет. E2E после самопроверки и при выкладке не запускался по указанию владельца; браузерный авторизованный smoke остаётся за пользователем.
-- Рабочее дерево: изменены только `plan.md` и этот журнал для результата релиза; чужая незакоммиченная `docs/plans/OPS-stage-gallery-cleanup/` не тронута.
+- Рабочее дерево: журнал релиза закоммичен в ветке задачи после merge; чужая незакоммиченная `docs/plans/OPS-stage-gallery-cleanup/` не тронута.
 - Следующая проверка: `ssh photo.rebit-pro 'docker service ls --format "{{.Name}} {{.Replicas}}"'` и ручная проверка `https://app.morefoto36.ru`; ServiceSpec и восстановимая копия БД находятся в каталоге релиза.
 
 ## Хронология
