@@ -6,6 +6,7 @@ namespace Morefoto\Organization\Application\Calendar\Service;
 
 use Morefoto\Organization\Application\Calendar\Contract\CalendarClockInterface;
 use Morefoto\Organization\Domain\Calendar\Exception\CalendarRuleViolation;
+use Morefoto\Organization\Domain\Calendar\Service\CalendarPolicy;
 use Morefoto\Organization\Domain\Calendar\Repository\GroupCalendarRepository;
 use Morefoto\Organization\Domain\Calendar\ValueObject\GroupCalendar as Calendar;
 use Morefoto\Organization\Domain\Institution\Repository\InstitutionOperationRepository;
@@ -68,10 +69,20 @@ final readonly class GroupCalendar implements GroupCalendarInterface
 
         // DATETIME persistence has second precision; reject silent deadline truncation.
         if ('000000' !== $newClosesAt->format('u') || 1000 > (int)$newClosesAt->format('Y') || 9999 < (int)$newClosesAt->format('Y')) {
-            throw new \InvalidArgumentException('A whole-second calendar deadline within the database range is required.');
+            throw new HttpException('INVALID_CALENDAR_DEADLINE', 422);
         }
 
         return $this->mutate($input, $newClosesAt);
+    }
+
+    public function extendDays(CalendarCommandInputDto $input, int $days): CalendarMutationOutputDto
+    {
+        $this->validator->validate($input);
+        if (1 > $days || 365 < $days) {
+            throw new HttpException('INVALID_EXTENSION_DAYS', 422);
+        }
+
+        return $this->mutate($input, null, $days);
     }
 
     public function recordLinkSent(LinkSentInputDto $input): CalendarMutationOutputDto
@@ -123,13 +134,17 @@ final readonly class GroupCalendar implements GroupCalendarInterface
         return new CalendarMutationOutputDto($input->groupId, $revision + 1, CalendarProjection::create($after, $now));
     }
 
-    private function mutate(CalendarCommandInputDto $input, ?\DateTimeImmutable $newClosesAt): CalendarMutationOutputDto
+    private function mutate(CalendarCommandInputDto $input, ?\DateTimeImmutable $newClosesAt, ?int $days = null): CalendarMutationOutputDto
     {
-        $operation = (null === $newClosesAt ? 'calendar.confirm/' : 'calendar.extend/') . $input->groupId;
-        $hash = hash('sha256', json_encode([
+        $operation = (null === $newClosesAt && null === $days ? 'calendar.confirm/' : 'calendar.extend/') . $input->groupId;
+        $payload = [
             $input->groupId, $input->actorUserId, $input->expectedRevision, $input->reason,
             $newClosesAt?->setTimezone(new \DateTimeZone('UTC'))->format(\DateTimeInterface::ATOM),
-        ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        ];
+        if (null !== $days) {
+            $payload[] = $days;
+        }
+        $hash = hash('sha256', json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
         $previous = $this->calendars->findOperation($input->actorUserId, $operation, $input->key)->fetch();
         if (false !== $previous) {
             if (!hash_equals((string)$previous['payload_hash'], $hash)) {
@@ -148,7 +163,19 @@ final readonly class GroupCalendar implements GroupCalendarInterface
         }
         $before = Calendar::fromStorage($row['UF_SENT_AT'], $row['UF_CLOSES_AT'], $row['UF_DIGITAL_SALES_UNTIL'], $row['UF_DELIVERY_DUE_AT'], (string)$row['UF_TIMEZONE']);
         $now = $this->clock->now();
-        $after = null === $newClosesAt ? $before->confirmLinkSent($now) : $before->extend($newClosesAt, $now);
+        try {
+            if (null !== $days) {
+                if (null === $before->closesAt) {
+                    throw new CalendarRuleViolation('LINK_NOT_SENT');
+                }
+                $newClosesAt = CalendarPolicy::addDays($before->closesAt, $days);
+            }
+            $after = null === $newClosesAt ? $before->confirmLinkSent($now) : $before->extend($newClosesAt, $now);
+        } catch (CalendarRuleViolation $violation) {
+            throw new HttpException($violation->getMessage(), 409, $violation);
+        } catch (\DomainException|\InvalidArgumentException $violation) {
+            throw new HttpException('INVALID_CALENDAR_DEADLINE', 422, $violation);
+        }
         $revision = $input->expectedRevision;
         if ($after !== $before) {
             if (!$this->calendars->save((int)$row['ID'], $revision, $after)) {
@@ -163,6 +190,7 @@ final readonly class GroupCalendar implements GroupCalendarInterface
                 operationId: Uuid::uuid4()->toString(),
                 delta: json_encode([
                     'action' => null === $newClosesAt ? 'confirmLinkSent' : 'extendCalendar',
+                    'days' => $days,
                     'reason' => $input->reason,
                     'before' => CalendarProjection::create($before, $now),
                     'after' => CalendarProjection::create($after, $now),

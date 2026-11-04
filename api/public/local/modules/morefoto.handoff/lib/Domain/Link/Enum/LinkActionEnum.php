@@ -12,4 +12,7 @@ enum LinkActionEnum: string
     case CORRECT = 'correct';
     case START_MARKUP_CORRECTION = 'startMarkupCorrection';
     case FINISH_MARKUP_CORRECTION = 'finishMarkupCorrection';
+    case SCHEDULE_OPENING = 'scheduleOpening';
+    case CANCEL_OPENING = 'cancelOpening';
+    case RECORD_MANUAL_DELIVERY = 'recordManualDelivery';
 }

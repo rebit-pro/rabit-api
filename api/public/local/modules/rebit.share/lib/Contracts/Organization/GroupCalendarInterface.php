@@ -30,6 +30,9 @@ interface GroupCalendarInterface
      */
     public function extend(CalendarCommandInputDto $input, \DateTimeImmutable $newClosesAt): CalendarMutationOutputDto;
 
+    /** Adds calendar days to the current print deadline under the group lock; replays never add days again. */
+    public function extendDays(CalendarCommandInputDto $input, int $days): CalendarMutationOutputDto;
+
     /**
      * Records the manual delivery moment reported by staff; never later than server time.
      * The first fact sets print close +7, digital close +14 and delivery print close +7 calendar days; a repeated fact

@@ -2,9 +2,15 @@
 import { formatMoment } from '../formatters';
 import { formatPhone } from '../../ui/field-values';
 import type { LiveBuyer, OrderPeriod } from '../live/types';
-defineProps<{ period: OrderPeriod; buyer: LiveBuyer; childFirstName: string | null; childLastName: string | null }>();
+defineProps<{
+  period: OrderPeriod;
+  buyer: LiveBuyer;
+  childFirstName: string | null;
+  childLastName: string | null;
+}>();
 const states = {
   preparing: 'Ещё не открыт',
+  scheduled: 'Открытие назначено',
   open: 'Идёт приём заказов',
   digital: 'Печать закрыта, продаются электронные фото',
   closed: 'Приём закрыт'

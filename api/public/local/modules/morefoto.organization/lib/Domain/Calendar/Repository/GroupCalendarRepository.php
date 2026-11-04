@@ -63,6 +63,23 @@ final readonly class GroupCalendarRepository
         }
     }
 
+    /** Reads the latest extension events with actor names; stored snapshots remain authoritative. */
+    public function extensions(string $publicId): Result
+    {
+        self::validateId($publicId);
+        try {
+            return Application::getConnection()->query("SELECT h.UF_ACTOR_ID,h.UF_DELTA,DATE_FORMAT(h.UF_OCCURRED_AT,'%Y-%m-%d %H:%i:%s') AS UF_OCCURRED_AT,
+                COALESCE(NULLIF(TRIM(CONCAT(COALESCE(u.NAME,''),' ',COALESCE(u.LAST_NAME,''))),''),u.LOGIN,'Сотрудник') AS ACTOR_NAME
+                FROM b_hlbd_mf_organization_change h JOIN b_hlbd_mf_group g ON g.ID=h.UF_AGGREGATE_ID
+                LEFT JOIN b_user u ON u.ID=h.UF_ACTOR_ID
+                WHERE g.UF_PUBLIC_ID='{$publicId}' AND h.UF_AGGREGATE_TYPE='group'
+                  AND JSON_UNQUOTE(JSON_EXTRACT(h.UF_DELTA,'$.action'))='extendCalendar'
+                ORDER BY h.ID DESC");
+        } catch (\Throwable $exception) {
+            throw new CalendarStorageException('Cannot read group calendar extensions.', 0, $exception);
+        }
+    }
+
     public function save(int $id, int $expectedRevision, GroupCalendar $calendar): bool
     {
         if (1 > $id || 1 > $expectedRevision || 2147483646 < $expectedRevision || null === $calendar->sentAt || null === $calendar->closesAt || null === $calendar->digitalSalesUntil || null === $calendar->deliveryDueAt) {

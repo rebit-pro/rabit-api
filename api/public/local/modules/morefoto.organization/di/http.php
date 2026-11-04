@@ -17,10 +17,26 @@ use Morefoto\Organization\Presentation\Request\InstitutionRequestFactory;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Application\Contract\Auth\TokenResolverInterface;
 use Morefoto\Organization\Presentation\Controller\InstitutionDetailController;
+use Morefoto\Organization\Presentation\Controller\GroupCalendarController;
+use Morefoto\Organization\Presentation\Calendar\CalendarInputMapper;
+use Morefoto\Organization\Presentation\Calendar\CalendarResultMapper;
+use Morefoto\Organization\Application\Calendar\UseCase\GetGroupCalendarUseCase;
+use Morefoto\Organization\Application\Calendar\UseCase\ChangeGroupCalendarUseCase;
 use Morefoto\Organization\Presentation\Institution\InstitutionDetailInputMapper;
 use Morefoto\Organization\Presentation\Institution\Result\InstitutionDetailResultMapper;
 
 return [
+    CalendarInputMapper::class => ['className' => CalendarInputMapper::class],
+    CalendarResultMapper::class => ['className' => CalendarResultMapper::class],
+    GroupCalendarController::class => [
+        'className' => GroupCalendarController::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(GetGroupCalendarUseCase::class),
+            ServiceLocator::getInstance()->get(ChangeGroupCalendarUseCase::class),
+            ServiceLocator::getInstance()->get(CalendarInputMapper::class),
+            ServiceLocator::getInstance()->get(CalendarResultMapper::class),
+        ],
+    ],
     InstitutionOperationRepository::class => ['className' => InstitutionOperationRepository::class],
     InstitutionRequestFactory::class => ['className' => InstitutionRequestFactory::class],
     InstitutionTransactionInterface::class => ['constructor' => static fn(): InstitutionTransactionInterface => new InstitutionTransaction()],

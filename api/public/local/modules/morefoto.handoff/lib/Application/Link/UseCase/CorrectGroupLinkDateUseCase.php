@@ -12,6 +12,8 @@ use Morefoto\Handoff\Application\Request\Contract\HandoffTransactionInterface;
 use Morefoto\Handoff\Domain\Link\Enum\LinkActionEnum;
 use Morefoto\Handoff\Domain\Link\Enum\LinkEventKindEnum;
 use Morefoto\Handoff\Domain\Link\Repository\GroupLinkRepositoryInterface;
+use Morefoto\Handoff\Domain\Link\Repository\OpeningScheduleRepositoryInterface;
+use Morefoto\Handoff\Domain\Link\Enum\OpeningStatusEnum;
 use Morefoto\Handoff\Domain\Link\Service\LinkDeliveryPolicy;
 use Morefoto\Handoff\Domain\Link\ValueObject\LinkHistoryEntry;
 use Morefoto\Handoff\Domain\Request\ValueObject\IdempotencyKey;
@@ -35,6 +37,7 @@ final readonly class CorrectGroupLinkDateUseCase
         private GroupCalendarInterface $calendar,
         private LinkDeliveryPolicy $delivery,
         private GroupLinkOutputMapper $mapper,
+        private OpeningScheduleRepositoryInterface $openings,
     ) {}
 
     public function execute(int $actorId, string $groupId, IdempotencyKey $key, LinkCorrectionInputDto $input): LinkCalendarOutputDto
@@ -48,6 +51,9 @@ final readonly class CorrectGroupLinkDateUseCase
             ]);
             if (null !== $command->replay) {
                 return $this->mapper->calendar($command->replay);
+            }
+            if (OpeningStatusEnum::OPENED === $this->openings->find($command->group->nativeId, true)?->status) {
+                throw new HttpException('AUTOMATIC_OPENING_DATE_FIXED', 409);
             }
             $before = $command->group->calendar;
             if (null === $before->sentAt) {

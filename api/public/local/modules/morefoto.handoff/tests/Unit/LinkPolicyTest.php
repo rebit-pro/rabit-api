@@ -76,10 +76,10 @@ final class LinkPolicyTest extends TestCase
             }
         }
         self::assertSame([
-            'organizer' => ['read' => true, 'prepare' => true, 'transmit' => true, 'correct' => true, 'startMarkupCorrection' => true, 'finishMarkupCorrection' => true],
-            'curator' => ['read' => true, 'prepare' => false, 'transmit' => true, 'correct' => true, 'startMarkupCorrection' => true, 'finishMarkupCorrection' => true],
-            'head' => ['read' => true, 'prepare' => false, 'transmit' => false, 'correct' => false, 'startMarkupCorrection' => false, 'finishMarkupCorrection' => false],
-            'teacher' => ['read' => true, 'prepare' => false, 'transmit' => true, 'correct' => false, 'startMarkupCorrection' => false, 'finishMarkupCorrection' => false],
+            'organizer' => ['read' => true, 'prepare' => true, 'transmit' => true, 'correct' => true, 'startMarkupCorrection' => true, 'finishMarkupCorrection' => true, 'scheduleOpening' => true, 'cancelOpening' => true, 'recordManualDelivery' => true],
+            'curator' => ['read' => true, 'prepare' => false, 'transmit' => true, 'correct' => true, 'startMarkupCorrection' => true, 'finishMarkupCorrection' => true, 'scheduleOpening' => false, 'cancelOpening' => false, 'recordManualDelivery' => true],
+            'head' => ['read' => true, 'prepare' => false, 'transmit' => false, 'correct' => false, 'startMarkupCorrection' => false, 'finishMarkupCorrection' => false, 'scheduleOpening' => false, 'cancelOpening' => false, 'recordManualDelivery' => false],
+            'teacher' => ['read' => true, 'prepare' => false, 'transmit' => true, 'correct' => false, 'startMarkupCorrection' => false, 'finishMarkupCorrection' => false, 'scheduleOpening' => false, 'cancelOpening' => false, 'recordManualDelivery' => true],
         ], $matrix);
         self::assertSame([null, null], $policy->scope('organizer', [3], [10]));
         self::assertSame([[3], null], $policy->scope('head', [3], []));

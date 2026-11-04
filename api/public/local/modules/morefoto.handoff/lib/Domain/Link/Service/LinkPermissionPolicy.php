@@ -31,8 +31,8 @@ final readonly class LinkPermissionPolicy
     {
         return in_array($role, match ($action) {
             LinkActionEnum::READ => ['organizer', 'curator', 'head', 'teacher'],
-            LinkActionEnum::PREPARE => ['organizer'],
-            LinkActionEnum::TRANSMIT => ['organizer', 'curator', 'teacher'],
+            LinkActionEnum::PREPARE, LinkActionEnum::SCHEDULE_OPENING, LinkActionEnum::CANCEL_OPENING => ['organizer'],
+            LinkActionEnum::TRANSMIT, LinkActionEnum::RECORD_MANUAL_DELIVERY => ['organizer', 'curator', 'teacher'],
             LinkActionEnum::CORRECT, LinkActionEnum::START_MARKUP_CORRECTION, LinkActionEnum::FINISH_MARKUP_CORRECTION => ['organizer', 'curator'],
         }, true);
     }

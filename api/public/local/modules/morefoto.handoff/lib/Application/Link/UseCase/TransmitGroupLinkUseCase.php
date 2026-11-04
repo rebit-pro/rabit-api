@@ -12,6 +12,8 @@ use Morefoto\Handoff\Application\Request\Contract\HandoffTransactionInterface;
 use Morefoto\Handoff\Domain\Link\Enum\LinkActionEnum;
 use Morefoto\Handoff\Domain\Link\Enum\LinkEventKindEnum;
 use Morefoto\Handoff\Domain\Link\Repository\GroupLinkRepositoryInterface;
+use Morefoto\Handoff\Domain\Link\Repository\OpeningScheduleRepositoryInterface;
+use Morefoto\Handoff\Domain\Link\Enum\OpeningStatusEnum;
 use Morefoto\Handoff\Domain\Link\Service\LinkDeliveryPolicy;
 use Morefoto\Handoff\Domain\Link\Service\LinkReadinessPolicy;
 use Morefoto\Handoff\Domain\Link\ValueObject\LinkHistoryEntry;
@@ -38,6 +40,7 @@ final readonly class TransmitGroupLinkUseCase
         private LinkReadinessPolicy $policy,
         private LinkDeliveryPolicy $delivery,
         private GroupLinkOutputMapper $mapper,
+        private OpeningScheduleRepositoryInterface $openings,
     ) {}
 
     public function execute(int $actorId, string $groupId, IdempotencyKey $key, LinkTransmissionInputDto $input): LinkCalendarOutputDto
@@ -50,6 +53,11 @@ final readonly class TransmitGroupLinkUseCase
             ]);
             if (null !== $command->replay) {
                 return $this->mapper->calendar($command->replay);
+            }
+            $opening = $this->openings->find($command->group->nativeId, true);
+            if (null !== $opening?->manualSentAt
+                || in_array($opening?->status, [OpeningStatusEnum::SCHEDULED, OpeningStatusEnum::OPENED, OpeningStatusEnum::BLOCKED], true)) {
+                throw new HttpException('MANUAL_DELIVERY_SEPARATE', 409);
             }
             $calendar = $command->group->calendar;
             if (null !== $calendar->sentAt) {

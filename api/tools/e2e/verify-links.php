@@ -58,10 +58,10 @@ $check(false !== $group, 'browser group is missing');
 $id = (int)$group['ID'];
 $publicId = (string)$group['UF_PUBLIC_ID'];
 $check(['prepared', 'prepared', 'transmitted', 'corrected'] === $column("SELECT KIND FROM mf_group_link_history WHERE GROUP_ID={$id} ORDER BY ID"), 'history kinds');
-$check(['5'] === $column("SELECT REVISION FROM mf_group_link WHERE GROUP_ID={$id}"), 'link revision after two preparations, delivery and correction');
+$check(['7'] === $column("SELECT REVISION FROM mf_group_link WHERE GROUP_ID={$id}"), 'link revision after preparation, schedule, cancellation, delivery and correction');
 $sent = new DateTimeImmutable((string)$group['SENT_AT'], new DateTimeZone('UTC'));
-$check((string)$group['CLOSES_AT'] === $sent->modify('+7 days')->format('Y-m-d H:i:s'), 'close is seven days after the corrected delivery');
-$check((string)$group['DELIVERY_DUE_AT'] === $sent->modify('+14 days')->format('Y-m-d H:i:s'), 'delivery is seven days after the close');
+$check((string)$group['CLOSES_AT'] === $sent->modify('+9 days')->format('Y-m-d H:i:s'), 'print close includes the browser extension by two days');
+$check((string)$group['DELIVERY_DUE_AT'] === $sent->modify('+16 days')->format('Y-m-d H:i:s'), 'delivery is seven days after the extended close');
 $keys = $connection->query("SELECT TOKEN,TOKEN_HASH FROM mf_gallery_capability WHERE GROUP_PUBLIC_ID='{$publicId}' AND REVOKED=0")->fetchAll();
 $check(1 === count($keys) && hash('sha256', (string)$keys[0]['TOKEN']) === (string)$keys[0]['TOKEN_HASH'], 'single active key whose hash still resolves buyers');
 // F3: the two preparations kept one alias for the key; every key staff can copy has exactly one, in the agreed format.

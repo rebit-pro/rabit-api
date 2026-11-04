@@ -12,6 +12,7 @@ use Rebit\Share\Application\Contract\Clock\ClockInterface;
 use Rebit\Share\Contracts\Media\Dto\GalleryAccessOutputDto;
 use Rebit\Share\Contracts\Media\Dto\GalleryContextOutputDto;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
+use Rebit\Share\Contracts\Handoff\GalleryOpeningInterface;
 use Rebit\Share\Contracts\Organization\GalleryGroupInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
@@ -27,6 +28,7 @@ final readonly class GalleryAccess implements GalleryAccessInterface
         private GalleryAvailability $availability,
         private ClockInterface $clock,
         private GalleryAssignmentMapper $mapper,
+        private GalleryOpeningInterface $openings,
     ) {}
 
     public function context(string $token): GalleryContextOutputDto
@@ -41,8 +43,16 @@ final readonly class GalleryAccess implements GalleryAccessInterface
         $group = $this->groups->get($key['GROUP_PUBLIC_ID']);
         $now = $this->clock->now();
         $state = $this->availability->state($group->sentAt, $group->closesAt, $group->digitalSalesUntil, $now);
+        $scheduledAt = null;
+        if ('preparing' === $state) {
+            $opening = $this->openings->current($group->publicId);
+            if (null !== $opening && 'scheduled' === $opening->status) {
+                $state = 'scheduled';
+                $scheduledAt = $opening->openAt;
+            }
+        }
 
-        return new GalleryContextOutputDto($group, $state, $now->format(DATE_ATOM), (int)$key['REVISION']);
+        return new GalleryContextOutputDto($group, $state, $now->format(DATE_ATOM), (int)$key['REVISION'], $scheduledAt);
     }
 
     public function resolve(string $token): GalleryAccessOutputDto
@@ -51,7 +61,7 @@ final readonly class GalleryAccess implements GalleryAccessInterface
         $group = $context->group;
         $state = $context->state;
         $assignments = [];
-        if ('preparing' !== $state) {
+        if ('preparing' !== $state && 'scheduled' !== $state) {
             $result = $this->photos->list($group->id, $group->shootId);
             while (false !== ($row = $result->fetch())) {
                 if (5000 === count($assignments)) {
@@ -61,6 +71,6 @@ final readonly class GalleryAccess implements GalleryAccessInterface
             }
         }
 
-        return new GalleryAccessOutputDto($group, $state, $context->referenceNow, $context->capabilityRevision, $assignments);
+        return new GalleryAccessOutputDto($group, $state, $context->referenceNow, $context->capabilityRevision, $assignments, $context->scheduledOpenAt);
     }
 }

@@ -19,6 +19,7 @@ export async function saveLink(token: string, command: LinkCommand): Promise<voi
       throw new Error(linkError(cause));
     }
   }
+  if (command.action === 'manual') throw new DemoError(400, 'Запланированное открытие доступно только в подключённом кабинете.');
   requireGroup(token, command.groupId);
   await simulateRequest();
   return handoffLock(() => {
@@ -53,7 +54,11 @@ export async function saveLink(token: string, command: LinkCommand): Promise<voi
       if (!command.conditionsReviewed) errors.conditionsReviewed = 'Подтвердите проверку демонстрационных условий.';
       if (!command.staffReviewed) errors.staffReviewed = 'Подтвердите проверку сотрудников и ответственных.';
       if (Object.keys(errors).length) throw new HandoffValidationError(errors);
-      group.preparation = { at: now, actorId: account.id, signature: currentSignature };
+      group.preparation = {
+        at: now,
+        actorId: account.id,
+        signature: currentSignature
+      };
       event = { kind: 'prepared', at: now, actorId: account.id };
     } else {
       const sentAt = parseTransmission(command.sentAt, now);
@@ -76,7 +81,13 @@ export async function saveLink(token: string, command: LinkCommand): Promise<voi
         at: now,
         sentAt: sentAt!,
         closesAt,
-        ...(previousSentAt ? { previousSentAt, previousClosesAt: group.closesAt ?? undefined, reason: command.reason.trim() } : {})
+        ...(previousSentAt
+          ? {
+              previousSentAt,
+              previousClosesAt: group.closesAt ?? undefined,
+              reason: command.reason.trim()
+            }
+          : {})
       };
       group.sentAt = sentAt!;
       group.closesAt = closesAt;

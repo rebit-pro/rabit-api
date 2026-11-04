@@ -15,5 +15,6 @@ final readonly class GalleryAccessOutputDto
         public string $referenceNow,
         public int $capabilityRevision,
         public array $assignments,
+        public ?string $scheduledOpenAt = null,
     ) {}
 }

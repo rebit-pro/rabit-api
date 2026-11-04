@@ -58,6 +58,8 @@ VERIFIERS = [
     ("verify-email-only-orders.php", None, "E8 email-only order integration passed", ["zzzzz-orders", "zzzzzzzzz-payments"]),
     # F2 prepares the link first in its group and reports the delivery after the minute of preparation is over.
     ("verify-links.php", None, "F2 integration passed", ["z-links-preparation", "zzzz-links"]),
+    # #232: the last browser scenario schedules a real ready gallery; the worker opens it on MySQL after the browser.
+    ("verify-gallery-openings.php", "i232-opening.json", "#232 gallery opening integration passed", ["z-links-preparation", "zzzzzzzzzzzzzzz-gallery-opening"]),
     # D3: the browser leaves one untransferred staff request for the injected-failure check on MySQL.
     ("verify-transfers.php", "d3-transfers.json", "D3 integration passed", ["zzzzzz-transfers"]),
     # B4: only SHA-256 of the links is stored, and the letter to the staff member created by the B2 spec holds the live one.

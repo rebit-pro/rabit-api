@@ -3,6 +3,7 @@
 declare(strict_types=1);
 use Bitrix\Main\Routing\RoutingConfigurator;
 use Morefoto\Organization\Presentation\Controller\InstitutionController;
+use Morefoto\Organization\Presentation\Controller\GroupCalendarController;
 use Morefoto\Organization\Presentation\Controller\InstitutionDetailController;
 use Morefoto\Organization\Presentation\Controller\ShootListController;
 use Morefoto\Organization\Presentation\Controller\StructureController;
@@ -24,4 +25,6 @@ return static function(RoutingConfigurator $routes): void {
     $routes->post('/api/v1/shoots/{shoot_id}/groups', [StructureController::class, 'createGroupAction']);
     $routes->patch('/api/v1/groups/{group_id}', [StructureController::class, 'updateGroupAction']);
     $routes->delete('/api/v1/groups/{group_id}', [StructureRemovalController::class, 'deleteGroupAction']);
+    $routes->get('/api/v1/groups/{group_id}/calendar', [GroupCalendarController::class, 'getAction']);
+    $routes->post('/api/v1/groups/{group_id}/calendar-extensions', [GroupCalendarController::class, 'extendAction']);
 };

@@ -13,8 +13,8 @@ use Rebit\Share\Contracts\Organization\Dto\CalendarMutationOutputDto;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /**
- * Внутренний сценарий C3: организатор подтверждает передачу ссылки или продлевает приём группы в одной транзакции
- * с блокировками Access и Organization. Невалидная команда отклоняется до транзакции; публичного маршрута у сценария нет.
+ * Подтверждает передачу ссылки или продлевает приём группы в транзакции с блокировками Access и Organization.
+ * При продлении на дни срок считается под блокировкой, а повтор команды возвращает прежний результат.
  */
 final readonly class ChangeGroupCalendarUseCase
 {
@@ -35,11 +35,16 @@ final readonly class ChangeGroupCalendarUseCase
         return $this->execute($input, $bearer, $newClosesAt);
     }
 
-    private function execute(CalendarCommandInputDto $input, string $bearer, ?\DateTimeImmutable $newClosesAt): CalendarMutationOutputDto
+    public function extendDays(CalendarCommandInputDto $input, int $days, string $bearer): CalendarMutationOutputDto
+    {
+        return $this->execute($input, $bearer, null, $days);
+    }
+
+    private function execute(CalendarCommandInputDto $input, string $bearer, ?\DateTimeImmutable $newClosesAt, ?int $days = null): CalendarMutationOutputDto
     {
         $this->validator->validate($input);
 
-        return $this->transaction->execute(function() use ($input, $bearer, $newClosesAt): CalendarMutationOutputDto {
+        return $this->transaction->execute(function() use ($input, $bearer, $newClosesAt, $days): CalendarMutationOutputDto {
             $this->access->lockState();
             if ('organizer' !== $this->access->scope($input->actorUserId)->role) {
                 throw new HttpException('FORBIDDEN', 403);
@@ -47,7 +52,11 @@ final readonly class ChangeGroupCalendarUseCase
             $this->calendar->lock($input->groupId);
             $this->access->lockParticipants($input->actorUserId, $bearer, []);
 
-            return null === $newClosesAt ? $this->calendar->confirmLinkSent($input) : $this->calendar->extend($input, $newClosesAt);
+            return match (true) {
+                null !== $days => $this->calendar->extendDays($input, $days),
+                null !== $newClosesAt => $this->calendar->extend($input, $newClosesAt),
+                default => $this->calendar->confirmLinkSent($input),
+            };
         });
     }
 }

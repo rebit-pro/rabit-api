@@ -36,5 +36,8 @@ final readonly class GroupLinkOutputDto
         public string $referenceNow,
         public array $history,
         public bool $markupCorrectable,
+        public ?string $openingStatus = null,
+        public ?string $scheduledOpenAt = null,
+        public ?string $manualSentAt = null,
     ) {}
 }

@@ -17,6 +17,7 @@ use Morefoto\Handoff\Presentation\Link\Request\Dto\GroupLinkListRequestDto;
 use Morefoto\Handoff\Presentation\Link\Request\Dto\PrepareGroupLinkRequestDto;
 use Morefoto\Handoff\Presentation\Link\Request\Dto\StartMarkupCorrectionRequestDto;
 use Morefoto\Handoff\Presentation\Link\Request\Dto\TransmitGroupLinkRequestDto;
+use Morefoto\Handoff\Presentation\Link\Request\Dto\RecordManualDeliveryRequestDto;
 use Morefoto\Handoff\Presentation\Request\StaffRequestValidation;
 use Rebit\Share\Shared\Exception\HttpException;
 
@@ -52,7 +53,7 @@ final readonly class GroupLinkInputMapper
         return new LinkPreparationInputDto($this->revision($request->revision), $this->signature($request->signature));
     }
 
-    public function transmission(TransmitGroupLinkRequestDto $request): LinkTransmissionInputDto
+    public function transmission(RecordManualDeliveryRequestDto|TransmitGroupLinkRequestDto $request): LinkTransmissionInputDto
     {
         $this->confirmed($request->confirmed);
 
@@ -80,7 +81,7 @@ final readonly class GroupLinkInputMapper
         return new MarkupCorrectionFinishInputDto($this->revision($request->revision), $this->signature($request->signature));
     }
 
-    public function key(CorrectGroupLinkDateRequestDto|FinishMarkupCorrectionRequestDto|PrepareGroupLinkRequestDto|StartMarkupCorrectionRequestDto|TransmitGroupLinkRequestDto $request): IdempotencyKey
+    public function key(CorrectGroupLinkDateRequestDto|FinishMarkupCorrectionRequestDto|PrepareGroupLinkRequestDto|RecordManualDeliveryRequestDto|StartMarkupCorrectionRequestDto|TransmitGroupLinkRequestDto $request): IdempotencyKey
     {
         return new IdempotencyKey($request->idempotencyKey);
     }

@@ -25,7 +25,7 @@ final readonly class GetGalleryPreviewUseCase
     {
         $context = $this->gallery->context($token);
         $group = $context->group;
-        if ('preparing' === $context->state) {
+        if ('preparing' === $context->state || 'scheduled' === $context->state) {
             throw new HttpException('GALLERY_NOT_READY', 409);
         }
         if (1 !== preg_match('/^[a-f0-9-]{36}$/D', $assignmentId)) {

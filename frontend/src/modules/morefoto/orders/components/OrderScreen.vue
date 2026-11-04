@@ -13,6 +13,7 @@ import OrderContacts from './OrderContacts.vue';
 import OrderAccessLinks from './OrderAccessLinks.vue';
 import OrderStatus from './OrderStatus.vue';
 import PaymentHistory from './PaymentHistory.vue';
+import { rememberedGallery } from '../../commerce/services/storefront';
 const { order, loading, error, unavailable, reload } = useOrder();
 const period = useOrderPeriod(() => order.value?.groupId ?? '');
 </script>
@@ -30,7 +31,7 @@ const period = useOrderPeriod(() => order.value?.groupId ?? '');
       </p>
     </section>
     <template v-else-if="order">
-      <RouterLink :to="'/g/' + order.galleryToken" class="mf-back">← К фотографиям</RouterLink>
+      <RouterLink :to="'/g/' + (rememberedGallery(order.groupId) ?? order.galleryToken)" class="mf-back">← К фотографиям</RouterLink>
       <header class="mf-page-heading">
         <p class="mf-eyebrow">ВАШ ЗАКАЗ</p>
         <h1>Заказ {{ order.number }}</h1>

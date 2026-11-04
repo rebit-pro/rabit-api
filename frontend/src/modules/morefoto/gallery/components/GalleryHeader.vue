@@ -15,7 +15,10 @@ const format = (moment: string): string =>
   }).format(new Date(moment));
 // E7: the open window counts down to the print close, the digital window — to the digital close.
 const remaining = computed(() => {
-  const until = { open: props.gallery.closesAt, digital: props.gallery.digitalSalesUntil }[props.gallery.state as 'open' | 'digital'];
+  const until = {
+    open: props.gallery.closesAt,
+    digital: props.gallery.digitalSalesUntil
+  }[props.gallery.state as 'open' | 'digital'];
   const left = until === undefined ? null : daysLeft(until, props.gallery.referenceNow);
   return left ? 'Осталось ' + left : '';
 });
@@ -32,7 +35,7 @@ const remaining = computed(() => {
       <h1>{{ gallery.shootName }}</h1>
       <p class="mf-muted">
         {{
-          gallery.state === 'preparing'
+          gallery.state === 'preparing' || gallery.state === 'scheduled'
             ? 'Фотографии появятся на этой странице, как только их подготовят.'
             : 'Выберите код ребёнка и откройте понравившийся кадр.'
         }}
@@ -44,20 +47,31 @@ const remaining = computed(() => {
         <v-icon icon="mdi-calendar-clock-outline" size="22" />
         <strong>{{ salesStateTitle(gallery.state) }}</strong>
       </div>
-      <dl v-if="gallery.state !== 'preparing' && gallery.closesAt" class="gallery-deadlines" data-testid="gallery-deadlines">
+      <dl
+        v-if="gallery.state !== 'preparing' && gallery.state !== 'scheduled' && gallery.closesAt"
+        class="gallery-deadlines"
+        data-testid="gallery-deadlines"
+      >
         <div>
           <dt>Печать</dt>
           <dd>
-            до <time :datetime="gallery.closesAt">{{ format(gallery.closesAt) }}</time> МСК
+            до
+            <time :datetime="gallery.closesAt">{{ format(gallery.closesAt) }}</time>
+            МСК
           </dd>
         </div>
         <div v-if="gallery.digitalSalesUntil">
           <dt>Электронные фото</dt>
           <dd>
-            до <time :datetime="gallery.digitalSalesUntil">{{ format(gallery.digitalSalesUntil) }}</time> МСК
+            до
+            <time :datetime="gallery.digitalSalesUntil">{{ format(gallery.digitalSalesUntil) }}</time>
+            МСК
           </dd>
         </div>
       </dl>
+      <p v-else-if="gallery.state === 'scheduled' && gallery.scheduledOpenAt">
+        Открытие {{ format(gallery.scheduledOpenAt) }} МСК. Сроки появятся после открытия.
+      </p>
       <p v-else>Сроки появятся после передачи ссылки в группу.</p>
       <p v-if="remaining" class="gallery-remaining">{{ remaining }}</p>
       <v-btn variant="text" color="primary" size="small" class="gallery-help" @click="emit('help')"

@@ -9,6 +9,7 @@ use Morefoto\Handoff\Application\Link\Mapper\GroupLinkOutputMapper;
 use Morefoto\Handoff\Application\Link\Service\GroupLinkReadiness;
 use Morefoto\Handoff\Domain\Link\Enum\LinkActionEnum;
 use Morefoto\Handoff\Domain\Link\Repository\GroupLinkRepositoryInterface;
+use Morefoto\Handoff\Domain\Link\Repository\OpeningScheduleRepositoryInterface;
 use Morefoto\Handoff\Domain\Link\Service\LinkPermissionPolicy;
 use Morefoto\Handoff\Domain\Link\Service\MarkupCorrectionAvailability;
 use Morefoto\Handoff\Domain\Link\Service\LinkReadinessPolicy;
@@ -38,6 +39,7 @@ final readonly class GetGroupLinkUseCase
         private ClockInterface $clock,
         private GroupOrdersInterface $orders,
         private MarkupCorrectionAvailability $corrections,
+        private OpeningScheduleRepositoryInterface $openings,
     ) {}
 
     public function execute(int $actorId, string $groupId): GroupLinkOutputDto
@@ -70,6 +72,7 @@ final readonly class GetGroupLinkUseCase
             now: $this->clock->now(),
             history: $this->links->history($group->nativeId),
             markupCorrectable: $correctable,
+            opening: $this->openings->find($group->nativeId),
         );
     }
 }

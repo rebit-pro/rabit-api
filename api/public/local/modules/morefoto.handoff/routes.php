@@ -3,6 +3,7 @@
 declare(strict_types=1);
 use Bitrix\Main\Routing\RoutingConfigurator;
 use Morefoto\Handoff\Presentation\Controller\GroupLinkController;
+use Morefoto\Handoff\Presentation\Controller\GalleryOpeningController;
 use Morefoto\Handoff\Presentation\Controller\StaffRequestController;
 use Morefoto\Handoff\Presentation\Controller\StaffRequestRemovalController;
 
@@ -20,6 +21,9 @@ return static function(RoutingConfigurator $routes): void {
     $routes->post('/api/v1/groups/{group_id}/link-preparations', [GroupLinkController::class, 'preparationAction']);
     $routes->post('/api/v1/groups/{group_id}/link-transmissions', [GroupLinkController::class, 'transmissionAction']);
     $routes->post('/api/v1/groups/{group_id}/link-date-corrections', [GroupLinkController::class, 'dateCorrectionAction']);
+    $routes->post('/api/v1/groups/{group_id}/opening-schedules', [GalleryOpeningController::class, 'scheduleAction']);
+    $routes->post('/api/v1/groups/{group_id}/opening-cancellations', [GalleryOpeningController::class, 'cancelAction']);
+    $routes->post('/api/v1/groups/{group_id}/manual-link-deliveries', [GalleryOpeningController::class, 'manualDeliveryAction']);
     $routes->post('/api/v1/groups/{group_id}/markup-corrections', [GroupLinkController::class, 'markupCorrectionAction']);
     $routes->post('/api/v1/groups/{group_id}/markup-correction-completions', [GroupLinkController::class, 'markupCompletionAction']);
 };

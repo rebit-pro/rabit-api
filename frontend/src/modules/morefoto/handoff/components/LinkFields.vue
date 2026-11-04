@@ -4,7 +4,12 @@ import type { LinkCommand, LinkGroup, HandoffErrors } from '../types';
 import { calendarDays, closingAfterCorrection, digitalSalesAfter, parseTransmission } from '../rules';
 import { formatMoment, problemText } from '../display';
 import { isMockApiEnabled } from '@/mocks/config';
-const props = defineProps<{ command: LinkCommand; group: LinkGroup; now: string; errors: HandoffErrors }>();
+const props = defineProps<{
+  command: LinkCommand;
+  group: LinkGroup;
+  now: string;
+  errors: HandoffErrors;
+}>();
 const emit = defineEmits<{ change: [value: Partial<LinkCommand>] }>();
 const sent = computed(() => parseTransmission(props.command.sentAt, props.now));
 const closing = computed(() => (sent.value ? closingAfterCorrection(sent.value, props.group.extensionClosesAt) : null));
@@ -46,8 +51,11 @@ const digital = computed(() => (sent.value && closing.value ? digitalSalesAfter(
   </template>
   <template v-else>
     <p class="mb-4">
-      Укажите, когда ссылка действительно была передана родителям. С этого момента печать продаётся 7 календарных дней, электронные фото —
-      14.
+      {{
+        command.action === 'manual'
+          ? 'Укажите, когда ссылка действительно была передана родителям. Сроки продаж начнутся с автоматического открытия.'
+          : 'Укажите, когда ссылка действительно была передана родителям. С этого момента печать продаётся 7 календарных дней, электронные фото — 14.'
+      }}
     </p>
     <p class="mf-muted mb-5">{{ isMockApiEnabled ? 'Текущее время демонстрации' : 'Текущее время' }}: {{ formatMoment(now) }}.</p>
     <v-text-field
@@ -58,7 +66,7 @@ const digital = computed(() => (sent.value && closing.value ? digitalSalesAfter(
       :aria-invalid="!!errors.sentAt"
       @update:model-value="emit('change', { sentAt: $event })"
     />
-    <div class="handoff-dates mb-5" aria-live="polite">
+    <div v-if="command.action !== 'manual'" class="handoff-dates mb-5" aria-live="polite">
       <div v-if="command.action === 'correct'">
         <span>До исправления</span><strong>Печать до {{ formatMoment(group.closesAt) }}</strong
         ><span>Электронные фото до {{ formatMoment(group.digitalSalesUntil) }}</span
@@ -87,7 +95,7 @@ const digital = computed(() => (sent.value && closing.value ? digitalSalesAfter(
     </p>
     <v-checkbox
       :model-value="command.confirmed"
-      label="Подтверждаю факт передачи и указанные сроки"
+      :label="command.action === 'manual' ? 'Подтверждаю факт передачи ссылки' : 'Подтверждаю факт передачи и указанные сроки'"
       :error-messages="errors.confirmed"
       :aria-invalid="!!errors.confirmed"
       @update:model-value="emit('change', { confirmed: !!$event })"
