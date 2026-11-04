@@ -2,13 +2,13 @@
 
 ## Точка продолжения
 
-- Ветка: `codex/ops-gallery-lifecycle-232`; base `9b89f306`, head — последний коммит ветки (`git rev-parse --short HEAD`); issue [#232](https://github.com/rebit-pro/rabit-api/issues/232), PR пока нет. Связанные: #167, F2/F3/E7, граф K2.
+- Ветка: `codex/ops-gallery-lifecycle-232`; base `9b89f306`, head — последний коммит ветки (`git rev-parse --short HEAD`); issue [#232](https://github.com/rebit-pro/rabit-api/issues/232), PR [#234](https://github.com/rebit-pro/rabit-api/pull/234). Связанные: #167, F2/F3/E7, граф K2.
 - Завершено: решения владельца зафиксированы; короткий URL, продление, расписание, worker, ручная отметка передачи и UI реализованы; полный двухстендовый E2E, 161 browser scenario, все verifiers и visual desktop/mobile прошли.
-- Сейчас: код и план закоммичены в `ad89216`; журнал дополняется перед push, затем amend.
-- Следующий шаг: push этой ветки и создать PR в `main`.
+- Сейчас: PR #234 открыт в `main`; код и проверки готовы к review, план S0–S8 закрыт.
+- Следующий шаг: ревью PR #234; merge и deployment — отдельные действия после ревью.
 - Блокеры/решения: владелец подтвердил немедленную фиксацию ручной отправки до открытия без изменения T0; открытых продуктовых решений нет. Системный PHP 8.3 вместо требуемого 8.4, проверки выполняются в PHP 8.4 Docker.
-- Рабочее дерево: код issue #232 закоммичен; сейчас изменён только этот progress для amend. Чужая незакоммиченная `docs/plans/OPS-stage-gallery-cleanup/` не затрагивается.
-- Следующая проверка: `git diff --cached --check` и список staged-файлов перед commit; затем сверить удалённый `main` и PR.
+- Рабочее дерево: код и план #232 сохранены в ветке; чужая незакоммиченная `docs/plans/OPS-stage-gallery-cleanup/` оставлена вне PR.
+- Следующая проверка: перед merge выполнить актуальные проверки PR и браузерный E2E по инструкции волн; текущий полный отчёт — `api/var/e2e/rabit-e2e-aad2dd33b408/`.
 
 ## Хронология
 
@@ -50,6 +50,8 @@
 - Финальный `make test-e2e` с двумя стендами, kernel `/home/user/rebit-p2p/api/public/bitrix`, текущим vendor и локальными PHP/NGINX образами: PHP lint, PHPStan, PHPUnit и frontend lint/styles/typecheck/typecheck:e2e/test:ui/test:commerce/build PASS. Browser A+B ещё выполняются; отчёт `api/var/e2e/rabit-e2e-aad2dd33b408/`.
 - Завершён этот же полный `make test-e2e`: browser A 81/81, B 80/80, все MySQL verifiers PASS, включая `verify-gallery-openings.php` (9.2 с); PHPUnit 1286 тестов/51481 assertions. Визуально просмотрены финальные снимки диалога назначения desktop, продления mobile с доступными действиями, состояния ожидания desktop/mobile — наложений нет. `docker run ... php-cs-fixer fix --dry-run --diff --path-mode=override` на последних трёх PHP-файлах сначала нашёл косметический префикс глобального `Throwable`; исправлено, повтор PASS 0/3. `php -l api/tools/e2e/verify-gallery-openings.php` и `git diff --check`: PASS. Лог финального E2E: `api/var/e2e/rabit-e2e-aad2dd33b408/`.
 - `/home/user/.local/bin/gh api repos/rebit-pro/rabit-api/commits/main --jq .sha`: `main` всё ещё `9b89f306`. `git add -A -- api frontend tools docs/plans/OPS-gallery-lifecycle-232`: PASS после разрешённого доступа к `.git`; `git diff --cached --check`: PASS, в staged 113 файлов только #232. `git commit -m 'OPS: implement gallery lifecycle issue 232'`: `ad89216`. Чужая `OPS-stage-gallery-cleanup/` осталась untracked и вне коммита.
+- Перед push журнал добавлен в тот же коммит (`git commit --amend --no-edit` → `c1fb632`). `git push -u origin codex/ops-gallery-lifecycle-232`: FAIL, SSH-соединение GitHub на порту 22 закрыто. `/home/user/.local/bin/gh auth status` с сетевым доступом: авторизация `repo` действует, Git operations protocol — HTTPS. `git -c 'credential.https://github.com.helper=!/home/user/.local/bin/gh auth git-credential' push https://github.com/rebit-pro/rabit-api.git HEAD:refs/heads/codex/ops-gallery-lifecycle-232`: PASS, ветка опубликована без изменения `origin`.
+- `/home/user/.local/bin/gh pr create --repo rebit-pro/rabit-api --base main --head codex/ops-gallery-lifecycle-232 --body-file /tmp/issue232-pr.md`: PASS, открыт [PR #234](https://github.com/rebit-pro/rabit-api/pull/234). В PR указаны ответственность, ограничения, миграция, cron, подключение frontend и результаты полного gate. Merge/deployment не выполнялись.
 
 ## Результаты тест-кейсов
 

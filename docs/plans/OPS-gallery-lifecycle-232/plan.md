@@ -44,7 +44,7 @@
 - [x] S5. Реализовать планирование: сохранение, отмена/перенос, воркер, защита готовности, публичное состояние, UI.
 - [x] S6. Добавить unit, architecture и HTTP/E2E сценарии.
 - [x] S7. Выполнить точечный quality gate, полный E2E и visual desktop/mobile; результаты перенести в progress.
-- [ ] S8. Самопроверка diff, commit и PR в `main` с явными ограничениями; merge/deployment только после ревью.
+- [x] S8. Самопроверка diff, commit и PR [#234](https://github.com/rebit-pro/rabit-api/pull/234) в `main` с явными ограничениями; merge/deployment только после ревью.
 
 ## Критерии приёмки
 
