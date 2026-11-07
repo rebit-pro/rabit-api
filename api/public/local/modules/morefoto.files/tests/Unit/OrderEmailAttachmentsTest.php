@@ -11,6 +11,7 @@ use Morefoto\Files\Tests\Unit\Support\DeliveryFixture;
 use Morefoto\Files\Tests\Unit\Support\FilesFixture;
 use PHPUnit\Framework\TestCase;
 use Rebit\Share\Application\Contract\Notification\Dto\EmailAttachmentInputDto;
+use Rebit\Share\Application\Contract\Notification\Dto\EmailNotificationInputDto;
 use Rebit\Share\Contracts\Commerce\Dto\OrderEmailOutputDto;
 
 require_once __DIR__ . '/../bootstrap.php';
@@ -71,6 +72,32 @@ final class OrderEmailAttachmentsTest extends TestCase
         self::assertSame(1, $f->deliveries->plans, 'Повтор берёт записанный план.');
         self::assertSame(3, $f->calls, 'Письмо 1 не ставится повторно: 1, сбой 2, затем только 2.');
         self::assertSame(['order-email:' . $id . ':1', 'order-email:' . $id . ':2'], array_map(static fn($letter): string => $letter->deduplicationKey, $f->queued));
+    }
+
+    public function testMissingOriginalKeepsAutoDeliveryUntilTheFullSetIsRestored(): void
+    {
+        $f = $this->fixture(8, 8, 8);
+        unset($f->files->paths[FilesFixture::P3]);
+
+        $first = $f->dispatch()->execute(100);
+        $delivery = array_values($f->deliveries->rows)[0];
+        self::assertSame([1, 0, 0], [$first->created, $first->queued, $first->cancelled]);
+        self::assertSame(DeliveryStatusEnum::HELD, $delivery->status);
+        $queuedBefore = $f->queued;
+        self::assertSame([], $queuedBefore);
+        self::assertSame(0, $f->deliveries->plans);
+
+        $f->files->withOriginals(FilesFixture::P3);
+        $second = $f->dispatch()->execute(100);
+        self::assertSame([0, 1, 0], [$second->created, $second->queued, $second->cancelled]);
+        self::assertCount(2, $f->queued);
+        self::assertSame([['AB001.jpg', 'CD001.jpg'], ['CD002.jpg']], array_map(
+            static fn(EmailNotificationInputDto $letter): array => array_map(
+                static fn(EmailAttachmentInputDto $file): string => $file->name,
+                $letter->attachments,
+            ),
+            $f->queued,
+        ));
     }
 
     public function testAFrameAboveTheLetterLimitIsNamedAndStaysByTheLink(): void

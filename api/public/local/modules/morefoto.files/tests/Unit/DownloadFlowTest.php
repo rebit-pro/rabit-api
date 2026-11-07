@@ -158,9 +158,11 @@ final class DownloadFlowTest extends TestCase
     {
         $first = $this->request(DownloadKindEnum::ZIP, null, 'b');
         $this->handler()(new BuildArchiveMessage($first->id, 0));
-        // A photo of the bundle disappears: the same key still answers with the download it already returned.
+        // A photo of the bundle disappears: do not expose a partial set even with the same idempotency key.
         unset($this->fixture->paths[FilesFixture::P3]);
 
+        $this->expectRefusal('FILES_UNAVAILABLE', 409, fn() => $this->request(DownloadKindEnum::ZIP, null, 'b'));
+        $this->fixture->paths[FilesFixture::P3] = $this->root . '/media/' . FilesFixture::P3 . '.jpg';
         self::assertSame($first->id, $this->request(DownloadKindEnum::ZIP, null, 'b')->id);
         self::assertCount(1, $this->downloads->rows);
     }
@@ -237,7 +239,7 @@ final class DownloadFlowTest extends TestCase
         $this->expectRefusal('INVALID_DOWNLOAD_TOKEN', 403, fn() => $this->content()->execute($download->id, null, $download->contentToken));
 
         unset($this->fixture->paths[FilesFixture::P2]);
-        $this->expectRefusal('COMPOSITION_CHANGED', 409, fn() => $this->content()->execute($download->id, FilesFixture::KEY, null));
+        $this->expectRefusal('FILES_UNAVAILABLE', 409, fn() => $this->content()->execute($download->id, FilesFixture::KEY, null));
 
         $this->fixture->paths[FilesFixture::P2] = $this->root . '/media/' . FilesFixture::P2 . '.jpg';
         $this->fixture->now = '2027-02-28 07:00:00';

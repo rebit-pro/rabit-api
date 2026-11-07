@@ -15,5 +15,7 @@ interface PrivatePhotoStorageInterface
 
     public function absolutePath(string $relativePath): string;
 
+    public function exists(string $relativePath): bool;
+
     public function delete(string $relativePath): void;
 }

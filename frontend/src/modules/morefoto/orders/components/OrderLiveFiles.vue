@@ -23,6 +23,10 @@ const { files, loading, busy, preparing, error, load, download, canSave, saveMod
       <p v-else-if="files.state === 'empty'" class="mf-muted mt-3" data-testid="files-state-empty">
         В этом заказе нет файлов для скачивания. Если они нужны, напишите куратору учреждения.
       </p>
+      <v-alert v-else-if="files.state === 'incomplete'" type="warning" variant="tonal" class="mt-4" data-testid="files-state-incomplete">
+        Не все оригиналы заказа сейчас доступны. Полный архив пока не формируется, новые письма с фотографиями не отправляются. Сообщите
+        куратору учреждения.
+      </v-alert>
       <template v-else>
         <p class="downloads__deadline mt-3" data-testid="files-deadline">
           {{ files.state === 'expired' ? 'Срок скачивания истёк' : 'Доступны до' }}
