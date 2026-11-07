@@ -15,7 +15,8 @@ use Rebit\Share\Contracts\Media\ChildPhotosInterface;
 use Rebit\Share\Contracts\Media\OriginalFilesInterface;
 
 /** Вычисляет текущее право заказа на оригиналы: состояние по оплате и сроку D10 и точный список файлов, которые можно отдать сейчас.
- * Комплект и подарок раскрываются в текущие готовые кадры ребёнка (J1-DEC-01), поэтому каждая выдача пересчитывает право заново.
+ * Комплект и подарок раскрываются в текущие готовые кадры ребёнка (J1-DEC-01); если хотя бы один положенный оригинал отсутствует,
+ * выдача всего набора ждёт восстановления файла.
  */
 final readonly class OrderFileAccess
 {
@@ -42,15 +43,22 @@ final readonly class OrderFileAccess
         $now = $this->clock->now();
         $until = null === $order->filesAvailableUntil ? null : new \DateTimeImmutable($order->filesAvailableUntil, new \DateTimeZone('UTC'));
         $state = $this->policy->state($order->paymentStatus, $order->latePayment, $until, $now, true);
-        $files = FilesStateEnum::AVAILABLE === $state ? $this->files($order) : [];
-        if (FilesStateEnum::AVAILABLE === $state && [] === $files) {
-            $state = FilesStateEnum::EMPTY;
+        $files = [];
+        if (FilesStateEnum::AVAILABLE === $state) {
+            $composition = $this->files($order);
+            if ($composition['missing']) {
+                $state = FilesStateEnum::INCOMPLETE;
+            } elseif ([] === $composition['files']) {
+                $state = FilesStateEnum::EMPTY;
+            } else {
+                $files = $composition['files'];
+            }
         }
 
         return new FileAccessOutputDto($order->id, $order->publicId, $order->number, $state, $until, $files);
     }
 
-    /** @return array<string, EntitledFileOutputDto> */
+    /** @return array{files: array<string, EntitledFileOutputDto>, missing: bool} */
     private function files(OrderEntitlementOutputDto $order): array
     {
         /** @var array<string, array{0: string, 1: string}> $candidates */
@@ -64,15 +72,17 @@ final readonly class OrderFileAccess
             }
         }
         if ([] === $candidates) {
-            return [];
+            return ['files' => [], 'missing' => false];
         }
         $originals = $this->originals->originals(array_map('strval', array_keys($candidates)));
         $files = [];
         $names = [];
+        $missing = false;
         foreach ($candidates as $photoId => [$childCode, $code]) {
             $photoId = (string)$photoId;
             $original = $originals[$photoId] ?? null;
             if (null === $original) {
+                $missing = true;
                 continue;
             }
             $base = preg_replace('/[^A-Za-z0-9_-]+/', '_', $code) ?: substr($photoId, 0, 8);
@@ -98,6 +108,6 @@ final readonly class OrderFileAccess
             );
         }
 
-        return $files;
+        return ['files' => $files, 'missing' => $missing];
     }
 }

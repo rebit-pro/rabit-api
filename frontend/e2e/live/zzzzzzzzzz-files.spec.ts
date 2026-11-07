@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { test, expect, type APIResponse, type Page } from '@playwright/test';
-import { orderConsents, payOnProvider } from './helpers.js';
+import { orderConsents, payOnProvider, productAdd } from './helpers.js';
 
 // J1: purchased originals of a paid order. The order is paid on the YooKassa test page like in G1; without the test
 // shop keys the spec proves only the honest unpaid state, and the gate accepts no skipped test.
@@ -142,7 +142,7 @@ const printGallery = '/api/v1/public/galleries/' + fixture.print.token;
 type Product = { id: string; kind: string; active: boolean; price: number; name: string };
 type Child = { code: string; photos: { id: string; assignmentId: string; code: string }[] };
 
-test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and never its neighbour', async ({
+test('J4-T06, J4-T07, J4-T08, OPS-T01-T03: mixed print and digital keep their selected frames and unique originals', async ({
   page,
   browser,
   baseURL
@@ -184,14 +184,40 @@ test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and nev
   }
   await page.evaluate((groupId) => localStorage.removeItem('morefoto:cart:v1:' + groupId), fixture.print.groupId);
 
-  // A1 in up to two formats, the first one three times; B1 once in the cheapest format, below the gift threshold.
+  // OPS-T03: a quick navigation after pressing + cannot replace the assignment already sent to the quote.
+  await page.goto('/g/' + fixture.print.token);
+  await page.getByRole('button', { name: 'Открыть кадр ' + photo('A', frames.A1).code, exact: true }).click();
+  const viewer = page.getByRole('dialog');
+  await productAdd(page, cheapest.name).click();
+  await viewer.getByRole('button', { name: 'Следующий кадр' }).click();
+  await expect(viewer.getByTestId('product-count')).toHaveCount(0);
+  await expect
+    .poll(async () => page.evaluate((groupId) => localStorage.getItem('morefoto:cart:v1:' + groupId), fixture.print.groupId))
+    .toContain(photo('A', frames.A1).assignmentId);
+  await viewer.getByRole('button', { name: 'Закрыть просмотр' }).click();
+  await page.getByRole('button', { name: 'Открыть кадр ' + photo('B', frames.B2).code, exact: true }).click();
+  await productAdd(page, digital!.name).click();
+  await expect(viewer.getByTestId('product-remove')).toBeVisible();
+  await viewer.getByRole('button', { name: 'Закрыть просмотр' }).click();
+  const quoted = page.waitForResponse((response) => response.url().endsWith('/quotes') && response.request().method() === 'POST');
+  await page.goto('/g/' + fixture.print.token + '/cart');
+  const draft = (await (await quoted).json()).data.quote.lines as { assignmentId: string; photoId: string }[];
+  expect(draft.map((line) => [line.assignmentId, line.photoId])).toEqual([
+    [photo('A', frames.A1).assignmentId, frames.A1.photoId],
+    [photo('B', frames.B2).assignmentId, frames.B2.photoId]
+  ]);
+  await page.evaluate((groupId) => localStorage.removeItem('morefoto:cart:v1:' + groupId), fixture.print.groupId);
+
+  // A1 in up to two formats, A1 digital again, B1 print and B2 digital; B stays below the print gift threshold.
   const a1 = photo('A', frames.A1).assignmentId;
   const created = await placeOrder(
     page,
     printGallery,
     [
       ...prints.slice(0, 2).map((print, index) => ({ assignmentId: a1, productId: print.id, quantity: index ? 1 : 3 })),
-      { assignmentId: photo('B', frames.B1).assignmentId, productId: cheapest.id, quantity: 1 }
+      { assignmentId: a1, productId: digital!.id, quantity: 1 },
+      { assignmentId: photo('B', frames.B1).assignmentId, productId: cheapest.id, quantity: 1 },
+      { assignmentId: photo('B', frames.B2).assignmentId, productId: digital!.id, quantity: 1 }
     ],
     'print.j4@example.test'
   );
@@ -211,15 +237,15 @@ test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and nev
   renameSync('var/j4-pay-request.json.tmp', 'var/j4-pay-request.json');
   await expect.poll(() => existsSync('var/j4-paid.json'), { timeout: 60000 }).toBe(true);
   expect(JSON.parse(readFileSync('var/j4-paid.json', 'utf8')).error).toBeUndefined();
-  // Printed frames once each; the print threshold keeps granting the whole set of its child (J1-DEC-01).
-  const expected = [frames.A1, frames.B1, ...(created.gifts.includes('A') ? [frames.A2] : [])].map((frame) => frame.photoId);
+  // A1 is owed by print and digital but appears once; B2 is owed only by its separately purchased digital line.
+  const expected = [frames.A1, frames.B1, frames.B2, ...(created.gifts.includes('A') ? [frames.A2] : [])].map((frame) => frame.photoId);
   const state = (await body(await page.request.get(files, { headers }))).data;
   expect(state.state).toBe('available');
   expect(state.items.map((item: { photoId: string }) => item.photoId).sort()).toEqual(expected.sort());
-  expect((await request({ kind: 'file', photoIds: [frames.B2.photoId] }, 422)).error.code).toBe('PHOTO_NOT_ENTITLED');
+  expect((await request({ kind: 'file', photoIds: [crypto.randomUUID()] }, 422)).error.code).toBe('PHOTO_NOT_ENTITLED');
   expect((await body(await page.request.get(files, { headers: asBuyer(key() + key()) }), 404)).error.code).toBe('ORDER_NOT_FOUND');
 
-  // The single files are the exact originals of the printed frames.
+  // The individual downloads contain the exact originals of the printed and purchased digital frames.
   const original = async (frame: Frame) => {
     const ready = (await request({ kind: 'file', photoIds: [frame.photoId] })).data;
     expect(ready.status).toBe('ready');
@@ -230,6 +256,7 @@ test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and nev
   };
   const printedA = await original(frames.A1);
   const printedB = await original(frames.B1);
+  const purchasedDigitalB = await original(frames.B2);
   record.printCopy.fileDownloadId = printedA.id;
 
   for (const viewport of [
@@ -258,7 +285,11 @@ test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and nev
   ]);
   const zip = readFileSync(await archive.path());
   expect(zip.subarray(0, 4).toString('hex')).toBe('504b0304');
-  expect([zip.indexOf(printedA.bytes) > 0, zip.indexOf(printedB.bytes) > 0]).toEqual([true, true]);
+  expect([zip.indexOf(printedA.bytes) > 0, zip.indexOf(printedB.bytes) > 0, zip.indexOf(purchasedDigitalB.bytes) > 0]).toEqual([
+    true,
+    true,
+    true
+  ]);
   record.printCopy.archiveBytes = zip.length;
   save();
 

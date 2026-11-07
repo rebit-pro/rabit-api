@@ -6,6 +6,7 @@ namespace Morefoto\Files\Tests\Unit;
 
 use Morefoto\Files\Domain\Download\Enum\FilesStateEnum;
 use Morefoto\Files\Domain\Download\Service\FileAccessPolicy;
+use Morefoto\Files\Application\Files\Dto\EntitledFileOutputDto;
 use Morefoto\Files\Tests\Unit\Support\FilesFixture;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -23,7 +24,7 @@ final class FileAccessTest extends TestCase
     #[DataProvider('states')]
     public function testStateFollowsPaymentLatenessAndDeadline(string $status, bool $late, ?string $now, FilesStateEnum $expected): void
     {
-        $fixture = new FilesFixture()->withOriginals(FilesFixture::P1);
+        $fixture = new FilesFixture()->withOriginals(FilesFixture::P1, FilesFixture::P2, FilesFixture::P3);
         $fixture->paymentStatus = $status;
         $fixture->latePayment = $late;
         $fixture->now = $now;
@@ -31,7 +32,7 @@ final class FileAccessTest extends TestCase
         $access = $fixture->access()->byKey(FilesFixture::KEY);
 
         self::assertSame($expected, $access->state);
-        self::assertSame(FilesStateEnum::AVAILABLE === $expected ? [FilesFixture::P1] : [], array_keys($access->files));
+        self::assertSame(FilesStateEnum::AVAILABLE === $expected ? [FilesFixture::P1, FilesFixture::P2, FilesFixture::P3] : [], array_keys($access->files));
     }
 
     public static function states(): iterable
@@ -44,19 +45,30 @@ final class FileAccessTest extends TestCase
         yield 'exactly at the deadline' => ['paid', false, '2027-02-28 07:00:00', FilesStateEnum::EXPIRED];
     }
 
-    public function testBundleExpandsToCurrentPhotosWithoutDuplicatesOrMissingOriginals(): void
+    public function testBundleExpandsToCurrentPhotosWithoutDuplicates(): void
+    {
+        $access = new FilesFixture()->withOriginals(FilesFixture::P1, FilesFixture::P2, FilesFixture::P3)->access()->byKey(FilesFixture::KEY);
+
+        self::assertSame(FilesStateEnum::AVAILABLE, $access->state);
+        self::assertSame([FilesFixture::P1, FilesFixture::P2, FilesFixture::P3], array_keys($access->files));
+        // The digital line keeps its purchase-time code; the bundle repeat of P1 does not produce a second file.
+        self::assertSame(['AB001.jpg', 'CD001.jpg', 'CD002.jpg'], array_map(static fn(EntitledFileOutputDto $file): string => $file->filename, array_values($access->files)));
+    }
+
+    public function testMissingOriginalDoesNotExposePartialOrderFiles(): void
     {
         $access = new FilesFixture()->withOriginals(FilesFixture::P1, FilesFixture::P2)->access()->byKey(FilesFixture::KEY);
 
-        self::assertSame(FilesStateEnum::AVAILABLE, $access->state);
-        self::assertSame([FilesFixture::P1, FilesFixture::P2], array_keys($access->files));
-        // The digital line keeps its purchase-time code; the bundle repeat of P1 does not produce a second file.
-        self::assertSame(['AB001.jpg', 'CD001.jpg'], [$access->files[FilesFixture::P1]->filename, $access->files[FilesFixture::P2]->filename]);
+        self::assertSame(FilesStateEnum::INCOMPLETE, $access->state);
+        self::assertSame([], $access->files);
     }
 
-    public function testPaidOrderWithoutStoredOriginalsIsEmpty(): void
+    public function testPaidOrderWithoutEntitledPhotosIsEmpty(): void
     {
-        self::assertSame(FilesStateEnum::EMPTY, new FilesFixture()->access()->byKey(FilesFixture::KEY)->state);
+        $fixture = new FilesFixture();
+        $fixture->hasEntitlements = false;
+
+        self::assertSame(FilesStateEnum::EMPTY, $fixture->access()->byKey(FilesFixture::KEY)->state);
     }
 
     public function testForeignKeyIsNotFound(): void
