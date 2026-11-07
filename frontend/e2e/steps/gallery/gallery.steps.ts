@@ -48,8 +48,15 @@ Given('первая миниатюра не загружается', async funct
   });
   await open(this, 'group');
 });
-Then('в галерее четыре серии', async function (this: CustomWorld) {
-  await expect(page(this).getByRole('button', { name: /^Серия A/ })).toHaveCount(4);
+Then('в галерее нет фильтра серий', async function (this: CustomWorld) {
+  await expect(page(this).getByLabel('Код ребёнка или кадра', { exact: true })).toHaveCount(0);
+  await expect(page(this).getByRole('button', { name: /^Серия / })).toHaveCount(0);
+  await expect(page(this).getByText('Найдите свою серию', { exact: true })).toHaveCount(0);
+});
+Then('карточки показывают исходные имена', async function (this: CustomWorld) {
+  const names = await page(this).getByTestId('gallery-filename').allTextContents();
+  expect(names.length).toBeGreaterThan(0);
+  expect(names.every((name) => /\.(jpe?g|png|webp)$/i.test(name))).toBe(true);
 });
 Then('видно кадров: {int}', async function (this: CustomWorld, count: number) {
   await expect(page(this).getByTestId('photo-card')).toHaveCount(count);
@@ -57,16 +64,8 @@ Then('видно кадров: {int}', async function (this: CustomWorld, count:
 Then('галерея показывает {string}', async function (this: CustomWorld, text: string) {
   await expect(page(this).locator('body')).toContainText(text);
 });
-When('выбирает серию {string}', async function (this: CustomWorld, code: string) {
-  await page(this)
-    .getByRole('button', { name: 'Серия ' + code, exact: true })
-    .click();
-});
-When('вводит код {string}', async function (this: CustomWorld, code: string) {
-  await page(this).getByLabel('Код ребёнка или кадра', { exact: true }).fill(code);
-});
-When('сбрасывает поиск', async function (this: CustomWorld) {
-  await page(this).getByRole('button', { name: 'Показать все серии', exact: true }).click();
+Given('галерея {string} открыта со старым кодом {string}', async function (this: CustomWorld, key: string, code: string) {
+  await open(this, key, '?child=' + encodeURIComponent(code));
 });
 When('открывает кадр {string}', async function (this: CustomWorld, code: string) {
   await page(this)
@@ -76,6 +75,7 @@ When('открывает кадр {string}', async function (this: CustomWorld, 
 Then('крупно показан кадр {string}', async function (this: CustomWorld, code: string) {
   await expect(page(this).getByRole('dialog')).toBeVisible();
   await expect(page(this).getByRole('heading', { name: 'Кадр ' + code, exact: true })).toBeVisible();
+  await expect(page(this).getByTestId('viewer-filename')).toHaveText(code + '.webp');
   const image = page(this).getByRole('img', { name: 'Крупный кадр ' + code, exact: true });
   await expect(image).toBeVisible();
   await expect.poll(() => image.evaluate((img) => (img as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
@@ -92,10 +92,9 @@ When('закрывает просмотр клавишей Escape', async functi
 When('обновляет галерею', async function (this: CustomWorld) {
   await page(this).reload({ waitUntil: 'networkidle' });
 });
-Then('просмотр закрыт и фильтр {string} сохранён', async function (this: CustomWorld, code: string) {
+Then('просмотр закрыт и фокус возвращён на кадр {string}', async function (this: CustomWorld, code: string) {
   await expect(page(this).getByRole('dialog')).toHaveCount(0);
-  await expect(page(this).getByLabel('Код ребёнка или кадра', { exact: true })).toHaveValue(code);
-  await expect(page(this).getByRole('button', { name: 'Открыть кадр ' + code + '-01', exact: true })).toBeFocused();
+  await expect(page(this).getByRole('button', { name: 'Открыть кадр ' + code, exact: true })).toBeFocused();
 });
 Then('диалог просмотра отсутствует', async function (this: CustomWorld) {
   await expect(page(this).getByRole('dialog')).toHaveCount(0);

@@ -4,6 +4,8 @@ export interface GalleryPhoto {
   assignmentId?: string;
   id: string;
   code: string;
+  /** Original uploaded basename, including its extension; absent in older API responses. */
+  filename?: string;
   thumbSrc: string;
   previewSrc: string;
   width: number;

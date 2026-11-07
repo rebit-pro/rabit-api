@@ -10,7 +10,7 @@ final readonly class GalleryAssignmentMapper
 {
     /** @param array{
      *     ASSIGNMENT_ID: string, PHOTO_ID: string, CHILD_ID: string, NATIVE_CHILD_ID: int|string, CODE: string,
-     *     SEQUENCE_NO: int|string, UF_WIDTH: int|string, UF_HEIGHT: int|string, UF_REVISION: int|string,
+     *     SEQUENCE_NO: int|string, UF_FILENAME: string, UF_WIDTH: int|string, UF_HEIGHT: int|string, UF_REVISION: int|string,
      * } $row
      */
     public function fromRow(array $row): GalleryAssignmentOutputDto
@@ -25,6 +25,7 @@ final readonly class GalleryAssignmentMapper
             (int)$row['UF_WIDTH'],
             (int)$row['UF_HEIGHT'],
             (int)$row['UF_REVISION'],
+            filename: $row['UF_FILENAME'],
         );
     }
 }

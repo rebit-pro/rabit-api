@@ -17,6 +17,7 @@ final readonly class GalleryResultMapper
             $base = '/api/v1/public/galleries/' . $token . '/photos/' . $photo->assignmentId;
             $children[$photo->childId]['photos'][] = [
                 'id' => $photo->photoId, 'assignmentId' => $photo->assignmentId, 'code' => $photo->code,
+                'filename' => $photo->filename,
                 'thumbSrc' => $base . '/thumb', 'previewSrc' => $base . '/preview',
                 'width' => $photo->width, 'height' => $photo->height,
             ];

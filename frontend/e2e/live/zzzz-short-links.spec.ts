@@ -41,14 +41,27 @@ for (const viewport of [
     await page.setViewportSize(viewport);
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto('/g/' + fixture.open.alias + '?child=A');
-    await expect(page).toHaveURL(new RegExp('/g/' + fixture.open.alias + '\\?child=A$'));
+    await page.goto('/g/' + fixture.open.alias + '?child=ZZ999');
+    await expect(page).toHaveURL(new RegExp('/g/' + fixture.open.alias + '[?]child=ZZ999$'));
     await expect(page.getByRole('button', { name: 'Открыть кадр A001', exact: true })).toBeVisible();
+    const data = (await body(await page.request.get(api(fixture.open.token)))).data;
+    const photos = data.children.flatMap((child: { photos: { filename: string; code: string }[] }) => child.photos) as {
+      filename: string;
+      code: string;
+    }[];
+    const selected = photos.find((photo) => photo.code === 'A001');
+    expect(selected).toBeDefined();
+    await expect(page.getByTestId('photo-card')).toHaveCount(photos.length);
+    await expect(page.getByRole('button', { name: 'Открыть кадр A001', exact: true }).getByTestId('gallery-filename')).toHaveText(
+      selected!.filename
+    );
+    await expect(page.getByLabel('Код ребёнка или кадра', { exact: true })).toHaveCount(0);
     await page.reload();
-    await expect(page).toHaveURL(new RegExp('/g/' + fixture.open.alias + '\\?child=A$'));
+    await expect(page).toHaveURL(new RegExp('/g/' + fixture.open.alias + '[?]child=ZZ999$'));
     await expect(page.getByRole('button', { name: 'Открыть кадр A001', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Открыть кадр A001', exact: true }).click();
     expect(new URL(page.url()).searchParams.has('photo')).toBe(true);
+    await expect(page.getByTestId('viewer-filename')).toHaveText(selected!.filename);
     await page.reload();
     await expect(page.getByRole('button', { name: 'Закрыть просмотр', exact: true })).toBeVisible();
     expect(new URL(page.url()).pathname).toBe('/g/' + fixture.open.alias);
@@ -75,7 +88,7 @@ for (const viewport of [
     });
 
     if (viewport.name === 'desktop') {
-      await page.goto('/g/' + fixture.open.alias + '?child=A');
+      await page.goto('/g/' + fixture.open.alias + '?child=ZZ999');
       await page.getByTestId('gallery-question-open').click();
       const dialog = page.getByTestId('gallery-question');
       await dialog.getByLabel('Как к вам обращаться', { exact: true }).fill('Проверка короткой ссылки');

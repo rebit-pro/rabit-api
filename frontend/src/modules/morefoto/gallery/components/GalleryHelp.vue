@@ -20,7 +20,7 @@ const open = defineModel<boolean>({ default: false });
       <h3>Вопрос по съёмке</h3>
       <template v-if="canAsk">
         <p>Напишите куратору{{ gallery.curator ? ' ' + gallery.curator : '' }} прямо здесь — ответ появится в этой же галерее.</p>
-        <p class="mf-muted">Если вопрос о снимке, укажите код кадра, например A001-01.</p>
+        <p class="mf-muted">Если вопрос о снимке, укажите имя файла или код кадра с карточки фотографии.</p>
         <v-btn color="primary" variant="tonal" prepend-icon="mdi-message-text-outline" data-testid="gallery-help-ask" @click="emit('ask')"
           >Задать вопрос куратору</v-btn
         >
@@ -31,7 +31,7 @@ const open = defineModel<boolean>({ default: false });
             gallery.curator ? ' ' + gallery.curator : ''
           }}.
         </p>
-        <p class="mf-muted">Укажите группу «{{ gallery.groupName }}» и код кадра, например A001-01.</p>
+        <p class="mf-muted">Укажите группу «{{ gallery.groupName }}» и имя файла или код кадра с карточки фотографии.</p>
       </template>
     </v-card>
   </v-dialog>

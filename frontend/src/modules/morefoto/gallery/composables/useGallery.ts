@@ -4,6 +4,7 @@ import { computed, nextTick, onScopeDispose, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { GalleryUnavailableError, loadGallery } from '../services/gallery';
 import type { GalleryPhoto, GallerySnapshot } from '../types';
+import { galleryPhotos } from '../photos';
 
 export function useGallery() {
   const route = useRoute();
@@ -63,18 +64,11 @@ export function useGallery() {
     if (scheduledRefresh !== null) window.clearInterval(scheduledRefresh);
     requestId++;
   });
-  const code = computed(() => (typeof route.query.child === 'string' ? route.query.child.trim().toUpperCase() : ''));
-  const allPhotos = computed(() => gallery.value?.children.flatMap((child) => child.photos) ?? []);
-  const photos = computed(() => allPhotos.value.filter((photo) => photo.code.includes(code.value)));
+  const photos = computed(() => galleryPhotos(gallery.value?.children ?? []));
   const activeIndex = computed(() => photos.value.findIndex((photo) => (photo.assignmentId ?? photo.id) === route.query.photo));
   const activePhoto = computed(() => photos.value[activeIndex.value] ?? null);
   const missingPhoto = computed(() => !!route.query.photo && !activePhoto.value && !!gallery.value);
 
-  function selectCode(value: string) {
-    void router.replace({
-      query: { child: value.trim().toUpperCase() || undefined }
-    });
-  }
   function openPhoto(photo: GalleryPhoto) {
     returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     void router.push({
@@ -105,13 +99,10 @@ export function useGallery() {
     error,
     unavailable,
     reload,
-    code,
     photos,
-    allPhotos,
     activePhoto,
     activeIndex,
     missingPhoto,
-    selectCode,
     openPhoto,
     closePhoto,
     stepPhoto
