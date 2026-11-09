@@ -3,9 +3,11 @@
 declare(strict_types=1);
 
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\Connection;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Morefoto\Files\Application\Delivery\UseCase\DispatchOrderEmailsUseCase;
+use Morefoto\Files\Application\Files\Service\OrderFileAccess;
 use Rebit\Notification\Application\Delivery\UseCase\DeliverEmailUseCase;
 
 // J2/J5: the stand has no cron, no mail worker and no SMTP. On a request of the browser it acts for them:
@@ -34,12 +36,14 @@ $answer = match ($request['action'] ?? 'dispatch') {
     'dispatch' => j5_dispatch($connection, $recipient),
     'deliver' => j5_deliver($connection, $recipient),
     'age' => j5_age($connection, $recipient),
+    'hide-original' => j5_original($connection, $recipient, true),
+    'restore-original' => j5_original($connection, $recipient, false),
 };
 file_put_contents('/runtime/j2-answer.json', json_encode($answer, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
 echo "J2 order email fixture: answered\n";
 
 /** @return array{created: int, queued: int, key: null|string} */
-function j5_dispatch(Bitrix\Main\DB\Connection $connection, string $recipient): array
+function j5_dispatch(Connection $connection, string $recipient): array
 {
     $result = ServiceLocator::getInstance()->get(DispatchOrderEmailsUseCase::class)->execute(100);
     $letter = $connection->query("SELECT BODY FROM b_rebit_notification_operation WHERE CONSUMER_KEY='files-order-email' AND RECIPIENT='{$recipient}'
@@ -50,7 +54,7 @@ function j5_dispatch(Bitrix\Main\DB\Connection $connection, string $recipient): 
 }
 
 /** @return array{delivered: int, letters: list<array<string, mixed>>} */
-function j5_deliver(Bitrix\Main\DB\Connection $connection, string $recipient): array
+function j5_deliver(Connection $connection, string $recipient): array
 {
     $mailbox = '/runtime/j5-mail';
     is_dir($mailbox) || mkdir($mailbox, 0777, true);
@@ -71,11 +75,48 @@ function j5_deliver(Bitrix\Main\DB\Connection $connection, string $recipient): a
 }
 
 /** @return array{aged: int} */
-function j5_age(Bitrix\Main\DB\Connection $connection, string $recipient): array
+function j5_age(Connection $connection, string $recipient): array
 {
     $connection->queryExecute("UPDATE mf_file_delivery SET CREATED_AT=CREATED_AT - INTERVAL 11 MINUTE WHERE RECIPIENT='{$recipient}'");
 
     return ['aged' => $connection->getAffectedRowsCount()];
+}
+
+/** @return array{changed: bool} */
+function j5_original(Connection $connection, string $recipient, bool $hide): array
+{
+    $marker = '/runtime/j5-original-' . hash('sha256', $recipient) . '.json';
+    if (!$hide) {
+        /** @var array{path: string, hidden: string} $saved */
+        $saved = json_decode((string)file_get_contents($marker), true, flags: JSON_THROW_ON_ERROR);
+        if (!rename($saved['hidden'], $saved['path']) || !unlink($marker)) {
+            throw new RuntimeException('Cannot restore the fixture original.');
+        }
+
+        return ['changed' => true];
+    }
+    $order = $connection->query("SELECT ID FROM mf_order WHERE BUYER_EMAIL='{$recipient}' AND PAYMENT_STATUS='paid' ORDER BY ID DESC LIMIT 1")->fetchRaw();
+    if (false === $order) {
+        throw new RuntimeException('A paid fixture order is required.');
+    }
+    $files = ServiceLocator::getInstance()->get(OrderFileAccess::class)->byOrderId((int)$order['ID'])->files;
+    $file = array_values($files)[0] ?? throw new RuntimeException('The fixture order has no original.');
+    if (!str_starts_with($file->absolutePath, '/runtime/private/media/')) {
+        throw new RuntimeException('Refusing to move an original outside the disposable runtime.');
+    }
+    $hidden = $file->absolutePath . '.e2e-held';
+    if (is_file($marker) || is_file($hidden)) {
+        throw new RuntimeException('A fixture original is already hidden.');
+    }
+    if (false === file_put_contents($marker, json_encode(['path' => $file->absolutePath, 'hidden' => $hidden], JSON_THROW_ON_ERROR))) {
+        throw new RuntimeException('Cannot record the fixture original.');
+    }
+    if (!rename($file->absolutePath, $hidden)) {
+        unlink($marker);
+        throw new RuntimeException('Cannot hide the fixture original.');
+    }
+
+    return ['changed' => true];
 }
 
 /** Bitrix calls it instead of mail(): the stand keeps the exact MIME message that msmtp would get. */

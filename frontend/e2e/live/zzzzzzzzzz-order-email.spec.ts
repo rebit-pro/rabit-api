@@ -19,7 +19,7 @@ async function body(response: APIResponse, status = 200) {
   return response.json();
 }
 /** Asks the runner to act for cron and the mail worker: dispatch the letters, deliver them or make the letters older. */
-async function stand<T>(action: 'dispatch' | 'deliver' | 'age', recipient: string): Promise<T> {
+async function stand<T>(action: 'dispatch' | 'deliver' | 'age' | 'hide-original' | 'restore-original', recipient: string): Promise<T> {
   requests += 1;
   writeFileSync(`var/j2-request-${requests}.json.tmp`, JSON.stringify({ action, recipient }));
   renameSync(`var/j2-request-${requests}.json.tmp`, `var/j2-request-${requests}.json`);
@@ -52,16 +52,56 @@ test('J2-T08, J2-T09, J5-T10, J5-T11, J5-T13: the paid order sends its originals
   // Before the dispatcher the paid order has no letter yet, the address is the order email.
   const before = (await body(await page.request.get(deliveries, { headers: buyer }))).data;
   expect([before.enabled, before.recipient, before.latest, before.canResend]).toEqual([true, recipient, null, true]);
-  // The frames of the order right now: the letters carry exactly these originals, the neighbour B2 never.
+  // The frames of the order right now: B2 was bought separately and must be delivered along with the printed frames.
   const files = (await body(await page.request.get('/api/v1/public/orders/current/files', { headers: buyer }))).data;
   const items = files.items as { photoId: string; filename: string }[];
   expect(items.length).toBeGreaterThanOrEqual(2);
   const sha = Object.fromEntries(Object.values(fixture.print.frames).map((frame) => [frame.photoId, frame.sha256]));
   const expected = items.map((item) => ({ name: item.filename, sha256: sha[item.photoId] })).sort((a, b) => a.name.localeCompare(b.name));
-  expect(expected.map((item) => item.sha256)).not.toContain(fixture.print.frames.B2.sha256);
+  expect(expected.map((item) => item.sha256)).toContain(fixture.print.frames.B2.sha256);
+
+  // OPS-T01/T04: one missing original blocks partial delivery and downloading until the entire set is restored.
+  await stand('hide-original', recipient);
+  try {
+    const incomplete = (await body(await page.request.get('/api/v1/public/orders/current/files', { headers: buyer }))).data;
+    expect([incomplete.state, incomplete.canDownload, incomplete.items]).toEqual(['incomplete', false, []]);
+    const refused = await body(
+      await page.request.post('/api/v1/public/orders/current/downloads', {
+        headers: { ...buyer, 'Idempotency-Key': key() },
+        data: { kind: 'zip' }
+      }),
+      409
+    );
+    expect(refused.error.code).toBe('FILES_UNAVAILABLE');
+    expect((await dispatch(recipient)).key).toBeNull();
+    const waiting = (await body(await page.request.get(deliveries, { headers: buyer }))).data.latest;
+    expect([waiting.status, waiting.letters, waiting.photos]).toEqual(['pending', 0, 0]);
+    for (const viewport of [
+      { name: 'desktop', width: 1440, height: 1000 },
+      { name: 'mobile', width: 390, height: 844 }
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto('/orders/access/' + paid.printCopy.accessKey);
+      const notice = page.getByTestId('files-state-incomplete');
+      await expect(notice).toBeVisible();
+      await expect(page.getByTestId('files-item')).toHaveCount(0);
+      await expect(page.getByTestId('files-archive')).toHaveCount(0);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await notice.scrollIntoViewIfNeeded();
+      await page.screenshot({
+        path: testInfo.outputPath('ops-' + viewport.name + '-files-incomplete.png'),
+        fullPage: true,
+        animations: 'disabled'
+      });
+    }
+  } finally {
+    await stand('restore-original', recipient);
+  }
+  expect((await body(await page.request.get('/api/v1/public/orders/current/files', { headers: buyer }))).data.state).toBe('available');
 
   const letter = await dispatch(recipient);
-  expect(letter.created).toBeGreaterThanOrEqual(1);
+  expect(letter.created, 'the held delivery is resumed instead of creating a replacement').toBe(0);
+  expect(letter.queued).toBeGreaterThanOrEqual(1);
   expect(letter.key).toMatch(/^[a-f0-9]{64}$/);
   expect(letter.key).not.toBe(paid.printCopy.accessKey);
   expect((await dispatch(recipient)).created, 'a repeated run adds no letter').toBe(0);

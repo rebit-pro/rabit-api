@@ -417,9 +417,12 @@ def open_stand(state, args, stand, notification):
             # Only php-fpm and the browser reach the provider; MySQL and RabbitMQ stay on the internal network.
             docker("network", "connect", state["browserNetwork"], name + "-fpm")
         # #141: the worker runs as www-data, like PHP-FPM, so that FPM can delete the previews it writes.
-        service(state, name + "-media", *network, "--user", "www-data", *cli, *amqp, *media, args.php_cli, "tools/e2e/consume-media.php")
+        worker_seconds = worker_timeout(stand["groups"])
+        service(state, name + "-media", *network, "--user", "www-data", *cli, *amqp, *media,
+                "--env", f"MEDIA_E2E_TIME_LIMIT={worker_seconds}", args.php_cli, "tools/e2e/consume-media.php")
         # J1: builds ZIP archives as www-data too, so nginx (uid 1000) serves them; SUPPORT carries the link signing secret.
-        service(state, name + "-files", *network, "--user", "www-data", *cli, *amqp, *media, *SUPPORT, args.php_cli, "tools/e2e/consume-files.php")
+        service(state, name + "-files", *network, "--user", "www-data", *cli, *amqp, *media, *SUPPORT,
+                "--env", f"FILES_E2E_TIME_LIMIT={worker_seconds}", args.php_cli, "tools/e2e/consume-files.php")
         service(state, name + "-backend", *network, "--network-alias", "backend", *php_mounts(state, stand),
                 "--mount", f"type=bind,source={Path(state['report'], 'backend.conf')},target=/etc/nginx/conf.d/default.conf,readonly",
                 "--mount", f"type=bind,source={ROOT / 'api/docker/common/nginx/auth.conf'},target=/etc/nginx/auth.conf,readonly", args.nginx)
@@ -560,6 +563,11 @@ def check_results(group, path):
 def browser_timeout(group):
     """The runner must not cut the opt-in bench short of its own Playwright timeout."""
     return BROWSER_TIMEOUT + (BENCH_TIMEOUT if os.environ.get("E2E_MEDIA_BENCH") and BENCH in GROUPS[group] else 0)
+
+
+def worker_timeout(groups):
+    """A stand's workers outlive all its browser groups, fixture preparation and native verifiers."""
+    return sum(browser_timeout(group) for group in groups) + 300
 
 
 def pay_fixture(report, fpm, var, done):

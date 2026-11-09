@@ -1,0 +1,423 @@
+{
+  "date": "2026-11-09",
+  "branch": "codex/ops-order-photo-delivery",
+  "head": "e62b720787a647264301bb1c4177f8aab34abea3",
+  "base": "90755f3a3700d55dae94befabea387ca8637c217",
+  "scope": "PARTIAL: group b; all requested T01-T04 and their native verifiers",
+  "fullCombinedGatePassed": false,
+  "independentDifferentModelReview": false,
+  "command": "E2E_GROUPS=b E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor E2E_PHP_CLI_IMAGE=rabit-api-e2e-php-cli:local E2E_PHP_FPM_IMAGE=rabit-api-e2e-php-fpm:local E2E_NGINX_IMAGE=rabit-api-e2e-nginx:local make test-e2e",
+  "runId": "rabit-e2e-e27c9a767aa0",
+  "runnerExitCode": 0,
+  "runnerTotalSeconds": 683.6,
+  "browserStats": {
+    "startTime": "2026-11-09T12:08:55.279Z",
+    "duration": 574995.866,
+    "expected": 80,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "stages": [
+    {
+      "name": "npm ci",
+      "status": "passed",
+      "seconds": 15.3
+    },
+    {
+      "name": "b: MySQL and RabbitMQ",
+      "status": "passed",
+      "seconds": 16.8
+    },
+    {
+      "name": "php-cli WebP capability",
+      "status": "passed",
+      "seconds": 1.6
+    },
+    {
+      "name": "php-fpm WebP capability",
+      "status": "passed",
+      "seconds": 1.6
+    },
+    {
+      "name": "composer autoload",
+      "status": "passed",
+      "seconds": 16.2
+    },
+    {
+      "name": "npm run lint",
+      "status": "passed",
+      "seconds": 47.5
+    },
+    {
+      "name": "npm run lint:styles",
+      "status": "passed",
+      "seconds": 17.9
+    },
+    {
+      "name": "npm run typecheck",
+      "status": "passed",
+      "seconds": 40.6
+    },
+    {
+      "name": "npm run typecheck:e2e",
+      "status": "passed",
+      "seconds": 15.2
+    },
+    {
+      "name": "npm run test:ui",
+      "status": "passed",
+      "seconds": 10.2
+    },
+    {
+      "name": "npm run test:commerce",
+      "status": "passed",
+      "seconds": 11.3
+    },
+    {
+      "name": "npm run build-only",
+      "status": "passed",
+      "seconds": 30.7
+    },
+    {
+      "name": "php-lint",
+      "status": "passed",
+      "seconds": 5.2
+    },
+    {
+      "name": "phpstan",
+      "status": "passed",
+      "seconds": 4.3
+    },
+    {
+      "name": "phpunit",
+      "status": "passed",
+      "seconds": 23.2
+    },
+    {
+      "name": "b: real Bitrix schema and fixture accounts",
+      "status": "passed",
+      "seconds": 4.8
+    },
+    {
+      "name": "b: durable Notification contract on real MySQL",
+      "status": "passed",
+      "seconds": 1.4
+    },
+    {
+      "name": "b: FPM, media and files workers and nginx",
+      "status": "passed",
+      "seconds": 6.7
+    },
+    {
+      "name": "b: E4 gallery fixture through internal lifecycle",
+      "status": "passed",
+      "seconds": 2.3
+    },
+    {
+      "name": "b: real browser group b",
+      "status": "passed",
+      "seconds": 580.2
+    },
+    {
+      "name": "b: verify-storefront.php",
+      "status": "passed",
+      "seconds": 0.4
+    },
+    {
+      "name": "b: verify-sales-windows.php",
+      "status": "passed",
+      "seconds": 0.4
+    },
+    {
+      "name": "b: verify-handoff.php",
+      "status": "passed",
+      "seconds": 0.6
+    },
+    {
+      "name": "b: verify-orders.php",
+      "status": "passed",
+      "seconds": 0.6
+    },
+    {
+      "name": "b: verify-markup-correction.php",
+      "status": "passed",
+      "seconds": 4.4
+    },
+    {
+      "name": "b: verify-email-only-orders.php",
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-links.php",
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-gallery-openings.php",
+      "status": "passed",
+      "seconds": 6.3
+    },
+    {
+      "name": "b: verify-transfers.php",
+      "status": "passed",
+      "seconds": 0.4
+    },
+    {
+      "name": "b: verify-avatar.php",
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-payment-costs.php",
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-payments.php",
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-files.php",
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-production.php",
+      "status": "passed",
+      "seconds": 0.5
+    },
+    {
+      "name": "b: verify-order-email.php",
+      "status": "passed",
+      "seconds": 0.4
+    },
+    {
+      "name": "b: verify-receipts.php",
+      "status": "passed",
+      "seconds": 0.4
+    }
+  ],
+  "environment": {
+    "php": "8.4.26",
+    "browserImage": "mcr.microsoft.com/playwright:v1.52.0-jammy",
+    "database": "disposable MySQL 8.0",
+    "queue": "disposable RabbitMQ 3.13",
+    "payment": "YooKassa test shop and fixture provider",
+    "mail": "real H1/Bitrix MIME captured by local custom_mail; no SMTP"
+  },
+  "phpunit": {
+    "tests": 1297,
+    "assertions": 51533,
+    "status": "PASS"
+  },
+  "runnerUnitTests": {
+    "command": "python3 -m unittest discover -s tools/tests -v",
+    "tests": 30,
+    "status": "PASS"
+  },
+  "tests": {
+    "T01": {
+      "status": "PASS",
+      "evidence": "OPS-T01-T03 mixed order keeps A001/B001/B002; quote, order, entitled originals, downloads/ZIP and MIME checked; SHA-256 equals fixture originals"
+    },
+    "T02": {
+      "status": "PASS",
+      "evidence": "A001 bought in two print formats and digital appears once in files, archive and letters; other bought frames retained"
+    },
+    "T03": {
+      "status": "PASS",
+      "evidence": "quick next-frame navigation preserves A1 assignment in localStorage; reloaded cart quote preserves A1+B2 assignment/photo pairs; saved mixed-order lines checked"
+    },
+    "T04": {
+      "status": "PASS",
+      "evidence": "missing original yields incomplete/empty/409/held; restoration resumes existing delivery; multipart MIME exact bytes and repeat checked; native recovery proof below",
+      "nativeRecovery": {
+        "largeFileBytes": 20971521,
+        "linkOnlyPhotos": 1,
+        "queuedBeforeFailure": 1,
+        "lettersAfterRecovery": 2,
+        "capturedMimeLetters": 2,
+        "duplicateOperations": 0
+      }
+    }
+  },
+  "visual": {
+    "status": "PASS",
+    "inspection": "Actual PNG files viewed by executor; available/incomplete/email/print-copy hint on desktop and mobile, unpaid on desktop",
+    "findings": "No overlapping controls, clipped buttons or horizontal overflow. Missing-original notice is readable; unavailable archive hidden; A001/B001/B002 appear once; email status says 3 letters/3 photos. Product viewer scrolls within dialog.",
+    "screenshots": [
+      {
+        "file": "j4-desktop-print-files.png",
+        "source": "api/var/e2e/rabit-e2e-e27c9a767aa0/b/b/artifacts/zzzzzzzzzz-files-J4-T06-J4-c4172-frames-and-unique-originals-b/j4-desktop-print-files.png",
+        "sha256": "24ce07aba8d3e9c19db93ab28a0fdc3fd3a6888b438d5c09b00b26a680e11a03",
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "visualStatus": "PASS"
+      },
+      {
+        "file": "j4-mobile-print-files.png",
+        "source": "api/var/e2e/rabit-e2e-e27c9a767aa0/b/b/artifacts/zzzzzzzzzz-files-J4-T06-J4-c4172-frames-and-unique-originals-b/j4-mobile-print-files.png",
+        "sha256": "25add83bc69e7752f7b0fb948068552162a879b3f5ead8e9c82d04f6c9ec7ccc",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "visualStatus": "PASS"
+      },
+      {
+        "file": "ops-desktop-files-incomplete.png",
+        "source": "api/var/e2e/rabit-e2e-e27c9a767aa0/b/b/artifacts/zzzzzzzzzz-order-email-J2--1224b--with-the-link-to-the-order-b/ops-desktop-files-incomplete.png",
+        "sha256": "2c120b97f7ce5429391fc2f91b7dd84a1f2b9f736f6ae3df3f4cdd8893d752c2",
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "visualStatus": "PASS"
+      },
+      {
+        "file": "ops-mobile-files-incomplete.png",
+        "source": "api/var/e2e/rabit-e2e-e27c9a767aa0/b/b/artifacts/zzzzzzzzzz-order-email-J2--1224b--with-the-link-to-the-order-b/ops-mobile-files-incomplete.png",
+        "sha256": "12ad3a044208b41729854737bcf46fb0924dc41f5e10c6ba3321a58a96aa12c9",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "visualStatus": "PASS"
+      },
+      {
+        "file": "j5-desktop-order-email.png",
+        "source": "api/var/e2e/rabit-e2e-e27c9a767aa0/b/b/artifacts/zzzzzzzzzz-order-email-J2--1224b--with-the-link-to-the-order-b/j5-desktop-order-email.png",
+        "sha256": "16a7ec51441b05b9f1e0598be12acb9ff3f33f9ed05b27c51dcf95e2fcc67cdd",
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "visualStatus": "PASS"
+      },
+      {
+        "file": "j5-mobile-order-email.png",
+        "source": "api/var/e2e/rabit-e2e-e27c9a767aa0/b/b/artifacts/zzzzzzzzzz-order-email-J2--1224b--with-the-link-to-the-order-b/j5-mobile-order-email.png",
+        "sha256": "f689d3812c9ad4e5b2737c35dc44b37bf8a4cf79f912b232137fb644cabae668",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "visualStatus": "PASS"
+      },
+      {
+        "file": "j4-desktop-print-copy-hint.png",
+        "source": "api/var/e2e/rabit-e2e-e27c9a767aa0/b/b/artifacts/zzzzzzzzzz-files-J4-T06-J4-c4172-frames-and-unique-originals-b/j4-desktop-print-copy-hint.png",
+        "sha256": "47de99dbec86955bcb55d6e0cbd6181c75935b812ed80e5c23a81f34993a090f",
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "visualStatus": "PASS"
+      },
+      {
+        "file": "j4-mobile-print-copy-hint.png",
+        "source": "api/var/e2e/rabit-e2e-e27c9a767aa0/b/b/artifacts/zzzzzzzzzz-files-J4-T06-J4-c4172-frames-and-unique-originals-b/j4-mobile-print-copy-hint.png",
+        "sha256": "5d22e03d5e4e32417e340e4b7723379ce64cfd9263c7a5303610450010824b05",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "visualStatus": "PASS"
+      },
+      {
+        "file": "j1-desktop-files-unpaid.png",
+        "source": "api/var/e2e/rabit-e2e-e27c9a767aa0/b/b/artifacts/zzzzzzzzzz-files-J1-T04-J1-6b002-nals-and-refuses-a-download-b/j1-desktop-files-unpaid.png",
+        "sha256": "358d51897edd658998e4410213c78866d0fc05d73f6b8b7159c98e61526f053f",
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "visualStatus": "PASS"
+      }
+    ]
+  },
+  "testInfrastructureFiles": [
+    {
+      "file": "api/tools/e2e/order-email-fixture.php",
+      "sha256": "294de3f36d06ba245d710e0522ae11ac7d0c8aebb2938cc63ab348e7f2732e4d"
+    },
+    {
+      "file": "api/tools/e2e/verify-order-email.php",
+      "sha256": "fce2199109f1f9104345850f7a2ebb6322e91266e97bcac8079563119bcbfc18"
+    },
+    {
+      "file": "frontend/e2e/live/zzzzzzzzzz-order-email.spec.ts",
+      "sha256": "44bca13f8e9462ef480690ecf8f38381b503b4d18d5ec5d7bda9165f5ea2a5ee"
+    },
+    {
+      "file": "frontend/e2e/live/zzzzzzzzzzzzz-receipts.spec.ts",
+      "sha256": "0430c6449ae3cec4d44d0a741d326bc924f2c16dc23f03e2880c3302b4b5a7df"
+    },
+    {
+      "file": "tools/run-browser-e2e.py",
+      "sha256": "fd496e2f89ca973fb67db1a58c56626be28f6bcdbe37f911706a4fbd45d2ab17"
+    },
+    {
+      "file": "tools/tests/test_run_browser_e2e.py",
+      "sha256": "8c882319945fd95f81021c8c97d17f523f7fb55e7f3e8ab98d016ca1c27e387b"
+    }
+  ],
+  "productChangesDuringVerification": false,
+  "runHistory": [
+    {
+      "runId": "rabit-e2e-210a36bc3914",
+      "overall": "CANCELLED",
+      "groupA": {
+        "passed": 81,
+        "failed": 0,
+        "skipped": 0,
+        "flaky": 0
+      },
+      "groupB": "cancelled after default worker lifetime exhausted; shared-stand F2 pagination also failed; no product conclusion"
+    },
+    {
+      "runId": "rabit-e2e-eb040d05c667",
+      "overall": "FAIL",
+      "groupB": {
+        "passed": 77,
+        "failed": 1,
+        "skipped": 2,
+        "flaky": 0
+      },
+      "reason": "stale G2 all-prepayment assertion for the mixed fixture; corrected against existing payment contract"
+    },
+    {
+      "runId": "rabit-e2e-e27c9a767aa0",
+      "overall": "PASS (PARTIAL scope)",
+      "groupB": {
+        "passed": 80,
+        "failed": 0,
+        "skipped": 0,
+        "flaky": 0
+      }
+    }
+  ],
+  "cleanup": {
+    "verified": true,
+    "runs": [
+      "rabit-e2e-210a36bc3914",
+      "rabit-e2e-eb040d05c667",
+      "rabit-e2e-e27c9a767aa0"
+    ],
+    "remainingContainers": 0,
+    "remainingNetworks": 0,
+    "remainingVolumes": 0,
+    "sharedCachesRetained": true
+  },
+  "limitations": [
+    "Original Z004 incident was not reproduced or explained by these fixtures.",
+    "No full combined a+b run passed; a and b passed separately.",
+    "Queue query uses existing status index plus filesort; no latency claim from an empty queue.",
+    "Push, merge and deployment were not performed."
+  ]
+}

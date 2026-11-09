@@ -3,10 +3,26 @@
 declare(strict_types=1);
 
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\Connection;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Morefoto\Commerce\Domain\Order\Service\OrderCalendarPolicy;
 use Morefoto\Files\Application\Delivery\UseCase\DispatchOrderEmailsUseCase;
+use Morefoto\Files\Application\Delivery\Contract\OrderEmailComposerInterface;
+use Morefoto\Files\Application\Delivery\Service\OrderEmailSender;
+use Morefoto\Files\Application\Files\Service\OrderFileAccess;
+use Morefoto\Files\Domain\Delivery\Enum\DeliveryStatusEnum;
+use Morefoto\Files\Domain\Delivery\Repository\DeliveryRepositoryInterface;
+use Morefoto\Files\Domain\Delivery\Service\AttachmentPlanner;
+use Morefoto\Files\Domain\Delivery\ValueObject\DeliveryPart;
+use Psr\Log\NullLogger;
+use Ramsey\Uuid\Uuid;
+use Rebit\Notification\Application\Delivery\UseCase\DeliverEmailUseCase;
+use Rebit\Share\Application\Contract\Clock\ClockInterface;
+use Rebit\Share\Application\Contract\Notification\Dto\EmailNotificationInputDto;
+use Rebit\Share\Application\Contract\Notification\Dto\NotificationOperationOutputDto;
+use Rebit\Share\Application\Contract\Notification\EmailNotificationInterface;
+use Rebit\Share\Contracts\Commerce\OrderEmailLinkInterface;
 
 // J2/J5: MySQL trail of the letters of the paid order — one automatic delivery per order confirmed after the release, its
 // letters planned once and each queued once in H1 under its own deduplication key; H1 keeps only references to the originals
@@ -106,4 +122,125 @@ $before = $scalar('SELECT COUNT(*) FROM mf_file_delivery') . ':' . $scalar('SELE
 ServiceLocator::getInstance()->get(DispatchOrderEmailsUseCase::class)->execute(100);
 $check($before === $scalar('SELECT COUNT(*) FROM mf_file_delivery') . ':' . $scalar('SELECT COUNT(*) FROM mf_file_delivery_part'), 'a repeated run added a letter');
 $check(0 === $scalar("SELECT COUNT(*) FROM (SELECT DEDUP_KEY FROM b_rebit_notification_operation WHERE CONSUMER_KEY='files-order-email' GROUP BY DEDUP_KEY HAVING COUNT(*)>1) d"), 'a letter queued twice');
+verifyDeliveryRecovery(ServiceLocator::getInstance(), $connection, $orderId, $check);
 echo "J2 order email integration passed\n";
+
+/** @param callable(bool, string): void $check */
+function verifyDeliveryRecovery(ServiceLocator $services, Connection $connection, int $orderId, callable $check): void
+{
+    $files = $services->get(OrderFileAccess::class)->byOrderId($orderId)->files;
+    $check(3 <= count($files), 'T04 requires at least three entitled originals');
+    $original = array_values($files)[0];
+    $check(str_starts_with($original->absolutePath, '/runtime/private/media/'), 'T04 must use the disposable media');
+    $suffix = '.ops-t04-' . Uuid::uuid4()->toString() . '.jpg';
+    $largePath = $original->absolutePath . $suffix;
+    $largeRelative = $original->relativePath . $suffix;
+    $bytes = AttachmentPlanner::FILE_BYTES + 1;
+    $check(copy($original->absolutePath, $largePath), 'T04 copies the test original');
+    $handle = fopen($largePath, 'r+b');
+    if (false === $handle) {
+        unlink($largePath);
+        throw new RuntimeException('Cannot open the large T04 fixture.');
+    }
+    try {
+        $check(ftruncate($handle, $bytes), 'T04 has a physical file above the attachment limit');
+    } finally {
+        fclose($handle);
+    }
+    $sql = $connection->getSqlHelper();
+    $photo = $sql->forSql($original->photoId);
+    try {
+        $connection->queryExecute("UPDATE b_hlbd_mf_photo SET UF_BYTES={$bytes},UF_ORIGINAL_PATH='" . $sql->forSql($largeRelative) . "' WHERE UF_PUBLIC_ID='{$photo}'");
+        clearstatcache(true, $largePath);
+        $check(filesize($largePath) === $bytes, 'T04 metadata matches the large file');
+        $deliveries = $services->get(DeliveryRepositoryInterface::class);
+        $now = $services->get(ClockInterface::class)->now();
+        $publicId = Uuid::uuid4()->toString();
+        $check($deliveries->createManual($publicId, $orderId, 'ops.t04@example.invalid', bin2hex(random_bytes(32)), $now), 'T04 creates a separate test delivery');
+        $delivery = $deliveries->find($publicId) ?? throw new RuntimeException('The T04 delivery is missing.');
+        $notifications = new class($services->get(EmailNotificationInterface::class)) implements EmailNotificationInterface {
+            private int $calls = 0;
+
+            public function __construct(private readonly EmailNotificationInterface $real) {}
+
+            public function queue(EmailNotificationInputDto $input): NotificationOperationOutputDto
+            {
+                if (2 === ++$this->calls) {
+                    throw new RuntimeException('ops-t04-interrupted-before-second-letter');
+                }
+
+                return $this->real->queue($input);
+            }
+
+            public function status(string $operationId): ?NotificationOperationOutputDto
+            {
+                return $this->real->status($operationId);
+            }
+        };
+        $sender = new OrderEmailSender(
+            deliveries: $deliveries,
+            links: $services->get(OrderEmailLinkInterface::class),
+            access: $services->get(OrderFileAccess::class),
+            planner: new AttachmentPlanner(1),
+            composer: $services->get(OrderEmailComposerInterface::class),
+            notifications: $notifications,
+            clock: $services->get(ClockInterface::class),
+            logger: new NullLogger(),
+        );
+        $interrupted = false;
+        try {
+            $sender->send($delivery);
+        } catch (RuntimeException $error) {
+            if ('ops-t04-interrupted-before-second-letter' !== $error->getMessage()) {
+                throw $error;
+            }
+            $interrupted = true;
+        }
+        $check($interrupted, 'T04 reached the controlled failure between letters');
+        $held = $deliveries->find($publicId) ?? throw new RuntimeException('The interrupted T04 delivery is missing.');
+        $parts = $deliveries->parts($publicId);
+        $queued = array_filter($parts, static fn(DeliveryPart $part): bool => null !== $part->operationId);
+        $check(DeliveryStatusEnum::HELD === $held->status && 1 === count($queued), 'T04 preserves the first queued letter and the held delivery');
+        $check(1 === count($held->linkOnly) && $held->linkOnly[0]->photoId === $original->photoId, 'T04 keeps the large original only by link');
+        $check(count($files) - 1 === count($parts), 'T04 plans every smaller original exactly once');
+        $before = json_encode([$held->linkOnly, array_map(static fn(DeliveryPart $part): array => $part->files, $parts)], JSON_THROW_ON_ERROR);
+        $check(DeliveryStatusEnum::QUEUED === $services->get(OrderEmailSender::class)->send($held), 'T04 resumes the held delivery');
+        $resumed = $deliveries->find($publicId) ?? throw new RuntimeException('The resumed T04 delivery is missing.');
+        $parts = $deliveries->parts($publicId);
+        $check($before === json_encode([$resumed->linkOnly, array_map(static fn(DeliveryPart $part): array => $part->files, $parts)], JSON_THROW_ON_ERROR), 'T04 reuses the exact persisted plan');
+        $operationIds = array_map(static fn(DeliveryPart $part): ?string => $part->operationId, $parts);
+        $check(!in_array(null, $operationIds, true) && count($parts) === count(array_unique($operationIds)), 'T04 queues every remaining part with its own operation');
+        $operations = $connection->query("SELECT COUNT(*) AS TOTAL,COUNT(DISTINCT DEDUP_KEY) AS UNIQUE_KEYS FROM b_rebit_notification_operation WHERE CONSUMER_KEY='files-order-email' AND DEDUP_KEY LIKE 'order-email:{$publicId}:%'")->fetchRaw();
+        $check(count($parts) === (int)$operations['TOTAL'] && (int)$operations['TOTAL'] === (int)$operations['UNIQUE_KEYS'], 'T04 creates no duplicate H1 operation');
+        $check(DeliveryStatusEnum::QUEUED === $services->get(OrderEmailSender::class)->send($resumed), 'T04 repeated completion is harmless');
+        foreach ($parts as $part) {
+            $operation = $connection->query("SELECT BODY FROM b_rebit_notification_operation WHERE ID='" . $sql->forSql((string)$part->operationId) . "'")->fetchRaw();
+            $check(str_contains((string)$operation['BODY'], $held->linkOnly[0]->name), 'T04 names the link-only original in every letter');
+            $services->get(DeliverEmailUseCase::class)->execute((string)$part->operationId);
+            $check('accepted' === $services->get(EmailNotificationInterface::class)->status((string)$part->operationId)?->status, 'T04 real H1 accepted the captured MIME');
+        }
+        $mail = glob('/runtime/ops-t04-mail/*.eml') ?: [];
+        $check(count($parts) === count($mail), 'T04 captures one MIME per remaining original');
+        foreach ($mail as $path) {
+            $check(1 === preg_match_all('/^Content-Disposition:\s*attachment;/mi', (string)file_get_contents($path)), 'T04 sends one small original per MIME');
+        }
+        $proof = ['largeFileBytes' => $bytes, 'linkOnlyPhotos' => 1, 'queuedBeforeFailure' => 1, 'lettersAfterRecovery' => count($parts), 'capturedMimeLetters' => count($mail), 'duplicateOperations' => 0];
+        file_put_contents('/runtime/ops-t04-verification.json', json_encode($proof, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT));
+        echo 'OPS T04 real recovery passed: ' . json_encode($proof, JSON_THROW_ON_ERROR) . "\n";
+    } finally {
+        $connection->queryExecute('UPDATE b_hlbd_mf_photo SET UF_BYTES=' . $original->bytes . ",UF_ORIGINAL_PATH='" . $sql->forSql($original->relativePath) . "' WHERE UF_PUBLIC_ID='{$photo}'");
+        unlink($largePath);
+    }
+}
+
+/** Bitrix mail is captured locally; the verifier never contacts SMTP. */
+function custom_mail(string $to, string $subject, string $message, string $headers = '', string $parameters = '', mixed $context = null): bool
+{
+    static $sequence = 0;
+    $directory = '/runtime/ops-t04-mail';
+    if (!is_dir($directory) && !mkdir($directory, 0700, true) && !is_dir($directory)) {
+        return false;
+    }
+
+    return false !== file_put_contents(sprintf('%s/%03d.eml', $directory, ++$sequence), 'To: ' . $to . "\nSubject: " . $subject . "\n" . $headers . "\n\n" . $message);
+}

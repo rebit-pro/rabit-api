@@ -216,6 +216,16 @@ class BrowserTimeout(unittest.TestCase):
             self.assertEqual(3600, runner.browser_timeout(bench))
             self.assertEqual(900, runner.browser_timeout(other))
 
+    def test_workers_outlive_every_group_of_a_single_stand(self):
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("E2E_MEDIA_BENCH", None)
+            self.assertGreater(runner.worker_timeout(list(runner.GROUPS)), len(runner.GROUPS) * 900)
+
+    def test_workers_outlive_the_opt_in_bench_and_the_other_groups(self):
+        with mock.patch.dict(os.environ, {"E2E_MEDIA_BENCH": "1"}):
+            budget = sum(runner.browser_timeout(group) for group in runner.GROUPS)
+            self.assertGreater(runner.worker_timeout(list(runner.GROUPS)), budget)
+
 
 class Groups(unittest.TestCase):
     def test_groups_and_verifiers_are_consistent(self):
