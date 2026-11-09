@@ -10,5 +10,6 @@ final readonly class SalesReportInputDto
         public ?string $institutionId = null,
         public ?string $shootId = null,
         public ?string $groupId = null,
+        public bool $includeUnordered = true,
     ) {}
 }

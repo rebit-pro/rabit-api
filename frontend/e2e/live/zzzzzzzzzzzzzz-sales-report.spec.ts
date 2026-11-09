@@ -278,6 +278,17 @@ test('E10-T09…T12: each role reads the sales of its own area and downloads the
   const bytes = await pdf.body();
   expect(bytes.subarray(0, 5).toString()).toBe('%PDF-');
   expect(bytes.length).toBeGreaterThan(10_000);
+  const compactPdf = await page.request.get('/api/v1/sales-report/pdf', {
+    headers: await bearer(page),
+    params: { groupId, childrenView: 'ordered' }
+  });
+  expect(compactPdf.status(), await compactPdf.text()).toBe(200);
+  expect((await compactPdf.body()).subarray(0, 5).toString()).toBe('%PDF-');
+  expect(
+    (
+      await page.request.get('/api/v1/sales-report/pdf', { headers: await bearer(page), params: { groupId, childrenView: 'paid-only' } })
+    ).status()
+  ).toBe(422);
 
   // E10-T04: the child's frame is shown only inside the area of the report.
   const framed = group.children.find((child) => child.hasPreview);
@@ -327,24 +338,67 @@ test('E10-T09…T12: each role reads the sales of its own area and downloads the
       await teacher.goto('/cabinet/reports?' + new URLSearchParams({ institutionId, shootId, groupId }));
       await expect(teacher.getByTestId('report-title')).toHaveText(group.group!.name);
       await expect(teacher.getByTestId('report-figure-total').locator('dd')).toHaveText(total);
-      await expect(teacher.getByTestId('report-child-status').filter({ visible: true })).toHaveCount(Math.min(group.children.length, 50));
+      const ordered = group.children.filter((child) => child.status !== 'none');
+      const childRows = teacher.getByTestId('report-child-status').filter({ visible: true });
+      await expect(childRows).toHaveCount(Math.min(ordered.length, 50));
+      await expect(teacher.getByTestId('report-without-orders')).toContainText('Нет заказа: ' + (group.children.length - ordered.length));
       await expect(teacher.getByTestId('report-format')).toHaveCount(group.products.length);
-      await expect(teacher.getByTestId('report-order')).toHaveCount(group.orders.length);
+      await expect(teacher.getByTestId('report-order').filter({ visible: true })).toHaveCount(Math.min(group.orders.length, 50));
       await expect(teacher.getByTestId('report-orders')).toContainText('Иванов Иван');
-      await expect(teacher.locator('[data-testid="report-children"] img').filter({ visible: true }).first()).toBeVisible();
-      await teacher
-        .getByRole('button', { name: /^Увеличить фото ребёнка/ })
-        .first()
-        .click();
-      await expect(teacher.getByRole('dialog').getByTestId('photo-zoom-level')).toHaveText('100%');
-      await teacher.getByRole('dialog').getByRole('button', { name: 'Увеличить фото' }).click();
-      await expect(teacher.getByRole('dialog').getByTestId('photo-zoom-level')).toHaveText('150%');
-      await teacher.getByRole('dialog').getByRole('button', { name: 'Закрыть фото' }).click();
+      await expect(teacher.locator('[data-testid="report-children"] img')).toHaveCount(0);
       expect(await fits(teacher)).toBe(true);
       await shot(teacher, 'teacher-group');
       const download = teacher.waitForEvent('download');
+      const requestedPdf = teacher.waitForRequest((request) => request.url().includes('/api/v1/sales-report/pdf'));
       await teacher.getByTestId('report-pdf').click();
       expect((await download).suggestedFilename()).toMatch(/^morefoto-otchet-group-\d{4}-\d{2}-\d{2}\.pdf$/);
+      expect(new URL((await requestedPdf).url()).searchParams.get('childrenView')).toBe('ordered');
+      await teacher.getByRole('checkbox', { name: 'Показать полный список' }).check();
+      await expect(childRows).toHaveCount(Math.min(group.children.length, 50));
+      await expect(teacher.getByTestId('report-figure-total').locator('dd')).toHaveText(total);
+      expect(await fits(teacher)).toBe(true);
+      await shot(teacher, 'teacher-group-all');
+      const fullDownload = teacher.waitForEvent('download');
+      const requestedFullPdf = teacher.waitForRequest((request) => request.url().includes('/api/v1/sales-report/pdf'));
+      await teacher.getByTestId('report-pdf').click();
+      await fullDownload;
+      expect(new URL((await requestedFullPdf).url()).searchParams.get('childrenView')).toBe('all');
+
+      // T07-LOAD: keep the real server response, but release it only after the requested context has changed.
+      for (const change of [
+        () => teacher.getByRole('checkbox', { name: 'Показать полный список' }).uncheck(),
+        () => teacher.getByRole('navigation', { name: 'Хлебные крошки' }).getByRole('link', { name: group.shoot!.name }).click()
+      ]) {
+        let release: (() => void) | undefined;
+        let finished = false;
+        await teacher.route(
+          '**/api/v1/sales-report/pdf?**',
+          async (route) => {
+            const response = await route.fetch();
+            await new Promise<void>((resolve) => {
+              release = resolve;
+            });
+            await route.fulfill({ response });
+            finished = true;
+          },
+          { times: 1 }
+        );
+        await teacher.getByTestId('report-pdf').click();
+        await expect.poll(() => typeof release).toBe('function');
+        await change();
+        release!();
+        await expect.poll(() => finished).toBe(true);
+        expect(await teacher.waitForEvent('download', { timeout: 1000 }).catch(() => null)).toBeNull();
+        await expect(teacher.getByTestId('report-pdf')).toBeEnabled();
+      }
+      await expect(teacher.getByTestId('report-title')).toHaveText(group.shoot!.name);
+      await teacher.route('**/api/v1/sales-report/pdf?**', (route) => route.abort('failed'), { times: 1 });
+      await teacher.getByTestId('report-pdf').click();
+      await expect(teacher.getByRole('alert')).toContainText('Не удалось сформировать PDF.');
+      const retryDownload = teacher.waitForEvent('download');
+      await teacher.getByTestId('report-pdf').click();
+      await retryDownload;
+      await expect(teacher.getByRole('alert')).toHaveCount(0);
     });
     await asStaff(browser, baseURL, 'head', viewport, async (head) => {
       await head.goto('/cabinet/reports?' + new URLSearchParams({ institutionId }));

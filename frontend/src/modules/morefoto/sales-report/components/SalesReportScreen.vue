@@ -3,12 +3,12 @@ import { computed } from 'vue';
 import MfBreadcrumbs from '@/components/navigation/MfBreadcrumbs.vue';
 import { levelKind, reportFigures, reportTitle, rowsTitle } from '../rules';
 import { useSalesReport } from '../useSalesReport';
-import ReportChildrenTable from './ReportChildrenTable.vue';
+import ReportChildrenSection from './ReportChildrenSection.vue';
 import ReportOrdersTable from './ReportOrdersTable.vue';
 import ReportRowsTable from './ReportRowsTable.vue';
 
 // E10: the sales of the staff member's area — children of a group or groups, shoots and institutions — and its PDF.
-const { report, loading, error, crumbs, downloading, downloadError, load, rowHref, download } = useSalesReport();
+const { report, loading, error, crumbs, downloading, downloadError, includeUnordered, load, rowHref, download } = useSalesReport();
 const figures = computed(() => (report.value ? reportFigures(report.value.totals) : []));
 const area = computed(() => {
   const value = report.value;
@@ -31,7 +31,7 @@ const number = new Intl.NumberFormat('ru-RU');
       color="primary"
       prepend-icon="mdi-download-outline"
       :loading="downloading"
-      :disabled="!report"
+      :disabled="!report || loading"
       data-testid="report-pdf"
       @click="download"
       >Скачать PDF</v-btn
@@ -55,11 +55,16 @@ const number = new Intl.NumberFormat('ru-RU');
       </div>
     </dl>
 
-    <section class="report-section" aria-labelledby="report-rows-title">
+    <ReportChildrenSection
+      v-if="'group' === report.level"
+      :key="report.group?.id"
+      v-model:include-unordered="includeUnordered"
+      :items="report.children"
+    />
+    <section v-else class="report-section" aria-labelledby="report-rows-title">
       <h2 id="report-rows-title">{{ rowsTitle(report.level) }}</h2>
       <!-- A new level starts with its own sort and first page. -->
-      <ReportChildrenTable v-if="'group' === report.level" :key="report.group?.id" :items="report.children" />
-      <ReportRowsTable v-else :key="levelKey" :report="report" :title="rowsTitle(report.level)" :row-href="rowHref" />
+      <ReportRowsTable :key="levelKey" :report="report" :title="rowsTitle(report.level)" :row-href="rowHref" />
     </section>
 
     <section v-if="'group' === report.level" class="report-section" aria-labelledby="report-orders-title">

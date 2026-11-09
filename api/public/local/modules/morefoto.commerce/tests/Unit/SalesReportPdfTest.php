@@ -30,16 +30,15 @@ final class SalesReportPdfTest extends TestCase
     public function testTheGroupPageShowsChildrenStatusesAndRoubles(): void
     {
         $html = new SalesReportHtml();
-        $body = $html->body($this->groupReport(), ['child-a' => 'child0']);
+        $body = $html->body($this->groupReport());
 
         self::assertStringContainsString('<h1>Солнышко &amp; Ко</h1>', $body);
         self::assertStringContainsString('Детский сад № 5 · съёмка «Осень»', $body);
         self::assertStringContainsString("1\u{00A0}234,50\u{00A0}₽", $body);
-        foreach (['>A<', '>AA<', 'Оплатил', 'Нет заказа', 'Поздняя оплата', 'Заказ без оплаты', 'Печать 10×15', '<img src="var:child0" width="9mm">'] as $text) {
+        foreach (['>A<', '>AA<', 'Оплатил', 'Нет заказа', 'Поздняя оплата', 'Заказ без оплаты', 'Печать 10×15', 'Комплекты'] as $text) {
             self::assertStringContainsString($text, $body);
         }
-        self::assertSame(1, substr_count($body, '<img src="var:'));
-        self::assertStringNotContainsString('data:image/webp', $body);
+        self::assertStringNotContainsString('<img', $body);
         self::assertStringContainsString('2 / 1', $body);
         self::assertStringContainsString('из 4 детей', $body);
         self::assertStringContainsString('Заказы с ФИО ребёнка', $body);
@@ -63,7 +62,7 @@ final class SalesReportPdfTest extends TestCase
             rows: [],
             children: [],
             generatedAt: new \DateTimeImmutable('2026-10-24T12:00:00+00:00'),
-        ), []);
+        ));
 
         self::assertStringContainsString('Все учреждения', $body);
         self::assertStringContainsString('Продаж пока нет', $body);
@@ -84,7 +83,7 @@ final class SalesReportPdfTest extends TestCase
             generatedAt: new \DateTimeImmutable('2026-10-24T12:00:00+00:00'),
         );
 
-        $pdf = $this->render($report, []);
+        $pdf = $this->render($report);
 
         self::assertStringStartsWith('%PDF-', $pdf);
         self::assertStringContainsString('%%EOF', substr($pdf, -64));
@@ -92,65 +91,71 @@ final class SalesReportPdfTest extends TestCase
         self::assertMatchesRegularExpression('/\/BaseFont\s*\/[A-Z]{6}\+GolosText/', $pdf);
     }
 
-    public function testAGroupWithRealSizedFramesStaysUnderTheHtmlLimit(): void
+    public function testOrderedViewHidesOnlyNoOrderRowsWithoutChangingTotalsOrNames(): void
     {
-        // Thirty children with ~20 KB frames: as base64 inside the HTML they broke mpdf's pcre.backtrack_limit on stage.
-        mt_srand(10);
-        $children = [];
-        $thumbnails = [];
-        for ($index = 0; $index < 30; ++$index) {
-            $id = 'child-' . $index;
-            $children[] = new ChildSalesOutputDto($id, chr(65 + $index % 26) . ($index >= 26 ? 'A' : ''), ChildSalesStatusEnum::PAID, 1, 1, 2, 0, 0, 50_000, 'photo-' . $index);
-            $thumbnails[$id] = $this->noise();
+        $body = (new SalesReportHtml())->body($this->groupReport(), false);
+
+        self::assertStringNotContainsString('>B<', $body);
+        foreach (['>A<', '>C<', '>AA<', 'Поздняя оплата', 'Заказ без оплаты', 'Нет заказа: 1', 'Строки с заказами', 'MF-000001', 'MF-000002', 'MF-000003', 'Иванов Иван', 'Не указано', "1\u{00A0}234,50\u{00A0}₽"] as $text) {
+            self::assertStringContainsString($text, $body);
         }
-        self::assertGreaterThan(100_000, array_sum(array_map('strlen', $thumbnails)));
+        self::assertSame(1, substr_count($body, 'MF-000001'));
+    }
+
+    public function testAGroupWithOnlyNoOrderRowsHasAnExplicitEmptyStateAndFullView(): void
+    {
+        $report = $this->groupReport();
+        $onlyNone = new SalesReportOutputDto($report->level, $report->institution, $report->shoot, $report->group, $report->totals, [], [], [$report->children[1]], $report->generatedAt);
+        $html = new SalesReportHtml();
+
+        self::assertStringContainsString('Заказов пока нет', $html->body($onlyNone, false));
+        self::assertStringContainsString('Нет заказа: 1', $html->body($onlyNone, false));
+        self::assertStringContainsString('>B<', $html->body($onlyNone, true));
+        self::assertStringContainsString('Полный список', $html->body($onlyNone, true));
+    }
+
+    public function testALargeGroupProducesSeveralPagesWithoutChildImages(): void
+    {
+        $children = [];
+        for ($index = 0; $index < 200; ++$index) {
+            $id = 'child-' . $index;
+            $children[] = new ChildSalesOutputDto($id, 'КОД-' . $index, ChildSalesStatusEnum::PAID, 1, 1, 2, 0, 0, 50_000, 'photo-' . $index);
+        }
         $report = new SalesReportOutputDto(
             level: SalesReportLevelEnum::GROUP,
             institution: new SalesReportNodeOutputDto('i', 'Детский сад № 5'),
             shoot: new SalesReportNodeOutputDto('s', 'Осень'),
             group: new SalesReportNodeOutputDto('g', 'Солнышко'),
-            totals: new SalesTotalsOutputDto(30, 30, 30, 30, 60, 0, 0, 1_500_000),
+            totals: new SalesTotalsOutputDto(200, 200, 200, 200, 400, 0, 0, 10_000_000),
             products: [],
             rows: [],
             children: $children,
             generatedAt: new \DateTimeImmutable('2026-10-25T12:00:00+00:00'),
         );
 
-        $pdf = $this->render($report, $thumbnails);
+        $pdf = $this->render($report);
 
         self::assertStringStartsWith('%PDF-', $pdf);
         self::assertStringContainsString('%%EOF', substr($pdf, -64));
-        self::assertSame(30, preg_match_all('/\/Subtype\s*\/Image/', $pdf));
+        self::assertSame(0, preg_match_all('/\/Subtype\s*\/Image/', $pdf));
+        self::assertGreaterThan(2, preg_match_all('/\/Type\s*\/Page\b/', $pdf));
+        $body = (new SalesReportHtml())->body($report);
+        self::assertSame(200, substr_count($body, 'class="code"'));
+        self::assertStringContainsString('КОД-199', $body);
     }
 
-    /** @param array<string, string> $thumbnails */
-    private function render(SalesReportOutputDto $report, array $thumbnails): string
+    private function render(SalesReportOutputDto $report): string
     {
         // The bypass-finals file:// wrapper breaks mpdf's seek-based font reads; production has no such wrapper.
         stream_wrapper_restore('file');
 
         try {
             return (new MpdfSalesReportWriter(new SalesReportHtml(), dirname(__DIR__, 2) . '/resources/pdf/fonts', sys_get_temp_dir() . '/e10-mpdf-' . getmypid()))
-                ->pdf($report, $thumbnails)
+                ->pdf($report)
             ;
         } finally {
             BypassFinals::enable();
         }
-    }
-
-    /** A distinct ~20 KB JPEG: random pixels do not compress, so the size is close to a real preview. */
-    private function noise(): string
-    {
-        $image = imagecreatetruecolor(120, 160);
-        for ($y = 0; $y < 160; ++$y) {
-            for ($x = 0; $x < 120; ++$x) {
-                imagesetpixel($image, $x, $y, mt_rand(0, 0xFFFFFF));
-            }
-        }
-        ob_start();
-        imagejpeg($image, null, 60);
-
-        return (string)ob_get_clean();
     }
 
     private function groupReport(): SalesReportOutputDto
