@@ -83,7 +83,7 @@ final readonly class BitrixDeliveryRepository implements DeliveryRepositoryInter
 
     public function held(int $limit): array
     {
-        $result = $this->query('SELECT ' . self::COLUMNS . " FROM mf_file_delivery WHERE STATUS='held' ORDER BY ID LIMIT {$limit}");
+        $result = $this->query('SELECT ' . self::COLUMNS . " FROM mf_file_delivery WHERE STATUS='held' ORDER BY UPDATED_AT,ID LIMIT {$limit}");
         $deliveries = [];
         while (false !== ($row = $result->fetch())) {
             /** @var DeliveryRow $row */
@@ -91,6 +91,12 @@ final readonly class BitrixDeliveryRepository implements DeliveryRepositoryInter
         }
 
         return $deliveries;
+    }
+
+    public function defer(string $publicId, \DateTimeImmutable $now): void
+    {
+        $this->execute('UPDATE mf_file_delivery SET UPDATED_AT=GREATEST(UPDATED_AT,' . $this->moment($now)
+            . ') WHERE PUBLIC_ID=' . $this->text($publicId) . " AND STATUS='held'");
     }
 
     public function plan(string $publicId, LetterPlan $plan, \DateTimeImmutable $now): void

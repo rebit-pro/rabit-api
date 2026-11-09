@@ -7,9 +7,12 @@ namespace Morefoto\Files\Tests\Unit;
 use Morefoto\Files\Domain\Download\Enum\FilesStateEnum;
 use Morefoto\Files\Domain\Download\Service\FileAccessPolicy;
 use Morefoto\Files\Application\Files\Dto\EntitledFileOutputDto;
+use Morefoto\Files\Application\Files\Service\OrderFileAccess;
 use Morefoto\Files\Tests\Unit\Support\FilesFixture;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Rebit\Share\Contracts\Media\Dto\OriginalFileOutputDto;
+use Rebit\Share\Contracts\Media\OriginalFilesInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 require_once __DIR__ . '/../bootstrap.php';
@@ -69,6 +72,28 @@ final class FileAccessTest extends TestCase
         $fixture->hasEntitlements = false;
 
         self::assertSame(FilesStateEnum::EMPTY, $fixture->access()->byKey(FilesFixture::KEY)->state);
+    }
+
+    public function testUnavailableOriginalMetadataDoesNotGrantPartialFiles(): void
+    {
+        $fixture = new FilesFixture()->withOriginals(FilesFixture::P1, FilesFixture::P2, FilesFixture::P3);
+        $files = $fixture->originals()->originals([FilesFixture::P1, FilesFixture::P2, FilesFixture::P3]);
+        $first = $files[FilesFixture::P1];
+        $files[FilesFixture::P1] = new OriginalFileOutputDto(
+            photoId: $first->photoId,
+            mimeType: $first->mimeType,
+            bytes: $first->bytes,
+            relativePath: $first->relativePath,
+            absolutePath: $first->absolutePath,
+            available: false,
+        );
+        $originals = $this->createStub(OriginalFilesInterface::class);
+        $originals->method('originals')->willReturn($files);
+
+        $access = new OrderFileAccess($fixture->orders(), $fixture->childPhotos(), $originals, new FileAccessPolicy(), $fixture->clock())->byKey(FilesFixture::KEY);
+
+        self::assertSame(FilesStateEnum::INCOMPLETE, $access->state);
+        self::assertSame([], $access->files);
     }
 
     public function testForeignKeyIsNotFound(): void

@@ -9,8 +9,8 @@ use Morefoto\Media\Domain\Photo\Repository\PhotoRepository;
 use Rebit\Share\Contracts\Media\Dto\OriginalFileOutputDto;
 use Rebit\Share\Contracts\Media\OriginalFilesInterface;
 
-/** Открывает выдаче купленных файлов доступ к приватным оригиналам готовых кадров, не раскрывая устройство хранилища Media.
- * Право покупателя здесь не проверяется: Media подтверждает готовность кадра и наличие оригинала в хранилище.
+/** Предоставляет метаданные оригиналов готовых кадров и отдельно подтверждает наличие файлов в хранилище.
+ * Исчезновение файла не меняет его метаданные для сохранённого состава; право покупателя проверяет вызывающий модуль.
  */
 final readonly class OriginalFiles implements OriginalFilesInterface
 {
@@ -26,15 +26,13 @@ final readonly class OriginalFiles implements OriginalFilesInterface
         $result = $this->photos->originals($ids);
         while (false !== ($row = $result->fetch())) {
             /** @var array{UF_PUBLIC_ID: string, UF_MIME_TYPE: string, UF_BYTES: int|string, UF_ORIGINAL_PATH: string} $row */
-            if (!$this->storage->exists($row['UF_ORIGINAL_PATH'])) {
-                continue;
-            }
             $originals[$row['UF_PUBLIC_ID']] = new OriginalFileOutputDto(
                 photoId: $row['UF_PUBLIC_ID'],
                 mimeType: $row['UF_MIME_TYPE'],
                 bytes: (int)$row['UF_BYTES'],
                 relativePath: $row['UF_ORIGINAL_PATH'],
                 absolutePath: $this->storage->absolutePath($row['UF_ORIGINAL_PATH']),
+                available: $this->storage->exists($row['UF_ORIGINAL_PATH']),
             );
         }
 

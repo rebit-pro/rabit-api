@@ -81,7 +81,7 @@ final readonly class OrderFileAccess
         foreach ($candidates as $photoId => [$childCode, $code]) {
             $photoId = (string)$photoId;
             $original = $originals[$photoId] ?? null;
-            if (null === $original) {
+            if (null === $original || !$original->available) {
                 $missing = true;
                 continue;
             }

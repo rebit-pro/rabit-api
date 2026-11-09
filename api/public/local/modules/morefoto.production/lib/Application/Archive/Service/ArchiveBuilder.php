@@ -57,7 +57,7 @@ final readonly class ArchiveBuilder
             $extensions = [];
             foreach ($lines as $line) {
                 $original = $originals[$line->photoId] ?? null;
-                if (null === $original) {
+                if (null === $original || !$original->available) {
                     $this->archives->markFailed($version->publicId, 'ORIGINAL_MISSING');
                     $this->logger->warning('Print archive misses an original.', ['versionId' => $version->publicId]);
 

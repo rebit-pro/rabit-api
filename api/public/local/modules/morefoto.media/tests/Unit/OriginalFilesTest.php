@@ -36,6 +36,7 @@ final class OriginalFilesTest extends TestCase
             $originals = new OriginalFiles($photos, new LocalPrivatePhotoStorage($root))->originals([self::PHOTO, '../etc', self::PHOTO]);
 
             self::assertSame([self::PHOTO], array_keys($originals));
+            self::assertTrue($originals[self::PHOTO]->available);
             self::assertSame(['image/jpeg', 2048, 'shoot/ab/ab.jpg', $root . '/shoot/ab/ab.jpg'], [
                 $originals[self::PHOTO]->mimeType, $originals[self::PHOTO]->bytes, $originals[self::PHOTO]->relativePath, $originals[self::PHOTO]->absolutePath,
             ]);
@@ -47,16 +48,22 @@ final class OriginalFilesTest extends TestCase
         }
     }
 
-    public function testMissingStoredOriginalIsNotReturned(): void
+    public function testMissingStoredOriginalKeepsItsMetadataAndIsUnavailable(): void
     {
         $result = $this->createStub(Result::class);
         $result->method('fetch')->willReturnOnConsecutiveCalls([
-            'UF_PUBLIC_ID' => self::PHOTO, 'UF_MIME_TYPE' => 'image/jpeg', 'UF_BYTES' => '2048', 'UF_ORIGINAL_PATH' => 'shoot/ab/ab.jpg',
+            'UF_PUBLIC_ID' => self::PHOTO, 'UF_MIME_TYPE' => 'image/png', 'UF_BYTES' => '2048', 'UF_ORIGINAL_PATH' => 'shoot/ab/ab.png',
         ], false);
         $photos = $this->createStub(PhotoRepository::class);
         $photos->method('originals')->willReturn($result);
 
-        self::assertSame([], new OriginalFiles($photos, new LocalPrivatePhotoStorage('/nonexistent-media'))->originals([self::PHOTO]));
+        $originals = new OriginalFiles($photos, new LocalPrivatePhotoStorage('/nonexistent-media'))->originals([self::PHOTO]);
+
+        self::assertSame([self::PHOTO], array_keys($originals));
+        self::assertFalse($originals[self::PHOTO]->available);
+        self::assertSame(['image/png', 2048, 'shoot/ab/ab.png'], [
+            $originals[self::PHOTO]->mimeType, $originals[self::PHOTO]->bytes, $originals[self::PHOTO]->relativePath,
+        ]);
     }
 
     public function testInvalidIdsDoNotQueryStorage(): void

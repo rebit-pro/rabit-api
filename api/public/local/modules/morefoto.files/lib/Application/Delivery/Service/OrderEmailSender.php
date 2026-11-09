@@ -25,8 +25,8 @@ use Rebit\Share\Contracts\Commerce\OrderEmailLinkInterface;
 /**
  * Ставит письма отправки в очередь H1 вне любой транзакции: оригиналы права заказа во вложениях, разложенные по письмам
  * (J5), и ссылка на оплаченный заказ в каждом письме (J2). План писем записывается один раз до постановки, поэтому повтор
- * после сбоя даёт те же письма, и H1 по ключу письма не отправит уже поставленное письмо дважды. Отправка ждёт, пока она
- * выключена (J2-DEC-05) или пока не восстановлены все положенные оригиналы; заказ без действующего срока файлов писем не получает.
+ * после сбоя даёт те же письма, и H1 по ключу письма не отправит уже поставленное письмо дважды. До восстановления оригиналов
+ * неполные отправки уступают очередь другим заказам; при выключенной отправке письма ждут, а без действующего срока файлов отменяются.
  */
 final readonly class OrderEmailSender
 {
@@ -53,6 +53,7 @@ final readonly class OrderEmailSender
         $access = null === $order ? null : $this->access->byOrderId($delivery->orderId);
         $state = $access->state ?? FilesStateEnum::UNPAID;
         if (FilesStateEnum::INCOMPLETE === $state) {
+            $this->deliveries->defer($delivery->publicId, $this->clock->now());
             $this->logger->warning('Order email waits for missing originals.', ['deliveryId' => $delivery->publicId]);
 
             return DeliveryStatusEnum::HELD;
