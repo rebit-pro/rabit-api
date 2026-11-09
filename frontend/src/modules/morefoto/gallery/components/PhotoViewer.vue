@@ -38,6 +38,7 @@ watch(
       <header class="photo-viewer__header">
         <div>
           <h2 id="gallery-photo-title">Кадр {{ photo.code }}</h2>
+          <p v-if="photo.filename" class="photo-viewer__filename" data-testid="viewer-filename">{{ photo.filename }}</p>
           <p class="mf-muted">{{ context }}</p>
         </div>
         <v-btn icon="mdi-close" variant="text" aria-label="Закрыть просмотр" @click="$emit('close')" />
@@ -99,6 +100,10 @@ watch(
 .photo-viewer__header p {
   font-size: 12px;
   margin-top: 4px;
+}
+.photo-viewer__header > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .photo-viewer__body {
   min-height: 0;

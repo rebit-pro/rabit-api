@@ -12,9 +12,10 @@ defineEmits<{ open: [photo: GalleryPhoto] }>();
         <GalleryImage :src="photo.thumbSrc" :alt="'Кадр ' + photo.code" :eager="index < 4" />
       </div>
       <button type="button" class="photo-card__open" :aria-label="'Открыть кадр ' + photo.code" @click="$emit('open', photo)">
-        <span
-          ><span class="photo-card__label">КАДР</span><strong>{{ photo.code }}</strong></span
-        >
+        <span class="photo-card__copy">
+          <strong :title="photo.filename || photo.code" data-testid="gallery-filename">{{ photo.filename || photo.code }}</strong>
+          <span v-if="photo.filename" class="photo-card__label">Кадр {{ photo.code }}</span>
+        </span>
         <v-icon icon="mdi-arrow-top-right" size="22" />
       </button>
     </article>
@@ -58,7 +59,11 @@ defineEmits<{ open: [photo: GalleryPhoto] }>();
   color: var(--mf-color-text-secondary);
   font-size: 10px;
   letter-spacing: 0.12em;
-  margin-bottom: 4px;
+  margin-top: 4px;
+}
+.photo-card__copy {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .photo-card__open strong {
   font-size: 14px;

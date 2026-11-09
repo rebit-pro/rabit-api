@@ -23,7 +23,7 @@ final class ChildPhotosTest extends TestCase
         $result = $this->createStub(Result::class);
         $result->method('fetch')->willReturnOnConsecutiveCalls([
             'ASSIGNMENT_ID' => 'assignment-1', 'PHOTO_ID' => 'photo-1', 'CHILD_ID' => 'child-1', 'NATIVE_CHILD_ID' => '7',
-            'CODE' => 'AB', 'SEQUENCE_NO' => '3', 'UF_WIDTH' => '1200', 'UF_HEIGHT' => '800', 'UF_REVISION' => '2',
+            'CODE' => 'AB', 'SEQUENCE_NO' => '3', 'UF_FILENAME' => 'IMG_0003.JPEG', 'UF_WIDTH' => '1200', 'UF_HEIGHT' => '800', 'UF_REVISION' => '2',
         ], false);
         $photos = $this->createMock(GalleryPhotoRepository::class);
         $photos->expects(self::once())->method('children')->with(20, [7, 8])->willReturn($result);
@@ -34,6 +34,7 @@ final class ChildPhotosTest extends TestCase
         self::assertSame('AB003', $items[0]->code);
         self::assertSame(7, $items[0]->nativeChildId);
         self::assertSame('assignment-1', $items[0]->assignmentId);
+        self::assertSame('IMG_0003.JPEG', $items[0]->filename);
     }
 
     public function testEmptyChildListDoesNotQueryStorage(): void
