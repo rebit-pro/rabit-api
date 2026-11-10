@@ -36,6 +36,7 @@ use Rebit\Share\Application\Contract\Clock\ClockInterface;
 use Rebit\Share\Contracts\Access\InstitutionAccessInterface;
 use Rebit\Share\Contracts\Commerce\GroupPrintOrdersInterface;
 use Rebit\Share\Contracts\Media\OriginalFilesInterface;
+use Rebit\Share\Contracts\Media\PhotoFilenamesInterface;
 use Rebit\Share\Contracts\Organization\GroupDirectoryInterface;
 use Rebit\Share\Contracts\Organization\PrintClosedGroupsInterface;
 use Rebit\Share\Infrastructure\File\AtomicZipWriter;
@@ -83,6 +84,7 @@ return [
             ServiceLocator::getInstance()->get(ArchiveLayout::class),
             ServiceLocator::getInstance()->get(ArchiveStorageInterface::class),
             ServiceLocator::getInstance()->get(ProductionIdGeneratorInterface::class),
+            ServiceLocator::getInstance()->get(PhotoFilenamesInterface::class),
         ],
     ],
     VersionView::class => [

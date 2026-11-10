@@ -26,7 +26,7 @@ final class RunProductionCommand extends RebitCommand
 
     protected function configure(): void
     {
-        $this->addOption('limit', 'l', InputOption::VALUE_REQUIRED, 'Лимит групп и сборок за прогон', (string)self::DEFAULT_LIMIT);
+        $this->addOption('limit', 'l', InputOption::VALUE_REQUIRED, 'Лимит новых версий, сборок и удалений за прогон', (string)self::DEFAULT_LIMIT);
     }
 
     protected function handle(SymfonyStyle $io, InputInterface $input): int

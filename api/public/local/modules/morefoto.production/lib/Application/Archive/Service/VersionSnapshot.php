@@ -13,13 +13,15 @@ use Morefoto\Production\Domain\Archive\ValueObject\ArchiveLine;
 use Morefoto\Production\Domain\Archive\ValueObject\ArchiveVersion;
 use Morefoto\Production\Domain\Archive\ValueObject\NewVersion;
 use Rebit\Share\Contracts\Commerce\GroupPrintOrdersInterface;
+use Rebit\Share\Contracts\Media\PhotoFilenamesInterface;
+use Morefoto\Production\Domain\Archive\Exception\ArchiveLayoutException;
 use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryItemOutputDto;
 use Rebit\Share\Shared\Exception\HttpException;
 
 /**
- * Фиксирует состав новой версии архива из оплаченной до срока печати группы. Версия 1 берёт всю оплаченную печать,
- * дополнение — только строки, не вошедшие в прежние версии (L1-DEC-02); пустая версия 1 фиксирует «нет оплаченной
- * печати» без ZIP. Заказы, ждущие подтверждения оплаты, только считаются: подтвердившись до срока, они уйдут в дополнение.
+ * Фиксирует оплаченный состав группы с исходными именами Media и полными путями файлов для повторяемой сборки.
+ * Первая версия включает всю допустимую печать, дополнение — только ещё не учтённые строки; пустая первая версия
+ * отмечает отсутствие печати без ZIP. Позднее подтверждение своевременной оплаты оставляет строки для дополнения.
  */
 final readonly class VersionSnapshot
 {
@@ -29,6 +31,7 @@ final readonly class VersionSnapshot
         private ArchiveLayout $layout,
         private ArchiveStorageInterface $storage,
         private ProductionIdGeneratorInterface $ids,
+        private PhotoFilenamesInterface $filenames,
     ) {}
 
     /**
@@ -71,7 +74,15 @@ final readonly class VersionSnapshot
         if (1 < $number && [] === $lines) {
             throw new HttpException('NOTHING_TO_BUILD', 409);
         }
-        $lines = $this->layout->arrange($lines);
+        $photoIds = [];
+        foreach ($lines as $line) {
+            $photoIds[$line->photoId] = $line->photoId;
+        }
+        try {
+            $lines = $this->layout->arrange($lines, $this->filenames->filenames(array_values($photoIds)));
+        } catch (ArchiveLayoutException $error) {
+            throw new HttpException($error->getMessage(), 409, $error);
+        }
         $files = [];
         $prints = 0;
         foreach ($lines as $line) {
@@ -94,6 +105,7 @@ final readonly class VersionSnapshot
             lines: $lines,
             createdAt: $now,
             createdBy: $actorId,
+            layoutVersion: ArchiveLayout::VERSION,
         ));
 
         return $created ? $this->archives->find($id) : null;

@@ -42,6 +42,9 @@ test('titles, building state and error texts', () => {
   assert.match(archiveErrorText({ network: true }), /Ответ сервера не получен/);
   assert.match(archiveErrorText({ network: false, status: 409, code: 'NOTHING_TO_BUILD' }), /дополнение не нужно/);
   assert.match(archiveErrorText({ network: false, status: 403, code: 'FORBIDDEN' }), /только организатор/);
+  assert.match(archiveErrorText({ network: false, status: 409, code: 'ORIGINAL_MISSING' }), /исходное имя/);
+  assert.match(archiveErrorText({ network: false, status: 409, code: 'UNSAFE_FILENAME' }), /архив не создан/);
+  assert.match(archiveErrorText({ network: false, status: 409, code: 'INVALID_ARCHIVE_LAYOUT' }), /некорректные данные/);
   assert.match(archiveErrorText({ network: false, status: 500 }), /Повторите позже/);
 });
 

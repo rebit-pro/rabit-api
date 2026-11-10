@@ -16,15 +16,28 @@ final readonly class CsvManifestWriter implements ManifestWriterInterface
         'Отпечатков в единице', 'Отпечатков', 'Группа сотрудников'];
     private const string TIMEZONE = 'Europe/Moscow';
 
-    public function csv(array $lines, array $extensions): string
+    public function csv(array $lines, array $extensions, int $layoutVersion = 1): string
     {
-        $rows = [$this->row(self::HEADER)];
+        if (!in_array($layoutVersion, [1, 2], true)) {
+            throw new \InvalidArgumentException('Unknown print archive layout.');
+        }
+        $header = self::HEADER;
+        $prints = [];
+        if (2 === $layoutVersion) {
+            foreach (['ID строки заказа', 'ID заказа', 'ID фото', 'ID продукции', 'Отпечатков в файле'] as $column) {
+                $header[] = $column;
+            }
+            foreach ($lines as $line) {
+                $prints[$line->entry] = ($prints[$line->entry] ?? 0) + $line->prints;
+            }
+        }
+        $rows = [$this->row($header)];
         foreach ($lines as $line) {
             $paidAt = new \DateTimeImmutable($line->paidAt, new \DateTimeZone('UTC'))->setTimezone(new \DateTimeZone(self::TIMEZONE));
-            $rows[] = $this->row([
+            $values = [
                 $line->productName,
                 $line->productFormat,
-                $line->entry . '.' . ($extensions[$line->photoId] ?? 'jpg'),
+                1 === $layoutVersion ? $line->entry . '.' . ($extensions[$line->photoId] ?? 'jpg') : $line->entry,
                 $line->photoCode,
                 $line->childCode,
                 $line->orderNumber,
@@ -33,7 +46,15 @@ final readonly class CsvManifestWriter implements ManifestWriterInterface
                 (string)$line->printCount,
                 (string)$line->prints,
                 'staff' === $line->audience ? 'да' : 'нет',
-            ]);
+            ];
+            if (2 === $layoutVersion) {
+                $values[] = $line->orderLineId;
+                $values[] = $line->orderId;
+                $values[] = $line->photoId;
+                $values[] = $line->productId;
+                $values[] = (string)$prints[$line->entry];
+            }
+            $rows[] = $this->row($values);
         }
 
         return "\u{FEFF}" . implode("\r\n", $rows) . "\r\n";

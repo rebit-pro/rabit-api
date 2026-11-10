@@ -244,6 +244,17 @@ final readonly class PhotoRepository
     }
 
     /**
+     * Имена сохраняются независимо от состояния обработки и наличия оригинала.
+     *
+     * @param list<string> $publicIds
+     */
+    public function filenames(array $publicIds): Result
+    {
+        return $this->query('SELECT UF_PUBLIC_ID,UF_FILENAME FROM b_hlbd_mf_photo WHERE UF_PUBLIC_ID IN ('
+            . implode(',', array_map($this->quote(...), $publicIds)) . ')');
+    }
+
+    /**
      * Приватные оригиналы готовых кадров; дубликаты и незавершённая обработка не попадают.
      *
      * @param non-empty-list<string> $publicIds
