@@ -7,10 +7,15 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Morefoto\Production\Application\Archive\Contract\ArchiveLinkInterface;
+use Morefoto\Production\Application\Archive\UseCase\ExportProductionVersionUseCase;
+use Morefoto\Production\Domain\Archive\Repository\ArchiveRepositoryInterface;
+use Rebit\Share\Contracts\Media\PhotoFilenamesInterface;
+use Rebit\Share\Contracts\Media\OriginalFilesInterface;
 use Morefoto\Production\Application\Archive\UseCase\OpenProductionArchiveUseCase;
 use Morefoto\Production\Application\Archive\UseCase\RenewProductionVersionUseCase;
 use Morefoto\Production\Application\Archive\UseCase\RunProductionUseCase;
 use Rebit\Share\Shared\Exception\HttpException;
+use Sprint\Migration\Version20261109200001;
 
 // L1: MySQL and disk trail of the print archive — the version holds exactly the paid print of the group with
 // quantity × printCount, the archive on disk matches its size, only the hash of the current link is stored, a second run
@@ -55,7 +60,7 @@ $check($paid === $scalar("SELECT COUNT(*) FROM mf_production_line p JOIN mf_orde
     WHERE p.VERSION_ID={$id} AND l.PRODUCT_KIND='physical' AND p.QUANTITY=l.QUANTITY AND p.PRINT_COUNT=l.PRINT_COUNT AND p.PRINTS=l.QUANTITY*l.PRINT_COUNT
     AND p.PRODUCT_NAME=l.PRODUCT_NAME AND p.PHOTO_PUBLIC_ID=l.PHOTO_PUBLIC_ID"), 'a line differs from its paid order line');
 $check((int)$version['PRINTS_COUNT'] === $scalar("SELECT SUM(PRINTS) FROM mf_production_line WHERE VERSION_ID={$id}"), 'the prints of the version');
-$check((int)$version['FILES_COUNT'] === $scalar("SELECT COUNT(DISTINCT ENTRY) FROM mf_production_line WHERE VERSION_ID={$id}"), 'the files of the version');
+$check((int)$version['FILES_COUNT'] === $scalar("SELECT COUNT(DISTINCT BINARY ENTRY) FROM mf_production_line WHERE VERSION_ID={$id}"), 'the files of the version');
 $check(0 === $scalar("SELECT COUNT(*) FROM mf_production_line p JOIN mf_order_line l ON l.PUBLIC_ID=p.ORDER_LINE_ID WHERE l.PRODUCT_KIND<>'physical'"), 'a digital line entered print');
 $check(0 === $scalar('SELECT COUNT(*) FROM (SELECT ORDER_LINE_ID FROM mf_production_line GROUP BY GROUP_ID,DEADLINE_AT,ORDER_LINE_ID HAVING COUNT(*)>1) d'), 'a line entered two versions');
 
@@ -75,6 +80,90 @@ foreach (['mf_production_version', 'mf_production_line', 'mf_production_request'
 }
 $check(!str_contains($dump, $token) && !str_contains($dump, (string)$record['revokedToken']), 'a raw link is stored');
 $check(2 === $scalar("SELECT COUNT(*) FROM mf_production_request WHERE VERSION_ID={$id}"), 'the build and the renewal of the organizer are remembered');
+
+// ENTRY uses the inherited locale collation; physical files must be counted by their exact path bytes.
+$check(2 === $scalar("SELECT COUNT(DISTINCT BINARY entry) FROM (SELECT 'Печать/e.JPG' AS entry UNION ALL SELECT 'Печать/é.JPG') paths"), 'accented filenames must remain separate jobs');
+
+// Layout v2: the MySQL snapshot, real ZIP bytes and exported CSV are one composition.
+$services = ServiceLocator::getInstance();
+$organizer = $scalar("SELECT ID FROM b_user WHERE EMAIL='organizer@example.invalid'");
+$check(2 === (int)$version['LAYOUT_VERSION'], 'new snapshots use layout v2');
+$lines = $services->get(ArchiveRepositoryInterface::class)->lines($id);
+$photoIds = array_values(array_unique(array_column($lines, 'photoId')));
+$names = $services->get(PhotoFilenamesInterface::class)->filenames($photoIds);
+$originals = $services->get(OriginalFilesInterface::class)->originals($photoIds);
+$prints = [];
+$byLine = [];
+foreach ($lines as $line) {
+    $key = $line->productId . '|' . $line->photoId;
+    $prints[$key] = ($prints[$key] ?? 0) + $line->quantity * $line->printCount;
+    $byLine[$line->orderLineId] = $line;
+}
+$zip = new ZipArchive();
+$check(true === $zip->open($path), 'the archive opens');
+$entries = [];
+for ($i = 0; $i < $zip->numFiles; ++$i) {
+    $entry = (string)$zip->getNameIndex($i);
+    $check(!isset($entries[$entry]), 'a ZIP entry repeats');
+    $entries[$entry] = true;
+}
+$check((int)$version['FILES_COUNT'] + 1 === count($entries), 'ZIP holds every job and only the manifest in addition');
+foreach ($lines as $line) {
+    $check(isset($entries[$line->entry]), 'a snapshot entry is missing in ZIP');
+    $check(basename($line->entry) === ($names[$line->photoId] ?? null), 'the original basename changed');
+    $count = $prints[$line->productId . '|' . $line->photoId];
+    $check(1 === $count ? !str_contains($line->entry, '/1шт/') : str_contains($line->entry, '/' . $count . 'шт/'), 'the quantity directory differs');
+    $stream = $zip->getStream($line->entry);
+    $check(is_resource($stream), 'the ZIP entry streams');
+    $hash = hash_init('sha256');
+    hash_update_stream($hash, $stream);
+    fclose($stream);
+    $check(hash_file('sha256', $originals[$line->photoId]->absolutePath) === hash_final($hash), 'original bytes differ from ZIP');
+}
+$manifest = (string)$zip->getFromName('состав.csv');
+$check($manifest === $services->get(ExportProductionVersionUseCase::class)->execute($organizer, (string)$record['versionId'])->content, 'ZIP and HTTP CSV differ');
+$zip->close();
+$csv = fopen('php://temp', 'w+');
+fwrite($csv, substr($manifest, 3));
+rewind($csv);
+$header = fgetcsv($csv, separator: ';', escape: '');
+$seen = [];
+while (false !== ($row = fgetcsv($csv, separator: ';', escape: ''))) {
+    $line = $byLine[$row[11]] ?? null;
+    $check(null !== $line && !isset($seen[$row[11]]), 'CSV lost or repeated an order line');
+    $seen[$row[11]] = true;
+    $check($row[2] === $line->entry && $row[12] === $line->orderId && $row[13] === $line->photoId && $row[14] === $line->productId, 'CSV trace differs from snapshot');
+    $check((int)$row[15] === $prints[$line->productId . '|' . $line->photoId], 'CSV total differs from print job');
+}
+fclose($csv);
+$check(count($seen) === count($lines), 'CSV must include all original order lines');
+Loader::includeModule('sprint.migration');
+require_once '/app/public/local/php_interface/migrations.foundation/Version20261109200001.php';
+$migration = new Version20261109200001();
+$migration->up();
+$migration->up();
+$column = $connection->query("SHOW COLUMNS FROM mf_production_line LIKE 'ENTRY'")->fetchRaw();
+$check('varchar(512)' === strtolower((string)$column['Type']), 'the entry column fits frozen paths');
+$column = $connection->query("SHOW COLUMNS FROM mf_production_version LIKE 'LAYOUT_VERSION'")->fetchRaw();
+$check('1' === (string)$column['Default'], 'legacy rows default to layout v1');
+// A full source basename can produce an entry longer than the former 255-character column.
+$longEntry = 'Печать/' . str_repeat('0', 246) . '.JPEG';
+$firstLineId = $sql->forSql($lines[0]->orderLineId);
+$connection->startTransaction();
+try {
+    $connection->queryExecute("UPDATE mf_production_line SET ENTRY='" . $sql->forSql($longEntry) . "' WHERE VERSION_ID={$id} AND ORDER_LINE_ID='{$firstLineId}'");
+    $storedEntry = $connection->query("SELECT ENTRY FROM mf_production_line WHERE VERSION_ID={$id} AND ORDER_LINE_ID='{$firstLineId}'")->fetchRaw();
+    $check($longEntry === $storedEntry['ENTRY'], 'the database silently truncated the original basename');
+} finally {
+    $connection->rollbackTransaction();
+}
+try {
+    $migration->down();
+    $check(false, 'rollback silently destroys new layouts');
+} catch (RuntimeException $error) {
+    $check(str_contains($error->getMessage(), 'destructive rollback is forbidden'), 'rollback fails for the expected reason');
+}
+echo 'Print archive layout v2 ZIP/CSV/SHA-256 and migration replay passed: ' . json_encode(array_keys($entries), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . "\n";
 
 // 3. A second run adds no version; an archive past its retention is deleted and refuses its link.
 $services = ServiceLocator::getInstance();

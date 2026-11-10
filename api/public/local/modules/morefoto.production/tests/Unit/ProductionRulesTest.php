@@ -40,15 +40,15 @@ final class ProductionRulesTest extends TestCase
             $this->line('l4', 'p-3', '../Магнит: "кот" <10/15>.. ', 'B002', 1),
             $this->line('l5', 'p-4', " \t.. ", 'B../002', 3),
             $this->line('l6', 'p-5', 'печать 10×15', 'C003', 1),
-        ]));
+        ], ['aaaaaaaa-aaaa-4aaa-8aaa-000000000001' => '0007.JPG']));
 
         self::assertSame([
-            'Печать 10×15/A001_x3',
-            'Печать 10×15 (p-2)/A001_x1',
-            'Печать 10×15/A001_x3',
-            'Магнит кот 10 15/B002_x1',
-            'Продукция/B_002_x3',
-            'печать 10×15 (p-5)/C003_x1',
+            'Печать 10×15/3шт/0007.JPG',
+            'Печать 10×15 (p-2)/0007.JPG',
+            'Печать 10×15/3шт/0007.JPG',
+            'Магнит кот 10 15/0007.JPG',
+            'Продукция/3шт/0007.JPG',
+            'печать 10×15 (p-5)/0007.JPG',
         ], $entries);
         foreach ($entries as $entry) {
             self::assertStringNotContainsString('..', $entry);

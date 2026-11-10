@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Rebit\Share\Tests\Infrastructure\Logger;
 
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use Rebit\Share\Infrastructure\Logger\CommonLoggerProcessor;
 use Rebit\Share\Infrastructure\Logger\LogSanitizer;
@@ -14,6 +16,45 @@ use Rebit\Share\Infrastructure\Logger\LogSanitizer;
 final class DiagnosticLogSanitizerTest extends TestCase
 {
     private const string PHOTO_ID = '12345678-abcd-4abc-8abc-123456789abc';
+
+    public function testPrintArchiveRejectionKeepsTypedDiagnosticsInTheFinalRecord(): void
+    {
+        foreach (['ORIGINAL_MISSING', 'UNSAFE_FILENAME', 'INVALID_ARCHIVE_LAYOUT'] as $code) {
+            $context = ['groupId' => self::PHOTO_ID, 'errorCode' => $code];
+            $record = $this->log('Print archive snapshot rejected.', $context);
+
+            self::assertSame('Print archive snapshot rejected.', $record['message']);
+            self::assertSame($context, $record['context']);
+        }
+    }
+
+    public function testPrintArchiveDiagnosticsRejectUntrustedValuesAndFilenames(): void
+    {
+        foreach ([
+            ['groupId' => '../group', 'errorCode' => 'UNSAFE_FILENAME secret'],
+            ['groupId' => ['id' => self::PHOTO_ID], 'errorCode' => ['code' => 'ORIGINAL_MISSING']],
+        ] as $context) {
+            $context['filename'] = 'private-original.jpg';
+            $record = $this->log('Print archive snapshot rejected.', $context);
+
+            self::assertSame(['redacted' => true], $record['context']);
+            self::assertStringNotContainsString('private-original.jpg', json_encode($record, JSON_THROW_ON_ERROR));
+        }
+
+        $record = $this->log('Print archive snapshot rejected.', ['groupId' => self::PHOTO_ID, 'errorCode' => 'OTHER_FAILURE']);
+        self::assertSame(['groupId' => self::PHOTO_ID, 'redacted' => true], $record['context']);
+    }
+
+    public function testPrintArchiveMessageCannotIncludeAnOriginalFilename(): void
+    {
+        $record = $this->log('Print archive snapshot rejected. private-original.jpg', [
+            'groupId' => self::PHOTO_ID,
+            'errorCode' => 'UNSAFE_FILENAME',
+        ]);
+
+        self::assertSame(LogSanitizer::REDACTED, $record['message']);
+        self::assertStringNotContainsString('private-original.jpg', json_encode($record, JSON_THROW_ON_ERROR));
+    }
 
     public function testMediaDiagnosticsKeepTypedMetadata(): void
     {
@@ -105,5 +146,20 @@ final class DiagnosticLogSanitizerTest extends TestCase
     private function process(string $message, array $context): array
     {
         return (new CommonLoggerProcessor(['message' => $message, 'context' => $context, 'extra' => []]))();
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     *
+     * @return array<string, mixed>
+     */
+    private function log(string $message, array $context): array
+    {
+        $handler = new TestHandler();
+        $logger = new Logger('production', [$handler]);
+        $logger->pushProcessor(static fn(array $record): array => (new CommonLoggerProcessor($record))());
+        $logger->warning($message, $context);
+
+        return $handler->getRecords()[0];
     }
 }

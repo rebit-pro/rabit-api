@@ -1,0 +1,490 @@
+{
+  "completedAt": "2026-11-09T20:18:25.514696+00:00",
+  "branch": "codex/ops-print-archive-layout",
+  "base": "952f9789595e4d9e6a9c73b9b03c3deb1cd139dc",
+  "state": "uncommitted worktree; no commit, push, PR, merge or deployment of stage 4",
+  "dependency": {
+    "pr": 237,
+    "status": "MERGED",
+    "commit": "952f9789595e4d9e6a9c73b9b03c3deb1cd139dc"
+  },
+  "checks": {
+    "targetedPhpunit": {
+      "status": "PASS",
+      "tests": 54,
+      "assertions": 1008,
+      "php": "8.4.26",
+      "phpunit": "12.5.14",
+      "memoryLimitMiB": 128,
+      "peakMiB": 30,
+      "realZipMiB": 160
+    },
+    "phpstanFinal": {
+      "status": "PASS",
+      "configuration": "api/tools/e2e/phpstan.neon"
+    },
+    "formatter": {
+      "status": "PASS",
+      "changedPhpFiles": 25,
+      "fixable": 0
+    },
+    "browser": {
+      "status": "PASS",
+      "group": "b",
+      "fullGate": false,
+      "passed": 80,
+      "skipped": 0,
+      "flaky": 0,
+      "run": "api/var/e2e/rabit-e2e-2ac8ea0adbcc",
+      "stats": {
+        "startTime": "2026-11-09T20:05:31.371Z",
+        "duration": 321928.452,
+        "expected": 80,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "gateBackendPhpunit": {
+      "status": "PASS",
+      "tests": 1324,
+      "assertions": 51653,
+      "note": "final added accent-name case additionally passed in targeted 54 tests"
+    },
+    "frontend": {
+      "status": "PASS",
+      "uiTests": 113,
+      "commerceTests": 253,
+      "commands": [
+        "lint",
+        "lint:styles",
+        "typecheck",
+        "typecheck:e2e",
+        "test:ui",
+        "test:commerce",
+        "build-only"
+      ]
+    },
+    "nativeProduction": {
+      "status": "PASS",
+      "originalNameAndSha256": true,
+      "zipCsvAndOrderLineTrace": true,
+      "migrationReplay": true,
+      "longEntryRoundtrip": true,
+      "guardedDown": true,
+      "expiryAndRebuild": true,
+      "proof": "artifacts/native-layout.log"
+    },
+    "visual": {
+      "status": "PASS",
+      "screenshots": [
+        "guide-print-desktop.png",
+        "guide-print-mobile.png",
+        "l1-desktop-print-archive.png",
+        "l1-mobile-print-archive.png"
+      ],
+      "viewports": [
+        "1440x1000",
+        "390x844"
+      ],
+      "inspection": "viewed by author; real HTTP guide and live L1 dialog"
+    }
+  },
+  "limitations": [
+    "Stage 6 statement/archive reconciliation remains outside scope; complete T10 not claimed.",
+    "Post-fix R2 work is author implementation/verification, not independent review.",
+    "First full run failed G1-T14 and G2-T14; fresh full rerun passed without source/config/test changes. Root cause of the first-run payment/receipt failures remains undetermined.",
+    "Bad-filename isolation, pinned-cursor recovery and retry cases are unit-verified; live browser/native gate verifies the valid archive HTTP/ZIP/lifecycle scenario."
+  ],
+  "resolvedRuns": [
+    {
+      "run": "rabit-e2e-acc28e7034e3",
+      "result": "FAIL",
+      "reason": "new migration missing from explicit E2E prepare list; fixed"
+    },
+    {
+      "run": "rabit-e2e-cfd36809de28",
+      "result": "FAIL before HTTP",
+      "reason": "always-true assertion in new supplement test detected by PHPStan; fixed"
+    }
+  ],
+  "sourceSha256": {
+    "api/public/local/modules/morefoto.media/di/media.php": "845cb3b3847b2bc6409298711a4824892dd4e088d8e239d9645b0fbad63d28fd",
+    "api/public/local/modules/morefoto.media/lib/Application/Photo/Service/PhotoFilenames.php": "69888f661dc0eb532db7773c707dddba9213cbac4d53353ed469c2e81ef7c8f1",
+    "api/public/local/modules/morefoto.media/lib/Domain/Photo/Repository/PhotoRepository.php": "5e5f6808584aab5be617988d7db0e7959265c6ae323453bc0aa1b3ed7b1f0252",
+    "api/public/local/modules/morefoto.media/tests/Unit/PhotoFilenamesTest.php": "99ce51f01392a92a290a848102d3be5b3298a127b1be8919ed72e31f7ef1cd44",
+    "api/public/local/modules/morefoto.production/di/archive.php": "5d92033cc39a18c614be134b7c086bca146cf1be22f2c5abafa93b756d21fdf9",
+    "api/public/local/modules/morefoto.production/lib/Application/Archive/Contract/ManifestWriterInterface.php": "ca3663e406128c5ddae7251cf797566a754dfa93eac8bb8d32b20efc47872c78",
+    "api/public/local/modules/morefoto.production/lib/Application/Archive/Dto/ProductionRunOutputDto.php": "b7382e6c95f2d5dba0f42083438e848e5d5864253e1b43186f8ee058f7c7784c",
+    "api/public/local/modules/morefoto.production/lib/Application/Archive/Service/ArchiveBuilder.php": "9412087e916c455dd3013d6889129fdfca0d2d5d084ba63acb83c4839453ebe7",
+    "api/public/local/modules/morefoto.production/lib/Application/Archive/Service/VersionSnapshot.php": "81aed8517556af8f4791247b5a52426e0bcf6c1d8f37d68f85f9de6a19f8e24b",
+    "api/public/local/modules/morefoto.production/lib/Application/Archive/UseCase/ExportProductionVersionUseCase.php": "f0257dcf4ddb9023715091b9ef106a5fd365d9235779d01753f887f146b3da20",
+    "api/public/local/modules/morefoto.production/lib/Application/Archive/UseCase/RunProductionUseCase.php": "66605f255a968601bca34e42677a9190b77e1a085d3e6e0c4599e81d03e5466b",
+    "api/public/local/modules/morefoto.production/lib/Domain/Archive/Exception/ArchiveLayoutException.php": "379c22aea7fb95a995975cb29947b29f6d7ed91c6fd07f86260bab7f8f72239d",
+    "api/public/local/modules/morefoto.production/lib/Domain/Archive/Service/ArchiveLayout.php": "38017234ba53d9a60c48884ac7580a4b887c2aadf851e46f9e6bf26dde4c66ac",
+    "api/public/local/modules/morefoto.production/lib/Domain/Archive/ValueObject/ArchiveLine.php": "2a8c3ac7b8fa9a1f7331f659cc46edf2717760a61842c03a307fc164004f2257",
+    "api/public/local/modules/morefoto.production/lib/Domain/Archive/ValueObject/ArchiveVersion.php": "54dacb13331142e34ec1bb0cb62b319a10004d5cf83974f09acd7cf7cadc846f",
+    "api/public/local/modules/morefoto.production/lib/Domain/Archive/ValueObject/NewVersion.php": "a596a0f7deb4144231a5dc57c8cbecff015ac656d8d3f3fa86ea5d27c19a133c",
+    "api/public/local/modules/morefoto.production/lib/Infrastructure/Database/BitrixArchiveRepository.php": "dd4a9520513bceed05ea239d9d1afb09f3db1d5cfb68738bf9731b1040d01aea",
+    "api/public/local/modules/morefoto.production/lib/Infrastructure/File/CsvManifestWriter.php": "e75b09becb3cb3f6b4ab6fe14156a8644daad27919f722dfb7b8cf45db707700",
+    "api/public/local/modules/morefoto.production/lib/Presentation/Command/RunProductionCommand.php": "1fdb4a64b8df84d1382b418e0ea8dfc1205aefd8052982c337ed396afd7d7e69",
+    "api/public/local/modules/morefoto.production/tests/Unit/PrintArchiveLayoutTest.php": "1a23a60f6fa49f670a31f796c0ce2ae200831788ea2421c9b1aea4b85ef8e181",
+    "api/public/local/modules/morefoto.production/tests/Unit/ProductionFlowTest.php": "7f6ff222bbad503738a45244b468ff153743e67c8ecffa28b39fb39e8e3dd6e8",
+    "api/public/local/modules/morefoto.production/tests/Unit/ProductionRulesTest.php": "bba756bcc69cb693e887bee82f92d305e24646665facf8a0f9e8d676310b361b",
+    "api/public/local/modules/morefoto.production/tests/Unit/Support/InMemoryArchives.php": "9e2203065e45acb6cbeaaedf3d4c8dc5d300397a5f8292aa450527458670d6d0",
+    "api/public/local/modules/morefoto.production/tests/Unit/Support/ProductionFixture.php": "ff18a28081658d9ceb99289682146ded5f254a38f88384444da7650ad2e726ea",
+    "api/public/local/modules/rebit.share/lib/Contracts/Media/PhotoFilenamesInterface.php": "d459fd614ce944f6afc6479bb452c259bf6c5564dc17ab2fb20bca7e04c6a402",
+    "api/public/local/modules/rebit.share/lib/Infrastructure/Logger/LogSanitizer.php": "3e553dc57cc30b90796b958ac4f27116f3080ace50cb4dc931d07917858c0cd9",
+    "api/public/local/modules/rebit.share/tests/Infrastructure/Logger/DiagnosticLogSanitizerTest.php": "4fea037e05a5517c8a2a0af6b7972b6a83a7eafdd5d43aa037c52bd092517eef",
+    "api/public/local/php_interface/migrations.foundation/Version20261109200001.php": "2ffd22c1e67ec0fb9741e6ba9c2f90954f528227c8723aa04db9eacc03d4f419",
+    "api/tools/e2e/prepare.php": "3dae1e5d0b8435368db05e5e7983eac4e06a3fe9a4fa308df1e905d0da49a220",
+    "api/tools/e2e/verify-production.php": "8e34313ee597758c34eafc4cf17b556d44afe50526e74a6cfa9d317c8a4e3965",
+    "frontend/public/guide/organizer/index.html": "43f7ecd8a7bd1b730e222f0451f4c2621826b35b8c6d14ec31f74b48e9fe5398",
+    "frontend/src/modules/morefoto/production/live/archive-rules.ts": "27bcb4e5bfed3458e2ddbe73f63723ecb9c892b6669dd0b8934fa0354905f7b4",
+    "frontend/tests/ui/print-archive.test.mjs": "d054c21910bf65a34825046d3cb1265f6b6136c1fe2b62bb672d74eaad9c916d"
+  },
+  "artifactSha256": {
+    "guide-print-mobile.png": "520a8039bdac42be5f9ae784f37515b152f61a8085b732521d7288db3c22ecb4",
+    "l1-desktop-print-archive.png": "608e43737768588c5eb7f4159d8ae584c2b592282117e328426b0c6b3d2d15d1",
+    "l1-mobile-print-archive.png": "5269f4639c468f3ccff8efd0d1f124afafa408280a9194be832c5774b98de96c",
+    "native-layout.log": "11977d60f518bdd83a021c784bd956a5966f779156ea0f9880f2c4d0529d3f60",
+    "guide-print-desktop.png": "a7600b45d64257dfd40307901e7b4e8aefc45a90e53a84305333d75a4b661a66",
+    "native-layout-r2.log": "84afc3e324490c12d27a25b67d2e15b979439f08968a6c461287ba995c99432c",
+    "l1-r2-desktop-print-archive.png": "312a7c6df59b05dfb93d93eb42c72eff1cd1bd8a2209efee618e9bc3e5e95639",
+    "l1-r2-mobile-print-archive.png": "6802be9edd10bfefe9b52a33ce84d349b4e0d3474438aa2b8b24f522a3c3e349"
+  },
+  "postGateChanges": [
+    {
+      "path": "api/public/local/modules/morefoto.media/lib/Application/Photo/Service/PhotoFilenames.php",
+      "change": "PHPDoc shape formatting only",
+      "formatterCheck": "PASS 0/1"
+    }
+  ],
+  "revalidation": {
+    "date": "2026-11-10",
+    "timezone": "Europe/Moscow",
+    "branch": "codex/ops-print-archive-layout",
+    "base": "952f9789595e4d9e6a9c73b9b03c3deb1cd139dc",
+    "runtimeSourceChanged": false,
+    "dependency": "PASS: gh confirmed main and merged PR #237",
+    "sourceSha256": "PASS 28/28",
+    "artifactSha256": "PASS 5/5",
+    "targetedPhpunit": {
+      "status": "PASS",
+      "tests": 54,
+      "assertions": 1008,
+      "peakMiB": 30,
+      "memoryLimitMiB": 128
+    },
+    "phpstan": "PASS: tools/e2e/phpstan.neon",
+    "lint": "PASS: 1714 files",
+    "migrationSyntax": "PASS",
+    "formatter": "PASS: 0/25, dry-run only",
+    "frontend": "PASS: node --experimental-strip-types --test tests/ui/print-archive.test.mjs",
+    "savedBrowserReport": "confirmed b=80/80, zero skipped/unexpected/flaky; no new browser run",
+    "savedVisualArtifacts": "four PNGs viewed; no new visual run",
+    "independentReview": "PENDING",
+    "fullGate": "PENDING: groups a+b before merge",
+    "stage6Reconciliation": "outside scope; complete T10 not claimed",
+    "details": "../progress.md: section 10.11.2026"
+  },
+  "checksScope": "Historical results before R1; current sourceSha256 includes R1 and R2. See r1 and r2 for later verification.",
+  "beforeR1SourceSha256": {
+    "api/public/local/modules/morefoto.media/di/media.php": "845cb3b3847b2bc6409298711a4824892dd4e088d8e239d9645b0fbad63d28fd",
+    "api/public/local/modules/morefoto.media/lib/Application/Photo/Service/PhotoFilenames.php": "69888f661dc0eb532db7773c707dddba9213cbac4d53353ed469c2e81ef7c8f1",
+    "api/public/local/modules/morefoto.media/lib/Domain/Photo/Repository/PhotoRepository.php": "5e5f6808584aab5be617988d7db0e7959265c6ae323453bc0aa1b3ed7b1f0252",
+    "api/public/local/modules/morefoto.media/tests/Unit/PhotoFilenamesTest.php": "99ce51f01392a92a290a848102d3be5b3298a127b1be8919ed72e31f7ef1cd44",
+    "api/public/local/modules/morefoto.production/di/archive.php": "5d92033cc39a18c614be134b7c086bca146cf1be22f2c5abafa93b756d21fdf9",
+    "api/public/local/modules/morefoto.production/lib/Application/Archive/Contract/ManifestWriterInterface.php": "ca3663e406128c5ddae7251cf797566a754dfa93eac8bb8d32b20efc47872c78",
+    "api/public/local/modules/morefoto.production/lib/Application/Archive/Service/ArchiveBuilder.php": "9412087e916c455dd3013d6889129fdfca0d2d5d084ba63acb83c4839453ebe7",
+    "api/public/local/modules/morefoto.production/lib/Application/Archive/Service/VersionSnapshot.php": "81aed8517556af8f4791247b5a52426e0bcf6c1d8f37d68f85f9de6a19f8e24b",
+    "api/public/local/modules/morefoto.production/lib/Application/Archive/UseCase/ExportProductionVersionUseCase.php": "f0257dcf4ddb9023715091b9ef106a5fd365d9235779d01753f887f146b3da20",
+    "api/public/local/modules/morefoto.production/lib/Domain/Archive/Exception/ArchiveLayoutException.php": "379c22aea7fb95a995975cb29947b29f6d7ed91c6fd07f86260bab7f8f72239d",
+    "api/public/local/modules/morefoto.production/lib/Domain/Archive/Service/ArchiveLayout.php": "38017234ba53d9a60c48884ac7580a4b887c2aadf851e46f9e6bf26dde4c66ac",
+    "api/public/local/modules/morefoto.production/lib/Domain/Archive/ValueObject/ArchiveLine.php": "2a8c3ac7b8fa9a1f7331f659cc46edf2717760a61842c03a307fc164004f2257",
+    "api/public/local/modules/morefoto.production/lib/Domain/Archive/ValueObject/ArchiveVersion.php": "54dacb13331142e34ec1bb0cb62b319a10004d5cf83974f09acd7cf7cadc846f",
+    "api/public/local/modules/morefoto.production/lib/Domain/Archive/ValueObject/NewVersion.php": "a596a0f7deb4144231a5dc57c8cbecff015ac656d8d3f3fa86ea5d27c19a133c",
+    "api/public/local/modules/morefoto.production/lib/Infrastructure/Database/BitrixArchiveRepository.php": "dd4a9520513bceed05ea239d9d1afb09f3db1d5cfb68738bf9731b1040d01aea",
+    "api/public/local/modules/morefoto.production/lib/Infrastructure/File/CsvManifestWriter.php": "e75b09becb3cb3f6b4ab6fe14156a8644daad27919f722dfb7b8cf45db707700",
+    "api/public/local/modules/morefoto.production/tests/Unit/PrintArchiveLayoutTest.php": "2035ab4e8320da50eb49bb6ca4d5aef26b54ab81a2e59f1c5676001362bbb91c",
+    "api/public/local/modules/morefoto.production/tests/Unit/ProductionFlowTest.php": "7f6ff222bbad503738a45244b468ff153743e67c8ecffa28b39fb39e8e3dd6e8",
+    "api/public/local/modules/morefoto.production/tests/Unit/ProductionRulesTest.php": "bba756bcc69cb693e887bee82f92d305e24646665facf8a0f9e8d676310b361b",
+    "api/public/local/modules/morefoto.production/tests/Unit/Support/InMemoryArchives.php": "9e2203065e45acb6cbeaaedf3d4c8dc5d300397a5f8292aa450527458670d6d0",
+    "api/public/local/modules/morefoto.production/tests/Unit/Support/ProductionFixture.php": "e99821e103620fa49d78dc18a02c96b8c8cf5a0842a7ac34ceebfb8f954b2b61",
+    "api/public/local/modules/rebit.share/lib/Contracts/Media/PhotoFilenamesInterface.php": "d459fd614ce944f6afc6479bb452c259bf6c5564dc17ab2fb20bca7e04c6a402",
+    "api/public/local/php_interface/migrations.foundation/Version20261109200001.php": "2ffd22c1e67ec0fb9741e6ba9c2f90954f528227c8723aa04db9eacc03d4f419",
+    "api/tools/e2e/prepare.php": "3dae1e5d0b8435368db05e5e7983eac4e06a3fe9a4fa308df1e905d0da49a220",
+    "api/tools/e2e/verify-production.php": "8e34313ee597758c34eafc4cf17b556d44afe50526e74a6cfa9d317c8a4e3965",
+    "frontend/public/guide/organizer/index.html": "43f7ecd8a7bd1b730e222f0451f4c2621826b35b8c6d14ec31f74b48e9fe5398",
+    "frontend/src/modules/morefoto/production/live/archive-rules.ts": "27bcb4e5bfed3458e2ddbe73f63723ecb9c892b6669dd0b8934fa0354905f7b4",
+    "frontend/tests/ui/print-archive.test.mjs": "d054c21910bf65a34825046d3cb1265f6b6136c1fe2b62bb672d74eaad9c916d"
+  },
+  "r1": {
+    "updatedAt": "2026-11-10T10:50:26.952282+00:00",
+    "status": "Functional R1 confirmed by independent round 2; separate R2 logging issue is being corrected.",
+    "review": "/tmp/rabit-print-archive-review-20261110-952f9789.md",
+    "baselineSourcesPreserved": 26,
+    "baselineSourcesChanged": 2,
+    "additionalSources": 3,
+    "changes": [
+      "Isolate HttpException caused by ArchiveLayoutException per group; retain manual 409.",
+      "Pin durable cursor before first rejection; scan later keyset pages locally with a cap on new versions.",
+      "Log groupId/errorCode and include rejected snapshots in failed; continue due/expired.",
+      "Retry rejected group after filename repair without reserving or duplicating its order lines."
+    ],
+    "checks": {
+      "redRegression": {
+        "status": "FAIL as expected before fix",
+        "tests": 4,
+        "assertions": 12,
+        "errors": 4
+      },
+      "targetedPhpunit": {
+        "status": "PASS",
+        "tests": 57,
+        "assertions": 1119,
+        "peakMiB": 30,
+        "memoryLimitMiB": 128,
+        "php": "8.4.26",
+        "phpunit": "12.5.14"
+      },
+      "T12-R1": "PASS: unsafe, empty, unknown filename; pending/safe/expired; second run and repair; trace and unchanged previous ZIP hashes",
+      "T12-R1-PAGE": "PASS: limit=1, subsequent pages, repaired group and no duplicate lines",
+      "phpstan": {
+        "status": "PASS",
+        "configuration": "api/tools/e2e/phpstan.neon"
+      },
+      "formatter": {
+        "status": "PASS",
+        "changedPhpFiles": 28,
+        "fixable": 0,
+        "mode": "dry-run"
+      },
+      "e2e": "NOT RUN as instructed; pre-R1 group b is historical only",
+      "visual": "NOT RUN as instructed",
+      "fullGate": "PENDING: a+b",
+      "independentRecheck": "PASS for scheduling/cursor/recovery; R2 MEDIUM logged separately by round 2."
+    },
+    "limitations": [
+      "Unit fixture uses in-memory repository and real temporary files/ZIP; no live DB/HTTP proof for R1.",
+      "Until a rejected filename is repaired, the tail of closed groups is scanned again from the pinned cursor.",
+      "Stage 6 remains outside scope."
+    ],
+    "details": "../progress.md: R1 sections"
+  },
+  "revalidationScope": "Historical author revalidation on 2026-11-10 before R1; runtimeSourceChanged=false referred to that earlier point, not current R1 sources.",
+  "beforeR2SourceSha256": {
+    "api/public/local/modules/morefoto.media/di/media.php": "845cb3b3847b2bc6409298711a4824892dd4e088d8e239d9645b0fbad63d28fd",
+    "api/public/local/modules/morefoto.media/lib/Application/Photo/Service/PhotoFilenames.php": "69888f661dc0eb532db7773c707dddba9213cbac4d53353ed469c2e81ef7c8f1",
+    "api/public/local/modules/morefoto.media/lib/Domain/Photo/Repository/PhotoRepository.php": "5e5f6808584aab5be617988d7db0e7959265c6ae323453bc0aa1b3ed7b1f0252",
+    "api/public/local/modules/morefoto.media/tests/Unit/PhotoFilenamesTest.php": "99ce51f01392a92a290a848102d3be5b3298a127b1be8919ed72e31f7ef1cd44",
+    "api/public/local/modules/morefoto.production/di/archive.php": "5d92033cc39a18c614be134b7c086bca146cf1be22f2c5abafa93b756d21fdf9",
+    "api/public/local/modules/morefoto.production/lib/Application/Archive/Contract/ManifestWriterInterface.php": "ca3663e406128c5ddae7251cf797566a754dfa93eac8bb8d32b20efc47872c78",
+    "api/public/local/modules/morefoto.production/lib/Application/Archive/Dto/ProductionRunOutputDto.php": "b7382e6c95f2d5dba0f42083438e848e5d5864253e1b43186f8ee058f7c7784c",
+    "api/public/local/modules/morefoto.production/lib/Application/Archive/Service/ArchiveBuilder.php": "9412087e916c455dd3013d6889129fdfca0d2d5d084ba63acb83c4839453ebe7",
+    "api/public/local/modules/morefoto.production/lib/Application/Archive/Service/VersionSnapshot.php": "81aed8517556af8f4791247b5a52426e0bcf6c1d8f37d68f85f9de6a19f8e24b",
+    "api/public/local/modules/morefoto.production/lib/Application/Archive/UseCase/ExportProductionVersionUseCase.php": "f0257dcf4ddb9023715091b9ef106a5fd365d9235779d01753f887f146b3da20",
+    "api/public/local/modules/morefoto.production/lib/Application/Archive/UseCase/RunProductionUseCase.php": "66605f255a968601bca34e42677a9190b77e1a085d3e6e0c4599e81d03e5466b",
+    "api/public/local/modules/morefoto.production/lib/Domain/Archive/Exception/ArchiveLayoutException.php": "379c22aea7fb95a995975cb29947b29f6d7ed91c6fd07f86260bab7f8f72239d",
+    "api/public/local/modules/morefoto.production/lib/Domain/Archive/Service/ArchiveLayout.php": "38017234ba53d9a60c48884ac7580a4b887c2aadf851e46f9e6bf26dde4c66ac",
+    "api/public/local/modules/morefoto.production/lib/Domain/Archive/ValueObject/ArchiveLine.php": "2a8c3ac7b8fa9a1f7331f659cc46edf2717760a61842c03a307fc164004f2257",
+    "api/public/local/modules/morefoto.production/lib/Domain/Archive/ValueObject/ArchiveVersion.php": "54dacb13331142e34ec1bb0cb62b319a10004d5cf83974f09acd7cf7cadc846f",
+    "api/public/local/modules/morefoto.production/lib/Domain/Archive/ValueObject/NewVersion.php": "a596a0f7deb4144231a5dc57c8cbecff015ac656d8d3f3fa86ea5d27c19a133c",
+    "api/public/local/modules/morefoto.production/lib/Infrastructure/Database/BitrixArchiveRepository.php": "dd4a9520513bceed05ea239d9d1afb09f3db1d5cfb68738bf9731b1040d01aea",
+    "api/public/local/modules/morefoto.production/lib/Infrastructure/File/CsvManifestWriter.php": "e75b09becb3cb3f6b4ab6fe14156a8644daad27919f722dfb7b8cf45db707700",
+    "api/public/local/modules/morefoto.production/lib/Presentation/Command/RunProductionCommand.php": "1fdb4a64b8df84d1382b418e0ea8dfc1205aefd8052982c337ed396afd7d7e69",
+    "api/public/local/modules/morefoto.production/tests/Unit/PrintArchiveLayoutTest.php": "1a23a60f6fa49f670a31f796c0ce2ae200831788ea2421c9b1aea4b85ef8e181",
+    "api/public/local/modules/morefoto.production/tests/Unit/ProductionFlowTest.php": "7f6ff222bbad503738a45244b468ff153743e67c8ecffa28b39fb39e8e3dd6e8",
+    "api/public/local/modules/morefoto.production/tests/Unit/ProductionRulesTest.php": "bba756bcc69cb693e887bee82f92d305e24646665facf8a0f9e8d676310b361b",
+    "api/public/local/modules/morefoto.production/tests/Unit/Support/InMemoryArchives.php": "9e2203065e45acb6cbeaaedf3d4c8dc5d300397a5f8292aa450527458670d6d0",
+    "api/public/local/modules/morefoto.production/tests/Unit/Support/ProductionFixture.php": "ff18a28081658d9ceb99289682146ded5f254a38f88384444da7650ad2e726ea",
+    "api/public/local/modules/rebit.share/lib/Contracts/Media/PhotoFilenamesInterface.php": "d459fd614ce944f6afc6479bb452c259bf6c5564dc17ab2fb20bca7e04c6a402",
+    "api/public/local/php_interface/migrations.foundation/Version20261109200001.php": "2ffd22c1e67ec0fb9741e6ba9c2f90954f528227c8723aa04db9eacc03d4f419",
+    "api/tools/e2e/prepare.php": "3dae1e5d0b8435368db05e5e7983eac4e06a3fe9a4fa308df1e905d0da49a220",
+    "api/tools/e2e/verify-production.php": "8e34313ee597758c34eafc4cf17b556d44afe50526e74a6cfa9d317c8a4e3965",
+    "frontend/public/guide/organizer/index.html": "43f7ecd8a7bd1b730e222f0451f4c2621826b35b8c6d14ec31f74b48e9fe5398",
+    "frontend/src/modules/morefoto/production/live/archive-rules.ts": "27bcb4e5bfed3458e2ddbe73f63723ecb9c892b6669dd0b8934fa0354905f7b4",
+    "frontend/tests/ui/print-archive.test.mjs": "d054c21910bf65a34825046d3cb1265f6b6136c1fe2b62bb672d74eaad9c916d"
+  },
+  "r2": {
+    "updatedAt": "2026-11-10T12:34:58.387207+00:00",
+    "status": "implemented; author unit/static/full real E2E gate a+b PASS; independent post-fix review not performed",
+    "review": "/tmp/rabit-print-archive-review-round2-20261110-952f9789.md",
+    "sourcesPreserved": 31,
+    "additionalSources": 2,
+    "checks": {
+      "redRegression": {
+        "status": "FAIL as expected before fix",
+        "tests": 3,
+        "assertions": 8,
+        "failures": 2
+      },
+      "targetedPhpunit": {
+        "status": "PASS",
+        "tests": 74,
+        "assertions": 1344,
+        "peakMiB": 34,
+        "memoryLimitMiB": 128,
+        "php": "8.4.26",
+        "phpunit": "12.5.14"
+      },
+      "formatter": {
+        "status": "PASS",
+        "changedPhpFiles": 30,
+        "fixable": 0,
+        "mode": "dry-run"
+      },
+      "fullGate": {
+        "status": "PASS",
+        "groups": [
+          "a",
+          "b"
+        ],
+        "fullGate": true,
+        "run": "api/var/e2e/rabit-e2e-519bbd19944e",
+        "passed": 161,
+        "results": {
+          "a": {
+            "startTime": "2026-11-10T12:24:52.326Z",
+            "duration": 425837.358,
+            "expected": 81,
+            "skipped": 0,
+            "unexpected": 0,
+            "flaky": 0
+          },
+          "b": {
+            "startTime": "2026-11-10T12:24:52.337Z",
+            "duration": 478637.12399999995,
+            "expected": 80,
+            "skipped": 0,
+            "unexpected": 0,
+            "flaky": 0
+          }
+        },
+        "sourceChangedBetweenRuns": false,
+        "stopped": true,
+        "cleanupErrors": []
+      },
+      "independentReview": "NOT PERFORMED after author changes",
+      "fullGateAttempts": [
+        {
+          "status": "FAIL",
+          "groups": [
+            "a",
+            "b"
+          ],
+          "run": "api/var/e2e/rabit-e2e-830327f939b5",
+          "a": {
+            "passed": 81,
+            "skipped": 0,
+            "unexpected": 0,
+            "flaky": 0
+          },
+          "b": {
+            "passed": 76,
+            "skipped": 2,
+            "unexpected": 2,
+            "flaky": 0
+          },
+          "failedScenarios": [
+            "G1-T14: SBP remains unknown/provider_refused_retry",
+            "G2-T14: test-shop receipt payment.provider missing"
+          ],
+          "sourceChangedAfterRun": false
+        },
+        {
+          "status": "PASS",
+          "groups": [
+            "a",
+            "b"
+          ],
+          "fullGate": true,
+          "run": "api/var/e2e/rabit-e2e-519bbd19944e",
+          "passed": 161,
+          "results": {
+            "a": {
+              "startTime": "2026-11-10T12:24:52.326Z",
+              "duration": 425837.358,
+              "expected": 81,
+              "skipped": 0,
+              "unexpected": 0,
+              "flaky": 0
+            },
+            "b": {
+              "startTime": "2026-11-10T12:24:52.337Z",
+              "duration": 478637.12399999995,
+              "expected": 80,
+              "skipped": 0,
+              "unexpected": 0,
+              "flaky": 0
+            }
+          },
+          "sourceChangedBetweenRuns": false,
+          "stopped": true,
+          "cleanupErrors": []
+        }
+      ],
+      "phpstan": "PASS: full gate tools/e2e/phpstan.neon",
+      "lint": {
+        "status": "PASS",
+        "files": 1714
+      },
+      "fullPhpunit": {
+        "status": "PASS",
+        "tests": 1331,
+        "assertions": 51778
+      },
+      "frontend": {
+        "status": "PASS",
+        "commands": [
+          "lint",
+          "lint:styles",
+          "typecheck",
+          "typecheck:e2e",
+          "test:ui",
+          "test:commerce",
+          "build-only"
+        ],
+        "uiTests": 113,
+        "commerceTests": 253
+      },
+      "nativeProduction": {
+        "status": "PASS",
+        "proof": "artifacts/native-layout-r2.log",
+        "originalNameAndSha256": true,
+        "zipCsvAndOrderLineTrace": true,
+        "migrationReplay": true,
+        "longEntryRoundtrip": true,
+        "guardedDown": true,
+        "expiryAndRebuild": true
+      },
+      "visual": {
+        "status": "PASS",
+        "run": "api/var/e2e/rabit-e2e-519bbd19944e",
+        "screenshots": [
+          "l1-r2-desktop-print-archive.png",
+          "l1-r2-mobile-print-archive.png"
+        ],
+        "viewports": [
+          "1440x1000",
+          "390x844"
+        ],
+        "inspection": "viewed by author; screenshots from passed real L1 scenario"
+      }
+    },
+    "changes": [
+      "Allow only the fixed print rejection event, strict UUID groupId and three layout errorCode values.",
+      "Test final Monolog record through CommonLoggerProcessor; reject filename and arbitrary values/messages."
+    ],
+    "details": "../progress.md: R2 sections",
+    "completedAt": "2026-11-10T12:34:58.387207+00:00"
+  },
+  "historicalLimitationsBeforeR2": [
+    "Group a and full a+b gate not run.",
+    "Author verification is not independent review.",
+    "Stage 6 statement/archive reconciliation remains outside stage 4.",
+    "Migration was applied only to the disposable test database.",
+    "R1 changed runtime after saved browser/visual results; full a+b and independent R1 recheck remain pending."
+  ],
+  "updatedAt": "2026-11-10T12:34:58.387207+00:00"
+}

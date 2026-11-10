@@ -1,0 +1,3 @@
+[2026-11-10T15:33:04.719661+03:00] production.INFO: [REDACTED] {"bytes":22224,"attempt":1,"redacted":true} {"durationMs":148.039,"requestId":"6af30f00afc7c4.53367695","method":"CLI"}
+Print archive layout v2 ZIP/CSV/SHA-256 and migration replay passed: ["D3 Печать eda50d4e\/e4.jpg","E4 Печать 10×15\/3шт\/e4.jpg","E4 Печать 10×15\/e4.jpg","состав.csv"]
+L1 production integration passed

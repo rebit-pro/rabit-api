@@ -11,6 +11,7 @@ use Morefoto\Production\Application\Archive\Contract\ManifestWriterInterface;
 use Morefoto\Production\Application\Archive\Dto\ArchiveFileInputDto;
 use Morefoto\Production\Domain\Archive\Repository\ArchiveRepositoryInterface;
 use Morefoto\Production\Domain\Archive\Service\ArchivePolicy;
+use Morefoto\Production\Domain\Archive\Exception\ProductionStorageException;
 use Morefoto\Production\Domain\Archive\ValueObject\ArchiveVersion;
 use Psr\Log\LoggerInterface;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
@@ -53,7 +54,11 @@ final readonly class ArchiveBuilder
         try {
             $lines = $this->archives->lines($version->id);
             $originals = $this->originals->originals(array_values(array_unique(array_map(static fn($line): string => $line->photoId, $lines))));
+            if (!in_array($version->layoutVersion, [1, 2], true)) {
+                throw new ProductionStorageException('Unknown print archive layout.');
+            }
             $files = [];
+            $entryPhotos = [];
             $extensions = [];
             foreach ($lines as $line) {
                 $original = $originals[$line->photoId] ?? null;
@@ -65,9 +70,14 @@ final readonly class ArchiveBuilder
                 }
                 $extension = strtolower(pathinfo($original->relativePath, PATHINFO_EXTENSION));
                 $extensions[$line->photoId] = '' === $extension ? 'jpg' : $extension;
-                $files[$line->entry] = new ArchiveFileInputDto($original->absolutePath, $line->entry . '.' . $extensions[$line->photoId]);
+                if (isset($entryPhotos[$line->entry]) && $entryPhotos[$line->entry] !== $line->photoId) {
+                    throw new ProductionStorageException('Conflicting print archive entries.');
+                }
+                $entryPhotos[$line->entry] = $line->photoId;
+                $entry = 1 === $version->layoutVersion ? $line->entry . '.' . $extensions[$line->photoId] : $line->entry;
+                $files[$line->entry] = new ArchiveFileInputDto($original->absolutePath, $entry);
             }
-            $bytes = $this->writer->write(array_values($files), $this->manifest->csv($lines, $extensions), $this->storage->absolutePath($version->archivePath));
+            $bytes = $this->writer->write(array_values($files), $this->manifest->csv($lines, $extensions, $version->layoutVersion), $this->storage->absolutePath($version->archivePath));
             $readyAt = $this->clock->now();
             $this->archives->markReady(
                 $version->publicId,
