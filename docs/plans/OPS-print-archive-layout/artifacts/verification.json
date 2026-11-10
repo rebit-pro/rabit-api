@@ -486,5 +486,17 @@
     "Migration was applied only to the disposable test database.",
     "R1 changed runtime after saved browser/visual results; full a+b and independent R1 recheck remain pending."
   ],
-  "updatedAt": "2026-11-10T12:34:58.387207+00:00"
+  "updatedAt": "2026-11-10T12:34:58.387207+00:00",
+  "publication": {
+    "recordedAt": "2026-11-10T12:57:24.231331+00:00",
+    "repo": "rebit-pro/rabit-api",
+    "branch": "codex/ops-print-archive-layout",
+    "implementationCommit": "24bccd22e16d2683428a9e57f1b51c2f62004903",
+    "baseBeforeMerge": "952f9789595e4d9e6a9c73b9b03c3deb1cd139dc",
+    "pr": 238,
+    "url": "https://github.com/rebit-pro/rabit-api/pull/238",
+    "scope": "pre-merge journal snapshot; merge explicitly authorized; actual merge receipt is GitHub PR state",
+    "deployment": "not performed",
+    "runtimeSourceChangedAfterGate": false
+  }
 }

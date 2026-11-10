@@ -2,12 +2,12 @@
 
 ## Точка продолжения
 
-- Worktree/ветка: `/home/user/rabit-api/.worktrees/ops-print-archive-layout`, `codex/ops-print-archive-layout`; base/HEAD/main `952f9789595e4d9e6a9c73b9b03c3deb1cd139dc`, PR #237 MERGED.
+- Worktree/ветка: `/home/user/rabit-api/.worktrees/ops-print-archive-layout`, `codex/ops-print-archive-layout`; base/main перед merge `952f9789595e4d9e6a9c73b9b03c3deb1cd139dc`, PR #237 MERGED. Коммит реализации `24bccd22e16d2683428a9e57f1b51c2f62004903`; завершающий коммит журнала не меняет исходники.
 - Завершено: R1 функционально подтверждён независимым вторым кругом; R2 исправлен в двух файлах Share, plan версия 3. Адресные 74/1344, полный PHPUnit 1331/51778, PHPStan/lint и dry-run 0/30 PASS.
 - Полный gate a+b актуального diff: PASS 161/161, `api/var/e2e/rabit-e2e-519bbd19944e/state.json`; native ZIP/CSV/SHA-256/миграция/expiry/rebuild и desktop/mobile PASS. Первый run 830327f939b5 FAIL на G1-T14/G2-T14 сохранён, свежий повтор без изменения кода прошёл; первопричина первых сбоев не установлена.
-- Сейчас: пользователь поручил commit и merge; начинается публикация всего проверенного этапа 4 через один PR в main. Один следующий шаг — зафиксировать 44 файла задачи и отправить OPS-ветку. Ведомость этапа 6 вне scope.
+- Сейчас: реализация закоммичена и опубликована через [PR #238](https://github.com/rebit-pro/rabit-api/pull/238). Merge прямо разрешён пользователем. Этот журнал фиксируется перед завершающим merge; его фактическое состояние и merge SHA сверять через `gh pr view 238 --json state,mergedAt,mergeCommit,headRefOid`. Один следующий шаг при возобновлении — подтвердить MERGED PR #238 перед использованием этапа 4 как поставщика. Ведомость этапа 6 вне scope.
 - Полномочия: пользователь после результатов проверок поручил «Делай коммит и merge». Разрешены commit/push/создание PR/merge текущего этапа 4; deployment не выполняется. Отдельного независимого post-fix review R2 не было, это ограничение сохраняется в отчёте; новое поручение на merge принято с учётом уже сообщённых результатов. Оба исходных отчёта review в /tmp сохранены.
-- Dirty tree: сохранён весь предыдущий diff, новые правки только LogSanitizer и DiagnosticLogSanitizerTest, текущие plan/progress/verification и 3 новых артефакта r2. Staging пуст; временного .ast-index.yaml нет.
+- Рабочее дерево: весь проверенный diff зафиксирован в 24bccd2. После публикации обновлены только plan/progress/verification для номера PR и точки восстановления; они входят в завершающий документарный коммит. Временного .ast-index.yaml нет; продуктовые исходники/артефакты после gate не менялись.
 - Блокеров реализации/проверок нет. R2 post-fix independent review отдельно; реальная инъекция небезопасных имён в HTTP gate не выполнялась (эти ветви покрыты unit). Оба одноразовых runner stopped=true / cleanupErrors=[].
 - Команды для следующей сверки: `git status --short --untracked-files=all`; `git diff --check`; Python SHA-256 по текущим sourceSha256/artifactSha256 verification.json. При новом коде повторить затронутые проверки.
 
@@ -405,3 +405,11 @@ php_check vendor/bin/php-cs-fixer fix --dry-run --diff --config=public/local/php
 - Пользователь: «Делай коммит и merge». Поручение относится ко всему текущему проверенному diff этапа 4; для merge выполняются push OPS-ветки и создание одного PR в main. Deployment не разрешён и не выполняется.
 - Pre-commit: worktree/ветка/HEAD подтверждены; remote main 952f9789595e4d9e6a9c73b9b03c3deb1cd139dc, существующего PR этапа 4 нет. Staging пуст, git diff --check PASS; 33/33 sourceSha256 и 8/8 artifactSha256 совпали, полный перечень 44 файлов соответствует задаче. Сохранённый актуальный full gate 519bbd19944e — все stages PASS, a81+b80=161, без skipped/unexpected/flaky, stopped=true/cleanupErrors=[]. Новых исходников после тестов нет.
 - План/прогресс актуализированы только по текущим полномочиям и исправлению устаревшей строки о повторном R1 review. Новая продуктовая область не добавлена; R2 повторно независимо не проверялся, авторские unit/static/E2E и самопроверка сохранены.
+
+### Публикация PR #238 — снимок перед merge
+
+- `git commit -m "feat(production): preserve filenames and group print quantities"` — PASS: `24bccd22e16d2683428a9e57f1b51c2f62004903`, 44 файла задачи, рабочее дерево после коммита чистое.
+- Первая отправка через origin фактически использовала SSH и завершилась `Connection closed ... port 22`, exit 128; remote ветки ещё не было (gh git/ref — 404). Коммит/исходники не менялись.
+- Успешная отправка: `GIT_TERMINAL_PROMPT=0 timeout 90 git -c credential.helper= -c 'credential.helper=!/home/user/.local/bin/gh auth git-credential' push https://github.com/rebit-pro/rabit-api.git HEAD:refs/heads/codex/ops-print-archive-layout` — PASS, новая remote ветка создана, без force.
+- `gh pr create --repo rebit-pro/rabit-api --base main --head codex/ops-print-archive-layout --title ... --body-file /tmp/rabit-print-archive-pr-body.md` — PASS: https://github.com/rebit-pro/rabit-api/pull/238. Сразу после создания OPEN, не draft, head 24bccd2, base 952f9789; Actions/checks отсутствуют, локальные проверки и ограничения указаны в PR.
+- До merge сохраняется этот документарный снимок с фактическими PR/commit и результатами. Поручение merge остаётся действующим; финальные состояние/merge SHA фиксируются GitHub в PR #238 и итоговом сообщении. Этот снимок не утверждает успешный merge до выполнения операции. После merge следующий шаг — использовать только подтверждённый main; deployment отдельно.
