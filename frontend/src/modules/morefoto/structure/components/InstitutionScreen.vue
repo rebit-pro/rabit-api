@@ -8,6 +8,7 @@ import UiBulkNotice from '../../ui/components/UiBulkNotice.vue';
 import { bulkNotice, type BulkNotice } from '../../ui/removal';
 import type { UiTableColumn, UiTableRow } from '../../ui/table-types';
 import InstitutionOverview from './InstitutionOverview.vue';
+import InstitutionPrintArchiveDialog from '../../production/live/InstitutionPrintArchiveDialog.vue';
 import StructureWidget from './StructureWidget.vue';
 import StructureRemoveDialog from './StructureRemoveDialog.vue';
 import StructureFields from './StructureFields.vue';
@@ -17,6 +18,8 @@ import { structureApi, structureError, structureRemovalError } from '../api';
 import { defaultShootId, type Group, type Shoot } from '../model';
 const props = defineProps<{ institutionId: string }>();
 const auth = useAuthStore();
+const archiveOpen = shallowRef(false);
+const canReadArchive = computed(() => auth.user?.role === 'organizer' || auth.user?.role === 'curator');
 const router = useRouter();
 const canManage = computed(() => auth.user?.role === 'organizer' && !!auth.user.permissions?.includes('organization.manage'));
 const { snapshot, loading, busy: removing, error, reload, remove } = useInstitutionPage(props.institutionId);
@@ -81,8 +84,22 @@ function editInstitution(): void {
 }
 const shootColumns: UiTableColumn[] = [
   { key: 'name', label: 'Съёмка', sortable: true, primary: true, width: '52%' },
-  { key: 'date', label: 'Дата', type: 'date', sortable: true, mobile: true, width: '18%' },
-  { key: 'groups', label: 'Групп', type: 'number', sortable: true, mobile: true, width: '10%' }
+  {
+    key: 'date',
+    label: 'Дата',
+    type: 'date',
+    sortable: true,
+    mobile: true,
+    width: '18%'
+  },
+  {
+    key: 'groups',
+    label: 'Групп',
+    type: 'number',
+    sortable: true,
+    mobile: true,
+    width: '10%'
+  }
 ];
 const groupColumns: UiTableColumn[] = [
   { key: 'name', label: 'Группа', sortable: true, primary: true, width: '30%' },
@@ -101,9 +118,17 @@ const groupColumns: UiTableColumn[] = [
       closed: { label: 'Приём завершён', tone: 'neutral' }
     }
   },
-  { key: 'closesAt', label: 'Печать до', type: 'date', sortable: true, mobile: true }
+  {
+    key: 'closesAt',
+    label: 'Печать до',
+    type: 'date',
+    sortable: true,
+    mobile: true
+  }
 ];
-const moscowDate = new Intl.DateTimeFormat('ru-RU', { timeZone: 'Europe/Moscow' });
+const moscowDate = new Intl.DateTimeFormat('ru-RU', {
+  timeZone: 'Europe/Moscow'
+});
 const shootNames = computed(() => new Map((snapshot.value?.shoots.items ?? []).map((shoot) => [shoot.id, shoot.name])));
 const groupsById = computed(() => new Map((snapshot.value?.groups.items ?? []).map((group) => [group.id, group])));
 const shootRows = computed<UiTableRow[]>(() =>
@@ -131,7 +156,10 @@ const groupRows = computed<UiTableRow[]>(() =>
 );
 const shootFilterItems = computed(() => [
   { title: 'Все съёмки', value: null },
-  ...(snapshot.value?.shoots.items ?? []).map((shoot) => ({ title: shoot.name, value: shoot.id }))
+  ...(snapshot.value?.shoots.items ?? []).map((shoot) => ({
+    title: shoot.name,
+    value: shoot.id
+  }))
 ]);
 function firstPage(list: { items: unknown[]; meta: { total: number } } | undefined): string {
   return list && list.meta.total > list.items.length ? 'Показаны первые ' + list.items.length + ' из ' + list.meta.total + '.' : '';
@@ -149,18 +177,30 @@ const groupsEmptyText = computed(() =>
       ? 'Добавьте группу: у каждой будут свои фотографии и ссылка для родителей.'
       : 'Сначала добавьте съёмку — группа создаётся внутри неё.'
 );
-const removal = shallowRef<{ kind: 'institution' | 'shoot' | 'group'; ids: string[]; names: string[] } | null>(null);
+const removal = shallowRef<{
+  kind: 'institution' | 'shoot' | 'group';
+  ids: string[];
+  names: string[];
+} | null>(null);
 function askRemove(kind: 'shoot' | 'group', ids: string[]): void {
   const items: { id: string; name: string }[] = (kind === 'shoot' ? snapshot.value?.shoots.items : snapshot.value?.groups.items) ?? [];
   const targets = items.filter((item) => ids.includes(item.id));
   if (!canManage.value || !targets.length) return;
   clearNotices();
-  removal.value = { kind, ids: targets.map((item) => item.id), names: targets.map((item) => item.name) };
+  removal.value = {
+    kind,
+    ids: targets.map((item) => item.id),
+    names: targets.map((item) => item.name)
+  };
 }
 function askRemoveInstitution(): void {
   if (!canManage.value || !snapshot.value) return;
   clearNotices();
-  removal.value = { kind: 'institution', ids: [snapshot.value.id], names: [snapshot.value.name] };
+  removal.value = {
+    kind: 'institution',
+    ids: [snapshot.value.id],
+    names: [snapshot.value.name]
+  };
 }
 const removingInstitution = shallowRef(false);
 async function confirmRemove(): Promise<void> {
@@ -193,6 +233,9 @@ async function confirmRemove(): Promise<void> {
     <h1 class="institution-title">{{ snapshot?.name ?? 'Учреждение' }}</h1>
     <p class="mf-muted">Реквизиты, назначения, съёмки и группы учреждения</p>
     <div class="mf-actions mt-5">
+      <v-btn v-if="canReadArchive" variant="outlined" prepend-icon="mdi-folder-zip-outline" :disabled="disabled" @click="archiveOpen = true"
+        >Архив с печатью</v-btn
+      >
       <v-btn v-if="canManage" variant="outlined" prepend-icon="mdi-pencil-outline" :disabled="disabled" @click="editInstitution"
         >Изменить учреждение</v-btn
       >
@@ -208,6 +251,11 @@ async function confirmRemove(): Promise<void> {
       >
     </div>
   </header>
+  <InstitutionPrintArchiveDialog
+    :institution-id="archiveOpen ? institutionId : null"
+    :institution-name="snapshot?.name ?? ''"
+    @close="archiveOpen = false"
+  />
   <v-progress-linear v-if="loading" indeterminate aria-label="Загрузка учреждения" class="mb-5" />
   <v-alert v-if="error" type="error" variant="tonal" role="alert" class="mb-5">{{ error }}</v-alert>
   <v-alert v-if="actionError && !error" type="error" variant="tonal" role="alert" class="mb-5">{{ actionError }}</v-alert>

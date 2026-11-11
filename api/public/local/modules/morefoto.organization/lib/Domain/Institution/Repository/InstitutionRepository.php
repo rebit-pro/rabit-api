@@ -17,6 +17,20 @@ use Morefoto\Organization\Domain\Calendar\Repository\GroupStateSql;
 
 final readonly class InstitutionRepository
 {
+    public function after(int $nativeId, int $limit): Result
+    {
+        if (0 > $nativeId || 1 > $limit || 200 < $limit) {
+            throw new \InvalidArgumentException('Invalid institution cursor.');
+        }
+        try {
+            return InstitutionTable::query()->setSelect(['ID', 'UF_PUBLIC_ID', 'UF_NAME'])
+                ->where('ID', '>', $nativeId)->setOrder(['ID' => 'ASC'])->setLimit($limit)->exec()
+            ;
+        } catch (\Throwable $error) {
+            throw new InstitutionStorageException('Cannot read institutions for print.', 0, $error);
+        }
+    }
+
     public function find(InstitutionId $id): Result
     {
         try {

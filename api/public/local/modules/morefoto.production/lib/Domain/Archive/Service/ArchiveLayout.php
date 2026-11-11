@@ -47,22 +47,7 @@ final readonly class ArchiveLayout
             }
             $prints[$key] = $total + $line->prints;
         }
-        ksort($products, SORT_STRING);
-        $folders = [];
-        // Состав в корне — файл: одноимённая продукция должна получить другую папку.
-        $taken = [$this->canonical('состав.csv') => true];
-        foreach ($products as $id => $name) {
-            $base = $this->folder($name);
-            $folder = $base;
-            if (isset($taken[$this->canonical($folder)])) {
-                $folder = $this->withSuffix($base, ' (' . $id . ')');
-            }
-            for ($suffix = 2; isset($taken[$this->canonical($folder)]); ++$suffix) {
-                $folder = $this->withSuffix($base, ' (' . $id . ') ' . $suffix);
-            }
-            $taken[$this->canonical($folder)] = true;
-            $folders[$id] = $folder;
-        }
+        $folders = $this->folders($products);
         $buckets = [];
         foreach ($lines as $line) {
             $bucket = $this->bucket($line, $prints[$this->fileKey($line)]);
@@ -104,6 +89,36 @@ final readonly class ArchiveLayout
         return $arranged;
     }
 
+    /**
+     * Имена каталогов по устойчивому ID: то же правило для продукции, учреждения и групп.
+     *
+     * @param array<string, string> $names
+     *
+     * @return array<string, string>
+     */
+    public function folders(array $names, string $fallback = self::DEFAULT_FOLDER): array
+    {
+        ksort($names, SORT_STRING);
+        $folders = [];
+        // Состав в корне — файл: одноимённый каталог должен получить другое имя.
+        $taken = [$this->canonical('состав.csv') => true];
+        foreach ($names as $id => $name) {
+            $this->identity((string)$id);
+            $base = $this->folder($name, $fallback);
+            $folder = $base;
+            if (isset($taken[$this->canonical($folder)])) {
+                $folder = $this->withSuffix($base, ' (' . $id . ')');
+            }
+            for ($suffix = 2; isset($taken[$this->canonical($folder)]); ++$suffix) {
+                $folder = $this->withSuffix($base, ' (' . $id . ') ' . $suffix);
+            }
+            $taken[$this->canonical($folder)] = true;
+            $folders[$id] = $folder;
+        }
+
+        return $folders;
+    }
+
     private function filename(string $name): void
     {
         if ('' === $name) {
@@ -116,14 +131,14 @@ final readonly class ArchiveLayout
         }
     }
 
-    /** Очищается только папка продукции; исходные имена файлов не преобразуются. */
-    private function folder(string $name): string
+    /** Очищает имя каталога; исходные имена файлов не преобразуются. */
+    private function folder(string $name, string $fallback): string
     {
         $safe = (string)preg_replace('~[\p{Cc}\p{Cf}/\\\:*?"<>|]+~u', ' ', $name);
         $safe = trim((string)preg_replace('/\s+/u', ' ', $safe), ' .');
         $safe = rtrim(mb_substr($safe, 0, self::MAX_FOLDER_LENGTH), ' .');
         if ('' === $safe || 1 === preg_match('/^[=+\-@]/', $safe) || 1 === preg_match('/^(?:CON|PRN|AUX|NUL|CONIN\$|CONOUT\$|COM[1-9¹²³]|LPT[1-9¹²³])(?: *\.|$)/ui', $safe)) {
-            $safe = self::DEFAULT_FOLDER . ('' === $safe ? '' : ' ' . $safe);
+            $safe = $fallback . ('' === $safe ? '' : ' ' . $safe);
         }
 
         return rtrim(mb_strcut($safe, 0, 255, 'UTF-8'), ' .');

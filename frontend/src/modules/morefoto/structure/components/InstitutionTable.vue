@@ -14,6 +14,7 @@ const props = defineProps<{
   loading: boolean;
   error: string;
   canManage: boolean;
+  canReadArchive: boolean;
   disabled: boolean;
   emptyDescription: string;
 }>();
@@ -23,13 +24,41 @@ const emit = defineEmits<{
   edit: [institution: Institution];
   remove: [institution: Institution];
   retry: [];
+  archive: [institution: Institution];
 }>();
 const sort = shallowRef<UiTableSort>({ key: 'name', direction: 'asc' });
 const columns: UiTableColumn[] = [
-  { key: 'name', label: 'Учреждение', sortable: true, primary: true, width: '34%' },
-  { key: 'shoots', label: 'Съёмок', type: 'number', sortable: true, mobile: true, width: '10%' },
-  { key: 'groups', label: 'Групп', type: 'number', sortable: true, mobile: true, width: '10%' },
-  { key: 'open', label: 'Приём открыт', type: 'number', sortable: true, mobile: true, width: '16%' },
+  {
+    key: 'name',
+    label: 'Учреждение',
+    sortable: true,
+    primary: true,
+    width: '34%'
+  },
+  {
+    key: 'shoots',
+    label: 'Съёмок',
+    type: 'number',
+    sortable: true,
+    mobile: true,
+    width: '10%'
+  },
+  {
+    key: 'groups',
+    label: 'Групп',
+    type: 'number',
+    sortable: true,
+    mobile: true,
+    width: '10%'
+  },
+  {
+    key: 'open',
+    label: 'Приём открыт',
+    type: 'number',
+    sortable: true,
+    mobile: true,
+    width: '16%'
+  },
   { key: 'curator', label: 'Куратор', sortable: true, mobile: true }
 ];
 const byId = computed(() => new Map(props.institutions.map((item) => [item.id, item])));
@@ -55,7 +84,7 @@ const path = (id: string) => '/cabinet/institutions/' + encodeURIComponent(id);
     title="Учреждения"
     label-key="name"
     density="compact"
-    actions-width="96px"
+    actions-width="136px"
     :columns="columns"
     :rows="rows"
     :total="total"
@@ -64,7 +93,7 @@ const path = (id: string) => '/cabinet/institutions/' + encodeURIComponent(id);
     :sort="sort"
     :selected="[]"
     :selectable="false"
-    :actions="canManage"
+    :actions="canManage || canReadArchive"
     :loading="loading"
     :error="error"
     empty-title="Учреждений пока нет"
@@ -91,6 +120,16 @@ const path = (id: string) => '/cabinet/institutions/' + encodeURIComponent(id);
     <template #actions="{ row }">
       <div class="institution-actions">
         <v-btn
+          v-if="canReadArchive"
+          icon="mdi-folder-zip-outline"
+          variant="text"
+          density="compact"
+          :disabled="disabled"
+          :aria-label="'Архив с печатью: ' + row.name"
+          @click="emit('archive', institution(row.id))"
+        />
+        <v-btn
+          v-if="canManage"
           icon="mdi-pencil-outline"
           variant="text"
           density="compact"
@@ -99,6 +138,7 @@ const path = (id: string) => '/cabinet/institutions/' + encodeURIComponent(id);
           @click="emit('edit', institution(row.id))"
         />
         <v-btn
+          v-if="canManage"
           icon="mdi-delete-outline"
           variant="text"
           density="compact"
