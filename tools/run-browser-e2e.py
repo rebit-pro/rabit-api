@@ -78,6 +78,7 @@ VERIFIERS = [
     ("verify-files.php", "j1-files.json", "J1 files integration passed", ["zzzzzzzzzz-files"]),
     # L1: the print archive of the J4 paid print order — composition, disk, link hash, expiry and rebuild.
     ("verify-production.php", "l1-archive.json", "L1 production integration passed", ["zzzzzzzzzz-files", "zzzzzzzzzzzz-print-archive"]),
+    ("verify-institution-production.php", "institution-production.json", "Institution production integration passed", ["zzzzzzzzzz-files", "zzzzzzzzzzzz-print-archive"]),
     # J2: one automatic letter per paid order, the email key stored only as a hash, its link opens the order.
     ("verify-order-email.php", "j2-email.json", "J2 order email integration passed", ["zzzzzzzzzz-files", "zzzzzzzzzz-order-email"]),
     # G2: one payment receipt per paid attempt with a receipt, one closing receipt per handed order and only for its print.
