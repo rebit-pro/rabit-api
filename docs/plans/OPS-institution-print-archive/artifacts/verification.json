@@ -128,12 +128,24 @@
   "sourceHashesMatch": true,
   "postGateSourceChanges": false,
   "isolatedResourcesStopped": true,
-  "independentReview": "Prior independent review found REV-01/02/03; fixes are author-checked and need separate independent review before merge",
-  "externalActions": "No commit/push/PR/merge/deployment",
+  "independentReview": {
+    "status": "PASS_NO_BLOCKING_FINDINGS",
+    "reviewer": "fresh subagent /root/review_archive_fixes, fork_turns=none",
+    "reviewedHead": "1421ec00563463315093e0652d6312009f04ba87",
+    "scope": "9 corrected files and integration after original full review",
+    "artifact": "independent-review-fixes.md",
+    "nonBlockingFollowup": "WORK_PATH-CLEANUP (MEDIUM), recorded in progress; issue not published"
+  },
+  "externalActions": "Implementation committed and branch pushed; PR #239 created; merge explicitly authorized and checked; final state is GitHub PR metadata; no deployment",
   "limitations": [
     "Metadata materialized in memory proportional to saved line count; image bytes streamed.",
     "Historical fixture orders cloned from a real paid J4 snapshot; archive UI/API/DB/files are real.",
     "Rebuild needs retained original files; future shoot rotation is outside scope.",
     "Two pre-existing cache metadata TODO warnings in functional suite are outside this diff."
-  ]
+  ],
+  "pullRequest": {
+    "number": 239,
+    "url": "https://github.com/rebit-pro/rabit-api/pull/239",
+    "base": "main"
+  }
 }

@@ -4,11 +4,11 @@
 
 - Дата: 11.11.2026, Europe/Moscow.
 - Worktree: `/home/user/rabit-api/.worktrees/ops-institution-print-archive`; ветка `codex/ops-institution-print-archive`.
-- Base/HEAD: `7b9de6ed82b7786e4b5e957a3d44a004fcb92935`; main/PR #238 перепроверены через gh тем же SHA, зависимость MERGED. Собственного PR задачи нет.
+- Base: `7b9de6ed82b7786e4b5e957a3d44a004fcb92935`; коммит реализации `41415d0`, пред-push HEAD `1421ec00563463315093e0652d6312009f04ba87`. Main/PR #238 перепроверены через gh тем же base, зависимость MERGED. Текущий HEAD после документарных записей смотреть через git rev-parse HEAD.
 - Документы: plan.md v1.2, архитектура проекта; artifacts/verification.json, source-hashes-review-fixes.json и source-hashes-final.json — текущие результаты. Прежние verification/final manifest сохранены как *-before-review-fixes.json.
-- Завершено: все три замечания независимого review REV-01/02/03 исправлены; unit/native регрессии добавлены. Полный gate 56eab0e1d064 PASS (162/162 browser и все native), backend 1348/52478, targeted unit 72/1800, PHPStan/CS dry-run 0/52 и весь frontend PASS. Desktop/mobile просмотрены, 66/66 хешей совпадают, после gate runtime/test не менялись.
-- Сейчас: пользователь поручил merge в main. Готовится коммит и PR всего этапа 5; повторное независимое review исправлений выполняется перед слиянием.
-- Один следующий шаг: закоммитить проверенный срез, получить повторное независимое review исправлений, создать PR и выполнить разрешённый merge при зелёных условиях. Commit/push/PR/merge разрешены поручением 11.11.2026; deployment не поручен.
+- Завершено: все три замечания независимого review REV-01/02/03 исправлены; unit/native регрессии добавлены, повторное независимое review девяти исправленных файлов завершено без блокеров. Полный gate 56eab0e1d064 PASS (162/162 browser и все native), backend 1348/52478, targeted unit 72/1800, PHPStan/CS dry-run 0/52 и весь frontend PASS. Desktop/mobile просмотрены, 66/66 хешей совпадают, после gate runtime/test не менялись.
+- Сейчас: предмержевый checkpoint PR #239. Коммиты отправлены, повторное независимое review исправлений завершено без блокеров; выполняется разрешённый GitHub merge после финальной сверки SHA. Это состояние на момент документарного коммита; итоговое состояние PR проверяется через gh.
+- Один следующий шаг: проверить PR #239 через gh (state/mergedAt/mergeCommit). Если MERGED — поставка завершена, продолжения по коду нет; deployment не поручен. Если OPEN — разрешён merge при прежних head/main и зелёных условиях. Commit/push/PR/merge разрешены пользователем 11.11.2026.
 - Блокеров и открытых бизнес-решений нет. Накопительный состав/история сохранены; ротация/PDF/этапы 6–8 вне scope. Для восстановления по-прежнему нужны оригиналы.
 - Dirty state: весь этап 5 незакоммичен и не staged. От reviewed manifest изменены ровно 9 runtime/test файлов; остальные 57 неизменны. Plan/progress и новые доказательства обновлены. Чужие деревья/изменения не трогались.
 - Runtime: полный runner a+b завершился exit 0 за 662.9 s; изолированные ресурсы остановлены (`state.stopped=true`). Текущий state — api/var/e2e/rabit-e2e-56eab0e1d064/state.json. Рабочая БД и deployment не использовались.
@@ -229,3 +229,16 @@
 - По rebit-code-review и code-review.md OS повторное независимое review исправлений поручается свежему субагенту без истории реализации; он работает на чтение, без E2E/стендов/публикаций. Его вывод будет проверен до merge.
 
 - Создан коммит реализации 41415d0. Полная проверка staged впервые обнаружила пробелы/пустую строку в новом сохранённом PHPStan-логе (до git add untracked-лог не попадал в git diff --check). Shell продолжил commit после ненулевого check; исправляется отдельным документарным коммитом до push. Исполняемый код и доказанный PASS не менялись. Дальнейшие git-команды выполняются через subprocess с check=True.
+
+- Перед push: коммит 1421ec00563463315093e0652d6312009f04ba87 включает реализацию и подготовленный журнал. Whitespace сохранённого PHPStan-лога исправлен, полный diff от base проходит check. Независимый reviewer /root/review_archive_fixes запущен свежим (fork_turns=none), читает точный ref 1421ec0 и 9 исправленных runtime/test файлов с интеграцией; результатов пока нет. Следующие незакоммиченные изменения — только метаданные поставки.
+
+- Ветка 1421ec0 отправлена без force через HTTPS с настроенным gh credential helper. Создан PR #239: https://github.com/rebit-pro/rabit-api/pull/239, base main.
+- `gh pr view ... --json headRefOid,baseRefOid,mergeable,mergeStateStatus,reviewDecision,statusCheckRollup` — OPEN, head 1421ec0, base 7b9de6e, CLEAN/MERGEABLE, checks отсутствуют (Actions отключены), обязательного GitHub reviewDecision нет. Разрешён обычный merge commit, admin bypass не нужен.
+- Предварительный результат свежего reviewer: новые три исправления проверены, 66/66 хешей совпадают. Отдельное неблокирующее наблюдение о потере прежнего WORK_PATH при отказе удаления остатка убитой сборки фиксируется локально; это предшествующая ветвь очистки, не регрессия трёх исправлений. Публикация issues отдельно не поручена и не выполняется. Окончательный вердикт ожидается.
+
+### 11.11.2026 — повторное независимое review и предмержевый checkpoint
+
+- Свежий reviewer /root/review_archive_fixes (fork_turns=none) завершил независимый проход Б по всем 9 исправленным файлам и А по интеграции на head 1421ec00563463315093e0652d6312009f04ba87. REV-01/02/03 закрыты; блокирующих замечаний к исправлениям нет. Отчёт artifacts/independent-review-fixes.md; модель/reasoning не угадываются.
+- Неблокирующий MEDIUM follow-up WORK_PATH-CLEANUP: при временной ошибке удаления due.workPath после claim старый путь может потеряться, оставив остаток прерванной сборки. Это прежняя ветвь очистки, готовый архив/печатные строки не повреждаются; scope трёх исправлений не расширялся. Наблюдение сохранено локально, issue/review-комментарии без отдельного поручения не публикуются.
+- PR #239 OPEN/CLEAN/MERGEABLE, base прежний; GitHub checks отсутствуют по принятому отключению Actions, локальный полный gate PASS. После review меняются только документы поставки/отчёт, runtime/test состав строго прежний.
+- До финального push/merge повторно сверяются 66 source hashes и отсутствие runtime delta от reviewed ref. Предмержевый документарный коммит включает этот checkpoint; точный исход GitHub-слияния — state/mergedAt/mergeCommit PR #239 и ответ пользователю. Внешние действия ограничены порученным merge, deployment отдельно.
