@@ -26,7 +26,12 @@ final readonly class SalesReportResultMapper
 {
     public function input(SalesReportRequestDto $request): SalesReportInputDto
     {
-        return new SalesReportInputDto($request->institutionId, $request->shootId, $request->groupId);
+        return new SalesReportInputDto(
+            institutionId: $request->institutionId,
+            shootId: $request->shootId,
+            groupId: $request->groupId,
+            includeUnordered: 'all' === $request->childrenView,
+        );
     }
 
     public function report(SalesReportOutputDto $report): SalesReportResultDto

@@ -87,7 +87,6 @@ return [
         'className' => ExportSalesReportPdfUseCase::class,
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(GetSalesReportUseCase::class),
-            ServiceLocator::getInstance()->get(GroupChildrenInterface::class),
             ServiceLocator::getInstance()->get(SalesReportPdfWriterInterface::class),
         ],
     ],

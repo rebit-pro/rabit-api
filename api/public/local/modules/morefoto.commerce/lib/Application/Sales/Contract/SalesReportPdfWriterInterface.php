@@ -8,10 +8,6 @@ use Morefoto\Commerce\Application\Sales\Dto\SalesReportOutputDto;
 
 interface SalesReportPdfWriterInterface
 {
-    /**
-     * Документ PDF фирменного шаблона «Море фото» по готовому отчёту.
-     *
-     * @param array<string, string> $thumbnails WebP-миниатюры по публичному ID ребёнка
-     */
-    public function pdf(SalesReportOutputDto $report, array $thumbnails): string;
+    /** Документ по готовому отчёту; includeUnordered определяет показ строк без заказов, сохраняя общие итоги. */
+    public function pdf(SalesReportOutputDto $report, bool $includeUnordered = true): string;
 }

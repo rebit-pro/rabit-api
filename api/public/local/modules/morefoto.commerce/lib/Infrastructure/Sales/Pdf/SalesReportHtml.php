@@ -70,15 +70,14 @@ final readonly class SalesReportHtml
             . '<td style="text-align: right">Стр. {PAGENO} из {nbpg}</td></tr></table>';
     }
 
-    /** @param array<string, string> $images имя переменной mpdf `imageVars` по публичному ID ребёнка */
-    public function body(SalesReportOutputDto $report, array $images): string
+    public function body(SalesReportOutputDto $report, bool $includeUnordered = true): string
     {
         $html = '<p class="kind">' . $this->escape($this->kind($report->level)) . '</p>'
             . '<h1>' . $this->escape($this->title($report)) . '</h1>'
             . '<p class="area">' . $this->escape($this->area($report)) . '</p>'
             . $this->tiles($report->totals);
         if (SalesReportLevelEnum::GROUP === $report->level) {
-            $html .= '<h2>Дети группы</h2>' . $this->children($report, $images);
+            $html .= '<h2>Дети группы</h2>' . $this->children($report, $includeUnordered);
         } else {
             $html .= '<h2>' . $this->escape($this->rowsTitle($report->level)) . '</h2>' . $this->rows($report);
         }
@@ -92,6 +91,9 @@ final readonly class SalesReportHtml
         if (SalesReportLevelEnum::GROUP === $report->level) {
             $html .= '<h2>Заказы с ФИО ребёнка</h2><p class="muted">ФИО указано покупателем для заказа целиком; в заказе могут быть фото нескольких детей.</p>'
                 . '<table class="rows"><thead><tr><th>Заказ</th><th>Имя и фамилия ребёнка</th><th>Оплата</th><th class="num">Сумма заказа</th></tr></thead><tbody>';
+            if ([] === $report->orders) {
+                $html .= '<tr><td colspan="4" class="muted">Заказов пока нет.</td></tr>';
+            }
             foreach ($report->orders as $order) {
                 $name = null === $order->firstName || null === $order->lastName ? 'Не указано' : $order->lastName . ' ' . $order->firstName;
                 $html .= '<tr><td>' . $this->escape($order->number) . '</td><td>' . $this->escape($name) . '</td><td>'
@@ -192,24 +194,35 @@ final readonly class SalesReportHtml
             . '<td class="num">' . $this->escape($this->money($totals->paidTotal)) . '</td></tr>';
     }
 
-    /** @param array<string, string> $images */
-    private function children(SalesReportOutputDto $report, array $images): string
+    private function children(SalesReportOutputDto $report, bool $includeUnordered): string
     {
-        $html = '<table class="rows"><thead><tr><th></th><th>Ребёнок</th><th>Статус</th><th class="num">Заказов</th>'
-            . '<th class="num">Печать</th><th class="num">Цифровые</th><th class="num">Сумма</th></tr></thead><tbody>';
+        $withoutOrders = 0;
+        foreach ($report->children as $child) {
+            if (ChildSalesStatusEnum::NONE === $child->status) {
+                ++$withoutOrders;
+            }
+        }
+        $html = '<p class="muted">' . ($includeUnordered ? 'Полный список' : 'Строки с заказами')
+            . ' · Нет заказа: ' . $this->number($withoutOrders) . '. Итоги включают всю группу.</p>'
+            . '<table class="rows"><thead><tr><th>Код ребёнка</th><th>Статус</th><th class="num">Оплачено заказов</th>'
+            . '<th class="num">Печать</th><th class="num">Эл. кадры</th><th class="num">Комплекты</th><th class="num">Оплачено</th></tr></thead><tbody>';
         if ([] === $report->children) {
             return $html . '<tr><td colspan="7" class="muted">В группе пока нет детей</td></tr></tbody></table>';
         }
         foreach ($report->children as $child) {
-            // The bytes stay in mpdf imageVars: base64 frames inside the HTML exceed the PCRE limit of mpdf on a real group.
-            $image = $images[$child->id] ?? null;
-            $html .= '<tr><td width="11mm">' . (null === $image ? '' : '<img src="var:' . $this->escape($image) . '" width="9mm">') . '</td>'
-                . '<td class="code">' . $this->escape($child->code) . '</td>'
+            if (!$includeUnordered && ChildSalesStatusEnum::NONE === $child->status) {
+                continue;
+            }
+            $html .= '<tr><td class="code">' . $this->escape($child->code) . '</td>'
                 . '<td><span class="status status-' . $child->status->value . '">' . $this->escape($this->status($child)) . '</span></td>'
                 . '<td class="num">' . $this->number($child->paidOrders) . ($child->orders > $child->paidOrders ? ' <span class="muted">из ' . $this->number($child->orders) . '</span>' : '') . '</td>'
                 . '<td class="num">' . $this->number($child->prints) . '</td>'
-                . '<td class="num">' . $this->number($child->digitalFiles + $child->bundles) . '</td>'
+                . '<td class="num">' . $this->number($child->digitalFiles) . '</td>'
+                . '<td class="num">' . $this->number($child->bundles) . '</td>'
                 . '<td class="num">' . $this->escape($this->money($child->paidTotal)) . '</td></tr>';
+        }
+        if (!$includeUnordered && count($report->children) === $withoutOrders) {
+            $html .= '<tr><td colspan="7" class="muted">Заказов пока нет. Строки без заказа доступны в полном списке.</td></tr>';
         }
 
         return $html . $this->childTotal($report->totals) . '</tbody></table>';
@@ -217,9 +230,10 @@ final readonly class SalesReportHtml
 
     private function childTotal(SalesTotalsOutputDto $totals): string
     {
-        return '<tr class="total"><td></td><td colspan="2">Итого</td><td class="num">' . $this->number($totals->paidOrders) . '</td>'
+        return '<tr class="total"><td colspan="2">Итого</td><td class="num">' . $this->number($totals->paidOrders) . '</td>'
             . '<td class="num">' . $this->number($totals->prints) . '</td>'
-            . '<td class="num">' . $this->number($totals->digitalFiles + $totals->bundles) . '</td>'
+            . '<td class="num">' . $this->number($totals->digitalFiles) . '</td>'
+            . '<td class="num">' . $this->number($totals->bundles) . '</td>'
             . '<td class="num">' . $this->escape($this->money($totals->paidTotal)) . '</td></tr>';
     }
 

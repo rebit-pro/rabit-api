@@ -40,6 +40,7 @@ export function useSalesReport() {
   const error = shallowRef('');
   const downloading = shallowRef(false);
   const downloadError = shallowRef('');
+  const includeUnordered = shallowRef(false);
   const filter = computed(() => reportFilter(route.query));
   const crumbs = computed(() =>
     report.value
@@ -53,13 +54,19 @@ export function useSalesReport() {
   let descending = false;
   let descentKey = '';
   let request = 0;
+  let downloadRequest = 0;
   // A report that answers after the page is gone must neither render nor send the user back to the section.
   onScopeDispose(() => {
     request++;
+    downloadRequest++;
   });
 
   async function load(): Promise<void> {
     const current = ++request;
+    downloadRequest++;
+    downloading.value = false;
+    downloadError.value = '';
+    report.value = null;
     loading.value = true;
     error.value = '';
     try {
@@ -90,30 +97,48 @@ export function useSalesReport() {
 
   async function download(): Promise<void> {
     if (!report.value || downloading.value) return;
+    const current = ++downloadRequest;
+    const source = report.value;
+    const query = filter.value;
+    const all = includeUnordered.value;
+    const isCurrent = () =>
+      current === downloadRequest &&
+      source === report.value &&
+      all === includeUnordered.value &&
+      JSON.stringify(query) === JSON.stringify(filter.value);
     downloading.value = true;
     downloadError.value = '';
     try {
-      const url = URL.createObjectURL(await reportsApi.pdf(filter.value));
+      const blob = await reportsApi.pdf(query, all);
+      if (!isCurrent()) return;
+      const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
-      anchor.download = pdfFileName(report.value.level, new Date().toISOString());
+      anchor.download = pdfFileName(source.level, new Date().toISOString());
       anchor.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
-      downloadError.value = pdfError;
+      if (isCurrent()) downloadError.value = pdfError;
     } finally {
-      downloading.value = false;
+      if (current === downloadRequest) downloading.value = false;
     }
   }
 
   watch(
     () => JSON.stringify(filter.value),
     (key) => {
+      includeUnordered.value = false;
       descending = keepsDescending(key, descending, descentKey, role.value);
       void load();
     },
     { immediate: true }
   );
 
-  return { report, loading, error, crumbs, downloading, downloadError, load, rowHref, download };
+  watch(includeUnordered, () => {
+    downloadRequest++;
+    downloading.value = false;
+    downloadError.value = '';
+  });
+
+  return { report, loading, error, crumbs, downloading, downloadError, includeUnordered, load, rowHref, download };
 }

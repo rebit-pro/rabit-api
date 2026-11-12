@@ -1,4 +1,5 @@
 import api from '@/api/http';
+import { reportPdfFilter } from './rules';
 
 export type SalesReportLevel = 'all' | 'institution' | 'shoot' | 'group';
 export type ChildSalesStatus = 'paid' | 'late' | 'unpaid' | 'none';
@@ -74,10 +75,10 @@ export const reportsApi = {
     return (await api.get<SalesReport>('/api/v1/sales-report', { params: filter })).data;
   },
   /** COM-16: the same report as a branded PDF; the server builds it, so it may take longer than a JSON read. */
-  async pdf(filter: SalesReportFilter): Promise<Blob> {
+  async pdf(filter: SalesReportFilter, includeUnordered = false): Promise<Blob> {
     return (
       await api.get<Blob>('/api/v1/sales-report/pdf', {
-        params: filter,
+        params: reportPdfFilter(filter, includeUnordered),
         responseType: 'blob',
         timeout: 60_000
       })
