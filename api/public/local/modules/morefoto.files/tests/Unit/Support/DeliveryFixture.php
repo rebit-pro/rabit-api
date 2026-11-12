@@ -53,6 +53,7 @@ final class DeliveryFixture implements OrderEmailLinkInterface, EmailNotificatio
     public function __construct()
     {
         $this->files = new FilesFixture();
+        $this->files->hasEntitlements = false;
         $this->deliveries = new InMemoryDeliveries();
     }
 

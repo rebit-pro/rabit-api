@@ -1,4 +1,4 @@
-export type FilesState = 'unpaid' | 'review' | 'empty' | 'expired' | 'available';
+export type FilesState = 'unpaid' | 'review' | 'empty' | 'incomplete' | 'expired' | 'available';
 export type DownloadStatus = 'pending' | 'ready' | 'failed' | 'expired';
 export type DownloadKind = 'file' | 'zip';
 export interface OrderFile {
