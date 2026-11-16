@@ -2,13 +2,13 @@
 
 ## Точка продолжения
 
-- Статус: **MERGE AUTHORIZED / PREPARING PUBLICATION**. Тесты завершены с общим FAIL; пользователь после сообщения о падениях прямо поручил merge в main.
-- Worktree `/home/user/rabit-api/.worktrees/ops-production-report-template`, ветка `codex/ops-production-report-template`, base/HEAD/merge-base `2e4174eb8e558bf1712d257bb10ed3e0fc400555`. DEP-3 #240 / DEP-5 #239 находятся в base; PR этапа 6 отсутствует по последней проверке gh.
+- Статус: **PUBLISHED / USER-AUTHORIZED MERGE**. Продуктовый commit опубликован, PR #241 создан; результат серверного merge — каноническое состояние PR по ссылке ниже. Тесты имеют известный общий FAIL.
+- Worktree `/home/user/rabit-api/.worktrees/ops-production-report-template`, ветка `codex/ops-production-report-template`, base/merge-base `2e4174eb8e558bf1712d257bb10ed3e0fc400555`, продуктовый commit `9b5b8f0a7e08639971e75a755402e910809c8350`. DEP-3 #240 / DEP-5 #239 находятся в base; текущий head/merge отслеживаются в PR #241.
 - Код этапа 6 и исправления R1–R7 не менялись во время тестового поручения. Все 53 исходника совпадают с `artifacts/full-tests-20261116/source-before.json`; dirty diff сохранён, добавлены только документы/доказательства.
 - PASS: backend 1377/52833, PHP lint/PHPStan, frontend check (27 UI-файлов)/commerce (32)/build, основной live a+b 163 browser и все 46 стадий, настоящий Stage6 native/HTTP PDF/CSV/ZIP и основные desktop/mobile.
 - Дополнительный a + бенч: первый default run 78 PASS / 4 FAIL, exit 1; свежий повтор с disposable worker 1000 сообщений / 3600 s — 82/82, native PASS, exit 0. Уникальных real E2E с бенчем — 164. Параметры временного wrapper прозрачны; дефолты repo runner не менялись.
 - **FAIL:** полный demo — 451 сценарий, 21 PASS / 430 FAIL, exit 1; шаги 284 PASS / 430 FAIL / 818 SKIPPED. Подтверждена несовместимость unchanged demo adapter с обязательным GET /api/v1/me; дополнительно есть падения галереи и две проверки геометрии. Полный baseline main не запускался, все причины не объявляются доказанными.
-- **Один следующий шаг:** сохранить commit, опубликовать ветку/один PR и выполнить обычный merge по прямому поручению пользователя. Все известные FAIL/PENDING и отсутствие независимого review явно публикуются в PR. Demo mocks/UI требуют отдельной последующей работы.
+- **Точка восстановления:** [PR #241](https://github.com/rebit-pro/rabit-api/pull/241). Проверить его state/mergeCommit и актуальный main; продуктовых правок в этом срезе больше не планируется. Обычный merge выполняется по прямому поручению пользователя, все FAIL/PENDING опубликованы. Demo mocks/UI требуют отдельной последующей работы.
 - Открыто: ручные сценарии сверх автоматического покрытия (live 15x21/printCount>1, supplement/expired/layout1 и др.), крайний объём 50000 ссылок, независимое review. Автоматический Stage6 PASS не подменяет эти PENDING условия.
 - Доказательства: [verification.json](artifacts/full-tests-20261116/verification.json), [падения](artifacts/full-tests-20261116/failures.md), [451 demo-результат](artifacts/full-tests-20261116/demo-summary.json), HTTP PDF/PNG/native/логи и source/evidence manifests в той же папке. Исторические артефакты предыдущего этапа сохранены.
 - Все собственные live/demo-контейнеры и стенды завершены и убраны; чужие стенды не затрагивались. Commit/push/PR/merge/deploy не выполнялись. Изменения исходников остаются незакоммиченными.
@@ -357,3 +357,12 @@ PASS: tracked git diff --check и отдельные no-index проверки �
 - gh branch main = 2e4174eb8e558bf1712d257bb10ed3e0fc400555, protected=false; gh pr list по ветке = []; права текущего аккаунта ADMIN, но admin/force обход не планируется.
 - Исходники 53/53 совпадают с проверенными SHA; diff --check PASS, high-confidence secret scan опубликованных артефактов PASS. В папке задачи 84 документа/артефакта, ~2.7 МБ; сырые traces и закрытые env туда не включены.
 - main/base не менялись, поэтому продуктовые тесты повторно не запускаются без новой причины. Будут сохранены обычный commit, push и PR с явным перечислением всех FAIL/PENDING. Серверные ограничения merge не обходятся.
+
+
+### Публикация перед merge
+
+- Commit `9b5b8f0a7e08639971e75a755402e910809c8350`: `feat(reports): add versioned production worksheet`, 137 файлов (53 исходника + 84 документа/артефакта). После commit все 53 содержимых `git show <commit>:<path>` совпали с проверенными SHA, рабочее дерево было clean.
+- Обычный `git push -u origin codex/ops-production-report-template`: PASS, новая удалённая ветка создана без force.
+- `gh pr create --repo rebit-pro/rabit-api --base main --head codex/ops-production-report-template --title 'Этап 6 MoreFoto: ведомость по версии печатного архива' --body-file /tmp/stage6-pr-body-20261116.md`: PASS, https://github.com/rebit-pro/rabit-api/pull/241.
+- В PR опубликованы фактические PASS/FAIL/PENDING, прямое поручение пользователя и отсутствие независимого review. Общая зелёная готовность не заявляется. Для merge используется проверенный удалённый main 2e4174e, а не устаревшая локальная refs/heads/main; в PR входит только собственный diff.
+- Этот журнал фиксирует подготовку/публикацию до вызова merge. Итоговый факт/merge SHA — состояние PR #241, которое проверяется сразу после операции; commit, содержащий журнал, сам себя не хеширует. При возобновлении сначала сверить PR/main, не повторять реализацию или merge автоматически.
