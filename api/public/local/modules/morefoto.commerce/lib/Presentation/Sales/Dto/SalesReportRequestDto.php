@@ -17,5 +17,13 @@ final readonly class SalesReportRequestDto implements RequestDtoInterface
         public ?string $groupId = null,
         #[Assert\Choice(choices: ['all', 'ordered'])]
         public string $childrenView = 'all',
+        #[Assert\Choice(choices: ['summary', 'worksheet'])]
+        public string $view = 'summary',
+        #[Assert\Choice(choices: ['preview', 'final'])]
+        public string $worksheetMode = 'preview',
+        #[Assert\Choice(choices: ['group', 'institution'])]
+        public ?string $archiveType = null,
+        #[Assert\Uuid]
+        public ?string $archiveId = null,
     ) {}
 }

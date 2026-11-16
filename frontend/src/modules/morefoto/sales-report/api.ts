@@ -1,5 +1,6 @@
 import api from '@/api/http';
 import { reportPdfFilter } from './rules';
+import type { ReportSelection, Worksheet } from './worksheet';
 
 export type SalesReportLevel = 'all' | 'institution' | 'shoot' | 'group';
 export type ChildSalesStatus = 'paid' | 'late' | 'unpaid' | 'none';
@@ -62,6 +63,7 @@ export interface SalesReport {
   /** One name belongs to the whole order, including an order with photos of several children. */
   orders: OrderNameSales[];
   generatedAt: string;
+  worksheet?: Worksheet | null;
 }
 
 export interface SalesReportFilter {
@@ -71,14 +73,14 @@ export interface SalesReportFilter {
 }
 
 export const reportsApi = {
-  async report(filter: SalesReportFilter): Promise<SalesReport> {
-    return (await api.get<SalesReport>('/api/v1/sales-report', { params: filter })).data;
+  async report(filter: SalesReportFilter, selection: ReportSelection = {}): Promise<SalesReport> {
+    return (await api.get<SalesReport>('/api/v1/sales-report', { params: { ...filter, ...selection } })).data;
   },
   /** COM-16: the same report as a branded PDF; the server builds it, so it may take longer than a JSON read. */
-  async pdf(filter: SalesReportFilter, includeUnordered = false): Promise<Blob> {
+  async pdf(filter: SalesReportFilter, includeUnordered = false, selection: ReportSelection = {}): Promise<Blob> {
     return (
       await api.get<Blob>('/api/v1/sales-report/pdf', {
-        params: reportPdfFilter(filter, includeUnordered),
+        params: { ...reportPdfFilter(filter, includeUnordered), ...selection },
         responseType: 'blob',
         timeout: 60_000
       })

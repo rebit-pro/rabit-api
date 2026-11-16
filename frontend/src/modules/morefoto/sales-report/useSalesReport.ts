@@ -1,7 +1,9 @@
 import { computed, onScopeDispose, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { apiErrorCode } from '@/api/authErrors';
 import { reportsApi, type SalesReport, type SalesReportFilter } from './api';
+import { reportSelection, worksheetError, worksheetSourceKey, worksheetSourceSelection, type ReportSelection } from './worksheet';
 import {
   descendFilter,
   keepsDescending,
@@ -21,8 +23,8 @@ export function reportQuery(filter: SalesReportFilter): Record<string, string> {
   return Object.fromEntries(Object.entries(filter).filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
 }
 
-export function reportHref(filter: SalesReportFilter): string {
-  const query = new URLSearchParams(reportQuery(filter)).toString();
+export function reportHref(filter: SalesReportFilter, selection: ReportSelection = {}): string {
+  const query = new URLSearchParams(reportQuery({ ...filter, ...selection })).toString();
   return query ? PATH + '?' + query : PATH;
 }
 
@@ -42,11 +44,14 @@ export function useSalesReport() {
   const downloadError = shallowRef('');
   const includeUnordered = shallowRef(false);
   const filter = computed(() => reportFilter(route.query));
+  const selection = computed(() => reportSelection(route.query));
+  const view = computed(() => (selection.value.view === 'worksheet' ? 'worksheet' : 'summary'));
+  const worksheetSource = computed(() => worksheetSourceKey(selection.value));
   const crumbs = computed(() =>
     report.value
       ? reportCrumbs(report.value, role.value).map((crumb) => ({
           title: crumb.title,
-          to: crumb.filter ? reportHref(crumb.filter) : undefined
+          to: crumb.filter ? reportHref(crumb.filter, selection.value) : undefined
         }))
       : []
   );
@@ -70,21 +75,22 @@ export function useSalesReport() {
     loading.value = true;
     error.value = '';
     try {
-      const next = await reportsApi.report(filter.value);
+      const next = await reportsApi.report(filter.value, selection.value);
       if (current !== request) return;
+      if (selection.value.view === 'worksheet' && !next.worksheet) throw new Error('Worksheet response missing.');
       const down = descending ? descendFilter(next, role.value) : null;
       if (down) {
         descentKey = JSON.stringify(reportFilter(reportQuery(down)));
-        await router.replace({ path: PATH, query: reportQuery(down) });
+        await router.replace({ path: PATH, query: reportQuery({ ...down, ...selection.value }) });
         return;
       }
       descending = false;
       report.value = next;
-    } catch {
+    } catch (cause) {
       if (current === request) {
         descending = false;
         report.value = null;
-        error.value = reportLoadError;
+        error.value = worksheetError(apiErrorCode(cause)) ?? reportLoadError;
       }
     } finally {
       if (current === request) loading.value = false;
@@ -92,7 +98,18 @@ export function useSalesReport() {
   }
 
   function rowHref(rowId: string): string {
-    return report.value ? reportHref(rowFilter(report.value, rowId)) : PATH;
+    return report.value ? reportHref(rowFilter(report.value, rowId), selection.value) : PATH;
+  }
+
+  function setView(value: unknown): void {
+    if (value !== 'summary' && value !== 'worksheet') return;
+    const next: ReportSelection = value === 'worksheet' ? { view: 'worksheet', worksheetMode: 'preview' } : {};
+    void router.replace({ path: PATH, query: reportQuery({ ...filter.value, ...next }) });
+  }
+
+  function setWorksheetSource(value: unknown): void {
+    const next = typeof value === 'string' ? worksheetSourceSelection(value) : null;
+    if (next) void router.replace({ path: PATH, query: reportQuery({ ...filter.value, ...next }) });
   }
 
   async function download(): Promise<void> {
@@ -101,15 +118,17 @@ export function useSalesReport() {
     const source = report.value;
     const query = filter.value;
     const all = includeUnordered.value;
+    const chosen = selection.value;
     const isCurrent = () =>
       current === downloadRequest &&
       source === report.value &&
       all === includeUnordered.value &&
-      JSON.stringify(query) === JSON.stringify(filter.value);
+      JSON.stringify(query) === JSON.stringify(filter.value) &&
+      JSON.stringify(chosen) === JSON.stringify(selection.value);
     downloading.value = true;
     downloadError.value = '';
     try {
-      const blob = await reportsApi.pdf(query, all);
+      const blob = await reportsApi.pdf(query, all, chosen);
       if (!isCurrent()) return;
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
@@ -125,10 +144,10 @@ export function useSalesReport() {
   }
 
   watch(
-    () => JSON.stringify(filter.value),
-    (key) => {
+    () => JSON.stringify([filter.value, selection.value]),
+    () => {
       includeUnordered.value = false;
-      descending = keepsDescending(key, descending, descentKey, role.value);
+      descending = keepsDescending(JSON.stringify(filter.value), descending, descentKey, role.value);
       void load();
     },
     { immediate: true }
@@ -140,5 +159,20 @@ export function useSalesReport() {
     downloadError.value = '';
   });
 
-  return { report, loading, error, crumbs, downloading, downloadError, includeUnordered, load, rowHref, download };
+  return {
+    report,
+    loading,
+    error,
+    crumbs,
+    downloading,
+    downloadError,
+    includeUnordered,
+    view,
+    worksheetSource,
+    setView,
+    setWorksheetSource,
+    load,
+    rowHref,
+    download
+  };
 }

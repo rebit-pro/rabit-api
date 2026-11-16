@@ -24,6 +24,8 @@ use Morefoto\Commerce\Presentation\Sales\Dto\SalesTotalsResultDto;
 /** Ответ COM-15 без данных покупателей: числа уровня, коды детей и признак миниатюры вместо ID кадра. */
 final readonly class SalesReportResultMapper
 {
+    public function __construct(private WorksheetResultMapper $worksheet = new WorksheetResultMapper()) {}
+
     public function input(SalesReportRequestDto $request): SalesReportInputDto
     {
         return new SalesReportInputDto(
@@ -31,6 +33,10 @@ final readonly class SalesReportResultMapper
             shootId: $request->shootId,
             groupId: $request->groupId,
             includeUnordered: 'all' === $request->childrenView,
+            view: $request->view,
+            worksheetMode: $request->worksheetMode,
+            archiveType: $request->archiveType,
+            archiveId: $request->archiveId,
         );
     }
 
@@ -78,6 +84,7 @@ final readonly class SalesReportResultMapper
                 ),
                 $report->orders,
             ),
+            worksheet: null === $report->worksheet ? null : $this->worksheet->map($report->worksheet),
         );
     }
 

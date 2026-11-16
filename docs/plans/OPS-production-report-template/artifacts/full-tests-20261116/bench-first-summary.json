@@ -1,0 +1,14 @@
+{
+  "run": "rabit-e2e-c21ba253e7ab",
+  "stats": {
+    "startTime": "2026-11-16T09:38:09.422Z",
+    "duration": 723210.367,
+    "expected": 78,
+    "skipped": 0,
+    "unexpected": 4,
+    "flaky": 0
+  },
+  "containerExitCode": 1,
+  "native": "not run after browser failure",
+  "cause": "Suspected test-worker 100-message limit; a fresh repeat with higher worker capacity follows."
+}

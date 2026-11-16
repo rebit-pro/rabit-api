@@ -1,0 +1,42 @@
+{
+  "status": "PASS",
+  "source": "real HTTP PDFs and API worksheet projection from full live run",
+  "results": [
+    {
+      "archiveId": "609dcc3a-9831-4126-8760-eb538e2230f1",
+      "type": "group",
+      "number": 1,
+      "pages": 1,
+      "selectedLines": 3,
+      "prints": 5,
+      "total": 55000,
+      "namesPathsVersionId": "PASS",
+      "a4Landscape": "PASS",
+      "minFontAtLeast7pt": "PASS"
+    },
+    {
+      "archiveId": "c865503d-177f-4869-b20f-fd0944df8bfd",
+      "type": "institution",
+      "number": 1,
+      "pages": 2,
+      "selectedLines": 6,
+      "prints": 10,
+      "total": 110000,
+      "namesPathsVersionId": "PASS",
+      "a4Landscape": "PASS",
+      "minFontAtLeast7pt": "PASS"
+    },
+    {
+      "archiveId": "f7cad3e7-e55e-4a2a-945b-7bae3eb62b01",
+      "type": "institution",
+      "number": 2,
+      "pages": 2,
+      "selectedLines": 9,
+      "prints": 15,
+      "total": 165000,
+      "namesPathsVersionId": "PASS",
+      "a4Landscape": "PASS",
+      "minFontAtLeast7pt": "PASS"
+    }
+  ]
+}

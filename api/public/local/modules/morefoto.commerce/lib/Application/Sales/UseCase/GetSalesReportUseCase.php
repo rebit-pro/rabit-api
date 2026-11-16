@@ -15,6 +15,7 @@ use Morefoto\Commerce\Application\Sales\Dto\SalesReportRowOutputDto;
 use Morefoto\Commerce\Application\Sales\Enum\SalesReportLevelEnum;
 use Morefoto\Commerce\Application\Sales\Mapper\SalesReportRowMapper;
 use Morefoto\Commerce\Application\Sales\Service\SalesReportScope;
+use Morefoto\Commerce\Application\Sales\Service\ProductionWorksheet;
 use Morefoto\Commerce\Domain\Sales\Enum\SalesBreakdownEnum;
 use Morefoto\Commerce\Domain\Sales\Repository\SalesReportRepository;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
@@ -26,6 +27,7 @@ use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryItemOutputDto;
  * COM-15: отчёт продаж для воспитателя, руководителя, куратора и организатора в их области — по детям группы со
  * статусом оплаты или по группам, съёмкам и учреждениям, с итогом и печатью по форматам. Отчёт собирается тремя
  * агрегирующими чтениями заказов, чтением заказов группы и одним чтением детей Media, без запросов на строку.
+ * По явному выбору добавляет рабочую ведомость из снимков покупок и сохранённого задания печати.
  */
 final readonly class GetSalesReportUseCase
 {
@@ -35,6 +37,7 @@ final readonly class GetSalesReportUseCase
         private GroupChildrenInterface $media,
         private SalesReportRowMapper $mapper,
         private ClockInterface $clock,
+        private ProductionWorksheet $worksheet,
     ) {}
 
     public function execute(int $actorId, SalesReportInputDto $input): SalesReportOutputDto
@@ -83,6 +86,7 @@ final readonly class GetSalesReportUseCase
             children: $children,
             generatedAt: $this->clock->now(),
             orders: $orders,
+            worksheet: 'worksheet' === $input->view ? $this->worksheet->build($actorId, $input, $scope) : null,
         );
     }
 

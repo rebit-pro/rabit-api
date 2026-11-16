@@ -6,9 +6,25 @@ import { useSalesReport } from '../useSalesReport';
 import ReportChildrenSection from './ReportChildrenSection.vue';
 import ReportOrdersTable from './ReportOrdersTable.vue';
 import ReportRowsTable from './ReportRowsTable.vue';
+import WorksheetSection from './WorksheetSection.vue';
 
 // E10: the sales of the staff member's area — children of a group or groups, shoots and institutions — and its PDF.
-const { report, loading, error, crumbs, downloading, downloadError, includeUnordered, load, rowHref, download } = useSalesReport();
+const {
+  report,
+  loading,
+  error,
+  crumbs,
+  downloading,
+  downloadError,
+  includeUnordered,
+  view,
+  worksheetSource,
+  setView,
+  setWorksheetSource,
+  load,
+  rowHref,
+  download
+} = useSalesReport();
 const figures = computed(() => (report.value ? reportFigures(report.value.totals) : []));
 const area = computed(() => {
   const value = report.value;
@@ -37,6 +53,19 @@ const number = new Intl.NumberFormat('ru-RU');
       >Скачать PDF</v-btn
     >
   </header>
+  <v-btn-toggle
+    :model-value="view"
+    mandatory
+    divided
+    color="primary"
+    aria-label="Вид отчёта"
+    class="mb-4"
+    data-testid="report-view"
+    @update:model-value="setView"
+  >
+    <v-btn value="summary">Компактная сводка</v-btn>
+    <v-btn value="worksheet">Ведомость</v-btn>
+  </v-btn-toggle>
   <v-alert v-if="downloadError" type="error" variant="tonal" class="mb-4" role="alert">{{ downloadError }}</v-alert>
 
   <div v-if="loading && !report" class="report-state" role="status">
@@ -46,8 +75,17 @@ const number = new Intl.NumberFormat('ru-RU');
   <v-alert v-else-if="error" type="error" variant="tonal" role="alert">
     {{ error }}
     <div class="mt-3"><v-btn variant="outlined" @click="load">Повторить</v-btn></div>
+    <div v-if="view === 'worksheet'" class="mt-3">
+      <v-btn variant="outlined" @click="setWorksheetSource('preview')">Предварительная ведомость</v-btn>
+    </div>
   </v-alert>
-  <template v-else-if="report">
+  <WorksheetSection
+    v-else-if="report?.worksheet"
+    :report="report.worksheet"
+    :selected-source="worksheetSource"
+    @source="setWorksheetSource"
+  />
+  <template v-else-if="report && view === 'summary'">
     <dl class="report-figures" :aria-busy="loading" data-testid="report-figures">
       <div v-for="figure in figures" :key="figure.key" :data-testid="'report-figure-' + figure.key">
         <dt>{{ figure.label }}</dt>

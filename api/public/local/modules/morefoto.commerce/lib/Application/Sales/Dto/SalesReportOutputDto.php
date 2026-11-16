@@ -25,5 +25,6 @@ final readonly class SalesReportOutputDto
         public array $children,
         public \DateTimeImmutable $generatedAt,
         public array $orders = [],
+        public ?WorksheetOutputDto $worksheet = null,
     ) {}
 }

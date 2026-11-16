@@ -15,6 +15,8 @@ final readonly class SalesReportHtml
 {
     private const string NBSP = "\u{00A0}";
 
+    public function __construct(private WorksheetHtml $worksheet = new WorksheetHtml()) {}
+
     public function css(): string
     {
         return <<<'CSS'
@@ -43,7 +45,7 @@ final readonly class SalesReportHtml
             .header td { vertical-align: middle; }
             .brand { font-family: manrope; font-weight: bold; font-size: 13pt; color: #1E1E1E; }
             .footer { font-size: 7.5pt; color: #66737F; }
-            CSS;
+            CSS . $this->worksheet->css();
     }
 
     public function header(): string
@@ -72,6 +74,9 @@ final readonly class SalesReportHtml
 
     public function body(SalesReportOutputDto $report, bool $includeUnordered = true): string
     {
+        if (null !== $report->worksheet) {
+            return $this->worksheet->body($report->worksheet);
+        }
         $html = '<p class="kind">' . $this->escape($this->kind($report->level)) . '</p>'
             . '<h1>' . $this->escape($this->title($report)) . '</h1>'
             . '<p class="area">' . $this->escape($this->area($report)) . '</p>'

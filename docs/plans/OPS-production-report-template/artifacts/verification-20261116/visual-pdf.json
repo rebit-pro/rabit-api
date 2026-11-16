@@ -1,0 +1,13 @@
+{
+  "scope": "Offline synthetic DTO/mPDF only; no HTTP/browser/E2E",
+  "viewed": [
+    "preview-page-1.png",
+    "final-page-1.png",
+    "final-page-23.png",
+    "bundle-300-wide-page-1.png",
+    "bundle-300-wide-page-2.png",
+    "bundle-300-wide-page-14.png"
+  ],
+  "result": "PASS",
+  "observations": "Шрифт имён читаем; длинные имена переносятся; версия/колонки/итоги присутствуют; деньги заказа не повторяются в продолжениях. Все страницы проверены программно на размеры/обрезку; визуально просмотрены только перечисленные страницы."
+}
