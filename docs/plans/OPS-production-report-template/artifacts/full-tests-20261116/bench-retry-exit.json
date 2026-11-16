@@ -1,0 +1,8 @@
+{
+  "exitCode": 0,
+  "wrapper": "/tmp/stage6-bench-runner-20261116.py",
+  "testEnvironmentOverrides": {
+    "MEDIA_E2E_LIMIT": 1000,
+    "MEDIA_E2E_TIME_LIMIT": 3600
+  }
+}

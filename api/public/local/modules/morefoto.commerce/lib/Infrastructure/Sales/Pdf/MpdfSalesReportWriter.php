@@ -29,7 +29,7 @@ final readonly class MpdfSalesReportWriter implements SalesReportPdfWriterInterf
         try {
             $mpdf = new Mpdf([
                 'mode' => 'utf-8',
-                'format' => 'A4',
+                'format' => null === $report->worksheet ? 'A4' : 'A4-L',
                 'tempDir' => $this->tempDir,
                 'fontDir' => array_merge((new ConfigVariables())->getDefaults()['fontDir'], [$this->fontDir]),
                 'fontdata' => (new FontVariables())->getDefaults()['fontdata'] + [

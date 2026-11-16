@@ -1,0 +1,29 @@
+{
+  "reviewDate": "2026-11-12",
+  "savedDate": "2026-11-13",
+  "base": "2e4174eb8e558bf1712d257bb10ed3e0fc400555",
+  "head": "2e4174eb8e558bf1712d257bb10ed3e0fc400555",
+  "kind": "Historical unit/static/render evidence; no HTTP, browser, visual E2E or real a+b run",
+  "files": [
+    {
+      "file": "worksheet-preview.pdf",
+      "bytes": 78415,
+      "sha256": "c5bccff5fb9639e136d9748ab0217c148e08c92f82ae1587aee760a2a5e51a63"
+    },
+    {
+      "file": "worksheet-final.pdf",
+      "bytes": 94956,
+      "sha256": "f0d918679da84e946e564c13e39fbbe9da987b10e7ac3d25526782952fcbde76"
+    },
+    {
+      "file": "bundle-300.pdf",
+      "bytes": 49728,
+      "sha256": "cc7ea4efc9497c76215d53d7dbea23f2f796d562673d0882ae34605f5f2ced1f"
+    },
+    {
+      "file": "manifest.json",
+      "bytes": 11381,
+      "sha256": "fa6528347596150a358048dd72bbbfff22b5ab3733993cd9387056579ca86209"
+    }
+  ]
+}

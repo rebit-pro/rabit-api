@@ -1,0 +1,102 @@
+
+> morefoto-frontend@0.1.0 test:e2e:live
+> playwright test --config playwright.live.config.ts --project a
+
+
+Running 82 tests using 1 worker
+
+  ✓  1 [a] › e2e/live/catalog.spec.ts:24:1 › неверный пароль отклонён сервером; роль загружается через /me (2.9s)
+  ✓  2 [a] › e2e/live/catalog.spec.ts:43:1 › неподключённая оплата недоступна в настоящем режиме (826ms)
+  ✓  3 [a] › e2e/live/catalog.spec.ts:61:1 › оформление и заказ по ссылке честно сообщают о недействительном ключе (1.0s)
+  ✓  4 [a] › e2e/live/catalog.spec.ts:69:1 › создание и изменение сохраняются в БД и видны в новой сессии (6.2s)
+  ✓  5 [a] › e2e/live/catalog.spec.ts:91:1 › ошибки полей и серверный 422 оставляют редактор открытым (4.8s)
+  ✓  6 [a] › e2e/live/catalog.spec.ts:119:1 › PATCH принимает ID пути, но отклоняет настоящий query string (2.6s)
+  ✓  7 [a] › e2e/live/catalog.spec.ts:134:1 › воспитатель не может открыть или изменить каталог, включая прямой запрос (2.0s)
+  ✓  8 [a] › e2e/live/catalog.spec.ts:164:1 › изменённая роль в localStorage заменяется настоящим профилем (1.7s)
+  ✓  9 [a] › e2e/live/catalog.spec.ts:177:1 › учётная запись без профиля сотрудника получает понятный отказ (1.4s)
+  ✓  10 [a] › e2e/live/catalog.spec.ts:184:1 › выход отзывает серверный токен (2.9s)
+  ✓  11 [a] › e2e/live/catalog.spec.ts:202:1 › отзыв сессии возвращает ко входу и затем в каталог (4.6s)
+  ✓  12 [a] › e2e/live/catalog.spec.ts:218:1 › конфликт двух редакторов не перезаписывает чужие изменения (7.4s)
+  ✓  13 [a] › e2e/live/catalog.spec.ts:245:1 › потеря ответа после commit и повтор не создают дубликат (4.7s)
+  ✓  14 [a] › e2e/live/catalog.spec.ts:275:1 › #92: каталог загружается одной страницей до 100 позиций и листается без запросов (3.8s)
+  ✓  15 [a] › e2e/live/catalog.spec.ts:297:1 › мобильный редактор доступен, текст товара безопасно отображается (3.2s)
+  ✓  16 [a] › e2e/live/conditions.spec.ts:133:1 › E3: общие и групповые условия проходят CAS, idempotency и live UI (11.0s)
+  ✓  17 [a] › e2e/live/conditions.spec.ts:256:1 › E3: воспитатель не читает и не меняет условия прямым запросом (1.9s)
+  ✓  18 [a] › e2e/live/conditions.spec.ts:279:1 › E3: потерянный ответ условий повторяется с тем же ключом и телом (4.7s)
+  ✓  19 [a] › e2e/live/design-tokens.spec.ts:5:1 › токены размеров, радиус и рамка поля, шрифты из собственной сборки (437ms)
+  ✓  20 [a] › e2e/live/legal.spec.ts:26:1 › LEG-T10/T21: документы и реквизиты открываются без входа, подстановки заполнены (1.4s)
+  ✓  21 [a] › e2e/live/legal.spec.ts:67:1 › LEG-T11/T15: футер со ссылками и плашка о cookie без сторонних запросов (531ms)
+  ✓  22 [a] › e2e/live/legal.spec.ts:91:1 › LEG-T20: сотрудник без согласия принимает его в кабинете один раз (2.1s)
+  ✓  23 [a] › e2e/live/organization.spec.ts:107:1 › C3: учреждение, две съёмки и группы сохраняются через браузер и новую сессию (9.5s)
+  ✓  24 [a] › e2e/live/organization.spec.ts:177:1 › C3: очистка даты сохраняет null, переименование без даты сохраняет значение (3.6s)
+  ✓  25 [a] › e2e/live/organization.spec.ts:219:1 › C3: потерянный ответ группы повторяется после reload с тем же ключом и телом (4.2s)
+  ✓  26 [a] › e2e/live/organization.spec.ts:259:1 › C3: конфликт двух редакторов группы сохраняет ввод и не перезаписывает победителя (7.6s)
+  ✓  27 [a] › e2e/live/organization.spec.ts:287:1 › C3: съёмки учреждения листаются в виджете, группы съёмки — страницами сервера (7.9s)
+  ✓  28 [a] › e2e/live/organization.spec.ts:319:1 › C3: сервер отклоняет query-подмену, календарь в PATCH и отсутствующие сущности (3.1s)
+  ✓  29 [a] › e2e/live/organization.spec.ts:366:1 › C3: воспитатель не получает редактор даже после подмены локальной роли (1.7s)
+  ✓  30 [a] › e2e/live/organization.spec.ts:388:1 › C3: мобильная форма и календарь группы доступны без горизонтального скролла (3.5s)
+  ✓  31 [a] › e2e/live/organization.spec.ts:411:1 › C3: куратор и руководитель видят только назначенное учреждение и его съёмки (10.6s)
+  ✓  32 [a] › e2e/live/organization.spec.ts:478:1 › C3: отзыв сессии во время редактора не сохраняет группу и возвращает ко входу (5.4s)
+  ✓  33 [a] › e2e/live/organization.spec.ts:506:1 › C3: повтор потерянного сохранения после 401 и нового входа не создаёт дубликат (7.1s)
+  ✓  34 [a] › e2e/live/shell.spec.ts:52:3 › каркас кабинета на 1280: organizer (3.7s)
+  ✓  35 [a] › e2e/live/shell.spec.ts:52:3 › каркас кабинета на 1280: curator (2.8s)
+  ✓  36 [a] › e2e/live/shell.spec.ts:52:3 › каркас кабинета на 1280: head (2.6s)
+  ✓  37 [a] › e2e/live/shell.spec.ts:52:3 › каркас кабинета на 1280: teacher (2.7s)
+  ✓  38 [a] › e2e/live/shell.spec.ts:79:3 › каркас кабинета организатора на 390 (3.1s)
+  ✓  39 [a] › e2e/live/shell.spec.ts:79:3 › каркас кабинета организатора на 768 (3.4s)
+  ✓  40 [a] › e2e/live/shell.spec.ts:79:3 › каркас кабинета организатора на 1440 (3.8s)
+  ✓  41 [a] › e2e/live/staff.spec.ts:58:1 › B2: организатор приглашает учителя и назначает реальную группу (7.5s)
+  ✓  42 [a] › e2e/live/staff.spec.ts:104:1 › B2: замена назначения требует подпись и отзывает старый токен (3.3s)
+  ✓  43 [a] › e2e/live/staff.spec.ts:165:1 › B2: форма показывает замену занятой группы и сохраняет видимые значения (6.0s)
+  ✓  44 [a] › e2e/live/staff.spec.ts:226:1 › B2: teacher не читает управление, а последний организатор защищён (4.0s)
+  ✓  45 [a] › e2e/live/staff.spec.ts:284:1 › B2: мобильный список не создаёт горизонтальную прокрутку (2.8s)
+  ✓  46 [a] › e2e/live/staff.spec.ts:296:1 › #91: организатор сортирует, выбирает и удаляет сотрудников; повторное добавление приглашает заново (5.4s)
+  ✓  47 [a] › e2e/live/z-institution-detail.spec.ts:101:1 › C4: полная карточка показывает сохранённые съёмки и группы из разных съёмок (5.7s)
+  ✓  48 [a] › e2e/live/z-institution-detail.spec.ts:157:1 › #105: организатор создаёт и изменяет группу на странице учреждения, выбрав съёмку (8.7s)
+  ✓  49 [a] › e2e/live/z-institution-detail.spec.ts:223:1 › C4 #92: виджеты листают съёмки и группы независимо, без запросов к серверу (8.8s)
+  ✓  50 [a] › e2e/live/z-institution-detail.spec.ts:261:1 › C4: куратор и руководитель читают только свою карточку без mutation signature (12.4s)
+  ✓  51 [a] › e2e/live/z-institution-detail.spec.ts:329:1 › C4: teacher и невалидный токен не открывают полный endpoint (3.9s)
+  ✓  52 [a] › e2e/live/z-institution-detail.spec.ts:364:1 › C4: query границы, path spoof и пустые дальние страницы проверяет сервер (2.5s)
+  ✓  53 [a] › e2e/live/z-institution-detail.spec.ts:406:1 › C4: ошибка загрузки не подменяется пустой карточкой, повтор читает сервер (3.4s)
+  ✓  54 [a] › e2e/live/z-institution-detail.spec.ts:430:1 › C4: мобильная карточка безопасно отображает длинный текст и доступные действия (4.6s)
+  ✓  55 [a] › e2e/live/z-institution-detail.spec.ts:452:1 › C4: отзыв сессии при обновлении карточки возвращает к входу и обратно (5.1s)
+  ✓  56 [a] › e2e/live/zz-access.spec.ts:35:1 › B4: приглашение по ссылке — пароль, вход и одноразовая ссылка (3.4s)
+  ✓  57 [a] › e2e/live/zz-access.spec.ts:80:1 › B4: ожидающий регистрации сотрудник получает общий ответ и подсказки (888ms)
+  ✓  58 [a] › e2e/live/zz-access.spec.ts:89:1 › B4: восстановление доступа отвечает одинаково для любого адреса (852ms)
+  ✓  59 [a] › e2e/live/zz-access.spec.ts:100:1 › B4: сброс пароля по ссылке завершает прежнюю сессию (2.8s)
+  ✓  60 [a] › e2e/live/zz-access.spec.ts:125:1 › B4: смена пароля в профиле проверяет текущий пароль (2.5s)
+  ✓  61 [a] › e2e/live/zz-access.spec.ts:144:1 › B4: организатор находит ожидающих регистрации и повторяет приглашение (3.1s)
+  ✓  62 [a] › e2e/live/zz-media-archive.spec.ts:117:1 › #150: архивы по папкам детей размечаются сами, групповые кадры достаются всем детям (9.3s)
+  ✓  63 [a] › e2e/live/zz-media-archive.spec.ts:203:1 › #150: сбои сервера и связи повторяются сами, экран сверки помещается на телефоне (9.6s)
+Media bench: {"count":50,"averageMegabytes":7.4,"parallel":2,"totalSeconds":56,"transferMs":{"p50":396,"p95":576},"acceptedToReadyMs":{"p50":35881,"p95":42823}}
+  ✓  64 [a] › e2e/live/zz-media-bench.spec.ts:13:1 › #33/#34: замер партии типичных фото на изолированном стенде (1.9m)
+  ✓  65 [a] › e2e/live/zz-media.spec.ts:39:1 › D3: ошибочный ответ списка кадров показывает понятное сообщение (3.4s)
+  ✓  66 [a] › e2e/live/zz-media.spec.ts:74:1 › D1/D2: приватное фото получает M:N-разметку и обложку без потери атомарности (18.4s)
+  ✓  67 [a] › e2e/live/zz-media.spec.ts:412:1 › #33: партия отправляется по два файла без ожидания превью и переживает обновление страницы (11.8s)
+  ✓  68 [a] › e2e/live/zz-media.spec.ts:499:1 › #54/#55: большая группа открывается страницей, превью идут очередью и переживают сбой (32.4s)
+  ✓  69 [a] › e2e/live/zz-media.spec.ts:660:1 › #55: превью прежней сессии отменяются при выходе и не сбрасывают новый вход (7.5s)
+  ✓  70 [a] › e2e/live/zz-media.spec.ts:742:1 › #106: организатор удаляет лишние кадры группы с подтверждением (11.8s)
+  ✓  71 [a] › e2e/live/zz-media.spec.ts:898:1 › #115/#116: потерянный ответ удаления восстанавливается повтором, duplicate уходит вместе с canonical (8.9s)
+  ✓  72 [a] › e2e/live/zz-notification.spec.ts:3:1 › H1/NTF-01: существующий Lead остаётся доступен и honeypot не отправляет сообщение (34ms)
+  ✓  73 [a] › e2e/live/zz-questions.spec.ts:17:1 › a parent asks the curator from the gallery and keeps the conversation in this browser (4.0s)
+  ✓  74 [a] › e2e/live/zz-questions.spec.ts:70:1 › a first question whose response was lost is recovered after reload without a second conversation (2.1s)
+  ✓  75 [a] › e2e/live/zz-questions.spec.ts:93:1 › an edited text after a lost first answer joins the recovered conversation instead of starting another (1.5s)
+  ✓  76 [a] › e2e/live/zz-questions.spec.ts:125:1 › a new curator answer is marked on the gallery until the parent opens it (1.5s)
+  ✓  77 [a] › e2e/live/zz-questions.spec.ts:161:1 › a teacher writes to the curators from the cabinet; a curator cannot open this conversation (4.2s)
+  ✓  78 [a] › e2e/live/zz-questions.spec.ts:182:1 › the question screens fit desktop and mobile (2.7s)
+  ✓  79 [a] › e2e/live/zz-questions.spec.ts:202:1 › a guest writes from the login page to the same curator group and sees the request number (1.9s)
+  ✓  80 [a] › e2e/live/zz-questions.spec.ts:253:1 › the login page with its information and feedback form fits desktop and mobile (2.4s)
+  ✓  81 [a] › e2e/live/zz-u7-screens.spec.ts:27:1 › U7: учреждение и съёмка — счётчики, хлебные крошки, вкладки, распределение групп и готовность фото (5.1s)
+  ✓  82 [a] › e2e/live/zz-u7-screens.spec.ts:82:1 › U7: раздел «Помощь» профиля показывает контакт организатора (1.5s)
+
+  82 passed (8.5m)
+
+To open last HTML report run:
+
+  npx playwright show-report reports/e2e-live/html
+
+npm notice
+npm notice New major version of npm available! 10.9.2 -> 12.2.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+npm notice To update run: npm install -g npm@12.2.2
+npm notice

@@ -1,0 +1,405 @@
+{
+  "id": "rabit-e2e-a6f4ccef313f",
+  "source": "/home/user/rabit-api/.worktrees/ops-production-report-template",
+  "scope": "full gate",
+  "stopped": true,
+  "stages": [
+    {
+      "name": "npm ci",
+      "startedAt": 1.4,
+      "status": "passed",
+      "seconds": 19.0
+    },
+    {
+      "name": "php-cli WebP capability",
+      "startedAt": 1.4,
+      "status": "passed",
+      "seconds": 1.1
+    },
+    {
+      "name": "a: MySQL and RabbitMQ",
+      "startedAt": 1.4,
+      "status": "passed",
+      "seconds": 22.1
+    },
+    {
+      "name": "b: MySQL and RabbitMQ",
+      "startedAt": 1.4,
+      "status": "passed",
+      "seconds": 22.4
+    },
+    {
+      "name": "php-fpm WebP capability",
+      "startedAt": 2.5,
+      "status": "passed",
+      "seconds": 1.2
+    },
+    {
+      "name": "composer autoload",
+      "startedAt": 3.7,
+      "status": "passed",
+      "seconds": 51.2
+    },
+    {
+      "name": "npm run lint",
+      "startedAt": 20.4,
+      "status": "passed",
+      "seconds": 63.0
+    },
+    {
+      "name": "npm run lint:styles",
+      "startedAt": 20.4,
+      "status": "passed",
+      "seconds": 21.2
+    },
+    {
+      "name": "npm run typecheck",
+      "startedAt": 20.4,
+      "status": "passed",
+      "seconds": 56.0
+    },
+    {
+      "name": "npm run typecheck:e2e",
+      "startedAt": 20.4,
+      "status": "passed",
+      "seconds": 18.6
+    },
+    {
+      "name": "npm run build-only",
+      "startedAt": 20.4,
+      "status": "passed",
+      "seconds": 37.9
+    },
+    {
+      "name": "npm run test:commerce",
+      "startedAt": 20.4,
+      "status": "passed",
+      "seconds": 17.8
+    },
+    {
+      "name": "npm run test:ui",
+      "startedAt": 20.4,
+      "status": "passed",
+      "seconds": 17.2
+    },
+    {
+      "name": "php-lint",
+      "startedAt": 54.9,
+      "status": "passed",
+      "seconds": 6.2
+    },
+    {
+      "name": "phpstan",
+      "startedAt": 54.9,
+      "status": "passed",
+      "seconds": 22.5
+    },
+    {
+      "name": "phpunit",
+      "startedAt": 54.9,
+      "status": "passed",
+      "seconds": 32.8
+    },
+    {
+      "name": "a: real Bitrix schema and fixture accounts",
+      "startedAt": 87.7,
+      "status": "passed",
+      "seconds": 6.3
+    },
+    {
+      "name": "b: real Bitrix schema and fixture accounts",
+      "startedAt": 87.7,
+      "status": "passed",
+      "seconds": 6.3
+    },
+    {
+      "name": "a: durable Notification contract on real MySQL",
+      "startedAt": 94.0,
+      "status": "passed",
+      "seconds": 1.8
+    },
+    {
+      "name": "b: FPM, media and files workers and nginx",
+      "startedAt": 94.0,
+      "status": "passed",
+      "seconds": 6.9
+    },
+    {
+      "name": "a: FPM, media and files workers and nginx",
+      "startedAt": 95.8,
+      "status": "passed",
+      "seconds": 6.3
+    },
+    {
+      "name": "b: E4 gallery fixture through internal lifecycle",
+      "startedAt": 102.1,
+      "status": "passed",
+      "seconds": 1.2
+    },
+    {
+      "name": "a: E4 gallery fixture through internal lifecycle",
+      "startedAt": 102.1,
+      "status": "passed",
+      "seconds": 1.2
+    },
+    {
+      "name": "a: real browser group a",
+      "startedAt": 103.3,
+      "status": "passed",
+      "seconds": 495.4
+    },
+    {
+      "name": "b: real browser group b",
+      "startedAt": 103.3,
+      "status": "passed",
+      "seconds": 588.8
+    },
+    {
+      "name": "a: verify-access.php",
+      "startedAt": 598.7,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "a: verify-support.php",
+      "startedAt": 599.1,
+      "status": "passed",
+      "seconds": 1.0
+    },
+    {
+      "name": "a: verify-photo-deletion.php",
+      "startedAt": 600.0,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-storefront.php",
+      "startedAt": 692.1,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-sales-windows.php",
+      "startedAt": 692.4,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-handoff.php",
+      "startedAt": 692.7,
+      "status": "passed",
+      "seconds": 0.4
+    },
+    {
+      "name": "b: verify-orders.php",
+      "startedAt": 693.1,
+      "status": "passed",
+      "seconds": 0.5
+    },
+    {
+      "name": "b: verify-markup-correction.php",
+      "startedAt": 693.6,
+      "status": "passed",
+      "seconds": 4.4
+    },
+    {
+      "name": "b: verify-email-only-orders.php",
+      "startedAt": 697.9,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-links.php",
+      "startedAt": 698.2,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-gallery-openings.php",
+      "startedAt": 698.5,
+      "status": "passed",
+      "seconds": 8.3
+    },
+    {
+      "name": "b: verify-transfers.php",
+      "startedAt": 706.8,
+      "status": "passed",
+      "seconds": 0.4
+    },
+    {
+      "name": "b: verify-avatar.php",
+      "startedAt": 707.1,
+      "status": "passed",
+      "seconds": 0.2
+    },
+    {
+      "name": "b: verify-payment-costs.php",
+      "startedAt": 707.4,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-payments.php",
+      "startedAt": 707.7,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-files.php",
+      "startedAt": 708.0,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-production-worksheet.php",
+      "startedAt": 708.4,
+      "status": "passed",
+      "seconds": 0.4
+    },
+    {
+      "name": "b: verify-production.php",
+      "startedAt": 708.8,
+      "status": "passed",
+      "seconds": 0.4
+    },
+    {
+      "name": "b: verify-institution-production.php",
+      "startedAt": 709.2,
+      "status": "passed",
+      "seconds": 1.5
+    },
+    {
+      "name": "b: verify-order-email.php",
+      "startedAt": 710.7,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-receipts.php",
+      "startedAt": 711.0,
+      "status": "passed",
+      "seconds": 0.3
+    }
+  ],
+  "results": {
+    "a": {
+      "passed": 81,
+      "seconds": 491.2,
+      "files": {
+        "catalog.spec.ts": 15,
+        "conditions.spec.ts": 3,
+        "design-tokens.spec.ts": 1,
+        "legal.spec.ts": 3,
+        "organization.spec.ts": 11,
+        "shell.spec.ts": 7,
+        "staff.spec.ts": 6,
+        "z-institution-detail.spec.ts": 9,
+        "zz-access.spec.ts": 6,
+        "zz-media-archive.spec.ts": 2,
+        "zz-media.spec.ts": 7,
+        "zz-notification.spec.ts": 1,
+        "zz-questions.spec.ts": 8,
+        "zz-u7-screens.spec.ts": 2
+      }
+    },
+    "b": {
+      "passed": 82,
+      "seconds": 585.1,
+      "files": {
+        "cabinet-tables.spec.ts": 6,
+        "z-links-preparation.spec.ts": 2,
+        "zz-avatar.spec.ts": 3,
+        "zzz-handoff.spec.ts": 9,
+        "zzzz-links.spec.ts": 2,
+        "zzzz-short-links.spec.ts": 3,
+        "zzzz-storefront-windows.spec.ts": 4,
+        "zzzz-storefront.spec.ts": 9,
+        "zzzzz-markup-correction.spec.ts": 2,
+        "zzzzz-orders.spec.ts": 12,
+        "zzzzzz-transfers.spec.ts": 4,
+        "zzzzzzz-overview.spec.ts": 3,
+        "zzzzzzz-summaries.spec.ts": 1,
+        "zzzzzzzz-payment-costs.spec.ts": 2,
+        "zzzzzzzzz-payments.spec.ts": 3,
+        "zzzzzzzzzz-files.spec.ts": 4,
+        "zzzzzzzzzz-order-email.spec.ts": 1,
+        "zzzzzzzzzzz-tables.spec.ts": 3,
+        "zzzzzzzzzzz-teacher-sales.spec.ts": 1,
+        "zzzzzzzzzzzz-print-archive.spec.ts": 2,
+        "zzzzzzzzzzzzz-receipts.spec.ts": 3,
+        "zzzzzzzzzzzzzz-sales-report.spec.ts": 2,
+        "zzzzzzzzzzzzzzz-gallery-opening.spec.ts": 1
+      }
+    }
+  },
+  "environment": {
+    "commit": "2e4174eb8e558bf1712d257bb10ed3e0fc400555",
+    "dirtyPaths": [
+      "api/public/local/modules/morefoto.commerce/di/sales.php",
+      "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/SalesReportInputDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/SalesReportOutputDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Application/Sales/UseCase/GetSalesReportUseCase.php",
+      "api/public/local/modules/morefoto.commerce/lib/Domain/Sales/Repository/SalesReportRepository.php",
+      "api/public/local/modules/morefoto.commerce/lib/Infrastructure/Sales/Pdf/MpdfSalesReportWriter.php",
+      "api/public/local/modules/morefoto.commerce/lib/Infrastructure/Sales/Pdf/SalesReportHtml.php",
+      "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/SalesReportRequestDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/SalesReportResultDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/SalesReportResultMapper.php",
+      "api/public/local/modules/morefoto.commerce/tests/Unit/GroupSalesArchitectureTest.php",
+      "api/public/local/modules/morefoto.commerce/tests/Unit/SalesReportTest.php",
+      "api/public/local/modules/morefoto.production/.settings.php",
+      "frontend/e2e/live/zzzzzzzzzzzzzz-sales-report.spec.ts",
+      "frontend/public/guide/reports/index.html",
+      "frontend/src/modules/morefoto/sales-report/api.ts",
+      "frontend/src/modules/morefoto/sales-report/components/SalesReportScreen.vue",
+      "frontend/src/modules/morefoto/sales-report/useSalesReport.ts",
+      "tools/run-browser-e2e.py",
+      "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/WorksheetColumnOutputDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/WorksheetFileOutputDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/WorksheetGroupOutputDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/WorksheetLineOutputDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/WorksheetOrderOutputDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/WorksheetOutputDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/WorksheetPurchaseOutputDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Mapper/WorksheetPurchaseMapper.php",
+      "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Service/ProductionWorksheet.php",
+      "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Service/WorksheetAssembler.php",
+      "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Service/WorksheetFiles.php",
+      "api/public/local/modules/morefoto.commerce/lib/Infrastructure/Sales/Pdf/WorksheetHtml.php",
+      "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/WorksheetColumnResultDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/WorksheetFileResultDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/WorksheetGroupResultDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/WorksheetLineResultDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/WorksheetOrderResultDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/WorksheetResultDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/WorksheetVersionResultDto.php",
+      "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/WorksheetResultMapper.php",
+      "api/public/local/modules/morefoto.commerce/tests/Unit/ProductionWorksheetTest.php",
+      "api/public/local/modules/morefoto.production/di/worksheet.php",
+      "api/public/local/modules/morefoto.production/lib/Application/Worksheet/",
+      "api/public/local/modules/morefoto.production/tests/Unit/ProductionWorksheetContractTest.php",
+      "api/public/local/modules/rebit.share/lib/Contracts/Production/",
+      "api/tools/e2e/verify-production-worksheet.php",
+      "docs/plans/OPS-production-report-template/",
+      "frontend/src/modules/morefoto/sales-report/components/WorksheetSection.vue",
+      "frontend/src/modules/morefoto/sales-report/components/WorksheetTable.vue",
+      "frontend/src/modules/morefoto/sales-report/worksheet.ts",
+      "frontend/tests/ui/production-worksheet.test.mjs"
+    ],
+    "diffSha256": "fbf9d1d37dab763034bd9ddf421e3be508c022a4ef4350dca3c22e92a485c88d",
+    "lockSha256": "5bbdcf6f35e8bb075491b7cecd07a68e970edaebe0ed7169d2e05ce9781e333b",
+    "images": {
+      "mcr.microsoft.com/playwright:v1.52.0-jammy": "sha256:ff2946177f0756c87482c0ef958b7cfbf389b92525ace78a1c9890281d0d60f4",
+      "rabit-api-e2e-php-cli:local": "sha256:968b2d5ef8d82c32382ddd41c9fb14d88e5735bb66a10a81f354c355e2479200",
+      "rabit-api-e2e-php-fpm:local": "sha256:1e60d2751e671fc9f4020f85b806e90ab596d498e75425129a037f582028499e",
+      "rabit-api-e2e-nginx:local": "sha256:3ce6f0e4926b53d65dec97a4ce2ca91ed82742c7ec0f9feccc51f87c82052e62",
+      "mysql:8.0": "sha256:64756cc92f707eb504496d774353990bcb0f6999ddf598b6ad188f2da66bd000",
+      "nginx:1.29-alpine": "sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de",
+      "rabbitmq:3.13-management": "sha256:e582c0bc7766f3342496d8485efb5a1df782b5ce3886ad017e2eaae442311f69"
+    },
+    "cpus": 20,
+    "memoryMiB": 15939
+  },
+  "observedExecSessionExitCode": 143,
+  "exitCodeNote": "All runner stages passed, full gate summary printed, and owned stands cleaned up. Tool session later returned 143; no test-stage failure is present. This is recorded separately from actual test results."
+}

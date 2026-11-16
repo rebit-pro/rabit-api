@@ -27,5 +27,6 @@ final readonly class SalesReportResultDto implements ResultDtoInterface
         public array $children,
         public string $generatedAt,
         public array $orders = [],
+        public ?WorksheetResultDto $worksheet = null,
     ) {}
 }

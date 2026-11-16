@@ -1,0 +1,87 @@
+{
+  "date": "2026-11-16T10:10:21.662558+00:00",
+  "branch": "codex/ops-production-report-template",
+  "head": "2e4174eb8e558bf1712d257bb10ed3e0fc400555",
+  "overall": "FAIL",
+  "reason": "Demo regression: 430 failed scenarios",
+  "codeChangedDuringTestTask": false,
+  "backend": {
+    "status": "PASS",
+    "tests": 1377,
+    "assertions": 52833,
+    "lint": "PASS",
+    "phpstan": "PASS"
+  },
+  "frontend": {
+    "checks": "PASS",
+    "uiFiles": 27,
+    "commerceFiles": 32,
+    "build": "PASS"
+  },
+  "liveAB": {
+    "status": "PASS at test-stage level",
+    "run": "rabit-e2e-a6f4ccef313f",
+    "passed": 163,
+    "stagesPassed": 46,
+    "skipped": 0,
+    "flaky": 0,
+    "execWrapperExitCode": 143,
+    "allOwnedResourcesRemoved": true
+  },
+  "bench": {
+    "defaultAttempt": {
+      "run": "rabit-e2e-c21ba253e7ab",
+      "passed": 78,
+      "failed": 4,
+      "containerExitCode": 1
+    },
+    "retry": {
+      "run": "rabit-e2e-03c3ed9d1003",
+      "passed": 82,
+      "failed": 0,
+      "exitCode": 0,
+      "native": "PASS",
+      "testEnvironmentOverrides": {
+        "MEDIA_E2E_LIMIT": 1000,
+        "MEDIA_E2E_TIME_LIMIT": 3600
+      }
+    }
+  },
+  "uniqueLiveScenariosPassed": 164,
+  "stage6": {
+    "browser": "PASS",
+    "nativeCommerceProductionCsvZip": "PASS",
+    "httpPdfs": "PASS (3 versions)",
+    "desktopMobile": "PASS within captured default states",
+    "sourceFilesUnchanged": 53
+  },
+  "demo": {
+    "status": "FAIL",
+    "total": 451,
+    "passed": 21,
+    "failed": 430,
+    "skippedScenarios": 0,
+    "steps": {
+      "passed": 284,
+      "failed": 430,
+      "skipped": 818
+    },
+    "exitCode": 1,
+    "durationSeconds": 1397.381,
+    "workers": 4,
+    "memoryLimitGiB": 6
+  },
+  "pending": [
+    "Independent review",
+    "Manual scenarios outside captured/automated states",
+    "Maximum 50000-file worksheet runtime/memory measurement",
+    "Separate fixes for demo mocks/UI and permanent opt-in stand worker capacity"
+  ],
+  "externalActions": {
+    "commit": false,
+    "push": false,
+    "pr": false,
+    "merge": false,
+    "deploy": false
+  }
+}

@@ -1,0 +1,9 @@
+Продолжи реализацию этапа 6 MoreFoto «Ведомость по шаблону и файлам печати».
+Worktree: /home/user/rabit-api/.worktrees/ops-production-report-template
+Ветка: codex/ops-production-report-template
+
+Прочитай AGENTS.md/CLAUDE.md, подключи rebit-os и профильные skills. В docs/plans/OPS-production-report-template/ прочитай plan.md, progress.md и artifacts/review-2026-11-12.md. Через настроенный gh проверь актуальный main и зависимости этапов 3/5.
+
+Продолжай существующую незакоммиченную реализацию: внеси исправления R1–R7 и заверши недостающий scope этапа 6. Сохрани snapshot-цены/скидки, ФИО всего заказа, отсутствие повторного учёта денег, компактную сводку и выбор конкретной версии Production с совпадением ZIP/CSV. Обнови руководство и plan/progress; выполни обязательные backend/frontend проверки и проверь PDF.
+
+E2E сам не запускай: подготовь реальные сценарии T05–T07, T10–T13, T15 для отдельного полного a+b и desktop/mobile прогона. Непроверенное оставь PENDING. Итог — исправления, доказательства проверок и открытые условия готовности. Без commit/push/PR/merge/deploy. Авторская проверка не заменяет независимое review.

@@ -1,0 +1,227 @@
+{
+  "head": "2e4174eb8e558bf1712d257bb10ed3e0fc400555",
+  "scope": "Final changed sources + plan/progress; artifact directory excluded",
+  "codeUnchangedDuringTestTask": true,
+  "files": [
+    {
+      "path": "api/public/local/modules/morefoto.commerce/di/sales.php",
+      "sha256": "1e613102773659916524242c950c5a47d1b6918f03d95ee786db689fa2376a2a"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/SalesReportInputDto.php",
+      "sha256": "1b38819ad79d5874f567a66b3069f615d6f143cef72b7c5622479feefcfe8e46"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/SalesReportOutputDto.php",
+      "sha256": "e1d9054bfd38b7fe2abff7348946c41b4424e24b8e15e1b156bd28b65bd5fb87"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/WorksheetColumnOutputDto.php",
+      "sha256": "d449ca36c4aa7645f684694c522b00cc4c557310aaf9291dce02c1d2896b3bf5"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/WorksheetFileOutputDto.php",
+      "sha256": "2d5e606bf949b9c430d09f332a43d7fbc92e1aff7e61a96254ad11b538032913"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/WorksheetGroupOutputDto.php",
+      "sha256": "b5b373f710ea7a971dee8e9d6f2e9a52ac6bfcc06a61d8c7b59393823ef9907f"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/WorksheetLineOutputDto.php",
+      "sha256": "0fb8ed5190c3a0b98726182f4961d984edf6ca247961f5a3df7fe07883600f51"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/WorksheetOrderOutputDto.php",
+      "sha256": "74f550e76d8e43b58d539c4d5b28c1cf01a46fcdec4d429193cdce0be653857b"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/WorksheetOutputDto.php",
+      "sha256": "40fe18f1dd29e848aea100e84785ca93aa4362c2b05cce7e634e528d47d430e2"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/WorksheetPurchaseOutputDto.php",
+      "sha256": "2a890ee656f68c3eea1a5f36d8a810d02b7a719035fe4dfc62d0a45b16c1ea7b"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Mapper/WorksheetPurchaseMapper.php",
+      "sha256": "1700862a684b5c8434d995efd167847fa28a6b45b6c4fab06656781274f96f83"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Service/ProductionWorksheet.php",
+      "sha256": "2bf92e4a35305ab3c6b07346b47ddd2381eae63bae361d6aa88f590936aab7ff"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Service/WorksheetAssembler.php",
+      "sha256": "9bdc19d2eb55252e17e07d0dc62ebef0d2f36dec925480ac5123718b0fb33972"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Service/WorksheetFiles.php",
+      "sha256": "c3f9236f641f9fd10fb8e66dce7b6be84cc4067d244b99d5d7ee88eb139f6709"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/UseCase/GetSalesReportUseCase.php",
+      "sha256": "328f56d4f77e6f06aceead9b3b1599c646fb236dfeea0bd6dfb76a1db6c7d088"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Domain/Sales/Repository/SalesReportRepository.php",
+      "sha256": "7d1713b8be2c439cb47548e120ca5f63075d2276bbe800c5fb40db34cb25a435"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Infrastructure/Sales/Pdf/MpdfSalesReportWriter.php",
+      "sha256": "a4c209207951cd90e88296441f5efd3508d73db8184f402f6397c2346857e7bf"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Infrastructure/Sales/Pdf/SalesReportHtml.php",
+      "sha256": "9574e7a6f9518d5403f55ec0b003b79a1566e4251f4b8914b76bf3dfd396077d"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Infrastructure/Sales/Pdf/WorksheetHtml.php",
+      "sha256": "63ed073360ffbf6cfcc8c4697787ed5bb224705798eea205ce445a7169427425"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/SalesReportRequestDto.php",
+      "sha256": "d4ffb3d2a0cd455a55ed36b286de7b27bff42fbcfd6c62da88e296c2df4abaec"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/SalesReportResultDto.php",
+      "sha256": "412e490d716d2e54e9d0795ed21de11d163ac92d69deb2491a0d3deb805cfb32"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/WorksheetColumnResultDto.php",
+      "sha256": "95d48798e47e88a633f0321c738cd30b491e0ed33a870dea5fd4baf1effe05f8"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/WorksheetFileResultDto.php",
+      "sha256": "ecb6aca3ea8b556cfd2dba2e62e616c79477dd3f564d316fa1c80f940524ce21"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/WorksheetGroupResultDto.php",
+      "sha256": "5b4d17d0e6190b5d4b2da1967dca79b4af2c7ad0dacf92b192a21034cf6005db"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/WorksheetLineResultDto.php",
+      "sha256": "4619eb6fb4d6e9d95cb5b23aaaa569080edb6e15a0963cd3aebf7d62d76f310e"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/WorksheetOrderResultDto.php",
+      "sha256": "7b7f1a318058b2e3e4d7507e2f0b997b27ee73a52a9066cccb9b6a7b60c5c821"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/WorksheetResultDto.php",
+      "sha256": "7fcbc95822994cafb665bb745c68036e604872e3d137b923c568b98cf4a69597"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/WorksheetVersionResultDto.php",
+      "sha256": "ad07522b67c66effe1b841899761919b699f8e5c0acc1ea88517c6ea3c4a6535"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/SalesReportResultMapper.php",
+      "sha256": "ff69eaa82ace7c163ff0cd856ebc40db174e896da91fa0132f0ca56ecb8d3b3c"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/WorksheetResultMapper.php",
+      "sha256": "040451d977168e6a90f539604b183c189e1ff3131d27f93de68879f53e5cd6be"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/tests/Unit/GroupSalesArchitectureTest.php",
+      "sha256": "328b526362ab7a989665fac3dc5230a36c6ba2ed2828fc9cf112e1547bd990ee"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/tests/Unit/ProductionWorksheetTest.php",
+      "sha256": "8a8b894809f6229418760416279099046e27add54350726abc260e08c2b8c2e5"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.commerce/tests/Unit/SalesReportTest.php",
+      "sha256": "cd1103397970679787263af88d42e082a6e3fa03ef9526a50d2b9be1fde3ecc1"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.production/.settings.php",
+      "sha256": "518d5691b9be55b4628c85ad4197fdcdd724be5d7afc27de954488c9e6d96661"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.production/di/worksheet.php",
+      "sha256": "ff7485f3377375d5ba6e491ef26f1b5a9d0d5f4239245a23d67a1ad98a3c88f9"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.production/lib/Application/Worksheet/Service/PrintComposition.php",
+      "sha256": "238332d1a1579a2ef37a60662d3663cd938dfe8707d5cf6342f5decf6d5fc9c9"
+    },
+    {
+      "path": "api/public/local/modules/morefoto.production/tests/Unit/ProductionWorksheetContractTest.php",
+      "sha256": "4083eb4ead8cf7785a24acf0846f4b57b5a95a44b473f975cb6f7873d30ae186"
+    },
+    {
+      "path": "api/public/local/modules/rebit.share/lib/Contracts/Production/Dto/PrintCompositionOutputDto.php",
+      "sha256": "d63a2b8e3b4b0044a67e9e530ffe84c567a231da6768645fbdacac8ab21bb70c"
+    },
+    {
+      "path": "api/public/local/modules/rebit.share/lib/Contracts/Production/Dto/PrintLineOutputDto.php",
+      "sha256": "9a1e2f45bd59c0da58b234290d4a468c4256872d67abf7472951bec9bda6df32"
+    },
+    {
+      "path": "api/public/local/modules/rebit.share/lib/Contracts/Production/Dto/PrintVersionOutputDto.php",
+      "sha256": "00d0bcae27bbd28b59a8f57e9d2d4b989f5e99f3082e6bbf761c10801ce36a6d"
+    },
+    {
+      "path": "api/public/local/modules/rebit.share/lib/Contracts/Production/Dto/PrintVersionsOutputDto.php",
+      "sha256": "f771b611fcf4d71f86db2637ddc3048d07509fa19927c6ba8cb218981974ddfd"
+    },
+    {
+      "path": "api/public/local/modules/rebit.share/lib/Contracts/Production/PrintCompositionInterface.php",
+      "sha256": "838d3d8350c26982943ba0a04117f9661318b648a797d60da2fc664c0028619e"
+    },
+    {
+      "path": "api/tools/e2e/verify-production-worksheet.php",
+      "sha256": "d36a765e188b09ca529c54f9bdd00f93af60bb67805c34ec07ca550892f48530"
+    },
+    {
+      "path": "docs/plans/OPS-production-report-template/plan.md",
+      "sha256": "16371dde35d65dfaca5eb0789de02059465856f64d61061fdfd2d925ba1af6bd"
+    },
+    {
+      "path": "docs/plans/OPS-production-report-template/progress.md",
+      "sha256": "043be19030818313a992132dc17487ebb444093a86e632c71f174efb2cca00f6"
+    },
+    {
+      "path": "frontend/e2e/live/zzzzzzzzzzzzzz-sales-report.spec.ts",
+      "sha256": "e0573d408e5c6d7320f69cb55dbe0d123da613d468dd1a72fe4e1f3f1deac6f1"
+    },
+    {
+      "path": "frontend/public/guide/reports/index.html",
+      "sha256": "7fd9aaab77d75996fc9e011f8135af4cd5a9b39b1a74c2e38298adf0de2c50aa"
+    },
+    {
+      "path": "frontend/src/modules/morefoto/sales-report/api.ts",
+      "sha256": "20393a0e82935129820190ef65898d6c270b607db498d6dc3182365b0f40c9d5"
+    },
+    {
+      "path": "frontend/src/modules/morefoto/sales-report/components/SalesReportScreen.vue",
+      "sha256": "f4c5a3400ae2ec9941d7aaafe15b7ba60d3f38d5e73b58d19b0a08f42dff2dc7"
+    },
+    {
+      "path": "frontend/src/modules/morefoto/sales-report/components/WorksheetSection.vue",
+      "sha256": "654d3882027d71755fdc824fed5993a3fb324a0701e97c564773ff3ae51dc0c9"
+    },
+    {
+      "path": "frontend/src/modules/morefoto/sales-report/components/WorksheetTable.vue",
+      "sha256": "c33305688e8c98ca9dce16ab05589a29a57b87c7e1ab283ef3b10577482f8c4d"
+    },
+    {
+      "path": "frontend/src/modules/morefoto/sales-report/useSalesReport.ts",
+      "sha256": "e80b358e8b4ba4fd543ffefd9a99ac2e6f119feb98f771ee5b2dcfea3a8f4c9b"
+    },
+    {
+      "path": "frontend/src/modules/morefoto/sales-report/worksheet.ts",
+      "sha256": "f0cc05eff15788b0a7891a169942187118571b714bd405f8f8713f31de8b0832"
+    },
+    {
+      "path": "frontend/tests/ui/production-worksheet.test.mjs",
+      "sha256": "1e01b8b19158b531c81e233f26d92b373aef31d0260d27c077dd4dc613dfa74c"
+    },
+    {
+      "path": "tools/run-browser-e2e.py",
+      "sha256": "be2c22d7c10463e1bc94d6a0524feb327556d52212f6580a31962ce3dc788100"
+    }
+  ]
+}

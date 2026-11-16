@@ -76,6 +76,8 @@ VERIFIERS = [
     ("verify-photo-deletion.php", "i116-deletion.json", "#116 photo deletion integration passed", ["zz-media"]),
     # J1: downloads agree with archives on disk, the paid key lasts the files month, expired archives are purged.
     ("verify-files.php", "j1-files.json", "J1 files integration passed", ["zzzzzzzzzz-files"]),
+    # Stage 6 must inspect the saved versions before the L1/institution verifiers expire and rebuild them.
+    ("verify-production-worksheet.php", "production-worksheet.json", "Production worksheet integration passed", ["zzzzzzzzzzzzzz-sales-report"]),
     # L1: the print archive of the J4 paid print order — composition, disk, link hash, expiry and rebuild.
     ("verify-production.php", "l1-archive.json", "L1 production integration passed", ["zzzzzzzzzz-files", "zzzzzzzzzzzz-print-archive"]),
     ("verify-institution-production.php", "institution-production.json", "Institution production integration passed", ["zzzzzzzzzz-files", "zzzzzzzzzzzz-print-archive"]),

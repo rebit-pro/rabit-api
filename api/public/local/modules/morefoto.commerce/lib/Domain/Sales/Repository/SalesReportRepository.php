@@ -14,6 +14,16 @@ use Morefoto\Commerce\Domain\Sales\ValueObject\SalesArea;
  * Отчёт продаж по неизменяемым снимкам заказов: одно агрегирующее чтение на разбивку, деньги — сумма строк оплаченных
  * заказов (итог заказа равен сумме его строк). «Продано» — как в E9: только `paid` без поздней оплаты, digital без
  * подарка, комплекты отдельно; заказавшими считаются дети с заказом в любом статусе оплаты.
+ *
+ * @phpstan-type WorksheetRow array{
+ *     ORDER_PUBLIC_ID: string, NUMBER: null|string, GROUP_PUBLIC_ID: string, GROUP_NAME: string,
+ *     INSTITUTION_NAME: string, SHOOT_NAME: string, SHOOT_ID: int|string, CHILD_ID: int|string,
+ *     CHILD_PUBLIC_ID: string, CHILD_CODE: string, CHILD_FIRST_NAME: null|string, CHILD_LAST_NAME: null|string,
+ *     PAYMENT_STATUS: string, LATE_PAYMENT: int|string, IS_PAID: int|string, ORDER_TOTAL: int|string, GIFTS: string,
+ *     LINE_ID: string, PRODUCT_KIND: string, PRODUCT_PUBLIC_ID: string, PRODUCT_NAME: string, PRODUCT_FORMAT: string,
+ *     PHOTO_PUBLIC_ID: null|string, QUANTITY: int|string, PRINT_COUNT: int|string, UNIT_PRICE: int|string,
+ *     LINE_DISCOUNT: int|string, LINE_TOTAL: int|string, COVERED_BY_GIFT: int|string,
+ * }
  */
 final readonly class SalesReportRepository
 {
@@ -65,6 +75,24 @@ final readonly class SalesReportRepository
     {
         return $this->query("SELECT o.PUBLIC_ID,o.NUMBER,o.CHILD_FIRST_NAME,o.CHILD_LAST_NAME,o.PAYMENT_STATUS,o.LATE_PAYMENT,o.TOTAL
             FROM mf_order o WHERE {$this->where($area)} ORDER BY o.CREATED_AT DESC,o.ID DESC");
+    }
+
+    /** Строки WorksheetRow полного снимка в разрешённой области; limit включает контрольную лишнюю строку. */
+    public function worksheet(SalesArea $area, int $limit): Result
+    {
+        if (0 >= $limit) {
+            throw new \InvalidArgumentException('Invalid worksheet limit.');
+        }
+        $paid = self::PAID;
+
+        return $this->query("SELECT o.PUBLIC_ID AS ORDER_PUBLIC_ID,o.NUMBER,o.GROUP_PUBLIC_ID,o.GROUP_NAME,
+            o.INSTITUTION_NAME,o.SHOOT_NAME,o.SHOOT_ID,l.CHILD_ID,l.CHILD_PUBLIC_ID,l.CHILD_CODE,
+            o.CHILD_FIRST_NAME,o.CHILD_LAST_NAME,o.PAYMENT_STATUS,o.LATE_PAYMENT,({$paid}) AS IS_PAID,
+            o.TOTAL AS ORDER_TOTAL,o.GIFTS,l.PUBLIC_ID AS LINE_ID,l.PRODUCT_KIND,l.PRODUCT_PUBLIC_ID,
+            l.PRODUCT_NAME,l.PRODUCT_FORMAT,l.PHOTO_PUBLIC_ID,l.QUANTITY,l.PRINT_COUNT,l.UNIT_PRICE,
+            l.DISCOUNT AS LINE_DISCOUNT,l.TOTAL AS LINE_TOTAL,l.COVERED_BY_GIFT
+            FROM mf_order o INNER JOIN mf_order_line l ON l.ORDER_ID=o.ID
+            WHERE {$this->where($area)} ORDER BY o.GROUP_ID,o.CREATED_AT,o.ID,l.LINE_NO LIMIT {$limit}");
     }
 
     private function where(SalesArea $area): string

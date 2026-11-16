@@ -1,0 +1,181 @@
+{
+  "scope": "This final artifact folder only; excludes evidence-manifest.json",
+  "files": [
+    {
+      "path": "bench-first-browser.log",
+      "sha256": "1e8f98f0875e597c6a83695c6ec21de6ba944ebf1be0974ba952689271553605"
+    },
+    {
+      "path": "bench-first-summary.json",
+      "sha256": "a8070092a7fe5e4bb5253a817c7100577a7dd55ed4b7ef9344e73ca7d6a780a4"
+    },
+    {
+      "path": "bench-retry-browser.log",
+      "sha256": "f5d6ee0524f1f263da29fd08600d7a84b61c4a8999fe26d7ab88e883c954ed75"
+    },
+    {
+      "path": "bench-retry-exit.json",
+      "sha256": "ce099d1a10d383c5e6134b41a32e8d1ae8b74dff1b33f6227c94f3e23837cab8"
+    },
+    {
+      "path": "bench-retry-gate.log",
+      "sha256": "8479620f9cc1a52956317785c6efbc2c3af507b67ab696460b64720a254f1752"
+    },
+    {
+      "path": "bench-retry-summary.json",
+      "sha256": "2faee491690138560d51323ac2ee381a33c1b71185424ee0e384c66ff61def89"
+    },
+    {
+      "path": "bench-runtime-wrapper.py",
+      "sha256": "56262a67aa0898cd0ff866d395cd831a172885ae9429201db059ef206f6e3226"
+    },
+    {
+      "path": "demo-command.sh",
+      "sha256": "0035f77c5ecfa6486d2dac5c1d394ecd48c9b6d87216152f673665e8bd574db3"
+    },
+    {
+      "path": "demo-container-exit.json",
+      "sha256": "1bc4ac133688b340eb79cfaec3ed69cdca94d5574ca2046cc816b3c70e63c843"
+    },
+    {
+      "path": "demo-summary.json",
+      "sha256": "7de3180384715812be1b4b2631bea821c5ac945954d8375b7a5377baa242b915"
+    },
+    {
+      "path": "failures.md",
+      "sha256": "7afb77b5f06c62d507b7df9fcac2d6cc96efdd1b1f9f0ac45df21cbdb8d599a0"
+    },
+    {
+      "path": "http-pdf/group-1.png",
+      "sha256": "29e735d8e80a622e61246cf40d6a4c71f9020901436711651f4b8ab085087284"
+    },
+    {
+      "path": "http-pdf/institution-1.png",
+      "sha256": "925c3454c225fa711af3fd596377a058e4d934f21b1177a1f14ad6337eef4001"
+    },
+    {
+      "path": "http-pdf/institution-2.png",
+      "sha256": "deaf40878b507c7cafd429ba92a4335989361c2193640e31b8151aaa7284b2d6"
+    },
+    {
+      "path": "http-pdf/worksheet-609dcc3a-9831-4126-8760-eb538e2230f1.pdf",
+      "sha256": "3f9bc09bd572cb18d8baf429a84a923f2f4fc21c3ff9c671e46a434337a8a037"
+    },
+    {
+      "path": "http-pdf/worksheet-c865503d-177f-4869-b20f-fd0944df8bfd.pdf",
+      "sha256": "8c90ef7731d845fc7a93a6a07cf7d9974de8c003d32dd02756ae51d5a733e659"
+    },
+    {
+      "path": "http-pdf/worksheet-f7cad3e7-e55e-4a2a-945b-7bae3eb62b01.pdf",
+      "sha256": "a0b2c1ccc04029c82772e4d30d5d5ee06af3aca358c400c003c40dcf1e2bab9b"
+    },
+    {
+      "path": "http-pdf-check.json",
+      "sha256": "0184961e672d85ba52293916ddd57b026ee60c9a39fd7855bc62661faf84e158"
+    },
+    {
+      "path": "live-build-only.log",
+      "sha256": "1c062a59fd00f98d0d74d84970d2484fc2c5e410fcdddeef7f62133dc21fb71e"
+    },
+    {
+      "path": "live-gate-summary.json",
+      "sha256": "6d2ebe84dd9348515c4727aa29941c57c352e53a1de53f1b35977113d0591a20"
+    },
+    {
+      "path": "live-gate.log",
+      "sha256": "9201eb96a9655a7cef616190e24db4c49a6ac6f2fefd62e3eb39a7c9a867b387"
+    },
+    {
+      "path": "live-lint-styles.log",
+      "sha256": "03c5105291ddecb7d637b3f0866fc86edaf9e47f43894a53ce859e7c521c3a79"
+    },
+    {
+      "path": "live-lint.log",
+      "sha256": "26dad7f9dcf31bb77311f283486eb4c12fb14a32950b4d6c7117d199400a3f6f"
+    },
+    {
+      "path": "live-php-lint.log",
+      "sha256": "49285e5f24937d1b18eaeb483074c57486bf7b2ff6c58487648f46c099c2e29e"
+    },
+    {
+      "path": "live-phpstan.log",
+      "sha256": "e7eb707ec9e3352c0d101120de205177c953303278125baa893f68fcadfc9222"
+    },
+    {
+      "path": "live-phpunit.log",
+      "sha256": "1ec70da1ba23762da4c3b3b98b492fa4e63912f06f3f68d4c3f70c7eef28a32d"
+    },
+    {
+      "path": "live-test-commerce.log",
+      "sha256": "39bfb396860464a86f1541c86caaa4661e2fcec5e65b086bef7b02b94d20a57a"
+    },
+    {
+      "path": "live-test-ui.log",
+      "sha256": "750d14274e814df5c3c469830f74b636f83d0ba0bb9d6d1ae04e39d7f1dce460"
+    },
+    {
+      "path": "live-typecheck-e2e.log",
+      "sha256": "4a73ab0fdd1ece9454240f7b2633987472accce28de673254f9f9cfa795d7e8d"
+    },
+    {
+      "path": "live-typecheck.log",
+      "sha256": "a5200903aa8339be5c2a383f593dcfb5eef0a0365b3248ce32df98b096d2197c"
+    },
+    {
+      "path": "log-normalization.json",
+      "sha256": "760a83ff13467901ada110f721e2b8e5b262f2c8ed331aa63021e3924dc773d3"
+    },
+    {
+      "path": "media-bench-first.json",
+      "sha256": "763ca9912d9fc9d99ec9172cabab53c000a6293332cd0e2edb3b796a95795671"
+    },
+    {
+      "path": "media-bench-retry.json",
+      "sha256": "412a409eb0006e93dfdb5557d6b66c21f6717aa0f4366db4c320fe7bcb47d763"
+    },
+    {
+      "path": "native-worksheet.log",
+      "sha256": "336f2eff77e5d62daad07031c0dd7f1fde32e2f281ea986f83e03008fb1899df"
+    },
+    {
+      "path": "raw-demo-evidence.json",
+      "sha256": "08a1a940bada8d0e58494aae16f5bd2acde877d9e67a22c8e4c5423b0015a30d"
+    },
+    {
+      "path": "screenshots/worksheet-desktop-final.png",
+      "sha256": "fdbfb0e2f8281ccbd2d78c3064e934c72284e438d9f091190e16cd53da5c7216"
+    },
+    {
+      "path": "screenshots/worksheet-desktop-preview.png",
+      "sha256": "0bb5384a05ea966a34dd143439a8f8fb983eb6d13784d57c86096ecb248fb22e"
+    },
+    {
+      "path": "screenshots/worksheet-mobile-final.png",
+      "sha256": "7aca6cfef9939b128d1900dd7f7ea107ccf3151f68dc100a806c1cb668a1770c"
+    },
+    {
+      "path": "screenshots/worksheet-mobile-preview.png",
+      "sha256": "9633a1cbcdd66e96961cfeb194f6a05ce5af7d50bcecad3976a358b04089473c"
+    },
+    {
+      "path": "source-after.json",
+      "sha256": "9b579d6899317cd2fa3882fe7031544bc54ec16d28ca0c98677aa5ef7ea9c2df"
+    },
+    {
+      "path": "source-before.json",
+      "sha256": "c7f91656867f2043222f12b1031ded2e120e4e4f18e43436b0c0a8f1c6fb8c94"
+    },
+    {
+      "path": "verification.json",
+      "sha256": "763fcf3a3291a1e2ed1455a4b1519e73590f5be1069af7722b9f84f9ab88fd17"
+    },
+    {
+      "path": "visual-live.json",
+      "sha256": "2c2edc85fe75376a038bb487becb2f212c7976ac409d4c0ce8aadb5695db3213"
+    },
+    {
+      "path": "worksheet-http-records.json",
+      "sha256": "ade5978e7ad15d706a38d28cf0fe73c9662f69949b463e8f8de6bb7b4f41ebb2"
+    }
+  ]
+}

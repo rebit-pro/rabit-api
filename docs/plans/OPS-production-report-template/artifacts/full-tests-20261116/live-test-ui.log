@@ -1,0 +1,694 @@
+
+> morefoto-frontend@0.1.0 test:ui
+> node --experimental-strip-types --test tests/tokens/*.test.mjs tests/avatar/*.test.mjs tests/shell/*.test.mjs tests/ui/*.test.mjs tests/viz/*.test.mjs tests/support/*.test.mjs tests/legal/*.test.mjs tests/photos/*.test.mjs
+
+TAP version 13
+# (node:24) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: initials keep the written order of the first two words
+ok 1 - initials keep the written order of the first two words
+  ---
+  duration_ms: 10.916083
+  ...
+# Subtest: parenthesised notes and punctuation do not become letters
+ok 2 - parenthesised notes and punctuation do not become letters
+  ---
+  duration_ms: 0.390138
+  ...
+# Subtest: without a name the email local part is used, without both a bullet
+ok 3 - without a name the email local part is used, without both a bullet
+  ---
+  duration_ms: 5.405398
+  ...
+# Subtest: tone is stable, in range and independent of the name
+ok 4 - tone is stable, in range and independent of the name
+  ---
+  duration_ms: 0.761731
+  ...
+# (node:35) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: an order accepts the buyer consent and the offer, staff only its own consent
+ok 5 - an order accepts the buyer consent and the offer, staff only its own consent
+  ---
+  duration_ms: 9.291394
+  ...
+# Subtest: without a loaded catalog nothing can be accepted
+ok 6 - without a loaded catalog nothing can be accepted
+  ---
+  duration_ms: 0.495359
+  ...
+# Subtest: the seller line promises requisites until they are published
+ok 7 - the seller line promises requisites until they are published
+  ---
+  duration_ms: 0.522175
+  ...
+# Subtest: checkout contacts are kept for a week at most
+ok 8 - checkout contacts are kept for a week at most
+  ---
+  duration_ms: 0.329176
+  ...
+# Subtest: document links and dates
+ok 9 - document links and dates
+  ---
+  duration_ms: 1.952924
+  ...
+# (node:46) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: only ready or duplicate frames count as delivered for a resume
+ok 10 - only ready or duplicate frames count as delivered for a resume
+  ---
+  duration_ms: 5.022674
+  ...
+# Subtest: a frame whose preview failed is queued again when the same ZIP is chosen after a reload (review \#151)
+ok 11 - a frame whose preview failed is queued again when the same ZIP is chosen after a reload (review \#151)
+  ---
+  duration_ms: 3.809747
+  ...
+# Subtest: in the same tab a failed job is replaced, delivered ones stay listed and group frames are sent again
+ok 12 - in the same tab a failed job is replaced, delivered ones stay listed and group frames are sent again
+  ---
+  duration_ms: 1.704198
+  ...
+# Subtest: an online event while a worker is still sending resumes the queue once the worker ends (\#153)
+ok 13 - an online event while a worker is still sending resumes the queue once the worker ends (\#153)
+  ---
+  duration_ms: 0.405339
+  ...
+# Subtest: a manual pause, an ended session or a handed-over group are not lifted by the network (\#153)
+ok 14 - a manual pause, an ended session or a handed-over group are not lifted by the network (\#153)
+  ---
+  duration_ms: 0.386597
+  ...
+# (node:57) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: folders become children by code and GROUP folders become shared frames (T07)
+ok 15 - folders become children by code and GROUP folders become shared frames (T07)
+  ---
+  duration_ms: 35.305463
+  ...
+# Subtest: a manual mark turns a coded folder into group frames, as for shoot 158 with F, L, U, AX
+ok 16 - a manual mark turns a coded folder into group frames, as for shoot 158 with F, L, U, AX
+  ---
+  duration_ms: 0.545005
+  ...
+# Subtest: a Cyrillic or a long folder name stops the start with a hint (T07)
+ok 17 - a Cyrillic or a long folder name stops the start with a hint (T07)
+  ---
+  duration_ms: 1.573903
+  ...
+# Subtest: service entries, wrappers, loose and oversized files are handled before the start (T06, T12)
+ok 18 - service entries, wrappers, loose and oversized files are handled before the start (T06, T12)
+  ---
+  duration_ms: 1.445105
+  ...
+# Subtest: parts chosen together are one plan: a child split between parts is one child (T18)
+ok 19 - parts chosen together are one plan: a child split between parts is one child (T18)
+  ---
+  duration_ms: 1.552869
+  ...
+# Subtest: limits and group frames without children are reported (T12)
+ok 20 - limits and group frames without children are reported (T12)
+  ---
+  duration_ms: 78.943635
+  ...
+# (node:68) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: transient failures repeat, the rest stop the file or the queue (T20)
+ok 21 - transient failures repeat, the rest stop the file or the queue (T20)
+  ---
+  duration_ms: 1.413439
+  ...
+# Subtest: repeats wait longer each time and end after the last pause (T20)
+ok 22 - repeats wait longer each time and end after the last pause (T20)
+  ---
+  duration_ms: 1.706593
+  ...
+# Subtest: a session that ends before the estimated upload is reported before the start (T11)
+ok 23 - a session that ends before the estimated upload is reported before the start (T11)
+  ---
+  duration_ms: 0.457523
+  ...
+# Subtest: accepted archive files survive a reload and a broken storage costs only the convenience (T22)
+ok 24 - accepted archive files survive a reload and a broken storage costs only the convenience (T22)
+  ---
+  duration_ms: 0.939369
+  ...
+# (node:79) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: stored and deflated entries come out with their content
+ok 25 - stored and deflated entries come out with their content
+  ---
+  duration_ms: 179.18079
+  ...
+# Subtest: names without the UTF-8 flag are read in the Windows Explorer code page (T08)
+ok 26 - names without the UTF-8 flag are read in the Windows Explorer code page (T08)
+  ---
+  duration_ms: 1.884559
+  ...
+# Subtest: a Zip64 directory is read through its locator (T17)
+ok 27 - a Zip64 directory is read through its locator (T17)
+  ---
+  duration_ms: 11.810791
+  ...
+# Subtest: a volume of a split archive and a non-ZIP file are refused with a reason
+ok 28 - a volume of a split archive and a non-ZIP file are refused with a reason
+  ---
+  duration_ms: 4.051983
+  ...
+# (node:90) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: live organizer sees work and settings groups
+ok 29 - live organizer sees work and settings groups
+  ---
+  duration_ms: 5.701122
+  ...
+# Subtest: live roles keep the visibility of the router guards
+ok 30 - live roles keep the visibility of the router guards
+  ---
+  duration_ms: 0.917761
+  ...
+# Subtest: permissions, not roles, open settings in live mode
+ok 31 - permissions, not roles, open settings in live mode
+  ---
+  duration_ms: 0.528549
+  ...
+# Subtest: demo mode keeps the product screens without live API
+ok 32 - demo mode keeps the product screens without live API
+  ---
+  duration_ms: 0.519181
+  ...
+# Subtest: no role, no menu
+ok 33 - no role, no menu
+  ---
+  duration_ms: 0.720015
+  ...
+# Subtest: every live menu item leads to a route the live guard lets through
+ok 34 - every live menu item leads to a route the live guard lets through
+  ---
+  duration_ms: 2.709927
+  ...
+# (node:101) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a machine code decides the reason
+ok 35 - a machine code decides the reason
+  ---
+  duration_ms: 2.345832
+  ...
+# Subtest: without a code a token with time left was replaced or revoked
+ok 36 - without a code a token with time left was replaced or revoked
+  ---
+  duration_ms: 5.296561
+  ...
+# Subtest: without a code a token past its lifetime or without one has expired
+ok 37 - without a code a token past its lifetime or without one has expired
+  ---
+  duration_ms: 5.57494
+  ...
+# (node:112) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a contact is an email or a phone with at least ten digits, like on the server
+ok 38 - a contact is an email or a phone with at least ten digits, like on the server
+  ---
+  duration_ms: 8.33536
+  ...
+# Subtest: empty and invalid fields are named before any request
+ok 39 - empty and invalid fields are named before any request
+  ---
+  duration_ms: 1.861471
+  ...
+# Subtest: the payload key ignores outer spaces so a repeat keeps its Idempotency-Key
+ok 40 - the payload key ignores outer spaces so a repeat keeps its Idempotency-Key
+  ---
+  duration_ms: 4.087602
+  ...
+# Subtest: server problems become readable hints
+ok 41 - server problems become readable hints
+  ---
+  duration_ms: 0.562487
+  ...
+# (node:123) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a confirmed first question keeps its key and leaves nothing pending
+ok 42 - a confirmed first question keeps its key and leaves nothing pending
+  ---
+  duration_ms: 1.952609
+  ...
+# Subtest: after a lost answer an edited text recovers the first conversation and becomes its next reply
+ok 43 - after a lost answer an edited text recovers the first conversation and becomes its next reply
+  ---
+  duration_ms: 2.396865
+  ...
+# Subtest: after a lost answer an edited name does not break the replay of the original question
+ok 44 - after a lost answer an edited name does not break the replay of the original question
+  ---
+  duration_ms: 0.650039
+  ...
+# Subtest: only a proven refusal of the original payload drops the unfinished attempt
+ok 45 - only a proven refusal of the original payload drops the unfinished attempt
+  ---
+  duration_ms: 1.095689
+  ...
+# (node:134) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: after a switch to another gallery the parent continues that gallery’s conversation, not the previous one
+ok 46 - after a switch to another gallery the parent continues that gallery’s conversation, not the previous one
+  ---
+  duration_ms: 36.764553
+  ...
+# Subtest: the history of the previous gallery arriving late does not replace the new gallery’s
+ok 47 - the history of the previous gallery arriving late does not replace the new gallery’s
+  ---
+  duration_ms: 12.036525
+  ...
+# Subtest: a first question answered after the switch stays with its gallery and does not touch the new one
+ok 48 - a first question answered after the switch stays with its gallery and does not touch the new one
+  ---
+  duration_ms: 3.179527
+  ...
+# Subtest: a late 404 for the old key keeps the key of the conversation started after the current 404
+ok 49 - a late 404 for the old key keeps the key of the conversation started after the current 404
+  ---
+  duration_ms: 4.442749
+  ...
+# Subtest: a 404 for the old key keeps a key another tab stored meanwhile
+ok 50 - a 404 for the old key keeps a key another tab stored meanwhile
+  ---
+  duration_ms: 6.287109
+  ...
+# Subtest: a 404 for the stored key forgets it and lets the parent start a new conversation
+ok 51 - a 404 for the stored key forgets it and lets the parent start a new conversation
+  ---
+  duration_ms: 5.04611
+  ...
+# (node:145) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: the question key is kept per gallery link and must be 64 lowercase hex
+ok 52 - the question key is kept per gallery link and must be 64 lowercase hex
+  ---
+  duration_ms: 1.829414
+  ...
+# Subtest: texts follow the server limits before sending
+ok 53 - texts follow the server limits before sending
+  ---
+  duration_ms: 0.975243
+  ...
+# Subtest: a new curator answer is unread until its id was seen
+ok 54 - a new curator answer is unread until its id was seen
+  ---
+  duration_ms: 0.529921
+  ...
+# Subtest: only an unknown outcome keeps the Idempotency-Key for a repeat
+ok 55 - only an unknown outcome keeps the Idempotency-Key for a repeat
+  ---
+  duration_ms: 0.626379
+  ...
+# Subtest: delivery states and moments are readable
+ok 56 - delivery states and moments are readable
+  ---
+  duration_ms: 34.24947
+  ...
+# Subtest: an unfinished first question is replayed only when intact
+ok 57 - an unfinished first question is replayed only when intact
+  ---
+  duration_ms: 1.506758
+  ...
+# Subtest: an unknown delivery is not shown as still sending
+ok 58 - an unknown delivery is not shown as still sending
+  ---
+  duration_ms: 6.788432
+  ...
+# Subtest: a successful send clears the draft the parent did not touch
+ok 59 - a successful send clears the draft the parent did not touch
+  ---
+  duration_ms: 0.986602
+  ...
+# Subtest: a next question typed while the previous one is sending survives its success
+ok 60 - a next question typed while the previous one is sending survives its success
+  ---
+  duration_ms: 0.577353
+  ...
+# Subtest: a failed send keeps the text for a retry
+ok 61 - a failed send keeps the text for a retry
+  ---
+  duration_ms: 0.616016
+  ...
+# (node:156) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: generated _tokens.scss matches tokens.ts
+ok 62 - generated _tokens.scss matches tokens.ts
+  ---
+  duration_ms: 3.069335
+  ...
+# Subtest: semantic colors reference existing primitives
+ok 63 - semantic colors reference existing primitives
+  ---
+  duration_ms: 1.360993
+  ...
+# Subtest: text and actions meet the contrast table of the design plan (7.6)
+ok 64 - text and actions meet the contrast table of the design plan (7.6)
+  ---
+  duration_ms: 0.923571
+  ...
+# Subtest: non-text UI keeps 3:1 (WCAG 1.4.11)
+ok 65 - non-text UI keeps 3:1 (WCAG 1.4.11)
+  ---
+  duration_ms: 2.437214
+  ...
+# Subtest: status tones and avatar pastels are readable
+ok 66 - status tones and avatar pastels are readable
+  ---
+  duration_ms: 0.728574
+  ...
+# (node:167) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: KK-T03: the guide page carries a messenger preview with an absolute image that exists
+ok 67 - KK-T03: the guide page carries a messenger preview with an absolute image that exists
+  ---
+  duration_ms: 8.342427
+  ...
+# Subtest: KK-T01: six steps, each with an existing screenshot that opens in the shared viewer
+ok 68 - KK-T01: six steps, each with an existing screenshot that opens in the shared viewer
+  ---
+  duration_ms: 31.823879
+  ...
+# Subtest: KK-T04: every purchase step links to the guide, step anchors exist on the page
+ok 69 - KK-T04: every purchase step links to the guide, step anchors exist on the page
+  ---
+  duration_ms: 4.757151
+  ...
+# Subtest: KK-T05: the buyer footer leads to the guide
+ok 70 - KK-T05: the buyer footer leads to the guide
+  ---
+  duration_ms: 1.438514
+  ...
+# Subtest: KK-T06: production frontend nginx keeps directory redirects relative behind the TLS proxy
+ok 71 - KK-T06: production frontend nginx keeps directory redirects relative behind the TLS proxy
+  ---
+  duration_ms: 1.51723
+  ...
+# Subtest: KK-T06: development frontend nginx keeps directory redirects relative behind the TLS proxy
+ok 72 - KK-T06: development frontend nginx keeps directory redirects relative behind the TLS proxy
+  ---
+  duration_ms: 1.116376
+  ...
+# (node:178) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a group without frames starts with the upload and shows every other problem
+ok 73 - a group without frames starts with the upload and shows every other problem
+  ---
+  duration_ms: 5.0766
+  ...
+# Subtest: unassigned frames make the distribution the current step
+ok 74 - unassigned frames make the distribution the current step
+  ---
+  duration_ms: 0.509165
+  ...
+# Subtest: a ready group waits for the link check, then for the transmission
+ok 75 - a ready group waits for the link check, then for the transmission
+  ---
+  duration_ms: 0.556394
+  ...
+# Subtest: a transmitted group has every step done
+ok 76 - a transmitted group has every step done
+  ---
+  duration_ms: 0.551412
+  ...
+# Subtest: a group without pending lists has no staff lists step; a staff group always has it
+ok 77 - a group without pending lists has no staff lists step; a staff group always has it
+  ---
+  duration_ms: 0.578515
+  ...
+# Subtest: \#154: a regular group held by an unreviewed staff list shows the staff lists step
+ok 78 - \#154: a regular group held by an unreviewed staff list shows the staff lists step
+  ---
+  duration_ms: 0.365582
+  ...
+# Subtest: \#154: a problem this screen does not know still blocks the link check with a reason
+ok 79 - \#154: a problem this screen does not know still blocks the link check with a reason
+  ---
+  duration_ms: 0.414805
+  ...
+# (node:189) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: all children stay together in letter order, with the original frame order
+ok 80 - all children stay together in letter order, with the original frame order
+  ---
+  duration_ms: 24.935115
+  ...
+# Subtest: shared frames and identical filenames keep each separate assignment
+ok 81 - shared frames and identical filenames keep each separate assignment
+  ---
+  duration_ms: 0.548394
+  ...
+# Subtest: empty children and a group without frames produce an empty list
+ok 82 - empty children and a group without frames produce an empty list
+  ---
+  duration_ms: 0.429031
+  ...
+# Subtest: GR-T01: every /guide/ link and image of the knowledge base exists, anchors included
+ok 83 - GR-T01: every /guide/ link and image of the knowledge base exists, anchors included
+  ---
+  duration_ms: 39.926892
+  ...
+# Subtest: GR-T01: the reports article is linked from the home page and every role that has the section
+ok 84 - GR-T01: the reports article is linked from the home page and every role that has the section
+  ---
+  duration_ms: 1.499018
+  ...
+# (node:211) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: every mdi-* name used in src has an SVG path in the registry
+ok 85 - every mdi-* name used in src has an SVG path in the registry
+  ---
+  duration_ms: 97.001676
+  ...
+# Subtest: registry entries are SVG paths
+ok 86 - registry entries are SVG paths
+  ---
+  duration_ms: 2.437786
+  ...
+# (node:222) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a new open shoot keeps the previous complete archive downloadable
+ok 87 - a new open shoot keeps the previous complete archive downloadable
+  ---
+  duration_ms: 9.810577
+  ...
+# Subtest: supplements and failed releases do not replace a complete downloadable archive
+ok 88 - supplements and failed releases do not replace a complete downloadable archive
+  ---
+  duration_ms: 0.410879
+  ...
+# Subtest: only the organizer supplements new timely lines after the full scope has closed and waited
+ok 89 - only the organizer supplements new timely lines after the full scope has closed and waited
+  ---
+  duration_ms: 3.337842
+  ...
+# Subtest: full cumulative releases and new-only supplements are named separately
+ok 90 - full cumulative releases and new-only supplements are named separately
+  ---
+  duration_ms: 0.479524
+  ...
+# Subtest: scope changes, expiry and retries have actionable messages
+ok 91 - scope changes, expiry and retries have actionable messages
+  ---
+  duration_ms: 1.150042
+  ...
+# (node:233) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a row badge appears only after print sales close
+ok 92 - a row badge appears only after print sales close
+  ---
+  duration_ms: 2.751512
+  ...
+# Subtest: only the organizer builds: the first archive of a closed group or a supplement with late payments
+ok 93 - only the organizer builds: the first archive of a closed group or a supplement with late payments
+  ---
+  duration_ms: 0.703197
+  ...
+# Subtest: titles, building state and error texts
+ok 94 - titles, building state and error texts
+  ---
+  duration_ms: 0.792665
+  ...
+# Subtest: the archive link is absolute for the lab whatever the API base
+ok 95 - the archive link is absolute for the lab whatever the API base
+  ---
+  duration_ms: 0.595495
+  ...
+# Subtest: production frontend nginx keeps download links, galleries and order keys out of the access log
+ok 96 - production frontend nginx keeps download links, galleries and order keys out of the access log
+  ---
+  duration_ms: 2.582737
+  ...
+# Subtest: development frontend nginx keeps download links, galleries and order keys out of the access log
+ok 97 - development frontend nginx keeps download links, galleries and order keys out of the access log
+  ---
+  duration_ms: 0.52665
+  ...
+# (node:255) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: T10/T13: the explicit version survives query/selection and never becomes latest or preview
+ok 98 - T10/T13: the explicit version survives query/selection and never becomes latest or preview
+  ---
+  duration_ms: 6.857338
+  ...
+# Subtest: T10/T12: list exposes each ID and state, disabling unavailable files without picking a replacement
+ok 99 - T10/T12: list exposes each ID and state, disabling unavailable files without picking a replacement
+  ---
+  duration_ms: 2.894269
+  ...
+# Subtest: T05/T06/T11: original filenames, 15x21 and each order contribution remain intact
+ok 100 - T05/T06/T11: original filenames, 15x21 and each order contribution remain intact
+  ---
+  duration_ms: 3.603614
+  ...
+# Subtest: T06: name stays on the order, missing name is explicit and equal names do not supply identity
+ok 101 - T06: name stays on the order, missing name is explicit and equal names do not supply identity
+  ---
+  duration_ms: 0.71871
+  ...
+# Subtest: T12/T15: failures explain the unavailable exact selection instead of rendering a success
+ok 102 - T12/T15: failures explain the unavailable exact selection instead of rendering a success
+  ---
+  duration_ms: 0.70546
+  ...
+# Subtest: R2: same original basename stays distinguishable by public frame and child codes
+ok 103 - R2: same original basename stays distinguishable by public frame and child codes
+  ---
+  duration_ms: 0.60404
+  ...
+# (node:266) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: the address keeps only well-formed filters
+ok 104 - the address keeps only well-formed filters
+  ---
+  duration_ms: 2.212819
+  ...
+# Subtest: the working list hides only none and the PDF explicitly uses the selected view
+ok 105 - the working list hides only none and the PDF explicitly uses the selected view
+  ---
+  duration_ms: 0.491859
+  ...
+# Subtest: order names are not linked to children and late payments stay distinct
+ok 106 - order names are not linked to children and late payments stay distinct
+  ---
+  duration_ms: 0.537787
+  ...
+# Subtest: a row opens the level below with all its ancestors
+ok 107 - a row opens the level below with all its ancestors
+  ---
+  duration_ms: 0.536791
+  ...
+# Subtest: breadcrumbs start at the top of the role
+ok 108 - breadcrumbs start at the top of the role
+  ---
+  duration_ms: 0.540976
+  ...
+# Subtest: the head lands on the institution, the teacher goes down to the only group
+ok 109 - the head lands on the institution, the teacher goes down to the only group
+  ---
+  duration_ms: 0.393527
+  ...
+# Subtest: the descent goes on only through its own addresses
+ok 110 - the descent goes on only through its own addresses
+  ---
+  duration_ms: 0.259728
+  ...
+# Subtest: figures read like the PDF
+ok 111 - figures read like the PDF
+  ---
+  duration_ms: 1.131665
+  ...
+# Subtest: every child status has a label and a tone; the PDF name uses the Moscow date
+ok 112 - every child status has a label and a tone; the PDF name uses the Moscow date
+  ---
+  duration_ms: 1.097095
+  ...
+# (node:277) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: every labelled domain status has a tone
+ok 113 - every labelled domain status has a tone
+  ---
+  duration_ms: 2.972675
+  ...
+# Subtest: meaning of tones is fixed across screens
+ok 114 - meaning of tones is fixed across screens
+  ---
+  duration_ms: 0.394025
+  ...
+# Subtest: unknown values are neutral
+ok 115 - unknown values are neutral
+  ---
+  duration_ms: 0.287325
+  ...
+# Subtest: link card status follows closing, handover and preparation
+ok 116 - link card status follows closing, handover and preparation
+  ---
+  duration_ms: 0.735946
+  ...
+# (node:288) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a new group on the institution page goes to the latest dated shoot
+ok 117 - a new group on the institution page goes to the latest dated shoot
+  ---
+  duration_ms: 1.878274
+  ...
+# Subtest: the chosen shoot becomes the collection of the new group
+ok 118 - the chosen shoot becomes the collection of the new group
+  ---
+  duration_ms: 1.528364
+  ...
+# Subtest: a kept draft of a shoot is restored only for that shoot and with its own pending attempt
+ok 119 - a kept draft of a shoot is restored only for that shoot and with its own pending attempt
+  ---
+  duration_ms: 0.879519
+  ...
+# Subtest: an untouched draft is not kept and not restored, a changed or sent one is
+ok 120 - an untouched draft is not kept and not restored, a changed or sent one is
+  ---
+  duration_ms: 0.723005
+  ...
+# (node:299) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: four counters in reading order and the paid sum in rubles
+ok 121 - four counters in reading order and the paid sum in rubles
+  ---
+  duration_ms: 35.930961
+  ...
+# Subtest: E9-DEC-04: bought «all photos» sets are named apart and declined
+ok 122 - E9-DEC-04: bought «all photos» sets are named apart and declined
+  ---
+  duration_ms: 0.493031
+  ...
+# (node:310) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: countdown tones follow the thresholds of plan 9.3.5
+ok 123 - countdown tones follow the thresholds of plan 9.3.5
+  ---
+  duration_ms: 4.008609
+  ...
+# Subtest: numbers always come with their word
+ok 124 - numbers always come with their word
+  ---
+  duration_ms: 36.775499
+  ...
+# Subtest: every category has its own pastel of the eight
+ok 125 - every category has its own pastel of the eight
+  ---
+  duration_ms: 0.523613
+  ...
+# Subtest: processed frames: everything but the processing ones, an empty set is not 100 %
+ok 126 - processed frames: everything but the processing ones, an empty set is not 100 %
+  ---
+  duration_ms: 0.937987
+  ...
+1..126
+# tests 126
+# suites 0
+# pass 126
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11517.553372
