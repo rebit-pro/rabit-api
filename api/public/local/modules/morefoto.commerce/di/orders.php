@@ -36,6 +36,7 @@ use Morefoto\Commerce\Infrastructure\Order\OrderStaffAccess;
 use Morefoto\Commerce\Infrastructure\Order\OrderTokenGenerator;
 use Morefoto\Commerce\Infrastructure\Order\OrderTransaction;
 use Morefoto\Commerce\Infrastructure\Files\OrderEntitlements;
+use Morefoto\Commerce\Infrastructure\Files\PurchasedDigitalLines;
 use Morefoto\Commerce\Infrastructure\Payment\OrderPayments;
 use Morefoto\Commerce\Infrastructure\Payment\OrderReceiptSource;
 use Morefoto\Commerce\Domain\Storefront\Service\SalesWindowPolicy;
@@ -59,6 +60,7 @@ use Rebit\Share\Contracts\Commerce\GroupPrintOrdersInterface;
 use Rebit\Share\Contracts\Commerce\StructureSalesRemovalInterface;
 use Morefoto\Commerce\Infrastructure\Organization\StructureSalesRemoval;
 use Rebit\Share\Contracts\Commerce\OrderEntitlementInterface;
+use Rebit\Share\Contracts\Commerce\PurchasedDigitalLinesInterface;
 use Rebit\Share\Contracts\Commerce\OrderPaymentInterface;
 use Rebit\Share\Contracts\Commerce\OrderReceiptSourceInterface;
 use Rebit\Share\Contracts\Payment\PaymentCapabilitiesInterface;
@@ -116,6 +118,9 @@ return [
             ServiceLocator::getInstance()->get(OrderCalendarPolicy::class),
             ServiceLocator::getInstance()->get(SalesWindowPolicy::class),
         ),
+    ],
+    PurchasedDigitalLinesInterface::class => [
+        'constructor' => static fn(): PurchasedDigitalLinesInterface => new PurchasedDigitalLines(ServiceLocator::getInstance()->get(OrderRepository::class)),
     ],
     OrderEntitlementInterface::class => [
         'constructor' => static fn(): OrderEntitlementInterface => new OrderEntitlements(

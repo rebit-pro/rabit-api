@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Morefoto\Files\Presentation\Command;
 
 use Morefoto\Files\Application\Files\UseCase\DispatchPendingDownloadsUseCase;
+use Morefoto\Files\Application\Institution\UseCase\MaintainInstitutionDigitalArchivesUseCase;
 use Rebit\Share\Presentation\Command\Attribute\WithLock;
 use Rebit\Share\Presentation\Command\RebitCommand;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -19,7 +20,7 @@ final class DispatchPendingDownloadsCommand extends RebitCommand
 {
     private const int DEFAULT_LIMIT = 100;
 
-    public function __construct(private readonly DispatchPendingDownloadsUseCase $dispatch)
+    public function __construct(private readonly DispatchPendingDownloadsUseCase $dispatch, private readonly MaintainInstitutionDigitalArchivesUseCase $digital)
     {
         parent::__construct();
     }
@@ -38,7 +39,15 @@ final class DispatchPendingDownloadsCommand extends RebitCommand
             return Command::INVALID;
         }
         $result = $this->dispatch->execute($limit);
-        $io->success(sprintf('Опубликовано сборок: %d, завершено ошибкой или не опубликовано: %d.', $result->processed, $result->failed));
+        $digital = $this->digital->dispatch($limit);
+        $failed = $result->failed + $digital->failed;
+        $message = sprintf('Опубликовано сборок: %d, завершено ошибкой или не опубликовано: %d.', $result->processed + $digital->processed, $failed);
+        if (0 !== $failed) {
+            $io->warning($message);
+
+            return Command::FAILURE;
+        }
+        $io->success($message);
 
         return Command::SUCCESS;
     }

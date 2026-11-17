@@ -44,4 +44,14 @@ final class ChildPhotosTest extends TestCase
 
         self::assertSame([], (new ChildPhotos($photos, new GalleryAssignmentMapper()))->ready(20, [0]));
     }
+
+    public function testBoundedProjectionUsesTheCallersSentinelLimitInsteadOfLegacy5001(): void
+    {
+        $result = $this->createStub(Result::class);
+        $result->method('fetch')->willReturn(false);
+        $photos = $this->createMock(GalleryPhotoRepository::class);
+        $photos->expects(self::once())->method('children')->with(20, [7], 50_001)->willReturn($result);
+
+        self::assertSame([], (new ChildPhotos($photos, new GalleryAssignmentMapper()))->ready(20, [7], 50_001));
+    }
 }
