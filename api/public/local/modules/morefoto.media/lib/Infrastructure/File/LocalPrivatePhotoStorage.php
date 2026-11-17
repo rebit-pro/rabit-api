@@ -70,7 +70,10 @@ final readonly class LocalPrivatePhotoStorage implements PrivatePhotoStorageInte
 
     public function exists(string $relativePath): bool
     {
-        return is_file($this->absolutePath($relativePath));
+        $path = $this->absolutePath($relativePath);
+        clearstatcache(true, $path);
+
+        return is_file($path);
     }
 
     public function delete(string $relativePath): void
