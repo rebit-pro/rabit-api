@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-11-17T16:26:16.051035+00:00",
+  "runs": [
+    {
+      "runId": "rabit-e2e-480386667006",
+      "stopped": true,
+      "ownerRestored": true,
+      "cleanupErrors": [],
+      "remainingRunOwnedResources": {
+        "containers": [],
+        "networks": [],
+        "volumes": []
+      }
+    },
+    {
+      "runId": "rabit-e2e-40b49eeedfbe",
+      "stopped": true,
+      "ownerRestored": true,
+      "cleanupErrors": [],
+      "remainingRunOwnedResources": {
+        "containers": [],
+        "networks": [],
+        "volumes": []
+      }
+    }
+  ]
+}

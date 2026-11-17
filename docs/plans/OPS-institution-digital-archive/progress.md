@@ -3,12 +3,12 @@
 ## Точка продолжения
 
 - Ветка: `codex/ops-institution-digital-archive`; worktree `/home/user/rabit-api/.worktrees/ops-institution-digital-archive`.
-- Base и HEAD перед первым delivery commit: `b826a157d608c63cbf9e50aab5ebc0b54de228bb`; PR пока не создан. Источник: план восьми этапов OPS-telemos-20261107-prompt; этап 6 merged #241, зависимости #237/#239 merged.
+- Base/main: `b826a157d608c63cbf9e50aab5ebc0b54de228bb`; проверенный code HEAD: `1459df1336f318905eaf5f6085daff1147243c47`; delivery HEAD (`git rev-parse HEAD`) после него содержит только отчёты в папке задачи; PR [#242](https://github.com/rebit-pro/rabit-api/pull/242) OPEN/DRAFT. Источник: план восьми этапов OPS-telemos-20261107-prompt; этап 6 merged #241, зависимости #237/#239 merged.
 - Завершено: backend/frontend этапа 7, foundation-миграция, инструкция, unit/architecture/CLI, full a+b и 22 native verifier, desktop/mobile/footer visual. Итог PASS; версия — base/HEAD + 83 SHA-256 из artifacts/source-manifest.json.
-- Сейчас: пользователь поручил merge этапа 7; готовится delivery commit, независимое review и обязательный QA другой моделью. Deploy не поручен.
-- Один следующий шаг: commit проверенного diff; затем PR, независимое review и QA перед разрешённым merge. Runtime/source фиксируются на время проверок.
-- Блокеров реализации/проверок и открытых продуктовых решений нет: 7 суток с готовности ZIP, вся история оплаченных покупок, buyer права не продлены. Пределы 10000 файлов / 20 ГиБ / 50000 связей и границы покрытия указаны в plan/verification.
-- Dirty: собственные plan/progress/артефакты, 83 runtime/config/test файла: Share/Commerce/Media/Files, foundation-миграция, UI/инструкции frontend, nginx и E2E runner/fixture/verifier. Все изменения остаются незакоммиченными в этой ветке. Чужая untracked папка OPS-stage-gallery-cleanup и 3 локальных коммита ветки OPS-order-photo-delivery остались в исходном checkout без изменений.
+- Сейчас: runtime commit/push/PR выполнены, переносимые отчёты QA подготовлены к отдельному metadata commit/push; QA gpt-6-astra/max PASS на 1459df1 (164 browser, 22 native, 83 hash неизменны). Независимое review gpt-6.1-sol/max ещё выполняется. Merge/deploy не выполнены; deploy не поручен.
+- Один следующий шаг: получить независимый review; при PASS сверить metadata-only diff после code HEAD, актуальные PR head/main и выполнить разрешённый merge #242. Затем обновить и смержить #235, после него начать этап 8 по выбору пользователя.
+- Подтверждённых блокеров реализации и открытых продуктовых решений нет; готовность merge ждёт независимого review: 7 суток с готовности ZIP, вся история оплаченных покупок, buyer права не продлены. Пределы 10000 файлов / 20 ГиБ / 50000 связей и границы покрытия указаны в plan/verification.
+- Рабочее дерево: перед metadata commit подготовлены только собственные plan/progress, artifacts/premerge-qa и premerge-actions.json; после него ожидается clean. Все 83 runtime/config/test файла committed в 1459df1 и неизменны. Исходный checkout с чужой OPS-stage-gallery-cleanup не тронут. Для #235 в собственном detached worktree подготовлен локальный fc21d54 (stat-cache fix + regression, 29 tests PASS); он не отправлен и не влияет на #242.
 - Следующая проверка: из этого worktree `git status --short`, `git rev-parse HEAD`, `git diff --check`; читать artifacts/self-check.md, source-manifest.json и verification.json. Команда полного E2E и результаты — ниже; после будущих правок перед AST-чтением выполнить `/home/user/.local/bin/ast-index update`.
 
 ## Результаты тест-кейсов
@@ -152,3 +152,45 @@
 - Обнаружено условие этапа 8: канонический implementation-stages.md требует этапы 1–7 в main, но #235 этапа 1 OPEN. Пользователю задан асинхронный вопрос о предварительной сверке с PENDING зависимых частей либо предварительном завершении этапа 1; merge этапа 7 продолжается независимо.
 
 - Перед delivery commit: `git diff --check` PASS; точечный `php-cs-fixer ... --dry-run --diff` по 65 PHP-файлам PASS (var/institution-digital-archive/precommit-format.log). В коммит включаются только 83 проверенных source/config/test файла и собственная папка задачи; исходный checkout/OPS-stage-gallery-cleanup не участвуют.
+
+### 17.11.2026 — delivery commit, PR и порядок следующих этапов
+
+- `git commit -m "feat(files): export purchased institution digital photos"` PASS: **1459df1336f318905eaf5f6085daff1147243c47**, 95 собственных файлов (83 runtime/config/test + папка задачи). `git push --set-upstream origin codex/ops-institution-digital-archive` PASS. Создан draft PR **#242** https://github.com/rebit-pro/rabit-api/pull/242, привязан к текущему T3 thread.
+- На code head 1459df1 запущены свежий независимый Reviewer **gpt-6.1-sol / max** (только чтение, без E2E) и отдельный QA **gpt-6-astra / max** (полный E2E/visual). Это разные роли; фактические результаты PENDING. Модель/уровень текущего автора теперь явно доступны через runtime T3: gpt-6.1-sol / max; это не меняет прошлую запись о недоступных тогда метаданных.
+- Пользователь ответил на вопрос о зависимости этапа 8: **сначала завершить и смержить этап 1 (PR #235), затем переходить к этапу 8**. Порядок поставки: #242 → обновление #235 на main и его merge → отдельный этап 8. Реализация этапа 8 до этого не начинается.
+- Для #235 подготовлен собственный detached worktree /home/user/rabit-api/.worktrees/ops-order-photo-delivery-final от локального b570d27419bba6b0169d3741966fd161c580cf3f с тремя ещё не отправленными коммитами. Исходный checkout/чужой untracked каталог не меняются. `git merge-tree --write-tree b570d27419bba6b0169d3741966fd161c580cf3f origin/main` PASS без конфликтов на прежнем b826a15; фактическая интеграция делается после merge #242.
+
+### 17.11.2026 — отдельный предmerge QA другой моделью PASS
+
+- QA gpt-6-astra / max завершён на code head **1459df1336f318905eaf5f6085daff1147243c47**. Run **rabit-e2e-40b49eeedfbe**, полный gate **PASS**, exit 0, **580.0 s**, все **47 stages**, **164 browser (81+83)** без failed/skipped/flaky, **22 native verifier**, PHPUnit **1406 / 53683 assertions**, frontend UI **129** / commerce **253**, lint/styles/types/build, stage7 native **69 assertions**. Свежие три PNG просмотрены QA, visual PASS.
+- Первый run **rabit-e2e-480386667006** остаётся FAIL: G1 не дождался статуса тестовой СБП, G2 зависим; дополнительно runner прервался с 143. Первопричины не установлены, не названы доказанным transient. Один повтор на том же неизменном head разрешил родитель в рамках пользовательского поручения merge; код/ожидания/таймауты не изменялись. Оба исхода и исследование прерывания сохранены.
+- Родитель сверил фактические state/results и 83/83 SHA-256, status/scope/stopped. По отчёту QA оба disposable run очищены, исходные 56 контейнеров сохранены. Это отдельный QA, не code review. Независимое review code head 1459df1 ещё ожидается; преждевременный merge не выполняется.
+- Переносимая копия отчёта/JSON/counts/cleanup/двух attempts/диагностики/visual и PNG сохранена в artifacts/premerge-qa/. Полные логи остаются в ignored var и api/var/e2e; они не переносятся в Git. Runtime-код не изменялся.
+
+- Перед ожиданием review точка продолжения обновлена фактическими PR/code head/QA. GitHub REST через `gh api repos/rebit-pro/rabit-api/pulls/242` подтвердил OPEN/DRAFT, head 1459df1, base b826a15, mergeable/clean; два отдельных GraphQL read ранее завершались timeout/EOF, данные из них не считались подтверждёнными. Кода в новую head-версию не переносилось.
+
+### 17.11.2026 — уведомление T3 об отсутствии GitHub checks
+
+- На уведомление «No checks on 1459df1 after 17 minutes» проверены PR head/state, YAML и фактические GitHub настройки через настроенный gh. Head 1459df1, PR OPEN/DRAFT, mergeable/clean; 83 runtime hash и QA PASS прежние.
+- `gh api repos/rebit-pro/rabit-api/actions/permissions` — enabled=true. Отдельный `gh api repos/rebit-pro/rabit-api/actions/workflows/makefile.yml` — **disabled_manually**, workflow **355706697**, updated_at 25.09.2026. `gh api .../actions/runs?head_sha=1459df1...` — total_count=0. Это подтверждает ручное отключение workflow, а не ошибку trigger YAML. Сам workflow и настройки не менялись.
+- Первые API read/отдельный check-runs endpoint возвращали TLS handshake timeout; они не считались доказательством настроек. Успешные targeted API read выше подтверждают причину отсутствия запусков. Ожидание CI не заменяет локальный gate/независимое review.
+- Подготовлено обновление описания #242: отдельный QA PASS с сохранённым первым FAIL, точный code head/run/source hash и причина пустого GitHub checks. Независимое review ещё ожидается, merge не выполняется.
+
+- PATCH описания #242 через gh REST PASS: PR остаётся draft, head 1459df1 не изменён. Зафиксированы отдельный QA PASS и подтверждённый disabled_manually workflow; ожидание checks не считается новым QA. Сводка API сохранена в artifacts/premerge-actions.json. Workflow не включался, повторный gate без изменения кода не запускался.
+- Перед возвратом снимается наблюдение пустого GitHub CI по текущему уведомлению T3; PR остаётся привязан. Независимый Reviewer должен прислать собственное completion; он остаётся единственным незакрытым предmerge шагом этапа 7. Далее сохраняется порученный порядок #242 → #235 → этап 8.
+
+### 17.11.2026 21:21 МСК — сверка точки продолжения по вопросу пользователя
+
+- Read-only `gh api repos/rebit-pro/rabit-api/pulls/242`: OPEN/DRAFT, head `1459df1336f318905eaf5f6085daff1147243c47`, merged=false, mergeable_state=clean. Независимый Reviewer прочитан через `t3_thread_read` по запросу статуса: running, pendingRequestCount=0; итогового отчёта пока нет. Предmerge QA другой моделью остаётся PASS на том же code HEAD.
+- Следующий шаг прежний: получить независимое review и при PASS завершить разрешённый merge #242; затем #235 и этап 8. Код, GitHub workflow и PR не менялись, новые проверки не запускались.
+
+### 17.11.2026 21:30 МСК — продолжение по поручению пользователя
+
+- Пользователь поручил продолжать согласованную поставку #242 → #235 → этап 8. Независимый review остаётся ожидаемым отдельным результатом; блокеры заранее не считаются закрытыми.
+- Plan v5 приведён к фактическому состоянию: draft PR уже создан, отдельный QA PASS, выбранный порядок #235 перед этапом 8 явно зафиксирован. Подготовлен собственный metadata commit с переносимыми QA-отчётами и подтверждением вручную отключённого Actions workflow. Runtime/config/test код не меняется; review и QA относятся к code head 1459df1.
+
+### 17.11.2026 21:32 МСК — проверка metadata перед commit/push
+
+- `git fetch origin main` PASS: origin/main остаётся b826a157d608c63cbf9e50aab5ebc0b54de228bb. `gh api .../pulls/242` — OPEN/DRAFT, head 1459df1, mergeable/clean; `gh api .../pulls/242/reviews` и `.../issues/242/comments` вернули пустые массивы.
+- Python-проверка manifest/report: **PASS**, 83/83 SHA-256 неизменны, QA report привязан к code head 1459df1 и точному manifest SHA-256, 10 JSON читаются. Credential-shaped scan подготовленных текстовых QA-артефактов PASS, значения не выводились. `git diff --check` PASS, tracked diff только в собственной папке задачи. Нового E2E не требовалось: код после QA не менялся.
+- Выполняется отдельный commit/push только delivery-метаданных. Независимый Reviewer продолжает проверку зафиксированной версии 1459df1; его результат и merge пока PENDING. После push PR связывается с текущим T3 thread и ставится на ожидание ревью. Следующий шаг — обработать итог review, при PASS выполнить разрешённый merge #242, затем продолжить #235.
