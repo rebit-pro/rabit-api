@@ -2,14 +2,11 @@
 
 ## Точка продолжения
 
-- Ветка: `codex/ops-institution-digital-archive`; worktree `/home/user/rabit-api/.worktrees/ops-institution-digital-archive`.
-- Base/main: `b826a157d608c63cbf9e50aab5ebc0b54de228bb`; проверенный code HEAD: `1459df1336f318905eaf5f6085daff1147243c47`; delivery HEAD (`git rev-parse HEAD`) после него содержит только отчёты в папке задачи; PR [#242](https://github.com/rebit-pro/rabit-api/pull/242) OPEN/DRAFT. Источник: план восьми этапов OPS-telemos-20261107-prompt; этап 6 merged #241, зависимости #237/#239 merged.
-- Завершено: backend/frontend этапа 7, foundation-миграция, инструкция, unit/architecture/CLI, full a+b и 22 native verifier, desktop/mobile/footer visual. Итог PASS; версия — base/HEAD + 83 SHA-256 из artifacts/source-manifest.json.
-- Сейчас: runtime commit/push/PR выполнены, переносимые отчёты QA подготовлены к отдельному metadata commit/push; QA gpt-6-astra/max PASS на 1459df1 (164 browser, 22 native, 83 hash неизменны). Независимое review gpt-6.1-sol/max ещё выполняется. Merge/deploy не выполнены; deploy не поручен.
-- Один следующий шаг: получить независимый review; при PASS сверить metadata-only diff после code HEAD, актуальные PR head/main и выполнить разрешённый merge #242. Затем обновить и смержить #235, после него начать этап 8 по выбору пользователя.
-- Подтверждённых блокеров реализации и открытых продуктовых решений нет; готовность merge ждёт независимого review: 7 суток с готовности ZIP, вся история оплаченных покупок, buyer права не продлены. Пределы 10000 файлов / 20 ГиБ / 50000 связей и границы покрытия указаны в plan/verification.
-- Рабочее дерево: перед metadata commit подготовлены только собственные plan/progress, artifacts/premerge-qa и premerge-actions.json; после него ожидается clean. Все 83 runtime/config/test файла committed в 1459df1 и неизменны. Исходный checkout с чужой OPS-stage-gallery-cleanup не тронут. Для #235 в собственном detached worktree подготовлен локальный fc21d54 (stat-cache fix + regression, 29 tests PASS); он не отправлен и не влияет на #242.
-- Следующая проверка: из этого worktree `git status --short`, `git rev-parse HEAD`, `git diff --check`; читать artifacts/self-check.md, source-manifest.json и verification.json. Команда полного E2E и результаты — ниже; после будущих правок перед AST-чтением выполнить `/home/user/.local/bin/ast-index update`.
+- Ветка `codex/ops-institution-digital-archive`, worktree `/home/user/rabit-api/.worktrees/ops-institution-digital-archive`, PR [#242](https://github.com/rebit-pro/rabit-api/pull/242) в `main`. План восьми этапов — OPS-telemos-20261107-prompt. Этап 6 merged #241, зависимости #237/#239 merged.
+- Проверенный `main` и merge-base `b826a157d608c63cbf9e50aab5ebc0b54de228bb`, code head `1459df1336f318905eaf5f6085daff1147243c47`, проверенные QA-документы в `00e004982dc7f11aca9183168ea379920a3cf273`. Финальная запись меняет только plan.md и progress.md.
+- Готовность подтверждена. Авторский gate, отдельный QA gpt-6-astra/max и независимое ревью gpt-6.1-sol/max — PASS. Ревью охватывает весь исходный diff и документы `00e0049`. Изменений исходников после проверенной версии нет.
+- Результат поставки подтверждается в PR #242. Следующий шаг после merge — обновить #235 от нового `main` и повторить проверки, затем начать этап 8 при выполнении всех зависимостей. Подтверждённых блокеров и открытых решений этапа 7 нет.
+- При возобновлении проверить `gh api repos/rebit-pro/rabit-api/pulls/242`, `git status --short` и `git diff --check`. Команда E2E и результаты сохранены ниже. На момент подготовки merge изменены только эти два документа. Рабочее дерево этапа 1 ведётся отдельно.
 
 ## Результаты тест-кейсов
 
@@ -194,3 +191,18 @@
 - `git fetch origin main` PASS: origin/main остаётся b826a157d608c63cbf9e50aab5ebc0b54de228bb. `gh api .../pulls/242` — OPEN/DRAFT, head 1459df1, mergeable/clean; `gh api .../pulls/242/reviews` и `.../issues/242/comments` вернули пустые массивы.
 - Python-проверка manifest/report: **PASS**, 83/83 SHA-256 неизменны, QA report привязан к code head 1459df1 и точному manifest SHA-256, 10 JSON читаются. Credential-shaped scan подготовленных текстовых QA-артефактов PASS, значения не выводились. `git diff --check` PASS, tracked diff только в собственной папке задачи. Нового E2E не требовалось: код после QA не менялся.
 - Выполняется отдельный commit/push только delivery-метаданных. Независимый Reviewer продолжает проверку зафиксированной версии 1459df1; его результат и merge пока PENDING. После push PR связывается с текущим T3 thread и ставится на ожидание ревью. Следующий шаг — обработать итог review, при PASS выполнить разрешённый merge #242, затем продолжить #235.
+
+### 17.11.2026 21:41 МСК — QA-отчёты отправлены, ожидание независимого review
+
+- `git commit -m "docs(files): record independent stage 7 QA results"` PASS: **00e004982dc7f11aca9183168ea379920a3cf273**, только 16 файлов собственной папки задачи; после commit дерево clean.
+- Стандартный SSH push завершился `Connection closed ... port 22`; один bounded повтор с `ConnectTimeout=15` — `Connection timed out during banner exchange`, exit 128. Это сбой SSH-соединения, а не результат проверки кода. Повтор через HTTPS с credential helper настроенного `/home/user/.local/bin/gh auth git-credential`, без изменения remote/config, **PASS**: remote branch 1459df1 → 00e0049.
+- Сразу после push выполнен `link_pull_request` #242, alreadyLinked=true. REST `gh api .../pulls/242` подтвердил head 00e004982dc7f11aca9183168ea379920a3cf273, OPEN/DRAFT. PATCH описания PASS: явно разделены code head 1459df1 и metadata head 00e0049, добавлен путь переносимого QA-отчёта, независимое review обозначено PENDING.
+- Все прежние PASS относятся к неизменному runtime (83 SHA-256). Новые тесты не запускались: изменены только отчёты. Merge #242, интеграция/merge #235 и этап 8 ещё не выполнены. Наблюдение PR возобновляется по правилу T3 для разрешённого merge, ожидающего review; завершение делегированного Reviewer отдельно возобновит работу.
+- Единственный dirty файл — этот собственный журнал. Следующий шаг: обработать итог независимого review, исправить подтверждённые блокеры при наличии, затем сохранить review/журнал, сверить PR/main и выполнить разрешённый merge #242.
+
+### 17.11.2026 21:57 МСК — независимое ревью PASS, этап готов к merge
+
+- Независимый Reviewer gpt-6.1-sol/max проверил `b826a15..1459df1` по всем 95 файлам и применимым правилам. Сверены 16 документов `1459df1..00e0049`. Все 83 исходных SHA-256 совпали. Подтверждённых дефектов текущего diff и вопросов до merge нет. Существующие предупреждения кеша метаданных DTO за пределами diff остаются наблюдением.
+- Адресные проверки Reviewer PASS: PHPUnit 31 тест / 583 assertions и `node --experimental-strip-types --test frontend/tests/ui/institution-digital-archive.test.mjs` 3/3. E2E gpt-6-astra/max сверено по готовым артефактам. Первый FAIL G1/G2 и прерывание 143 сохранены в QA, единственный разрешённый повтор на том же коде прошёл.
+- Полный локальный отчёт: `var/institution-digital-archive/independent-review-1459df1.md`, SHA-256 `8926422af0ff19de45b717b3d5ca786d4ade6a5cf8422a0f0fc20e8269880f63`. Сводка сохранена здесь.
+- `gh api repos/rebit-pro/rabit-api/pulls/242` перед финальной записью: OPEN/DRAFT, head `00e0049`, base `b826a15`, mergeable/clean. Финальная правка содержит только результаты ревью и состояние плана. После сверки точного head и base выполняется разрешённый merge.
