@@ -1,0 +1,118 @@
+{
+  "date": "2026-11-16",
+  "scope": "Artifacts only; excludes this manifest",
+  "files": [
+    {
+      "path": "changed-php.json",
+      "sha256": "44beceedd853406eef0ace8165c853a5e8d735152a58054157baa4f044828453"
+    },
+    {
+      "path": "check-pdf.py",
+      "sha256": "bafd54453005ab1d8b29c2611cfce4128696d3b1493131d32c77d037e3aff6bc"
+    },
+    {
+      "path": "dependencies-current.json",
+      "sha256": "8b0b886c6567231b2acd57742ad171f61d02a60cdff8da029dd3728deb45642c"
+    },
+    {
+      "path": "formatter-check.log",
+      "sha256": "caa3cbae712094a8f4f3da1f52a8c6cb362151563f03a00dac2b01522633f539"
+    },
+    {
+      "path": "frontend-build.log",
+      "sha256": "0e189e28bb8c4baf10ad92899e8f546f821c9aa0dcf57b656955b7b80963331c"
+    },
+    {
+      "path": "frontend-check.log",
+      "sha256": "5857ede8c1b8c075ce9fd4f0c42067790ffe593da24848858d70cf5e9440d579"
+    },
+    {
+      "path": "frontend-commerce.log",
+      "sha256": "6858043fad276684b55de63a728ebc9a5cdd9514c20d065535498f4322fb1055"
+    },
+    {
+      "path": "frontend-e2e-typecheck.log",
+      "sha256": "e6acec258b14209204282da151b1b90bfe56e381af1d8b8b516b3dc45b1339eb"
+    },
+    {
+      "path": "functional.log",
+      "sha256": "68497ddf346f4e524d75bb5a49556f56cd34dec08051be15b218f6614bee95ea"
+    },
+    {
+      "path": "native-lint.log",
+      "sha256": "a716eec378ec2a6ea12c56191428694b777abb9012f20b9586909b4c4cfb3e90"
+    },
+    {
+      "path": "pdf/worksheet-bundle-300-wide.pdf",
+      "sha256": "c8681f74795ceacccad31c89d06418c4419f5105dbab59f1f798369a7b854ddc"
+    },
+    {
+      "path": "pdf/worksheet-final.pdf",
+      "sha256": "85dd5ad462024f305d85865ff681696ec10e046693c63dd2256cf9512d0b7aa3"
+    },
+    {
+      "path": "pdf/worksheet-preview.pdf",
+      "sha256": "a9ad04ad311761cfb90ce951b0d1ac9f616c3bd3400218f45c6d3c4a325679a7"
+    },
+    {
+      "path": "pdf-check.json",
+      "sha256": "8582b133459ebcfe28bfdd03403098b96ba1847ce275ed87592c9eeed10f1ba3"
+    },
+    {
+      "path": "pdf-render/bundle-300-wide-page-1.png",
+      "sha256": "145a20d2367483e6ad451c3356c115b8ea44059b541cbebee50fcd8f4b620132"
+    },
+    {
+      "path": "pdf-render/bundle-300-wide-page-14.png",
+      "sha256": "a786058eda5d84ad32d2591a71785e57f7bd011976bc23c852a4f92535aaa010"
+    },
+    {
+      "path": "pdf-render/bundle-300-wide-page-2.png",
+      "sha256": "e7687d3195ec8ccec7210b410a728856ef542afdf71588cfe04df0bae79fa5eb"
+    },
+    {
+      "path": "pdf-render/final-page-1.png",
+      "sha256": "048be768aff4d765cc68c319919cc299d282290cfb49e7890fde1dfa8e570167"
+    },
+    {
+      "path": "pdf-render/final-page-23.png",
+      "sha256": "7c5edd4d35028c54f7959115a3a4a29246b68219ee9be4211902da8d3f76a4dc"
+    },
+    {
+      "path": "pdf-render/preview-page-1.png",
+      "sha256": "b1cc712799264cbd12ab75795cbaf9456fc62ba65297d0fbdb977f1ae0178d72"
+    },
+    {
+      "path": "php-lint.log",
+      "sha256": "aa9c1448f8af3b967f2423cae6f2ec6c11199cc5e80a86dbb0daa02254abb634"
+    },
+    {
+      "path": "phpstan.log",
+      "sha256": "9b0cfea182cc148e61245dc4c6310c3074586d4e59daf1ed920d310c46285ab4"
+    },
+    {
+      "path": "raw-log-hashes.json",
+      "sha256": "65e2549f1d2f8c88269de0c8689a6f6a0dc3152267d38a50d48c4fef1aeadb81"
+    },
+    {
+      "path": "self-check.md",
+      "sha256": "f727a292ca7dbc996fb29c444c89d2bb5ddd78ebfba338960b99665701ddf5c9"
+    },
+    {
+      "path": "source-manifest.json",
+      "sha256": "7ca7ac084f7544dbbfcd77d55bb058a7960cd371bc0b669455cd1a9b1c612ab9"
+    },
+    {
+      "path": "unit.log",
+      "sha256": "84fdff67c1d5c823b85576f06dd5005d8478ed296011144eedc8da5a4b16141b"
+    },
+    {
+      "path": "verification.json",
+      "sha256": "677b40ef32f7abe34a04a13a0baf10b34bfce192858b3eb3a933f785a0115090"
+    },
+    {
+      "path": "visual-pdf.json",
+      "sha256": "ee64e1a66b401541420be3739863bcb4fe85b88bb8d71b2ab00a9df0abd066ff"
+    }
+  ]
+}

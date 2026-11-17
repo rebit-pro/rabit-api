@@ -10,6 +10,10 @@ import {
   reportFigures,
   reportFilter,
   reportTitle,
+  reportChildren,
+  reportPdfFilter,
+  reportOrderName,
+  reportOrderStatus,
   rowFilter
 } from '../../src/modules/morefoto/sales-report/rules.ts';
 
@@ -32,6 +36,32 @@ const report = (level, rows = []) => ({
 test('the address keeps only well-formed filters', () => {
   assert.deepEqual(reportFilter({ institutionId: I, shootId: 'x', groupId: [G], other: G }), { institutionId: I });
   assert.deepEqual(reportFilter({}), {});
+});
+
+test('the working list hides only none and the PDF explicitly uses the selected view', () => {
+  const children = ['paid', 'none', 'unpaid', 'late'].map((status, index) => ({ id: String(index), status }));
+  assert.deepEqual(
+    reportChildren(children, false).map((child) => child.status),
+    ['paid', 'unpaid', 'late']
+  );
+  assert.equal(reportChildren(children, true), children);
+  assert.deepEqual(reportChildren([], false), []);
+  assert.deepEqual(reportChildren([{ status: 'none' }], false), []);
+  assert.equal(children.length, 4);
+  assert.deepEqual(reportPdfFilter({ groupId: G }, false), { groupId: G, childrenView: 'ordered' });
+  assert.deepEqual(reportPdfFilter({ groupId: G }, true), { groupId: G, childrenView: 'all' });
+});
+
+test('order names are not linked to children and late payments stay distinct', () => {
+  const order = { firstName: 'Иван', lastName: 'Иванов', paymentStatus: 'paid', latePayment: false };
+  assert.equal(reportOrderName(order), 'Иванов Иван');
+  assert.equal(reportOrderName({ ...order, firstName: null }), 'Не указано');
+  assert.equal(reportOrderName({ ...order, lastName: null }), 'Не указано');
+  assert.deepEqual(reportOrderStatus(order), { label: 'Оплачен', tone: 'success' });
+  assert.deepEqual(reportOrderStatus({ ...order, latePayment: true }), { label: 'Поздняя оплата', tone: 'warning' });
+  assert.equal(reportOrderStatus({ ...order, paymentStatus: 'unpaid' }).label, 'Не оплачен');
+  assert.equal(reportOrderStatus({ ...order, paymentStatus: 'pending' }).label, 'Ожидает оплаты');
+  assert.equal(reportOrderStatus({ ...order, paymentStatus: 'declined' }).label, 'Оплата отклонена');
 });
 
 test('a row opens the level below with all its ancestors', () => {

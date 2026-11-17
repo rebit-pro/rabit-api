@@ -27,11 +27,13 @@ use Morefoto\Production\Infrastructure\File\ZipArchiveWriter;
 use Morefoto\Production\Infrastructure\Id\ProductionIdGenerator;
 use Morefoto\Production\Infrastructure\Security\HmacArchiveLink;
 use Psr\Log\NullLogger;
+use Psr\Log\LoggerInterface;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
 use Rebit\Share\Contracts\Commerce\Dto\PaidPrintLineOutputDto;
 use Rebit\Share\Contracts\Commerce\GroupPrintOrdersInterface;
 use Rebit\Share\Contracts\Media\Dto\OriginalFileOutputDto;
 use Rebit\Share\Contracts\Media\OriginalFilesInterface;
+use Rebit\Share\Contracts\Media\PhotoFilenamesInterface;
 use Rebit\Share\Contracts\Organization\Dto\GroupCalendarOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryItemOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryPageOutputDto;
@@ -44,7 +46,7 @@ use Rebit\Share\Shared\Exception\HttpException;
 use Morefoto\Production\Application\Archive\Dto\ProductionRunOutputDto;
 
 /** Собирает UseCase'ы L1 на настоящих правилах, файлах и ZIP; Commerce, Organization, Media и Access подменены. */
-final class ProductionFixture implements ClockInterface, GroupPrintOrdersInterface, GroupDirectoryInterface, PrintClosedGroupsInterface, OriginalFilesInterface, ProductionAccessInterface
+final class ProductionFixture implements ClockInterface, GroupPrintOrdersInterface, GroupDirectoryInterface, PrintClosedGroupsInterface, OriginalFilesInterface, PhotoFilenamesInterface, ProductionAccessInterface
 {
     public const int ORGANIZER = 1;
     public const int CURATOR = 2;
@@ -64,6 +66,8 @@ final class ProductionFixture implements ClockInterface, GroupPrintOrdersInterfa
     public array $waiting = [];
     /** @var array<string, OriginalFileOutputDto> */
     public array $originalFiles = [];
+    /** @var array<string, string> */
+    public array $names = [];
     public HmacArchiveLink $links;
     /** Чтения справочника групп: контракт помечен impure, каждое чтение видит текущее состояние. */
     public int $groupReads = 0;
@@ -103,9 +107,10 @@ final class ProductionFixture implements ClockInterface, GroupPrintOrdersInterfa
     }
 
     /** Оплаченная печатная строка с настоящим файлом оригинала. */
-    public function paidLine(string $groupId, string $lineId, string $photoCode, string $productId, string $productName, int $quantity, int $printCount = 1, string $paidAt = '2026-10-10 10:00:00', string $audience = 'regular'): void
+    public function paidLine(string $groupId, string $lineId, string $photoCode, string $productId, string $productName, int $quantity, int $printCount = 1, string $paidAt = '2026-10-10 10:00:00', string $audience = 'regular', ?string $filename = null, ?string $photoId = null): void
     {
-        $photoId = sprintf('aaaaaaaa-aaaa-4aaa-8aaa-%012d', crc32($photoCode));
+        $photoId ??= sprintf('aaaaaaaa-aaaa-4aaa-8aaa-%012d', crc32($photoCode));
+        $this->names[$photoId] ??= $filename ?? $photoCode . '.jpg';
         if (!isset($this->originalFiles[$photoId])) {
             $path = $this->root . '/media/' . $photoCode . '.jpg';
             file_put_contents($path, 'JPEG:' . $photoCode);
@@ -133,9 +138,9 @@ final class ProductionFixture implements ClockInterface, GroupPrintOrdersInterfa
         $this->now = new \DateTimeImmutable($moment, new \DateTimeZone('UTC'));
     }
 
-    public function run(int $limit = 20): ProductionRunOutputDto
+    public function run(int $limit = 20, ?LoggerInterface $logger = null): ProductionRunOutputDto
     {
-        return new RunProductionUseCase($this->archives, $this, $this->lookup(), $this->snapshot(), $this->builder(), $this->storage(), new ArchivePolicy(), $this, new NullLogger())->execute($limit);
+        return new RunProductionUseCase($this->archives, $this, $this->lookup(), $this->snapshot(), $this->builder(), $this->storage(), new ArchivePolicy(), $this, $logger ?? new NullLogger())->execute($limit);
     }
 
     public function create(): CreateProductionVersionUseCase
@@ -190,7 +195,7 @@ final class ProductionFixture implements ClockInterface, GroupPrintOrdersInterfa
 
     private function snapshot(): VersionSnapshot
     {
-        return new VersionSnapshot($this->archives, $this, new ArchiveLayout(), $this->storage(), new ProductionIdGenerator());
+        return new VersionSnapshot($this->archives, $this, new ArchiveLayout(), $this->storage(), new ProductionIdGenerator(), $this);
     }
 
     private function view(): VersionView
@@ -258,6 +263,11 @@ final class ProductionFixture implements ClockInterface, GroupPrintOrdersInterfa
     public function originals(array $photoIds): array
     {
         return array_intersect_key($this->originalFiles, array_flip($photoIds));
+    }
+
+    public function filenames(array $photoIds): array
+    {
+        return array_intersect_key($this->names, array_flip($photoIds));
     }
 
     public function scope(int $actorId): ProductionScopeOutputDto

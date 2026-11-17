@@ -6,6 +6,10 @@ use Bitrix\Main\DI\ServiceLocator;
 use Morefoto\Commerce\Application\Sales\Contract\SalesAccessInterface;
 use Morefoto\Commerce\Application\Sales\Contract\SalesReportPdfWriterInterface;
 use Morefoto\Commerce\Application\Sales\Mapper\SalesReportRowMapper;
+use Morefoto\Commerce\Application\Sales\Mapper\WorksheetPurchaseMapper;
+use Morefoto\Commerce\Application\Sales\Service\ProductionWorksheet;
+use Morefoto\Commerce\Application\Sales\Service\WorksheetAssembler;
+use Morefoto\Commerce\Application\Sales\Service\WorksheetFiles;
 use Morefoto\Commerce\Application\Sales\Service\SalesReportScope;
 use Morefoto\Commerce\Application\Sales\UseCase\ExportSalesReportPdfUseCase;
 use Morefoto\Commerce\Application\Sales\UseCase\GetChildPreviewUseCase;
@@ -24,6 +28,9 @@ use Morefoto\Commerce\Presentation\Sales\SalesResultMapper;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
 use Rebit\Share\Contracts\Access\StaffRequestAccessInterface;
 use Rebit\Share\Contracts\Media\GroupChildrenInterface;
+use Rebit\Share\Contracts\Media\ChildPhotosInterface;
+use Rebit\Share\Contracts\Media\PhotoFilenamesInterface;
+use Rebit\Share\Contracts\Production\PrintCompositionInterface;
 use Rebit\Share\Contracts\Organization\GroupDirectoryInterface;
 
 return [
@@ -70,6 +77,7 @@ return [
             ServiceLocator::getInstance()->get(GroupChildrenInterface::class),
             ServiceLocator::getInstance()->get(SalesReportRowMapper::class),
             ServiceLocator::getInstance()->get(ClockInterface::class),
+            ServiceLocator::getInstance()->get(ProductionWorksheet::class),
         ],
     ],
     SalesReportPdfWriterInterface::class => [
@@ -87,7 +95,6 @@ return [
         'className' => ExportSalesReportPdfUseCase::class,
         'constructorParams' => static fn(): array => [
             ServiceLocator::getInstance()->get(GetSalesReportUseCase::class),
-            ServiceLocator::getInstance()->get(GroupChildrenInterface::class),
             ServiceLocator::getInstance()->get(SalesReportPdfWriterInterface::class),
         ],
     ],
@@ -100,6 +107,26 @@ return [
         ],
     ],
     SalesReportResultMapper::class => ['className' => SalesReportResultMapper::class],
+    WorksheetPurchaseMapper::class => ['className' => WorksheetPurchaseMapper::class],
+    WorksheetAssembler::class => ['className' => WorksheetAssembler::class],
+    WorksheetFiles::class => [
+        'className' => WorksheetFiles::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(ChildPhotosInterface::class),
+            ServiceLocator::getInstance()->get(PhotoFilenamesInterface::class),
+        ],
+    ],
+    ProductionWorksheet::class => [
+        'className' => ProductionWorksheet::class,
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(SalesReportRepository::class),
+            ServiceLocator::getInstance()->get(PrintCompositionInterface::class),
+            ServiceLocator::getInstance()->get(WorksheetPurchaseMapper::class),
+            ServiceLocator::getInstance()->get(WorksheetFiles::class),
+            ServiceLocator::getInstance()->get(WorksheetAssembler::class),
+            ServiceLocator::getInstance()->get(ClockInterface::class),
+        ],
+    ],
     SalesReportController::class => [
         'className' => SalesReportController::class,
         'constructorParams' => static fn(): array => [

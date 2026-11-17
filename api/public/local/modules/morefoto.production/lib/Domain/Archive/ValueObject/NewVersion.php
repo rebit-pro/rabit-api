@@ -25,5 +25,6 @@ final readonly class NewVersion
         public array $lines,
         public \DateTimeImmutable $createdAt,
         public ?int $createdBy,
+        public int $layoutVersion = 1,
     ) {}
 }

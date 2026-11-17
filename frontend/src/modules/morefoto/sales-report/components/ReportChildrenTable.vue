@@ -6,17 +6,17 @@ import type { UiTableColumn } from '../../ui/table-types';
 import type { ChildSales } from '../api';
 import { CHILD_STATUS, childOrdersText } from '../rules';
 import { useLocalTable } from '../useLocalTable';
-import ReportChildThumb from './ReportChildThumb.vue';
 
-// E10-DEC-01: children by code and frame only — no names, contacts or order numbers of the buyers.
-const props = defineProps<{ items: ChildSales[] }>();
+// Child rows use codes; a name belongs to the separate order list and is never guessed from the code.
+const props = defineProps<{ items: ChildSales[]; emptyTitle: string; emptyDescription: string }>();
 const columns: UiTableColumn[] = [
-  { key: 'code', label: 'Ребёнок', sortable: true, primary: true, width: '18%' },
-  { key: 'status', label: 'Статус', sortable: true, mobile: true, width: '20%' },
+  { key: 'code', label: 'Код ребёнка', sortable: true, primary: true },
+  { key: 'status', label: 'Статус', sortable: true, mobile: true },
   { key: 'paidOrders', label: 'Оплачено заказов', type: 'number', sortable: true, mobile: true },
   { key: 'prints', label: 'Печать', type: 'number', sortable: true },
-  { key: 'files', label: 'Цифровые', type: 'number', sortable: true },
-  { key: 'total', label: 'Сумма', type: 'money', sortable: true, mobile: true, width: '13%' }
+  { key: 'files', label: 'Эл. кадры', type: 'number', sortable: true },
+  { key: 'bundles', label: 'Комплекты', type: 'number', sortable: true },
+  { key: 'total', label: 'Оплачено', type: 'money', sortable: true, mobile: true }
 ];
 const byId = computed(() => new Map(props.items.map((child) => [child.id, child])));
 // Codes sort as the gallery shows them: A…Z, then AA.
@@ -29,7 +29,8 @@ const table = useLocalTable(
       status: CHILD_STATUS[child.status].label,
       paidOrders: child.paidOrders,
       prints: child.prints,
-      files: child.digitalFiles + child.bundles,
+      files: child.digitalFiles,
+      bundles: child.bundles,
       total: child.paidTotal
     })),
   columns,
@@ -53,15 +54,15 @@ const child = (id: string) => byId.value.get(id)!;
     :selectable="false"
     :actions="false"
     auto-pager
-    empty-title="В группе пока нет детей"
-    empty-description="Дети появятся после разметки фотографий группы."
+    :empty-title="emptyTitle"
+    :empty-description="emptyDescription"
     data-testid="report-children"
     @sort="table.order"
     @page="table.page.value = $event"
     @page-size="table.resize"
   >
     <template #cell-code="{ row }">
-      <ReportChildThumb :child-id="row.id" :code="child(row.id).code" :has-preview="child(row.id).hasPreview" />
+      <strong>{{ child(row.id).code }}</strong>
     </template>
     <template #cell-status="{ row }">
       <MfStatus :tone="CHILD_STATUS[child(row.id).status].tone" data-testid="report-child-status">{{ row.status }}</MfStatus>

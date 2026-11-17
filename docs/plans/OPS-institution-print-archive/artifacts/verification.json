@@ -1,0 +1,151 @@
+{
+  "stage": 5,
+  "solutionVersion": "1.2",
+  "status": "PASS",
+  "runId": "56eab0e1d064",
+  "date": "2026-11-11",
+  "branch": "codex/ops-institution-print-archive",
+  "base": "7b9de6ed82b7786e4b5e957a3d44a004fcb92935",
+  "head": "7b9de6ed82b7786e4b5e957a3d44a004fcb92935",
+  "dirty": true,
+  "gateCommand": [
+    "python3",
+    "tools/run-browser-e2e.py",
+    "run",
+    "--groups",
+    "a,b",
+    "--kernel",
+    "/home/user/rebit-p2p/api/public/bitrix",
+    "--vendor",
+    "/home/user/rabit-api/api/vendor",
+    "--php-cli",
+    "rabit-api-e2e-php-cli:local",
+    "--php-fpm",
+    "rabit-api-e2e-php-fpm:local",
+    "--nginx",
+    "rabit-api-e2e-nginx:local",
+    "--mysql",
+    "mysql:8.0"
+  ],
+  "gateExitCode": 0,
+  "gateDurationSeconds": 662.9,
+  "gateLog": "review-fixes-gate.log",
+  "sourceManifest": "source-hashes-review-fixes.json",
+  "finalManifest": "source-hashes-final.json",
+  "previousVerification": "verification-before-review-fixes.json",
+  "browser": {
+    "a": {
+      "startTime": "2026-11-11T11:01:33.491Z",
+      "duration": 427370.928,
+      "expected": 81,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "b": {
+      "startTime": "2026-11-11T11:01:33.571Z",
+      "duration": 492819.702,
+      "expected": 81,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    }
+  },
+  "backend": {
+    "phpLint": "PASS",
+    "phpStan": "PASS",
+    "phpunit": {
+      "suite": "all suites from phpunit.xml",
+      "tests": 1348,
+      "assertions": 52478,
+      "peakMiB": 68.5,
+      "artifact": "review-fixes-backend.log"
+    },
+    "targetedUnit": {
+      "tests": 72,
+      "assertions": 1800,
+      "peakMiB": 32,
+      "memoryLimitMiB": 128,
+      "artifact": "review-fixes-unit.log"
+    },
+    "csFixerDryRun": {
+      "files": 52,
+      "fixable": 0
+    }
+  },
+  "frontend": {
+    "lint": "PASS",
+    "styleLint": "PASS",
+    "typecheck": "PASS",
+    "e2eTypecheck": "PASS",
+    "ui": 118,
+    "commerce": 253,
+    "build": "PASS"
+  },
+  "native": {
+    "status": "PASS",
+    "artifact": "review-fixes-native.log",
+    "checks": [
+      "source L1 and paid Commerce rows",
+      "ZIP Media SHA-256 and original basename",
+      "exact CSV path and trace IDs",
+      "GET_LOCK across PHP connections",
+      "two concurrent cron runners",
+      "renewal replay",
+      "expiry and missing-file retries",
+      "same snapshot recovery",
+      "request INSERT failure rollback for supplement and renewal",
+      "retry same key without duplicate L1 print",
+      "repeatable migration and guarded down",
+      "REV-01 unpublished full scope still required after renewal",
+      "REV-02 interrupted exhausted lease reaches failed and remains renewable",
+      "REV-03 renewal before expiry cleanup removes obsolete ZIP and preserves first publication/CSV"
+    ]
+  },
+  "reviewRegressions": {
+    "REV-01": "PASS: unit and real MySQL native verifier",
+    "REV-02": "PASS: unit and real MySQL native verifier",
+    "REV-03": "PASS: unit and real MySQL native verifier"
+  },
+  "visual": {
+    "desktop": {
+      "viewport": [
+        1440,
+        1000
+      ],
+      "artifact": "review-fixes-institution-desktop.png",
+      "inspected": true
+    },
+    "mobile": {
+      "viewport": [
+        390,
+        844
+      ],
+      "artifact": "review-fixes-institution-mobile.png",
+      "inspected": true
+    }
+  },
+  "sourceHashesMatch": true,
+  "postGateSourceChanges": false,
+  "isolatedResourcesStopped": true,
+  "independentReview": {
+    "status": "PASS_NO_BLOCKING_FINDINGS",
+    "reviewer": "fresh subagent /root/review_archive_fixes, fork_turns=none",
+    "reviewedHead": "1421ec00563463315093e0652d6312009f04ba87",
+    "scope": "9 corrected files and integration after original full review",
+    "artifact": "independent-review-fixes.md",
+    "nonBlockingFollowup": "WORK_PATH-CLEANUP (MEDIUM), recorded in progress; issue not published"
+  },
+  "externalActions": "Implementation committed and branch pushed; PR #239 created; merge explicitly authorized and checked; final state is GitHub PR metadata; no deployment",
+  "limitations": [
+    "Metadata materialized in memory proportional to saved line count; image bytes streamed.",
+    "Historical fixture orders cloned from a real paid J4 snapshot; archive UI/API/DB/files are real.",
+    "Rebuild needs retained original files; future shoot rotation is outside scope.",
+    "Two pre-existing cache metadata TODO warnings in functional suite are outside this diff."
+  ],
+  "pullRequest": {
+    "number": 239,
+    "url": "https://github.com/rebit-pro/rabit-api/pull/239",
+    "base": "main"
+  }
+}

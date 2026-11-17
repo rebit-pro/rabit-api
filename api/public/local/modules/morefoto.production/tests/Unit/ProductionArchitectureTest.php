@@ -20,17 +20,18 @@ final class ProductionArchitectureTest extends TestCase
 
     public function testControllersOnlyMapTypedDtosThroughUseCases(): void
     {
-        foreach (['ProductionController', 'PublicArchiveController'] as $controller) {
+        foreach (['ProductionController', 'PublicArchiveController', 'InstitutionProductionController', 'InstitutionArchiveContentController'] as $controller) {
             $source = (string)file_get_contents(self::LIB . '/Presentation/Controller/' . $controller . '.php');
             foreach (token_get_all($source) as $token) {
                 if (is_array($token) && in_array($token[0], [T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED], true)) {
                     $name = ltrim($token[1], '\\');
                     self::assertTrue(
                         'Morefoto\Production\Presentation\Controller' === $name
-                        || (str_starts_with($name, 'Morefoto\Production\Application\Archive\UseCase\\') && str_ends_with($name, 'UseCase'))
-                        || (str_starts_with($name, 'Morefoto\Production\Presentation\Archive\Request\Dto\\') && str_ends_with($name, 'RequestDto'))
+                        || ((str_starts_with($name, 'Morefoto\Production\Application\Archive\UseCase\\') || str_starts_with($name, 'Morefoto\Production\Application\Institution\UseCase\\')) && str_ends_with($name, 'UseCase'))
+                        || ((str_starts_with($name, 'Morefoto\Production\Presentation\Archive\Request\Dto\\') || str_starts_with($name, 'Morefoto\Production\Presentation\Institution\Request\Dto\\')) && str_ends_with($name, 'RequestDto'))
                         || in_array($name, [
                             'Morefoto\Production\Presentation\Archive\ProductionInputMapper',
+                            'Morefoto\Production\Presentation\Institution\InstitutionResultMapper',
                             'Morefoto\Production\Presentation\Archive\ProductionResultMapper',
                             'Rebit\Share\Infrastructure\Bitrix\ControllerJson',
                             'Rebit\Share\Infrastructure\Controller\AuthenticatedApiJsonController',

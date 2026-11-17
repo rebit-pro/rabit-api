@@ -1,0 +1,606 @@
+{
+  "date": "2026-11-09",
+  "branch": "codex/ops-compact-group-report",
+  "sourceBase": "90755f3a3700d55dae94befabea387ca8637c217",
+  "sourceFiles": [
+    {
+      "file": "api/public/local/modules/morefoto.commerce/di/sales.php",
+      "sha256": "20a3176a848c3aa339f6c5796df53fd6ec8d1f24adf5b001f346b21dc7d672c8"
+    },
+    {
+      "file": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Contract/SalesReportPdfWriterInterface.php",
+      "sha256": "8043356d72a380899489a575429d0ca24050fe3c4efc5029211d361eab7cad1c"
+    },
+    {
+      "file": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/SalesReportInputDto.php",
+      "sha256": "a45554d62e01548ab4b0f9c3108d6a8b0c78652e7216884cbfd222704313dddc"
+    },
+    {
+      "file": "api/public/local/modules/morefoto.commerce/lib/Application/Sales/UseCase/ExportSalesReportPdfUseCase.php",
+      "sha256": "aa9d9ebe9021d298fadac61087a3bd61d6d9301b80d9db890023c7df3181104f"
+    },
+    {
+      "file": "api/public/local/modules/morefoto.commerce/lib/Infrastructure/Sales/Pdf/MpdfSalesReportWriter.php",
+      "sha256": "c056d547d71abe4c9110945cde2895fbb445f5a98547f2ef0dc33eb737714083"
+    },
+    {
+      "file": "api/public/local/modules/morefoto.commerce/lib/Infrastructure/Sales/Pdf/SalesReportHtml.php",
+      "sha256": "4c212645e765d16a90200c3396c3a51408d3fa459abb59a41130df40ed45ac5e"
+    },
+    {
+      "file": "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/SalesReportRequestDto.php",
+      "sha256": "81dfb3f860aa04b712dfaf7c1a079243ba52deb49dea02abd4e314b5995a8937"
+    },
+    {
+      "file": "api/public/local/modules/morefoto.commerce/lib/Presentation/Sales/SalesReportResultMapper.php",
+      "sha256": "acfee496052c71ff70dab66a21d4b499e4a848bf59c47551ac2b64887a28c218"
+    },
+    {
+      "file": "api/public/local/modules/morefoto.commerce/tests/Unit/SalesReportArchitectureTest.php",
+      "sha256": "0589933da98e5633add59b88f4bb6fbb78cd59018c820ac33f3c03120525bc36"
+    },
+    {
+      "file": "api/public/local/modules/morefoto.commerce/tests/Unit/SalesReportPdfTest.php",
+      "sha256": "afde028b15e6c1250218b1588bac5fa0a47fdb9d165f04a2b4c02dcd7d35eae7"
+    },
+    {
+      "file": "frontend/e2e/live/zzzzzzzzzzzzzz-sales-report.spec.ts",
+      "sha256": "1148fa7eaf55363cb62d2848d24231de9b992a1b3088f463350a8a54323718e9"
+    },
+    {
+      "file": "frontend/public/guide/organizer/index.html",
+      "sha256": "3df87a56bf33044ae2d3975dbc9e148a5546a9a9e3384fad9305569642c816e8"
+    },
+    {
+      "file": "frontend/public/guide/reports/index.html",
+      "sha256": "5dd3199415ea4940373dc7defa115b5a5b2cf1128c4b51c603420241dafa5f0c"
+    },
+    {
+      "file": "frontend/public/guide/team/index.html",
+      "sha256": "618ac51c96765a1d55cd4e1d4e02425c0b9891e7ca559d9303beeeee999f9cef"
+    },
+    {
+      "file": "frontend/src/modules/morefoto/sales-report/api.ts",
+      "sha256": "51a3de95feddf645e468dc8f83d474e09288f0017fa44c48233eecddcca42c6a"
+    },
+    {
+      "file": "frontend/src/modules/morefoto/sales-report/components/ReportChildrenSection.vue",
+      "sha256": "35cfd206e9b39074b6a733a9c65613fe4746c482519c669e9f8a8a080de28b9e"
+    },
+    {
+      "file": "frontend/src/modules/morefoto/sales-report/components/ReportChildrenTable.vue",
+      "sha256": "a1633a6e8b7fe2ccf05def32671c119c8f56950c50423955023acedcc92f7acf"
+    },
+    {
+      "file": "frontend/src/modules/morefoto/sales-report/components/ReportOrdersTable.vue",
+      "sha256": "5e3b0d10e42530d6f44a3ab122c0de72b7739b2b9d5307e999c1405e69172481"
+    },
+    {
+      "file": "frontend/src/modules/morefoto/sales-report/components/SalesReportScreen.vue",
+      "sha256": "79dc7788888eb297d7b18187affc900c8e8e4f6e5b6e7465bb1a50d834199359"
+    },
+    {
+      "file": "frontend/src/modules/morefoto/sales-report/rules.ts",
+      "sha256": "14dcc395fc5427a3ffb94ab1a26e3aa67d79dcc89f5c029c78b67bf688561085"
+    },
+    {
+      "file": "frontend/src/modules/morefoto/sales-report/useSalesReport.ts",
+      "sha256": "ce6e285aaff2062224a2da47503495751d4d860fdbf8d6df58d501f6a66bcd0d"
+    },
+    {
+      "file": "frontend/tests/ui/sales-report.test.mjs",
+      "sha256": "c4b0e3142a71fa626d24b5f8ab9408a49347b9512ce036ad3757687eb09bc645"
+    }
+  ],
+  "scope": "Author verification: real group b plus separate empty/200-child stand and real mPDF/Chromium documents",
+  "fullCombinedGatePassed": false,
+  "independentReview": false,
+  "differentModelE2E": false,
+  "command": "E2E_GROUPS=b E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor E2E_PHP_CLI_IMAGE=rabit-api-e2e-php-cli:local E2E_PHP_FPM_IMAGE=rabit-api-e2e-php-fpm:local E2E_NGINX_IMAGE=rabit-api-e2e-nginx:local make test-e2e",
+  "runId": "rabit-e2e-512b38d52a0d",
+  "exitCode": 0,
+  "runnerSeconds": 694.9,
+  "browser": {
+    "startTime": "2026-11-09T13:25:24.143Z",
+    "duration": 582589.01,
+    "expected": 80,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "stages": [
+    {
+      "name": "npm ci",
+      "status": "passed",
+      "seconds": 17.2
+    },
+    {
+      "name": "php-cli WebP capability",
+      "status": "passed",
+      "seconds": 2.0
+    },
+    {
+      "name": "b: MySQL and RabbitMQ",
+      "status": "passed",
+      "seconds": 14.7
+    },
+    {
+      "name": "php-fpm WebP capability",
+      "status": "passed",
+      "seconds": 2.4
+    },
+    {
+      "name": "composer autoload",
+      "status": "passed",
+      "seconds": 32.4
+    },
+    {
+      "name": "npm run lint",
+      "status": "passed",
+      "seconds": 50.6
+    },
+    {
+      "name": "npm run lint:styles",
+      "status": "passed",
+      "seconds": 16.8
+    },
+    {
+      "name": "npm run typecheck",
+      "status": "passed",
+      "seconds": 41.4
+    },
+    {
+      "name": "npm run typecheck:e2e",
+      "status": "passed",
+      "seconds": 14.1
+    },
+    {
+      "name": "npm run test:ui",
+      "status": "passed",
+      "seconds": 9.2
+    },
+    {
+      "name": "npm run test:commerce",
+      "status": "passed",
+      "seconds": 10.3
+    },
+    {
+      "name": "npm run build-only",
+      "status": "passed",
+      "seconds": 30.0
+    },
+    {
+      "name": "php-lint",
+      "status": "passed",
+      "seconds": 4.9
+    },
+    {
+      "name": "phpstan",
+      "status": "passed",
+      "seconds": 4.3
+    },
+    {
+      "name": "phpunit",
+      "status": "passed",
+      "seconds": 22.1
+    },
+    {
+      "name": "b: real Bitrix schema and fixture accounts",
+      "status": "passed",
+      "seconds": 6.9
+    },
+    {
+      "name": "b: durable Notification contract on real MySQL",
+      "status": "passed",
+      "seconds": 1.5
+    },
+    {
+      "name": "b: FPM, media and files workers and nginx",
+      "status": "passed",
+      "seconds": 6.3
+    },
+    {
+      "name": "b: E4 gallery fixture through internal lifecycle",
+      "status": "passed",
+      "seconds": 1.2
+    },
+    {
+      "name": "b: real browser group b",
+      "status": "passed",
+      "seconds": 586.0
+    },
+    {
+      "name": "b: verify-storefront.php",
+      "status": "passed",
+      "seconds": 0.5
+    },
+    {
+      "name": "b: verify-sales-windows.php",
+      "status": "passed",
+      "seconds": 0.4
+    },
+    {
+      "name": "b: verify-handoff.php",
+      "status": "passed",
+      "seconds": 0.5
+    },
+    {
+      "name": "b: verify-orders.php",
+      "status": "passed",
+      "seconds": 0.6
+    },
+    {
+      "name": "b: verify-markup-correction.php",
+      "status": "passed",
+      "seconds": 4.4
+    },
+    {
+      "name": "b: verify-email-only-orders.php",
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-links.php",
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-gallery-openings.php",
+      "status": "passed",
+      "seconds": 7.3
+    },
+    {
+      "name": "b: verify-transfers.php",
+      "status": "passed",
+      "seconds": 0.4
+    },
+    {
+      "name": "b: verify-avatar.php",
+      "status": "passed",
+      "seconds": 0.2
+    },
+    {
+      "name": "b: verify-payment-costs.php",
+      "status": "passed",
+      "seconds": 0.4
+    },
+    {
+      "name": "b: verify-payments.php",
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-files.php",
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-production.php",
+      "status": "passed",
+      "seconds": 0.4
+    },
+    {
+      "name": "b: verify-order-email.php",
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-receipts.php",
+      "status": "passed",
+      "seconds": 0.3
+    }
+  ],
+  "backend": {
+    "php": "8.4.26",
+    "phpunitTests": 1290,
+    "assertions": 51513,
+    "targetedTests": 29,
+    "targetedAssertions": 170,
+    "phpstan": "PASS",
+    "phplint": "PASS",
+    "formatterChangedFiles": 10,
+    "formatterCorrections": 0
+  },
+  "frontend": {
+    "uiTests": 112,
+    "commerceTests": 253,
+    "lint": "PASS",
+    "stylelint": "PASS",
+    "typecheck": "PASS",
+    "e2eTypes": "PASS",
+    "build": "PASS"
+  },
+  "mixedLargePdf": {
+    "ordered": {
+      "file": "large-ordered.pdf",
+      "sha256": "0ba53a52ae67602bd63ee14600d7f70a83f1b43b8c271c936fd2636098332407",
+      "pages": 7,
+      "children": 100,
+      "orders": 99,
+      "withoutOrders": 100,
+      "paidOrders": 49,
+      "paidTotalKopecks": 5000000,
+      "repeatedChildHeaders": 4,
+      "allRowsPresentOnce": true,
+      "footerNumbersValid": true,
+      "childImages": 0,
+      "status": "PASS"
+    },
+    "all": {
+      "file": "large-all.pdf",
+      "sha256": "8b9646475c740e3624fa9e3611c7784da564e0d09e85de99111d55285f92b46b",
+      "pages": 10,
+      "children": 200,
+      "orders": 99,
+      "withoutOrders": 100,
+      "paidOrders": 49,
+      "paidTotalKopecks": 5000000,
+      "repeatedChildHeaders": 7,
+      "allRowsPresentOnce": true,
+      "footerNumbersValid": true,
+      "childImages": 0,
+      "status": "PASS"
+    }
+  },
+  "edgeStand": {
+    "runId": "rabit-e2e-b03f3daa9e11",
+    "method": "Standard runner up, fresh Bitrix/MySQL; separate test groups, real MediaMutationRepository children A..GR; no API response mocks",
+    "proof": {
+      "empty": {
+        "desktop": "PASS",
+        "mobile": "PASS"
+      },
+      "large": {
+        "desktop": {
+          "status": "PASS",
+          "count": 200,
+          "uniqueAcrossPages": 200,
+          "descendingFirst": "GR",
+          "resizedPage": 10
+        },
+        "mobile": {
+          "status": "PASS",
+          "count": 200,
+          "uniqueAcrossPages": 200,
+          "descendingFirst": "GR",
+          "resizedPage": 10
+        }
+      },
+      "pdf": {
+        "empty-desktop.pdf": {
+          "pages": 1,
+          "children": 0,
+          "sha256": "a12dee1d4337954baa6d867b43dc55e76e7fdc0dbf3fb1953567ad877915d9e8",
+          "status": "PASS"
+        },
+        "empty-mobile.pdf": {
+          "pages": 1,
+          "children": 0,
+          "sha256": "371db9e432f63c5115339174270517e49a5e95ab8e600608bfd8794db4c13707",
+          "status": "PASS"
+        },
+        "http-large-all-desktop.pdf": {
+          "pages": 7,
+          "children": 200,
+          "sha256": "5a0b62350ef804a5646c3efd4684c350947bc56608e2a9e142508774595efe52",
+          "status": "PASS"
+        },
+        "http-large-all-mobile.pdf": {
+          "pages": 7,
+          "children": 200,
+          "sha256": "ebca99d242d2675731b13094cc99079d42ded57bf19c407516b437fd4e56c5f4",
+          "status": "PASS"
+        },
+        "http-large-ordered-desktop.pdf": {
+          "pages": 1,
+          "children": 0,
+          "sha256": "c27c56df4cb33d61e3e167f5a614e431a62ad561ebd45e2c28afca40bd454223",
+          "status": "PASS"
+        },
+        "http-large-ordered-mobile.pdf": {
+          "pages": 1,
+          "children": 0,
+          "sha256": "6ce73f26eb0df4b933128e16bafa61de6fd060ceb08d9383e42bd36a340c89a6",
+          "status": "PASS"
+        }
+      }
+    },
+    "fixtureScriptSha256": "fc95fc221d613f327799d6ff5fd3d8f309bc7fd43a345649d0c28dea18914e75",
+    "browserScriptSha256": "c82b20c778582c708a59a701927d2ca3bbbf7b65ed0606032482e519c3f73fb4"
+  },
+  "testCases": {
+    "T07-EMPTY": "PASS (author verification)",
+    "T07-ROWS": "PASS (author verification)",
+    "T07-LARGE": "PASS (author verification)",
+    "T06-NAMES": "PASS (author verification)",
+    "T07-SCOPE": "PASS (author verification)",
+    "T07-LOAD": "PASS (author verification)"
+  },
+  "screenshots": [
+    {
+      "file": "docs/plans/OPS-compact-group-report/artifacts/verification-20261109/e10-desktop-teacher-group-all.png",
+      "sha256": "2cb727c4b473b707b3f6ab61fb5bbcc7a2b1266ae9086521922cd8cad3acc48e",
+      "pixels": [
+        1440,
+        1290
+      ],
+      "manualVisualStatus": "PASS"
+    },
+    {
+      "file": "docs/plans/OPS-compact-group-report/artifacts/verification-20261109/e10-mobile-teacher-group-all.png",
+      "sha256": "59720d8b85e158b7e1ae86dfd8f3e0e9f068668d47405b5e6d8260aaf7e09eaf",
+      "pixels": [
+        390,
+        2639
+      ],
+      "manualVisualStatus": "PASS"
+    },
+    {
+      "file": "docs/plans/OPS-compact-group-report/artifacts/verification-20261109/empty-desktop.png",
+      "sha256": "7047857477859ab088005f3d723b98c482cf3770614a59a17ca9517794c6327e",
+      "pixels": [
+        1440,
+        1169
+      ],
+      "manualVisualStatus": "PASS"
+    },
+    {
+      "file": "docs/plans/OPS-compact-group-report/artifacts/verification-20261109/empty-mobile.png",
+      "sha256": "1f171cc8314d14ca060ac17ae661276f21a349cc2ddd48af81ac195b0ebb0021",
+      "pixels": [
+        390,
+        1646
+      ],
+      "manualVisualStatus": "PASS"
+    },
+    {
+      "file": "docs/plans/OPS-compact-group-report/artifacts/verification-20261109/large-all-desktop.png",
+      "sha256": "cf25f2a1923313c6991c189a4519e21455a48d8a800742ec68d1975cdd75eb5e",
+      "pixels": [
+        1440,
+        1000
+      ],
+      "manualVisualStatus": "PASS"
+    },
+    {
+      "file": "docs/plans/OPS-compact-group-report/artifacts/verification-20261109/large-all-last-page.png",
+      "sha256": "06c5b20f71a6c7f49c17e8c922784237911c2a48b47445c8d39af584949d822f",
+      "pixels": [
+        1050,
+        1400
+      ],
+      "manualVisualStatus": "PASS"
+    },
+    {
+      "file": "docs/plans/OPS-compact-group-report/artifacts/verification-20261109/large-all-mobile.png",
+      "sha256": "319c86c8b2712c21f72fb4bb5c1c6154d57bfb18b60d2433f4de6cc55946f5ea",
+      "pixels": [
+        390,
+        844
+      ],
+      "manualVisualStatus": "PASS"
+    },
+    {
+      "file": "docs/plans/OPS-compact-group-report/artifacts/verification-20261109/large-all-page1.png",
+      "sha256": "6ae523fb51deefed374567083163310e4dc5a6c69148b2c85d2e68fc1f999559",
+      "pixels": [
+        1050,
+        1400
+      ],
+      "manualVisualStatus": "PASS"
+    },
+    {
+      "file": "docs/plans/OPS-compact-group-report/artifacts/verification-20261109/large-ordered-desktop.png",
+      "sha256": "3d11da1e20c0815f52ceb932501e827cf4c9762c27ef7933120aa521dd22157d",
+      "pixels": [
+        1440,
+        1000
+      ],
+      "manualVisualStatus": "PASS"
+    },
+    {
+      "file": "docs/plans/OPS-compact-group-report/artifacts/verification-20261109/large-ordered-last-page.png",
+      "sha256": "8a11ecf5a1a92109ae6d51455d9be65164ba0c64ee30f453a03525e44eb4a20d",
+      "pixels": [
+        1050,
+        1400
+      ],
+      "manualVisualStatus": "PASS"
+    },
+    {
+      "file": "docs/plans/OPS-compact-group-report/artifacts/verification-20261109/large-ordered-mobile-section.png",
+      "sha256": "bff3f0fb7bd31bac76e0ebcb5a508096cd5694b7aabb4129be2a237c7e529395",
+      "pixels": [
+        358,
+        363
+      ],
+      "manualVisualStatus": "PASS"
+    },
+    {
+      "file": "docs/plans/OPS-compact-group-report/artifacts/verification-20261109/large-ordered-mobile.png",
+      "sha256": "bd585519db3652685f950e66d3e29c237c5972946abcf2b8c3e4cdd0df8b9a15",
+      "pixels": [
+        390,
+        844
+      ],
+      "manualVisualStatus": "PASS"
+    },
+    {
+      "file": "frontend/public/guide/img/r09-compact-group.png",
+      "sha256": "3170f10dfa4ac88c8145e5f0e1def5e0a6c36a995da2c0d8f9af657f6adfe370",
+      "pixels": [
+        1440,
+        1290
+      ],
+      "manualVisualStatus": "PASS"
+    },
+    {
+      "file": "frontend/public/guide/img/r10-compact-group-mobile.png",
+      "sha256": "6a259c1809e5c8e9453c52678e68d02815440635c101657c20ae963528cad8ff",
+      "pixels": [
+        390,
+        2639
+      ],
+      "manualVisualStatus": "PASS"
+    },
+    {
+      "file": "frontend/public/guide/img/r11-compact-pdf.png",
+      "sha256": "d2d259c8e792dfb05fcb5097d955c8113214772d25c4fcfd2316fe2290dbc693",
+      "pixels": [
+        1050,
+        1400
+      ],
+      "manualVisualStatus": "PASS"
+    }
+  ],
+  "visualFindings": "Actual desktop/mobile screenshots and first/last PDF pages viewed. No horizontal overflow, overlapping controls, child thumbnails or lost rows. Names stay per order; unpaid and late states stay distinct. Large-group pagination returned 200 unique IDs on each viewport; filter and page-size reset verified. Element capture supplements the mobile empty-list screenshot.",
+  "runHistory": [
+    {
+      "runId": "rabit-e2e-f6017cfd64d0",
+      "result": "FAIL before browser",
+      "reason": "node_modules symlink conflicted with Docker mount; stylelint unavailable"
+    },
+    {
+      "runId": "rabit-e2e-da40b0fba5f1",
+      "result": "FAIL before browser",
+      "reason": "own guide edit removed direct reports link; restored without weakening test"
+    },
+    {
+      "runId": "rabit-e2e-b2bd9dd60913",
+      "result": "FAIL overall; target E10 PASS",
+      "browser": {
+        "passed": 76,
+        "failed": 2,
+        "skipped": 2,
+        "flaky": 0
+      },
+      "reason": "SBP return stayed pending for 30 seconds, related sandbox receipt absent; cause unproven; payment code unchanged"
+    },
+    {
+      "runId": "rabit-e2e-512b38d52a0d",
+      "result": "PASS (PARTIAL b)",
+      "browser": {
+        "passed": 80,
+        "failed": 0,
+        "skipped": 0,
+        "flaky": 0
+      }
+    }
+  ],
+  "postRunChanges": "Guide images/references and one obsolete comment; an additional standard up gate passed and guide link tests were repeated.",
+  "cleanup": {
+    "verified": true,
+    "remainingRunContainers": 0,
+    "remainingRunNetworks": 0,
+    "remainingRunVolumes": 0,
+    "pdfViewersRemoved": true,
+    "sharedCachesRetained": true
+  },
+  "limitations": [
+    "No combined a+b gate on this branch; group b and targeted edge scenarios cover this change.",
+    "Independent review and required different-model checks remain separate before merge.",
+    "Backend supporting childrenView must precede the new frontend or ship with it.",
+    "No push, PR publication, merge or deployment."
+  ],
+  "mixedLargePdfMethod": "Synthetic SalesReportOutputDto with 200 children and 99 orders, real MpdfSalesReportWriter; separate from the HTTP edge stand."
+}

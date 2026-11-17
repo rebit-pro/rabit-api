@@ -58,6 +58,7 @@ export function groupChildren(groupId: string): GalleryChild[] {
       .map(({ photo, assignment }) => ({
         id: photo.id,
         code: assignment.code,
+        filename: photo.filename,
         thumbSrc: photo.thumbSrc,
         previewSrc: photo.previewSrc,
         width: photo.width,

@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-11-16",
+  "method": "configured gh, read-only",
+  "main": "2e4174eb8e558bf1712d257bb10ed3e0fc400555",
+  "head": "2e4174eb8e558bf1712d257bb10ed3e0fc400555",
+  "pr239": {
+    "state": "MERGED",
+    "mergedAt": "2026-11-11T13:03:39Z",
+    "mergeCommit": "079b19245ef70d2ec999f34e952cd9bdc6388b49",
+    "ancestorOfHead": true
+  },
+  "pr240": {
+    "state": "MERGED",
+    "mergedAt": "2026-11-12T13:27:13Z",
+    "mergeCommit": "2e4174eb8e558bf1712d257bb10ed3e0fc400555",
+    "ancestorOfHead": true
+  },
+  "stage6PullRequests": []
+}

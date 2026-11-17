@@ -1,0 +1,19 @@
+{
+  "run": "rabit-e2e-a6f4ccef313f",
+  "status": "PASS",
+  "viewports": [
+    "1440x1000 desktop",
+    "390x844 mobile"
+  ],
+  "viewed": [
+    "worksheet-desktop-final.png",
+    "worksheet-desktop-preview.png",
+    "worksheet-mobile-final.png",
+    "worksheet-mobile-preview.png"
+  ],
+  "observations": "Просмотрены реальные browser PNG: читаемые шапки/итоги/неоднозначность ФИО, тип/номер/ID версии, нет горизонтального скролла. На mobile продукция находится в свернутых дополнительных сведениях; раскрытие этого блока отдельно визуально не проверялось. HTTP PDF выбранных group/institution версий программно сопоставлены с JSON; группа и full2 также просмотрены визуально.",
+  "limits": [
+    "mobile extra details are collapsed in captured screenshots",
+    "Guide page and all pending/failed/expired states not manually exercised beyond existing tests"
+  ]
+}

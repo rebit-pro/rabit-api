@@ -16,6 +16,7 @@ use Morefoto\Production\Presentation\Archive\ProductionResultMapper;
 use Morefoto\Production\Presentation\Command\RunProductionCommand;
 use Morefoto\Production\Presentation\Controller\ProductionController;
 use Morefoto\Production\Presentation\Controller\PublicArchiveController;
+use Morefoto\Production\Application\Institution\UseCase\RunInstitutionProductionUseCase;
 
 return [
     ProductionInputMapper::class => ['className' => ProductionInputMapper::class],
@@ -39,6 +40,9 @@ return [
     ],
     RunProductionCommand::class => [
         'className' => RunProductionCommand::class,
-        'constructorParams' => static fn(): array => [ServiceLocator::getInstance()->get(RunProductionUseCase::class)],
+        'constructorParams' => static fn(): array => [
+            ServiceLocator::getInstance()->get(RunProductionUseCase::class),
+            ServiceLocator::getInstance()->get(RunInstitutionProductionUseCase::class),
+        ],
     ],
 ];

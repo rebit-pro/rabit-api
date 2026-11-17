@@ -1,0 +1,449 @@
+{
+  "runId": "rabit-e2e-480386667006",
+  "scope": "supplemental; original runner state/stages untouched",
+  "results": [
+    {
+      "script": "verify-institution-digital.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "cp",
+          "api/var/e2e/rabit-e2e-480386667006/b/var/institution-digital.json",
+          "rabit-e2e-480386667006-b-fpm:/runtime/institution-digital.json"
+        ],
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-institution-digital.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:40.254031+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 0.49,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-institution-digital.log",
+      "proof": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/institution-digital-proof.json",
+      "metrics": {
+        "checks": 69,
+        "files": 4,
+        "purchasedLines": 12,
+        "largeSourceBytes": 67108864,
+        "phpPeakDelta": 0,
+        "rssDeltaKiB": 0,
+        "buyerExpiryPreserved": true
+      }
+    },
+    {
+      "script": "verify-storefront.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-storefront.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:40.887291+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 0.3,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-storefront.log"
+    },
+    {
+      "script": "verify-sales-windows.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-sales-windows.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:41.185940+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 0.29,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-sales-windows.log"
+    },
+    {
+      "script": "verify-handoff.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-handoff.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:41.476081+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 0.39,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-handoff.log"
+    },
+    {
+      "script": "verify-orders.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "cp",
+          "api/var/e2e/rabit-e2e-480386667006/b/var/e5-orders.json",
+          "rabit-e2e-480386667006-b-fpm:/runtime/e5-orders.json"
+        ],
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-orders.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:41.866289+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 0.5,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-orders.log"
+    },
+    {
+      "script": "verify-markup-correction.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-markup-correction.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:42.370358+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 4.34,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-markup-correction.log"
+    },
+    {
+      "script": "verify-email-only-orders.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-email-only-orders.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:46.709093+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 0.25,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-email-only-orders.log"
+    },
+    {
+      "script": "verify-links.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-links.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:46.963040+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 0.24,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-links.log"
+    },
+    {
+      "script": "verify-gallery-openings.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "cp",
+          "api/var/e2e/rabit-e2e-480386667006/b/var/i232-opening.json",
+          "rabit-e2e-480386667006-b-fpm:/runtime/i232-opening.json"
+        ],
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-gallery-openings.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:47.203920+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 0.29,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-gallery-openings.log"
+    },
+    {
+      "script": "verify-transfers.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "cp",
+          "api/var/e2e/rabit-e2e-480386667006/b/var/d3-transfers.json",
+          "rabit-e2e-480386667006-b-fpm:/runtime/d3-transfers.json"
+        ],
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-transfers.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:47.490257+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 0.32,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-transfers.log"
+    },
+    {
+      "script": "verify-avatar.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-avatar.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:47.813655+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 0.23,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-avatar.log"
+    },
+    {
+      "script": "verify-payment-costs.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-payment-costs.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:48.049263+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 0.31,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-payment-costs.log"
+    },
+    {
+      "script": "verify-payments.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "cp",
+          "api/var/e2e/rabit-e2e-480386667006/b/var/g1-payments.json",
+          "rabit-e2e-480386667006-b-fpm:/runtime/g1-payments.json"
+        ],
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-payments.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:48.364390+00:00",
+      "status": "FAIL",
+      "exitCode": 1,
+      "successMarkerPresent": false,
+      "durationSeconds": 0.34,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-payments.log"
+    },
+    {
+      "script": "verify-files.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "cp",
+          "api/var/e2e/rabit-e2e-480386667006/b/var/j1-files.json",
+          "rabit-e2e-480386667006-b-fpm:/runtime/j1-files.json"
+        ],
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-files.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:48.702157+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 0.29,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-files.log"
+    },
+    {
+      "script": "verify-production-worksheet.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "cp",
+          "api/var/e2e/rabit-e2e-480386667006/b/var/production-worksheet.json",
+          "rabit-e2e-480386667006-b-fpm:/runtime/production-worksheet.json"
+        ],
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-production-worksheet.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:48.994291+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 0.36,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-production-worksheet.log"
+    },
+    {
+      "script": "verify-production.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "cp",
+          "api/var/e2e/rabit-e2e-480386667006/b/var/l1-archive.json",
+          "rabit-e2e-480386667006-b-fpm:/runtime/l1-archive.json"
+        ],
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-production.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:49.354039+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 0.33,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-production.log"
+    },
+    {
+      "script": "verify-institution-production.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "cp",
+          "api/var/e2e/rabit-e2e-480386667006/b/var/institution-production.json",
+          "rabit-e2e-480386667006-b-fpm:/runtime/institution-production.json"
+        ],
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-institution-production.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:49.686290+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 1.25,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-institution-production.log"
+    },
+    {
+      "script": "verify-order-email.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "cp",
+          "api/var/e2e/rabit-e2e-480386667006/b/var/j2-email.json",
+          "rabit-e2e-480386667006-b-fpm:/runtime/j2-email.json"
+        ],
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-order-email.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:50.940226+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 0.28,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-order-email.log"
+    },
+    {
+      "script": "verify-receipts.php",
+      "scope": "supplemental diagnostic after original runner interruption; not a green full gate",
+      "commands": [
+        [
+          "docker",
+          "cp",
+          "api/var/e2e/rabit-e2e-480386667006/b/var/g2-receipts.json",
+          "rabit-e2e-480386667006-b-fpm:/runtime/g2-receipts.json"
+        ],
+        [
+          "docker",
+          "exec",
+          "rabit-e2e-480386667006-b-fpm",
+          "php",
+          "/app/tools/e2e/verify-receipts.php"
+        ]
+      ],
+      "startedAt": "2026-11-17T16:08:51.222485+00:00",
+      "status": "PASS",
+      "exitCode": 0,
+      "successMarkerPresent": true,
+      "durationSeconds": 0.28,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b/verify-receipts.log"
+    }
+  ],
+  "counts": {
+    "PASS": 18,
+    "FAIL": 1,
+    "BLOCKED": 0
+  },
+  "finishedAt": "2026-11-17T16:08:51.502752+00:00"
+}

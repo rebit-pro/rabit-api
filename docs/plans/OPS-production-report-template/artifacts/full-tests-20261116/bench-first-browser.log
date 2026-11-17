@@ -1,0 +1,264 @@
+
+> morefoto-frontend@0.1.0 test:e2e:live
+> playwright test --config playwright.live.config.ts --project a
+
+
+Running 82 tests using 1 worker
+
+  ✓  1 [a] › e2e/live/catalog.spec.ts:24:1 › неверный пароль отклонён сервером; роль загружается через /me (2.5s)
+  ✓  2 [a] › e2e/live/catalog.spec.ts:43:1 › неподключённая оплата недоступна в настоящем режиме (760ms)
+  ✓  3 [a] › e2e/live/catalog.spec.ts:61:1 › оформление и заказ по ссылке честно сообщают о недействительном ключе (937ms)
+  ✓  4 [a] › e2e/live/catalog.spec.ts:69:1 › создание и изменение сохраняются в БД и видны в новой сессии (6.1s)
+  ✓  5 [a] › e2e/live/catalog.spec.ts:91:1 › ошибки полей и серверный 422 оставляют редактор открытым (4.8s)
+  ✓  6 [a] › e2e/live/catalog.spec.ts:119:1 › PATCH принимает ID пути, но отклоняет настоящий query string (2.4s)
+  ✓  7 [a] › e2e/live/catalog.spec.ts:134:1 › воспитатель не может открыть или изменить каталог, включая прямой запрос (1.8s)
+  ✓  8 [a] › e2e/live/catalog.spec.ts:164:1 › изменённая роль в localStorage заменяется настоящим профилем (1.7s)
+  ✓  9 [a] › e2e/live/catalog.spec.ts:177:1 › учётная запись без профиля сотрудника получает понятный отказ (1.3s)
+  ✓  10 [a] › e2e/live/catalog.spec.ts:184:1 › выход отзывает серверный токен (2.9s)
+  ✓  11 [a] › e2e/live/catalog.spec.ts:202:1 › отзыв сессии возвращает ко входу и затем в каталог (5.0s)
+  ✓  12 [a] › e2e/live/catalog.spec.ts:218:1 › конфликт двух редакторов не перезаписывает чужие изменения (7.6s)
+  ✓  13 [a] › e2e/live/catalog.spec.ts:245:1 › потеря ответа после commit и повтор не создают дубликат (4.9s)
+  ✓  14 [a] › e2e/live/catalog.spec.ts:275:1 › #92: каталог загружается одной страницей до 100 позиций и листается без запросов (4.4s)
+  ✓  15 [a] › e2e/live/catalog.spec.ts:297:1 › мобильный редактор доступен, текст товара безопасно отображается (3.3s)
+  ✓  16 [a] › e2e/live/conditions.spec.ts:133:1 › E3: общие и групповые условия проходят CAS, idempotency и live UI (10.1s)
+  ✓  17 [a] › e2e/live/conditions.spec.ts:256:1 › E3: воспитатель не читает и не меняет условия прямым запросом (1.9s)
+  ✓  18 [a] › e2e/live/conditions.spec.ts:279:1 › E3: потерянный ответ условий повторяется с тем же ключом и телом (5.3s)
+  ✓  19 [a] › e2e/live/design-tokens.spec.ts:5:1 › токены размеров, радиус и рамка поля, шрифты из собственной сборки (594ms)
+  ✓  20 [a] › e2e/live/legal.spec.ts:26:1 › LEG-T10/T21: документы и реквизиты открываются без входа, подстановки заполнены (1.6s)
+  ✓  21 [a] › e2e/live/legal.spec.ts:67:1 › LEG-T11/T15: футер со ссылками и плашка о cookie без сторонних запросов (934ms)
+  ✓  22 [a] › e2e/live/legal.spec.ts:91:1 › LEG-T20: сотрудник без согласия принимает его в кабинете один раз (2.4s)
+  ✓  23 [a] › e2e/live/organization.spec.ts:107:1 › C3: учреждение, две съёмки и группы сохраняются через браузер и новую сессию (10.4s)
+  ✓  24 [a] › e2e/live/organization.spec.ts:177:1 › C3: очистка даты сохраняет null, переименование без даты сохраняет значение (3.4s)
+  ✓  25 [a] › e2e/live/organization.spec.ts:219:1 › C3: потерянный ответ группы повторяется после reload с тем же ключом и телом (4.8s)
+  ✓  26 [a] › e2e/live/organization.spec.ts:259:1 › C3: конфликт двух редакторов группы сохраняет ввод и не перезаписывает победителя (7.1s)
+  ✓  27 [a] › e2e/live/organization.spec.ts:287:1 › C3: съёмки учреждения листаются в виджете, группы съёмки — страницами сервера (7.6s)
+  ✓  28 [a] › e2e/live/organization.spec.ts:319:1 › C3: сервер отклоняет query-подмену, календарь в PATCH и отсутствующие сущности (3.1s)
+  ✓  29 [a] › e2e/live/organization.spec.ts:366:1 › C3: воспитатель не получает редактор даже после подмены локальной роли (2.1s)
+  ✓  30 [a] › e2e/live/organization.spec.ts:388:1 › C3: мобильная форма и календарь группы доступны без горизонтального скролла (2.9s)
+  ✓  31 [a] › e2e/live/organization.spec.ts:411:1 › C3: куратор и руководитель видят только назначенное учреждение и его съёмки (9.4s)
+  ✓  32 [a] › e2e/live/organization.spec.ts:478:1 › C3: отзыв сессии во время редактора не сохраняет группу и возвращает ко входу (5.7s)
+  ✓  33 [a] › e2e/live/organization.spec.ts:506:1 › C3: повтор потерянного сохранения после 401 и нового входа не создаёт дубликат (6.9s)
+  ✓  34 [a] › e2e/live/shell.spec.ts:52:3 › каркас кабинета на 1280: organizer (3.3s)
+  ✓  35 [a] › e2e/live/shell.spec.ts:52:3 › каркас кабинета на 1280: curator (2.7s)
+  ✓  36 [a] › e2e/live/shell.spec.ts:52:3 › каркас кабинета на 1280: head (3.0s)
+  ✓  37 [a] › e2e/live/shell.spec.ts:52:3 › каркас кабинета на 1280: teacher (2.8s)
+  ✓  38 [a] › e2e/live/shell.spec.ts:79:3 › каркас кабинета организатора на 390 (3.2s)
+  ✓  39 [a] › e2e/live/shell.spec.ts:79:3 › каркас кабинета организатора на 768 (3.3s)
+  ✓  40 [a] › e2e/live/shell.spec.ts:79:3 › каркас кабинета организатора на 1440 (3.2s)
+  ✓  41 [a] › e2e/live/staff.spec.ts:58:1 › B2: организатор приглашает учителя и назначает реальную группу (6.6s)
+  ✓  42 [a] › e2e/live/staff.spec.ts:104:1 › B2: замена назначения требует подпись и отзывает старый токен (2.9s)
+  ✓  43 [a] › e2e/live/staff.spec.ts:165:1 › B2: форма показывает замену занятой группы и сохраняет видимые значения (4.9s)
+  ✓  44 [a] › e2e/live/staff.spec.ts:226:1 › B2: teacher не читает управление, а последний организатор защищён (3.8s)
+  ✓  45 [a] › e2e/live/staff.spec.ts:284:1 › B2: мобильный список не создаёт горизонтальную прокрутку (2.9s)
+  ✓  46 [a] › e2e/live/staff.spec.ts:296:1 › #91: организатор сортирует, выбирает и удаляет сотрудников; повторное добавление приглашает заново (5.5s)
+  ✓  47 [a] › e2e/live/z-institution-detail.spec.ts:101:1 › C4: полная карточка показывает сохранённые съёмки и группы из разных съёмок (5.6s)
+  ✓  48 [a] › e2e/live/z-institution-detail.spec.ts:157:1 › #105: организатор создаёт и изменяет группу на странице учреждения, выбрав съёмку (7.8s)
+  ✓  49 [a] › e2e/live/z-institution-detail.spec.ts:223:1 › C4 #92: виджеты листают съёмки и группы независимо, без запросов к серверу (8.1s)
+  ✓  50 [a] › e2e/live/z-institution-detail.spec.ts:261:1 › C4: куратор и руководитель читают только свою карточку без mutation signature (12.0s)
+  ✓  51 [a] › e2e/live/z-institution-detail.spec.ts:329:1 › C4: teacher и невалидный токен не открывают полный endpoint (4.0s)
+  ✓  52 [a] › e2e/live/z-institution-detail.spec.ts:364:1 › C4: query границы, path spoof и пустые дальние страницы проверяет сервер (2.3s)
+  ✓  53 [a] › e2e/live/z-institution-detail.spec.ts:406:1 › C4: ошибка загрузки не подменяется пустой карточкой, повтор читает сервер (3.0s)
+  ✓  54 [a] › e2e/live/z-institution-detail.spec.ts:430:1 › C4: мобильная карточка безопасно отображает длинный текст и доступные действия (4.3s)
+  ✓  55 [a] › e2e/live/z-institution-detail.spec.ts:452:1 › C4: отзыв сессии при обновлении карточки возвращает к входу и обратно (5.2s)
+  ✓  56 [a] › e2e/live/zz-access.spec.ts:35:1 › B4: приглашение по ссылке — пароль, вход и одноразовая ссылка (3.3s)
+  ✓  57 [a] › e2e/live/zz-access.spec.ts:80:1 › B4: ожидающий регистрации сотрудник получает общий ответ и подсказки (833ms)
+  ✓  58 [a] › e2e/live/zz-access.spec.ts:89:1 › B4: восстановление доступа отвечает одинаково для любого адреса (920ms)
+  ✓  59 [a] › e2e/live/zz-access.spec.ts:100:1 › B4: сброс пароля по ссылке завершает прежнюю сессию (3.0s)
+  ✓  60 [a] › e2e/live/zz-access.spec.ts:125:1 › B4: смена пароля в профиле проверяет текущий пароль (2.4s)
+  ✓  61 [a] › e2e/live/zz-access.spec.ts:144:1 › B4: организатор находит ожидающих регистрации и повторяет приглашение (3.5s)
+  ✓  62 [a] › e2e/live/zz-media-archive.spec.ts:117:1 › #150: архивы по папкам детей размечаются сами, групповые кадры достаются всем детям (9.0s)
+  ✓  63 [a] › e2e/live/zz-media-archive.spec.ts:203:1 › #150: сбои сервера и связи повторяются сами, экран сверки помещается на телефоне (9.0s)
+Media bench: {"count":50,"averageMegabytes":7.4,"parallel":2,"totalSeconds":63,"transferMs":{"p50":494,"p95":1645},"acceptedToReadyMs":{"p50":34715,"p95":45059}}
+  ✓  64 [a] › e2e/live/zz-media-bench.spec.ts:13:1 › #33/#34: замер партии типичных фото на изолированном стенде (2.0m)
+  ✓  65 [a] › e2e/live/zz-media.spec.ts:39:1 › D3: ошибочный ответ списка кадров показывает понятное сообщение (3.1s)
+  ✓  66 [a] › e2e/live/zz-media.spec.ts:74:1 › D1/D2: приватное фото получает M:N-разметку и обложку без потери атомарности (15.9s)
+  ✓  67 [a] › e2e/live/zz-media.spec.ts:412:1 › #33: партия отправляется по два файла без ожидания превью и переживает обновление страницы (11.5s)
+  ✘  68 [a] › e2e/live/zz-media.spec.ts:499:1 › #54/#55: большая группа открывается страницей, превью идут очередью и переживают сбой (2.2m)
+  ✘  69 [a] › e2e/live/zz-media.spec.ts:660:1 › #55: превью прежней сессии отменяются при выходе и не сбрасывают новый вход (1.1m)
+  ✘  70 [a] › e2e/live/zz-media.spec.ts:742:1 › #106: организатор удаляет лишние кадры группы с подтверждением (34.6s)
+  ✘  71 [a] › e2e/live/zz-media.spec.ts:898:1 › #115/#116: потерянный ответ удаления восстанавливается повтором, duplicate уходит вместе с canonical (34.1s)
+  ✓  72 [a] › e2e/live/zz-notification.spec.ts:3:1 › H1/NTF-01: существующий Lead остаётся доступен и honeypot не отправляет сообщение (73ms)
+  ✓  73 [a] › e2e/live/zz-questions.spec.ts:17:1 › a parent asks the curator from the gallery and keeps the conversation in this browser (3.7s)
+  ✓  74 [a] › e2e/live/zz-questions.spec.ts:70:1 › a first question whose response was lost is recovered after reload without a second conversation (2.0s)
+  ✓  75 [a] › e2e/live/zz-questions.spec.ts:93:1 › an edited text after a lost first answer joins the recovered conversation instead of starting another (1.6s)
+  ✓  76 [a] › e2e/live/zz-questions.spec.ts:125:1 › a new curator answer is marked on the gallery until the parent opens it (1.7s)
+  ✓  77 [a] › e2e/live/zz-questions.spec.ts:161:1 › a teacher writes to the curators from the cabinet; a curator cannot open this conversation (3.6s)
+  ✓  78 [a] › e2e/live/zz-questions.spec.ts:182:1 › the question screens fit desktop and mobile (2.8s)
+  ✓  79 [a] › e2e/live/zz-questions.spec.ts:202:1 › a guest writes from the login page to the same curator group and sees the request number (2.1s)
+  ✓  80 [a] › e2e/live/zz-questions.spec.ts:253:1 › the login page with its information and feedback form fits desktop and mobile (2.6s)
+  ✓  81 [a] › e2e/live/zz-u7-screens.spec.ts:27:1 › U7: учреждение и съёмка — счётчики, хлебные крошки, вкладки, распределение групп и готовность фото (4.9s)
+  ✓  82 [a] › e2e/live/zz-u7-screens.spec.ts:82:1 › U7: раздел «Помощь» профиля показывает контакт организатора (1.3s)
+
+
+  1) [a] › e2e/live/zz-media.spec.ts:499:1 › #54/#55: большая группа открывается страницей, превью идут очередью и переживают сбой
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m62[39m
+    Received: [31m35[39m
+
+    Call Log:
+    - Timeout 120000ms exceeded while waiting on the predicate
+
+      549 |       )
+      550 |     );
+    > 551 |   await expect
+          |   ^
+      552 |     .poll(
+      553 |       async () =>
+      554 |         (await result(await page.request.get(listing + '?status=ready&pageSize=1&groupId=' + group.id, { headers: authorization }), 200))
+        at /app/e2e/live/zz-media.spec.ts:551:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports/e2e-live/artifacts/zz-media--54-55-большая-гр-62fc1--очередью-и-переживают-сбой-a/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports/e2e-live/artifacts/zz-media--54-55-большая-гр-62fc1--очередью-и-переживают-сбой-a/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports/e2e-live/artifacts/zz-media--54-55-большая-гр-62fc1--очередью-и-переживают-сбой-a/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    reports/e2e-live/artifacts/zz-media--54-55-большая-гр-62fc1--очередью-и-переживают-сбой-a/trace.zip
+    Usage:
+
+        npx playwright show-trace reports/e2e-live/artifacts/zz-media--54-55-большая-гр-62fc1--очередью-и-переживают-сбой-a/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [a] › e2e/live/zz-media.spec.ts:660:1 › #55: превью прежней сессии отменяются при выходе и не сбрасывают новый вход
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m1[39m
+    Received: [31m0[39m
+
+    Call Log:
+    - Timeout 60000ms exceeded while waiting on the predicate
+
+      699 |     202
+      700 |   );
+    > 701 |   await expect
+          |   ^
+      702 |     .poll(
+      703 |       async () =>
+      704 |         (await result(await page.request.get(listing + '?status=ready&pageSize=1&groupId=' + group.id, { headers: authorization }), 200))
+        at /app/e2e/live/zz-media.spec.ts:701:3
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports/e2e-live/artifacts/zz-media--55-превью-прежне-deaa9--и-не-сбрасывают-новый-вход-a/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports/e2e-live/artifacts/zz-media--55-превью-прежне-deaa9--и-не-сбрасывают-новый-вход-a/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports/e2e-live/artifacts/zz-media--55-превью-прежне-deaa9--и-не-сбрасывают-новый-вход-a/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    reports/e2e-live/artifacts/zz-media--55-превью-прежне-deaa9--и-не-сбрасывают-новый-вход-a/trace.zip
+    Usage:
+
+        npx playwright show-trace reports/e2e-live/artifacts/zz-media--55-превью-прежне-deaa9--и-не-сбрасывают-новый-вход-a/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [a] › e2e/live/zz-media.spec.ts:742:1 › #106: организатор удаляет лишние кадры группы с подтверждением
+
+    Error: [31mTimed out 30000ms waiting for [39m[2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m
+
+    Locator: getByTestId('photo-card')
+    Expected: [32m3[39m
+    Received: [31m0[39m
+    Call log:
+    [2m  - expect.toHaveCount with timeout 30000ms[22m
+    [2m  - waiting for getByTestId('photo-card')[22m
+    [2m    34 × locator resolved to 0 elements[22m
+    [2m       - unexpected value "0"[22m
+
+
+      781 |   );
+      782 |   await page.getByRole('button', { name: 'Загрузить на сервер', exact: true }).click();
+    > 783 |   await expect(page.getByTestId('photo-card')).toHaveCount(3, { timeout: 30000 });
+          |                                                ^
+      784 |
+      785 |   const auth = { Authorization: 'Bearer ' + (await token(page)) };
+      786 |   const listed = await result(await page.request.get('/api/v1/shoots/' + shoot.id + '/photos', { headers: auth }), 200);
+        at /app/e2e/live/zz-media.spec.ts:783:48
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports/e2e-live/artifacts/zz-media--106-организатор--8bba7-дры-группы-с-подтверждением-a/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports/e2e-live/artifacts/zz-media--106-организатор--8bba7-дры-группы-с-подтверждением-a/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports/e2e-live/artifacts/zz-media--106-организатор--8bba7-дры-группы-с-подтверждением-a/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    reports/e2e-live/artifacts/zz-media--106-организатор--8bba7-дры-группы-с-подтверждением-a/trace.zip
+    Usage:
+
+        npx playwright show-trace reports/e2e-live/artifacts/zz-media--106-организатор--8bba7-дры-группы-с-подтверждением-a/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [a] › e2e/live/zz-media.spec.ts:898:1 › #115/#116: потерянный ответ удаления восстанавливается повтором, duplicate уходит вместе с canonical
+
+    Error: [31mTimed out 30000ms waiting for [39m[2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m
+
+    Locator: getByTestId('photo-card')
+    Expected: [32m3[39m
+    Received: [31m0[39m
+    Call log:
+    [2m  - expect.toHaveCount with timeout 30000ms[22m
+    [2m  - waiting for getByTestId('photo-card')[22m
+    [2m    34 × locator resolved to 0 elements[22m
+    [2m       - unexpected value "0"[22m
+
+
+      938 |   );
+      939 |   await page.getByRole('button', { name: 'Загрузить на сервер', exact: true }).click();
+    > 940 |   await expect(page.getByTestId('photo-card')).toHaveCount(3, { timeout: 30000 });
+          |                                                ^
+      941 |   // The same bytes once more: the server stores a duplicate record that references the canonical frame (FK RESTRICT).
+      942 |   await picker.setInputFiles({ name: 'i116-copy.png', mimeType: 'image/png', buffer: pngVariant('i116-canonical') });
+      943 |   await page.getByRole('button', { name: 'Загрузить на сервер', exact: true }).click();
+        at /app/e2e/live/zz-media.spec.ts:940:48
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports/e2e-live/artifacts/zz-media--115-116-потерянн-647b8-e-уходит-вместе-с-canonical-a/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports/e2e-live/artifacts/zz-media--115-116-потерянн-647b8-e-уходит-вместе-с-canonical-a/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports/e2e-live/artifacts/zz-media--115-116-потерянн-647b8-e-уходит-вместе-с-canonical-a/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    reports/e2e-live/artifacts/zz-media--115-116-потерянн-647b8-e-уходит-вместе-с-canonical-a/trace.zip
+    Usage:
+
+        npx playwright show-trace reports/e2e-live/artifacts/zz-media--115-116-потерянн-647b8-e-уходит-вместе-с-canonical-a/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    [a] › e2e/live/zz-media.spec.ts:499:1 › #54/#55: большая группа открывается страницей, превью идут очередью и переживают сбой
+    [a] › e2e/live/zz-media.spec.ts:660:1 › #55: превью прежней сессии отменяются при выходе и не сбрасывают новый вход
+    [a] › e2e/live/zz-media.spec.ts:742:1 › #106: организатор удаляет лишние кадры группы с подтверждением
+    [a] › e2e/live/zz-media.spec.ts:898:1 › #115/#116: потерянный ответ удаления восстанавливается повтором, duplicate уходит вместе с canonical
+  78 passed (12.1m)
+
+To open last HTML report run:
+
+  npx playwright show-report reports/e2e-live/html
+
+npm notice
+npm notice New major version of npm available! 10.9.2 -> 12.2.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+npm notice To update run: npm install -g npm@12.2.2
+npm notice

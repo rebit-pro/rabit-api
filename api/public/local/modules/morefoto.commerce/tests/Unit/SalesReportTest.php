@@ -32,6 +32,7 @@ use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryPageOutputDto;
 use Rebit\Share\Contracts\Organization\Dto\GroupDirectoryQueryInputDto;
 use Rebit\Share\Contracts\Organization\GroupDirectoryInterface;
 use Rebit\Share\Shared\Exception\HttpException;
+use Morefoto\Commerce\Application\Sales\Service\ProductionWorksheet;
 
 require_once __DIR__ . '/../bootstrap.php';
 
@@ -284,6 +285,7 @@ final class SalesReportTest extends TestCase
             $media,
             new SalesReportRowMapper(new ChildSalesStatusPolicy()),
             $clock,
+            $this->createStub(ProductionWorksheet::class),
         );
     }
 

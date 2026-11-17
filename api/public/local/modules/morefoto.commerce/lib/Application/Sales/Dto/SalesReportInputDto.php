@@ -10,5 +10,10 @@ final readonly class SalesReportInputDto
         public ?string $institutionId = null,
         public ?string $shootId = null,
         public ?string $groupId = null,
+        public bool $includeUnordered = true,
+        public string $view = 'summary',
+        public string $worksheetMode = 'preview',
+        public ?string $archiveType = null,
+        public ?string $archiveId = null,
     ) {}
 }

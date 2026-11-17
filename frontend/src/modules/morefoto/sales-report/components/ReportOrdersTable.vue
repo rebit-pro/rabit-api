@@ -1,71 +1,62 @@
 <script setup lang="ts">
-import { money } from '../rules';
+import { computed } from 'vue';
+import MfStatus from '@/components/status/MfStatus.vue';
+import UiDataTable from '../../ui/components/UiDataTable.vue';
+import type { UiTableColumn } from '../../ui/table-types';
+import { reportOrderName, reportOrderStatus } from '../rules';
 import type { OrderNameSales } from '../api';
+import { useLocalTable } from '../useLocalTable';
 
-defineProps<{ items: OrderNameSales[] }>();
-const statuses: Record<string, string> = { paid: 'Оплачен', pending: 'Ожидает оплаты', declined: 'Оплата отклонена', unpaid: 'Не оплачен' };
+const props = defineProps<{ items: OrderNameSales[] }>();
+const columns: UiTableColumn[] = [
+  { key: 'number', label: 'Заказ', primary: true, sortable: true },
+  { key: 'name', label: 'Имя и фамилия ребёнка', mobile: true, sortable: true },
+  { key: 'status', label: 'Оплата', mobile: true, sortable: true },
+  { key: 'total', label: 'Сумма заказа', type: 'money', mobile: true, sortable: true }
+];
+const byId = computed(() => new Map(props.items.map((order) => [order.id, order])));
+const table = useLocalTable(
+  () =>
+    props.items.map((order) => ({
+      id: order.id,
+      number: order.number,
+      name: reportOrderName(order),
+      status: reportOrderStatus(order).label,
+      total: order.total
+    })),
+  columns,
+  { key: 'number', direction: 'asc' }
+);
+const tone = (id: string) => reportOrderStatus(byId.value.get(id)!).tone;
 </script>
 
 <template>
-  <div class="report-orders" data-testid="report-orders">
-    <p v-if="items.length === 0" class="mf-muted">Заказов пока нет.</p>
-    <article v-for="order in items" :key="order.id" class="report-orders__row" data-testid="report-order">
-      <h3>{{ order.number }}</h3>
-      <dl>
-        <div>
-          <dt>Имя и фамилия ребёнка</dt>
-          <dd>{{ order.firstName && order.lastName ? `${order.lastName} ${order.firstName}` : 'Не указано' }}</dd>
-        </div>
-        <div>
-          <dt>Оплата</dt>
-          <dd>{{ order.latePayment ? 'Поздняя оплата' : (statuses[order.paymentStatus] ?? order.paymentStatus) }}</dd>
-        </div>
-        <div>
-          <dt>Сумма заказа</dt>
-          <dd>{{ money(order.total) }}</dd>
-        </div>
-      </dl>
-    </article>
-  </div>
+  <UiDataTable
+    title="Заказы"
+    label-key="number"
+    density="compact"
+    :columns="columns"
+    :rows="table.visible.value"
+    :total="table.total.value"
+    :page="table.page.value"
+    :page-size="table.pageSize.value"
+    :sort="table.sort.value"
+    :selected="[]"
+    :selectable="false"
+    :actions="false"
+    auto-pager
+    empty-title="Заказов пока нет"
+    empty-description="Здесь появятся оформленные заказы группы, включая неоплаченные."
+    data-testid="report-orders"
+    @sort="table.order"
+    @page="table.page.value = $event"
+    @page-size="table.resize"
+  >
+    <template #cell-number="{ row }"
+      ><strong data-testid="report-order">{{ row.number }}</strong></template
+    >
+    <template #cell-status="{ row }"
+      ><MfStatus :tone="tone(row.id)">{{ row.status }}</MfStatus></template
+    >
+  </UiDataTable>
 </template>
-
-<style scoped>
-.report-orders {
-  display: grid;
-  border: 1px solid var(--mf-color-border);
-  border-radius: var(--mf-radius-sm);
-}
-.report-orders__row {
-  padding: var(--mf-space-3);
-  border-bottom: 1px solid var(--mf-color-border);
-  overflow-wrap: anywhere;
-}
-.report-orders__row h3 {
-  margin-bottom: var(--mf-space-2);
-  font-size: var(--mf-text-base);
-}
-.report-orders__row dl {
-  display: grid;
-  grid-template-columns: minmax(160px, 2fr) repeat(2, minmax(110px, 1fr));
-  gap: var(--mf-space-3);
-  margin: 0;
-}
-.report-orders__row dt {
-  font-size: var(--mf-text-xs);
-  color: var(--mf-color-text-secondary);
-}
-.report-orders__row dd {
-  margin: 0;
-}
-.report-orders__row:last-child {
-  border-bottom: 0;
-}
-@media (max-width: 700px) {
-  .report-orders__row dl {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .report-orders__row dl > div:first-child {
-    grid-column: 1 / -1;
-  }
-}
-</style>

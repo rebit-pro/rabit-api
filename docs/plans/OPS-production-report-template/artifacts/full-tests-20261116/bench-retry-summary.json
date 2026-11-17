@@ -1,0 +1,173 @@
+{
+  "id": "rabit-e2e-03c3ed9d1003",
+  "scope": "PARTIAL run, not a full gate",
+  "stopped": true,
+  "stages": [
+    {
+      "name": "npm ci",
+      "startedAt": 1.3,
+      "status": "passed",
+      "seconds": 14.3
+    },
+    {
+      "name": "php-cli WebP capability",
+      "startedAt": 1.3,
+      "status": "passed",
+      "seconds": 0.8
+    },
+    {
+      "name": "a: MySQL and RabbitMQ",
+      "startedAt": 1.3,
+      "status": "passed",
+      "seconds": 12.6
+    },
+    {
+      "name": "php-fpm WebP capability",
+      "startedAt": 2.1,
+      "status": "passed",
+      "seconds": 0.9
+    },
+    {
+      "name": "composer autoload",
+      "startedAt": 3.0,
+      "status": "passed",
+      "seconds": 18.7
+    },
+    {
+      "name": "npm run lint",
+      "startedAt": 15.6,
+      "status": "passed",
+      "seconds": 47.2
+    },
+    {
+      "name": "npm run lint:styles",
+      "startedAt": 15.6,
+      "status": "passed",
+      "seconds": 17.4
+    },
+    {
+      "name": "npm run typecheck",
+      "startedAt": 15.6,
+      "status": "passed",
+      "seconds": 40.9
+    },
+    {
+      "name": "npm run typecheck:e2e",
+      "startedAt": 15.6,
+      "status": "passed",
+      "seconds": 15.0
+    },
+    {
+      "name": "npm run test:ui",
+      "startedAt": 15.6,
+      "status": "passed",
+      "seconds": 10.5
+    },
+    {
+      "name": "npm run test:commerce",
+      "startedAt": 15.6,
+      "status": "passed",
+      "seconds": 11.0
+    },
+    {
+      "name": "npm run build-only",
+      "startedAt": 15.6,
+      "status": "passed",
+      "seconds": 29.6
+    },
+    {
+      "name": "php-lint",
+      "startedAt": 21.7,
+      "status": "passed",
+      "seconds": 5.6
+    },
+    {
+      "name": "phpstan",
+      "startedAt": 21.7,
+      "status": "passed",
+      "seconds": 5.1
+    },
+    {
+      "name": "phpunit",
+      "startedAt": 21.7,
+      "status": "passed",
+      "seconds": 31.1
+    },
+    {
+      "name": "a: real Bitrix schema and fixture accounts",
+      "startedAt": 62.8,
+      "status": "passed",
+      "seconds": 4.3
+    },
+    {
+      "name": "a: durable Notification contract on real MySQL",
+      "startedAt": 67.1,
+      "status": "passed",
+      "seconds": 1.1
+    },
+    {
+      "name": "a: FPM, media and files workers and nginx",
+      "startedAt": 68.2,
+      "status": "passed",
+      "seconds": 5.3
+    },
+    {
+      "name": "a: E4 gallery fixture through internal lifecycle",
+      "startedAt": 73.5,
+      "status": "passed",
+      "seconds": 1.3
+    },
+    {
+      "name": "a: real browser group a",
+      "startedAt": 74.8,
+      "status": "passed",
+      "seconds": 514.5
+    },
+    {
+      "name": "a: verify-access.php",
+      "startedAt": 589.3,
+      "status": "passed",
+      "seconds": 0.6
+    },
+    {
+      "name": "a: verify-support.php",
+      "startedAt": 589.8,
+      "status": "passed",
+      "seconds": 1.2
+    },
+    {
+      "name": "a: verify-photo-deletion.php",
+      "startedAt": 591.1,
+      "status": "passed",
+      "seconds": 0.3
+    }
+  ],
+  "results": {
+    "a": {
+      "passed": 82,
+      "seconds": 511.7,
+      "files": {
+        "catalog.spec.ts": 15,
+        "conditions.spec.ts": 3,
+        "design-tokens.spec.ts": 1,
+        "legal.spec.ts": 3,
+        "organization.spec.ts": 11,
+        "shell.spec.ts": 7,
+        "staff.spec.ts": 6,
+        "z-institution-detail.spec.ts": 9,
+        "zz-access.spec.ts": 6,
+        "zz-media-archive.spec.ts": 2,
+        "zz-media-bench.spec.ts": 1,
+        "zz-media.spec.ts": 7,
+        "zz-notification.spec.ts": 1,
+        "zz-questions.spec.ts": 8,
+        "zz-u7-screens.spec.ts": 2
+      }
+    }
+  },
+  "testEnvironmentOverrides": {
+    "MEDIA_E2E_LIMIT": 1000,
+    "MEDIA_E2E_TIME_LIMIT": 3600,
+    "scope": "disposable media worker only"
+  }
+}

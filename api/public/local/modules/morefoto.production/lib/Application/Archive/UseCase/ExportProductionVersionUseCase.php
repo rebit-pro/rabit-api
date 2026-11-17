@@ -13,7 +13,7 @@ use Rebit\Share\Contracts\Media\OriginalFilesInterface;
 
 /**
  * PRD-07: состав версии в CSV из кабинета — тот же, что лежит в корне ZIP, и доступный после удаления файла архива
- * по сроку хранения (L1-DEC-04): состав версии хранится всегда.
+ * по сроку хранения (L1-DEC-04): состав версии хранится всегда. Новые версии сохраняют полные пути: их CSV не зависит от доступности оригиналов.
  */
 final readonly class ExportProductionVersionUseCase
 {
@@ -30,7 +30,7 @@ final readonly class ExportProductionVersionUseCase
         $version = $this->lookup->version($this->access->scope($actorId), $versionId);
         $lines = $this->archives->lines($version->id);
         $extensions = [];
-        foreach ($this->originals->originals(array_values(array_unique(array_map(static fn($line): string => $line->photoId, $lines)))) as $photoId => $original) {
+        foreach (1 === $version->layoutVersion ? $this->originals->originals(array_values(array_unique(array_map(static fn($line): string => $line->photoId, $lines)))) : [] as $photoId => $original) {
             $extension = strtolower(pathinfo($original->relativePath, PATHINFO_EXTENSION));
             $extensions[$photoId] = '' === $extension ? 'jpg' : $extension;
         }
@@ -38,7 +38,7 @@ final readonly class ExportProductionVersionUseCase
         return new TextFileOutputDto(
             filename: 'print-' . substr($version->groupPublicId, 0, 8) . '-v' . $version->number . '.csv',
             mimeType: 'text/csv; charset=utf-8',
-            content: $this->manifest->csv($lines, $extensions),
+            content: $this->manifest->csv($lines, $extensions, $version->layoutVersion),
         );
     }
 }

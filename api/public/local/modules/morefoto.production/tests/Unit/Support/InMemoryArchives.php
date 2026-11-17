@@ -80,6 +80,7 @@ final class InMemoryArchives implements ArchiveRepositoryInterface
             readyAt: null,
             expiresAt: null,
             createdBy: $version->createdBy,
+            layoutVersion: $version->layoutVersion,
         );
 
         return true;

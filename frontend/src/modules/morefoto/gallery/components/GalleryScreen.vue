@@ -8,30 +8,14 @@ import { useGallery } from '../composables/useGallery';
 import GalleryHeader from './GalleryHeader.vue';
 import { formatMoment } from '../../orders/formatters';
 import MfLogo from '@/components/brand/MfLogo.vue';
-import GalleryFilters from './GalleryFilters.vue';
 import GalleryGrid from './GalleryGrid.vue';
 import PhotoViewer from './PhotoViewer.vue';
 import GalleryHelp from './GalleryHelp.vue';
 import GalleryQuestionDialog from './GalleryQuestionDialog.vue';
 import { questionsApi } from '../../support/api';
 import { useGalleryQuestion } from '../../support/composables/useGalleryQuestion';
-const {
-  gallery,
-  loading,
-  error,
-  unavailable,
-  reload,
-  code,
-  photos,
-  allPhotos,
-  activePhoto,
-  activeIndex,
-  missingPhoto,
-  selectCode,
-  openPhoto,
-  closePhoto,
-  stepPhoto
-} = useGallery();
+const { gallery, loading, error, unavailable, reload, photos, activePhoto, activeIndex, missingPhoto, openPhoto, closePhoto, stepPhoto } =
+  useGallery();
 const route = useRoute();
 const helpOpen = shallowRef(false);
 const questionOpen = shallowRef(false);
@@ -138,24 +122,18 @@ function askCurator(): void {
             Ответственный группы сообщит, когда галерея откроется.
           </p>
         </section>
-        <section v-else-if="!allPhotos.length" class="mf-panel gallery-empty">
+        <section v-else-if="!photos.length" class="mf-panel gallery-empty">
           <v-icon icon="mdi-image-multiple-outline" size="40" color="primary" />
           <h2>В подборке пока нет фотографий</h2>
           <p class="mf-muted">Проверьте ссылку позже или обратитесь к ответственному группы.</p>
         </section>
         <template v-else>
-          <GalleryFilters :children="gallery.children" :code="code" :count="photos.length" @select="selectCode" />
+          <p class="gallery-count" role="status" aria-live="polite" data-testid="gallery-count">Кадров: {{ photos.length }}</p>
           <v-alert v-if="missingPhoto" type="info" variant="tonal" class="mb-6">
             Кадр не найден в этой подборке.
             <v-btn variant="text" @click="closePhoto">Вернуться к фотографиям</v-btn>
           </v-alert>
-          <GalleryGrid v-if="photos.length" :photos="photos" @open="openPhoto" />
-          <section v-else class="mf-panel gallery-empty">
-            <v-icon icon="mdi-magnify" size="40" color="primary" />
-            <h2>По этому коду ничего не найдено</h2>
-            <p class="mf-muted">Проверьте код. Поиск работает только внутри этой группы и съёмки.</p>
-            <v-btn color="primary" variant="outlined" @click="selectCode('')">Показать все серии</v-btn>
-          </section>
+          <GalleryGrid :photos="photos" @open="openPhoto" />
         </template>
         <PhotoViewer
           :photo="activePhoto"
@@ -235,6 +213,11 @@ function askCurator(): void {
   justify-items: center;
   gap: 16px;
   text-align: center;
+}
+.gallery-count {
+  padding-block: var(--mf-space-4);
+  color: var(--mf-color-text-secondary);
+  font-size: var(--mf-text-sm);
 }
 .gallery-empty h1 {
   font-size: 28px;

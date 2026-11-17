@@ -1,4 +1,5 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
+import type { Worksheet } from '../../src/modules/morefoto/sales-report/worksheet.js';
 import { test, expect, type APIResponse, type Browser, type Page } from '@playwright/test';
 import { login, token } from './helpers.js';
 
@@ -278,6 +279,17 @@ test('E10-T09…T12: each role reads the sales of its own area and downloads the
   const bytes = await pdf.body();
   expect(bytes.subarray(0, 5).toString()).toBe('%PDF-');
   expect(bytes.length).toBeGreaterThan(10_000);
+  const compactPdf = await page.request.get('/api/v1/sales-report/pdf', {
+    headers: await bearer(page),
+    params: { groupId, childrenView: 'ordered' }
+  });
+  expect(compactPdf.status(), await compactPdf.text()).toBe(200);
+  expect((await compactPdf.body()).subarray(0, 5).toString()).toBe('%PDF-');
+  expect(
+    (
+      await page.request.get('/api/v1/sales-report/pdf', { headers: await bearer(page), params: { groupId, childrenView: 'paid-only' } })
+    ).status()
+  ).toBe(422);
 
   // E10-T04: the child's frame is shown only inside the area of the report.
   const framed = group.children.find((child) => child.hasPreview);
@@ -327,24 +339,67 @@ test('E10-T09…T12: each role reads the sales of its own area and downloads the
       await teacher.goto('/cabinet/reports?' + new URLSearchParams({ institutionId, shootId, groupId }));
       await expect(teacher.getByTestId('report-title')).toHaveText(group.group!.name);
       await expect(teacher.getByTestId('report-figure-total').locator('dd')).toHaveText(total);
-      await expect(teacher.getByTestId('report-child-status').filter({ visible: true })).toHaveCount(Math.min(group.children.length, 50));
+      const ordered = group.children.filter((child) => child.status !== 'none');
+      const childRows = teacher.getByTestId('report-child-status').filter({ visible: true });
+      await expect(childRows).toHaveCount(Math.min(ordered.length, 50));
+      await expect(teacher.getByTestId('report-without-orders')).toContainText('Нет заказа: ' + (group.children.length - ordered.length));
       await expect(teacher.getByTestId('report-format')).toHaveCount(group.products.length);
-      await expect(teacher.getByTestId('report-order')).toHaveCount(group.orders.length);
+      await expect(teacher.getByTestId('report-order').filter({ visible: true })).toHaveCount(Math.min(group.orders.length, 50));
       await expect(teacher.getByTestId('report-orders')).toContainText('Иванов Иван');
-      await expect(teacher.locator('[data-testid="report-children"] img').filter({ visible: true }).first()).toBeVisible();
-      await teacher
-        .getByRole('button', { name: /^Увеличить фото ребёнка/ })
-        .first()
-        .click();
-      await expect(teacher.getByRole('dialog').getByTestId('photo-zoom-level')).toHaveText('100%');
-      await teacher.getByRole('dialog').getByRole('button', { name: 'Увеличить фото' }).click();
-      await expect(teacher.getByRole('dialog').getByTestId('photo-zoom-level')).toHaveText('150%');
-      await teacher.getByRole('dialog').getByRole('button', { name: 'Закрыть фото' }).click();
+      await expect(teacher.locator('[data-testid="report-children"] img')).toHaveCount(0);
       expect(await fits(teacher)).toBe(true);
       await shot(teacher, 'teacher-group');
       const download = teacher.waitForEvent('download');
+      const requestedPdf = teacher.waitForRequest((request) => request.url().includes('/api/v1/sales-report/pdf'));
       await teacher.getByTestId('report-pdf').click();
       expect((await download).suggestedFilename()).toMatch(/^morefoto-otchet-group-\d{4}-\d{2}-\d{2}\.pdf$/);
+      expect(new URL((await requestedPdf).url()).searchParams.get('childrenView')).toBe('ordered');
+      await teacher.getByRole('checkbox', { name: 'Показать полный список' }).check();
+      await expect(childRows).toHaveCount(Math.min(group.children.length, 50));
+      await expect(teacher.getByTestId('report-figure-total').locator('dd')).toHaveText(total);
+      expect(await fits(teacher)).toBe(true);
+      await shot(teacher, 'teacher-group-all');
+      const fullDownload = teacher.waitForEvent('download');
+      const requestedFullPdf = teacher.waitForRequest((request) => request.url().includes('/api/v1/sales-report/pdf'));
+      await teacher.getByTestId('report-pdf').click();
+      await fullDownload;
+      expect(new URL((await requestedFullPdf).url()).searchParams.get('childrenView')).toBe('all');
+
+      // T07-LOAD: keep the real server response, but release it only after the requested context has changed.
+      for (const change of [
+        () => teacher.getByRole('checkbox', { name: 'Показать полный список' }).uncheck(),
+        () => teacher.getByRole('navigation', { name: 'Хлебные крошки' }).getByRole('link', { name: group.shoot!.name }).click()
+      ]) {
+        let release: (() => void) | undefined;
+        let finished = false;
+        await teacher.route(
+          '**/api/v1/sales-report/pdf?**',
+          async (route) => {
+            const response = await route.fetch();
+            await new Promise<void>((resolve) => {
+              release = resolve;
+            });
+            await route.fulfill({ response });
+            finished = true;
+          },
+          { times: 1 }
+        );
+        await teacher.getByTestId('report-pdf').click();
+        await expect.poll(() => typeof release).toBe('function');
+        await change();
+        release!();
+        await expect.poll(() => finished).toBe(true);
+        expect(await teacher.waitForEvent('download', { timeout: 1000 }).catch(() => null)).toBeNull();
+        await expect(teacher.getByTestId('report-pdf')).toBeEnabled();
+      }
+      await expect(teacher.getByTestId('report-title')).toHaveText(group.shoot!.name);
+      await teacher.route('**/api/v1/sales-report/pdf?**', (route) => route.abort('failed'), { times: 1 });
+      await teacher.getByTestId('report-pdf').click();
+      await expect(teacher.getByRole('alert')).toContainText('Не удалось сформировать PDF.');
+      const retryDownload = teacher.waitForEvent('download');
+      await teacher.getByTestId('report-pdf').click();
+      await retryDownload;
+      await expect(teacher.getByRole('alert')).toHaveCount(0);
     });
     await asStaff(browser, baseURL, 'head', viewport, async (head) => {
       await head.goto('/cabinet/reports?' + new URLSearchParams({ institutionId }));
@@ -383,4 +438,141 @@ test('E10-T09…T12: each role reads the sales of its own area and downloads the
       await shot(organizer, 'organizer-group');
     });
   }
+});
+
+// Stage 6 stays in the existing group b. Prepared only; run as part of a full isolated a+b gate.
+test('Stage6 T05–T07/T10–T13/T15: worksheet keeps the chosen ZIP version on desktop and mobile', async ({
+  page,
+  browser,
+  baseURL
+}, testInfo) => {
+  test.setTimeout(240000);
+  await login(page);
+  const groupArchive = JSON.parse(readFileSync('var/l1-archive.json', 'utf8')) as { versionId: string };
+  const institutionArchive = JSON.parse(readFileSync('var/institution-production.json', 'utf8')) as {
+    institutionId: string;
+    firstId: string;
+    latestId: string;
+  };
+  const selections: Record<string, string>[] = [
+    { groupId, archiveType: 'group', archiveId: groupArchive.versionId },
+    {
+      institutionId: institutionArchive.institutionId,
+      archiveType: 'institution',
+      archiveId: institutionArchive.firstId
+    },
+    {
+      institutionId: institutionArchive.institutionId,
+      archiveType: 'institution',
+      archiveId: institutionArchive.latestId
+    }
+  ];
+  const records: { params: Record<string, string>; worksheet: Worksheet }[] = [];
+  const worksheet = async (staff: Page, params: Record<string, string>): Promise<Worksheet> =>
+    (
+      await body(
+        await staff.request.get('/api/v1/sales-report', {
+          headers: await bearer(staff),
+          params
+        })
+      )
+    ).data.worksheet;
+  const preview = await worksheet(page, { groupId, view: 'worksheet' });
+  expect(preview.mode).toBe('preview');
+  expect(preview.archive).toBeNull();
+  expect(preview.total).toBe((await report(page, { groupId })).data.totals.paidTotal);
+  records.push({ params: { groupId, view: 'worksheet' }, worksheet: preview });
+  for (const selection of selections) {
+    const params = { ...selection, view: 'worksheet', worksheetMode: 'final' };
+    const value = await worksheet(page, params);
+    expect(value.archive!.id).toBe(selection.archiveId);
+    expect(value.archive!.type).toBe(selection.archiveType);
+    const selected = value.groups.flatMap((group) => group.orders.flatMap((order) => order.lines.filter((line) => line.selected)));
+    expect(new Set(selected.map((line) => line.id)).size).toBe(selected.length);
+    expect(selected.every((line) => line.kind === 'physical' && line.files.every((file) => file.path && !('photoId' in file)))).toBe(true);
+    expect(selected.reduce((sum, line) => sum + line.total, 0)).toBe(value.total);
+    expect(selected.reduce((sum, line) => sum + line.prints, 0)).toBe(value.archive!.prints);
+    const pdf = await page.request.get('/api/v1/sales-report/pdf', {
+      headers: await bearer(page),
+      params
+    });
+    expect(pdf.status(), await pdf.text()).toBe(200);
+    expect(pdf.headers()['content-type']).toMatch(/^application\/pdf\b/);
+    const bytes = await pdf.body();
+    expect(bytes.subarray(0, 5).toString()).toBe('%PDF-');
+    writeFileSync('var/worksheet-' + selection.archiveId + '.pdf', bytes);
+    await testInfo.attach('worksheet-' + selection.archiveId + '.pdf', {
+      body: bytes,
+      contentType: 'application/pdf'
+    });
+    records.push({ params, worksheet: value });
+  }
+  expect((await worksheet(page, records[1]!.params)).archive!.id).toBe(groupArchive.versionId);
+  expect((await worksheet(page, records[2]!.params)).archive!.id).toBe(institutionArchive.firstId);
+  const invalid = {
+    groupId,
+    view: 'worksheet',
+    worksheetMode: 'final',
+    archiveType: 'group',
+    archiveId: crypto.randomUUID()
+  };
+  for (const suffix of ['', '/pdf']) {
+    expect(
+      (
+        await page.request.get('/api/v1/sales-report' + suffix, {
+          headers: await bearer(page),
+          params: invalid
+        })
+      ).status()
+    ).toBe(404);
+  }
+  for (const [account, status] of [
+    ['another-teacher', 403],
+    ['head', 403],
+    ['teacher', 404]
+  ] as const) {
+    await asStaff(browser, baseURL, account, { name: 'desktop', width: 1440, height: 1000 }, async (staff) => {
+      if (status === 403) expect((await worksheet(staff, { groupId, view: 'worksheet' })).finalAllowed).toBe(false);
+      for (const suffix of ['', '/pdf']) {
+        const response = await staff.request.get('/api/v1/sales-report' + suffix, {
+          headers: await bearer(staff),
+          params: records[1]!.params
+        });
+        expect(response.status(), await response.text()).toBe(status);
+      }
+    });
+  }
+  for (const viewport of [
+    { name: 'desktop', width: 1440, height: 1000 },
+    { name: 'mobile', width: 390, height: 844 }
+  ]) {
+    await asStaff(browser, baseURL, 'organizer', viewport, async (staff) => {
+      const params = records[1]!.params;
+      await staff.goto('/cabinet/reports?' + new URLSearchParams(params));
+      await expect(staff.getByTestId('worksheet-version')).toContainText(groupArchive.versionId);
+      expect(await staff.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await staff.screenshot({
+        path: testInfo.outputPath('worksheet-' + viewport.name + '-final.png'),
+        fullPage: true,
+        animations: 'disabled'
+      });
+      const requested = staff.waitForRequest((request) => request.url().includes('/api/v1/sales-report/pdf'));
+      const downloaded = staff.waitForEvent('download');
+      await staff.getByTestId('report-pdf').click();
+      await downloaded;
+      const url = new URL((await requested).url());
+      for (const [key, value] of Object.entries(params)) expect(url.searchParams.get(key)).toBe(value);
+      await staff.goto('/cabinet/reports?' + new URLSearchParams({ groupId, view: 'worksheet' }));
+      await expect(staff.getByTestId('worksheet-preview')).toBeVisible();
+      await staff.screenshot({
+        path: testInfo.outputPath('worksheet-' + viewport.name + '-preview.png'),
+        fullPage: true,
+        animations: 'disabled'
+      });
+      await staff.getByRole('button', { name: 'Компактная сводка', exact: true }).click();
+      await expect(staff.getByTestId('report-figure-total')).toBeVisible();
+      await expect(staff.getByTestId('production-worksheet')).toHaveCount(0);
+    });
+  }
+  writeFileSync('var/production-worksheet.json', JSON.stringify({ records }));
 });

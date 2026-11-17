@@ -16,5 +16,6 @@ final readonly class GalleryAssignmentOutputDto
         public int $width,
         public int $height,
         public int $revision,
+        public string $filename = '',
     ) {}
 }

@@ -17,5 +17,5 @@ interface ManifestWriterInterface
      * @param list<ArchiveLine>     $lines
      * @param array<string, string> $extensions расширение файла по публичному ID кадра
      */
-    public function csv(array $lines, array $extensions): string;
+    public function csv(array $lines, array $extensions, int $layoutVersion = 1): string;
 }

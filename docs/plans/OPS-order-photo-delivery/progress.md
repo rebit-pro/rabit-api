@@ -2,13 +2,12 @@
 
 ## Точка продолжения
 
-- Поручение 17.11.2026: после merge этапа 7 завершить и смержить PR #235, затем начать этап 8. Merge/push необходимых собственных исправлений разрешены; deployment не поручен.
-- Рабочее дерево завершения: `/home/user/rabit-api/.worktrees/ops-order-photo-delivery-final`, detached HEAD **b570d27419bba6b0169d3741966fd161c580cf3f**. Canonical PR branch `codex/ops-order-photo-delivery` остаётся в исходном checkout; remote PR head **acb136327e7e72ff2caa88370849e41bc3118361**, OPEN/DRAFT. Локальные e62b720/e9e7bb3/b570d27 ещё не отправлены.
-- Старые проверки и review на e9e7bb3/старом base сохранены ниже. Они не доказывают совместимость с новым main; повтор на объединённой версии PENDING.
-- Сейчас: независимая T08 stat-cache правка и межпроцессная регрессия подготовлены на старом base, адресные тесты PASS. Поставка #235 ждёт merge #242. Один следующий шаг: fetch свежего main после #242, интегрировать его в собственном detached worktree и проверить всех потребителей OriginalFiles/Files/Production.
-- Открыто: причина исходной жалобы с двумя Z004 всё ещё не установлена; это не замещается самостоятельным исправлением incomplete. Известный Q1 filesort без измеренной деградации не требует произвольной миграции. Других новых решений до интеграции не принято.
-- Dirty перед T08 commit: собственные plan.md/progress.md, LocalPrivatePhotoStorage.php и PhotoFilesTest.php. Runtime-скрипты диагностики находятся только в ignored var; в commit не включаются. Чужая `docs/plans/OPS-stage-gallery-cleanup/` осталась в исходной папке и сюда не переносилась. Никакие новые checkout для детей не создаются.
-- Следующие команды: `git fetch origin main`, `git status --short`, `git merge --no-ff --no-commit origin/main` после merge #242; до первой правки выбрать правила, перед структурным чтением обновить AST активного дерева. Команды тестов сверить с новым Makefile/package/composer и записать фактические результаты.
+- После merge этапа 7 (`ece56d2e0169d811b1cd51767ae6219b539d43ee`) завершить PR [#235](https://github.com/rebit-pro/rabit-api/pull/235). Этап 8 начинается после merge #235.
+- Worktree `/home/user/rabit-api/.worktrees/ops-order-photo-delivery-final`, detached. Base и merge-base `ece56d2e0169d811b1cd51767ae6219b539d43ee`. Кандидат фиксируется merge-коммитом `fc21d54` и актуального main. Ветка PR `codex/ops-order-photo-delivery`, предыдущий remote head `acb136327e7e72ff2caa88370849e41bc3118361`.
+- Интеграция без конфликтов. Защита от неполной доставки, обновление проверки файла в worker, сохранение CSV v1/v2 и адресные проверки PASS. T06-R2 сначала FAIL из-за несовместимой тестовой фикстуры, затем PASS. Результаты старых gate на прежней базе сохранены отдельно.
+- Следующий шаг — полный предmerge QA другой моделью и независимое ревью кандидата на актуальной базе. Сохранить оба результата и сверить PR head перед разрешённым merge. Полный E2E, визуальная проверка и реальный T09 на новой базе PENDING. Кандидат можно отправить в существующий draft PR после адресных проверок.
+- Причина исходной жалобы с двумя Z004 не установлена. Отдельный известный filesort Q1 остаётся наблюдением без измеренной деградации. Исходный checkout и его локальная папка OPS-stage-gallery-cleanup сохраняются отдельно.
+- Следующая команда полного QA: `E2E_STANDS=2 E2E_GROUPS=a,b E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor E2E_PHP_CLI_IMAGE=rabit-api-e2e-php-cli:local E2E_PHP_FPM_IMAGE=rabit-api-e2e-php-fpm:local E2E_NGINX_IMAGE=rabit-api-e2e-nginx:local make test-e2e`. Git: `git status --short`, `git rev-parse HEAD origin/main`, `git diff --check origin/main HEAD`. Перед новым чтением индекса после правки выполнить `ast-index update`.
 
 ## Хронология
 
@@ -159,3 +158,35 @@
 - exists теперь получает безопасный absolutePath, вызывает clearstatcache(true, $path) и только затем is_file. Тест дополнен восстановлением другим процессом и переименован testPrivateStorageDetectsRemovalAndRestorationByAnotherProcess; никаких shell строк/внешней БД.
 - Точечный PHP CS Fixer по LocalPrivatePhotoStorage.php/PhotoFilesTest.php PASS. `docker run --rm --pull=never --network none -v /home/user/rabit-api/.worktrees/ops-order-photo-delivery-final/api:/app -v /home/user/rabit-api/api/vendor:/app/vendor:ro -w /app --entrypoint php rabit-api-e2e-php-cli:local vendor/bin/phpunit --testsuite=unit --filter='PhotoFilesTest|OriginalFilesTest|FileAccessTest|OrderEmailFlowTest'` — **PASS, 29 tests / 134 assertions** (stat-cache-green.log). T08 unit PASS на b570d27 + собственная правка, совместимость с новым main/FULL PENDING.
 - `git diff --check` PASS, AST update PASS: 2 исходника. Авторская проверка целых изменённых методов/теста PASS; это не независимое review. К фиксации выбраны только два исходника и оба документа задачи; штатная базовая Media-логика store/delete не менялась. Отправка/merge #235 по-прежнему после #242 и новой проверки base.
+
+- Локальная фиксация T08 PASS: `git commit -m "fix(media): refresh private original existence in workers"` → **fc21d5490d38d2282d7de1bbc385ed077d21c19e**, только 4 собственных файла. Push/merge #235 до #242 и обновлённого общего gate не выполнялись. Точка продолжения обновлена фактическим SHA.
+
+### 17.11.2026 21:21 МСК — сверка точки продолжения по вопросу пользователя
+
+- Read-only `gh api repos/rebit-pro/rabit-api/pulls/235`: OPEN/DRAFT, remote head `acb136327e7e72ff2caa88370849e41bc3118361`, merged=false. Собственный detached HEAD `fc21d5490d38d2282d7de1bbc385ed077d21c19e`; локальные исправления не отправлены. Код не менялся, новые проверки не запускались.
+- Поставка по-прежнему ждёт merge #242 и проверку на обновлённом main; этап 8 не начат.
+
+### 17.11.2026 21:59 МСК — #242 merged, подготовка интеграции #235
+
+- GitHub подтвердил merge PR #242 в `main`, merge commit `ece56d2e0169d811b1cd51767ae6219b539d43ee`. Обычный merge сохранил проверенный code head `1459df1` и два коммита отчётов. `git fetch` через HTTPS с credential helper настроенного gh обновил `origin/main` с `b826a15` до `ece56d2`.
+- `gh api .../pulls/235`, `/reviews` и `.../issues/235/comments`: PR draft, head `acb1363`, ревью и комментарии в GitHub отсутствуют. Предыдущий независимый отчёт и QA остаются историческими записями своего base. `git merge-tree --write-tree fc21d54 ad4fcbf` на дереве этапа 7 завершился без конфликтов.
+- Перед фактической интеграцией обновлён plan.md. В исходном пользовательском checkout ветку, файлы и коммиты не меняли. T01–T08 на `main` с этапом 7 остаются PENDING.
+
+### 17.11.2026 22:01 МСК — объединённое дерево и потребители Media
+
+- `git merge --no-ff --no-commit ece56d2e0169d811b1cd51767ae6219b539d43ee` завершился без конфликтов. `git diff --cached --check origin/main` PASS; с деревом репетиции `4cf51922` исходники совпали. До фиксации merge изменён только PHPDoc публичного контракта, чтобы закрепить фактическую семантику флага.
+- `/home/user/.local/bin/ast-index update` PASS после merge, v3.56.0-php.4, 242 изменения индекса. `usages` показал 46/46 мест интерфейса и 22/22 DTO, перепроверено `git grep` и чтением конечных потребителей. OrderFileAccess и групповой ArchiveBuilder учитывают `available`. Экспорт CSV и снимок электронного архива используют метаданные. Электронный writer проверяет исходный файл, размер и читаемость, печатный writer сохраняет проверку и действующий retry при физически пропавшем файле.
+- Уточнён plan.md с T09-ARCHIVE-COMPAT: оба сценария уже имеют реальные проверки в общем gate. Новая регрессия не дублирует имеющиеся тесты. Итог объединённых runtime-проверок PENDING.
+
+### 17.11.2026 22:03 МСК — первая адресная проверка на новой базе
+
+- `docker run ... vendor/bin/php-cs-fixer fix --dry-run --diff --config=public/local/php-cs-fixer.php --allow-risky=yes --using-cache=no --path-mode=intersection <изменённые PHP>` PASS, 0/24. Два PHP-файла runner за пределами config finder проверяются адресно отдельно. `python3 -m unittest discover -s tools/tests -p test_run_browser_e2e.py` PASS, 24 теста.
+- `docker run --rm --pull=never --network none --read-only --tmpfs /tmp:rw --user 1000:1000 -v "$PWD/api:/app:ro" -v /home/user/rabit-api/api/vendor:/app/vendor:ro -w /app --entrypoint php rabit-api-e2e-php-cli:local vendor/bin/phpunit --do-not-cache-result --testsuite=unit --filter='PhotoFilesTest|OriginalFilesTest|FileAccessTest|DownloadFlowTest|OrderEmailFlowTest|OrderEmailAttachmentsTest|InstitutionDigital|InstitutionPrintArchive|ProductionFlowTest|OrderEntitlementsTest|OrderMapperTest|StorefrontQuoteTest'` — **FAIL**, 134 tests / 1214 assertions, 2 случая T06-R2. Доказательство `var/order-delivery-premerge/integrated-unit.log`.
+- Установлена причина обоих FAIL: новая версия печати с этапом 4 сохраняет `Печать/<basename>` из `PhotoFilenamesInterface`. Старая проверка задавала расширение только у Media DTO и ждала путь поколения v1 `A001_x1.<ext>`. До исправления уточнён тест-кейс T06-R2. Фикстура v2 получит соответствующий basename, а существующая проверка v1 дополнится исчезновением PNG с сохранёнными метаданными. Продакшен-код раскладки не меняется. Повтор проверок PENDING.
+
+### 17.11.2026 22:05 МСК — T06-R2 GREEN, кандидат #235
+
+- В ProductionFlowTest v2 проверяет имя из `PhotoFilenamesInterface`, путь, байты и CSV при исчезновении PNG/WebP. В существующей проверке PrintArchiveLayoutTest v1 CSV сохраняет расширение из Media DTO при `available: false`; байты ZIP до исчезновения совпали. Публичный PHPDoc уточняет момент измерения `available`. Сравнение с чистым merge-деревом `4cf51922` показывает два файла тестов, PHPDoc контракта и эти документы.
+- `docker run --rm --pull=never --network none --read-only --tmpfs /tmp:rw --user 1000:1000 -v "$PWD/api:/app:ro" -v /home/user/rabit-api/api/vendor:/app/vendor:ro -w /app --entrypoint php rabit-api-e2e-php-cli:local vendor/bin/phpunit --do-not-cache-result --testsuite=unit --filter='PhotoFilesTest|OriginalFilesTest|FileAccessTest|DownloadFlowTest|OrderEmailFlowTest|OrderEmailAttachmentsTest|InstitutionDigital|InstitutionPrintArchive|ProductionFlowTest|PrintArchiveLayoutTest|OrderEntitlementsTest|OrderMapperTest|StorefrontQuoteTest'` — **PASS, 169 tests / 1468 assertions**. Лог `var/order-delivery-premerge/integrated-unit-final.log`. T05-R1, T06-R2, T08-FS-REFRESH и unit-часть T09 прошли на новой базе.
+- Точечный PHP CS Fixer dry-run `--config=public/local/php-cs-fixer.php --allow-risky=yes --using-cache=no --path-mode=override` по списку всех изменённых 27 PHP-файлов — PASS, 0/27, включая оба PHP-файла E2E. Лог `var/order-delivery-premerge/integrated-format-final.log`. Python runner PASS 24/24. `git diff --cached --check origin/main` и `ast-index update` PASS. Тестовый профиль оплаты присутствует; содержимое не читалось и не сохранялось.
+- Кандидат готов для публикации в существующем draft PR и передачи отдельным исполнителям. Авторская проверка не заменяет независимое ревью. Обязательные T01–T04 и T07-FULL на точном объединённом коммите PENDING, как и реальные сценарии T09.

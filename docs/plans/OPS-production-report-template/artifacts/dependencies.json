@@ -1,0 +1,47 @@
+{
+  "checkedAt": "2026-11-12 11:06:54 UTC",
+  "worktree": "/home/user/rabit-api/.worktrees/ops-production-report-template",
+  "base": "079b19245ef70d2ec999f34e952cd9bdc6388b49",
+  "checks": [
+    {
+      "command": "/home/user/.local/bin/gh pr view 239 --json number,state,mergedAt,mergeCommit,baseRefName,headRefName,url",
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "229cf1",
+        "wall_time_seconds": 0.000015058,
+        "exit_code": 0,
+        "original_token_count": 65,
+        "output": "{\"baseRefName\":\"main\",\"headRefName\":\"codex/ops-institution-print-archive\",\"mergeCommit\":{\"oid\":\"079b19245ef70d2ec999f34e952cd9bdc6388b49\"},\"mergedAt\":\"2026-11-11T13:03:39Z\",\"number\":239,\"state\":\"MERGED\",\"url\":\"https://github.com/rebit-pro/rabit-api/pull/239\"}\n"
+      }
+    },
+    {
+      "command": "/home/user/.local/bin/gh pr list --state all --head codex/ops-compact-group-report --json number,state,mergeCommit,headRefOid,url",
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "7f0278",
+        "wall_time_seconds": 0.000013652,
+        "exit_code": 0,
+        "original_token_count": 1,
+        "output": "[]\n"
+      }
+    },
+    {
+      "command": "/home/user/.local/bin/gh api repos/rebit-pro/rabit-api/commits/main --jq .sha",
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "5b1156",
+        "wall_time_seconds": 0.000012146,
+        "exit_code": 0,
+        "original_token_count": 11,
+        "output": "079b19245ef70d2ec999f34e952cd9bdc6388b49\n"
+      }
+    }
+  ],
+  "localStage3": {
+    "ref": "codex/ops-compact-group-report",
+    "head": "37b9839001be6458905798205f70d95f7e07444c",
+    "ancestorOfBase": false,
+    "mergeBaseExitCode": 1
+  },
+  "implementationStarted": false
+}

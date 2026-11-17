@@ -3,12 +3,28 @@ import { computed } from 'vue';
 import MfBreadcrumbs from '@/components/navigation/MfBreadcrumbs.vue';
 import { levelKind, reportFigures, reportTitle, rowsTitle } from '../rules';
 import { useSalesReport } from '../useSalesReport';
-import ReportChildrenTable from './ReportChildrenTable.vue';
+import ReportChildrenSection from './ReportChildrenSection.vue';
 import ReportOrdersTable from './ReportOrdersTable.vue';
 import ReportRowsTable from './ReportRowsTable.vue';
+import WorksheetSection from './WorksheetSection.vue';
 
 // E10: the sales of the staff member's area — children of a group or groups, shoots and institutions — and its PDF.
-const { report, loading, error, crumbs, downloading, downloadError, load, rowHref, download } = useSalesReport();
+const {
+  report,
+  loading,
+  error,
+  crumbs,
+  downloading,
+  downloadError,
+  includeUnordered,
+  view,
+  worksheetSource,
+  setView,
+  setWorksheetSource,
+  load,
+  rowHref,
+  download
+} = useSalesReport();
 const figures = computed(() => (report.value ? reportFigures(report.value.totals) : []));
 const area = computed(() => {
   const value = report.value;
@@ -31,12 +47,25 @@ const number = new Intl.NumberFormat('ru-RU');
       color="primary"
       prepend-icon="mdi-download-outline"
       :loading="downloading"
-      :disabled="!report"
+      :disabled="!report || loading"
       data-testid="report-pdf"
       @click="download"
       >Скачать PDF</v-btn
     >
   </header>
+  <v-btn-toggle
+    :model-value="view"
+    mandatory
+    divided
+    color="primary"
+    aria-label="Вид отчёта"
+    class="mb-4"
+    data-testid="report-view"
+    @update:model-value="setView"
+  >
+    <v-btn value="summary">Компактная сводка</v-btn>
+    <v-btn value="worksheet">Ведомость</v-btn>
+  </v-btn-toggle>
   <v-alert v-if="downloadError" type="error" variant="tonal" class="mb-4" role="alert">{{ downloadError }}</v-alert>
 
   <div v-if="loading && !report" class="report-state" role="status">
@@ -46,8 +75,17 @@ const number = new Intl.NumberFormat('ru-RU');
   <v-alert v-else-if="error" type="error" variant="tonal" role="alert">
     {{ error }}
     <div class="mt-3"><v-btn variant="outlined" @click="load">Повторить</v-btn></div>
+    <div v-if="view === 'worksheet'" class="mt-3">
+      <v-btn variant="outlined" @click="setWorksheetSource('preview')">Предварительная ведомость</v-btn>
+    </div>
   </v-alert>
-  <template v-else-if="report">
+  <WorksheetSection
+    v-else-if="report?.worksheet"
+    :report="report.worksheet"
+    :selected-source="worksheetSource"
+    @source="setWorksheetSource"
+  />
+  <template v-else-if="report && view === 'summary'">
     <dl class="report-figures" :aria-busy="loading" data-testid="report-figures">
       <div v-for="figure in figures" :key="figure.key" :data-testid="'report-figure-' + figure.key">
         <dt>{{ figure.label }}</dt>
@@ -55,11 +93,16 @@ const number = new Intl.NumberFormat('ru-RU');
       </div>
     </dl>
 
-    <section class="report-section" aria-labelledby="report-rows-title">
+    <ReportChildrenSection
+      v-if="'group' === report.level"
+      :key="report.group?.id"
+      v-model:include-unordered="includeUnordered"
+      :items="report.children"
+    />
+    <section v-else class="report-section" aria-labelledby="report-rows-title">
       <h2 id="report-rows-title">{{ rowsTitle(report.level) }}</h2>
       <!-- A new level starts with its own sort and first page. -->
-      <ReportChildrenTable v-if="'group' === report.level" :key="report.group?.id" :items="report.children" />
-      <ReportRowsTable v-else :key="levelKey" :report="report" :title="rowsTitle(report.level)" :row-href="rowHref" />
+      <ReportRowsTable :key="levelKey" :report="report" :title="rowsTitle(report.level)" :row-href="rowHref" />
     </section>
 
     <section v-if="'group' === report.level" class="report-section" aria-labelledby="report-orders-title">

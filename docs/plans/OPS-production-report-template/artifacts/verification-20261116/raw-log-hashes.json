@@ -1,0 +1,45 @@
+{
+  "note": "Saved .log copies trim line-ending whitespace; raw logs kept in /tmp with these hashes. No result text removed.",
+  "files": [
+    {
+      "path": "/tmp/stage6-evidence-20261116/formatter-check.log",
+      "sha256": "caa3cbae712094a8f4f3da1f52a8c6cb362151563f03a00dac2b01522633f539"
+    },
+    {
+      "path": "/tmp/stage6-evidence-20261116/frontend-build.log",
+      "sha256": "5e5489a474b08f379dde38e6f750c2a41595f979d01bf295b8ed0d7fd7e4faec"
+    },
+    {
+      "path": "/tmp/stage6-evidence-20261116/frontend-check.log",
+      "sha256": "678a2c99e2d3a1e16f2bbca59b1763308b782d1c96a0b570749af59616e9c036"
+    },
+    {
+      "path": "/tmp/stage6-evidence-20261116/frontend-commerce.log",
+      "sha256": "b656625e27ddf782123ac37a5782ce6576d6747a055856e90a17cbf23129eeb9"
+    },
+    {
+      "path": "/tmp/stage6-evidence-20261116/frontend-e2e-typecheck.log",
+      "sha256": "f0727c8fedb0d35ce552d4741069c3a84ddf4a30ed117e6468a0ec7f05cfaaee"
+    },
+    {
+      "path": "/tmp/stage6-evidence-20261116/functional.log",
+      "sha256": "68497ddf346f4e524d75bb5a49556f56cd34dec08051be15b218f6614bee95ea"
+    },
+    {
+      "path": "/tmp/stage6-evidence-20261116/native-lint.log",
+      "sha256": "a716eec378ec2a6ea12c56191428694b777abb9012f20b9586909b4c4cfb3e90"
+    },
+    {
+      "path": "/tmp/stage6-evidence-20261116/php-lint.log",
+      "sha256": "c91bc34c37499dbe9177808080809085fa9b50763dc9c33aeb24a52ba06f8511"
+    },
+    {
+      "path": "/tmp/stage6-evidence-20261116/phpstan.log",
+      "sha256": "9dd3eeb023e498eff4ab6e14af3d76d6e6c7672da330c9e3edf35753590df0d7"
+    },
+    {
+      "path": "/tmp/stage6-evidence-20261116/unit.log",
+      "sha256": "84fdff67c1d5c823b85576f06dd5005d8478ed296011144eedc8da5a4b16141b"
+    }
+  ]
+}

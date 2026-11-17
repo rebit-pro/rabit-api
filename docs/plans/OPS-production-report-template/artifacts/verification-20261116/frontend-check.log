@@ -1,0 +1,58 @@
+> morefoto-frontend@0.1.0 check
+> npm run lint && npm run lint:styles && npm run typecheck && npm run typecheck:e2e && npm run test:ui
+
+
+> morefoto-frontend@0.1.0 lint
+> eslint . --ignore-pattern .gitignore
+
+
+> morefoto-frontend@0.1.0 lint:styles
+> stylelint "src/**/*.{vue,scss,css}"
+
+
+> morefoto-frontend@0.1.0 typecheck
+> vue-tsc --noEmit
+
+
+> morefoto-frontend@0.1.0 typecheck:e2e
+> tsc --project tsconfig.e2e.json --noEmit
+
+
+> morefoto-frontend@0.1.0 test:ui
+> node --experimental-strip-types --test tests/tokens/*.test.mjs tests/avatar/*.test.mjs tests/shell/*.test.mjs tests/ui/*.test.mjs tests/viz/*.test.mjs tests/support/*.test.mjs tests/legal/*.test.mjs tests/photos/*.test.mjs
+
+✔ tests/avatar/avatar.test.mjs (1140.892878ms)
+✔ tests/legal/rules.test.mjs (1045.78664ms)
+✔ tests/photos/archive-queue.test.mjs (1132.933703ms)
+✔ tests/photos/archive.test.mjs (1202.943066ms)
+✔ tests/photos/upload-retry.test.mjs (830.569453ms)
+✔ tests/photos/zip-reader.test.mjs (1267.443091ms)
+✔ tests/shell/navigation.test.mjs (723.265963ms)
+✔ tests/shell/session-end.test.mjs (1183.293925ms)
+✔ tests/support/feedback.test.mjs (1820.813678ms)
+✔ tests/support/first-question.test.mjs (1670.076011ms)
+✔ tests/support/gallery-question.test.mjs (2059.055609ms)
+✔ tests/support/rules.test.mjs (1976.893803ms)
+✔ tests/tokens/tokens.test.mjs (1088.654464ms)
+✔ tests/ui/buyer-guide.test.mjs (1337.949103ms)
+✔ tests/ui/gallery-path.test.mjs (1165.437129ms)
+✔ tests/ui/gallery-photos.test.mjs (1266.26211ms)
+✔ tests/ui/guide-links.test.mjs (1133.105028ms)
+✔ tests/ui/icons.test.mjs (2293.133356ms)
+✔ tests/ui/institution-print-archive.test.mjs (1075.165329ms)
+✔ tests/ui/print-archive.test.mjs (1271.570262ms)
+✔ tests/ui/private-links-log.test.mjs (653.567288ms)
+✔ tests/ui/production-worksheet.test.mjs (1219.353499ms)
+✔ tests/ui/sales-report.test.mjs (1133.36988ms)
+✔ tests/ui/status-tone.test.mjs (944.627376ms)
+✔ tests/ui/structure-group-shoot.test.mjs (967.201522ms)
+✔ tests/ui/teacher-sales.test.mjs (876.598903ms)
+✔ tests/viz/viz.test.mjs (871.060042ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2516.551771

@@ -10,7 +10,7 @@ final readonly class ArchiveLine
     /**
      * @param string $paidAt подтверждённая оплата, UTC `Y-m-d H:i:s`
      * @param int    $prints quantity × printCount
-     * @param string $entry  путь файла внутри архива без расширения: `<продукция>/<код кадра>_x<отпечатков>`
+     * @param string $entry  путь файла: в формате 1 без расширения, в формате 2 полный путь с исходным basename
      */
     public function __construct(
         public string $orderLineId,

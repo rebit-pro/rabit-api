@@ -1,0 +1,14 @@
+{
+  "count": 50,
+  "averageMegabytes": 7.4,
+  "parallel": 2,
+  "totalSeconds": 56,
+  "transferMs": {
+    "p50": 396,
+    "p95": 576
+  },
+  "acceptedToReadyMs": {
+    "p50": 35881,
+    "p95": 42823
+  }
+}

@@ -5,6 +5,8 @@ import MfBreadcrumbs from '@/components/navigation/MfBreadcrumbs.vue';
 import AdminDialog from '../../management/components/AdminDialog.vue';
 import StructureFields from './StructureFields.vue';
 import InstitutionTable from './InstitutionTable.vue';
+import InstitutionDigitalArchiveDialog from '../../files/InstitutionDigitalArchiveDialog.vue';
+import InstitutionPrintArchiveDialog from '../../production/live/InstitutionPrintArchiveDialog.vue';
 import GroupTable from './GroupTable.vue';
 import StructureSearch from './StructureSearch.vue';
 import StructureRemoveDialog from './StructureRemoveDialog.vue';
@@ -15,6 +17,9 @@ import { structureApi, structureRemovalError } from '../api';
 import type { Group, Institution, StructureItem, StructureScope } from '../model';
 const props = defineProps<{ scope: StructureScope }>();
 const auth = useAuthStore();
+const canReadArchive = computed(() => auth.user?.role === 'organizer' || auth.user?.role === 'curator');
+const archiveTarget = shallowRef<Institution | null>(null);
+const digitalArchiveTarget = shallowRef<Institution | null>(null);
 const canManage = computed(() => auth.user?.role === 'organizer' && !!auth.user.permissions?.includes('organization.manage'));
 const { snapshot, loading, error, query, institutionName, reload, page, pageSize, resize } = useStructurePage(props.scope);
 // Countdowns of the group table count from the page's own clock: the structure answer has no server moment.
@@ -61,7 +66,10 @@ const crumbs = computed(() =>
   props.scope.kind === 'group'
     ? [
         { title: 'Учреждения', to: '/cabinet/institutions' },
-        { title: institutionName.value || 'Учреждение', to: institutionPath.value },
+        {
+          title: institutionName.value || 'Учреждение',
+          to: institutionPath.value
+        },
         { title: snapshot.value?.shoot?.name ?? 'Съёмка' }
       ]
     : []
@@ -154,6 +162,7 @@ function editShoot(): void {
     :loading="loading && !snapshot"
     :error="error"
     :can-manage="canManage"
+    :can-read-archive="canReadArchive"
     :disabled="disabled"
     :empty-description="emptyText"
     @page="reload($event)"
@@ -161,6 +170,8 @@ function editShoot(): void {
     @edit="edit"
     @remove="askRemove"
     @retry="reload()"
+    @archive="archiveTarget = $event"
+    @digital-archive="digitalArchiveTarget = $event"
   />
   <GroupTable
     v-else
@@ -178,6 +189,16 @@ function editShoot(): void {
     @page-size="resize"
     @edit="edit"
     @retry="reload()"
+  />
+  <InstitutionPrintArchiveDialog
+    :institution-id="archiveTarget?.id ?? null"
+    :institution-name="archiveTarget?.name ?? ''"
+    @close="archiveTarget = null"
+  />
+  <InstitutionDigitalArchiveDialog
+    :institution-id="digitalArchiveTarget?.id ?? null"
+    :institution-name="digitalArchiveTarget?.name ?? ''"
+    @close="digitalArchiveTarget = null"
   />
   <StructureRemoveDialog
     :kind="removal ? 'institution' : null"

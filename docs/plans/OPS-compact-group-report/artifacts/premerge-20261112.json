@@ -1,0 +1,80 @@
+{
+  "date": "2026-11-12",
+  "branch": "codex/ops-compact-group-report",
+  "pr": "https://github.com/rebit-pro/rabit-api/pull/240",
+  "targetMain": "079b19245ef70d2ec999f34e952cd9bdc6388b49",
+  "sourceHead": "37b9839001be6458905798205f70d95f7e07444c",
+  "mergeBase": "90755f3a3700d55dae94befabea387ca8637c217",
+  "testedMergeTree": "68eb46e0530cd63b38d77412d4c8a0536095e92c",
+  "codeChanged": false,
+  "checks": [
+    {
+      "name": "phpunit",
+      "command": "docker run --rm --pull=never --network none --read-only --tmpfs /tmp:rw --user 1000:1000 -v /tmp/rabit-stage3-merge-k6x4k2_8/api:/app:ro -v /home/user/rabit-api/api/vendor:/app/vendor:ro -w /app --entrypoint php rabit-api-e2e-php-cli:local vendor/bin/phpunit --colors=never --do-not-cache-result --testsuite=unit --filter 'SalesReportTest|SalesReportPdfTest|SalesReportArchitectureTest'",
+      "workingDirectory": "/tmp/rabit-stage3-merge-k6x4k2_8",
+      "exitCode": 0,
+      "summary": "PASS: 29 tests, 170 assertions, PHP 8.4.26. Existing Metadata cache warnings are not PHPUnit failures."
+    },
+    {
+      "name": "formatter",
+      "command": "docker run --rm --pull=never --network none --read-only --tmpfs /tmp:rw --user 1000:1000 -v /tmp/rabit-stage3-merge-k6x4k2_8/api:/app:ro -v /home/user/rabit-api/api/vendor:/app/vendor:ro -w /app --entrypoint php rabit-api-e2e-php-cli:local vendor/bin/php-cs-fixer fix --config=public/local/php-cs-fixer.php --dry-run --diff --allow-risky=yes --using-cache=no --path-mode=intersection public/local/modules/morefoto.commerce/di/sales.php public/local/modules/morefoto.commerce/lib/Application/Sales/Contract/SalesReportPdfWriterInterface.php public/local/modules/morefoto.commerce/lib/Application/Sales/Dto/SalesReportInputDto.php public/local/modules/morefoto.commerce/lib/Application/Sales/UseCase/ExportSalesReportPdfUseCase.php public/local/modules/morefoto.commerce/lib/Infrastructure/Sales/Pdf/MpdfSalesReportWriter.php public/local/modules/morefoto.commerce/lib/Infrastructure/Sales/Pdf/SalesReportHtml.php public/local/modules/morefoto.commerce/lib/Presentation/Sales/Dto/SalesReportRequestDto.php public/local/modules/morefoto.commerce/lib/Presentation/Sales/SalesReportResultMapper.php public/local/modules/morefoto.commerce/tests/Unit/SalesReportArchitectureTest.php public/local/modules/morefoto.commerce/tests/Unit/SalesReportPdfTest.php",
+      "workingDirectory": "/tmp/rabit-stage3-merge-k6x4k2_8",
+      "exitCode": 0,
+      "summary": "PASS: 0/10 files require formatting, dry-run only."
+    },
+    {
+      "name": "frontend-check",
+      "command": "npm run check",
+      "workingDirectory": "/tmp/rabit-stage3-merge-k6x4k2_8/frontend",
+      "exitCode": 0,
+      "summary": "PASS: ESLint, stylelint, app/E2E typecheck, UI runner 26 files passed, 0 failed/skipped."
+    },
+    {
+      "name": "commerce",
+      "command": "npm run test:commerce",
+      "workingDirectory": "/tmp/rabit-stage3-merge-k6x4k2_8/frontend",
+      "exitCode": 0,
+      "summary": "PASS: Node runner 32 test files passed, 0 failed/skipped."
+    },
+    {
+      "name": "build",
+      "command": "npm run build-only",
+      "workingDirectory": "/tmp/rabit-stage3-merge-k6x4k2_8/frontend",
+      "exitCode": 0,
+      "summary": "PASS: Vite production build, 1314 modules, 8.45 s."
+    }
+  ],
+  "artifacts": {
+    "sourceHashes": 22,
+    "pngHashes": 15,
+    "pdfHashes": 8,
+    "pdfPageCounts": [
+      7,
+      10,
+      1,
+      1,
+      7,
+      7,
+      1,
+      1
+    ],
+    "screenshotsViewed": [
+      "frontend/public/guide/img/r09-compact-group.png",
+      "frontend/public/guide/img/r10-compact-group-mobile.png"
+    ]
+  },
+  "e2eRunByReviewer": false,
+  "fullCombinedGatePassed": null,
+  "differentModelE2EConfirmed": true,
+  "mergePerformed": false,
+  "externalRequiredChecks": {
+    "confirmedBy": "user",
+    "date": "2026-11-12",
+    "confirmation": "все есть можно сливать",
+    "scope": "Independent review and full real a+b by another model for 37b9839 or later",
+    "reportsInspectedByAgent": false,
+    "reportPathsProvided": false,
+    "mergeAuthorized": true
+  },
+  "fullCombinedGateEvidence": "Confirmed by user; no new report was supplied or independently inspected by this agent."
+}

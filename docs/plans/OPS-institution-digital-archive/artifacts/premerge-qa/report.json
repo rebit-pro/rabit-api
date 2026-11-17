@@ -1,0 +1,622 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "role": "independent premerge QA",
+  "notCodeReview": true,
+  "generatedAt": "2026-11-17T16:32:38.539456+00:00",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "worktree": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive",
+  "branch": "codex/ops-institution-digital-archive",
+  "base": "b826a157d608c63cbf9e50aab5ebc0b54de228bb",
+  "mergeBase": "b826a157d608c63cbf9e50aab5ebc0b54de228bb",
+  "checkedCodeHead": "1459df1336f318905eaf5f6085daff1147243c47",
+  "headAfter": "1459df1336f318905eaf5f6085daff1147243c47",
+  "mainAfter": "b826a157d608c63cbf9e50aab5ebc0b54de228bb",
+  "runtimeManifest": {
+    "path": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/docs/plans/OPS-institution-digital-archive/artifacts/source-manifest.json",
+    "sha256": "5680b31bce5dc02c089331ef794f6f017010108c7b1521c38f17f8a5a309cea7",
+    "runtimeMapSha256": "ca98640e6705720e34b77a1f76ce84d71e22cecfcca96d41e66dd116843d4b54",
+    "expectedFiles": 83,
+    "beforeMatched": 83,
+    "betweenAttemptsMatched": 83,
+    "afterMatched": 83,
+    "unchanged": true
+  },
+  "command": "python3 tools/run-browser-e2e.py run --groups a,b --kernel /home/user/rebit-p2p/api/public/bitrix --vendor /home/user/rabit-api/api/vendor --php-cli rabit-api-e2e-php-cli:local --php-fpm rabit-api-e2e-php-fpm:local --nginx rabit-api-e2e-nginx:local",
+  "finalRunId": "rabit-e2e-40b49eeedfbe",
+  "exitCode": 0,
+  "runnerDurationSeconds": 580.0,
+  "supervisorDurationSeconds": 580.53,
+  "startedAt": "2026-11-17T16:14:54.483756+00:00",
+  "finishedAt": "2026-11-17T16:24:37.028569+00:00",
+  "yooKassaTestShopEnabled": true,
+  "attempts": [
+    {
+      "number": 1,
+      "runId": "rabit-e2e-480386667006",
+      "status": "FAIL",
+      "runnerExitCode": null,
+      "toolSessionExitCode": 143,
+      "browser": {
+        "passed": 160,
+        "failed": 2,
+        "skipped": 2,
+        "flaky": 0
+      },
+      "nativeOriginalRunner": {
+        "passed": 3,
+        "notRun": 19
+      },
+      "supplementalNativeB": {
+        "passed": 18,
+        "failed": 1,
+        "blocked": 0
+      },
+      "stage7Browser": "PASS",
+      "stage7NativeSupplemental": "69 assertions PASS",
+      "visual": "PASS",
+      "evidence": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/attempt-01.json",
+      "reason": [
+        "G1-T14: at 2026-11-17T15:59:49.399Z, refusal of test SBP did not become visible within 30000 ms; received «Проверяем оплату». YooMoney navigation was not reached in this scenario.",
+        "G1-T09/T10 and #83 skipped after serial G1 failure.",
+        "G2-T14: no sandbox payment receipt; expected provider yookassa, received undefined.",
+        "Tool session 79631 ended with 143; runner owner PID 88285 absent, state remained b browser running and stopped=false. Sender of signal not established.",
+        "Original runner did not execute the 19 native verifiers of b. Supplemental diagnostic: 18 PASS, G1 verifier FAIL."
+      ]
+    },
+    {
+      "number": 2,
+      "runId": "rabit-e2e-40b49eeedfbe",
+      "status": "PASS",
+      "exitCode": 0,
+      "stageCounts": {
+        "passed": 47
+      },
+      "browser": {
+        "passed": 164,
+        "failed": 0,
+        "skipped": 0,
+        "flaky": 0
+      },
+      "native": {
+        "passed": 22,
+        "failed": 0,
+        "skipped": 0
+      },
+      "signals": [],
+      "authorization": "Explicit user permission for one unchanged-head reproducibility repeat after preserving first FAIL",
+      "evidence": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/attempt-02.json"
+    }
+  ],
+  "checks": {
+    "phpunit": {
+      "status": "PASS",
+      "tests": 1406,
+      "assertions": 53683,
+      "failed": 0,
+      "skipped": 0,
+      "suiteSelection": "All configured unit + functional via vendor/bin/phpunit --colors=never",
+      "evidence": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/phpunit.log",
+      "summary": "OK (1406 tests, 53683 assertions)"
+    },
+    "phpLint": {
+      "status": "PASS",
+      "files": 1829,
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/php-lint.log"
+    },
+    "phpstan": {
+      "status": "PASS",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/phpstan.log",
+      "cacheNote": "Runner used the project cache: No errors; 0 files reanalysed. Rules/config unchanged."
+    },
+    "frontend": {
+      "test-ui": {
+        "status": "PASS",
+        "tests": 129,
+        "pass": 129,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "evidence": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/test-ui.log"
+      },
+      "test-commerce": {
+        "status": "PASS",
+        "tests": 253,
+        "pass": 253,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0,
+        "evidence": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/test-commerce.log"
+      }
+    },
+    "frontendOther": [
+      "lint PASS",
+      "lint:styles PASS",
+      "typecheck PASS",
+      "typecheck:e2e PASS",
+      "build-only PASS (mocks disabled)"
+    ],
+    "browser": {
+      "a": {
+        "stats": {
+          "startTime": "2026-11-17T16:16:08.686Z",
+          "duration": 389436.49799999996,
+          "expected": 81,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "resultCounts": {
+          "passed": 81
+        },
+        "specCount": 14,
+        "files": {
+          "catalog.spec.ts": 15,
+          "conditions.spec.ts": 3,
+          "design-tokens.spec.ts": 1,
+          "legal.spec.ts": 3,
+          "organization.spec.ts": 11,
+          "shell.spec.ts": 7,
+          "staff.spec.ts": 6,
+          "z-institution-detail.spec.ts": 9,
+          "zz-access.spec.ts": 6,
+          "zz-media-archive.spec.ts": 2,
+          "zz-media.spec.ts": 7,
+          "zz-notification.spec.ts": 1,
+          "zz-questions.spec.ts": 8,
+          "zz-u7-screens.spec.ts": 2
+        },
+        "allRequiredSpecsExecuted": true,
+        "errors": [],
+        "resultsPath": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/a/a/results.json"
+      },
+      "b": {
+        "stats": {
+          "startTime": "2026-11-17T16:16:08.677Z",
+          "duration": 479900.271,
+          "expected": 83,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "resultCounts": {
+          "passed": 83
+        },
+        "specCount": 24,
+        "files": {
+          "cabinet-tables.spec.ts": 6,
+          "z-links-preparation.spec.ts": 2,
+          "zz-avatar.spec.ts": 3,
+          "zzz-handoff.spec.ts": 9,
+          "zzzz-links.spec.ts": 2,
+          "zzzz-short-links.spec.ts": 3,
+          "zzzz-storefront-windows.spec.ts": 4,
+          "zzzz-storefront.spec.ts": 9,
+          "zzzzz-markup-correction.spec.ts": 2,
+          "zzzzz-orders.spec.ts": 12,
+          "zzzzzz-transfers.spec.ts": 4,
+          "zzzzzzz-overview.spec.ts": 3,
+          "zzzzzzz-summaries.spec.ts": 1,
+          "zzzzzzzz-payment-costs.spec.ts": 2,
+          "zzzzzzzzz-payments.spec.ts": 3,
+          "zzzzzzzzzz-files.spec.ts": 4,
+          "zzzzzzzzzz-institution-digital.spec.ts": 1,
+          "zzzzzzzzzz-order-email.spec.ts": 1,
+          "zzzzzzzzzzz-tables.spec.ts": 3,
+          "zzzzzzzzzzz-teacher-sales.spec.ts": 1,
+          "zzzzzzzzzzzz-print-archive.spec.ts": 2,
+          "zzzzzzzzzzzzz-receipts.spec.ts": 3,
+          "zzzzzzzzzzzzzz-sales-report.spec.ts": 2,
+          "zzzzzzzzzzzzzzz-gallery-opening.spec.ts": 1
+        },
+        "allRequiredSpecsExecuted": true,
+        "errors": [],
+        "resultsPath": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/b/results.json"
+      }
+    },
+    "native": [
+      {
+        "script": "verify-institution-digital.php",
+        "status": "PASS",
+        "seconds": 0.5,
+        "marker": "Institution digital integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-institution-digital.log"
+      },
+      {
+        "script": "verify-storefront.php",
+        "status": "PASS",
+        "seconds": 0.3,
+        "marker": "E4 integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-storefront.log"
+      },
+      {
+        "script": "verify-sales-windows.php",
+        "status": "PASS",
+        "seconds": 0.3,
+        "marker": "E7 sales windows integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-sales-windows.log"
+      },
+      {
+        "script": "verify-handoff.php",
+        "status": "PASS",
+        "seconds": 0.5,
+        "marker": "F1 list integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-handoff.log"
+      },
+      {
+        "script": "verify-orders.php",
+        "status": "PASS",
+        "seconds": 0.5,
+        "marker": "E5 integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-orders.log"
+      },
+      {
+        "script": "verify-markup-correction.php",
+        "status": "PASS",
+        "seconds": 4.4,
+        "marker": "D4 markup correction integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-markup-correction.log"
+      },
+      {
+        "script": "verify-email-only-orders.php",
+        "status": "PASS",
+        "seconds": 0.3,
+        "marker": "E8 email-only order integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-email-only-orders.log"
+      },
+      {
+        "script": "verify-links.php",
+        "status": "PASS",
+        "seconds": 0.3,
+        "marker": "F2 integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-links.log"
+      },
+      {
+        "script": "verify-gallery-openings.php",
+        "status": "PASS",
+        "seconds": 7.3,
+        "marker": "#232 gallery opening integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-gallery-openings.log"
+      },
+      {
+        "script": "verify-transfers.php",
+        "status": "PASS",
+        "seconds": 0.4,
+        "marker": "D3 integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-transfers.log"
+      },
+      {
+        "script": "verify-access.php",
+        "status": "PASS",
+        "seconds": 0.3,
+        "marker": "B4 access integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/a/verify-access.log"
+      },
+      {
+        "script": "verify-avatar.php",
+        "status": "PASS",
+        "seconds": 0.2,
+        "marker": "B3 avatar integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-avatar.log"
+      },
+      {
+        "script": "verify-payment-costs.php",
+        "status": "PASS",
+        "seconds": 0.3,
+        "marker": "E6 payment cost integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-payment-costs.log"
+      },
+      {
+        "script": "verify-support.php",
+        "status": "PASS",
+        "seconds": 1.1,
+        "marker": "K3 support integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/a/verify-support.log"
+      },
+      {
+        "script": "verify-payments.php",
+        "status": "PASS",
+        "seconds": 0.3,
+        "marker": "G1 payment integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-payments.log"
+      },
+      {
+        "script": "verify-photo-deletion.php",
+        "status": "PASS",
+        "seconds": 0.4,
+        "marker": "#116 photo deletion integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/a/verify-photo-deletion.log"
+      },
+      {
+        "script": "verify-files.php",
+        "status": "PASS",
+        "seconds": 0.3,
+        "marker": "J1 files integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-files.log"
+      },
+      {
+        "script": "verify-production-worksheet.php",
+        "status": "PASS",
+        "seconds": 0.3,
+        "marker": "Production worksheet integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-production-worksheet.log"
+      },
+      {
+        "script": "verify-production.php",
+        "status": "PASS",
+        "seconds": 0.3,
+        "marker": "L1 production integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-production.log"
+      },
+      {
+        "script": "verify-institution-production.php",
+        "status": "PASS",
+        "seconds": 1.3,
+        "marker": "Institution production integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-institution-production.log"
+      },
+      {
+        "script": "verify-order-email.php",
+        "status": "PASS",
+        "seconds": 0.3,
+        "marker": "J2 order email integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-order-email.log"
+      },
+      {
+        "script": "verify-receipts.php",
+        "status": "PASS",
+        "seconds": 0.3,
+        "marker": "G2 receipts integration passed",
+        "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-receipts.log"
+      }
+    ],
+    "notificationIntegration": {
+      "status": "PASS",
+      "evidence": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/a/notification.log"
+    }
+  },
+  "stage7": {
+    "browser": [
+      {
+        "title": "T14/T12/T15 digital institution: purchased history, exact ZIP, current rights and desktop/mobile",
+        "file": "zzzzzzzzzz-institution-digital.spec.ts",
+        "status": "passed",
+        "durationMs": 23848,
+        "retry": 0
+      }
+    ],
+    "native": {
+      "checks": 69,
+      "files": 4,
+      "purchasedLines": 12,
+      "largeSourceBytes": 67108864,
+      "phpPeakDelta": 0,
+      "rssDeltaKiB": 0,
+      "buyerExpiryPreserved": true
+    },
+    "nativeMetricsPath": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/attempt-02-institution-digital-proof.json",
+    "visual": {
+      "status": "PASS",
+      "runId": "rabit-e2e-40b49eeedfbe",
+      "observedAt": "2026-11-17T16:23:28.840933+00:00",
+      "model": "gpt-6-astra",
+      "effort": "max",
+      "method": "Все три новых PNG второй попытки отдельно открыты через view_image и реально оценены. Оценка по снимкам первой попытки не переносилась без нового просмотра; preview tools не использовались.",
+      "images": [
+        {
+          "kind": "desktop",
+          "status": "PASS",
+          "source": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/b/artifacts/zzzzzzzzzz-institution-dig-b6428-t-rights-and-desktop-mobile-b/institution-digital-desktop.png",
+          "qaCopy": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/screenshots-attempt-02/institution-digital-desktop.png",
+          "sha256": "cf455949c9f10f320503dffac8d736273949463de4f9b4d87cc1c2a6a524857f",
+          "width": 1440,
+          "height": 1000,
+          "assessment": "Диалог помещается целиком на 1440×1000. Читаются описание состава, успешное скачивание, статус готовности, 4 файла, обе даты, ZIP/CSV, срок и ограничения. Кнопка закрытия видна. Наложений и обрезки содержимого не обнаружено."
+        },
+        {
+          "kind": "mobile",
+          "status": "PASS",
+          "source": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/b/artifacts/zzzzzzzzzz-institution-dig-b6428-t-rights-and-desktop-mobile-b/institution-digital-mobile.png",
+          "qaCopy": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/screenshots-attempt-02/institution-digital-mobile.png",
+          "sha256": "31a69bd9e73544baba71af60912b149e0668742bbded638da4a232dece377f99",
+          "width": 390,
+          "height": 844,
+          "assessment": "На 390×844 заголовок естественно переносится; описание, двухстрочное сообщение об успешном скачивании, карточка, даты и кнопки ZIP/CSV читаются без перекрытий. Нижний поясняющий текст продолжается в области вертикальной прокрутки."
+        },
+        {
+          "kind": "mobile-footer",
+          "status": "PASS",
+          "source": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/b/artifacts/zzzzzzzzzz-institution-dig-b6428-t-rights-and-desktop-mobile-b/institution-digital-mobile-footer.png",
+          "qaCopy": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/screenshots-attempt-02/institution-digital-mobile-footer.png",
+          "sha256": "3ba2338ae6e3e1334a55189ab3cacb7157fe19fb2a231f7317bd8141ce70e6ea",
+          "width": 390,
+          "height": 844,
+          "assessment": "После прокрутки на 390×844 полностью доступны срок хранения, ограничения, пояснения и кнопка «Закрыть». Карточка не выходит за ширину диалога. Обрезанный верх содержимого соответствует положению вертикальной прокрутки."
+        }
+      ],
+      "automatedChecks": "Успешный stage7 browser scenario дополнительно проверил отсутствие горизонтального overflow страницы/диалога, полную высоту notice и видимость Закрыть после прокрутки.",
+      "limitations": [
+        "PNG показывают ready и успешное скачивание. Отдельной визуальной серии empty/expired нет; эти состояния покрываются unit/native.",
+        "Визуальная оценка не является code review."
+      ]
+    }
+  },
+  "coverage": [
+    {
+      "testCaseIds": [
+        "T14-SELECT",
+        "T14-BUNDLE",
+        "T12-NAMES"
+      ],
+      "evidence": [
+        "real browser stage7",
+        "native stage7",
+        "PHPUnit"
+      ],
+      "result": "PASS",
+      "details": "Оплаченная история digital/bundle; 4 исходных файла и 12 уникальных купленных строк в манифесте. Точные ZIP/CSV/байты и имена 0001.JPG; группы и коллизии разнесены. Подарочные/печатные/неоплаченные/late строки исключены."
+    },
+    {
+      "testCaseIds": [
+        "T12-MISSING",
+        "T15-ACCESS",
+        "T15-TICKET"
+      ],
+      "evidence": [
+        "real HTTP/browser stage7",
+        "native stage7",
+        "PHPUnit"
+      ],
+      "result": "PASS",
+      "details": "Отсутствующий оригинал даёт failed/ORIGINAL_MISSING и отказ download. Organizer create; curator read без create; teacher/anonymous denied; отзыв назначения прекращает выдачу уже подписанной ссылки."
+    },
+    {
+      "testCaseIds": [
+        "T12-RECOVERY",
+        "MIGRATION",
+        "T12-RETENTION"
+      ],
+      "evidence": [
+        "native MySQL/Files stage7",
+        "real Files-worker in browser"
+      ],
+      "result": "PASS",
+      "details": "Разные MySQL-сессии GET_LOCK, lease/CAS/stale owner, восстановление после записи, повтор миграции и защищённый down, 7 суток от ready, expiry до cron, purge ZIP/tmp при сохранении состава/CSV/оригиналов и buyer expiry."
+    },
+    {
+      "testCaseIds": [
+        "T14-SNAPSHOT",
+        "T12-LARGE"
+      ],
+      "evidence": [
+        "full PHPUnit",
+        "native stage7"
+      ],
+      "result": "PASS within stated coverage",
+      "details": "Unit проверяет неизменность снимка и превышение лимитов. Native подтверждает сохранение CSV после cleanup и один синтетический источник 64 МиБ с ограниченным добавочным пиком. Пределы 10000 файлов/20 ГиБ/50000 связей не нагрузочно прогонялись."
+    },
+    {
+      "testCaseIds": [
+        "T01-T02-REG",
+        "ARCH-HTTP"
+      ],
+      "evidence": [
+        "full PHPUnit unit+functional",
+        "PHP lint/PHPStan",
+        "all 22 native verifiers",
+        "real a+b browser"
+      ],
+      "result": "PASS",
+      "details": "Покупательские ZIP/выдача/письма, сроки и смежные сценарии прошли полный повтор. Контракты/архитектурные тесты выполнены как тесты; code review не выполнялось."
+    },
+    {
+      "testCaseIds": [
+        "UI-STATE"
+      ],
+      "evidence": [
+        "frontend UI/commerce tests",
+        "real browser stage7",
+        "three fresh PNGs manually inspected"
+      ],
+      "result": "PASS within stated coverage",
+      "details": "Пустой список выпусков, создание, ready/скачивание, ошибка missing original; fresh desktop 1440×1000, mobile и footer 390×844 просмотрены. Отдельных визуальных снимков empty/expired нет: эти состояния покрыты unit/native."
+    }
+  ],
+  "limitations": [
+    "Первый полный запуск остаётся FAIL: 160 browser PASS / 2 FAIL / 2 skipped. Успешный повтор не отменяет этот результат.",
+    "Причина таймаута G1 не установлена как подтверждённый transient. Ошибка G1 возникла до прерывания runner и до перехода на YooMoney; на единственном разрешённом повторе не воспроизвелась.",
+    "Отправитель/причина SIGTERM-совместимого exit 143 не установлены доступными журналами. Во втором независимом процессе exit 0 и signals=[]; это не доказывает точную причину первого прерывания.",
+    "64 МиБ — один синтетический источник; PHP peak delta/RSS delta являются добавочным high-water mark, а не полной памятью процесса. Пределы 20 ГиБ/10000 файлов/50000 связей не бенчмаркировались.",
+    "Отдельной визуальной серии empty/expired нет. Heavy media bench zz-media-bench opt-in и Cucumber demo не входят в выполненную точную команду. В обязательном a+b наборе 0 skipped.",
+    "PHPStan использовал штатный восстановленный cache (0 файлов reanalysed); правила и конфигурация не менялись.",
+    "Это отдельный QA, не code review. Commit/push/PR/merge/deploy не выполнялись."
+  ],
+  "resources": {
+    "timestamp": "2026-11-17T16:26:16.051035+00:00",
+    "runs": [
+      {
+        "runId": "rabit-e2e-480386667006",
+        "stopped": true,
+        "ownerRestored": true,
+        "cleanupErrors": [],
+        "remainingRunOwnedResources": {
+          "containers": [],
+          "networks": [],
+          "volumes": []
+        }
+      },
+      {
+        "runId": "rabit-e2e-40b49eeedfbe",
+        "stopped": true,
+        "ownerRestored": true,
+        "cleanupErrors": [],
+        "remainingRunOwnedResources": {
+          "containers": [],
+          "networks": [],
+          "volumes": []
+        }
+      }
+    ]
+  },
+  "baselineContainersUnchanged": 56,
+  "trackedChangesAfter": [
+    " M docs/plans/OPS-institution-digital-archive/progress.md"
+  ],
+  "trackedChangesOwner": "Only parent delivery journal progress.md; QA did not write tracked files.",
+  "sourceChangesByQA": false,
+  "firstAttemptArtifactsPreserved": true,
+  "environment": {
+    "commit": "1459df1336f318905eaf5f6085daff1147243c47",
+    "dirtyPaths": [
+      "docs/plans/OPS-institution-digital-archive/progress.md"
+    ],
+    "diffSha256": "9db3b6c60de8acf53cf43d0f67b0247621dbe986637a6a705ecb7a8952837102",
+    "lockSha256": "5bbdcf6f35e8bb075491b7cecd07a68e970edaebe0ed7169d2e05ce9781e333b",
+    "images": {
+      "mcr.microsoft.com/playwright:v1.52.0-jammy": "sha256:ff2946177f0756c87482c0ef958b7cfbf389b92525ace78a1c9890281d0d60f4",
+      "rabit-api-e2e-php-cli:local": "sha256:968b2d5ef8d82c32382ddd41c9fb14d88e5735bb66a10a81f354c355e2479200",
+      "rabit-api-e2e-php-fpm:local": "sha256:1e60d2751e671fc9f4020f85b806e90ab596d498e75425129a037f582028499e",
+      "rabit-api-e2e-nginx:local": "sha256:3ce6f0e4926b53d65dec97a4ce2ca91ed82742c7ec0f9feccc51f87c82052e62",
+      "mysql:8.0": "sha256:64756cc92f707eb504496d774353990bcb0f6999ddf598b6ad188f2da66bd000",
+      "nginx:1.29-alpine": "sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de",
+      "rabbitmq:3.13-management": "sha256:e582c0bc7766f3342496d8485efb5a1df782b5ce3886ad017e2eaae442311f69"
+    },
+    "cpus": 20,
+    "memoryMiB": 15939
+  },
+  "artifacts": {
+    "reportMarkdown": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/report.md",
+    "reportJson": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/report.json",
+    "manifestBefore": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/manifest-before.json",
+    "manifestBetweenAttempts": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/manifest-between-attempts.json",
+    "manifestAfter": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/manifest-after.json",
+    "verifiedCounts": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/verified-counts.json",
+    "firstAttemptMetadata": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/attempt-01.json",
+    "firstAttemptLog": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/attempt-01.log",
+    "firstState": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-480386667006/state.json",
+    "firstStateBeforeCleanup": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/state-after-interruption.json",
+    "firstBrowserA": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-480386667006/a/a/results.json",
+    "firstBrowserB": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-480386667006/b/b/results.json",
+    "firstSupplementalNative": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/diagnostic-native-b.json",
+    "firstNativeStage7": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/institution-digital-proof.json",
+    "firstVisual": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/visual.json",
+    "interruptionInvestigation": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/interruption-investigation.json",
+    "finalAttemptMetadata": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/attempt-02.json",
+    "finalLog": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/attempt-02.log",
+    "supervisorLog": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/attempt-02-supervisor.log",
+    "state": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/state.json",
+    "browserA": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/a/a/results.json",
+    "browserB": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/b/results.json",
+    "browserHtmlA": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/a/a/html/index.html",
+    "browserHtmlB": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/b/html/index.html",
+    "nativeStage7Log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-institution-digital.log",
+    "nativeStage7Metrics": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/attempt-02-institution-digital-proof.json",
+    "visualAssessment": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/visual-attempt-02.json",
+    "cleanup": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/cleanup-final.json",
+    "baselineContainers": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/docker-baseline-after.json",
+    "originalArtifactsPreserved": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/first-attempt-preservation.json"
+  }
+}

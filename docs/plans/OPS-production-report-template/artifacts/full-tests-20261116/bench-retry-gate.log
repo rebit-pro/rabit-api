@@ -1,0 +1,74 @@
+-> npm ci
+-> php-cli WebP capability
+-> a: MySQL and RabbitMQ
+passed php-cli WebP capability (0.8 s)
+-> php-fpm WebP capability
+passed php-fpm WebP capability (0.9 s)
+-> composer autoload
+passed a: MySQL and RabbitMQ (12.6 s)
+passed npm ci (14.3 s)
+-> npm run lint
+-> npm run lint:styles
+-> npm run typecheck
+-> npm run typecheck:e2e
+-> npm run test:ui
+-> npm run test:commerce
+-> npm run build-only
+passed composer autoload (18.7 s)
+-> php-lint
+-> phpstan
+-> phpunit
+passed npm run test:ui (10.5 s)
+passed npm run test:commerce (11.0 s)
+passed phpstan (5.1 s)
+passed php-lint (5.6 s)
+passed npm run typecheck:e2e (15.0 s)
+passed npm run lint:styles (17.4 s)
+passed npm run build-only (29.6 s)
+passed phpunit (31.1 s)
+passed npm run typecheck (40.9 s)
+passed npm run lint (47.2 s)
+-> a: real Bitrix schema and fixture accounts
+passed a: real Bitrix schema and fixture accounts (4.3 s)
+-> a: durable Notification contract on real MySQL
+passed a: durable Notification contract on real MySQL (1.1 s)
+-> a: FPM, media and files workers and nginx
+passed a: FPM, media and files workers and nginx (5.3 s)
+Browser a: http://localhost:57608
+State: /home/user/rabit-api/.worktrees/ops-production-report-template/api/var/e2e/rabit-e2e-03c3ed9d1003/state.json
+-> a: E4 gallery fixture through internal lifecycle
+passed a: E4 gallery fixture through internal lifecycle (1.3 s)
+-> a: real browser group a
+passed a: real browser group a (514.5 s)
+-> a: verify-access.php
+passed a: verify-access.php (0.6 s)
+-> a: verify-support.php
+passed a: verify-support.php (1.2 s)
+-> a: verify-photo-deletion.php
+passed a: verify-photo-deletion.php (0.3 s)
+Browser scenarios passed: 82 {'a': 82} (PARTIAL run, not a full gate)
+YooKassa test shop: on
+    1.3 s    14.3 s  passed     npm ci
+    1.3 s     0.8 s  passed     php-cli WebP capability
+    1.3 s    12.6 s  passed     a: MySQL and RabbitMQ
+    2.1 s     0.9 s  passed     php-fpm WebP capability
+    3.0 s    18.7 s  passed     composer autoload
+   15.6 s    47.2 s  passed     npm run lint
+   15.6 s    17.4 s  passed     npm run lint:styles
+   15.6 s    40.9 s  passed     npm run typecheck
+   15.6 s    15.0 s  passed     npm run typecheck:e2e
+   15.6 s    10.5 s  passed     npm run test:ui
+   15.6 s    11.0 s  passed     npm run test:commerce
+   15.6 s    29.6 s  passed     npm run build-only
+   21.7 s     5.6 s  passed     php-lint
+   21.7 s     5.1 s  passed     phpstan
+   21.7 s    31.1 s  passed     phpunit
+   62.8 s     4.3 s  passed     a: real Bitrix schema and fixture accounts
+   67.1 s     1.1 s  passed     a: durable Notification contract on real MySQL
+   68.2 s     5.3 s  passed     a: FPM, media and files workers and nginx
+   73.5 s     1.3 s  passed     a: E4 gallery fixture through internal lifecycle
+   74.8 s   514.5 s  passed     a: real browser group a
+  589.3 s     0.6 s  passed     a: verify-access.php
+  589.8 s     1.2 s  passed     a: verify-support.php
+  591.1 s     0.3 s  passed     a: verify-photo-deletion.php
+Total: 597.8 s

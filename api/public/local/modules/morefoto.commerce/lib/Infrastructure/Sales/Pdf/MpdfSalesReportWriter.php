@@ -14,7 +14,7 @@ use Mpdf\Mpdf;
 
 /**
  * Собирает PDF отчёта mpdf: A4, фирменные Manrope и Golos Text из ресурсов модуля, временные файлы вне публичной части.
- * Миниатюры передаются через `imageVars`, а не внутри HTML: тип mpdf определяет по байтам.
+ * Состав детских строк задаётся явно; детские изображения в рабочий документ не включаются.
  */
 final readonly class MpdfSalesReportWriter implements SalesReportPdfWriterInterface
 {
@@ -24,12 +24,12 @@ final readonly class MpdfSalesReportWriter implements SalesReportPdfWriterInterf
         private string $tempDir,
     ) {}
 
-    public function pdf(SalesReportOutputDto $report, array $thumbnails): string
+    public function pdf(SalesReportOutputDto $report, bool $includeUnordered = true): string
     {
         try {
             $mpdf = new Mpdf([
                 'mode' => 'utf-8',
-                'format' => 'A4',
+                'format' => null === $report->worksheet ? 'A4' : 'A4-L',
                 'tempDir' => $this->tempDir,
                 'fontDir' => array_merge((new ConfigVariables())->getDefaults()['fontDir'], [$this->fontDir]),
                 'fontdata' => (new FontVariables())->getDefaults()['fontdata'] + [
@@ -50,13 +50,7 @@ final readonly class MpdfSalesReportWriter implements SalesReportPdfWriterInterf
             $mpdf->SetHTMLHeader($this->html->header());
             $mpdf->SetHTMLFooter($this->html->footer($report));
             $mpdf->WriteHTML($this->html->css(), HTMLParserMode::HEADER_CSS);
-            $images = [];
-            foreach ($thumbnails as $childId => $thumbnail) {
-                $name = 'child' . count($images);
-                $mpdf->imageVars[$name] = $thumbnail;
-                $images[$childId] = $name;
-            }
-            $mpdf->WriteHTML($this->html->body($report, $images), HTMLParserMode::HTML_BODY);
+            $mpdf->WriteHTML($this->html->body($report, $includeUnordered), HTMLParserMode::HTML_BODY);
 
             return $mpdf->OutputBinaryData();
         } catch (\Throwable $error) {

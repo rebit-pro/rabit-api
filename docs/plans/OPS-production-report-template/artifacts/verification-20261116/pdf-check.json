@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "tool": "PyMuPDF 1.26.6",
+  "pdfs": [
+    {
+      "file": "worksheet-preview.pdf",
+      "pages": 15,
+      "minFontPt": 7.0,
+      "minFilenameFontPt": 8.0,
+      "layout": "A4-L",
+      "clippedSpans": 0,
+      "orders": 200
+    },
+    {
+      "file": "worksheet-final.pdf",
+      "pages": 23,
+      "minFontPt": 7.0,
+      "minFilenameFontPt": 8.0,
+      "layout": "A4-L",
+      "clippedSpans": 0,
+      "orders": 200
+    },
+    {
+      "file": "worksheet-bundle-300-wide.pdf",
+      "pages": 14,
+      "minFontPt": 7.0,
+      "minFilenameFontPt": 8.0,
+      "layout": "A4-L",
+      "clippedSpans": 0,
+      "bundleFilenames": 300,
+      "longFilenameIntact": true,
+      "dynamicColumns": 10,
+      "orderMoneyCells": 1
+    }
+  ]
+}

@@ -1,0 +1,608 @@
+{
+  "timestamp": "2026-11-17T16:27:07.292070+00:00",
+  "runId": "rabit-e2e-40b49eeedfbe",
+  "scope": "full gate",
+  "stages": [
+    {
+      "name": "npm ci",
+      "startedAt": 1.2,
+      "status": "passed",
+      "seconds": 13.0
+    },
+    {
+      "name": "php-cli WebP capability",
+      "startedAt": 1.2,
+      "status": "passed",
+      "seconds": 0.7
+    },
+    {
+      "name": "a: MySQL and RabbitMQ",
+      "startedAt": 1.2,
+      "status": "passed",
+      "seconds": 17.2
+    },
+    {
+      "name": "b: MySQL and RabbitMQ",
+      "startedAt": 1.2,
+      "status": "passed",
+      "seconds": 17.0
+    },
+    {
+      "name": "php-fpm WebP capability",
+      "startedAt": 1.9,
+      "status": "passed",
+      "seconds": 0.7
+    },
+    {
+      "name": "composer autoload",
+      "startedAt": 2.5,
+      "status": "passed",
+      "seconds": 11.4
+    },
+    {
+      "name": "php-lint",
+      "startedAt": 13.9,
+      "status": "passed",
+      "seconds": 6.2
+    },
+    {
+      "name": "phpstan",
+      "startedAt": 13.9,
+      "status": "passed",
+      "seconds": 5.0
+    },
+    {
+      "name": "phpunit",
+      "startedAt": 13.9,
+      "status": "passed",
+      "seconds": 33.9
+    },
+    {
+      "name": "npm run lint",
+      "startedAt": 14.2,
+      "status": "passed",
+      "seconds": 43.8
+    },
+    {
+      "name": "npm run lint:styles",
+      "startedAt": 14.2,
+      "status": "passed",
+      "seconds": 18.2
+    },
+    {
+      "name": "npm run typecheck",
+      "startedAt": 14.2,
+      "status": "passed",
+      "seconds": 37.6
+    },
+    {
+      "name": "npm run typecheck:e2e",
+      "startedAt": 14.2,
+      "status": "passed",
+      "seconds": 16.3
+    },
+    {
+      "name": "npm run test:ui",
+      "startedAt": 14.2,
+      "status": "passed",
+      "seconds": 12.4
+    },
+    {
+      "name": "npm run test:commerce",
+      "startedAt": 14.2,
+      "status": "passed",
+      "seconds": 12.7
+    },
+    {
+      "name": "npm run build-only",
+      "startedAt": 14.2,
+      "status": "passed",
+      "seconds": 29.0
+    },
+    {
+      "name": "a: real Bitrix schema and fixture accounts",
+      "startedAt": 57.9,
+      "status": "passed",
+      "seconds": 5.3
+    },
+    {
+      "name": "b: real Bitrix schema and fixture accounts",
+      "startedAt": 57.9,
+      "status": "passed",
+      "seconds": 5.4
+    },
+    {
+      "name": "a: durable Notification contract on real MySQL",
+      "startedAt": 63.3,
+      "status": "passed",
+      "seconds": 1.6
+    },
+    {
+      "name": "b: FPM, media and files workers and nginx",
+      "startedAt": 63.3,
+      "status": "passed",
+      "seconds": 6.3
+    },
+    {
+      "name": "a: FPM, media and files workers and nginx",
+      "startedAt": 64.9,
+      "status": "passed",
+      "seconds": 5.9
+    },
+    {
+      "name": "b: E4 gallery fixture through internal lifecycle",
+      "startedAt": 70.9,
+      "status": "passed",
+      "seconds": 1.0
+    },
+    {
+      "name": "a: E4 gallery fixture through internal lifecycle",
+      "startedAt": 70.9,
+      "status": "passed",
+      "seconds": 1.0
+    },
+    {
+      "name": "b: real browser group b",
+      "startedAt": 71.9,
+      "status": "passed",
+      "seconds": 482.2
+    },
+    {
+      "name": "a: real browser group a",
+      "startedAt": 71.9,
+      "status": "passed",
+      "seconds": 391.9
+    },
+    {
+      "name": "a: verify-access.php",
+      "startedAt": 463.8,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "a: verify-support.php",
+      "startedAt": 464.1,
+      "status": "passed",
+      "seconds": 1.1
+    },
+    {
+      "name": "a: verify-photo-deletion.php",
+      "startedAt": 465.2,
+      "status": "passed",
+      "seconds": 0.4
+    },
+    {
+      "name": "b: verify-institution-digital.php",
+      "startedAt": 554.1,
+      "status": "passed",
+      "seconds": 0.5
+    },
+    {
+      "name": "b: verify-storefront.php",
+      "startedAt": 554.6,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-sales-windows.php",
+      "startedAt": 554.9,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-handoff.php",
+      "startedAt": 555.2,
+      "status": "passed",
+      "seconds": 0.5
+    },
+    {
+      "name": "b: verify-orders.php",
+      "startedAt": 555.7,
+      "status": "passed",
+      "seconds": 0.5
+    },
+    {
+      "name": "b: verify-markup-correction.php",
+      "startedAt": 556.2,
+      "status": "passed",
+      "seconds": 4.4
+    },
+    {
+      "name": "b: verify-email-only-orders.php",
+      "startedAt": 560.6,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-links.php",
+      "startedAt": 560.9,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-gallery-openings.php",
+      "startedAt": 561.1,
+      "status": "passed",
+      "seconds": 7.3
+    },
+    {
+      "name": "b: verify-transfers.php",
+      "startedAt": 568.5,
+      "status": "passed",
+      "seconds": 0.4
+    },
+    {
+      "name": "b: verify-avatar.php",
+      "startedAt": 568.8,
+      "status": "passed",
+      "seconds": 0.2
+    },
+    {
+      "name": "b: verify-payment-costs.php",
+      "startedAt": 569.0,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-payments.php",
+      "startedAt": 569.3,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-files.php",
+      "startedAt": 569.6,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-production-worksheet.php",
+      "startedAt": 569.9,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-production.php",
+      "startedAt": 570.2,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-institution-production.php",
+      "startedAt": 570.5,
+      "status": "passed",
+      "seconds": 1.3
+    },
+    {
+      "name": "b: verify-order-email.php",
+      "startedAt": 571.8,
+      "status": "passed",
+      "seconds": 0.3
+    },
+    {
+      "name": "b: verify-receipts.php",
+      "startedAt": 572.1,
+      "status": "passed",
+      "seconds": 0.3
+    }
+  ],
+  "stageCounts": {
+    "passed": 47
+  },
+  "phpunit": {
+    "status": "PASS",
+    "tests": 1406,
+    "assertions": 53683,
+    "failed": 0,
+    "skipped": 0,
+    "suiteSelection": "All configured unit + functional via vendor/bin/phpunit --colors=never",
+    "evidence": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/phpunit.log",
+    "summary": "OK (1406 tests, 53683 assertions)"
+  },
+  "frontend": {
+    "test-ui": {
+      "status": "PASS",
+      "tests": 129,
+      "pass": 129,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "evidence": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/test-ui.log"
+    },
+    "test-commerce": {
+      "status": "PASS",
+      "tests": 253,
+      "pass": 253,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "evidence": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/test-commerce.log"
+    }
+  },
+  "browser": {
+    "a": {
+      "stats": {
+        "startTime": "2026-11-17T16:16:08.686Z",
+        "duration": 389436.49799999996,
+        "expected": 81,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "resultCounts": {
+        "passed": 81
+      },
+      "specCount": 14,
+      "files": {
+        "catalog.spec.ts": 15,
+        "conditions.spec.ts": 3,
+        "design-tokens.spec.ts": 1,
+        "legal.spec.ts": 3,
+        "organization.spec.ts": 11,
+        "shell.spec.ts": 7,
+        "staff.spec.ts": 6,
+        "z-institution-detail.spec.ts": 9,
+        "zz-access.spec.ts": 6,
+        "zz-media-archive.spec.ts": 2,
+        "zz-media.spec.ts": 7,
+        "zz-notification.spec.ts": 1,
+        "zz-questions.spec.ts": 8,
+        "zz-u7-screens.spec.ts": 2
+      },
+      "allRequiredSpecsExecuted": true,
+      "errors": [],
+      "resultsPath": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/a/a/results.json"
+    },
+    "b": {
+      "stats": {
+        "startTime": "2026-11-17T16:16:08.677Z",
+        "duration": 479900.271,
+        "expected": 83,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "resultCounts": {
+        "passed": 83
+      },
+      "specCount": 24,
+      "files": {
+        "cabinet-tables.spec.ts": 6,
+        "z-links-preparation.spec.ts": 2,
+        "zz-avatar.spec.ts": 3,
+        "zzz-handoff.spec.ts": 9,
+        "zzzz-links.spec.ts": 2,
+        "zzzz-short-links.spec.ts": 3,
+        "zzzz-storefront-windows.spec.ts": 4,
+        "zzzz-storefront.spec.ts": 9,
+        "zzzzz-markup-correction.spec.ts": 2,
+        "zzzzz-orders.spec.ts": 12,
+        "zzzzzz-transfers.spec.ts": 4,
+        "zzzzzzz-overview.spec.ts": 3,
+        "zzzzzzz-summaries.spec.ts": 1,
+        "zzzzzzzz-payment-costs.spec.ts": 2,
+        "zzzzzzzzz-payments.spec.ts": 3,
+        "zzzzzzzzzz-files.spec.ts": 4,
+        "zzzzzzzzzz-institution-digital.spec.ts": 1,
+        "zzzzzzzzzz-order-email.spec.ts": 1,
+        "zzzzzzzzzzz-tables.spec.ts": 3,
+        "zzzzzzzzzzz-teacher-sales.spec.ts": 1,
+        "zzzzzzzzzzzz-print-archive.spec.ts": 2,
+        "zzzzzzzzzzzzz-receipts.spec.ts": 3,
+        "zzzzzzzzzzzzzz-sales-report.spec.ts": 2,
+        "zzzzzzzzzzzzzzz-gallery-opening.spec.ts": 1
+      },
+      "allRequiredSpecsExecuted": true,
+      "errors": [],
+      "resultsPath": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/b/results.json"
+    }
+  },
+  "browserTotals": {
+    "expected": 164,
+    "unexpected": 0,
+    "skipped": 0,
+    "flaky": 0
+  },
+  "native": [
+    {
+      "script": "verify-institution-digital.php",
+      "status": "PASS",
+      "seconds": 0.5,
+      "marker": "Institution digital integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-institution-digital.log"
+    },
+    {
+      "script": "verify-storefront.php",
+      "status": "PASS",
+      "seconds": 0.3,
+      "marker": "E4 integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-storefront.log"
+    },
+    {
+      "script": "verify-sales-windows.php",
+      "status": "PASS",
+      "seconds": 0.3,
+      "marker": "E7 sales windows integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-sales-windows.log"
+    },
+    {
+      "script": "verify-handoff.php",
+      "status": "PASS",
+      "seconds": 0.5,
+      "marker": "F1 list integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-handoff.log"
+    },
+    {
+      "script": "verify-orders.php",
+      "status": "PASS",
+      "seconds": 0.5,
+      "marker": "E5 integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-orders.log"
+    },
+    {
+      "script": "verify-markup-correction.php",
+      "status": "PASS",
+      "seconds": 4.4,
+      "marker": "D4 markup correction integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-markup-correction.log"
+    },
+    {
+      "script": "verify-email-only-orders.php",
+      "status": "PASS",
+      "seconds": 0.3,
+      "marker": "E8 email-only order integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-email-only-orders.log"
+    },
+    {
+      "script": "verify-links.php",
+      "status": "PASS",
+      "seconds": 0.3,
+      "marker": "F2 integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-links.log"
+    },
+    {
+      "script": "verify-gallery-openings.php",
+      "status": "PASS",
+      "seconds": 7.3,
+      "marker": "#232 gallery opening integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-gallery-openings.log"
+    },
+    {
+      "script": "verify-transfers.php",
+      "status": "PASS",
+      "seconds": 0.4,
+      "marker": "D3 integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-transfers.log"
+    },
+    {
+      "script": "verify-access.php",
+      "status": "PASS",
+      "seconds": 0.3,
+      "marker": "B4 access integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/a/verify-access.log"
+    },
+    {
+      "script": "verify-avatar.php",
+      "status": "PASS",
+      "seconds": 0.2,
+      "marker": "B3 avatar integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-avatar.log"
+    },
+    {
+      "script": "verify-payment-costs.php",
+      "status": "PASS",
+      "seconds": 0.3,
+      "marker": "E6 payment cost integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-payment-costs.log"
+    },
+    {
+      "script": "verify-support.php",
+      "status": "PASS",
+      "seconds": 1.1,
+      "marker": "K3 support integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/a/verify-support.log"
+    },
+    {
+      "script": "verify-payments.php",
+      "status": "PASS",
+      "seconds": 0.3,
+      "marker": "G1 payment integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-payments.log"
+    },
+    {
+      "script": "verify-photo-deletion.php",
+      "status": "PASS",
+      "seconds": 0.4,
+      "marker": "#116 photo deletion integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/a/verify-photo-deletion.log"
+    },
+    {
+      "script": "verify-files.php",
+      "status": "PASS",
+      "seconds": 0.3,
+      "marker": "J1 files integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-files.log"
+    },
+    {
+      "script": "verify-production-worksheet.php",
+      "status": "PASS",
+      "seconds": 0.3,
+      "marker": "Production worksheet integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-production-worksheet.log"
+    },
+    {
+      "script": "verify-production.php",
+      "status": "PASS",
+      "seconds": 0.3,
+      "marker": "L1 production integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-production.log"
+    },
+    {
+      "script": "verify-institution-production.php",
+      "status": "PASS",
+      "seconds": 1.3,
+      "marker": "Institution production integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-institution-production.log"
+    },
+    {
+      "script": "verify-order-email.php",
+      "status": "PASS",
+      "seconds": 0.3,
+      "marker": "J2 order email integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-order-email.log"
+    },
+    {
+      "script": "verify-receipts.php",
+      "status": "PASS",
+      "seconds": 0.3,
+      "marker": "G2 receipts integration passed",
+      "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/verify-receipts.log"
+    }
+  ],
+  "nativeCount": 22,
+  "notificationIntegration": {
+    "status": "PASS",
+    "evidence": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/a/notification.log"
+  },
+  "stage7Browser": [
+    {
+      "title": "T14/T12/T15 digital institution: purchased history, exact ZIP, current rights and desktop/mobile",
+      "file": "zzzzzzzzzz-institution-digital.spec.ts",
+      "status": "passed",
+      "durationMs": 23848,
+      "retry": 0
+    }
+  ],
+  "stage7Native": {
+    "checks": 69,
+    "files": 4,
+    "purchasedLines": 12,
+    "largeSourceBytes": 67108864,
+    "phpPeakDelta": 0,
+    "rssDeltaKiB": 0,
+    "buyerExpiryPreserved": true
+  },
+  "phpLintFiles": 1829,
+  "phpstanCacheNote": "Runner used the project cache: No errors; 0 files reanalysed. Rules/config unchanged.",
+  "environment": {
+    "commit": "1459df1336f318905eaf5f6085daff1147243c47",
+    "dirtyPaths": [
+      "docs/plans/OPS-institution-digital-archive/progress.md"
+    ],
+    "diffSha256": "9db3b6c60de8acf53cf43d0f67b0247621dbe986637a6a705ecb7a8952837102",
+    "lockSha256": "5bbdcf6f35e8bb075491b7cecd07a68e970edaebe0ed7169d2e05ce9781e333b",
+    "images": {
+      "mcr.microsoft.com/playwright:v1.52.0-jammy": "sha256:ff2946177f0756c87482c0ef958b7cfbf389b92525ace78a1c9890281d0d60f4",
+      "rabit-api-e2e-php-cli:local": "sha256:968b2d5ef8d82c32382ddd41c9fb14d88e5735bb66a10a81f354c355e2479200",
+      "rabit-api-e2e-php-fpm:local": "sha256:1e60d2751e671fc9f4020f85b806e90ab596d498e75425129a037f582028499e",
+      "rabit-api-e2e-nginx:local": "sha256:3ce6f0e4926b53d65dec97a4ce2ca91ed82742c7ec0f9feccc51f87c82052e62",
+      "mysql:8.0": "sha256:64756cc92f707eb504496d774353990bcb0f6999ddf598b6ad188f2da66bd000",
+      "nginx:1.29-alpine": "sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de",
+      "rabbitmq:3.13-management": "sha256:e582c0bc7766f3342496d8485efb5a1df782b5ce3886ad017e2eaae442311f69"
+    },
+    "cpus": 20,
+    "memoryMiB": 15939
+  }
+}

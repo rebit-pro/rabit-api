@@ -1,0 +1,141 @@
+-> npm ci
+-> php-cli WebP capability
+-> a: MySQL and RabbitMQ
+-> b: MySQL and RabbitMQ
+passed php-cli WebP capability (0.8 s)
+-> php-fpm WebP capability
+passed php-fpm WebP capability (0.7 s)
+-> composer autoload
+passed b: MySQL and RabbitMQ (23.5 s)
+passed a: MySQL and RabbitMQ (23.6 s)
+passed npm ci (29.7 s)
+-> npm run lint
+-> npm run lint:styles
+-> npm run typecheck
+-> npm run typecheck:e2e
+-> npm run test:ui
+-> npm run test:commerce
+-> npm run build-only
+passed composer autoload (68.5 s)
+-> php-lint
+-> phpstan
+-> phpunit
+passed npm run test:commerce (41.3 s)
+passed npm run typecheck:e2e (41.6 s)
+passed npm run lint:styles (41.8 s)
+passed npm run test:ui (41.7 s)
+passed php-lint (24.8 s)
+passed npm run build-only (91.4 s)
+passed phpstan (51.9 s)
+passed phpunit (69.2 s)
+passed npm run typecheck (121.7 s)
+passed npm run lint (143.7 s)
+-> b: real Bitrix schema and fixture accounts
+-> a: real Bitrix schema and fixture accounts
+passed a: real Bitrix schema and fixture accounts (19.7 s)
+-> a: durable Notification contract on real MySQL
+passed b: real Bitrix schema and fixture accounts (20.1 s)
+-> b: FPM, media and files workers and nginx
+passed a: durable Notification contract on real MySQL (5.9 s)
+-> a: FPM, media and files workers and nginx
+passed b: FPM, media and files workers and nginx (35.8 s)
+passed a: FPM, media and files workers and nginx (35.1 s)
+Browser a: http://localhost:56043
+Browser b: http://localhost:56621
+State: /home/user/rabit-api/.worktrees/ops-institution-print-archive/api/var/e2e/rabit-e2e-62559a39d294/state.json
+-> a: E4 gallery fixture through internal lifecycle
+-> b: E4 gallery fixture through internal lifecycle
+passed a: E4 gallery fixture through internal lifecycle (3.7 s)
+-> a: real browser group a
+passed b: E4 gallery fixture through internal lifecycle (3.9 s)
+-> b: real browser group b
+passed a: real browser group a (494.9 s)
+-> a: verify-access.php
+passed a: verify-access.php (0.4 s)
+-> a: verify-support.php
+passed a: verify-support.php (1.3 s)
+-> a: verify-photo-deletion.php
+passed a: verify-photo-deletion.php (0.4 s)
+passed b: real browser group b (564.5 s)
+-> b: verify-storefront.php
+passed b: verify-storefront.php (0.6 s)
+-> b: verify-sales-windows.php
+passed b: verify-sales-windows.php (0.7 s)
+-> b: verify-handoff.php
+passed b: verify-handoff.php (0.7 s)
+-> b: verify-orders.php
+passed b: verify-orders.php (0.8 s)
+-> b: verify-markup-correction.php
+passed b: verify-markup-correction.php (4.4 s)
+-> b: verify-email-only-orders.php
+passed b: verify-email-only-orders.php (0.3 s)
+-> b: verify-links.php
+passed b: verify-links.php (0.3 s)
+-> b: verify-gallery-openings.php
+passed b: verify-gallery-openings.php (6.3 s)
+-> b: verify-transfers.php
+passed b: verify-transfers.php (0.4 s)
+-> b: verify-avatar.php
+passed b: verify-avatar.php (0.2 s)
+-> b: verify-payment-costs.php
+passed b: verify-payment-costs.php (0.3 s)
+-> b: verify-payments.php
+passed b: verify-payments.php (0.3 s)
+-> b: verify-files.php
+passed b: verify-files.php (0.3 s)
+-> b: verify-production.php
+passed b: verify-production.php (0.4 s)
+-> b: verify-institution-production.php
+passed b: verify-institution-production.php (1.2 s)
+-> b: verify-order-email.php
+passed b: verify-order-email.php (0.3 s)
+-> b: verify-receipts.php
+passed b: verify-receipts.php (0.3 s)
+Browser scenarios passed: 162 {'a': 81, 'b': 81} (full gate)
+YooKassa test shop: on
+    1.3 s    29.7 s  passed     npm ci
+    1.3 s     0.8 s  passed     php-cli WebP capability
+    1.3 s    23.6 s  passed     a: MySQL and RabbitMQ
+    1.3 s    23.5 s  passed     b: MySQL and RabbitMQ
+    2.1 s     0.7 s  passed     php-fpm WebP capability
+    2.9 s    68.5 s  passed     composer autoload
+   31.0 s   143.7 s  passed     npm run lint
+   31.0 s    41.8 s  passed     npm run lint:styles
+   31.0 s   121.7 s  passed     npm run typecheck
+   31.0 s    41.6 s  passed     npm run typecheck:e2e
+   31.0 s    41.7 s  passed     npm run test:ui
+   31.0 s    41.3 s  passed     npm run test:commerce
+   31.0 s    91.4 s  passed     npm run build-only
+   71.4 s    24.8 s  passed     php-lint
+   71.4 s    51.9 s  passed     phpstan
+   71.4 s    69.2 s  passed     phpunit
+  174.7 s    20.1 s  passed     b: real Bitrix schema and fixture accounts
+  174.7 s    19.7 s  passed     a: real Bitrix schema and fixture accounts
+  194.4 s     5.9 s  passed     a: durable Notification contract on real MySQL
+  194.8 s    35.8 s  passed     b: FPM, media and files workers and nginx
+  200.3 s    35.1 s  passed     a: FPM, media and files workers and nginx
+  235.7 s     3.7 s  passed     a: E4 gallery fixture through internal lifecycle
+  235.7 s     3.9 s  passed     b: E4 gallery fixture through internal lifecycle
+  239.4 s   494.9 s  passed     a: real browser group a
+  239.6 s   564.5 s  passed     b: real browser group b
+  734.4 s     0.4 s  passed     a: verify-access.php
+  734.7 s     1.3 s  passed     a: verify-support.php
+  736.0 s     0.4 s  passed     a: verify-photo-deletion.php
+  804.0 s     0.6 s  passed     b: verify-storefront.php
+  804.6 s     0.7 s  passed     b: verify-sales-windows.php
+  805.4 s     0.7 s  passed     b: verify-handoff.php
+  806.1 s     0.8 s  passed     b: verify-orders.php
+  806.9 s     4.4 s  passed     b: verify-markup-correction.php
+  811.4 s     0.3 s  passed     b: verify-email-only-orders.php
+  811.7 s     0.3 s  passed     b: verify-links.php
+  811.9 s     6.3 s  passed     b: verify-gallery-openings.php
+  818.3 s     0.4 s  passed     b: verify-transfers.php
+  818.6 s     0.2 s  passed     b: verify-avatar.php
+  818.9 s     0.3 s  passed     b: verify-payment-costs.php
+  819.2 s     0.3 s  passed     b: verify-payments.php
+  819.5 s     0.3 s  passed     b: verify-files.php
+  819.8 s     0.4 s  passed     b: verify-production.php
+  820.2 s     1.2 s  passed     b: verify-institution-production.php
+  821.4 s     0.3 s  passed     b: verify-order-email.php
+  821.7 s     0.3 s  passed     b: verify-receipts.php
+Total: 830.4 s

@@ -1,0 +1,45 @@
+{
+  "status": "PASS",
+  "runId": "rabit-e2e-40b49eeedfbe",
+  "observedAt": "2026-11-17T16:23:28.840933+00:00",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "method": "Все три новых PNG второй попытки отдельно открыты через view_image и реально оценены. Оценка по снимкам первой попытки не переносилась без нового просмотра; preview tools не использовались.",
+  "images": [
+    {
+      "kind": "desktop",
+      "status": "PASS",
+      "source": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/b/artifacts/zzzzzzzzzz-institution-dig-b6428-t-rights-and-desktop-mobile-b/institution-digital-desktop.png",
+      "qaCopy": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/screenshots-attempt-02/institution-digital-desktop.png",
+      "sha256": "cf455949c9f10f320503dffac8d736273949463de4f9b4d87cc1c2a6a524857f",
+      "width": 1440,
+      "height": 1000,
+      "assessment": "Диалог помещается целиком на 1440×1000. Читаются описание состава, успешное скачивание, статус готовности, 4 файла, обе даты, ZIP/CSV, срок и ограничения. Кнопка закрытия видна. Наложений и обрезки содержимого не обнаружено."
+    },
+    {
+      "kind": "mobile",
+      "status": "PASS",
+      "source": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/b/artifacts/zzzzzzzzzz-institution-dig-b6428-t-rights-and-desktop-mobile-b/institution-digital-mobile.png",
+      "qaCopy": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/screenshots-attempt-02/institution-digital-mobile.png",
+      "sha256": "31a69bd9e73544baba71af60912b149e0668742bbded638da4a232dece377f99",
+      "width": 390,
+      "height": 844,
+      "assessment": "На 390×844 заголовок естественно переносится; описание, двухстрочное сообщение об успешном скачивании, карточка, даты и кнопки ZIP/CSV читаются без перекрытий. Нижний поясняющий текст продолжается в области вертикальной прокрутки."
+    },
+    {
+      "kind": "mobile-footer",
+      "status": "PASS",
+      "source": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/api/var/e2e/rabit-e2e-40b49eeedfbe/b/b/artifacts/zzzzzzzzzz-institution-dig-b6428-t-rights-and-desktop-mobile-b/institution-digital-mobile-footer.png",
+      "qaCopy": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/screenshots-attempt-02/institution-digital-mobile-footer.png",
+      "sha256": "3ba2338ae6e3e1334a55189ab3cacb7157fe19fb2a231f7317bd8141ce70e6ea",
+      "width": 390,
+      "height": 844,
+      "assessment": "После прокрутки на 390×844 полностью доступны срок хранения, ограничения, пояснения и кнопка «Закрыть». Карточка не выходит за ширину диалога. Обрезанный верх содержимого соответствует положению вертикальной прокрутки."
+    }
+  ],
+  "automatedChecks": "Успешный stage7 browser scenario дополнительно проверил отсутствие горизонтального overflow страницы/диалога, полную высоту notice и видимость Закрыть после прокрутки.",
+  "limitations": [
+    "PNG показывают ready и успешное скачивание. Отдельной визуальной серии empty/expired нет; эти состояния покрываются unit/native.",
+    "Визуальная оценка не является code review."
+  ]
+}

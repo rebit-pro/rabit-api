@@ -27,24 +27,27 @@ final class ProductionFlowTest extends TestCase
     {
         $f = new ProductionFixture();
         $f->group(ProductionFixture::GROUP, 10, 7, '2026-10-15 12:00:00');
-        $f->paidLine(ProductionFixture::GROUP, 'line-001', 'A001', 'print', 'Печать', 1);
+        $filename = 'A001.' . $extension;
+        $f->paidLine(ProductionFixture::GROUP, 'line-001', 'A001', 'print', 'Печать', 1, filename: $filename);
         $photoId = array_key_first($f->originalFiles);
         $original = $f->originalFiles[$photoId];
-        $path = $f->root . '/media/A001.' . $extension;
-        rename($original->absolutePath, $path);
-        $f->originalFiles[$photoId] = new OriginalFileOutputDto($photoId, $mimeType, $original->bytes, 'A001.' . $extension, $path);
+        $path = $f->root . '/media/' . $filename;
+        self::assertTrue(rename($original->absolutePath, $path));
+        $f->originalFiles[$photoId] = new OriginalFileOutputDto($photoId, $mimeType, $original->bytes, $filename, $path);
         $f->at('2026-10-15 13:00:00');
         self::assertSame(1, $f->run()->built);
         $version = array_values($f->archives->versions)[0];
         $before = $f->export()->execute(ProductionFixture::ORGANIZER, $version->publicId)->content;
-        self::assertStringContainsString('A001_x1.' . $extension, $before);
+        $entry = 'Печать/' . $filename;
+        self::assertStringContainsString('"' . $entry . '"', $before);
         $zip = new \ZipArchive();
         self::assertTrue($zip->open($f->storage()->absolutePath($version->archivePath)));
+        self::assertSame(file_get_contents($path), $zip->getFromName($entry));
         self::assertSame($before, $zip->getFromName('состав.csv'));
         $zip->close();
 
-        unlink($path);
-        $f->originalFiles[$photoId] = new OriginalFileOutputDto($photoId, $mimeType, $original->bytes, 'A001.' . $extension, $path, available: false);
+        self::assertTrue(unlink($path));
+        $f->originalFiles[$photoId] = new OriginalFileOutputDto($photoId, $mimeType, $original->bytes, $filename, $path, available: false);
         self::assertSame($before, $f->export()->execute(ProductionFixture::ORGANIZER, $version->publicId)->content);
         $f->paidLine(ProductionFixture::GROUP, 'line-002', 'A001', 'print', 'Печать', 1);
         $next = $f->create()->execute(ProductionFixture::ORGANIZER, ProductionFixture::GROUP, self::KEY);
@@ -84,8 +87,8 @@ final class ProductionFlowTest extends TestCase
             $names[] = (string)$zip->getNameIndex($i);
         }
         sort($names);
-        self::assertSame(['Магнит 10×15/B002_x2.jpg', 'Печать 10×15/A001_x3.jpg', 'состав.csv'], $names);
-        self::assertSame('JPEG:A001', $zip->getFromName('Печать 10×15/A001_x3.jpg'));
+        self::assertSame(['Магнит 10×15/2шт/B002.jpg', 'Печать 10×15/3шт/A001.jpg', 'состав.csv'], $names);
+        self::assertSame('JPEG:A001', $zip->getFromName('Печать 10×15/3шт/A001.jpg'));
         $csv = (string)$zip->getFromName('состав.csv');
         $zip->close();
         self::assertStringStartsWith("\u{FEFF}\"Продукция\";", $csv);
@@ -113,6 +116,7 @@ final class ProductionFlowTest extends TestCase
         $f->at('2026-10-15 13:00:00');
         $f->run();
         $first = array_values($f->archives->versions)[0];
+        $firstHash = hash_file('sha256', $f->storage()->absolutePath($first->archivePath));
 
         // The webhook came late, but the provider confirmed the payment before the deadline.
         $f->paidLine(ProductionFixture::GROUP, 'line-005', 'C003', 'print-10x15', 'Печать 10×15', 1, 1, '2026-10-15 11:59:00');
@@ -128,8 +132,20 @@ final class ProductionFlowTest extends TestCase
 
         $f->run();
         self::assertSame(3, $f->archives->find($first->publicId)?->linesCount, 'Собранная версия не меняется.');
-        self::assertSame(VersionStatusEnum::READY, $f->archives->find($supplement->id)?->status);
+        $stored = $f->archives->find($supplement->id);
+        self::assertNotNull($stored);
+        self::assertSame(VersionStatusEnum::READY, $stored->status);
         self::assertSame(0, $f->groupView()->execute(ProductionFixture::ORGANIZER, ProductionFixture::GROUP)->outsideLines);
+        self::assertSame($firstHash, hash_file('sha256', $f->storage()->absolutePath($first->archivePath)));
+        $zip = new \ZipArchive();
+        self::assertTrue($zip->open($f->storage()->absolutePath($stored->archivePath)));
+        self::assertSame(2, $zip->numFiles, 'Один новый файл и состав, без прежних заданий.');
+        self::assertSame('JPEG:C003', $zip->getFromName('Печать 10×15/C003.jpg'));
+        $csv = (string)$zip->getFromName('состав.csv');
+        self::assertStringContainsString('line-005', $csv);
+        self::assertStringNotContainsString('line-001', $csv);
+        self::assertSame($csv, $f->export()->execute(ProductionFixture::CURATOR, $stored->publicId)->content);
+        $zip->close();
     }
 
     public function testGroupClosedBeforeTheReleaseWaitsForTheOrganizer(): void
@@ -174,7 +190,7 @@ final class ProductionFlowTest extends TestCase
         $statuses = $f->list()->execute(ProductionFixture::CURATOR, [ProductionFixture::GROUP, ProductionFixture::OTHER_GROUP, '55555555-5555-4555-8555-555555555555']);
         self::assertSame([[ProductionFixture::GROUP, 'ready', 1]], array_map(static fn($item): array => [$item->groupId, $item->state, $item->version], $statuses));
         self::assertSame(['open', null], [$f->list()->execute(ProductionFixture::ORGANIZER, [ProductionFixture::OTHER_GROUP])[0]->state, $f->list()->execute(ProductionFixture::ORGANIZER, [ProductionFixture::OTHER_GROUP])[0]->version]);
-        self::assertStringContainsString('"Печать 10×15/A001_x3.jpg"', $f->export()->execute(ProductionFixture::CURATOR, $version->publicId)->content);
+        self::assertStringContainsString('"Печать 10×15/3шт/A001.jpg"', $f->export()->execute(ProductionFixture::CURATOR, $version->publicId)->content);
     }
 
     public function testLinkOpensOnlyItsCurrentGenerationWithinRetention(): void
@@ -205,7 +221,7 @@ final class ProductionFlowTest extends TestCase
         self::assertSame(1, $f->run()->expired);
         self::assertFalse($f->storage()->exists($f->archives->find($view->id)->archivePath ?? ''));
         self::assertSame('expired', $f->groupView()->execute(ProductionFixture::ORGANIZER, ProductionFixture::GROUP)->state);
-        self::assertStringContainsString('A001_x3', $f->export()->execute(ProductionFixture::ORGANIZER, $view->id)->content, 'Состав остаётся после удаления файла.');
+        self::assertStringContainsString('3шт/A001.jpg', $f->export()->execute(ProductionFixture::ORGANIZER, $view->id)->content, 'Состав остаётся после удаления файла.');
 
         $rebuilt = $f->renew()->execute(ProductionFixture::ORGANIZER, $view->id, str_repeat('c', 32));
         self::assertSame(['pending', null], [$rebuilt->status, $rebuilt->archiveUrl]);

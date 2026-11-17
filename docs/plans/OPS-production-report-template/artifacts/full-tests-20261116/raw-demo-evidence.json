@@ -1,0 +1,17 @@
+{
+  "note": "Raw full HTML/JSON/log kept outside Git. Sanitized scenario results are in demo-summary.json; no traces or raw tokens are published.",
+  "files": [
+    {
+      "path": "/tmp/stage6-demo-20261116/frontend/reports/e2e/cucumber-report.json",
+      "sha256": "d69708c4598b94f9474be5c26efbec6dc314461cc018947dcd3b0f0c0ab771b7"
+    },
+    {
+      "path": "/tmp/stage6-demo-20261116/frontend/reports/e2e/cucumber-report.html",
+      "sha256": "47d751ef42e8663440119847e8fd82e68e8a7a651159716c2240812b9df2648f"
+    },
+    {
+      "path": "/tmp/stage6-demo-full-container-20261116.log",
+      "sha256": "d4072ddd746f6c6a9bbedf682de4963d19f0ceedb293ce6f990c531dd02e2585"
+    }
+  ]
+}

@@ -1,0 +1,1343 @@
+
+> morefoto-frontend@0.1.0 test:commerce
+> node --experimental-strip-types --test tests/commerce/*.test.mjs
+
+TAP version 13
+# (node:24) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: E8-T05: email is the only contact, normalized without changing the comment
+ok 1 - E8-T05: email is the only contact, normalized without changing the comment
+  ---
+  duration_ms: 6.520078
+  ...
+# Subtest: E8-T05: buyer reports the required fields independently, without a name or a phone
+ok 2 - E8-T05: buyer reports the required fields independently, without a name or a phone
+  ---
+  duration_ms: 0.6715
+  ...
+# Subtest: MAX requires availability, email remains an alternative
+ok 3 - MAX requires availability, email remains an alternative
+  ---
+  duration_ms: 0.284453
+  ...
+# Subtest: comment is optional and the length boundary is enforced
+ok 4 - comment is optional and the length boundary is enforced
+  ---
+  duration_ms: 0.286946
+  ...
+# (node:35) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: R11 only organizer and assigned curator can see order context
+ok 5 - R11 only organizer and assigned curator can see order context
+  ---
+  duration_ms: 11.018819
+  ...
+# Subtest: R11 extension is strictly later than now and current deadline, with valid Moscow dates
+ok 6 - R11 extension is strictly later than now and current deadline, with valid Moscow dates
+  ---
+  duration_ms: 1.34372
+  ...
+# Subtest: R11 extending across year preserves minute and allows leap date only in leap year
+ok 7 - R11 extending across year preserves minute and allows leap date only in leap year
+  ---
+  duration_ms: 0.323693
+  ...
+# Subtest: R11 reason and impact confirmation are required
+ok 8 - R11 reason and impact confirmation are required
+  ---
+  duration_ms: 1.499136
+  ...
+# Subtest: R11 reply needs a valid status and visible explanation
+ok 9 - R11 reply needs a valid status and visible explanation
+  ---
+  duration_ms: 0.471533
+  ...
+# Subtest: R11 order filters combine context, independent states, Moscow dates and late payment
+ok 10 - R11 order filters combine context, independent states, Moscow dates and late payment
+  ---
+  duration_ms: 55.355884
+  ...
+# Subtest: R11 order search handles number, contact and photo code without crossing context filters
+ok 11 - R11 order search handles number, contact and photo code without crossing context filters
+  ---
+  duration_ms: 2.100266
+  ...
+# Subtest: R11 inbox uses appeal date and supports state, topic, reply address and request number
+ok 12 - R11 inbox uses appeal date and supports state, topic, reply address and request number
+  ---
+  duration_ms: 0.444019
+  ...
+# Subtest: R11 correcting handoff retains agreed extension; a later actual start still gets a full seven days
+ok 13 - R11 correcting handoff retains agreed extension; a later actual start still gets a full seven days
+  ---
+  duration_ms: 0.628346
+  ...
+# (node:46) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: R13 institution counts staff once and only scoped paid orders
+ok 14 - R13 institution counts staff once and only scoped paid orders
+  ---
+  duration_ms: 4.169428
+  ...
+# Subtest: R13 duplicate group selection cannot duplicate a financial total
+ok 15 - R13 duplicate group selection cannot duplicate a financial total
+  ---
+  duration_ms: 4.803057
+  ...
+# Subtest: R13 historical group ID keeps orders in their original shoot
+ok 16 - R13 historical group ID keeps orders in their original shoot
+  ---
+  duration_ms: 0.60113
+  ...
+# Subtest: R13 full confirmed refund retains paid count while pending and failed do not reduce net
+ok 17 - R13 full confirmed refund retains paid count while pending and failed do not reduce net
+  ---
+  duration_ms: 0.54311
+  ...
+# Subtest: R13 unpaid pending and failed payments do not increase totals
+ok 18 - R13 unpaid pending and failed payments do not increase totals
+  ---
+  duration_ms: 1.058009
+  ...
+# Subtest: R13 combined filters distinguish repeated shoot names and preserve source data
+ok 19 - R13 combined filters distinguish repeated shoot names and preserve source data
+  ---
+  duration_ms: 1.702604
+  ...
+# Subtest: R13 foreign or unknown query values do not expand the allowed set
+ok 20 - R13 foreign or unknown query values do not expand the allowed set
+  ---
+  duration_ms: 0.792236
+  ...
+# Subtest: R13 clarification lists sort first and follow visible group and shoot filters
+ok 21 - R13 clarification lists sort first and follow visible group and shoot filters
+  ---
+  duration_ms: 1.255295
+  ...
+# Subtest: R13 empty accessible scope has zero totals
+ok 22 - R13 empty accessible scope has zero totals
+  ---
+  duration_ms: 2.020314
+  ...
+# (node:57) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: download month clamps month-end in the Moscow calendar and preserves time
+ok 23 - download month clamps month-end in the Moscow calendar and preserves time
+  ---
+  duration_ms: 2.86645
+  ...
+# Subtest: paid entitlements last independently of group closure, excluding exact deadline
+ok 24 - paid entitlements last independently of group closure, excluding exact deadline
+  ---
+  duration_ms: 1.331404
+  ...
+# Subtest: unpaid, pending, late confirmation and physical-only orders have no download access
+ok 25 - unpaid, pending, late confirmation and physical-only orders have no download access
+  ---
+  duration_ms: 1.187767
+  ...
+# Subtest: support validates topic, reply email, text and photo ownership
+ok 26 - support validates topic, reply email, text and photo ownership
+  ---
+  duration_ms: 3.056238
+  ...
+# Subtest: ZIP refuses empty archives and unsafe paths
+ok 27 - ZIP refuses empty archives and unsafe paths
+  ---
+  duration_ms: 8.733917
+  ...
+# (node:68) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: J1-T12: a single file names exactly one photo, an archive takes all available
+ok 28 - J1-T12: a single file names exactly one photo, an archive takes all available
+  ---
+  duration_ms: 11.421844
+  ...
+# Subtest: J1-T12: the content link opens only a ready download and respects a separate API host
+ok 29 - J1-T12: the content link opens only a ready download and respects a separate API host
+  ---
+  duration_ms: 0.772707
+  ...
+# Subtest: J1-T12: archive polling slows down after half a minute
+ok 30 - J1-T12: archive polling slows down after half a minute
+  ---
+  duration_ms: 0.482842
+  ...
+# Subtest: J1-T12: sizes and counts read naturally in Russian
+ok 31 - J1-T12: sizes and counts read naturally in Russian
+  ---
+  duration_ms: 0.635849
+  ...
+# Subtest: J1-T12: server refusals become buyer-facing messages; only an unanswered request keeps its key
+ok 32 - J1-T12: server refusals become buyer-facing messages; only an unanswered request keeps its key
+  ---
+  duration_ms: 0.905478
+  ...
+# (node:79) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a row finds its own frame line, a bundle row — the line of the child series
+ok 33 - a row finds its own frame line, a bundle row — the line of the child series
+  ---
+  duration_ms: 2.740326
+  ...
+# Subtest: the frame summary counts prints by quantity and leaves the series bundle out
+ok 34 - the frame summary counts prints by quantity and leaves the series bundle out
+  ---
+  duration_ms: 8.349353
+  ...
+# (node:90) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: R10 fact time is Moscow, cannot be future or an impossible calendar date
+ok 35 - R10 fact time is Moscow, cannot be future or an impossible calendar date
+  ---
+  duration_ms: 13.200988
+  ...
+# Subtest: R10 seven calendar days cross month/year/leap day at the same Moscow minute
+ok 36 - R10 seven calendar days cross month/year/leap day at the same Moscow minute
+  ---
+  duration_ms: 0.637888
+  ...
+# Subtest: R10 closure boundary and legacy fact preserve previous seven-day window
+ok 37 - R10 closure boundary and legacy fact preserve previous seven-day window
+  ---
+  duration_ms: 2.091674
+  ...
+# Subtest: R10 a frame code resolves the entire child, within the specified group only
+ok 38 - R10 a frame code resolves the entire child, within the specified group only
+  ---
+  duration_ms: 2.04473
+  ...
+# Subtest: R10 ambiguous child/frame code rejected while legacy codes remain usable
+ok 39 - R10 ambiguous child/frame code rejected while legacy codes remain usable
+  ---
+  duration_ms: 0.367583
+  ...
+# Subtest: R10 duplicate child via different frames and other pending requests rejected
+ok 40 - R10 duplicate child via different frames and other pending requests rejected
+  ---
+  duration_ms: 1.074741
+  ...
+# Subtest: R10 identical codes in distinct groups are separate children; wrong shoot and staff sources rejected
+ok 41 - R10 identical codes in distinct groups are separate children; wrong shoot and staff sources rejected
+  ---
+  duration_ms: 0.418713
+  ...
+# Subtest: R10 preview requires a staff folder in exactly the same institution and shoot
+ok 42 - R10 preview requires a staff folder in exactly the same institution and shoot
+  ---
+  duration_ms: 1.218366
+  ...
+# Subtest: R10 preview allocates free child codes across the entire batch and never mutates source
+ok 43 - R10 preview allocates free child codes across the entire batch and never mutates source
+  ---
+  duration_ms: 1.344248
+  ...
+# Subtest: R10 additions expand full bundle and invalidate confirmation; missing submitted frames block transfer
+ok 44 - R10 additions expand full bundle and invalidate confirmation; missing submitted frames block transfer
+  ---
+  duration_ms: 1.175308
+  ...
+# Subtest: R10 existing orders are detected without mutation of snapshots
+ok 45 - R10 existing orders are detected without mutation of snapshots
+  ---
+  duration_ms: 1.004872
+  ...
+# Subtest: R10 preparation responds to photos, catalog, group conditions, assignment and pending staff lists
+ok 46 - R10 preparation responds to photos, catalog, group conditions, assignment and pending staff lists
+  ---
+  duration_ms: 1.642063
+  ...
+# Subtest: R10 confirmation rejects a source group moved outside the request context
+ok 47 - R10 confirmation rejects a source group moved outside the request context
+  ---
+  duration_ms: 0.373863
+  ...
+# Subtest: F2 live link form sends an explicit Moscow moment and checks the fields first
+ok 48 - F2 live link form sends an explicit Moscow moment and checks the fields first
+  ---
+  duration_ms: 0.515792
+  ...
+# Subtest: F2 live readiness codes are shown as sentences and demo sentences stay unchanged
+ok 49 - F2 live readiness codes are shown as sentences and demo sentences stay unchanged
+  ---
+  duration_ms: 0.122993
+  ...
+# Subtest: D3 live transfer preview keeps the submitted rows and shows thumbnails only to the organizer
+ok 50 - D3 live transfer preview keeps the submitted rows and shows thumbnails only to the organizer
+  ---
+  duration_ms: 0.608884
+  ...
+# Subtest: D3 transfer refusals map to sentences and leave other codes to the list messages
+ok 51 - D3 transfer refusals map to sentences and leave other codes to the list messages
+  ---
+  duration_ms: 0.238311
+  ...
+# Subtest: \#28: a stored draft keeps its edits, body and key until an explicit reset, even for a newer server revision
+ok 52 - \#28: a stored draft keeps its edits, body and key until an explicit reset, even for a newer server revision
+  ---
+  duration_ms: 0.35951
+  ...
+# Subtest: \#79: a confirmation is refreshed only with a readable transfer preview, other actions do not need it
+ok 53 - \#79: a confirmation is refreshed only with a readable transfer preview, other actions do not need it
+  ---
+  duration_ms: 0.264923
+  ...
+# Subtest: \#81: a lost F2 answer is an unknown outcome; HTTP errors keep their texts and point to fresh data
+ok 54 - \#81: a lost F2 answer is an unknown outcome; HTTP errors keep their texts and point to fresh data
+  ---
+  duration_ms: 0.595129
+  ...
+# Subtest: D4-T09: markup correction refusals tell the staff what blocks the correction
+ok 55 - D4-T09: markup correction refusals tell the staff what blocks the correction
+  ---
+  duration_ms: 0.410441
+  ...
+# Subtest: F3-T05: staff copy the short link; the long key is the fallback of a key without an alias
+ok 56 - F3-T05: staff copy the short link; the long key is the fallback of a key without an alias
+  ---
+  duration_ms: 0.636691
+  ...
+# (node:101) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: R09 money accepts zero and kopecks, rejects negative, exponent, extra decimals and excessive price
+ok 57 - R09 money accepts zero and kopecks, rejects negative, exponent, extra decimals and excessive price
+  ---
+  duration_ms: 2.191549
+  ...
+# Subtest: R09 physical units retain print count and digital units cannot become printed
+ok 58 - R09 physical units retain print count and digital units cannot become printed
+  ---
+  duration_ms: 1.992028
+  ...
+# Subtest: R09 stable product kinds, unique names and single digital bundle protect existing carts
+ok 59 - R09 stable product kinds, unique names and single digital bundle protect existing carts
+  ---
+  duration_ms: 0.602751
+  ...
+# Subtest: R09 gift zero requires disabling offer, inherited settings ignore hidden stale fields
+ok 60 - R09 gift zero requires disabling offer, inherited settings ignore hidden stale fields
+  ---
+  duration_ms: 0.607933
+  ...
+# Subtest: R09 user identity and active organizer are validated independently of UI
+ok 61 - R09 user identity and active organizer are validated independently of UI
+  ---
+  duration_ms: 1.087104
+  ...
+# Subtest: R09 assigning occupied groups requires explicit acknowledgement
+ok 62 - R09 assigning occupied groups requires explicit acknowledgement
+  ---
+  duration_ms: 1.28224
+  ...
+# Subtest: R09 role switch moves assignments atomically and revokes previous session revision
+ok 63 - R09 role switch moves assignments atomically and revokes previous session revision
+  ---
+  duration_ms: 0.562687
+  ...
+# Subtest: R09 disabling removes scope, while name-only edit preserves session validity
+ok 64 - R09 disabling removes scope, while name-only edit preserves session validity
+  ---
+  duration_ms: 0.331174
+  ...
+# Subtest: R09 unknown assignments cannot grant access
+ok 65 - R09 unknown assignments cannot grant access
+  ---
+  duration_ms: 0.692944
+  ...
+# (node:112) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: the block is hidden while sending is off or the order is not paid
+ok 66 - the block is hidden while sending is off or the order is not paid
+  ---
+  duration_ms: 1.223241
+  ...
+# Subtest: each state of the letter has its own sentence with the address
+ok 67 - each state of the letter has its own sentence with the address
+  ---
+  duration_ms: 1.562188
+  ...
+# Subtest: J5-T09: the letters with photos tell how many letters and photos went out
+ok 68 - J5-T09: the letters with photos tell how many letters and photos went out
+  ---
+  duration_ms: 1.016145
+  ...
+# Subtest: the repeat waits for the server interval
+ok 69 - the repeat waits for the server interval
+  ---
+  duration_ms: 0.546442
+  ...
+# Subtest: server refusals become plain sentences
+ok 70 - server refusals become plain sentences
+  ---
+  duration_ms: 0.45276
+  ...
+# (node:123) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: only an unanswered order request may be repeated with the same idempotency key
+ok 71 - only an unanswered order request may be repeated with the same idempotency key
+  ---
+  duration_ms: 3.856689
+  ...
+# Subtest: server field codes land on the matching checkout field
+ok 72 - server field codes land on the matching checkout field
+  ---
+  duration_ms: 1.443181
+  ...
+# Subtest: order lines never invent image URLs; a trusted thumbnail source is optional
+ok 73 - order lines never invent image URLs; a trusted thumbnail source is optional
+  ---
+  duration_ms: 5.672274
+  ...
+# Subtest: staff filters come from the URL and only non-empty values reach the API
+ok 74 - staff filters come from the URL and only non-empty values reach the API
+  ---
+  duration_ms: 0.77939
+  ...
+# Subtest: scope filters travel from the URL to the order request and back to the URL
+ok 75 - scope filters travel from the URL to the order request and back to the URL
+  ---
+  duration_ms: 0.917808
+  ...
+# Subtest: a manual link with only a group still narrows the request
+ok 76 - a manual link with only a group still narrows the request
+  ---
+  duration_ms: 1.326985
+  ...
+# Subtest: empty and non-string scope values reach neither the request nor the URL
+ok 77 - empty and non-string scope values reach neither the request nor the URL
+  ---
+  duration_ms: 0.963151
+  ...
+# Subtest: picking a parent level drops the levels below it
+ok 78 - picking a parent level drops the levels below it
+  ---
+  duration_ms: 0.778094
+  ...
+# Subtest: scope options follow the chosen shoot and name the shoot of a group otherwise
+ok 79 - scope options follow the chosen shoot and name the shoot of a group otherwise
+  ---
+  duration_ms: 2.070899
+  ...
+# Subtest: a linked scope value outside the loaded options stays selectable without inventing its name
+ok 80 - a linked scope value outside the loaded options stays selectable without inventing its name
+  ---
+  duration_ms: 1.710651
+  ...
+# Subtest: a scope retry repeats only failed sources and never starts a loading one again
+ok 81 - a scope retry repeats only failed sources and never starts a loading one again
+  ---
+  duration_ms: 1.29988
+  ...
+# Subtest: an unconfirmed attempt keeps its recovery screen while it is repeated, a first submission keeps the form
+ok 82 - an unconfirmed attempt keeps its recovery screen while it is repeated, a first submission keeps the form
+  ---
+  duration_ms: 0.490394
+  ...
+# Subtest: staff errors explain scope without revealing other orders
+ok 83 - staff errors explain scope without revealing other orders
+  ---
+  duration_ms: 0.467076
+  ...
+# Subtest: idempotency keys are 32 lowercase hex characters
+ok 84 - idempotency keys are 32 lowercase hex characters
+  ---
+  duration_ms: 7.313467
+  ...
+# Subtest: 5xx, proxy pages and unexpected failures keep the attempt for a safe repeat
+ok 85 - 5xx, proxy pages and unexpected failures keep the attempt for a safe repeat
+  ---
+  duration_ms: 0.314307
+  ...
+# Subtest: while recovering, only an answer given after the key lookup releases the stored attempt
+ok 86 - while recovering, only an answer given after the key lookup releases the stored attempt
+  ---
+  duration_ms: 0.372405
+  ...
+# Subtest: a success status counts only with a real order and personal key
+ok 87 - a success status counts only with a real order and personal key
+  ---
+  duration_ms: 0.438774
+  ...
+# (node:134) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Дата съёмки проверяется по календарю, включая високосный год
+ok 88 - Дата съёмки проверяется по календарю, включая високосный год
+  ---
+  duration_ms: 2.710574
+  ...
+# Subtest: Повторная съёмка допускается в другую дату и в другом учреждении
+ok 89 - Повторная съёмка допускается в другую дату и в другом учреждении
+  ---
+  duration_ms: 2.70609
+  ...
+# Subtest: Дубликат учреждения учитывает название и адрес, существующая запись может редактироваться
+ok 90 - Дубликат учреждения учитывает название и адрес, существующая запись может редактироваться
+  ---
+  duration_ms: 0.775204
+  ...
+# Subtest: Названия групп и единственная папка сотрудников ограничены одной съёмкой
+ok 91 - Названия групп и единственная папка сотрудников ограничены одной съёмкой
+  ---
+  duration_ms: 0.507834
+  ...
+# Subtest: Назначение требует существующего сотрудника подходящей роли
+ok 92 - Назначение требует существующего сотрудника подходящей роли
+  ---
+  duration_ms: 0.679437
+  ...
+# Subtest: Область куратора и руководителя — учреждение; ответственного — только его группы
+ok 93 - Область куратора и руководителя — учреждение; ответственного — только его группы
+  ---
+  duration_ms: 1.214676
+  ...
+# (node:145) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: sale price matches the server examples
+ok 94 - sale price matches the server examples
+  ---
+  duration_ms: 2.875201
+  ...
+# Subtest: sale price is the minimal rounded compensation across a range
+ok 95 - sale price is the minimal rounded compensation across a range
+  ---
+  duration_ms: 15.11115
+  ...
+# Subtest: rate input accepts percents with two decimals up to the cap
+ok 96 - rate input accepts percents with two decimals up to the cap
+  ---
+  duration_ms: 2.221873
+  ...
+# Subtest: global command sends the payment cost policy, group command does not
+ok 97 - global command sends the payment cost policy, group command does not
+  ---
+  duration_ms: 6.791782
+  ...
+# Subtest: editor rejects a rate above the cap and a price above 1 000 000 RUB
+ok 98 - editor rejects a rate above the cap and a price above 1 000 000 RUB
+  ---
+  duration_ms: 1.086322
+  ...
+# Subtest: \#68: switching the policy off is saved with an invalid draft rate and keeps the saved rate
+ok 99 - \#68: switching the policy off is saved with an invalid draft rate and keeps the saved rate
+  ---
+  duration_ms: 0.721192
+  ...
+# (node:156) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: G1-DEC-04: the order key waits on this device by attempt ID and is forgotten after the result
+ok 100 - G1-DEC-04: the order key waits on this device by attempt ID and is forgotten after the result
+  ---
+  duration_ms: 5.96545
+  ...
+# Subtest: a tampered or blocked storage never yields a key
+ok 101 - a tampered or blocked storage never yields a key
+  ---
+  duration_ms: 0.6205
+  ...
+# Subtest: the return page stops waiting only at a final status or after five minutes
+ok 102 - the return page stops waiting only at a final status or after five minutes
+  ---
+  duration_ms: 1.296204
+  ...
+# Subtest: buyer and staff errors speak about the payment, not HTTP
+ok 103 - buyer and staff errors speak about the payment, not HTTP
+  ---
+  duration_ms: 0.610137
+  ...
+# Subtest: registry filters round-trip through the URL and drop unknown values
+ok 104 - registry filters round-trip through the URL and drop unknown values
+  ---
+  duration_ms: 1.198949
+  ...
+# Subtest: review \#80: a lost start repeats its own key and method; another method is a new request
+ok 105 - review \#80: a lost start repeats its own key and method; another method is a new request
+  ---
+  duration_ms: 0.599973
+  ...
+# Subtest: review \#80: a pending payment with its provider page can be continued from the return page
+ok 106 - review \#80: a pending payment with its provider page can be continued from the return page
+  ---
+  duration_ms: 1.284645
+  ...
+# (node:167) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: confirmation preserves the attempted amount and independent manufacturing state
+ok 107 - confirmation preserves the attempted amount and independent manufacturing state
+  ---
+  duration_ms: 6.166636
+  ...
+# Subtest: decline is definitive and does not invent a paid date
+ok 108 - decline is definitive and does not invent a paid date
+  ---
+  duration_ms: 0.729115
+  ...
+# Subtest: duplicate or conflicting callbacks cannot reverse a confirmed payment
+ok 109 - duplicate or conflicting callbacks cannot reverse a confirmed payment
+  ---
+  duration_ms: 0.495842
+  ...
+# Subtest: confirmation at closing boundary and after it is retained as late
+ok 110 - confirmation at closing boundary and after it is retained as late
+  ---
+  duration_ms: 0.315781
+  ...
+# Subtest: stale declined callback cannot affect the next pending attempt
+ok 111 - stale declined callback cannot affect the next pending attempt
+  ---
+  duration_ms: 0.333916
+  ...
+# Subtest: foreign attempt and backward demo time are rejected
+ok 112 - foreign attempt and backward demo time are rejected
+  ---
+  duration_ms: 1.163276
+  ...
+# (node:178) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: \#115: сервер удалил кадры, ответ потерян — повтор с тем же ключом получает сохранённый успех
+ok 113 - \#115: сервер удалил кадры, ответ потерян — повтор с тем же ключом получает сохранённый успех
+  ---
+  duration_ms: 7.698248
+  ...
+# Subtest: \#115: определённый 409 завершает попытку — следующее удаление с новым ключом и текущей ревизией
+ok 114 - \#115: определённый 409 завершает попытку — следующее удаление с новым ключом и текущей ревизией
+  ---
+  duration_ms: 0.99033
+  ...
+# Subtest: \#115: ответ 5xx не доказывает отказ — повтор идёт с тем же ключом
+ok 115 - \#115: ответ 5xx не доказывает отказ — повтор идёт с тем же ключом
+  ---
+  duration_ms: 0.851829
+  ...
+# Subtest: \#115: отмена диалога забывает попытку, новый набор не продолжает прежний
+ok 116 - \#115: отмена диалога забывает попытку, новый набор не продолжает прежний
+  ---
+  duration_ms: 1.339073
+  ...
+# (node:189) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Фото: страница, итог и сводка группы считаются как на сервере
+ok 117 - Фото: страница, итог и сводка группы считаются как на сервере
+  ---
+  duration_ms: 5.256352
+  ...
+# Subtest: Фото: полная страница заполняет последний ряд при любом числе колонок
+ok 118 - Фото: полная страница заполняет последний ряд при любом числе колонок
+  ---
+  duration_ms: 0.623951
+  ...
+# Subtest: Фото: номер страницы и фильтр из URL проверяются
+ok 119 - Фото: номер страницы и фильтр из URL проверяются
+  ---
+  duration_ms: 1.795029
+  ...
+# Subtest: Фото: свободный код ребёнка берётся из сводки группы
+ok 120 - Фото: свободный код ребёнка берётся из сводки группы
+  ---
+  duration_ms: 3.073121
+  ...
+# (node:200) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Превью: одновременно выполняется не больше заданного числа запросов
+ok 121 - Превью: одновременно выполняется не больше заданного числа запросов
+  ---
+  duration_ms: 21.929148
+  ...
+# Subtest: Превью: временный сбой повторяется один раз, отказ сервера не повторяется
+ok 122 - Превью: временный сбой повторяется один раз, отказ сервера не повторяется
+  ---
+  duration_ms: 16.673992
+  ...
+# Subtest: Превью: один кадр запрашивается один раз и дальше берётся из кеша
+ok 123 - Превью: один кадр запрашивается один раз и дальше берётся из кеша
+  ---
+  duration_ms: 1.922769
+  ...
+# Subtest: Превью: ушедший из очереди кадр не запрашивается, начатый — докачивается в кеш
+ok 124 - Превью: ушедший из очереди кадр не запрашивается, начатый — докачивается в кеш
+  ---
+  duration_ms: 4.304981
+  ...
+# Subtest: Превью: крупный кадр встаёт в начало очереди
+ok 125 - Превью: крупный кадр встаёт в начало очереди
+  ---
+  duration_ms: 1.935921
+  ...
+# Subtest: Превью: при переполнении вытесняется давно не показанный кадр
+ok 126 - Превью: при переполнении вытесняется давно не показанный кадр
+  ---
+  duration_ms: 2.36886
+  ...
+# Subtest: Превью: очистка при смене сессии отзывает кеш и отменяет запросы
+ok 127 - Превью: очистка при смене сессии отзывает кеш и отменяет запросы
+  ---
+  duration_ms: 2.548314
+  ...
+# (node:211) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Фотографии: границы размера, пустой файл и запрещённый формат
+ok 128 - Фотографии: границы размера, пустой файл и запрещённый формат
+  ---
+  duration_ms: 1.726885
+  ...
+# Subtest: Буквенные коды продолжаются после Z и не используют кириллицу
+ok 129 - Буквенные коды продолжаются после Z и не используют кириллицу
+  ---
+  duration_ms: 2.035855
+  ...
+# Subtest: Свободный код ищется внутри своей группы
+ok 130 - Свободный код ищется внутри своей группы
+  ---
+  duration_ms: 2.51859
+  ...
+# Subtest: Нумерация кадров не повторяет номера после переназначения
+ok 131 - Нумерация кадров не повторяет номера после переназначения
+  ---
+  duration_ms: 1.018874
+  ...
+# Subtest: Дубли определяются по содержимому в пределах съёмки
+ok 132 - Дубли определяются по содержимому в пределах съёмки
+  ---
+  duration_ms: 0.721163
+  ...
+# Subtest: Полный набор исключает часть ребёнка, неизвестный ID и смешение групп
+ok 133 - Полный набор исключает часть ребёнка, неизвестный ID и смешение групп
+  ---
+  duration_ms: 0.874601
+  ...
+# Subtest: D3 child transfer refusals are explained, shared frames name their codes
+ok 134 - D3 child transfer refusals are explained, shared frames name their codes
+  ---
+  duration_ms: 0.782638
+  ...
+# (node:222) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: two identical prints are one priced unit with a multiplier of two for production
+ok 135 - two identical prints are one priced unit with a multiplier of two for production
+  ---
+  duration_ms: 2.687871
+  ...
+# Subtest: gift threshold never combines different children
+ok 136 - gift threshold never combines different children
+  ---
+  duration_ms: 1.224024
+  ...
+# Subtest: digital purchases do not count toward the printed threshold
+ok 137 - digital purchases do not count toward the printed threshold
+  ---
+  duration_ms: 0.455634
+  ...
+# Subtest: gift covers only the bundle and never a separate digital frame
+ok 138 - gift covers only the bundle and never a separate digital frame
+  ---
+  duration_ms: 1.205591
+  ...
+# Subtest: the same photo identifier is evaluated independently for each child
+ok 139 - the same photo identifier is evaluated independently for each child
+  ---
+  duration_ms: 0.605485
+  ...
+# Subtest: staff discount applies only to configured products
+ok 140 - staff discount applies only to configured products
+  ---
+  duration_ms: 0.40452
+  ...
+# Subtest: staff gift uses printed total after discount when configured
+ok 141 - staff gift uses printed total after discount when configured
+  ---
+  duration_ms: 0.389177
+  ...
+# Subtest: staff final unit price rounds an odd kopek half up
+ok 142 - staff final unit price rounds an odd kopek half up
+  ---
+  duration_ms: 0.352412
+  ...
+# Subtest: gift wins over staff discount without stacking both reductions
+ok 143 - gift wins over staff discount without stacking both reductions
+  ---
+  duration_ms: 0.845608
+  ...
+# Subtest: unknown photos or unavailable products block checkout through invalid lines
+ok 144 - unknown photos or unavailable products block checkout through invalid lines
+  ---
+  duration_ms: 0.80685
+  ...
+# Subtest: digital quantity remains one even with stale persisted data
+ok 145 - digital quantity remains one even with stale persisted data
+  ---
+  duration_ms: 0.368552
+  ...
+# (node:233) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: J4-T05: a print of the frame in the cart brings its digital copy, other frames do not
+ok 146 - J4-T05: a print of the frame in the cart brings its digital copy, other frames do not
+  ---
+  duration_ms: 13.967722
+  ...
+# Subtest: J4-T05: the demo order gives each printed frame once, next to digital lines and the gift set
+ok 147 - J4-T05: the demo order gives each printed frame once, next to digital lines and the gift set
+  ---
+  duration_ms: 1.537776
+  ...
+# (node:244) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: R14 pair units become six physical prints and inputs stay immutable
+ok 148 - R14 pair units become six physical prints and inputs stay immutable
+  ---
+  duration_ms: 90.569975
+  ...
+# Subtest: R14 digital images and bundles never become print rows
+ok 149 - R14 digital images and bundles never become print rows
+  ---
+  duration_ms: 0.492676
+  ...
+# Subtest: R14 unpaid, unconfirmed and held orders are excluded
+ok 150 - R14 unpaid, unconfirmed and held orders are excluded
+  ---
+  duration_ms: 0.957455
+  ...
+# Subtest: R14 pending and full refunds block; partial confirmed keep approved physical composition
+ok 151 - R14 pending and full refunds block; partial confirmed keep approved physical composition
+  ---
+  duration_ms: 0.847562
+  ...
+# Subtest: R14 late payment requires explicit fulfilment
+ok 152 - R14 late payment requires explicit fulfilment
+  ---
+  duration_ms: 0.450831
+  ...
+# Subtest: R14 approval is required for correction after printing
+ok 153 - R14 approval is required for correction after printing
+  ---
+  duration_ms: 0.401214
+  ...
+# Subtest: R14 malformed quantities and metadata exclude whole order
+ok 154 - R14 malformed quantities and metadata exclude whole order
+  ---
+  duration_ms: 0.506823
+  ...
+# Subtest: R14 already printing outside the ledger must be reconciled
+ok 155 - R14 already printing outside the ledger must be reconciled
+  ---
+  duration_ms: 0.258543
+  ...
+# Subtest: R14 deadline follows actual close including extension
+ok 156 - R14 deadline follows actual close including extension
+  ---
+  duration_ms: 0.755304
+  ...
+# Subtest: R14 unchanged rows yield zero new prints after one start
+ok 157 - R14 unchanged rows yield zero new prints after one start
+  ---
+  duration_ms: 1.234231
+  ...
+# Subtest: R14 increased quantity prints only the delta across all started versions
+ok 158 - R14 increased quantity prints only the delta across all started versions
+  ---
+  duration_ms: 0.618909
+  ...
+# Subtest: R14 unstarted superseded version never counts as printed
+ok 159 - R14 unstarted superseded version never counts as printed
+  ---
+  duration_ms: 0.398325
+  ...
+# Subtest: R14 replaced photo prints new row and records surplus of old row
+ok 160 - R14 replaced photo prints new row and records surplus of old row
+  ---
+  duration_ms: 0.6212
+  ...
+# Subtest: R14 quantity decrease preserves prior output and requires no new prints
+ok 161 - R14 quantity decrease preserves prior output and requires no new prints
+  ---
+  duration_ms: 0.568894
+  ...
+# Subtest: R14 unchanged packages carry forward; changed packages reset
+ok 162 - R14 unchanged packages carry forward; changed packages reset
+  ---
+  duration_ms: 0.927167
+  ...
+# Subtest: R14 projection queues current orders, retains print history, leaves quote untouched
+ok 163 - R14 projection queues current orders, retains print history, leaves quote untouched
+  ---
+  duration_ms: 1.19647
+  ...
+# Subtest: R14 removed unstarted order leaves queue; ready and delivered remain final
+ok 164 - R14 removed unstarted order leaves queue; ready and delivered remain final
+  ---
+  duration_ms: 0.450233
+  ...
+# Subtest: R14 staff keeps original group and pre-transfer child code in package rows
+ok 165 - R14 staff keeps original group and pre-transfer child code in package rows
+  ---
+  duration_ms: 0.419945
+  ...
+# Subtest: R14 foreign original group cannot leak through a photo
+ok 166 - R14 foreign original group cannot leak through a photo
+  ---
+  duration_ms: 29.873098
+  ...
+# Subtest: R14 unrelated unpaid order changes do not invalidate the job signature
+ok 167 - R14 unrelated unpaid order changes do not invalidate the job signature
+  ---
+  duration_ms: 16.943868
+  ...
+# Subtest: R14 CSV escapes separators, quotes, newlines and spreadsheet formulas
+ok 168 - R14 CSV escapes separators, quotes, newlines and spreadsheet formulas
+  ---
+  duration_ms: 1.827035
+  ...
+# (node:255) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: the receipts block explains where receipts come from or stays hidden
+ok 169 - the receipts block explains where receipts come from or stays hidden
+  ---
+  duration_ms: 2.895978
+  ...
+# Subtest: each receipt says what it settles
+ok 170 - each receipt says what it settles
+  ---
+  duration_ms: 3.884219
+  ...
+# Subtest: the handover summary counts the orders with print
+ok 171 - the handover summary counts the orders with print
+  ---
+  duration_ms: 1.084883
+  ...
+# Subtest: handover refusals are explained
+ok 172 - handover refusals are explained
+  ---
+  duration_ms: 0.571285
+  ...
+# (node:266) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: R16: fixture graph has real photos, valid assignments and separate scopes
+ok 173 - R16: fixture graph has real photos, valid assignments and separate scopes
+  ---
+  duration_ms: 3.162963
+  ...
+# Subtest: R16: sales require handoff; staff and autumn begin empty
+ok 174 - R16: sales require handoff; staff and autumn begin empty
+  ---
+  duration_ms: 1.244045
+  ...
+# Subtest: R16: reset creates fresh snapshots without retaining edits
+ok 175 - R16: reset creates fresh snapshots without retaining edits
+  ---
+  duration_ms: 99.577959
+  ...
+# Subtest: R16: strict Moscow time rejects impossible dates and supports calendar boundary
+ok 176 - R16: strict Moscow time rejects impossible dates and supports calendar boundary
+  ---
+  duration_ms: 1.394582
+  ...
+# Subtest: R16: runtime controls accept only documented delays
+ok 177 - R16: runtime controls accept only documented delays
+  ---
+  duration_ms: 0.565683
+  ...
+# Subtest: R16: any existing demo key protects user data, unrelated keys do not block
+ok 178 - R16: any existing demo key protects user data, unrelated keys do not block
+  ---
+  duration_ms: 0.303166
+  ...
+# (node:277) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: E7-T13: the open window sells everything, the digital window only digital photos and bundles
+ok 179 - E7-T13: the open window sells everything, the digital window only digital photos and bundles
+  ---
+  duration_ms: 3.577612
+  ...
+# Subtest: E7-T13: print lines of a stored cart drop out in the digital window, unknown products stay for the server
+ok 180 - E7-T13: print lines of a stored cart drop out in the digital window, unknown products stay for the server
+  ---
+  duration_ms: 0.915374
+  ...
+# Subtest: E7-T13: order lines join a cart without duplicating the same frame and product
+ok 181 - E7-T13: order lines join a cart without duplicating the same frame and product
+  ---
+  duration_ms: 0.7482
+  ...
+# Subtest: E7-T13: an unpaid mixed order is blocked after the print close and offers its digital lines
+ok 182 - E7-T13: an unpaid mixed order is blocked after the print close and offers its digital lines
+  ---
+  duration_ms: 1.012311
+  ...
+# Subtest: E7-T13: a 0 ₽ order is never shown as unpayable and a gift bundle is not offered again
+ok 183 - E7-T13: a 0 ₽ order is never shown as unpayable and a gift bundle is not offered again
+  ---
+  duration_ms: 0.49973
+  ...
+# Subtest: E7-T13: server codes of the closed print explain what the buyer can still do
+ok 184 - E7-T13: server codes of the closed print explain what the buyer can still do
+  ---
+  duration_ms: 42.976971
+  ...
+# Subtest: D4-T09: a markup correction pauses buying in an open or digital gallery and keeps the closed one closed
+ok 185 - D4-T09: a markup correction pauses buying in an open or digital gallery and keeps the closed one closed
+  ---
+  duration_ms: 0.566181
+  ...
+# Subtest: E7-T13: digital sales last 14 calendar days and never close before print
+ok 186 - E7-T13: digital sales last 14 calendar days and never close before print
+  ---
+  duration_ms: 0.920754
+  ...
+# Subtest: E7-T13: countdown text and staff statuses know the digital window
+ok 187 - E7-T13: countdown text and staff statuses know the digital window
+  ---
+  duration_ms: 4.185139
+  ...
+# (node:288) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: R12 monetary input uses exact kopecks and rejects invalid precision or unsafe numbers
+ok 188 - R12 monetary input uses exact kopecks and rejects invalid precision or unsafe numbers
+  ---
+  duration_ms: 3.220251
+  ...
+# Subtest: R12 processing reserves balance without changing financial net
+ok 189 - R12 processing reserves balance without changing financial net
+  ---
+  duration_ms: 0.983944
+  ...
+# Subtest: R12 failed refund frees reserved money and has no file effect
+ok 190 - R12 failed refund frees reserved money and has no file effect
+  ---
+  duration_ms: 1.988504
+  ...
+# Subtest: R12 only confirmed refund reduces net; full refund keeps labelled paid count
+ok 191 - R12 only confirmed refund reduces net; full refund keeps labelled paid count
+  ---
+  duration_ms: 0.495109
+  ...
+# Subtest: R12 unpaid and pending orders never enter money totals
+ok 192 - R12 unpaid and pending orders never enter money totals
+  ---
+  duration_ms: 0.326189
+  ...
+# Subtest: R12 amount refund allocates only unreserved original price balances
+ok 193 - R12 amount refund allocates only unreserved original price balances
+  ---
+  duration_ms: 0.832254
+  ...
+# Subtest: R12 selected positions are deduplicated and cannot consume other lines
+ok 194 - R12 selected positions are deduplicated and cannot consume other lines
+  ---
+  duration_ms: 0.623493
+  ...
+# Subtest: R12 refund above remainder and confirmation or reason omissions are rejected
+ok 195 - R12 refund above remainder and confirmation or reason omissions are rejected
+  ---
+  duration_ms: 2.863187
+  ...
+# Subtest: R12 invalid selected lines and selective effect in amount mode are rejected
+ok 196 - R12 invalid selected lines and selective effect in amount mode are rejected
+  ---
+  duration_ms: 1.209537
+  ...
+# Subtest: R12 contacts and current position projection preserve the purchase snapshot
+ok 197 - R12 contacts and current position projection preserve the purchase snapshot
+  ---
+  duration_ms: 2.482916
+  ...
+# Subtest: R12 replacing a digital frame changes only future entitlement
+ok 198 - R12 replacing a digital frame changes only future entitlement
+  ---
+  duration_ms: 5.980651
+  ...
+# Subtest: R12 removing digital line preserves a gift granted at purchase
+ok 199 - R12 removing digital line preserves a gift granted at purchase
+  ---
+  duration_ms: 0.568913
+  ...
+# Subtest: R12 confirmed selected refund restricts only the captured entitlement ids
+ok 200 - R12 confirmed selected refund restricts only the captured entitlement ids
+  ---
+  duration_ms: 1.49708
+  ...
+# Subtest: R12 confirmed all-files restriction preserves history but prevents new download
+ok 201 - R12 confirmed all-files restriction preserves history but prevents new download
+  ---
+  duration_ms: 0.451783
+  ...
+# Subtest: R12 late decision allows files within original month; refund decision suspends delivery
+ok 202 - R12 late decision allows files within original month; refund decision suspends delivery
+  ---
+  duration_ms: 0.377581
+  ...
+# Subtest: R12 production that has started cannot be silently put on hold
+ok 203 - R12 production that has started cannot be silently put on hold
+  ---
+  duration_ms: 0.803568
+  ...
+# Subtest: R12 quantity reductions are explicit and never create unpaid additions
+ok 204 - R12 quantity reductions are explicit and never create unpaid additions
+  ---
+  duration_ms: 0.836736
+  ...
+# Subtest: R12 recovery and contact changes require verified order and valid email
+ok 205 - R12 recovery and contact changes require verified order and valid email
+  ---
+  duration_ms: 0.516025
+  ...
+# Subtest: R12 concurrent payment or production and any settlement action invalidate an old form
+ok 206 - R12 concurrent payment or production and any settlement action invalidate an old form
+  ---
+  duration_ms: 0.340531
+  ...
+# (node:299) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: only a touch device whose browser shares image files offers the button
+ok 207 - only a touch device whose browser shares image files offers the button
+  ---
+  duration_ms: 8.571315
+  ...
+# Subtest: a closed sheet is not an error, an expired tap asks for one more tap
+ok 208 - a closed sheet is not an error, an expired tap asks for one more tap
+  ---
+  duration_ms: 0.607668
+  ...
+# Subtest: \#204: an iPhone saves from the share sheet, Android downloads, a computer only downloads
+ok 209 - \#204: an iPhone saves from the share sheet, Android downloads, a computer only downloads
+  ---
+  duration_ms: 0.620561
+  ...
+# (node:310) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: R15 readiness requires current closed started and completely packed version
+ok 210 - R15 readiness requires current closed started and completely packed version
+  ---
+  duration_ms: 5.278714
+  ...
+# Subtest: R15 ready packages count actual prints and cannot be marked twice
+ok 211 - R15 ready packages count actual prints and cannot be marked twice
+  ---
+  duration_ms: 0.543003
+  ...
+# Subtest: R15 reopened group keeps updated seven day deadline and cannot transfer
+ok 212 - R15 reopened group keeps updated seven day deadline and cannot transfer
+  ---
+  duration_ms: 0.755087
+  ...
+# Subtest: R15 deadline boundary is not overdue and late readiness remains actionable
+ok 213 - R15 deadline boundary is not overdue and late readiness remains actionable
+  ---
+  duration_ms: 0.390786
+  ...
+# Subtest: R15 completed transfer removes pending packages and locks unready
+ok 214 - R15 completed transfer removes pending packages and locks unready
+  ---
+  duration_ms: 0.919198
+  ...
+# Subtest: R15 ready status projects only own paid physical composition without mutation
+ok 215 - R15 ready status projects only own paid physical composition without mutation
+  ---
+  duration_ms: 2.440466
+  ...
+# Subtest: R15 hold pending refund and unapproved reprint suppress readiness
+ok 216 - R15 hold pending refund and unapproved reprint suppress readiness
+  ---
+  duration_ms: 1.351961
+  ...
+# Subtest: R15 removing readiness resets persisted parent projection to printing
+ok 217 - R15 removing readiness resets persisted parent projection to printing
+  ---
+  duration_ms: 0.350408
+  ...
+# Subtest: R15 new version does not inherit readiness
+ok 218 - R15 new version does not inherit readiness
+  ---
+  duration_ms: 0.689923
+  ...
+# Subtest: R15 transfer projects delivered and preserves actual receipt after refund
+ok 219 - R15 transfer projects delivered and preserves actual receipt after refund
+  ---
+  duration_ms: 0.619261
+  ...
+# Subtest: R15 tracked ready and delivered orders remain in current production plan
+ok 220 - R15 tracked ready and delivered orders remain in current production plan
+  ---
+  duration_ms: 0.281147
+  ...
+# Subtest: R15 corrected order is pending again but unchanged delivered order is excluded
+ok 221 - R15 corrected order is pending again but unchanged delivered order is excluded
+  ---
+  duration_ms: 0.264256
+  ...
+# Subtest: R15 last transferred composition wins for A to B to A correction
+ok 222 - R15 last transferred composition wins for A to B to A correction
+  ---
+  duration_ms: 0.288442
+  ...
+# Subtest: R15 already delivered unchanged new version does not create zero package transfer
+ok 223 - R15 already delivered unchanged new version does not create zero package transfer
+  ---
+  duration_ms: 0.511221
+  ...
+# Subtest: R15 operation validates explicit confirmation, comment and names
+ok 224 - R15 operation validates explicit confirmation, comment and names
+  ---
+  duration_ms: 0.554397
+  ...
+# Subtest: R15 dates reject future impossible and earlier event but allow exact previous minute
+ok 225 - R15 dates reject future impossible and earlier event but allow exact previous minute
+  ---
+  duration_ms: 0.173905
+  ...
+# Subtest: R15 unready validates reason without requiring date or receiver
+ok 226 - R15 unready validates reason without requiring date or receiver
+  ---
+  duration_ms: 0.122333
+  ...
+# Subtest: R15 institution summary is explicit whitelist and scoped to allowed groups
+ok 227 - R15 institution summary is explicit whitelist and scoped to allowed groups
+  ---
+  duration_ms: 0.372596
+  ...
+# (node:321) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: shoot PATCH preserves an omitted date and clears an explicitly emptied date
+ok 228 - shoot PATCH preserves an omitted date and clears an explicitly emptied date
+  ---
+  duration_ms: 3.08322
+  ...
+# Subtest: new shoot may have an unassigned date; group edit never sends immutable kind or teacher scope
+ok 229 - new shoot may have an unassigned date; group edit never sends immutable kind or teacher scope
+  ---
+  duration_ms: 0.44843
+  ...
+# Subtest: captured attempt remains unchanged for uncertain-result retry
+ok 230 - captured attempt remains unchanged for uncertain-result retry
+  ---
+  duration_ms: 0.320365
+  ...
+# Subtest: explicit conflict reload adopts the current server fields and revision
+ok 231 - explicit conflict reload adopts the current server fields and revision
+  ---
+  duration_ms: 0.416464
+  ...
+# Subtest: client rejects invalid calendar dates while accepting leap day and nullable dates
+ok 232 - client rejects invalid calendar dates while accepting leap day and nullable dates
+  ---
+  duration_ms: 1.18757
+  ...
+# (node:332) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: server table view survives the URL and falls back on anything unknown (\#92 DEC-05)
+ok 233 - server table view survives the URL and falls back on anything unknown (\#92 DEC-05)
+  ---
+  duration_ms: 3.370111
+  ...
+# Subtest: CSV opens in a Russian Excel: BOM, semicolons, CRLF and quoted cells (\#92 DEC-03)
+ok 234 - CSV opens in a Russian Excel: BOM, semicolons, CRLF and quoted cells (\#92 DEC-03)
+  ---
+  duration_ms: 0.859063
+  ...
+# Subtest: table moment fits one line in Moscow time
+ok 235 - table moment fits one line in Moscow time
+  ---
+  duration_ms: 0.751605
+  ...
+# Subtest: \#92 review: a cell Excel would run as a formula stays text
+ok 236 - \#92 review: a cell Excel would run as a formula stays text
+  ---
+  duration_ms: 1.099513
+  ...
+# (node:343) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: \#92: bulk actions go one by one, a refusal keeps its name and does not stop the rest
+ok 237 - \#92: bulk actions go one by one, a refusal keeps its name and does not stop the rest
+  ---
+  duration_ms: 5.102412
+  ...
+# Subtest: \#92: a later request waits for the previous answer, so a shared revision moves from answer to answer
+ok 238 - \#92: a later request waits for the previous answer, so a shared revision moves from answer to answer
+  ---
+  duration_ms: 7.000374
+  ...
+# Subtest: \#92: a full success adds its explanation, an empty action reports zero of zero
+ok 239 - \#92: a full success adds its explanation, an empty action reports zero of zero
+  ---
+  duration_ms: 0.440188
+  ...
+# (node:354) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: table compares numbers rather than formatted strings and keeps source order intact
+ok 240 - table compares numbers rather than formatted strings and keeps source order intact
+  ---
+  duration_ms: 9.287926
+  ...
+# Subtest: table sorts dates across months and orders missing values last in both directions
+ok 241 - table sorts dates across months and orders missing values last in both directions
+  ---
+  duration_ms: 0.509282
+  ...
+# Subtest: table tie order is stable by ID and forbidden columns do not sort
+ok 242 - table tie order is stable by ID and forbidden columns do not sort
+  ---
+  duration_ms: 0.351978
+  ...
+# Subtest: table page stays in range after filtering and removing the last page
+ok 243 - table page stays in range after filtering and removing the last page
+  ---
+  duration_ms: 0.381309
+  ...
+# Subtest: table preserves zero values and explains missing values
+ok 244 - table preserves zero values and explains missing values
+  ---
+  duration_ms: 7.197056
+  ...
+# (node:365) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: quantity keeps empty and invalid edits out of a committed cart value
+ok 245 - quantity keeps empty and invalid edits out of a committed cart value
+  ---
+  duration_ms: 2.369721
+  ...
+# Subtest: Russian formatting preserves digits and existing buyer normalization
+ok 246 - Russian formatting preserves digits and existing buyer normalization
+  ---
+  duration_ms: 0.956085
+  ...
+# Subtest: explicit international plus is never read as the Russian national 8
+ok 247 - explicit international plus is never read as the Russian national 8
+  ---
+  duration_ms: 0.630024
+  ...
+# Subtest: stored phone digits follow the backend BuyerPolicy rule
+ok 248 - stored phone digits follow the backend BuyerPolicy rule
+  ---
+  duration_ms: 0.371666
+  ...
+# Subtest: formatting never hides invalid symbols or truncates international numbers
+ok 249 - formatting never hides invalid symbols or truncates international numbers
+  ---
+  duration_ms: 0.538312
+  ...
+# Subtest: stored phones read as +7 900 123-45-67 on order pages and in staff orders
+ok 250 - stored phones read as +7 900 123-45-67 on order pages and in staff orders
+  ---
+  duration_ms: 0.317925
+  ...
+# Subtest: display formatting leaves non-standard and foreign phones as stored
+ok 251 - display formatting leaves non-standard and foreign phones as stored
+  ---
+  duration_ms: 0.391656
+  ...
+# Subtest: money parses decimal rubles into exact integer kopecks
+ok 252 - money parses decimal rubles into exact integer kopecks
+  ---
+  duration_ms: 0.617668
+  ...
+# Subtest: date input rejects impossible calendar days and accepts a leap day
+ok 253 - date input rejects impossible calendar days and accepts a leap day
+  ---
+  duration_ms: 1.360598
+  ...
+1..253
+# tests 253
+# suites 0
+# pass 253
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 13104.540916

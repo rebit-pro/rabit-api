@@ -40,5 +40,6 @@ final readonly class ArchiveVersion
         public ?\DateTimeImmutable $readyAt,
         public ?\DateTimeImmutable $expiresAt,
         public ?int $createdBy,
+        public int $layoutVersion = 1,
     ) {}
 }

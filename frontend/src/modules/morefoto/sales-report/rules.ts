@@ -1,6 +1,6 @@
 import { plural } from '../../../components/viz/measures.ts';
 import type { StatusTone } from '../../../components/status/tones.ts';
-import type { ChildSalesStatus, SalesReport, SalesReportFilter, SalesReportLevel, SalesTotals } from './api.ts';
+import type { ChildSales, ChildSalesStatus, OrderNameSales, SalesReport, SalesReportFilter, SalesReportLevel, SalesTotals } from './api.ts';
 
 export type ReportRole = 'organizer' | 'curator' | 'head' | 'teacher';
 
@@ -11,6 +11,28 @@ export const CHILD_STATUS: Readonly<Record<ChildSalesStatus, { label: string; to
   unpaid: { label: 'Заказ без оплаты', tone: 'danger' },
   none: { label: 'Нет заказа', tone: 'neutral' }
 };
+
+/** Only children without an order are hidden; an unpaid or late order remains part of the working list. */
+export function reportChildren(items: ChildSales[], includeUnordered: boolean): ChildSales[] {
+  return includeUnordered ? items : items.filter((child) => child.status !== 'none');
+}
+
+export function reportPdfFilter(filter: SalesReportFilter, includeUnordered: boolean) {
+  return { ...filter, childrenView: includeUnordered ? 'all' : 'ordered' };
+}
+
+/** The name belongs to the whole order, including orders with photos of several children. */
+export function reportOrderName(order: OrderNameSales): string {
+  return order.firstName !== null && order.lastName !== null ? `${order.lastName} ${order.firstName}` : 'Не указано';
+}
+
+export function reportOrderStatus(order: OrderNameSales): { label: string; tone: StatusTone } {
+  if (order.latePayment) return { label: 'Поздняя оплата', tone: 'warning' };
+  if (order.paymentStatus === 'paid') return { label: 'Оплачен', tone: 'success' };
+  if (order.paymentStatus === 'pending') return { label: 'Ожидает оплаты', tone: 'warning' };
+  if (order.paymentStatus === 'declined') return { label: 'Оплата отклонена', tone: 'danger' };
+  return { label: 'Не оплачен', tone: 'neutral' };
+}
 
 const LEVEL_KIND: Readonly<Record<SalesReportLevel, string>> = {
   all: 'ОТЧЁТ О ПРОДАЖАХ',

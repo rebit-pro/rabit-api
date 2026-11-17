@@ -24,7 +24,7 @@ use Morefoto\Production\Domain\Archive\ValueObject\ScheduleCursor;
  *     DEADLINE_AT: string, VERSION_NO: int|string, STATUS: string, LINES_COUNT: int|string, FILES_COUNT: int|string,
  *     PRINTS_COUNT: int|string, WAITING_ORDERS: int|string, ARCHIVE_PATH: string, BYTES: null|int|string,
  *     ERROR_CODE: null|string, ATTEMPTS: int|string, LINK_GENERATION: int|string, CREATED_AT: string,
- *     READY_AT: null|string, EXPIRES_AT: null|string, CREATED_BY: null|int|string,
+ *     READY_AT: null|string, EXPIRES_AT: null|string, CREATED_BY: null|int|string, LAYOUT_VERSION: int|string,
  * }
  */
 final readonly class BitrixArchiveRepository implements ArchiveRepositoryInterface
@@ -32,7 +32,7 @@ final readonly class BitrixArchiveRepository implements ArchiveRepositoryInterfa
     private const string COLUMNS = "ID,PUBLIC_ID,GROUP_ID,GROUP_PUBLIC_ID,INSTITUTION_ID,DATE_FORMAT(DEADLINE_AT,'%Y-%m-%d %H:%i:%s') AS DEADLINE_AT,
         VERSION_NO,STATUS,LINES_COUNT,FILES_COUNT,PRINTS_COUNT,WAITING_ORDERS,ARCHIVE_PATH,BYTES,ERROR_CODE,ATTEMPTS,LINK_GENERATION,
         DATE_FORMAT(CREATED_AT,'%Y-%m-%d %H:%i:%s') AS CREATED_AT,DATE_FORMAT(READY_AT,'%Y-%m-%d %H:%i:%s') AS READY_AT,
-        DATE_FORMAT(EXPIRES_AT,'%Y-%m-%d %H:%i:%s') AS EXPIRES_AT,CREATED_BY";
+        DATE_FORMAT(EXPIRES_AT,'%Y-%m-%d %H:%i:%s') AS EXPIRES_AT,CREATED_BY,LAYOUT_VERSION";
     private const int LINE_CHUNK = 500;
 
     public function cursor(): ScheduleCursor
@@ -61,12 +61,12 @@ final readonly class BitrixArchiveRepository implements ArchiveRepositoryInterfa
         $connection->startTransaction();
         try {
             $connection->queryExecute('INSERT IGNORE INTO mf_production_version(PUBLIC_ID,GROUP_ID,GROUP_PUBLIC_ID,INSTITUTION_ID,DEADLINE_AT,VERSION_NO,
-                STATUS,LINES_COUNT,FILES_COUNT,PRINTS_COUNT,WAITING_ORDERS,ARCHIVE_PATH,ATTEMPTS,LINK_GENERATION,CREATED_BY,CREATED_AT,UPDATED_AT) VALUES('
+                STATUS,LINES_COUNT,FILES_COUNT,PRINTS_COUNT,WAITING_ORDERS,ARCHIVE_PATH,ATTEMPTS,LINK_GENERATION,CREATED_BY,CREATED_AT,UPDATED_AT,LAYOUT_VERSION) VALUES('
                 . implode(',', [
                     $text($version->publicId), $version->groupId, $text($version->groupPublicId), $version->institutionId, $deadline,
                     $version->number, $text($version->status->value), count($version->lines), $version->filesCount, $version->printsCount,
                     $version->waitingOrders, $text($version->archivePath), 0, 1, $version->createdBy ?? 'NULL',
-                    $this->moment($version->createdAt), $this->moment($version->createdAt),
+                    $this->moment($version->createdAt), $this->moment($version->createdAt), $version->layoutVersion,
                 ]) . ')');
             if (1 !== $connection->getAffectedRowsCount()) {
                 $connection->rollbackTransaction();
@@ -186,7 +186,7 @@ final readonly class BitrixArchiveRepository implements ArchiveRepositoryInterfa
             return [];
         }
         $result = $this->query('SELECT VERSION_ID,PRODUCT_PUBLIC_ID,MIN(PRODUCT_NAME) AS PRODUCT_NAME,MIN(PRODUCT_FORMAT) AS PRODUCT_FORMAT,
-            COUNT(DISTINCT ENTRY) AS FILES,SUM(PRINTS) AS PRINTS FROM mf_production_line WHERE VERSION_ID IN (' . implode(',', $ids) . ')
+            COUNT(DISTINCT BINARY ENTRY) AS FILES,SUM(PRINTS) AS PRINTS FROM mf_production_line WHERE VERSION_ID IN (' . implode(',', $ids) . ')
             GROUP BY VERSION_ID,PRODUCT_PUBLIC_ID ORDER BY VERSION_ID,PRODUCT_NAME,PRODUCT_PUBLIC_ID');
         $products = [];
         while (false !== ($row = $result->fetch())) {
@@ -313,6 +313,7 @@ final readonly class BitrixArchiveRepository implements ArchiveRepositoryInterfa
             readyAt: null === $row['READY_AT'] ? null : $this->instant($row['READY_AT']),
             expiresAt: null === $row['EXPIRES_AT'] ? null : $this->instant($row['EXPIRES_AT']),
             createdBy: null === $row['CREATED_BY'] ? null : (int)$row['CREATED_BY'],
+            layoutVersion: (int)$row['LAYOUT_VERSION'],
         );
     }
 

@@ -1,0 +1,18 @@
+{
+  "investigatedAt": "2026-11-17T16:14:21.505471+00:00",
+  "signalExit": 143,
+  "confirmedEvent": {
+    "source": "Codex app-server commandExecution unifiedExecStartup completion metadata",
+    "processId": 79631,
+    "startedAt": "2026-11-17T15:54:05.107Z",
+    "completedAt": "2026-11-17T16:01:52.361Z",
+    "durationMs": 465749,
+    "exitCode": 143
+  },
+  "runnerOwnerPidAbsent": 88285,
+  "interpretation": "Command execution interrupted with SIGTERM-compatible exit; runner and logging parent disappeared. No sender or termination reason is present in the available completion metadata. This is separate from earlier G1 assertion failure.",
+  "systemJournal": "No OOM/kill matching entries in checked interval; lack of entries does not prove cause.",
+  "confirmedTransientYooMoney": false,
+  "mitigationForAuthorizedRepeat": "Run exact same command under an independent process session with stdout directly in a new file, captured process exit code, PID/heartbeat and signal forwarding. No runner/test/source/config/expectation/timeout change.",
+  "firstRunCleaned": "cleanup-attempt-01.json: stopped=true, cleanupErrors=[], no labelled containers/networks/volumes"
+}

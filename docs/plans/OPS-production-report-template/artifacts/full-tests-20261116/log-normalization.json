@@ -1,0 +1,92 @@
+[
+  {
+    "file": "native-worksheet.log",
+    "rawSha256": "336f2eff77e5d62daad07031c0dd7f1fde32e2f281ea986f83e03008fb1899df",
+    "savedSha256": "336f2eff77e5d62daad07031c0dd7f1fde32e2f281ea986f83e03008fb1899df",
+    "normalization": "Trailing whitespace and terminal line endings only; no result text removed"
+  },
+  {
+    "file": "bench-first-browser.log",
+    "rawSha256": "827cfd6080049bd57b5dc881755011ec45087bfaa7494fd57e55666eabe5ffbe",
+    "savedSha256": "1e8f98f0875e597c6a83695c6ec21de6ba944ebf1be0974ba952689271553605",
+    "normalization": "Trailing whitespace and terminal line endings only; no result text removed"
+  },
+  {
+    "file": "live-test-ui.log",
+    "rawSha256": "750d14274e814df5c3c469830f74b636f83d0ba0bb9d6d1ae04e39d7f1dce460",
+    "savedSha256": "750d14274e814df5c3c469830f74b636f83d0ba0bb9d6d1ae04e39d7f1dce460",
+    "normalization": "Trailing whitespace and terminal line endings only; no result text removed"
+  },
+  {
+    "file": "live-phpstan.log",
+    "rawSha256": "3ad3cc617a5dc35c096899120b763a0d569afdf0553c839970400a85f3fae24e",
+    "savedSha256": "e7eb707ec9e3352c0d101120de205177c953303278125baa893f68fcadfc9222",
+    "normalization": "Trailing whitespace and terminal line endings only; no result text removed"
+  },
+  {
+    "file": "live-gate.log",
+    "rawSha256": "9201eb96a9655a7cef616190e24db4c49a6ac6f2fefd62e3eb39a7c9a867b387",
+    "savedSha256": "9201eb96a9655a7cef616190e24db4c49a6ac6f2fefd62e3eb39a7c9a867b387",
+    "normalization": "Trailing whitespace and terminal line endings only; no result text removed"
+  },
+  {
+    "file": "live-typecheck.log",
+    "rawSha256": "050bb3da72b4366c093545ea811f8b8555d0abf24a7d9056777bbc439fc7c0d4",
+    "savedSha256": "a5200903aa8339be5c2a383f593dcfb5eef0a0365b3248ce32df98b096d2197c",
+    "normalization": "Trailing whitespace and terminal line endings only; no result text removed"
+  },
+  {
+    "file": "live-php-lint.log",
+    "rawSha256": "4723d487c5fbf5fcff58d2125fadf8c549f58c561ae6e454df9e6346f0ab1d47",
+    "savedSha256": "49285e5f24937d1b18eaeb483074c57486bf7b2ff6c58487648f46c099c2e29e",
+    "normalization": "Trailing whitespace and terminal line endings only; no result text removed"
+  },
+  {
+    "file": "live-test-commerce.log",
+    "rawSha256": "39bfb396860464a86f1541c86caaa4661e2fcec5e65b086bef7b02b94d20a57a",
+    "savedSha256": "39bfb396860464a86f1541c86caaa4661e2fcec5e65b086bef7b02b94d20a57a",
+    "normalization": "Trailing whitespace and terminal line endings only; no result text removed"
+  },
+  {
+    "file": "live-typecheck-e2e.log",
+    "rawSha256": "f0727c8fedb0d35ce552d4741069c3a84ddf4a30ed117e6468a0ec7f05cfaaee",
+    "savedSha256": "4a73ab0fdd1ece9454240f7b2633987472accce28de673254f9f9cfa795d7e8d",
+    "normalization": "Trailing whitespace and terminal line endings only; no result text removed"
+  },
+  {
+    "file": "live-phpunit.log",
+    "rawSha256": "1ec70da1ba23762da4c3b3b98b492fa4e63912f06f3f68d4c3f70c7eef28a32d",
+    "savedSha256": "1ec70da1ba23762da4c3b3b98b492fa4e63912f06f3f68d4c3f70c7eef28a32d",
+    "normalization": "Trailing whitespace and terminal line endings only; no result text removed"
+  },
+  {
+    "file": "live-lint.log",
+    "rawSha256": "0d4799a612b4b7e48e23603006a77da9489c63b36bc04432942ec1777a472230",
+    "savedSha256": "26dad7f9dcf31bb77311f283486eb4c12fb14a32950b4d6c7117d199400a3f6f",
+    "normalization": "Trailing whitespace and terminal line endings only; no result text removed"
+  },
+  {
+    "file": "bench-retry-gate.log",
+    "rawSha256": "8479620f9cc1a52956317785c6efbc2c3af507b67ab696460b64720a254f1752",
+    "savedSha256": "8479620f9cc1a52956317785c6efbc2c3af507b67ab696460b64720a254f1752",
+    "normalization": "Trailing whitespace and terminal line endings only; no result text removed"
+  },
+  {
+    "file": "live-build-only.log",
+    "rawSha256": "1c062a59fd00f98d0d74d84970d2484fc2c5e410fcdddeef7f62133dc21fb71e",
+    "savedSha256": "1c062a59fd00f98d0d74d84970d2484fc2c5e410fcdddeef7f62133dc21fb71e",
+    "normalization": "Trailing whitespace and terminal line endings only; no result text removed"
+  },
+  {
+    "file": "live-lint-styles.log",
+    "rawSha256": "8d34c7c4f6b422c22fd2b1dd19df0bd830427a5451de0ae1f7959cb3b66e96eb",
+    "savedSha256": "03c5105291ddecb7d637b3f0866fc86edaf9e47f43894a53ce859e7c521c3a79",
+    "normalization": "Trailing whitespace and terminal line endings only; no result text removed"
+  },
+  {
+    "file": "bench-retry-browser.log",
+    "rawSha256": "f5d6ee0524f1f263da29fd08600d7a84b61c4a8999fe26d7ab88e883c954ed75",
+    "savedSha256": "f5d6ee0524f1f263da29fd08600d7a84b61c4a8999fe26d7ab88e883c954ed75",
+    "normalization": "Trailing whitespace and terminal line endings only; no result text removed"
+  }
+]

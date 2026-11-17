@@ -45,6 +45,7 @@ GROUPS = json.loads((LIVE / "groups.json").read_text())
 BENCH = "zz-media-bench"
 # MySQL checks after the browser: script, file recorded by the browser, success marker, specs that produce the data.
 VERIFIERS = [
+    ("verify-institution-digital.php", "institution-digital.json", "Institution digital integration passed", ["zzzzzzzzzz-files", "zzzzzzzzzz-institution-digital"]),
     ("verify-storefront.php", None, "E4 integration passed", ["zzz-handoff", "zzzz-storefront"]),
     # E7: migration replay on groups sent before the release and the digital window fixture of the browser spec.
     ("verify-sales-windows.php", None, "E7 sales windows integration passed", ["zzzz-storefront-windows"]),
@@ -76,8 +77,11 @@ VERIFIERS = [
     ("verify-photo-deletion.php", "i116-deletion.json", "#116 photo deletion integration passed", ["zz-media"]),
     # J1: downloads agree with archives on disk, the paid key lasts the files month, expired archives are purged.
     ("verify-files.php", "j1-files.json", "J1 files integration passed", ["zzzzzzzzzz-files"]),
+    # Stage 6 must inspect the saved versions before the L1/institution verifiers expire and rebuild them.
+    ("verify-production-worksheet.php", "production-worksheet.json", "Production worksheet integration passed", ["zzzzzzzzzzzzzz-sales-report"]),
     # L1: the print archive of the J4 paid print order — composition, disk, link hash, expiry and rebuild.
     ("verify-production.php", "l1-archive.json", "L1 production integration passed", ["zzzzzzzzzz-files", "zzzzzzzzzzzz-print-archive"]),
+    ("verify-institution-production.php", "institution-production.json", "Institution production integration passed", ["zzzzzzzzzz-files", "zzzzzzzzzzzz-print-archive"]),
     # J2: one automatic letter per paid order, the email key stored only as a hash, its link opens the order.
     ("verify-order-email.php", "j2-email.json", "J2 order email integration passed", ["zzzzzzzzzz-files", "zzzzzzzzzz-order-email"]),
     # G2: one payment receipt per paid attempt with a receipt, one closing receipt per handed order and only for its print.
@@ -88,6 +92,7 @@ PAY_FIXTURE_SPEC = "zzzzzzzzzz-files"
 # The stand has no cron: these specs ask the stand to act through numbered requests (spec: request prefix, stand script).
 # L1 closes print sales and runs app:production:run; J2 runs app:files:order-emails and reads the letter of an order.
 STAND_REQUEST_SPECS = {
+    "zzzzzzzzzz-institution-digital": ("digital", "institution-digital-fixture.php"),
     "zzzzzzzzzzzz-print-archive": ("l1", "production-fixture.php"),
     "zzzzzzzzzz-order-email": ("j2", "order-email-fixture.php"),
     # G2: reconciles the open receipts — fixture payments with the fixture provider, the test shop payment with the test shop.
