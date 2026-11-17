@@ -215,6 +215,7 @@ test('J4-T06, J4-T07, J4-T08, OPS-T01-T03: mixed print and digital keep their se
       { assignmentId: firstLine.assignmentId, productId: firstLine.productId, quantity: 1 }
     ]);
     await viewer.getByRole('button', { name: 'Следующий кадр' }).click();
+    await expect(viewer.getByRole('heading', { name: 'Кадр ' + photo('A', frames.A2).code, exact: true })).toBeVisible();
     await expect(viewer.getByTestId('product-count')).toHaveCount(0);
   } finally {
     releaseQuote();
