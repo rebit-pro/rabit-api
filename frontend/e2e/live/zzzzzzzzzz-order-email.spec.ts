@@ -9,6 +9,8 @@ type Frame = { photoId: string; sha256: string };
 type Fixture = { print: { token: string; frames: Record<'A1' | 'A2' | 'B1' | 'B2', Frame> } };
 type Attachment = { name: string; contentType: string; bytes: number; sha256: string };
 type Letter = { to: string; subject: string; key: string | null; attachments: Attachment[] };
+type OrderEmailTarget = { orderId: string; recipient: string };
+type OriginalChange = { changed: boolean; photoId: string };
 const fixture = JSON.parse(readFileSync('var/e4-fixture.json', 'utf8')) as Fixture;
 const deliveries = '/api/v1/public/orders/current/file-deliveries';
 const key = () => crypto.randomUUID().replace(/-/g, '');
@@ -19,9 +21,12 @@ async function body(response: APIResponse, status = 200) {
   return response.json();
 }
 /** Asks the runner to act for cron and the mail worker: dispatch the letters, deliver them or make the letters older. */
-async function stand<T>(action: 'dispatch' | 'deliver' | 'age' | 'hide-original' | 'restore-original', recipient: string): Promise<T> {
+async function stand<T>(
+  action: 'dispatch' | 'deliver' | 'age' | 'hide-original' | 'restore-original',
+  target: OrderEmailTarget
+): Promise<T> {
   requests += 1;
-  writeFileSync(`var/j2-request-${requests}.json.tmp`, JSON.stringify({ action, recipient }));
+  writeFileSync(`var/j2-request-${requests}.json.tmp`, JSON.stringify({ action, ...target }));
   renameSync(`var/j2-request-${requests}.json.tmp`, `var/j2-request-${requests}.json`);
   const answer = `var/j2-answer-${requests}.json`;
   await expect.poll(() => existsSync(answer), { timeout: 90000 }).toBe(true);
@@ -29,8 +34,8 @@ async function stand<T>(action: 'dispatch' | 'deliver' | 'age' | 'hide-original'
   expect(result.error).toBeUndefined();
   return result as T;
 }
-const dispatch = (recipient: string) => stand<{ created: number; queued: number; key: string | null }>('dispatch', recipient);
-const deliver = (recipient: string) => stand<{ delivered: number; letters: Letter[] }>('deliver', recipient);
+const dispatch = (target: OrderEmailTarget) => stand<{ created: number; queued: number; key: string | null }>('dispatch', target);
+const deliver = (target: OrderEmailTarget) => stand<{ delivered: number; letters: Letter[] }>('deliver', target);
 
 test.describe.configure({ mode: 'serial' });
 test.use({ locale: 'ru-RU' });
@@ -45,6 +50,7 @@ test('J2-T08, J2-T09, J5-T10, J5-T11, J5-T13: the paid order sends its originals
   expect(paid.printCopy.accessKey, 'J4 must pay the print order first').not.toBe('');
   const buyer = { 'X-Order-Key': paid.printCopy.accessKey };
   const recipient = 'print.j4@example.test';
+  const target = { orderId: paid.printCopy.orderId, recipient };
 
   // J2-DEC-06: with sending on, the checkout tells where the link goes.
   const catalog = (await body(await page.request.get('/api/v1/public/galleries/' + fixture.print.token + '/catalog'))).data;
@@ -61,8 +67,10 @@ test('J2-T08, J2-T09, J5-T10, J5-T11, J5-T13: the paid order sends its originals
   expect(expected.map((item) => item.sha256)).toContain(fixture.print.frames.B2.sha256);
 
   // OPS-T01/T04: one missing original blocks partial delivery and downloading until the entire set is restored.
-  await stand('hide-original', recipient);
+  const hidden = await stand<OriginalChange>('hide-original', target);
   try {
+    expect(hidden.changed).toBe(true);
+    expect(items.map((item) => item.photoId)).toContain(hidden.photoId);
     const incomplete = (await body(await page.request.get('/api/v1/public/orders/current/files', { headers: buyer }))).data;
     expect([incomplete.state, incomplete.canDownload, incomplete.items]).toEqual(['incomplete', false, []]);
     const refused = await body(
@@ -73,7 +81,7 @@ test('J2-T08, J2-T09, J5-T10, J5-T11, J5-T13: the paid order sends its originals
       409
     );
     expect(refused.error.code).toBe('FILES_UNAVAILABLE');
-    expect((await dispatch(recipient)).key).toBeNull();
+    expect((await dispatch(target)).key).toBeNull();
     const waiting = (await body(await page.request.get(deliveries, { headers: buyer }))).data.latest;
     expect([waiting.status, waiting.letters, waiting.photos]).toEqual(['pending', 0, 0]);
     for (const viewport of [
@@ -95,16 +103,16 @@ test('J2-T08, J2-T09, J5-T10, J5-T11, J5-T13: the paid order sends its originals
       });
     }
   } finally {
-    await stand('restore-original', recipient);
+    expect(await stand<OriginalChange>('restore-original', target)).toEqual(hidden);
   }
   expect((await body(await page.request.get('/api/v1/public/orders/current/files', { headers: buyer }))).data.state).toBe('available');
 
-  const letter = await dispatch(recipient);
+  const letter = await dispatch(target);
   expect(letter.created, 'the held delivery is resumed instead of creating a replacement').toBe(0);
   expect(letter.queued).toBeGreaterThanOrEqual(1);
   expect(letter.key).toMatch(/^[a-f0-9]{64}$/);
   expect(letter.key).not.toBe(paid.printCopy.accessKey);
-  expect((await dispatch(recipient)).created, 'a repeated run adds no letter').toBe(0);
+  expect((await dispatch(target)).created, 'a repeated run adds no letter').toBe(0);
 
   // The link of the letter opens the paid order; the link the buyer saved at checkout keeps working.
   const email = { 'X-Order-Key': letter.key! };
@@ -117,7 +125,7 @@ test('J2-T08, J2-T09, J5-T10, J5-T11, J5-T13: the paid order sends its originals
   expect((await body(await page.request.get(deliveries + '/' + queued.id, { headers: email }))).data.status).toBe('pending');
 
   // J5-T10: the real MIME letters — one frame each, the bytes are the originals, the link is in every letter.
-  const mail = await deliver(recipient);
+  const mail = await deliver(target);
   const checkLetters = (letters: Letter[]) => {
     expect(letters).toHaveLength(items.length);
     letters.forEach((sent, index) => {
@@ -187,12 +195,12 @@ test('J2-T08, J2-T09, J5-T10, J5-T11, J5-T13: the paid order sends its originals
   }
 
   // J5-T11, J5-DEC-03: ten minutes later the repeat sends every letter again with the same originals.
-  expect((await stand<{ aged: number }>('age', recipient)).aged).toBeGreaterThanOrEqual(1);
+  expect((await stand<{ aged: number }>('age', target)).aged).toBeGreaterThanOrEqual(1);
   const repeat = (
     await body(await page.request.post(deliveries, { headers: { ...email, 'Idempotency-Key': key() }, data: { channel: 'email' } }), 202)
   ).data;
   expect([repeat.kind, repeat.letters, repeat.photos]).toEqual(['manual', items.length, items.length]);
-  const again = await deliver(recipient);
+  const again = await deliver(target);
   expect(again.delivered).toBe(items.length);
   checkLetters(again.letters);
   const resent = (await body(await page.request.get(deliveries + '/' + repeat.id, { headers: email }))).data;

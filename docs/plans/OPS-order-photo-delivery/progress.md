@@ -3,9 +3,10 @@
 ## Точка продолжения
 
 - После merge этапа 7 (`ece56d2e0169d811b1cd51767ae6219b539d43ee`) завершить PR [#235](https://github.com/rebit-pro/rabit-api/pull/235). Этап 8 начинается после merge #235.
-- Worktree `/home/user/rabit-api/.worktrees/ops-order-photo-delivery-final`, detached. Base и merge-base `ece56d2e0169d811b1cd51767ae6219b539d43ee`. Кандидат фиксируется merge-коммитом `fc21d54` и актуального main. Ветка PR `codex/ops-order-photo-delivery`, предыдущий remote head `acb136327e7e72ff2caa88370849e41bc3118361`.
+- Worktree `/home/user/rabit-api/.worktrees/ops-order-photo-delivery-final`, detached. Base и merge-base `ece56d2e0169d811b1cd51767ae6219b539d43ee`. Кандидат и remote head `f47942e52cc7d9556bf5c6cad03d2e9a29aef54d`, merge-коммит `fc21d54` и актуального main. Ветка PR `codex/ops-order-photo-delivery`, состояние OPEN/DRAFT. Локально меняется только этот журнал, результаты будут сохранены отдельным коммитом.
 - Интеграция без конфликтов. Защита от неполной доставки, обновление проверки файла в worker, сохранение CSV v1/v2 и адресные проверки PASS. T06-R2 сначала FAIL из-за несовместимой тестовой фикстуры, затем PASS. Результаты старых gate на прежней базе сохранены отдельно.
-- Следующий шаг — полный предmerge QA другой моделью и независимое ревью кандидата на актуальной базе. Сохранить оба результата и сверить PR head перед разрешённым merge. Полный E2E, визуальная проверка и реальный T09 на новой базе PENDING. Кандидат можно отправить в существующий draft PR после адресных проверок.
+- На `f47942e` отдельный QA выявил ошибку адресации заказа в E2E-фикстуре. Общий gate FAIL. Независимое ревью выявило B1 (утрата retry группового ZIP) и B2 (T03 не проверяет оформление). Исправления J2/J5 и B1/B2 готовы и адресно проверены. Следующий шаг — зафиксировать новый снимок, отправить в draft и передать на QA и повторное ревью. Visual `incomplete`/J5 и native T09 остаются BLOCKED результатом J2/J5.
+- GitHub Actions workflow `RaBit API — PR checks` отключён вручную. Для `f47942e` подтверждено 0 запусков и 0 check runs. Проверки перед merge выполняются на отдельных стендах по AGENTS.md.
 - Причина исходной жалобы с двумя Z004 не установлена. Отдельный известный filesort Q1 остаётся наблюдением без измеренной деградации. Исходный checkout и его локальная папка OPS-stage-gallery-cleanup сохраняются отдельно.
 - Следующая команда полного QA: `E2E_STANDS=2 E2E_GROUPS=a,b E2E_KERNEL_ROOT=/home/user/rebit-p2p/api/public/bitrix E2E_VENDOR_ROOT=/home/user/rabit-api/api/vendor E2E_PHP_CLI_IMAGE=rabit-api-e2e-php-cli:local E2E_PHP_FPM_IMAGE=rabit-api-e2e-php-fpm:local E2E_NGINX_IMAGE=rabit-api-e2e-nginx:local make test-e2e`. Git: `git status --short`, `git rev-parse HEAD origin/main`, `git diff --check origin/main HEAD`. Перед новым чтением индекса после правки выполнить `ast-index update`.
 
@@ -190,3 +191,43 @@
 - `docker run --rm --pull=never --network none --read-only --tmpfs /tmp:rw --user 1000:1000 -v "$PWD/api:/app:ro" -v /home/user/rabit-api/api/vendor:/app/vendor:ro -w /app --entrypoint php rabit-api-e2e-php-cli:local vendor/bin/phpunit --do-not-cache-result --testsuite=unit --filter='PhotoFilesTest|OriginalFilesTest|FileAccessTest|DownloadFlowTest|OrderEmailFlowTest|OrderEmailAttachmentsTest|InstitutionDigital|InstitutionPrintArchive|ProductionFlowTest|PrintArchiveLayoutTest|OrderEntitlementsTest|OrderMapperTest|StorefrontQuoteTest'` — **PASS, 169 tests / 1468 assertions**. Лог `var/order-delivery-premerge/integrated-unit-final.log`. T05-R1, T06-R2, T08-FS-REFRESH и unit-часть T09 прошли на новой базе.
 - Точечный PHP CS Fixer dry-run `--config=public/local/php-cs-fixer.php --allow-risky=yes --using-cache=no --path-mode=override` по списку всех изменённых 27 PHP-файлов — PASS, 0/27, включая оба PHP-файла E2E. Лог `var/order-delivery-premerge/integrated-format-final.log`. Python runner PASS 24/24. `git diff --cached --check origin/main` и `ast-index update` PASS. Тестовый профиль оплаты присутствует; содержимое не читалось и не сохранялось.
 - Кандидат готов для публикации в существующем draft PR и передачи отдельным исполнителям. Авторская проверка не заменяет независимое ревью. Обязательные T01–T04 и T07-FULL на точном объединённом коммите PENDING, как и реальные сценарии T09.
+
+### 17.11.2026 22:06 МСК — кандидат отправлен в draft #235
+
+- `git commit -m 'Merge main into stage 1 order photo delivery'` PASS, `f47942e52cc7d9556bf5c6cad03d2e9a29aef54d`, родители `fc21d54` и `ece56d2`. `git diff --check origin/main HEAD` PASS, merge-base `ece56d2`. Manifest 35/35 SHA-256 совпал с Git blobs. Файл `var/order-delivery-premerge/source-manifest-f47942e.json`, SHA-256 `cadff2f5fb72991d76e95467183100c6f6fda0279c2ba483aa506c487b58178a`.
+- Fast-forward push через HTTPS с helper настроенного gh: `acb1363..f47942e` в `refs/heads/codex/ops-order-photo-delivery`. `link_pull_request` подтвердил привязку #235. Чтение и PATCH описания через `gh api .../pulls/235` PASS; OPEN/DRAFT и подтверждённый head `f47942e`.
+- Ревью и полный QA должны проверить точный code head и base из manifest. Старый пользовательский checkout не переключался.
+
+### 17.11.2026 22:08 МСК — предmerge QA и ревью запущены на `f47942e`
+
+- Независимое ревью в свежей T3 сессии, запрошено gpt-6.2-sol/max, диапазон `ece56d2..f47942e`, 58 файлов. Отчёт ожидается в `var/order-delivery-premerge/independent-review-f47942e.md`. Роль Reviewer, без E2E.
+- Отдельный QA gpt-6-astra/max запущен на том же head. Полный `make test-e2e` (a+b на раздельных стендах) и проверка артефактов desktop/mobile. Отчёты ожидаются в `var/order-delivery-premerge/premerge-astra-qa/`. T01–T04, T07-FULL и реальная часть T09 помечены PENDING до результата.
+- PR #235 остаётся draft до результатов. PR #242 MERGED, наблюдение за ним завершено. Для #235 включается наблюдение T3. Следующий шаг после завершения исполнителей — сверить оба результата, затем решать готовность к merge.
+
+### 17.11.2026 22:24 МСК — проверено уведомление T3 об отсутствии GitHub checks
+
+- `gh api repos/rebit-pro/rabit-api/actions/workflows/makefile.yml` подтвердил `disabled_manually` (ID `355706697`, `updated_at` 25.09.2026). Это соответствует AGENTS.md. `git diff --exit-code origin/main HEAD -- .github/workflows/makefile.yml` PASS.
+- `gh api .../actions/runs?head_sha=f47942e…` и `gh api .../commits/f47942e…/check-runs`: по 0 результатов. `gh api .../pulls/235` подтвердил OPEN/DRAFT, `mergeable_state=clean`, head `f47942e`, base `ece56d2`. Настройки workflow и PR не менялись.
+- В опубликованном локальном отчёте QA пока PENDING, независимый итог ревью не получен. Они остаются условиями merge; уведомление GitHub не изменило последовательность. Текущая подписка T3 сохранена.
+
+### 17.11.2026 22:28 МСК — отдельный QA `f47942e` FAIL, выбранная правка
+
+- QA gpt-6-astra/max, `make test-e2e` с явным окружением из точки продолжения, run `rabit-e2e-4f57fe123107`, FAIL без повторов. PHP lint 1829, PHPStan, PHPUnit 1418 / 53752 assertions, frontend check/build, UI 129 и Commerce 253 — PASS. Browser a 81 PASS, b 82 PASS / 1 FAIL. Native 4/23 PASS с Notification, 19 BLOCKED. 35/35 SHA-256 совпали, два стенда очищены.
+- T04 и T07-FULL FAIL: J2/J5 на строке 67 получил `available / true / 3 файла` после `hide-original`. T09 native BLOCKED, visual J4 PASS, `incomplete`/J5 не достигнуты. Подробные доказательства: `var/order-delivery-premerge/premerge-astra-qa/report.md`, `report.json`, `run-01/fixture-interaction-evidence.json`.
+- Код и сохранённые идентификаторы подтверждают неоднозначность выбора: `institution-digital` создал семь заказов из J4 с тем же `BUYER_EMAIL`, отдельными ID и отдельными фото. `j5_original` выбирал последнюю оплаченную запись по email. Браузер сохранял исходный `printCopy.orderId` и access key. Снимок строки MySQL, которую выбрал helper, не сохранился. Сценарий воспроизведения ошибки адресации подтверждён, отдельного продуктового дефекта отчет не выявил.
+- До правки plan.md дополнен T10-J5-ORDER-SCOPE. Используем явный public ID J4 и его email, чтобы проверять и менять только его оригиналы и операции. Запуск повторяется на новом коммите, исходный FAIL остаётся в отчёте.
+
+### 17.11.2026 22:33 МСК — получено ревью `f47942e`, правки B1 и B2
+
+- Независимый Reviewer gpt-6.2-sol/max проверил `ece56d2..f47942e` (58 файлов, 35/35 SHA-256). Вердикт «требуются правки». Отчёт `var/order-delivery-premerge/independent-review-f47942e.md`.
+- B1 HIGH подтверждён сравнением с `ece56d2`: временно недоступный физический файл с сохранённым путём раньше оставлял групповой печатный ZIP `pending` и после восстановления переходил в `ready` на той же версии. `f47942e` сразу помечал её `FAILED / ORIGINAL_MISSING`. Восстановить проверку файла writer, сохранив немедленную ошибку только при отсутствии DTO метаданных. T06 расширяется проверкой повторной готовности той же версии и байтов.
+- B2 MEDIUM подтверждён чтением браузерного теста: после quote из восстановленной корзины он очищал её и создавал J4 через API с собственными lines. Целевой тест собирает идентичный состав в просмотрщике, откладывает первый ответ до смены кадра, восстанавливает корзину и оформляет обычной формой. `GET .../orders/current` берёт пары из сохранённых строк, проверяем их по ожидаемому составу.
+- До правки B1/B2 обновлён план. Неблокирующие замечания N1–N6 и открытый Q1 сохранены в отчёте. Финальные проверки выполняются на новом коммите.
+
+### 17.11.2026 22:37 МСК — три причины закрыты правками, до полного QA
+
+- B1 RED: Docker PHPUnit `--testsuite=unit --filter=testMissingOriginalKeepsTheExportedExtensionAndRetriesTheNewArchive` — 2 теста / 22 assertions, ожидаемое `PENDING` отличалось от фактического `FAILED` на первой попытке. Лог `var/order-delivery-premerge/print-retry-red.log`.
+- B1 GREEN: при сохранённом DTO групповой `ArchiveBuilder` снова передаёт путь writer. Исполняемая часть равна base `ece56d2`; её PHPDoc различает отсутствие метаданных и сбой чтения. Тесты PNG/WebP проверяют CSV, ожидание без ZIP и сборку той же версии после восстановления. `docker run … vendor/bin/phpunit --do-not-cache-result --testsuite=unit --filter='ProductionFlowTest|PrintArchiveLayoutTest|InstitutionPrintArchive|InstitutionDigital|FileAccessTest|OrderEmailFlowTest'` — PASS, 102/1225. Лог `var/order-delivery-premerge/print-retry-green.log`.
+- B2: J4 формируется через просмотрщик и обычную форму корзины. Первый запрос `/quotes` задерживается до смены кадра и далее проходит в настоящий API. После перехода на страницу корзины проверяются восстановленные строки, после HTTP 201 читаются строки того же сохранённого заказа. Состав J4 для оплаты, писем, кассы и архивов сохранён. T03 live PENDING.
+- T10: PHP fixture определяет оплаченный исходный J4 по public ID и email. Файл, маркер, чтение и доставка писем, ageing привязаны к внутреннему ID заказа. Browser утверждает, что скрытый кадр входит в проверяемый набор и восстановлен тот же кадр. T04/T10 live PENDING.
+- PHP lint и PHP CS Fixer dry run по 3 затронутым PHP — PASS, 0/3. `tsc --project tsconfig.e2e.json --noEmit` и `eslint` по двум тестовым файлам PASS после точечного форматирования. Логи `var/order-delivery-premerge/blockers-format.log`, `blockers-e2e-static-final.log`. `ast-index update` и `git diff --check` PASS. Сохраняется исходный FAIL `f47942e`; код новой версии ещё не прошёл E2E.
