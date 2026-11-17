@@ -1,0 +1,221 @@
+{
+  "runId": "rabit-e2e-1c464c41d61b",
+  "codeHead": "b11a23f4502c63fc49eeda0ca53a40703a5bc249",
+  "base": "ece56d2e0169d811b1cd51767ae6219b539d43ee",
+  "manifestSha256": "bc2f6e8a5d0529fc965d74d736b99bc441e9c2b43a7dacbde25f1fefa3cfe7ff",
+  "qaReportSha256": "596affb2d488b5e26b107d15e89e27b871a85cf35c8cfac450d09cd1458be4b8",
+  "model": "gpt-6-astra",
+  "effort": "max",
+  "startedAt": "2026-11-17T20:00:59.819494+00:00",
+  "finishedAt": "2026-11-17T20:08:56.779191+00:00",
+  "exitCode": 0,
+  "durationSeconds": 476.969,
+  "verdict": "PASS",
+  "scope": "full gate on two isolated stands",
+  "counts": {
+    "stages": {
+      "passed": 47,
+      "failed": 0,
+      "cancelled": 0
+    },
+    "phpLint": {
+      "passedFiles": 1829,
+      "failed": 0
+    },
+    "phpstan": {
+      "errors": 0,
+      "cacheRestored": true,
+      "reanalysedFiles": 0
+    },
+    "phpunit": {
+      "passed": 1418,
+      "assertions": 53766,
+      "failed": 0,
+      "skipped": 0
+    },
+    "frontendUi": {
+      "passed": 129,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "frontendCommerce": {
+      "passed": 253,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "frontendBuild": {
+      "modules": 1330,
+      "status": "PASS"
+    },
+    "browser": {
+      "passed": 164,
+      "a": 81,
+      "b": 83,
+      "files": 38,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "retries": 0,
+      "errors": 0
+    },
+    "native": {
+      "passed": 23,
+      "failed": 0
+    },
+    "cases": {
+      "passed": 10,
+      "failed": 0,
+      "blocked": 0
+    },
+    "visual": {
+      "passed": 9,
+      "requiredDesktopMobile": 8,
+      "extraTouch": 1
+    }
+  },
+  "testCases": {
+    "T01": "PASS",
+    "T02": "PASS",
+    "T03": "PASS",
+    "T04": "PASS",
+    "T05": "PASS",
+    "T06": "PASS",
+    "T07": "PASS",
+    "T08": "PASS",
+    "T09": "PASS",
+    "T10": "PASS"
+  },
+  "t03": {
+    "expectedHeading": "Кадр A002",
+    "sequence": [
+      "hold first real quote request",
+      "verify first request assignmentId/productId/quantity",
+      "click next frame",
+      "expect exact A2 heading visible",
+      "expect product-count absent",
+      "finally releaseQuote and route.continue",
+      "build remaining cart through viewer",
+      "goto cart and match restored quote",
+      "submit normal form, expect HTTP 201",
+      "GET saved order and match all expected lines"
+    ],
+    "storedAssignmentPairsMatch": true
+  },
+  "t04": {
+    "largeFileBytes": 20971521,
+    "linkOnlyPhotos": 1,
+    "queuedBeforeFailure": 1,
+    "lettersAfterRecovery": 2,
+    "capturedMimeLetters": 2,
+    "duplicateOperations": 0
+  },
+  "visual": [
+    {
+      "name": "j4-desktop-print-copy-hint.png",
+      "pixelSize": [
+        1440,
+        1000
+      ],
+      "status": "PASS",
+      "sha256": "37dcb83828d583d789f3ebf7f86cfc573870865ffb358ecc58b442395f8a58e1"
+    },
+    {
+      "name": "j4-desktop-print-files.png",
+      "pixelSize": [
+        1440,
+        2489
+      ],
+      "status": "PASS",
+      "sha256": "86884c22ebb862ef303dfff491aa73c0165a86a4af50572d32151b78d2e3fbef"
+    },
+    {
+      "name": "j4-mobile-print-copy-hint.png",
+      "pixelSize": [
+        390,
+        844
+      ],
+      "status": "PASS",
+      "sha256": "3c557517c2f770bcdeb86b0f7743fef1fffa9cd103150c9079209c4a5ac8ec61"
+    },
+    {
+      "name": "j4-mobile-print-files.png",
+      "pixelSize": [
+        390,
+        3839
+      ],
+      "status": "PASS",
+      "sha256": "d257f6245b8678939b78c738b2ec4cdf388911670cabb1895ee051876fd84218"
+    },
+    {
+      "name": "j4-phone-save-files.png",
+      "pixelSize": [
+        390,
+        844
+      ],
+      "status": "PASS",
+      "sha256": "6b87db8fe31bf8514e8d2a749473e46e18946c5213e019552d09229e3771b4da"
+    },
+    {
+      "name": "j5-desktop-order-email.png",
+      "pixelSize": [
+        1440,
+        2489
+      ],
+      "status": "PASS",
+      "sha256": "5f89dad31ab81b67d43231040031da3c11d345c9f922b2ab7c540f417b3e18b8"
+    },
+    {
+      "name": "j5-mobile-order-email.png",
+      "pixelSize": [
+        390,
+        3802
+      ],
+      "status": "PASS",
+      "sha256": "9bc82e34cd57827bf06ccd08b304fa4c90293eeb573a72fb8ec36355cd2b9113"
+    },
+    {
+      "name": "ops-desktop-files-incomplete.png",
+      "pixelSize": [
+        1440,
+        2210
+      ],
+      "status": "PASS",
+      "sha256": "ee4584a55399f4bf71fc168ec7030e7ee2fef61770e5e9af3ec863998e4ee554"
+    },
+    {
+      "name": "ops-mobile-files-incomplete.png",
+      "pixelSize": [
+        390,
+        3370
+      ],
+      "status": "PASS",
+      "sha256": "9024813fc7e5a6934d190a1f3ac19f3f24505337591c1031fe27651851b57383"
+    }
+  ],
+  "cleanup": {
+    "stopped": true,
+    "remaining": {
+      "containers": [],
+      "networks": [],
+      "volumes": []
+    }
+  },
+  "sourceHashesMatched": 35,
+  "previousQa": [
+    {
+      "codeHead": "f47942e",
+      "runId": "rabit-e2e-4f57fe123107",
+      "gate": "FAIL",
+      "reason": "J2/J5 fixture selected another order with the same email"
+    },
+    {
+      "codeHead": "6db9d81",
+      "runId": "rabit-e2e-0a65f65e9f91",
+      "gate": "PASS",
+      "acceptance": "BLOCKED",
+      "reason": "T03 did not explicitly observe the next frame before releasing quote"
+    }
+  ]
+}
