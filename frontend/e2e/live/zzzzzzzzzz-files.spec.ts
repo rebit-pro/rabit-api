@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { test, expect, type APIResponse, type Page } from '@playwright/test';
-import { orderConsents, payOnProvider } from './helpers.js';
+import { acceptCheckoutDocuments, fillCheckoutChild, orderConsents, payOnProvider, productAdd } from './helpers.js';
 
 // J1: purchased originals of a paid order. The order is paid on the YooKassa test page like in G1; without the test
 // shop keys the spec proves only the honest unpaid state, and the gate accepts no skipped test.
@@ -50,8 +50,8 @@ function remember(created: Created, idempotencyKey: string) {
   writeFileSync(path, JSON.stringify(orders));
 }
 type Line = { assignmentId: string; productId: string; quantity: number };
-/** Places the order of the priced lines; the gifts are the child codes whose print reached the threshold. */
-async function placeOrder(page: Page, path: string, lines: Line[], email: string): Promise<Created & { gifts: string[] }> {
+/** Places the order of the priced lines. */
+async function placeOrder(page: Page, path: string, lines: Line[], email: string): Promise<Created> {
   const priced = (await body(await page.request.post(path + '/quotes', { data: { lines } }))).data;
   const idempotencyKey = key();
   const created = (
@@ -70,7 +70,7 @@ async function placeOrder(page: Page, path: string, lines: Line[], email: string
     )
   ).data as Created;
   remember(created, idempotencyKey);
-  return { ...created, gifts: priced.quote.gifts };
+  return created;
 }
 /** A full set of child A: the bundle grants every current photo of the child. */
 async function placeBundleOrder(page: Page): Promise<Created> {
@@ -142,7 +142,7 @@ const printGallery = '/api/v1/public/galleries/' + fixture.print.token;
 type Product = { id: string; kind: string; active: boolean; price: number; name: string };
 type Child = { code: string; photos: { id: string; assignmentId: string; code: string }[] };
 
-test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and never its neighbour', async ({
+test('J4-T06, J4-T07, J4-T08, OPS-T01-T03: mixed print and digital keep their selected frames and unique originals', async ({
   page,
   browser,
   baseURL
@@ -184,19 +184,97 @@ test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and nev
   }
   await page.evaluate((groupId) => localStorage.removeItem('morefoto:cart:v1:' + groupId), fixture.print.groupId);
 
-  // A1 in up to two formats, the first one three times; B1 once in the cheapest format, below the gift threshold.
-  const a1 = photo('A', frames.A1).assignmentId;
-  const created = await placeOrder(
-    page,
-    printGallery,
-    [
-      ...prints.slice(0, 2).map((print, index) => ({ assignmentId: a1, productId: print.id, quantity: index ? 1 : 3 })),
-      { assignmentId: photo('B', frames.B1).assignmentId, productId: cheapest.id, quantity: 1 }
-    ],
-    'print.j4@example.test'
+  // OPS-T03: pass the real quote request through only after switching away from the selected frame.
+  await page.goto('/g/' + fixture.print.token);
+  const viewer = page.getByRole('dialog');
+  const openFrame = (code: string, frame: Frame) =>
+    page.getByRole('button', { name: 'Открыть кадр ' + photo(code, frame).code, exact: true }).click();
+  const closeFrame = () => viewer.getByRole('button', { name: 'Закрыть просмотр' }).click();
+  const line = (code: string, frame: Frame, product: Product, quantity = 1) => ({
+    assignmentId: photo(code, frame).assignmentId,
+    photoId: frame.photoId,
+    productId: product.id,
+    quantity
+  });
+  const firstLine = line('A', frames.A1, cheapest);
+  await openFrame('A', frames.A1);
+  let releaseQuote = () => {};
+  const heldQuote = new Promise<void>((resolve) => (releaseQuote = resolve));
+  await page.route(
+    '**/quotes',
+    async (route) => {
+      await heldQuote;
+      await route.continue();
+    },
+    { times: 1 }
   );
-  expect(created.gifts).not.toContain('B');
+  const started = page.waitForRequest((request) => request.url().endsWith('/quotes') && request.method() === 'POST');
+  try {
+    await productAdd(page, cheapest.name).click();
+    expect((await started).postDataJSON().lines).toEqual([
+      { assignmentId: firstLine.assignmentId, productId: firstLine.productId, quantity: 1 }
+    ]);
+    await viewer.getByRole('button', { name: 'Следующий кадр' }).click();
+    await expect(viewer.getByRole('heading', { name: 'Кадр ' + photo('A', frames.A2).code, exact: true })).toBeVisible();
+    await expect(viewer.getByTestId('product-count')).toHaveCount(0);
+  } finally {
+    releaseQuote();
+  }
+  await expect
+    .poll(async () => page.evaluate((groupId) => localStorage.getItem('morefoto:cart:v1:' + groupId), fixture.print.groupId))
+    .toContain(firstLine.assignmentId);
+
+  // Complete the mixed cart in the viewer. Keep these exact lines through restored cart, checkout and persistence.
+  await viewer.getByRole('button', { name: 'Предыдущий кадр' }).click();
+  const printCount = viewer.locator(`[data-product="${cheapest.id}"]`).getByTestId('product-count');
+  await expect(printCount).toHaveText('1');
+  for (const quantity of [2, 3]) {
+    await viewer.getByRole('button', { name: 'Добавить ещё один: ' + cheapest.name, exact: true }).click();
+    await expect(printCount).toHaveText(String(quantity));
+  }
+  if (prints[1]) {
+    await productAdd(page, prints[1].name).click();
+    await expect(viewer.locator(`[data-product="${prints[1].id}"]`).getByTestId('product-count')).toHaveText('1');
+  }
+  await productAdd(page, digital!.name).click();
+  await expect(viewer.getByTestId('product-remove')).toBeVisible();
+  await closeFrame();
+  await openFrame('B', frames.B1);
+  await productAdd(page, cheapest.name).click();
+  await expect(printCount).toHaveText('1');
+  await closeFrame();
+  await openFrame('B', frames.B2);
+  await productAdd(page, digital!.name).click();
+  await expect(viewer.getByTestId('product-remove')).toBeVisible();
+  await closeFrame();
+
+  const expectedLines = [
+    ...prints.slice(0, 2).map((print, index) => line('A', frames.A1, print, index ? 1 : 3)),
+    line('A', frames.A1, digital!),
+    line('B', frames.B1, cheapest),
+    line('B', frames.B2, digital!)
+  ];
+  const quoted = page.waitForResponse((response) => response.url().endsWith('/quotes') && response.request().method() === 'POST');
+  await page.goto('/g/' + fixture.print.token + '/cart');
+  const draft = (await (await quoted).json()).data.quote;
+  expect(draft.lines).toMatchObject(expectedLines);
+  expect(draft.gifts).not.toContain('B');
+  await page.getByRole('textbox', { name: 'Email', exact: true }).fill('print.j4@example.test');
+  await fillCheckoutChild(page);
+  await acceptCheckoutDocuments(page);
+  const submitted = page.waitForResponse((response) => response.url().endsWith('/orders') && response.request().method() === 'POST');
+  await page.getByTestId('create-order').click();
+  const response = await submitted;
+  expect(response.status(), await response.text()).toBe(201);
+  const created = (await response.json()).data as Created;
+  const idempotencyKey = await response.request().headerValue('Idempotency-Key');
+  expect(idempotencyKey).toBeTruthy();
+  remember(created, idempotencyKey!);
+  await expect(page).toHaveURL(new RegExp('/orders/access/' + created.accessKey + '$'));
   const headers = asBuyer(created.accessKey);
+  const saved = (await body(await page.request.get('/api/v1/public/orders/current', { headers }))).data;
+  expect(saved.id).toBe(created.id);
+  expect(saved.quote.lines).toMatchObject(expectedLines);
   Object.assign(record.printCopy, { orderId: created.id, accessKey: created.accessKey });
   save();
   // J4-T07: until the payment is confirmed the print gives no originals.
@@ -211,15 +289,15 @@ test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and nev
   renameSync('var/j4-pay-request.json.tmp', 'var/j4-pay-request.json');
   await expect.poll(() => existsSync('var/j4-paid.json'), { timeout: 60000 }).toBe(true);
   expect(JSON.parse(readFileSync('var/j4-paid.json', 'utf8')).error).toBeUndefined();
-  // Printed frames once each; the print threshold keeps granting the whole set of its child (J1-DEC-01).
-  const expected = [frames.A1, frames.B1, ...(created.gifts.includes('A') ? [frames.A2] : [])].map((frame) => frame.photoId);
+  // A1 is owed by print and digital but appears once; B2 is owed only by its separately purchased digital line.
+  const expected = [frames.A1, frames.B1, frames.B2, ...(draft.gifts.includes('A') ? [frames.A2] : [])].map((frame) => frame.photoId);
   const state = (await body(await page.request.get(files, { headers }))).data;
   expect(state.state).toBe('available');
   expect(state.items.map((item: { photoId: string }) => item.photoId).sort()).toEqual(expected.sort());
-  expect((await request({ kind: 'file', photoIds: [frames.B2.photoId] }, 422)).error.code).toBe('PHOTO_NOT_ENTITLED');
+  expect((await request({ kind: 'file', photoIds: [crypto.randomUUID()] }, 422)).error.code).toBe('PHOTO_NOT_ENTITLED');
   expect((await body(await page.request.get(files, { headers: asBuyer(key() + key()) }), 404)).error.code).toBe('ORDER_NOT_FOUND');
 
-  // The single files are the exact originals of the printed frames.
+  // The individual downloads contain the exact originals of the printed and purchased digital frames.
   const original = async (frame: Frame) => {
     const ready = (await request({ kind: 'file', photoIds: [frame.photoId] })).data;
     expect(ready.status).toBe('ready');
@@ -230,6 +308,7 @@ test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and nev
   };
   const printedA = await original(frames.A1);
   const printedB = await original(frames.B1);
+  const purchasedDigitalB = await original(frames.B2);
   record.printCopy.fileDownloadId = printedA.id;
 
   for (const viewport of [
@@ -258,7 +337,11 @@ test('J4-T06, J4-T07, J4-T08: a paid print opens each printed frame once and nev
   ]);
   const zip = readFileSync(await archive.path());
   expect(zip.subarray(0, 4).toString('hex')).toBe('504b0304');
-  expect([zip.indexOf(printedA.bytes) > 0, zip.indexOf(printedB.bytes) > 0]).toEqual([true, true]);
+  expect([zip.indexOf(printedA.bytes) > 0, zip.indexOf(printedB.bytes) > 0, zip.indexOf(purchasedDigitalB.bytes) > 0]).toEqual([
+    true,
+    true,
+    true
+  ]);
   record.printCopy.archiveBytes = zip.length;
   save();
 

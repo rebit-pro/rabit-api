@@ -32,6 +32,32 @@ final class StorefrontQuoteTest extends TestCase
     private const string BUNDLE = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
     private const string A = '11111111-1111-4111-8111-111111111111';
     private const string B = '22222222-2222-4222-8222-222222222222';
+    private const string PHOTO_B = '33333333-3333-4333-8333-333333333333';
+
+    public function testPrintAndDigitalKeepDifferentSelectedPhotos(): void
+    {
+        $quote = $this->calculator(secondPhotoId: self::PHOTO_B)->calculate(str_repeat('a', 64), [
+            new QuoteLineInputDto(self::A, self::PRINT, 1),
+            new QuoteLineInputDto(self::B, 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 1),
+        ])['quote'];
+
+        self::assertSame([self::A, self::B], array_column($quote['lines'], 'assignmentId'));
+        self::assertSame(['photo-id', self::PHOTO_B], array_column($quote['lines'], 'photoId'));
+        self::assertSame(['physical', 'digital'], array_column(array_column($quote['lines'], 'product'), 'kind'));
+    }
+
+    public function testPrintAndDigitalOfTheSameFrameKeepBothPaidLines(): void
+    {
+        $quote = $this->calculator()->calculate(str_repeat('a', 64), [
+            new QuoteLineInputDto(self::A, self::PRINT, 1),
+            new QuoteLineInputDto(self::A, 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 1),
+        ])['quote'];
+
+        self::assertSame(['photo-id', 'photo-id'], array_column($quote['lines'], 'photoId'));
+        self::assertSame(['physical', 'digital'], array_column(array_column($quote['lines'], 'product'), 'kind'));
+        self::assertSame([false, false], array_column($quote['lines'], 'coveredByGift'));
+        self::assertSame(20000, $quote['total']);
+    }
 
     public function testSharedPhotoDoesNotCombineGiftThresholdsOfTwoChildren(): void
     {
@@ -186,7 +212,7 @@ final class StorefrontQuoteTest extends TestCase
     }
 
     /** @param array<int,bool> $eligible */
-    private function calculator(bool $staff = false, array $eligible = [], string $state = 'open', int $price = 10000, int $photoRevision = 1, ?PaymentCostPolicy $policy = null, ?string $correction = null): StorefrontQuote
+    private function calculator(bool $staff = false, array $eligible = [], string $state = 'open', int $price = 10000, int $photoRevision = 1, ?PaymentCostPolicy $policy = null, ?string $correction = null, ?string $secondPhotoId = null): StorefrontQuote
     {
         $access = $this->createStub(GalleryAccessInterface::class);
         $access->method('resolve')->willReturn(new GalleryAccessOutputDto(
@@ -196,7 +222,7 @@ final class StorefrontQuoteTest extends TestCase
             1,
             [
                 new GalleryAssignmentOutputDto(self::A, 'photo-id', 'child-a', 1, 'A', 'A001', 100, 100, $photoRevision),
-                new GalleryAssignmentOutputDto(self::B, 'photo-id', 'child-b', 2, 'B', 'B001', 100, 100, $photoRevision),
+                new GalleryAssignmentOutputDto(self::B, $secondPhotoId ?? 'photo-id', 'child-b', 2, 'B', 'B001', 100, 100, $photoRevision),
             ],
         ));
         $products = [

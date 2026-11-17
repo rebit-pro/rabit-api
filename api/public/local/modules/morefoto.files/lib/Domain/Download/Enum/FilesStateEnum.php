@@ -10,6 +10,7 @@ enum FilesStateEnum: string
     case UNPAID = 'unpaid';
     case REVIEW = 'review';
     case EMPTY = 'empty';
+    case INCOMPLETE = 'incomplete';
     case EXPIRED = 'expired';
     case AVAILABLE = 'available';
 }

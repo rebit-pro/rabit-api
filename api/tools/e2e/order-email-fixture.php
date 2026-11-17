@@ -3,16 +3,18 @@
 declare(strict_types=1);
 
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\Connection;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Morefoto\Files\Application\Delivery\UseCase\DispatchOrderEmailsUseCase;
+use Morefoto\Files\Application\Files\Service\OrderFileAccess;
 use Rebit\Notification\Application\Delivery\UseCase\DeliverEmailUseCase;
 
 // J2/J5: the stand has no cron, no mail worker and no SMTP. On a request of the browser it acts for them:
-// - dispatch: runs app:files:order-emails once and returns the order key from the latest queued letter to the recipient;
-// - deliver: sends the queued letters of the recipient through the real H1 transport and Bitrix mail; custom_mail() catches
+// - dispatch: runs app:files:order-emails once and returns the key from the latest queued letter for the fixture order;
+// - deliver: sends the queued letters of that order through the real H1 transport and Bitrix mail; custom_mail() catches
 //   each MIME message instead of msmtp, and the answer lists every letter with the sha256 of its decoded attachments;
-// - age: moves the letters of the recipient eleven minutes back, so the buyer may ask for the letters again (J2-DEC-07).
+// - age: moves the deliveries of that order eleven minutes back, so the buyer may ask for the letters again (J2-DEC-07).
 if ('test' !== getenv('APP_ENV') || !is_file('/runtime/j2-request.json')) {
     throw new RuntimeException('The order email fixture requires the disposable stand and a request of the browser.');
 }
@@ -29,34 +31,47 @@ foreach (['rebit.notification', 'morefoto.files'] as $module) {
 }
 $request = json_decode((string)file_get_contents('/runtime/j2-request.json'), true, flags: JSON_THROW_ON_ERROR);
 $connection = Application::getConnection();
-$recipient = $connection->getSqlHelper()->forSql((string)$request['recipient']);
+$sql = $connection->getSqlHelper();
+$publicId = $sql->forSql((string)($request['orderId'] ?? ''));
+$recipient = $sql->forSql((string)($request['recipient'] ?? ''));
+$order = $connection->query("SELECT ID FROM mf_order WHERE PUBLIC_ID='{$publicId}' AND BUYER_EMAIL='{$recipient}' AND PAYMENT_STATUS='paid'")->fetchRaw();
+if (false === $order) {
+    throw new RuntimeException('The specified paid fixture order is required.');
+}
+$orderId = (int)$order['ID'];
 $answer = match ($request['action'] ?? 'dispatch') {
-    'dispatch' => j5_dispatch($connection, $recipient),
-    'deliver' => j5_deliver($connection, $recipient),
-    'age' => j5_age($connection, $recipient),
+    'dispatch' => j5_dispatch($connection, $orderId),
+    'deliver' => j5_deliver($connection, $orderId),
+    'age' => j5_age($connection, $orderId),
+    'hide-original' => j5_original($orderId, true),
+    'restore-original' => j5_original($orderId, false),
 };
 file_put_contents('/runtime/j2-answer.json', json_encode($answer, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
 echo "J2 order email fixture: answered\n";
 
 /** @return array{created: int, queued: int, key: null|string} */
-function j5_dispatch(Bitrix\Main\DB\Connection $connection, string $recipient): array
+function j5_dispatch(Connection $connection, int $orderId): array
 {
     $result = ServiceLocator::getInstance()->get(DispatchOrderEmailsUseCase::class)->execute(100);
-    $letter = $connection->query("SELECT BODY FROM b_rebit_notification_operation WHERE CONSUMER_KEY='files-order-email' AND RECIPIENT='{$recipient}'
-        ORDER BY CREATED_AT DESC,ID DESC LIMIT 1")->fetchRaw();
+    $letter = $connection->query("SELECT n.BODY FROM mf_file_delivery d
+        JOIN mf_file_delivery_part p ON p.DELIVERY_ID=d.ID JOIN b_rebit_notification_operation n ON n.ID=p.OPERATION_ID
+        WHERE d.ORDER_ID={$orderId} AND n.CONSUMER_KEY='files-order-email'
+        ORDER BY d.CREATED_AT DESC,d.ID DESC,p.NUMBER DESC LIMIT 1")->fetchRaw();
     $key = is_array($letter) && 1 === preg_match('~/orders/access/([a-f0-9]{64})~', (string)$letter['BODY'], $match) ? $match[1] : null;
 
     return ['created' => $result->created, 'queued' => $result->queued, 'key' => $key];
 }
 
 /** @return array{delivered: int, letters: list<array<string, mixed>>} */
-function j5_deliver(Bitrix\Main\DB\Connection $connection, string $recipient): array
+function j5_deliver(Connection $connection, int $orderId): array
 {
     $mailbox = '/runtime/j5-mail';
     is_dir($mailbox) || mkdir($mailbox, 0777, true);
     array_map('unlink', glob($mailbox . '/*.eml') ?: []);
-    $operations = $connection->query("SELECT ID FROM b_rebit_notification_operation WHERE CONSUMER_KEY='files-order-email' AND RECIPIENT='{$recipient}'
-        AND STATUS IN ('pending','retryWait') ORDER BY CREATED_AT,DEDUP_KEY");
+    $operations = $connection->query("SELECT n.ID FROM mf_file_delivery d
+        JOIN mf_file_delivery_part p ON p.DELIVERY_ID=d.ID JOIN b_rebit_notification_operation n ON n.ID=p.OPERATION_ID
+        WHERE d.ORDER_ID={$orderId} AND n.CONSUMER_KEY='files-order-email' AND n.STATUS IN ('pending','retryWait')
+        ORDER BY d.CREATED_AT,d.ID,p.NUMBER");
     $delivered = 0;
     while (false !== ($row = $operations->fetchRaw())) {
         ServiceLocator::getInstance()->get(DeliverEmailUseCase::class)->execute((string)$row['ID']);
@@ -71,11 +86,44 @@ function j5_deliver(Bitrix\Main\DB\Connection $connection, string $recipient): a
 }
 
 /** @return array{aged: int} */
-function j5_age(Bitrix\Main\DB\Connection $connection, string $recipient): array
+function j5_age(Connection $connection, int $orderId): array
 {
-    $connection->queryExecute("UPDATE mf_file_delivery SET CREATED_AT=CREATED_AT - INTERVAL 11 MINUTE WHERE RECIPIENT='{$recipient}'");
+    $connection->queryExecute("UPDATE mf_file_delivery SET CREATED_AT=CREATED_AT - INTERVAL 11 MINUTE WHERE ORDER_ID={$orderId}");
 
     return ['aged' => $connection->getAffectedRowsCount()];
+}
+
+/** @return array{changed: bool, photoId: string} */
+function j5_original(int $orderId, bool $hide): array
+{
+    $marker = '/runtime/j5-original-' . $orderId . '.json';
+    if (!$hide) {
+        /** @var array{path: string, hidden: string, photoId: string} $saved */
+        $saved = json_decode((string)file_get_contents($marker), true, flags: JSON_THROW_ON_ERROR);
+        if (!rename($saved['hidden'], $saved['path']) || !unlink($marker)) {
+            throw new RuntimeException('Cannot restore the fixture original.');
+        }
+
+        return ['changed' => true, 'photoId' => $saved['photoId']];
+    }
+    $files = ServiceLocator::getInstance()->get(OrderFileAccess::class)->byOrderId($orderId)->files;
+    $file = array_values($files)[0] ?? throw new RuntimeException('The fixture order has no original.');
+    if (!str_starts_with($file->absolutePath, '/runtime/private/media/')) {
+        throw new RuntimeException('Refusing to move an original outside the disposable runtime.');
+    }
+    $hidden = $file->absolutePath . '.e2e-held';
+    if (is_file($marker) || is_file($hidden)) {
+        throw new RuntimeException('A fixture original is already hidden.');
+    }
+    if (false === file_put_contents($marker, json_encode(['path' => $file->absolutePath, 'hidden' => $hidden, 'photoId' => $file->photoId], JSON_THROW_ON_ERROR))) {
+        throw new RuntimeException('Cannot record the fixture original.');
+    }
+    if (!rename($file->absolutePath, $hidden)) {
+        unlink($marker);
+        throw new RuntimeException('Cannot hide the fixture original.');
+    }
+
+    return ['changed' => true, 'photoId' => $file->photoId];
 }
 
 /** Bitrix calls it instead of mail(): the stand keeps the exact MIME message that msmtp would get. */

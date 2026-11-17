@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { test, expect, type APIResponse, type Page } from '@playwright/test';
 import { login, token } from './helpers.js';
+import type { BuyerOrder } from '../../src/modules/morefoto/orders/live/types.js';
 
 // G2: receipts of «Чеки от ЮKassa». The J4 print order paid through the fixture provider gets its prepayment receipt, the
 // organizer marks the print handed over in the «Печать» block of the L1 group, and the closing receipt settles the
@@ -81,7 +82,7 @@ test.beforeAll(() => {
   save();
 });
 
-test('G2-T15: the buyer sees the prepayment receipt of the paid print with its requisites', async ({ page }, testInfo) => {
+test('G2-T15: the mixed-order receipt has print prepayment and digital full payment with its requisites', async ({ page }, testInfo) => {
   const before = await receipts(page, printOrder.key);
   expect([before.enabled, before.channel, before.receipts.length, before.receipts[0]?.status]).toEqual([true, 'email', 1, 'pending']);
 
@@ -90,7 +91,15 @@ test('G2-T15: the buyer sees the prepayment receipt of the paid print with its r
   const after = await receipts(page, printOrder.key);
   const payment = after.receipts[0] as Receipt;
   expect([payment.kind, payment.status, payment.fiscalDocumentNumber]).toEqual(['payment', 'sent', '1001']);
-  expect(payment.items.every((item) => item.paymentMode === 'full_prepayment')).toBe(true);
+  const order = (await body(await page.request.get('/api/v1/public/orders/current', { headers: { 'X-Order-Key': printOrder.key } })))
+    .data as BuyerOrder;
+  const modes = new Map(
+    order.quote.lines
+      .filter((line) => line.total > 0)
+      .map((line) => [line.product.name, line.product.kind === 'physical' ? 'full_prepayment' : 'full_payment'])
+  );
+  expect(new Set(payment.items.map((item) => item.paymentMode))).toEqual(new Set(['full_prepayment', 'full_payment']));
+  for (const item of payment.items) expect(item.paymentMode).toBe(modes.get(item.description));
   expect(payment.items.reduce((sum, item) => sum + item.amount * item.quantity, 0)).toBe(payment.amount);
   expect((await body(await page.request.get(receiptsPath, { headers: { 'X-Order-Key': 'b'.repeat(64) } }), 404)).error.code).toBe(
     'ORDER_NOT_FOUND'
@@ -107,6 +116,7 @@ test('G2-T15: the buyer sees the prepayment receipt of the paid print with its r
     await expect(block).toContainText('Чек оплаты');
     await expect(block).toContainText('Отправлен на e-mail');
     await expect(block).toContainText('Предоплата 100%');
+    await expect(block).toContainText('Полный расчёт');
     await expect(block.getByTestId('order-receipt-fiscal')).toContainText('1001');
     await expect(block).toContainText('После выдачи печати придёт закрывающий чек.');
     printOrder.number = (await page.getByTestId('order-number').textContent())?.replace('Заказ ', '').trim() ?? '';
@@ -176,7 +186,10 @@ test('G2-T07, G2-T16: the organizer marks the print handed over and the closing 
   const [payment, closed] = buyer.receipts as Receipt[];
   expect(answer.closing).toHaveLength(1);
   expect(answer.closing[0]!.prepayment).toBe(closed!.amount);
-  expect(closed!.amount).toBe(payment!.amount);
+  const prepaid = payment!.items.filter((item) => item.paymentMode === 'full_prepayment');
+  expect(closed!.amount).toBe(prepaid.reduce((sum, item) => sum + item.amount * item.quantity, 0));
+  expect(closed!.items).toEqual(prepaid.map((item) => ({ ...item, paymentMode: 'full_payment' })));
+  expect(closed!.amount).toBeLessThan(payment!.amount);
   expect(answer.closing[0]!.items.every((item) => item[3] === 'full_payment')).toBe(true);
   expect([closed!.kind, closed!.status, closed!.fiscalDocumentNumber, closed!.handedAt === null]).toEqual([
     'closing',

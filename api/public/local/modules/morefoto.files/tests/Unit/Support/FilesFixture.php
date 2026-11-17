@@ -31,6 +31,7 @@ final class FilesFixture
     public bool $latePayment = false;
     public ?string $until = '2027-02-28 07:00:00';
     public ?string $now = null;
+    public bool $hasEntitlements = true;
 
     /** @var array<string, string> ID кадра → абсолютный путь оригинала */
     public array $paths = [];
@@ -99,8 +100,8 @@ final class FilesFixture
                     $paid ? '2027-01-31 07:00:00' : null,
                     $this->fixture->latePayment,
                     $paid ? $this->fixture->until : null,
-                    [new OrderEntitledPhotoOutputDto(FilesFixture::P1, 'AB', 'AB001')],
-                    [12],
+                    $this->fixture->hasEntitlements ? [new OrderEntitledPhotoOutputDto(FilesFixture::P1, 'AB', 'AB001')] : [],
+                    $this->fixture->hasEntitlements ? [12] : [],
                 );
             }
         };
@@ -143,6 +144,7 @@ final class FilesFixture
 
     public function withOriginals(string ...$photoIds): self
     {
+        $this->hasEntitlements = true;
         foreach ($photoIds as $id) {
             $this->paths[$id] = '/nonexistent/' . $id . '.jpg';
         }

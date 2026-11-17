@@ -33,8 +33,11 @@ interface DeliveryRepositoryInterface
 
     public function countSince(int $orderId, \DateTimeImmutable $since): int;
 
-    /** @return list<FileDelivery> письма, ещё не поставленные в очередь H1 */
+    /** @return list<FileDelivery> письма, ещё не поставленные в H1: сначала давно не обновлявшиеся, затем по ID */
     public function held(int $limit): array;
+
+    /** Переносит ждущую отправку в конец очереди повторов; сохраняет статус, план писем и уже поставленные части. */
+    public function defer(string $publicId, \DateTimeImmutable $now): void;
 
     /**
      * J5: записывает план писем один раз вместе с их составом; повтор и параллельная отправка той же доставки получают

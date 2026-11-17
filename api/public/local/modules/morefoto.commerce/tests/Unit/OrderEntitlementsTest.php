@@ -83,6 +83,24 @@ final class OrderEntitlementsTest extends TestCase
         self::assertSame([13], $order->childIds, 'The gift keeps granting the whole set of its child.');
     }
 
+    public function testPrintAAndPurchasedDigitalBGrantBothDifferentFrames(): void
+    {
+        $orders = $this->createStub(OrderRepository::class);
+        $orders->method('find')->willReturn($this->rows([[
+            'ID' => '9', 'PUBLIC_ID' => 'o-9', 'NUMBER' => 'MF-0009', 'SHOOT_ID' => '4', 'PAYMENT_STATUS' => 'paid',
+            'PAID_AT' => '2027-01-31 07:00:00', 'LATE_PAYMENT' => '0', 'GIFTS' => '[]',
+        ]]));
+        $orders->method('lines')->willReturn($this->rows([
+            ['CHILD_ID' => '11', 'CHILD_CODE' => 'A', 'PHOTO_PUBLIC_ID' => 'p-a', 'PHOTO_CODE' => 'A-01', 'PRODUCT_KIND' => 'physical'],
+            ['CHILD_ID' => '11', 'CHILD_CODE' => 'A', 'PHOTO_PUBLIC_ID' => 'p-b', 'PHOTO_CODE' => 'A-02', 'PRODUCT_KIND' => 'digital'],
+        ]));
+
+        $order = $this->entitlements($orders)->byId(9);
+
+        self::assertSame([['p-a', 'A', 'A-01'], ['p-b', 'A', 'A-02']], $this->photos($order->photos));
+        self::assertSame([], $order->childIds);
+    }
+
     public function testUnpaidOrderHasNoDeadline(): void
     {
         $orders = $this->createStub(OrderRepository::class);

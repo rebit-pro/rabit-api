@@ -7,6 +7,8 @@ namespace Morefoto\Production\Tests\Unit;
 use Morefoto\Production\Domain\Archive\Enum\VersionStatusEnum;
 use Morefoto\Production\Tests\Unit\Support\ProductionFixture;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Rebit\Share\Contracts\Media\Dto\OriginalFileOutputDto;
 use Rebit\Share\Shared\Exception\HttpException;
 
 require_once __DIR__ . '/../bootstrap.php';
@@ -19,6 +21,62 @@ require_once __DIR__ . '/../bootstrap.php';
 final class ProductionFlowTest extends TestCase
 {
     private const string KEY = '0123456789abcdef0123456789abcdef';
+
+    #[DataProvider('originalExtensions')]
+    public function testMissingOriginalKeepsTheExportedExtensionAndRetriesTheNewArchive(string $extension, string $mimeType): void
+    {
+        $f = new ProductionFixture();
+        $f->group(ProductionFixture::GROUP, 10, 7, '2026-10-15 12:00:00');
+        $filename = 'A001.' . $extension;
+        $f->paidLine(ProductionFixture::GROUP, 'line-001', 'A001', 'print', 'Печать', 1, filename: $filename);
+        $photoId = array_key_first($f->originalFiles);
+        $original = $f->originalFiles[$photoId];
+        $path = $f->root . '/media/' . $filename;
+        self::assertTrue(rename($original->absolutePath, $path));
+        $source = new OriginalFileOutputDto($photoId, $mimeType, $original->bytes, $filename, $path);
+        $f->originalFiles[$photoId] = $source;
+        $f->at('2026-10-15 13:00:00');
+        self::assertSame(1, $f->run()->built);
+        $version = array_values($f->archives->versions)[0];
+        $before = $f->export()->execute(ProductionFixture::ORGANIZER, $version->publicId)->content;
+        $entry = 'Печать/' . $filename;
+        self::assertStringContainsString('"' . $entry . '"', $before);
+        $zip = new \ZipArchive();
+        self::assertTrue($zip->open($f->storage()->absolutePath($version->archivePath)));
+        $bytes = file_get_contents($path);
+        self::assertSame($bytes, $zip->getFromName($entry));
+        self::assertSame($before, $zip->getFromName('состав.csv'));
+        $zip->close();
+
+        $hidden = $path . '.missing';
+        self::assertTrue(rename($path, $hidden));
+        $f->originalFiles[$photoId] = new OriginalFileOutputDto($photoId, $mimeType, $original->bytes, $filename, $path, available: false);
+        self::assertSame($before, $f->export()->execute(ProductionFixture::ORGANIZER, $version->publicId)->content);
+        $f->paidLine(ProductionFixture::GROUP, 'line-002', 'A001', 'print', 'Печать', 1);
+        $next = $f->create()->execute(ProductionFixture::ORGANIZER, ProductionFixture::GROUP, self::KEY);
+        self::assertSame(0, $f->run()->built);
+        $pending = $f->archives->find($next->id);
+        self::assertNotNull($pending);
+        self::assertSame([VersionStatusEnum::PENDING, 1], [$pending->status, $pending->attempts]);
+        self::assertFalse($f->storage()->exists($pending->archivePath));
+
+        self::assertTrue(rename($hidden, $path));
+        $f->originalFiles[$photoId] = $source;
+        $f->at('2026-10-15 13:06:00');
+        self::assertSame(1, $f->run()->built);
+        $ready = $f->archives->find($next->id);
+        self::assertNotNull($ready);
+        self::assertSame([VersionStatusEnum::READY, 2], [$ready->status, $ready->attempts]);
+        self::assertTrue($zip->open($f->storage()->absolutePath($ready->archivePath)));
+        self::assertSame($bytes, $zip->getFromName($entry));
+        $zip->close();
+    }
+
+    public static function originalExtensions(): iterable
+    {
+        yield 'png' => ['png', 'image/png'];
+        yield 'webp' => ['webp', 'image/webp'];
+    }
 
     public function testRunBuildsOnlyPaidPrintAnHourAfterTheDeadlineAndOnlyOnce(): void
     {

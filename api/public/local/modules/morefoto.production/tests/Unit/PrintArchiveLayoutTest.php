@@ -216,6 +216,10 @@ final class PrintArchiveLayoutTest extends TestCase
         $legacy = $this->group();
         $legacy->paidLine($legacy::GROUP, 'line-old', 'A001', 'print', 'Печать', 2);
         $photo = $legacy->paid[$legacy::GROUP][0]->photoId;
+        $original = $legacy->originalFiles[$photo];
+        $path = $legacy->root . '/media/A001.png';
+        self::assertTrue(rename($original->absolutePath, $path));
+        $legacy->originalFiles[$photo] = new OriginalFileOutputDto($photo, 'image/png', $original->bytes, 'A001.png', $path);
         $line = $this->line('line-old', $photo, quantity: 2, entry: 'Печать/A001_x2');
         $id = 'cccccccc-cccc-4ccc-8ccc-000000000001';
         self::assertTrue($legacy->archives->create(new NewVersion(
@@ -239,11 +243,17 @@ final class PrintArchiveLayoutTest extends TestCase
         self::assertSame(1, $old->layoutVersion);
         self::assertTrue($legacy->builder()->build($old));
         self::assertTrue($zip->open($legacy->storage()->absolutePath($old->archivePath)));
-        self::assertSame('JPEG:A001', $zip->getFromName('Печать/A001_x2.jpg'));
+        $entry = 'Печать/A001_x2.png';
+        self::assertSame(file_get_contents($path), $zip->getFromName($entry));
         $csv = (string)$zip->getFromName('состав.csv');
-        self::assertCount(11, $this->csvRows($csv)[0]);
-        self::assertSame($csv, $legacy->export()->execute($legacy::CURATOR, $id)->content);
+        $rows = $this->csvRows($csv);
+        self::assertCount(11, $rows[0]);
+        self::assertSame($entry, $rows[1][2]);
         $zip->close();
+
+        self::assertTrue(unlink($path));
+        $legacy->originalFiles[$photo] = new OriginalFileOutputDto($photo, 'image/png', $original->bytes, 'A001.png', $path, available: false);
+        self::assertSame($csv, $legacy->export()->execute($legacy::CURATOR, $id)->content);
     }
 
     #[DataProvider('rejectedGroupNames')]

@@ -55,6 +55,43 @@ final class OrderMapperTest extends TestCase
         self::assertSame([null, null, 'buyer@example.test'], [$records['order']['BUYER_NAME'], $records['order']['BUYER_PHONE'], $records['order']['BUYER_EMAIL']]);
     }
 
+    public function testSnapshotKeepsDifferentPrintAndDigitalPhotoIds(): void
+    {
+        $validated = $this->validated();
+        $quote = $validated->quote->quote;
+        $assignmentB = '22222222-2222-4222-8222-222222222222';
+        $photoB = '44444444-4444-4444-8444-444444444444';
+        $quote['lines'][1]['assignmentId'] = $assignmentB;
+        $quote['lines'][1]['childCode'] = 'B';
+        $quote['lines'][1]['photoId'] = $photoB;
+        $quote['lines'][1]['photo'] = ['id' => $photoB, 'assignmentId' => $assignmentB, 'code' => 'B001', 'width' => 1200, 'height' => 800];
+        $quote['lines'][1]['product']['kind'] = 'digital';
+        $gallery = $validated->gallery;
+        $mixed = new ValidatedQuoteOutputDto(
+            new QuoteOutputDto($quote, str_repeat('c', 64), '2026-09-22T10:15:00+00:00'),
+            new GalleryAccessOutputDto($gallery->group, $gallery->state, $gallery->referenceNow, $gallery->capabilityRevision, [
+                $gallery->assignments[0],
+                new GalleryAssignmentOutputDto($assignmentB, $photoB, 'child-b', 13, 'B', 'B001', 1200, 800, 1),
+            ]),
+        );
+
+        $records = (new OrderRecordMapper())->records(
+            $mixed,
+            new OrderBuyer('buyer@example.test', '', null),
+            new OrderChildName('Иван', 'Иванов'),
+            new MediaScopeOutputDto(5, 2, 'shoot-id', 1, 'group-id', false, 'institution-id', 'regular'),
+            'order-id',
+            ['line-1', 'line-2'],
+            str_repeat('a', 64),
+            str_repeat('c', 64),
+            new \DateTimeImmutable('2026-09-22T13:00:00+03:00'),
+        );
+
+        self::assertSame([self::ASSIGNMENT, $assignmentB], array_column($records['lines'], 'ASSIGNMENT_PUBLIC_ID'));
+        self::assertSame([self::PHOTO, $photoB], array_column($records['lines'], 'PHOTO_PUBLIC_ID'));
+        self::assertSame(['physical', 'digital'], array_column($records['lines'], 'PRODUCT_KIND'));
+    }
+
     public function testUnknownAssignmentCannotEnterSnapshot(): void
     {
         $validated = $this->validated();

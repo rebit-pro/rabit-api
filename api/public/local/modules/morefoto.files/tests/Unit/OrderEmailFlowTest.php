@@ -5,13 +5,21 @@ declare(strict_types=1);
 namespace Morefoto\Files\Tests\Unit;
 
 use Morefoto\Files\Application\Delivery\Dto\OrderLetterInputDto;
+use Morefoto\Files\Application\Delivery\Service\OrderEmailSender;
+use Morefoto\Files\Application\Delivery\UseCase\DispatchOrderEmailsUseCase;
+use Morefoto\Files\Application\Files\Dto\FileAccessOutputDto;
+use Morefoto\Files\Application\Files\Service\OrderFileAccess;
 use Morefoto\Files\Domain\Delivery\Enum\DeliveryKindEnum;
 use Morefoto\Files\Domain\Delivery\Enum\DeliveryStatusEnum;
+use Morefoto\Files\Domain\Delivery\Service\AttachmentPlanner;
+use Morefoto\Files\Domain\Delivery\Service\DeliveryPolicy;
 use Morefoto\Files\Infrastructure\Mail\OrderEmailComposer;
 use Morefoto\Files\Tests\Unit\Support\DeliveryFixture;
 use Morefoto\Files\Tests\Unit\Support\FilesFixture;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Rebit\Share\Contracts\Commerce\Dto\OrderEmailOutputDto;
+use Rebit\Share\Contracts\Commerce\OrderEmailLinkInterface;
 use Rebit\Share\Shared\Exception\HttpException;
 
 require_once __DIR__ . '/../bootstrap.php';
@@ -59,6 +67,57 @@ final class OrderEmailFlowTest extends TestCase
         $f->enabled = true;
         self::assertSame(1, $f->dispatch()->execute(100)->queued);
         self::assertCount(1, $f->queued);
+    }
+
+    public function testIncompleteBatchLetsACompleteOrderPassAndSendsOnceAfterRestoration(): void
+    {
+        $f = new DeliveryFixture();
+        $f->files->withOriginals(FilesFixture::P1, FilesFixture::P2);
+        $complete = new FilesFixture()->withOriginals(FilesFixture::P1, FilesFixture::P2, FilesFixture::P3)->access()->byOrderId(7);
+        $access = $this->createStub(OrderFileAccess::class);
+        $access->method('byOrderId')->willReturnCallback(
+            static fn(int $id): FileAccessOutputDto => 101 === $id ? $complete : $f->files->access()->byOrderId(7),
+        );
+        $links = $this->createStub(OrderEmailLinkInterface::class);
+        $links->method('enabled')->willReturn(true);
+        $links->method('paidSince')->willReturn([]);
+        $links->method('find')->willReturnCallback(static fn(int $id): OrderEmailOutputDto => new OrderEmailOutputDto(
+            $id,
+            'order-' . $id,
+            'MF-' . $id,
+            DeliveryFixture::EMAIL,
+            '2027-01-31 07:00:00',
+            '2027-02-01 10:00:00',
+        ));
+        $links->method('link')->willReturn($f->link(7));
+        $sender = new OrderEmailSender(
+            $f->deliveries,
+            $links,
+            $access,
+            new AttachmentPlanner(),
+            new OrderEmailComposer('https://app.example.test'),
+            $f,
+            $f->files->clock(),
+            new NullLogger(),
+        );
+        $now = $f->files->clock()->now();
+        for ($id = 1; $id <= 101; ++$id) {
+            $f->deliveries->createAuto(sprintf('dddddddd-dddd-4ddd-8ddd-%012d', $id), $id, DeliveryFixture::EMAIL, $now);
+        }
+        $dispatch = new DispatchOrderEmailsUseCase($f->deliveries, $links, $sender, $f, new DeliveryPolicy(), $f->files->clock());
+        $f->files->now = '2027-02-10 09:01:00';
+        self::assertSame([0, 0], [$dispatch->execute(100)->queued, count($f->queued)]);
+
+        $f->files->now = '2027-02-10 09:02:00';
+        self::assertSame(1, $dispatch->execute(100)->queued, 'Полный заказ не ждёт восстановления первых ста отправок.');
+        self::assertCount(100, $f->deliveries->held(101), 'Неполные отправки остаются в очереди.');
+        self::assertSame('Заказ №MF-101 оплачен — ваши фото', $f->queued[0]->subject);
+
+        $f->files->withOriginals(FilesFixture::P3);
+        $f->files->now = '2027-02-10 09:03:00';
+        self::assertSame(100, $dispatch->execute(100)->queued);
+        self::assertSame(0, $dispatch->execute(100)->queued);
+        self::assertCount(101, $f->queued, 'Каждый заказ отправлен ровно один раз.');
     }
 
     public function testExpiredFilesOrUnpaidOrderGetNoLetter(): void

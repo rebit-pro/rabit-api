@@ -26,6 +26,8 @@ final class InMemoryDeliveries implements DeliveryRepositoryInterface
     public array $parts = [];
     /** Сколько раз план записывался впервые. */
     public int $plans = 0;
+    /** @var array<string, \DateTimeImmutable> публичный ID → время последнего изменения отправки */
+    private array $updatedAt = [];
 
     public function __construct(string $cursor = '2027-02-01 00:00:00')
     {
@@ -51,6 +53,7 @@ final class InMemoryDeliveries implements DeliveryRepositoryInterface
             }
         }
         $this->rows[$publicId] = new FileDelivery($publicId, $orderId, DeliveryKindEnum::AUTO, DeliveryStatusEnum::HELD, $recipient, null, $now, null);
+        $this->updatedAt[$publicId] = $now;
 
         return true;
     }
@@ -61,6 +64,7 @@ final class InMemoryDeliveries implements DeliveryRepositoryInterface
             return false;
         }
         $this->rows[$publicId] = new FileDelivery($publicId, $orderId, DeliveryKindEnum::MANUAL, DeliveryStatusEnum::HELD, $recipient, null, $now, null);
+        $this->updatedAt[$publicId] = $now;
         $this->keys[$publicId] = $idempotencyHash;
 
         return true;
@@ -105,7 +109,17 @@ final class InMemoryDeliveries implements DeliveryRepositoryInterface
 
     public function held(int $limit): array
     {
-        return array_slice(array_values(array_filter($this->rows, static fn(FileDelivery $row): bool => DeliveryStatusEnum::HELD === $row->status)), 0, $limit);
+        $held = array_values(array_filter($this->rows, static fn(FileDelivery $row): bool => DeliveryStatusEnum::HELD === $row->status));
+        usort($held, fn(FileDelivery $left, FileDelivery $right): int => $this->updatedAt[$left->publicId] <=> $this->updatedAt[$right->publicId]);
+
+        return array_slice($held, 0, $limit);
+    }
+
+    public function defer(string $publicId, \DateTimeImmutable $now): void
+    {
+        if (DeliveryStatusEnum::HELD === $this->rows[$publicId]->status) {
+            $this->updatedAt[$publicId] = max($this->updatedAt[$publicId], $now);
+        }
     }
 
     public function plan(string $publicId, LetterPlan $plan, \DateTimeImmutable $now): void
@@ -115,6 +129,7 @@ final class InMemoryDeliveries implements DeliveryRepositoryInterface
             return;
         }
         ++$this->plans;
+        $this->updatedAt[$publicId] = $now;
         $this->rows[$publicId] = new FileDelivery($row->publicId, $row->orderId, $row->kind, $row->status, $row->recipient, null, $row->createdAt, null, count($plan->letters), $plan->linkOnly);
         foreach ($plan->letters as $index => $files) {
             $this->parts[$publicId][$index + 1] = new DeliveryPart($index + 1, $files, null);

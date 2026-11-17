@@ -75,6 +75,25 @@ final class PhotoFilesTest extends TestCase
         self::assertSame($relative, $storage->path('12345678-abcd-4abc-8abc-123456789abc', $photo));
     }
 
+    public function testPrivateStorageDetectsRemovalAndRestorationByAnotherProcess(): void
+    {
+        $path = $this->directory . '/original.jpg';
+        file_put_contents($path, 'original bytes');
+        $storage = new LocalPrivatePhotoStorage($this->directory);
+        self::assertTrue($storage->exists('original.jpg'));
+
+        $process = proc_open([PHP_BINARY, '-r', 'exit(unlink($argv[1]) ? 0 : 1);', $path], [], $pipes);
+        self::assertIsResource($process);
+        self::assertSame(0, proc_close($process));
+
+        self::assertFalse($storage->exists('original.jpg'));
+
+        $restored = proc_open([PHP_BINARY, '-r', 'exit(false !== file_put_contents($argv[1], "restored bytes") ? 0 : 1);', $path], [], $pipes);
+        self::assertIsResource($restored);
+        self::assertSame(0, proc_close($restored));
+        self::assertTrue($storage->exists('original.jpg'));
+    }
+
     public function testRendererWritesOnlyWatermarkedWebpVariants(): void
     {
         if (!function_exists('imagewebp')) {
