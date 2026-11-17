@@ -25,6 +25,7 @@ const emit = defineEmits<{
   remove: [institution: Institution];
   retry: [];
   archive: [institution: Institution];
+  digitalArchive: [institution: Institution];
 }>();
 const sort = shallowRef<UiTableSort>({ key: 'name', direction: 'asc' });
 const columns: UiTableColumn[] = [
@@ -84,7 +85,7 @@ const path = (id: string) => '/cabinet/institutions/' + encodeURIComponent(id);
     title="Учреждения"
     label-key="name"
     density="compact"
-    actions-width="136px"
+    actions-width="176px"
     :columns="columns"
     :rows="rows"
     :total="total"
@@ -119,6 +120,16 @@ const path = (id: string) => '/cabinet/institutions/' + encodeURIComponent(id);
     </template>
     <template #actions="{ row }">
       <div class="institution-actions">
+        <v-btn
+          v-if="canReadArchive"
+          v-tooltip="'Скачать заказанные электронные кадры'"
+          icon="mdi-image-multiple-outline"
+          variant="text"
+          density="compact"
+          :disabled="disabled"
+          :aria-label="'Скачать заказанные электронные кадры: ' + row.name"
+          @click="emit('digitalArchive', institution(row.id))"
+        />
         <v-btn
           v-if="canReadArchive"
           icon="mdi-folder-zip-outline"

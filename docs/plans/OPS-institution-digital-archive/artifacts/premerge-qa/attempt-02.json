@@ -1,0 +1,25 @@
+{
+  "attempt": 2,
+  "command": "python3 tools/run-browser-e2e.py run --groups a,b --kernel /home/user/rebit-p2p/api/public/bitrix --vendor /home/user/rabit-api/api/vendor --php-cli rabit-api-e2e-php-cli:local --php-fpm rabit-api-e2e-php-fpm:local --nginx rabit-api-e2e-nginx:local",
+  "cwd": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive",
+  "startedAt": "2026-11-17T16:14:54.483756+00:00",
+  "status": "PASS",
+  "supervisorPid": 7184,
+  "supervisorSessionId": 7184,
+  "supervisorInitialParent": 6723,
+  "log": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive/var/institution-digital-archive/premerge-astra-qa/attempt-02.log",
+  "signals": [],
+  "runIds": [
+    "rabit-e2e-40b49eeedfbe"
+  ],
+  "launchMode": "independent session; direct file output; no runner timeout or argument changes",
+  "authorization": "Explicit user permission for one unchanged-head reproducibility repeat after preserving first FAIL",
+  "runnerPid": 7185,
+  "heartbeatAt": "2026-11-17T16:24:27.004973+00:00",
+  "supervisorCurrentParent": 6723,
+  "nativeProofCapturedAt": "2026-11-17T16:24:11.999539+00:00",
+  "nativeProofSource": "rabit-e2e-40b49eeedfbe-b-fpm:/runtime/institution-digital-proof.json",
+  "exitCode": 0,
+  "finishedAt": "2026-11-17T16:24:37.028569+00:00",
+  "durationSeconds": 580.53
+}

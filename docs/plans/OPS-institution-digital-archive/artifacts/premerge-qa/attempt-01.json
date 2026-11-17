@@ -1,0 +1,41 @@
+{
+  "attempt": 1,
+  "command": "python3 tools/run-browser-e2e.py run --groups a,b --kernel /home/user/rebit-p2p/api/public/bitrix --vendor /home/user/rabit-api/api/vendor --php-cli rabit-api-e2e-php-cli:local --php-fpm rabit-api-e2e-php-fpm:local --nginx rabit-api-e2e-nginx:local",
+  "cwd": "/home/user/rabit-api/.worktrees/ops-institution-digital-archive",
+  "startedAt": "2026-11-17T15:54:04.989846+00:00",
+  "status": "FAIL",
+  "log": "var/institution-digital-archive/premerge-astra-qa/attempt-01.log",
+  "runnerExitCode": null,
+  "execSessionExitCode": 143,
+  "wrapperInterrupted": true,
+  "newRunIds": [
+    "rabit-e2e-480386667006"
+  ],
+  "resultsObservedAt": "2026-11-17T16:10:43.622944+00:00",
+  "browser": {
+    "a": {
+      "startTime": "2026-11-17T15:55:16.635Z",
+      "duration": 390559.678,
+      "expected": 81,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "b": {
+      "startTime": "2026-11-17T15:55:16.634Z",
+      "duration": 621544.7270000001,
+      "expected": 79,
+      "skipped": 2,
+      "unexpected": 2,
+      "flaky": 0
+    }
+  },
+  "failureFacts": [
+    "G1-T14: at 2026-11-17T15:59:49.399Z, refusal of test SBP did not become visible within 30000 ms; received «Проверяем оплату». YooMoney navigation was not reached in this scenario.",
+    "G1-T09/T10 and #83 skipped after serial G1 failure.",
+    "G2-T14: no sandbox payment receipt; expected provider yookassa, received undefined.",
+    "Tool session 79631 ended with 143; runner owner PID 88285 absent, state remained b browser running and stopped=false. Sender of signal not established.",
+    "Original runner did not execute the 19 native verifiers of b. Supplemental diagnostic: 18 PASS, G1 verifier FAIL."
+  ],
+  "retryAuthorization": "Explicit user permission: one repeat for reproducibility on same code head and 83 hashes, without code/expectation/timeout changes."
+}

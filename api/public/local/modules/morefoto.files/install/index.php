@@ -17,14 +17,14 @@ final class Morefoto_Files extends CModule
 
     public function DoInstall(): void
     {
-        foreach (['rebit.share', 'morefoto.commerce', 'morefoto.media'] as $dependency) {
+        foreach (['rebit.share', 'morefoto.access', 'morefoto.organization', 'morefoto.commerce', 'morefoto.media'] as $dependency) {
             if (!Loader::includeModule($dependency)) {
                 throw new RuntimeException('Required module is unavailable: ' . $dependency);
             }
         }
-        foreach (['mf_file_download', 'mf_file_download_request'] as $table) {
+        foreach (['mf_file_download', 'mf_file_download_request', 'mf_institution_digital_archive'] as $table) {
             if (!Application::getConnection()->isTableExists($table)) {
-                throw new RuntimeException('Apply the J1 files migration first: missing ' . $table);
+                throw new RuntimeException('Apply the Files migrations first: missing ' . $table);
             }
         }
         if (!ModuleManager::isModuleInstalled($this->MODULE_ID)) {

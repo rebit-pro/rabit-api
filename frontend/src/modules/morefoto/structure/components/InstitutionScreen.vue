@@ -9,6 +9,7 @@ import { bulkNotice, type BulkNotice } from '../../ui/removal';
 import type { UiTableColumn, UiTableRow } from '../../ui/table-types';
 import InstitutionOverview from './InstitutionOverview.vue';
 import InstitutionPrintArchiveDialog from '../../production/live/InstitutionPrintArchiveDialog.vue';
+import InstitutionDigitalArchiveDialog from '../../files/InstitutionDigitalArchiveDialog.vue';
 import StructureWidget from './StructureWidget.vue';
 import StructureRemoveDialog from './StructureRemoveDialog.vue';
 import StructureFields from './StructureFields.vue';
@@ -19,6 +20,7 @@ import { defaultShootId, type Group, type Shoot } from '../model';
 const props = defineProps<{ institutionId: string }>();
 const auth = useAuthStore();
 const archiveOpen = shallowRef(false);
+const digitalArchiveOpen = shallowRef(false);
 const canReadArchive = computed(() => auth.user?.role === 'organizer' || auth.user?.role === 'curator');
 const router = useRouter();
 const canManage = computed(() => auth.user?.role === 'organizer' && !!auth.user.permissions?.includes('organization.manage'));
@@ -236,6 +238,15 @@ async function confirmRemove(): Promise<void> {
       <v-btn v-if="canReadArchive" variant="outlined" prepend-icon="mdi-folder-zip-outline" :disabled="disabled" @click="archiveOpen = true"
         >Архив с печатью</v-btn
       >
+      <v-btn
+        v-if="canReadArchive"
+        class="institution-digital-action"
+        variant="outlined"
+        prepend-icon="mdi-image-multiple-outline"
+        :disabled="disabled"
+        @click="digitalArchiveOpen = true"
+        >Скачать заказанные электронные кадры</v-btn
+      >
       <v-btn v-if="canManage" variant="outlined" prepend-icon="mdi-pencil-outline" :disabled="disabled" @click="editInstitution"
         >Изменить учреждение</v-btn
       >
@@ -255,6 +266,11 @@ async function confirmRemove(): Promise<void> {
     :institution-id="archiveOpen ? institutionId : null"
     :institution-name="snapshot?.name ?? ''"
     @close="archiveOpen = false"
+  />
+  <InstitutionDigitalArchiveDialog
+    :institution-id="digitalArchiveOpen ? institutionId : null"
+    :institution-name="snapshot?.name ?? ''"
+    @close="digitalArchiveOpen = false"
   />
   <v-progress-linear v-if="loading" indeterminate aria-label="Загрузка учреждения" class="mb-5" />
   <v-alert v-if="error" type="error" variant="tonal" role="alert" class="mb-5">{{ error }}</v-alert>
@@ -444,6 +460,15 @@ async function confirmRemove(): Promise<void> {
   </AdminDialog>
 </template>
 <style scoped>
+.institution-digital-action {
+  max-width: 100%;
+  height: auto;
+  min-height: 40px;
+  padding-block: var(--mf-space-2);
+}
+.institution-digital-action :deep(.v-btn__content) {
+  white-space: normal;
+}
 .institution-title {
   overflow-wrap: anywhere;
 }

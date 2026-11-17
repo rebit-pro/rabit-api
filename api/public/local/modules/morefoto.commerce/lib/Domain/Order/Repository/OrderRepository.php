@@ -226,6 +226,22 @@ final readonly class OrderRepository
             AND l.PRODUCT_KIND='physical' AND l.PHOTO_PUBLIC_ID IS NOT NULL ORDER BY o.ID,l.LINE_NO");
     }
 
+    /** Купленные электронные позиции учреждения на момент снимка; срок покупательской выдачи здесь не применяется. */
+    public function purchasedDigitalLines(int $institutionId, string $at, int $limit): Result
+    {
+        $cutoff = Application::getConnection()->getSqlHelper()->forSql($at);
+        $limit = max(1, $limit);
+
+        return $this->query("SELECT o.PUBLIC_ID AS ORDER_PUBLIC_ID,o.NUMBER,o.GROUP_PUBLIC_ID,o.SHOOT_ID,
+            l.PUBLIC_ID,l.CHILD_ID,l.CHILD_CODE,l.PRODUCT_KIND,l.PHOTO_PUBLIC_ID
+            FROM mf_order o INNER JOIN mf_order_line l ON l.ORDER_ID=o.ID
+            WHERE o.INSTITUTION_ID={$institutionId} AND o.PAYMENT_STATUS='paid' AND o.LATE_PAYMENT=0
+            AND o.PAID_AT IS NOT NULL AND o.PAID_AT<='{$cutoff}'
+            AND COALESCE(o.PAID_RECORDED_AT,o.PAID_AT)<='{$cutoff}'
+            AND l.PRODUCT_KIND IN ('digital','bundle') AND l.COVERED_BY_GIFT=0
+            ORDER BY o.ID,l.LINE_NO LIMIT {$limit}");
+    }
+
     /**
      * J2: заказы, оплату которых сервер подтвердил после курсора (момент, ID); поздняя оплата и заказы до выкладки J2
      * (без момента) не входят.

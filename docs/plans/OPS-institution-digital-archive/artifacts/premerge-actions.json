@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-11-17T17:15:02.999453+00:00",
+  "pr": 242,
+  "head": "1459df1336f318905eaf5f6085daff1147243c47",
+  "repositoryActionsEnabled": true,
+  "workflow": {
+    "id": 355706697,
+    "name": "RaBit API — PR checks",
+    "path": ".github/workflows/makefile.yml",
+    "state": "disabled_manually",
+    "updatedAt": "2026-09-25T12:41:57+03:00"
+  },
+  "workflowRunsForHead": 0,
+  "configurationChanged": false,
+  "prDescriptionUpdated": true,
+  "mergePending": "independent code review",
+  "api": "GitHub CLI REST"
+}

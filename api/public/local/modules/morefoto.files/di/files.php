@@ -26,6 +26,7 @@ use Morefoto\Files\Application\Files\UseCase\GetOrderFilesUseCase;
 use Morefoto\Files\Application\Files\UseCase\OpenDownloadContentUseCase;
 use Morefoto\Files\Application\Files\UseCase\PurgeDownloadsUseCase;
 use Morefoto\Files\Application\Files\UseCase\RequestDownloadUseCase;
+use Morefoto\Files\Application\Institution\UseCase\MaintainInstitutionDigitalArchivesUseCase;
 use Morefoto\Files\Domain\Delivery\Repository\DeliveryRepositoryInterface;
 use Morefoto\Files\Domain\Delivery\Service\AttachmentPlanner;
 use Morefoto\Files\Domain\Delivery\Service\DeliveryPolicy;
@@ -210,7 +211,7 @@ return [
     ],
     DispatchPendingDownloadsCommand::class => [
         'className' => DispatchPendingDownloadsCommand::class,
-        'constructorParams' => static fn(): array => [ServiceLocator::getInstance()->get(DispatchPendingDownloadsUseCase::class)],
+        'constructorParams' => static fn(): array => [ServiceLocator::getInstance()->get(DispatchPendingDownloadsUseCase::class), ServiceLocator::getInstance()->get(MaintainInstitutionDigitalArchivesUseCase::class)],
     ],
     // J2/J5: the letters with the originals of the paid order and the link to it.
     DeliveryPolicy::class => ['className' => DeliveryPolicy::class],
@@ -305,6 +306,6 @@ return [
     ],
     PurgeDownloadsCommand::class => [
         'className' => PurgeDownloadsCommand::class,
-        'constructorParams' => static fn(): array => [ServiceLocator::getInstance()->get(PurgeDownloadsUseCase::class)],
+        'constructorParams' => static fn(): array => [ServiceLocator::getInstance()->get(PurgeDownloadsUseCase::class), ServiceLocator::getInstance()->get(MaintainInstitutionDigitalArchivesUseCase::class)],
     ],
 ];

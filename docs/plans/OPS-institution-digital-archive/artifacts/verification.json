@@ -1,0 +1,108 @@
+{
+  "status": "PASS",
+  "date": "2026-11-17T15:03:24.959278+00:00",
+  "role": "author self-check; independent review pending",
+  "branch": "codex/ops-institution-digital-archive",
+  "base": "b826a157d608c63cbf9e50aab5ebc0b54de228bb",
+  "head": "b826a157d608c63cbf9e50aab5ebc0b54de228bb",
+  "dirty": true,
+  "sourceManifest": {
+    "file": "source-manifest.json",
+    "sha256": "5680b31bce5dc02c089331ef794f6f017010108c7b1521c38f17f8a5a309cea7",
+    "files": 83,
+    "unchangedDuringGate": true
+  },
+  "run": "rabit-e2e-7c941de7cfb1",
+  "command": "python3 tools/run-browser-e2e.py run --groups a,b --kernel /home/user/rebit-p2p/api/public/bitrix --vendor /home/user/rabit-api/api/vendor --php-cli rabit-api-e2e-php-cli:local --php-fpm rabit-api-e2e-php-fpm:local --nginx rabit-api-e2e-nginx:local",
+  "scope": "full gate",
+  "totalSeconds": 602.6,
+  "environment": {
+    "php": "8.4.26",
+    "mysql": "8.0",
+    "licensedBitrixKernel": "external read-only resource",
+    "isolatedDatabase": true,
+    "httpNginx": true,
+    "realFilesWorker": true,
+    "yookassaTestShop": true
+  },
+  "checks": {
+    "phpunit": {
+      "tests": 1406,
+      "assertions": 53683,
+      "status": "PASS"
+    },
+    "phpstan": "PASS",
+    "phpLint": "PASS",
+    "frontendLint": "PASS",
+    "frontendStylelint": "PASS",
+    "frontendTypecheck": "PASS",
+    "frontendE2eTypecheck": "PASS",
+    "frontendUiTests": 129,
+    "frontendCommerceTests": 253,
+    "frontendProductionBuild": "PASS",
+    "browser": {
+      "a": {
+        "startTime": "2026-11-17T14:49:33.436Z",
+        "duration": 400861.723,
+        "expected": 81,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "b": {
+        "startTime": "2026-11-17T14:49:33.457Z",
+        "duration": 496963.958,
+        "expected": 83,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      }
+    },
+    "nativeVerifiersPassed": 22,
+    "institutionDigitalNative": {
+      "assertions": 69,
+      "largeSourceBytes": 67108864,
+      "phpPeakDeltaBytes": 0,
+      "rssDeltaKiB": 0,
+      "status": "PASS"
+    }
+  },
+  "archive": {
+    "files": 4,
+    "bytes": 24267,
+    "sha256": "2273addbbe6bc3c0f20b81263c7ac4ee7c38d828922fcd19796a2e9e58fa0bec"
+  },
+  "visual": {
+    "institution-digital-desktop.png": {
+      "sha256": "bc6bced93e2acb7cc035dd1c9d80bf7cce0e9ce7e7b9a07212fc6614ebee9253",
+      "width": 1440,
+      "height": 1000,
+      "review": "PASS"
+    },
+    "institution-digital-mobile-footer.png": {
+      "sha256": "9685aec5ba3ab438d9f23604e3d62106c6457c35353bef8f9685e28e22bbcfb0",
+      "width": 390,
+      "height": 844,
+      "review": "PASS"
+    },
+    "institution-digital-mobile.png": {
+      "sha256": "186505ef18ebdf2443b79b8a0954985c18183b68d05f97bba13c6cc95af0be26",
+      "width": 390,
+      "height": 844,
+      "review": "PASS"
+    }
+  },
+  "ownedRuntimeStopped": true,
+  "coverageLimits": [
+    "Large ZIP measurement: one 64 MiB source; 20 GiB/10000-file maximum was not benchmarked.",
+    "Empty/expired states verified by unit/native; real UI/visual covers no releases, create/ready/download/failure and mobile scroll.",
+    "Author checks are not independent review."
+  ],
+  "delivery": {
+    "commit": false,
+    "push": false,
+    "pr": false,
+    "merge": false,
+    "deploy": false
+  }
+}

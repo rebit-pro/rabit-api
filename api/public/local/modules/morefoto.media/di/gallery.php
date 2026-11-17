@@ -23,6 +23,7 @@ use Morefoto\Media\Presentation\Controller\ManagedPreviewController;
 use Morefoto\Media\Presentation\Gallery\GalleryResultMapper;
 use Rebit\Share\Application\Contract\Clock\ClockInterface;
 use Rebit\Share\Contracts\Media\ChildPhotosInterface;
+use Rebit\Share\Contracts\Media\BoundedChildPhotosInterface;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
 use Rebit\Share\Contracts\Media\GroupChildrenInterface;
 use Rebit\Share\Contracts\Handoff\GalleryOpeningInterface;
@@ -69,6 +70,12 @@ return [
     ],
     GalleryAssignmentMapper::class => [
         'className' => GalleryAssignmentMapper::class,
+    ],
+    BoundedChildPhotosInterface::class => [
+        'constructor' => static fn(): BoundedChildPhotosInterface => new ChildPhotos(
+            ServiceLocator::getInstance()->get(GalleryPhotoRepository::class),
+            ServiceLocator::getInstance()->get(GalleryAssignmentMapper::class),
+        ),
     ],
     ChildPhotosInterface::class => [
         'constructor' => static fn(): ChildPhotosInterface => new ChildPhotos(

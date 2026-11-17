@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Morefoto\Files\Presentation\Command;
 
 use Morefoto\Files\Application\Files\UseCase\PurgeDownloadsUseCase;
+use Morefoto\Files\Application\Institution\UseCase\MaintainInstitutionDigitalArchivesUseCase;
 use Rebit\Share\Presentation\Command\Attribute\WithLock;
 use Rebit\Share\Presentation\Command\RebitCommand;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -19,7 +20,7 @@ final class PurgeDownloadsCommand extends RebitCommand
 {
     private const int DEFAULT_LIMIT = 200;
 
-    public function __construct(private readonly PurgeDownloadsUseCase $purge)
+    public function __construct(private readonly PurgeDownloadsUseCase $purge, private readonly MaintainInstitutionDigitalArchivesUseCase $digital)
     {
         parent::__construct();
     }
@@ -38,7 +39,15 @@ final class PurgeDownloadsCommand extends RebitCommand
             return Command::INVALID;
         }
         $result = $this->purge->execute($limit);
-        $io->success(sprintf('Убрано загрузок: %d, ошибок: %d.', $result->processed, $result->failed));
+        $digital = $this->digital->purge($limit);
+        $failed = $result->failed + $digital->failed;
+        $message = sprintf('Убрано загрузок: %d, ошибок: %d.', $result->processed + $digital->processed, $failed);
+        if (0 !== $failed) {
+            $io->warning($message);
+
+            return Command::FAILURE;
+        }
+        $io->success($message);
 
         return Command::SUCCESS;
     }

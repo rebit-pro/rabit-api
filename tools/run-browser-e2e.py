@@ -45,6 +45,7 @@ GROUPS = json.loads((LIVE / "groups.json").read_text())
 BENCH = "zz-media-bench"
 # MySQL checks after the browser: script, file recorded by the browser, success marker, specs that produce the data.
 VERIFIERS = [
+    ("verify-institution-digital.php", "institution-digital.json", "Institution digital integration passed", ["zzzzzzzzzz-files", "zzzzzzzzzz-institution-digital"]),
     ("verify-storefront.php", None, "E4 integration passed", ["zzz-handoff", "zzzz-storefront"]),
     # E7: migration replay on groups sent before the release and the digital window fixture of the browser spec.
     ("verify-sales-windows.php", None, "E7 sales windows integration passed", ["zzzz-storefront-windows"]),
@@ -91,6 +92,7 @@ PAY_FIXTURE_SPEC = "zzzzzzzzzz-files"
 # The stand has no cron: these specs ask the stand to act through numbered requests (spec: request prefix, stand script).
 # L1 closes print sales and runs app:production:run; J2 runs app:files:order-emails and reads the letter of an order.
 STAND_REQUEST_SPECS = {
+    "zzzzzzzzzz-institution-digital": ("digital", "institution-digital-fixture.php"),
     "zzzzzzzzzzzz-print-archive": ("l1", "production-fixture.php"),
     "zzzzzzzzzz-order-email": ("j2", "order-email-fixture.php"),
     # G2: reconciles the open receipts — fixture payments with the fixture provider, the test shop payment with the test shop.
