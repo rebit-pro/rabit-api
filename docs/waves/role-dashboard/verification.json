@@ -1,0 +1,119 @@
+{
+  "rabit": {
+    "command": [
+      "python3",
+      "tools/verify-wave-graph.py",
+      "docs/waves/graph.json"
+    ],
+    "exitCode": 0,
+    "result": {
+      "waves": 40,
+      "endpoints": 99,
+      "legacyWaves": 35,
+      "readyFromMain": [
+        "E4"
+      ],
+      "blocked": [
+        "E5",
+        "D3",
+        "F2",
+        "G1",
+        "G2",
+        "I1",
+        "I2",
+        "I3",
+        "J1",
+        "J2",
+        "J3",
+        "K1",
+        "L1",
+        "L2",
+        "K2",
+        "M1",
+        "N1",
+        "N2"
+      ],
+      "negativeFixtures": [
+        "cycle",
+        "unknown dependency",
+        "unmerged dependency started",
+        "open decision started",
+        "stale unlocks",
+        "duplicate endpoint owner",
+        "missing legacy mapping",
+        "stacked PR permitted",
+        "browser gate disabled",
+        "visual gate disabled"
+      ]
+    }
+  },
+  "morefoto": {
+    "command": [
+      "python3",
+      "/home/user/MoreFoto/docs/04-bitrix-modules/wave_graph.py",
+      "/home/user/MoreFoto/docs/04-bitrix-modules/backend-waves.json"
+    ],
+    "exitCode": 0,
+    "result": {
+      "waves": 40,
+      "endpoints": 99,
+      "legacyWaves": 35,
+      "readyFromMain": [
+        "E5"
+      ],
+      "blocked": [
+        "D3",
+        "F2",
+        "G1",
+        "G2",
+        "I1",
+        "I2",
+        "I3",
+        "J1",
+        "J2",
+        "J3",
+        "K1",
+        "L1",
+        "L2",
+        "K2",
+        "M1",
+        "N1",
+        "N2"
+      ],
+      "negativeFixtures": [
+        "cycle",
+        "unknown dependency",
+        "unmerged dependency started",
+        "open decision started",
+        "stale unlocks",
+        "duplicate endpoint owner",
+        "missing legacy mapping",
+        "stacked PR permitted",
+        "browser gate disabled",
+        "visual gate disabled"
+      ]
+    }
+  },
+  "date": "2026-09-21",
+  "scope": "planning only: N1 requirements",
+  "base": "8cba22c7655b5886d5fe663523214bcd059e674b",
+  "sameN1": true,
+  "existingEndpointOwnersAndEdgesPreserved": true,
+  "onlyN1ChangedInBothGraphs": true,
+  "sberpayPR35Included": false,
+  "canonicalExternalSberpayChangesPreserved": true,
+  "readinessDifference": "RaBit base main still has old E4 status; local MoreFoto already has pending PR #35 E4/provider documentation. This PR preserves both baselines and changes only N1.",
+  "rendererReproducible": true,
+  "patchReverseCheck": "PASS",
+  "runtimeAndVisualTests": "NOT RUN: user requested plan only",
+  "canonicalFiles": {
+    "docs/04-bitrix-modules/backend-waves.json": {
+      "beforeSha256": "34308d9828e7fed021dfa88defbaf41c449d9e9c6887d64e162a0f9cf07c7d10",
+      "afterSha256": "58e6ada6800d998fb8dfd4128aac2f7989e00e28d7ef5cec65a79c6e2c3759b6"
+    },
+    "docs/04-bitrix-modules/backend-waves.md": {
+      "beforeSha256": "393bdb9dcc3a1d639c3c9e88277ccb8ae2450dc02a85b45d8b08c0aecd39ff5c",
+      "afterSha256": "4ea3745a29114b38ba652365eb52895ae20ff8de96e82d4f056c5425e017b564"
+    }
+  }
+}
