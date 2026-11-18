@@ -59,6 +59,9 @@ final readonly class StructureMediaRemoval implements StructureMediaRemovalInter
             $connection->queryExecute('DELETE FROM mf_media_child WHERE ID IN (' . implode(',', $children) . ')');
         }
         $connection->queryExecute("DELETE FROM mf_gallery_capability WHERE GROUP_PUBLIC_ID IN (SELECT UF_PUBLIC_ID FROM b_hlbd_mf_group WHERE ID IN ({$groups}))");
+        if ([] !== $removal->shootIds) {
+            $connection->queryExecute("DELETE FROM mf_shoot_gallery_link WHERE SHOOT_PUBLIC_ID IN (SELECT UF_PUBLIC_ID FROM b_hlbd_mf_shoot WHERE ID IN ({$shoots}))");
+        }
         $connection->queryExecute("DELETE FROM mf_media_shoot_state WHERE SHOOT_ID IN ({$shoots})");
         // Editors of a surviving shoot reload: their photo lists lost the removed groups.
         $connection->queryExecute('UPDATE mf_media_shoot_state SET REVISION=REVISION+1,UPDATED_AT=UTC_TIMESTAMP() WHERE SHOOT_ID IN (SELECT ID FROM b_hlbd_mf_shoot WHERE ID IN ('

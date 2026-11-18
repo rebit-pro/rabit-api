@@ -18,6 +18,7 @@ const props = withDefaults(
     sort: UiTableSort;
     selected: string[];
     selectable?: boolean;
+    selectableIds?: ReadonlySet<string>;
     removable?: boolean;
     loading?: boolean;
     error?: string;
@@ -57,8 +58,9 @@ const root = useTemplateRef<HTMLElement>('root');
 const pageSizes = [10, 25, 50];
 const smallestPage = Math.min(...pageSizes);
 const pages = computed(() => tablePageCount(props.total, props.pageSize));
-const selectedOnPage = computed(() => props.rows.filter((row) => props.selected.includes(row.id)).length);
-const allSelected = computed(() => props.rows.length > 0 && selectedOnPage.value === props.rows.length);
+const selectableRows = computed(() => (props.selectableIds ? props.rows.filter((row) => props.selectableIds!.has(row.id)) : props.rows));
+const selectedOnPage = computed(() => selectableRows.value.filter((row) => props.selected.includes(row.id)).length);
+const allSelected = computed(() => selectableRows.value.length > 0 && selectedOnPage.value === selectableRows.value.length);
 const primary = computed(() => props.columns.find((column) => column.primary) ?? props.columns[0]);
 const mobileColumns = computed(() => props.columns.filter((column) => column.mobile && column !== primary.value));
 const extraColumns = computed(() => props.columns.filter((column) => !column.mobile && column !== primary.value));
@@ -80,7 +82,7 @@ function toggle(id: string) {
   emit('select', props.selected.includes(id) ? props.selected.filter((selected) => selected !== id) : [...props.selected, id]);
 }
 function togglePage() {
-  const pageIds = props.rows.map((row) => row.id);
+  const pageIds = selectableRows.value.map((row) => row.id);
   emit('select', allSelected.value ? props.selected.filter((id) => !pageIds.includes(id)) : [...new Set([...props.selected, ...pageIds])]);
 }
 function sortBy(key: string) {
@@ -195,7 +197,7 @@ defineExpose({ focusRow });
             <tr v-for="row in rows" :key="row.id" :data-row-id="row.id" :class="{ 'ui-table-selected': selected.includes(row.id) }">
               <td v-if="selectable" class="ui-table-check">
                 <v-checkbox-btn
-                  v-if="selectable"
+                  v-if="!selectableIds || selectableIds.has(row.id)"
                   :model-value="selected.includes(row.id)"
                   :aria-label="'Выбрать ' + rowLabel(row)"
                   @update:model-value="toggle(row.id)"
@@ -228,7 +230,7 @@ defineExpose({ focusRow });
         >
           <div class="ui-table-card-title">
             <v-checkbox-btn
-              v-if="selectable"
+              v-if="selectable && (!selectableIds || selectableIds.has(row.id))"
               :model-value="selected.includes(row.id)"
               :aria-label="'Выбрать ' + rowLabel(row)"
               @update:model-value="toggle(row.id)"

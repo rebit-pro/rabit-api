@@ -7,6 +7,7 @@ import AdminDialog from '../../management/components/AdminDialog.vue';
 import UiBulkNotice from '../../ui/components/UiBulkNotice.vue';
 import { bulkNotice, type BulkNotice } from '../../ui/removal';
 import type { UiTableColumn, UiTableRow } from '../../ui/table-types';
+import InstitutionZipDialog from '../../photos/components/InstitutionZipDialog.vue';
 import InstitutionOverview from './InstitutionOverview.vue';
 import InstitutionPrintArchiveDialog from '../../production/live/InstitutionPrintArchiveDialog.vue';
 import InstitutionDigitalArchiveDialog from '../../files/InstitutionDigitalArchiveDialog.vue';
@@ -19,6 +20,7 @@ import { structureApi, structureError, structureRemovalError } from '../api';
 import { defaultShootId, type Group, type Shoot } from '../model';
 const props = defineProps<{ institutionId: string }>();
 const auth = useAuthStore();
+const importOpen = shallowRef(false);
 const archiveOpen = shallowRef(false);
 const digitalArchiveOpen = shallowRef(false);
 const canReadArchive = computed(() => auth.user?.role === 'organizer' || auth.user?.role === 'curator');
@@ -235,6 +237,9 @@ async function confirmRemove(): Promise<void> {
     <h1 class="institution-title">{{ snapshot?.name ?? 'Учреждение' }}</h1>
     <p class="mf-muted">Реквизиты, назначения, съёмки и группы учреждения</p>
     <div class="mf-actions mt-5">
+      <v-btn v-if="canManage" color="primary" prepend-icon="mdi-folder-zip-outline" :disabled="disabled" @click="importOpen = true"
+        >Загрузить ZIP по группам</v-btn
+      >
       <v-btn v-if="canReadArchive" variant="outlined" prepend-icon="mdi-folder-zip-outline" :disabled="disabled" @click="archiveOpen = true"
         >Архив с печатью</v-btn
       >
@@ -262,6 +267,17 @@ async function confirmRemove(): Promise<void> {
       >
     </div>
   </header>
+  <InstitutionZipDialog
+    v-if="importOpen && canManage"
+    :institution-id="institutionId"
+    :institution-name="snapshot?.name ?? ''"
+    @close="importOpen = false"
+    @create-shoot="
+      importOpen = false;
+      editShoot();
+    "
+    @changed="reload()"
+  />
   <InstitutionPrintArchiveDialog
     :institution-id="archiveOpen ? institutionId : null"
     :institution-name="snapshot?.name ?? ''"

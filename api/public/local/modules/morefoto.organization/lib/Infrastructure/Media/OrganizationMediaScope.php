@@ -49,6 +49,8 @@ final readonly class OrganizationMediaScope implements MediaScopeInterface
             institutionPublicId: (string)$shoot['INSTITUTION_PUBLIC_ID'],
             groupKind: $groupKind,
             groupCorrecting: $groupCorrecting,
+            shootName: (string)$shoot['UF_NAME'],
+            institutionName: (string)$shoot['INSTITUTION_NAME'],
         );
     }
 

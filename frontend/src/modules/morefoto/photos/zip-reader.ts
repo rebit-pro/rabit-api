@@ -121,8 +121,20 @@ export async function zipEntryBlob(file: Blob, entry: ZipEntry): Promise<Blob> {
   const header = await view(file, entry.offset, entry.offset + 30);
   if (header.byteLength < 30 || header.getUint32(0, true) !== localSignature) throw new ZipFormatError('Повреждена запись архива.');
   const start = entry.offset + 30 + header.getUint16(26, true) + header.getUint16(28, true);
+  if (start + entry.compressedBytes > file.size) throw new ZipFormatError('Файл в архиве обрезан.');
   const data = file.slice(start, start + entry.compressedBytes);
-  if (entry.method === 0) return data;
-  if (entry.method === 8) return new Response(data.stream().pipeThrough(new DecompressionStream('deflate-raw'))).blob();
-  throw new ZipFormatError('Неподдерживаемый способ сжатия в архиве. Пересоберите архив в формате ZIP.');
+  if (entry.method === 0 && data.size === entry.bytes) return data;
+  if (entry.method !== 8) throw new ZipFormatError('Некорректный размер или неподдерживаемый способ сжатия.');
+  let count = 0;
+  const bounded = new TransformStream<Uint8Array, Uint8Array>({
+    transform(chunk, output) {
+      count += chunk.byteLength;
+      if (count > entry.bytes) throw new ZipFormatError('Распакованный файл превышает размер из оглавления ZIP.');
+      output.enqueue(chunk);
+    },
+    flush() {
+      if (count !== entry.bytes) throw new ZipFormatError('Размер файла не совпадает с оглавлением ZIP.');
+    }
+  });
+  return new Response(data.stream().pipeThrough(new DecompressionStream('deflate-raw')).pipeThrough(bounded)).blob();
 }

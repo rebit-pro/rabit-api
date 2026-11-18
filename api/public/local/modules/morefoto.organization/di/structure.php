@@ -34,6 +34,9 @@ use Rebit\Share\Contracts\Organization\GroupReferenceInterface;
 use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 use Morefoto\Organization\Infrastructure\Media\GalleryGroup;
 use Rebit\Share\Contracts\Organization\GalleryGroupInterface;
+use Morefoto\Organization\Application\Structure\UseCase\ImportGroupsUseCase;
+use Morefoto\Organization\Presentation\Controller\ImportGroupsController;
+use Morefoto\Organization\Presentation\Structure\ImportGroupsInputMapper;
 
 $services = [
     GalleryGroupInterface::class => [
@@ -55,6 +58,9 @@ $services[MediaScopeInterface::class] = [
     ),
 ];
 $dependencies = [
+    ImportGroupsInputMapper::class => [],
+    ImportGroupsUseCase::class => [StructureRepository::class, InstitutionOperationRepository::class, InstitutionAccessInterface::class, GroupAccessInterface::class, InstitutionTransactionInterface::class],
+    ImportGroupsController::class => [ImportGroupsUseCase::class, ImportGroupsInputMapper::class],
     ListShootsUseCase::class => [StructureRepository::class, InstitutionAccessInterface::class, TokenResolverInterface::class],
     GetShootUseCase::class => [StructureRepository::class, InstitutionAccessInterface::class, GroupAccessInterface::class, TokenResolverInterface::class, CalendarClockInterface::class],
     SaveShootUseCase::class => [StructureRepository::class, InstitutionOperationRepository::class, InstitutionAccessInterface::class, InstitutionTransactionInterface::class],

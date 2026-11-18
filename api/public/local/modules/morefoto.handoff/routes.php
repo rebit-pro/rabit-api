@@ -6,6 +6,7 @@ use Morefoto\Handoff\Presentation\Controller\GroupLinkController;
 use Morefoto\Handoff\Presentation\Controller\GalleryOpeningController;
 use Morefoto\Handoff\Presentation\Controller\StaffRequestController;
 use Morefoto\Handoff\Presentation\Controller\StaffRequestRemovalController;
+use Morefoto\Handoff\Presentation\Controller\ShootGalleryLinkController;
 
 return static function(RoutingConfigurator $routes): void {
     $routes->get('/api/v1/staff-requests', [StaffRequestController::class, 'listAction']);
@@ -16,6 +17,8 @@ return static function(RoutingConfigurator $routes): void {
     $routes->post('/api/v1/staff-requests/{staff_request_id}/clarifications', [StaffRequestController::class, 'clarificationAction']);
     $routes->get('/api/v1/staff-requests/{staff_request_id}/transfer-preview', [StaffRequestController::class, 'transferPreviewAction']);
     $routes->post('/api/v1/staff-requests/{staff_request_id}/transfers', [StaffRequestController::class, 'transferAction']);
+    $routes->get('/api/v1/shoots/{shoot_id}/gallery-link', [ShootGalleryLinkController::class, 'getAction']);
+    $routes->post('/api/v1/shoots/{shoot_id}/gallery-link', [ShootGalleryLinkController::class, 'issueAction']);
     $routes->get('/api/v1/group-links', [GroupLinkController::class, 'listAction']);
     $routes->get('/api/v1/groups/{group_id}/link', [GroupLinkController::class, 'detailAction']);
     $routes->post('/api/v1/groups/{group_id}/link-preparations', [GroupLinkController::class, 'preparationAction']);

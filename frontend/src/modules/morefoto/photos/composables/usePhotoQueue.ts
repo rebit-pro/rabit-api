@@ -24,12 +24,13 @@ const checkDelay = (checks: number): number => [2000, 5000][checks - 1] ?? 10000
 const slowAfter = 10 * 60 * 1000;
 const refreshEvery = 5000;
 
-export function usePhotoQueue(shootId: string) {
+export function usePhotoQueue(shootId: string, options: { importScope?: string; pendingImport?: () => boolean } = {}) {
+  const { importScope = '' } = options;
   const auth = useAuthStore();
-  const key = 'morefoto:' + (isMockApiEnabled ? 'demo' : 'live') + ':uploads:' + auth.user?.id + ':' + shootId;
+  const key = 'morefoto:' + (isMockApiEnabled ? 'demo' : 'live') + ':uploads:' + auth.user?.id + ':' + shootId + importScope;
   let initial: UploadJob[] = [];
   try {
-    initial = JSON.parse(sessionStorage.getItem(key) ?? '[]') as UploadJob[];
+    initial = importScope ? [] : (JSON.parse(sessionStorage.getItem(key) ?? '[]') as UploadJob[]);
     if (!Array.isArray(initial)) initial = [];
   } catch {
     /* A new queue replaces an unreadable draft. */
@@ -49,8 +50,9 @@ export function usePhotoQueue(shootId: string) {
     )
   );
   const files = new Map<string, File>();
+  const lockedGroups = new Set<string>();
   const archives = new Map<string, { file: File; entries: Map<string, ZipEntry> }>();
-  const progress = new ArchiveProgress(browserStorage(), 'morefoto:archive-progress:' + auth.user?.id + ':' + shootId);
+  const progress = new ArchiveProgress(browserStorage(), 'morefoto:archive-progress:' + auth.user?.id + ':' + shootId + importScope);
   /** Archive files accepted before a reload: they are skipped, not sent again. */
   const previous = shallowRef(0);
   const busy = shallowRef(false);
@@ -60,6 +62,7 @@ export function usePhotoQueue(shootId: string) {
   let alive = true;
   let persistTimer = 0;
   let trackTimer = 0;
+  let tracking = false;
   let refreshTimer = 0;
   let refreshedAt = 0;
   const stop = new QueuePause();
@@ -67,8 +70,10 @@ export function usePhotoQueue(shootId: string) {
   const queued = computed(() => jobs.value.filter((job) => job.status === 'queued').length);
   const accepted = computed(() => jobs.value.filter((job) => job.status === 'done').length);
   const waiting = computed(() => jobs.value.filter((job) => job.status === 'uploading' || job.status === 'processing').length);
+  const pendingWork = computed(() => busy.value || !!options.pendingImport?.() || (!!importScope && waiting.value > 0));
   const failed = computed(() => jobs.value.filter((job) => ['error', 'interrupted'].includes(job.status)).length);
   function write() {
+    if (importScope) return;
     try {
       sessionStorage.setItem(key, JSON.stringify(jobs.value));
     } catch {
@@ -93,7 +98,8 @@ export function usePhotoQueue(shootId: string) {
       persist('status' in value);
       if (value.status && deliveredForResume(value.status)) {
         const job = jobs.value.find((item) => item.id === id);
-        if (job?.archive && job.entry) progress.mark(job.groupId + ' ' + job.archive, job.entry);
+        if (job?.archive && job.entry)
+          progress.mark(job.groupId + ' ' + job.archive, importScope ? JSON.stringify([job.entry, job.childCodes]) : job.entry);
       }
     }
   }
@@ -168,13 +174,56 @@ export function usePhotoQueue(shootId: string) {
     jobs.value = next;
     persist(true);
   }
+  /** В полном импорте последовательные порции дополняют очередь, результат завершённой порции забирает мастер. */
+  function appendPortion(plan: ArchivePlan, file: File, source: ArchiveSource, groupId: string): number {
+    if (!archives.has(source.key))
+      archives.set(source.key, {
+        file,
+        entries: new Map(source.entries.map((e) => [e.path, e]))
+      });
+    const result = archiveJobs(
+      plan,
+      [],
+      { shootId, groupId, archives: new Set([source.key]) },
+      (archive, path, codes) => progress.has(groupId + ' ' + archive, JSON.stringify([path, codes])),
+      () => crypto.randomUUID()
+    );
+    if (lockedGroups.has(groupId)) {
+      for (const job of result.jobs) {
+        job.status = 'error';
+        job.message = 'Группа уже передана. Проверьте состояние группы перед повтором.';
+      }
+    }
+    jobs.value = [...jobs.value, ...result.jobs];
+    return result.skipped;
+  }
+
+  async function completeShared(job: UploadJob): Promise<void> {
+    const remaining = job.childCodes?.slice(100);
+    if (!remaining?.length || !job.serverId) return;
+    const page = await photosApi.list(shootId, {
+      groupId: job.groupId,
+      pageSize: 1
+    });
+    let revision = page.revision;
+    for (const code of remaining) {
+      if (!alive) return;
+      revision = (await photosApi.assign(job.groupId, shootId, revision, [job.serverId], code)).revision;
+    }
+  }
+
   async function check(job: UploadJob) {
     const checks = (job.checks ?? 0) + 1;
     const later = { checks, checkAt: Date.now() + checkDelay(checks) };
     try {
       const photo = await photosApi.detail(job.serverId!);
       if (photo.status === 'ready') {
-        update(job.id, { status: 'done', progress: 100, message: 'Защищённые превью готовы' });
+        if (importScope && job.shared) await completeShared(job);
+        update(job.id, {
+          status: 'done',
+          progress: 100,
+          message: 'Защищённые превью готовы'
+        });
         refreshWorkspace();
       } else if (photo.status === 'failed') {
         update(job.id, {
@@ -190,13 +239,17 @@ export function usePhotoQueue(shootId: string) {
       }
     } catch (cause) {
       if (!alive || controller.signal.aborted) return;
-      if (isAxiosError(cause) && [403, 404].includes(cause.response?.status ?? 0))
+      if (
+        isAxiosError(cause) &&
+        ([403, 404, 422].includes(cause.response?.status ?? 0) ||
+          (cause.response?.status === 409 && photoApiErrorCode(cause) !== 'REVISION_CONFLICT'))
+      )
         update(job.id, { status: 'error', message: photoApiError(cause) });
       else update(job.id, { ...later, message: 'Статус пока не получен. Проверка повторится автоматически' });
     }
   }
   function track() {
-    if (!isMockApiEnabled && alive && !trackTimer) trackTimer = window.setTimeout(tick, 1000);
+    if (!isMockApiEnabled && alive && !trackTimer && !tracking) trackTimer = window.setTimeout(tick, 1000);
   }
   async function tick() {
     trackTimer = 0;
@@ -206,8 +259,13 @@ export function usePhotoQueue(shootId: string) {
       .filter((job) => job.status === 'processing' && job.serverId && (job.checkAt ?? 0) <= now)
       .sort((left, right) => (left.checkAt ?? 0) - (right.checkAt ?? 0))
       .slice(0, checksPerTick);
-    await Promise.all(due.map(check));
-    if (jobs.value.some((job) => job.status === 'processing' && job.serverId)) track();
+    tracking = true;
+    try {
+      await Promise.all(due.map(check));
+    } finally {
+      tracking = false;
+      if (jobs.value.some((job) => job.status === 'processing' && job.serverId)) track();
+    }
   }
   function uploadProgress(id: string, progress: number) {
     const job = jobs.value.find((item) => item.id === id);
@@ -221,10 +279,18 @@ export function usePhotoQueue(shootId: string) {
       file,
       controller.signal,
       (value) => uploadProgress(job.id, value),
-      job.childCodes
+      importScope ? job.childCodes?.slice(0, 100) : job.childCodes
     );
     files.delete(job.id);
-    if (result.status === 'duplicate') {
+    if (importScope && job.childCodes?.length && !result.childCodes?.length) {
+      update(job.id, {
+        status: 'error',
+        progress: 100,
+        message: 'Оригинал уже находится в другом классе этой съёмки. Серия не назначена.'
+      });
+      return;
+    }
+    if (result.status === 'duplicate' && !importScope) {
       const message = !job.childCodes?.length
         ? duplicateMessage
         : result.childCodes?.length
@@ -235,7 +301,7 @@ export function usePhotoQueue(shootId: string) {
     }
     const now = Date.now();
     update(job.id, {
-      serverId: result.id,
+      serverId: result.existingPhotoId ?? result.id,
       status: 'processing',
       progress: 100,
       message: acceptedMessage,
@@ -313,7 +379,18 @@ export function usePhotoQueue(shootId: string) {
       error.value = 'Сессия завершилась. Войдите снова и выберите те же файлы: отправленные повторно не уйдут.';
       update(job.id, { status: 'queued', progress: 0, message: 'Ждёт входа в кабинет.' });
     } else {
-      if (kind === 'locked') {
+      if (kind === 'locked' && importScope) {
+        lockedGroups.add(job.groupId);
+        jobs.value = jobs.value.map((item) =>
+          item.groupId === job.groupId && item.status === 'queued'
+            ? {
+                ...item,
+                status: 'error',
+                message: 'Подборка уже передана. Перечитайте состояние группы.'
+              }
+            : item
+        );
+      } else if (kind === 'locked') {
         stop.stop('locked');
         paused.value = true;
         error.value = 'Группа уже передана. Загрузка в неё остановлена.';
@@ -406,6 +483,7 @@ export function usePhotoQueue(shootId: string) {
       error.value = job?.archive ? archiveInterrupted : 'Выберите исходный файл снова: он не сохраняется после обновления страницы.';
       return;
     }
+    lockedGroups.delete(job.groupId);
     update(id, { status: 'queued', progress: 0, message: 'Готов к повтору', serverId: undefined, attempts: 0, retryAt: undefined });
     void start();
   }
@@ -424,7 +502,7 @@ export function usePhotoQueue(shootId: string) {
     }
   }
   function beforeUnload(event: BeforeUnloadEvent) {
-    if (busy.value) {
+    if (pendingWork.value) {
       event.preventDefault();
       event.returnValue = '';
     }
@@ -433,7 +511,7 @@ export function usePhotoQueue(shootId: string) {
   window.addEventListener('online', online);
   onBeforeRouteLeave(
     () =>
-      !busy.value ||
+      !pendingWork.value ||
       window.confirm('Подготовка файлов ещё идёт. При уходе она остановится; оставшиеся файлы потребуется выбрать снова. Уйти?')
   );
   onScopeDispose(() => {
@@ -450,5 +528,23 @@ export function usePhotoQueue(shootId: string) {
     window.removeEventListener('online', online);
   });
   if (jobs.value.some((job) => job.status === 'processing' && job.serverId)) track();
-  return { jobs, busy, paused, error, queued, accepted, waiting, failed, previous, add, addArchive, start, pause, retry, clear, remove };
+  return {
+    jobs,
+    busy,
+    paused,
+    error,
+    queued,
+    accepted,
+    waiting,
+    failed,
+    previous,
+    add,
+    addArchive,
+    appendPortion,
+    start,
+    pause,
+    retry,
+    clear,
+    remove
+  };
 }

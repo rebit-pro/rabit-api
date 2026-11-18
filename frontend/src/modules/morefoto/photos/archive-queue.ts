@@ -17,7 +17,7 @@ export function archiveJobs(
   plan: ArchivePlan,
   current: UploadJob[],
   target: { shootId: string; groupId: string; archives: ReadonlySet<string> },
-  delivered: (archive: string, path: string) => boolean,
+  delivered: (archive: string, path: string, codes: string[]) => boolean,
   id: () => string
 ): { jobs: UploadJob[]; skipped: number } {
   const { shootId, groupId, archives } = target;
@@ -38,7 +38,7 @@ export function archiveJobs(
     const childCodes = folderCodes(folder, plan);
     for (const file of folder.files) {
       if (listed.has(file.archive + '\n' + file.path)) continue;
-      if (folder.kind === 'child' && delivered(file.archive, file.path)) {
+      if (folder.kind === 'child' && delivered(file.archive, file.path, childCodes)) {
         skipped++;
         continue;
       }

@@ -16,5 +16,7 @@ final readonly class MediaScopeOutputDto
         public ?string $institutionPublicId = null,
         public ?string $groupKind = null,
         public bool $groupCorrecting = false,
+        public string $shootName = '',
+        public string $institutionName = '',
     ) {}
 }

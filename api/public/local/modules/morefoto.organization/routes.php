@@ -8,8 +8,10 @@ use Morefoto\Organization\Presentation\Controller\InstitutionDetailController;
 use Morefoto\Organization\Presentation\Controller\ShootListController;
 use Morefoto\Organization\Presentation\Controller\StructureController;
 use Morefoto\Organization\Presentation\Controller\StructureRemovalController;
+use Morefoto\Organization\Presentation\Controller\ImportGroupsController;
 
 return static function(RoutingConfigurator $routes): void {
+    $routes->post('/api/v1/institutions/{institution_id}/shoots/{shoot_id}/import-groups', [ImportGroupsController::class, 'importAction']);
     $routes->get('/api/v1/institutions', [InstitutionController::class, 'listAction']);
     $routes->post('/api/v1/institutions', [InstitutionController::class, 'createAction']);
     $routes->get('/api/v1/institutions/{institution_id}', [InstitutionDetailController::class, 'detailAction']);

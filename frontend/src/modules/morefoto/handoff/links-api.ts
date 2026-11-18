@@ -89,6 +89,31 @@ export const linksApi = {
     });
     return { items: response.data.data.items, meta: response.data.meta };
   },
+  async shootLink(shootId: string, mayIssue: boolean): Promise<string> {
+    const endpoint = '/api/v1/shoots/' + encodeURIComponent(shootId) + '/gallery-link';
+    try {
+      return (await api.get<{ galleryPath: string }>(endpoint)).data.galleryPath;
+    } catch (cause) {
+      if (!isAxiosError(cause) || cause.response?.status !== 404 || !mayIssue) throw cause;
+    }
+    return (await api.post<{ galleryPath: string }>(endpoint)).data.galleryPath;
+  },
+  async delivery(
+    group: Pick<LinkCommand, 'groupId' | 'revision' | 'signature' | 'confirmed' | 'requestId'>,
+    manual: boolean,
+    sentAt: string
+  ) {
+    await api.post(
+      path(group.groupId) + (manual ? '/manual-link-deliveries' : '/link-transmissions'),
+      {
+        revision: group.revision,
+        signature: group.signature,
+        sentAt,
+        confirmed: group.confirmed
+      },
+      { headers: { 'Idempotency-Key': key(group.requestId) } }
+    );
+  },
   async detail(groupId: string): Promise<LiveLinkDetail> {
     return (await api.get<LiveLinkDetail>(path(groupId) + '/link')).data;
   },
@@ -108,15 +133,7 @@ export const linksApi = {
         config
       );
     } else if (command.action === 'transmit' || command.action === 'manual') {
-      await api.post(
-        path(command.groupId) + (command.action === 'manual' ? '/manual-link-deliveries' : '/link-transmissions'),
-        {
-          ...base,
-          sentAt: serverMoment(command.sentAt),
-          confirmed: command.confirmed
-        },
-        config
-      );
+      await linksApi.delivery(command, command.action === 'manual', serverMoment(command.sentAt));
     } else {
       await api.post(
         path(command.groupId) + '/link-date-corrections',

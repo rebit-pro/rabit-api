@@ -52,6 +52,12 @@ const PublicRoutes: RouteRecordRaw = {
       meta: { title: 'Корзина' }
     },
     {
+      name: 'ShootGallery',
+      path: '/g/s/:shootKey',
+      component: () => import('@/modules/morefoto/gallery/components/ShootGalleryScreen.vue'),
+      meta: { title: 'Группы съёмки' }
+    },
+    {
       name: 'Gallery',
       path: '/g/:token',
       component: () => import('@/modules/morefoto/views/GalleryPage.vue'),
