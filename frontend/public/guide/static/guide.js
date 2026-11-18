@@ -1,5 +1,20 @@
 /* База знаний «Море фото»: просмотр скриншотов и чек-лист прогона (поля и отметки хранятся только в этом браузере). */
 
+/* Высота закреплённой шапки меняется при переносе строк. */
+(function () {
+  var nav = document.querySelector('.topnav');
+  if (!nav) return;
+
+  function updateOffset() {
+    document.documentElement.style.setProperty('--guide-nav-height', Math.ceil(nav.getBoundingClientRect().height) + 'px');
+  }
+
+  updateOffset();
+  if (typeof ResizeObserver === 'function') {
+    new ResizeObserver(updateOffset).observe(nav);
+  }
+})();
+
 /* Скриншоты статьи открываются поверх страницы: листание, подпись, увеличение по нажатию,
    закрытие крестиком, Esc, кнопкой «Назад» и кликом по фону. */
 (function () {

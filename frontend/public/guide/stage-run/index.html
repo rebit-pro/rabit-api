@@ -20,28 +20,28 @@
   <header class="hero">
     <p class="eyebrow">Практика</p>
     <h1>Тестовый прогон: весь путь за один раз</h1>
-    <p class="lead">Чек-лист для проверки на <a href="/login">app.morefoto36.ru</a>: каждый участник отмечает свои шаги и записывает, что получилось. Подробности каждого шага — по ссылкам «как».</p>
+    <p class="lead">Повторите путь на тестовом стенде с вымышленным учреждением и тестовыми кадрами. Каждый участник отмечает свои шаги и записывает результат. Подробности открываются по ссылкам «как».</p>
     <p class="hint" id="save">Поля сохраняются в этом браузере</p>
   </header>
 
   <div class="facts">
-    <div class="fact"><span class="k">Где хранится</span><b>Только в этом браузере</b><span>У каждого участника свои записи. Итог — ссылку, номер заказа и замечания — перешлите в общий чат.</span></div>
+    <div class="fact"><span class="k">Где хранится</span><b>Только в этом браузере</b><span>У каждого участника свои записи. Для сверки передавайте номер тестового заказа и замечания.</span></div>
     <div class="fact"><span class="k">Шаг родителя</span><b>Нужно включённое оформление</b><span>Если в корзине нет «Оформить заказ», его ещё не включили на сервере.</span></div>
-    <div class="fact"><span class="k">Оплата</span><b>Тестовая карта</b><span><code>5555 5555 5555 4444</code>, срок <code>12/30</code>, CVC <code>123</code>. Деньги не списываются.</span></div>
+    <div class="fact"><span class="k">Оплата</span><b>Проверьте тестовый режим</b><span>На тестовом стенде проверьте оплату картой и возврат к заказу. Проверку СБП отмечайте отдельно по фактическому результату.</span></div>
   </div>
-  <p class="note">Не вносите сюда пароли. Ссылки на галерею и заказ открывают данные без входа — пересылайте их только участникам прогона.</p>
+  <p class="note">Указывайте только тестовые данные. Личную ссылку открывайте в браузере участника прогона. В отчёт и общий чат её не вставляйте.</p>
 
   <section aria-labelledby="h-team">
     <h2 id="h-team">Кто участвует</h2>
     <div class="panel">
       <div class="grid2">
         <label class="f"><span>Организатор — вы</span><input type="text" id="p_me_name" data-f autocomplete="off" placeholder="Имя"></label>
-        <label class="f"><span>Второй организатор</span><input type="text" id="p_alena_name" data-f value="Алёна" autocomplete="off"></label>
-        <label class="f"><span>Email Алёны для приглашения</span><input type="email" id="p_alena_email" data-f autocomplete="off"></label>
-        <label class="f"><span>Статус Алёны</span><select id="p_alena_status" data-f><option value="">Не заведена</option><option value="added">Заведена, ждём письмо</option><option value="in">Вошла в кабинет</option></select></label>
-        <label class="f"><span>Куратор</span><input type="text" id="p_rita_name" data-f value="Рита" autocomplete="off"></label>
-        <label class="f"><span>Email Риты для приглашения</span><input type="email" id="p_rita_email" data-f autocomplete="off"></label>
-        <label class="f"><span>Статус Риты</span><select id="p_rita_status" data-f><option value="">Не заведена</option><option value="added">Заведена, ждём письмо</option><option value="in">Вошла в кабинет</option></select></label>
+        <label class="f"><span>Второй организатор</span><input type="text" id="p_alena_name" data-f autocomplete="off"></label>
+        <label class="f"><span>Тестовый email второго организатора</span><input type="email" id="p_alena_email" data-f autocomplete="off"></label>
+        <label class="f"><span>Статус приглашения организатора</span><select id="p_alena_status" data-f><option value="">Приглашение не создано</option><option value="added">Ждём письмо</option><option value="in">Вход проверен</option></select></label>
+        <label class="f"><span>Куратор</span><input type="text" id="p_rita_name" data-f autocomplete="off"></label>
+        <label class="f"><span>Тестовый email куратора</span><input type="email" id="p_rita_email" data-f autocomplete="off"></label>
+        <label class="f"><span>Статус приглашения куратора</span><select id="p_rita_status" data-f><option value="">Приглашение не создано</option><option value="added">Ждём письмо</option><option value="in">Вход проверен</option></select></label>
         <label class="f"><span>Кто играет родителя</span><input type="text" id="p_parent_name" data-f autocomplete="off"></label>
       </div>
     </div>
@@ -53,13 +53,13 @@
       <div class="check-group" style="--c:var(--r-org)">
         <header><span class="role role-org">Организатор</span><span class="done"></span></header>
         <ul>
-          <li><label><input type="checkbox" id="r_o1"><span>Пригласил Алёну (организатор) и Риту (куратор). <a href="/guide/organizer/#staff">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_o1"><span>Пригласил второго организатора и куратора. <a href="/guide/organizer/#staff">как</a></span></label></li>
           <li><label><input type="checkbox" id="r_o2"><span>Завёл продукцию с ценой, «Доступно для покупки». <a href="/guide/organizer/#catalog">как</a></span></label></li>
-          <li><label><input type="checkbox" id="r_o3"><span>Создал учреждение и назначил его Рите в «Сотрудники» → «Назначенные учреждения». <a href="/guide/organizer/#institution">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_o3"><span>Создал учреждение и добавил его в «Назначенные учреждения» куратора. <a href="/guide/organizer/#institution">как</a></span></label></li>
           <li><label><input type="checkbox" id="r_o4"><span>Создал съёмку и группу, проверил условия группы. <a href="/guide/organizer/#group">как</a></span></label></li>
           <li><label><input type="checkbox" id="r_o5"><span>Загрузил фото, все «Готово». <a href="/guide/organizer/#photos">как</a></span></label></li>
           <li><label><input type="checkbox" id="r_o6"><span>Назначил коды детей («Без ребёнка: 0») и обложку. <a href="/guide/organizer/#codes">как</a></span></label></li>
-          <li><label><input type="checkbox" id="r_o7"><span>«Проверить ссылку» → статус «Готова к передаче», ссылка скопирована и отправлена Рите. <a href="/guide/organizer/#check">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_o7"><span>Проверил ссылку группы и передал короткий адрес куратору. <a href="/guide/organizer/#check">как</a></span></label></li>
         </ul>
       </div>
       <div class="check-group" style="--c:var(--r-cur)">
@@ -67,16 +67,17 @@
         <ul>
           <li><label><input type="checkbox" id="r_c1"><span>Вошла по приглашению, видит только своё учреждение. <a href="/guide/curator/#login">как</a></span></label></li>
           <li><label><input type="checkbox" id="r_c2"><span>Скопировала ссылку группы и отправила «родителю». <a href="/guide/curator/#send">как</a></span></label></li>
-          <li><label><input type="checkbox" id="r_c3"><span>«Передать» → «Отметить передачу ссылки» → статус «Приём открыт», видны сроки. <a href="/guide/curator/#mark">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_c3"><span>Отметил передачу или отправку по расписанию. После открытия сверил две даты продаж. <a href="/guide/curator/#mark">как</a></span></label></li>
         </ul>
       </div>
       <div class="check-group" style="--c:var(--r-par)">
         <header><span class="role role-par">Родитель</span><span class="done"></span></header>
         <ul>
-          <li><label><input type="checkbox" id="r_p1"><span>Открыл ссылку на телефоне, нашёл серию своего ребёнка. <a href="/guide/parent/#code">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_p1"><span>Открыл ссылку на телефоне, нашёл кадр среди всех фото и сверил исходное имя. <a href="/guide/parent/#code">как</a></span></label></li>
           <li><label><input type="checkbox" id="r_p2"><span>Добавил в корзину два разных товара. <a href="/guide/parent/#choose">как</a></span></label></li>
-          <li><label><input type="checkbox" id="r_p3"><span>Оформил заказ, сохранил личную ссылку заказа. <a href="/guide/parent/#checkout">как</a></span></label></li>
-          <li><label><input type="checkbox" id="r_p4"><span>Оплатил тестовой картой, в заказе статус «Оплачено». <a href="/guide/parent/#pay">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_p3"><span>Восстановил корзину после перезагрузки, ввёл имя и фамилию ребёнка и email, оформил заказ. <a href="/guide/parent/#checkout">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_p4"><span>После оплаты вернулся к заказу и дождался статуса «Оплачено». <a href="/guide/parent/#pay">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_p5"><span>Проверил копию печати, купленные файлы и письма по частям. <a href="/guide/parent/#files">как</a></span></label></li>
         </ul>
       </div>
       <div class="check-group" style="--c:var(--r-cur)">
@@ -84,6 +85,8 @@
         <ul>
           <li><label><input type="checkbox" id="r_c4"><span>Нашли заказ в «Заказы», состав совпадает с корзиной родителя. <a href="/guide/curator/#orders">как</a></span></label></li>
           <li><label><input type="checkbox" id="r_c5"><span>Видят оплату в «Платежи». <a href="/guide/curator/#payments">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_c6"><span>Сверили компактную сводку и ведомость. <a href="/guide/reports/#worksheet">как</a></span></label></li>
+          <li><label><input type="checkbox" id="r_c7"><span>Отдельно проверили <a href="/guide/organizer/#institution-print-archive">архив с печатью</a> и <a href="/guide/organizer/#institution-digital-archive">архив купленных файлов</a>. Куратор скачал готовые архивы своего учреждения.</span></label></li>
         </ul>
       </div>
     </div>
