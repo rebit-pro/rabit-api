@@ -36,15 +36,23 @@ async function accept(): Promise<void> {
 }
 </script>
 <template>
-  <v-dialog :model-value="pending.length > 0" persistent max-width="520" content-class="morefoto-app">
-    <v-card class="mf-panel" data-testid="staff-consent-dialog">
-      <h2 class="mb-3">Согласие на обработку персональных данных</h2>
-      <p class="mf-muted mb-4">
+  <v-dialog
+    :model-value="pending.length > 0"
+    persistent
+    max-width="520"
+    content-class="morefoto-app"
+    aria-labelledby="staff-consent-title"
+    aria-describedby="staff-consent-description"
+  >
+    <v-card class="mf-panel staff-consent" data-testid="staff-consent-dialog">
+      <h2 id="staff-consent-title" class="staff-consent__title">Согласие на обработку персональных данных</h2>
+      <p id="staff-consent-description" class="mf-muted staff-consent__description">
         Для работы в кабинете нужно ваше согласие на обработку персональных данных. Без него доступ в кабинет не предоставляется.
       </p>
       <ConsentField
         v-for="document in pending"
         :key="document.code"
+        class="staff-consent__field"
         v-model="accepted"
         :document="document"
         name="staff-consent"
@@ -61,11 +69,38 @@ async function accept(): Promise<void> {
   </v-dialog>
 </template>
 <style scoped>
+.staff-consent {
+  padding: var(--mf-space-6);
+}
+.staff-consent__title {
+  margin: 0;
+  font-size: var(--mf-text-xl);
+  font-weight: var(--mf-weight-semibold);
+  line-height: var(--mf-leading-snug);
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+.staff-consent__description {
+  margin: var(--mf-space-3) 0 var(--mf-space-4);
+}
+.staff-consent__field :deep(.v-label) {
+  white-space: normal;
+  line-height: var(--mf-leading-normal);
+}
 .staff-consent__actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--mf-space-3);
   justify-content: flex-end;
-  margin-top: var(--mf-space-4);
+  margin-top: var(--mf-space-6);
+}
+@media (max-width: 480px) {
+  .staff-consent {
+    padding: var(--mf-space-5);
+  }
+  .staff-consent__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 </style>
