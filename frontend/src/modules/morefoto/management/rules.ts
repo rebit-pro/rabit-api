@@ -34,6 +34,7 @@ export function productValue(command: ProductCommand): Product {
     unit: command.product.unit.trim(),
     description: command.product.description.trim(),
     price: checkedPrice(command.product.price)!,
+    allowDigitalQuantity: command.product.kind === 'digital' && command.product.allowDigitalQuantity === true,
     printCount: command.product.kind === 'physical' ? Number(command.product.printCount) : 0
   };
 }

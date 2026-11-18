@@ -29,7 +29,7 @@ use Rebit\Share\Shared\Exception\HttpException;
  *     PUBLIC_ID: string, LINE_NO: int, ASSIGNMENT_PUBLIC_ID: string, CHILD_ID: int, CHILD_PUBLIC_ID: string, CHILD_CODE: string,
  *     PHOTO_PUBLIC_ID: null|string, PHOTO_CODE: null|string, PHOTO_WIDTH: null|int, PHOTO_HEIGHT: null|int,
  *     PRODUCT_PUBLIC_ID: string, PRODUCT_KIND: string, PRODUCT_NAME: string, PRODUCT_DESCRIPTION: string,
- *     PRODUCT_FORMAT: string, PRODUCT_UNIT: string, PRODUCT_PRICE: int, PRINT_COUNT: int, STAFF_DISCOUNT: bool,
+ *     PRODUCT_FORMAT: string, PRODUCT_UNIT: string, PRODUCT_PRICE: int, PRINT_COUNT: int, STAFF_DISCOUNT: bool, ALLOW_DIGITAL_QUANTITY: bool,
  *     QUANTITY: int, UNIT_PRICE: int, DISCOUNT: int, TOTAL: int, COVERED_BY_GIFT: bool,
  * }
  */
@@ -77,13 +77,13 @@ final readonly class OrderRepository
                     $text($line['CHILD_PUBLIC_ID']), $text($line['CHILD_CODE']), $text($line['PHOTO_PUBLIC_ID']), $text($line['PHOTO_CODE']),
                     $line['PHOTO_WIDTH'] ?? 'NULL', $line['PHOTO_HEIGHT'] ?? 'NULL', $text($line['PRODUCT_PUBLIC_ID']), $text($line['PRODUCT_KIND']),
                     $text($line['PRODUCT_NAME']), $text($line['PRODUCT_DESCRIPTION']), $text($line['PRODUCT_FORMAT']), $text($line['PRODUCT_UNIT']),
-                    $line['PRODUCT_PRICE'], $line['PRINT_COUNT'], (int)$line['STAFF_DISCOUNT'], $line['QUANTITY'], $line['UNIT_PRICE'],
+                    $line['PRODUCT_PRICE'], $line['PRINT_COUNT'], (int)$line['STAFF_DISCOUNT'], (int)$line['ALLOW_DIGITAL_QUANTITY'], $line['QUANTITY'], $line['UNIT_PRICE'],
                     $line['DISCOUNT'], $line['TOTAL'], (int)$line['COVERED_BY_GIFT'],
                 ]) . ')';
             }
             $connection->queryExecute('INSERT INTO mf_order_line(PUBLIC_ID,ORDER_ID,LINE_NO,ASSIGNMENT_PUBLIC_ID,CHILD_ID,CHILD_PUBLIC_ID,CHILD_CODE,
                 PHOTO_PUBLIC_ID,PHOTO_CODE,PHOTO_WIDTH,PHOTO_HEIGHT,PRODUCT_PUBLIC_ID,PRODUCT_KIND,PRODUCT_NAME,PRODUCT_DESCRIPTION,PRODUCT_FORMAT,
-                PRODUCT_UNIT,PRODUCT_PRICE,PRINT_COUNT,STAFF_DISCOUNT,QUANTITY,UNIT_PRICE,DISCOUNT,TOTAL,COVERED_BY_GIFT) VALUES' . implode(',', $values));
+                PRODUCT_UNIT,PRODUCT_PRICE,PRINT_COUNT,STAFF_DISCOUNT,ALLOW_DIGITAL_QUANTITY,QUANTITY,UNIT_PRICE,DISCOUNT,TOTAL,COVERED_BY_GIFT) VALUES' . implode(',', $values));
         } catch (\Throwable $error) {
             if (str_contains($error->getMessage(), 'ux_mf_order_quote')) {
                 throw new HttpException('QUOTE_ALREADY_USED', 409);
@@ -178,7 +178,7 @@ final readonly class OrderRepository
     {
         return $this->query('SELECT ORDER_ID,PUBLIC_ID,LINE_NO,ASSIGNMENT_PUBLIC_ID,CHILD_ID,CHILD_PUBLIC_ID,CHILD_CODE,PHOTO_PUBLIC_ID,PHOTO_CODE,
             PHOTO_WIDTH,PHOTO_HEIGHT,PRODUCT_PUBLIC_ID,PRODUCT_KIND,PRODUCT_NAME,PRODUCT_DESCRIPTION,PRODUCT_FORMAT,PRODUCT_UNIT,PRODUCT_PRICE,
-            PRINT_COUNT,STAFF_DISCOUNT,QUANTITY,UNIT_PRICE,DISCOUNT,TOTAL,COVERED_BY_GIFT
+            PRINT_COUNT,STAFF_DISCOUNT,ALLOW_DIGITAL_QUANTITY,QUANTITY,UNIT_PRICE,DISCOUNT,TOTAL,COVERED_BY_GIFT
             FROM mf_order_line WHERE ORDER_ID IN (' . implode(',', $orderIds) . ') ORDER BY ORDER_ID,LINE_NO');
     }
 

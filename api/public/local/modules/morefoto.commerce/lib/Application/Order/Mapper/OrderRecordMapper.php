@@ -74,6 +74,7 @@ final readonly class OrderRecordMapper
                 'PRODUCT_PRICE' => $line['product']['price'],
                 'PRINT_COUNT' => $line['product']['printCount'],
                 'STAFF_DISCOUNT' => $line['product']['staffDiscount'],
+                'ALLOW_DIGITAL_QUANTITY' => $line['product']['allowDigitalQuantity'],
                 'QUANTITY' => $line['quantity'],
                 'UNIT_PRICE' => $line['unitPrice'],
                 'DISCOUNT' => $line['discount'],

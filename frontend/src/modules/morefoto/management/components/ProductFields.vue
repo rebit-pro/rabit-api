@@ -64,6 +64,14 @@ const kinds = [
         :aria-invalid="!!errors.printCount"
       />
     </div>
+    <v-checkbox
+      v-if="model.product.kind === 'digital'"
+      :model-value="!model.product.allowDigitalQuantity"
+      label="Один экземпляр файла в заказе"
+      hint="Включите, чтобы родитель мог купить этот файл только один раз, даже если снимок есть у нескольких детей."
+      persistent-hint
+      @update:model-value="model.product.allowDigitalQuantity = !$event"
+    />
     <v-textarea
       v-model="model.product.description"
       label="Описание"

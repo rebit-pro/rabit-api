@@ -12,7 +12,7 @@ use Morefoto\Commerce\Domain\Catalog\ValueObject\ProductId;
 
 final readonly class CatalogRepository
 {
-    private const string FIELDS = 'UF_UUID, UF_NAME, UF_DESCRIPTION, UF_KIND, UF_PRICE, UF_PRINT_COUNT, UF_FORMAT, UF_UNIT, UF_STAFF_DISCOUNT, UF_ACTIVE';
+    private const string FIELDS = 'UF_UUID, UF_NAME, UF_DESCRIPTION, UF_KIND, UF_PRICE, UF_PRINT_COUNT, UF_FORMAT, UF_UNIT, UF_STAFF_DISCOUNT, UF_ACTIVE, UF_ALLOW_DIGITAL_QUANTITY';
 
     /** Must be the first read inside the catalogue transaction. */
     public function lockRevision(bool $forUpdate): int
@@ -85,6 +85,7 @@ final readonly class CatalogRepository
         return "UF_NAME = '" . $helper->forSql($details->name) . "', UF_DESCRIPTION = '" . $helper->forSql($details->description)
             . "', UF_KIND = '" . $details->kind->value . "', UF_PRICE = " . $details->price . ', UF_PRINT_COUNT = ' . $details->printCount
             . ", UF_FORMAT = '" . $helper->forSql($details->format) . "', UF_UNIT = '" . $helper->forSql($details->unit)
-            . "', UF_STAFF_DISCOUNT = " . (int)$details->staffDiscount . ', UF_ACTIVE = ' . (int)$details->active;
+            . "', UF_STAFF_DISCOUNT = " . (int)$details->staffDiscount . ', UF_ACTIVE = ' . (int)$details->active
+            . ', UF_ALLOW_DIGITAL_QUANTITY = ' . (int)$details->allowDigitalQuantity;
     }
 }

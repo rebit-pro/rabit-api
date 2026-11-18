@@ -7,17 +7,23 @@ namespace Morefoto\Commerce\Application\Catalog\Service;
 use Morefoto\Commerce\Application\Catalog\Dto\ProductInputDto;
 use Morefoto\Commerce\Application\Catalog\Dto\UpdateProductInputDto;
 
+/** Вычисляет отпечаток значимых полей запроса, чтобы повтор сохранения товара возвращал прежний результат. */
 final readonly class CatalogPayloadHash
 {
     public function create(ProductInputDto $input): string
     {
-        return $this->hash(get_object_vars($input->details));
+        $fields = get_object_vars($input->details);
+        // The default has the same meaning as a POST made before this field existed.
+        if (!$input->details->allowDigitalQuantity) {
+            unset($fields['allowDigitalQuantity']);
+        }
+
+        return $this->hash($fields);
     }
 
     public function update(UpdateProductInputDto $input): string
     {
-        $fields = get_object_vars($input);
-        unset($fields['id']);
+        $fields = get_object_vars($input->patch);
         // An omitted PATCH field differs from an explicit empty string, zero or false.
         $fields = array_filter($fields, static fn(mixed $value): bool => null !== $value);
 

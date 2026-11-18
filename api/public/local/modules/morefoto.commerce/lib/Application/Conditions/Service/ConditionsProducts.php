@@ -6,6 +6,7 @@ namespace Morefoto\Commerce\Application\Conditions\Service;
 
 use Bitrix\Main\DB\Result;
 use Morefoto\Commerce\Application\Catalog\Dto\ProductOutputDto;
+use Morefoto\Commerce\Application\Catalog\Mapper\ProductMapper;
 use Morefoto\Commerce\Application\Conditions\Dto\SaveConditionsInputDto;
 use Morefoto\Commerce\Domain\Catalog\Enum\ProductKind;
 use Morefoto\Commerce\Domain\Conditions\Exception\InvalidConditionsException;
@@ -22,7 +23,7 @@ final readonly class ConditionsProducts
     {
         $products = [];
         while (false !== ($row = $result->fetch())) {
-            $products[] = ProductOutputDto::fromRow($row);
+            $products[] = ProductMapper::fromRow($row);
         }
 
         return $products;

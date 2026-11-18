@@ -1,9 +1,15 @@
-import type { GallerySnapshot } from '../../gallery/types';
+import { allowsQuantity, restoreFileQuantities } from '../product-quantity.ts';
+import type { GalleryPhoto, GallerySnapshot } from '../../gallery/types';
 import type { CartLine, CartQuote, CartQuoteLine, Catalog } from '../types';
+
+export function cartPhoto(gallery: GallerySnapshot, line: CartLine): GalleryPhoto | undefined {
+  return gallery.children.find((child) => child.code === line.childCode)?.photos.find((photo) => photo.id === line.photoId);
+}
+
 export function calculateQuote(gallery: GallerySnapshot, source: CartLine[], catalog: Catalog): CartQuote {
   const invalid: string[] = [];
   const lines: CartQuoteLine[] = [];
-  for (const item of source) {
+  for (const item of restoreFileQuantities(source, catalog.products, (line) => cartPhoto(gallery, line)?.id)) {
     const product = catalog.products.find((product) => product.id === item.productId && product.active);
     const child = gallery.children.find((child) => child.code === item.childCode);
     const photo = child?.photos.find((photo) => photo.id === item.photoId) ?? null;
@@ -11,7 +17,7 @@ export function calculateQuote(gallery: GallerySnapshot, source: CartLine[], cat
       invalid.push(item.id);
       continue;
     }
-    const quantity = product.kind === 'physical' ? item.quantity : 1;
+    const quantity = allowsQuantity(product) ? item.quantity : 1;
     const unitPrice = gallery.audience === 'staff' && product.staffDiscount ? Math.round(product.price / 2) : product.price;
     const discount = product.price - unitPrice;
     lines.push({

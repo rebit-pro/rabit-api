@@ -3,6 +3,7 @@ import { shallowRef } from 'vue';
 import PhotoImage from '../../photos/components/PhotoImage.vue';
 import PhotoZoomDialog from '../../gallery/components/PhotoZoomDialog.vue';
 import type { CartQuoteLine } from '../types';
+import { allowsQuantity } from '../product-quantity';
 import { money } from '../money';
 import UiQuantityField from '../../ui/components/UiQuantityField.vue';
 const props = defineProps<{
@@ -41,7 +42,7 @@ function change(quantity: number) {
       <span v-else-if="line.discount" class="cart-benefit">Льгота 50% · {{ money(line.unitPrice) }} за единицу</span>
     </div>
     <UiQuantityField
-      v-if="line.product.kind === 'physical'"
+      v-if="allowsQuantity(line.product)"
       :model-value="line.quantity"
       :context="line.photo?.code ?? line.childCode"
       :disabled="busy || closed"

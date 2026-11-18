@@ -57,7 +57,7 @@ final readonly class StorefrontMapper
             $products[] = [
                 'id' => $product->id, 'name' => $product->name, 'description' => $product->description, 'kind' => $product->kind->value,
                 'price' => $product->price, 'printCount' => $product->printCount, 'format' => $product->format, 'unit' => $product->unit,
-                'staffDiscount' => $product->staffDiscount, 'active' => $product->active,
+                'staffDiscount' => $product->staffDiscount, 'active' => $product->active, 'allowDigitalQuantity' => $product->allowDigitalQuantity,
             ];
         }
 

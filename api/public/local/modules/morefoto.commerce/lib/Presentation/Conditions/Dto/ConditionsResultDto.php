@@ -22,6 +22,7 @@ final readonly class ConditionsResultDto implements ResultDtoInterface
      *     unit: string,
      *     staffDiscount: bool,
      *     active: bool,
+     *     allowDigitalQuantity: bool,
      * }> $products
      * @param array{
      *     enabled: bool,

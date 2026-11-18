@@ -22,7 +22,11 @@ final readonly class ProductDetails
         public string $unit,
         public bool $staffDiscount,
         public bool $active,
+        public bool $allowDigitalQuantity = false,
     ) {
+        if ($allowDigitalQuantity && ProductKind::DIGITAL !== $kind) {
+            throw new InvalidProductException('Only a digital photo can opt into quantity selection.');
+        }
         self::validateText($name, 255, 'name');
         self::validateText($description, 4000, 'description');
         self::validateText($format, 100, 'format');

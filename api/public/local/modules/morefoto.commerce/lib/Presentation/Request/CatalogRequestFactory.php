@@ -11,21 +11,24 @@ use Morefoto\Commerce\Domain\Catalog\Enum\ProductKind;
 use Morefoto\Commerce\Domain\Catalog\Exception\InvalidProductException;
 use Morefoto\Commerce\Domain\Catalog\Exception\MalformedCatalogJsonException;
 use Morefoto\Commerce\Domain\Catalog\ValueObject\IdempotencyKey;
+use Morefoto\Commerce\Domain\Catalog\ValueObject\ProductDetails;
+use Morefoto\Commerce\Domain\Catalog\ValueObject\ProductId;
+use Morefoto\Commerce\Domain\Catalog\ValueObject\ProductPatch;
 
 final readonly class CatalogRequestFactory
 {
-    private const array TYPES = ['name' => 'string', 'description' => 'string', 'kind' => 'string', 'price' => 'integer', 'printCount' => 'integer', 'format' => 'string', 'unit' => 'string', 'staffDiscount' => 'boolean', 'active' => 'boolean'];
+    private const array REQUIRED_TYPES = ['name' => 'string', 'description' => 'string', 'kind' => 'string', 'price' => 'integer', 'printCount' => 'integer', 'format' => 'string', 'unit' => 'string', 'staffDiscount' => 'boolean', 'active' => 'boolean'];
 
     /** @param array<string, mixed> $query */
     public function create(string $raw, string $contentType, string $key, array $query = []): CreateProductRequestDto
     {
         $data = $this->body($raw, $contentType, $query, false);
-        foreach (self::TYPES as $field => $type) {
+        foreach (self::REQUIRED_TYPES as $field => $type) {
             if (!array_key_exists($field, $data)) {
                 throw new InvalidProductException('Missing product field: ' . $field . '.');
             }
         }
-        $input = new ProductInputDto(
+        $details = new ProductDetails(
             name: $data['name'],
             description: $data['description'],
             kind: $this->kind($data['kind']),
@@ -35,9 +38,10 @@ final readonly class CatalogRequestFactory
             unit: $data['unit'],
             staffDiscount: $data['staffDiscount'],
             active: $data['active'],
+            allowDigitalQuantity: $data['allowDigitalQuantity'] ?? false,
         );
 
-        return new CreateProductRequestDto($input, new IdempotencyKey($key));
+        return new CreateProductRequestDto(new ProductInputDto($details), new IdempotencyKey($key));
     }
 
     /** @param array<string, mixed> $query */
@@ -47,8 +51,7 @@ final readonly class CatalogRequestFactory
         if (!isset($data['revision'])) {
             throw new InvalidProductException('Catalog revision is required.');
         }
-        $input = new UpdateProductInputDto(
-            id: $productId,
+        $patch = new ProductPatch(
             revision: $data['revision'],
             name: $data['name'] ?? null,
             description: $data['description'] ?? null,
@@ -59,9 +62,10 @@ final readonly class CatalogRequestFactory
             unit: $data['unit'] ?? null,
             staffDiscount: $data['staffDiscount'] ?? null,
             active: $data['active'] ?? null,
+            allowDigitalQuantity: $data['allowDigitalQuantity'] ?? null,
         );
 
-        return new UpdateProductRequestDto($input, new IdempotencyKey($key));
+        return new UpdateProductRequestDto(new UpdateProductInputDto(new ProductId($productId), $patch), new IdempotencyKey($key));
     }
 
     /** @param array<string, mixed> $query */
@@ -105,8 +109,12 @@ final readonly class CatalogRequestFactory
             throw new InvalidProductException('JSON body must be an object.');
         }
         $data = get_object_vars($decoded);
+        $types = self::REQUIRED_TYPES + ['allowDigitalQuantity' => 'boolean'];
+        if ($patch) {
+            $types['revision'] = 'integer';
+        }
         foreach ($data as $field => $value) {
-            $type = $patch && 'revision' === $field ? 'integer' : (self::TYPES[$field] ?? null);
+            $type = $types[$field] ?? null;
             if (null === $type || gettype($value) !== $type) {
                 throw new InvalidProductException('Unknown product field or incorrect JSON type: ' . $field . '.');
             }
