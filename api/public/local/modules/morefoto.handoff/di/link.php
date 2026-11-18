@@ -46,6 +46,10 @@ use Rebit\Share\Contracts\Handoff\GalleryOpeningInterface;
 use Rebit\Share\Contracts\Organization\GroupCalendarInterface;
 use Rebit\Share\Contracts\Organization\GroupDirectoryInterface;
 use Rebit\Share\Contracts\Organization\GroupMarkupCorrectionInterface;
+use Morefoto\Handoff\Application\Link\UseCase\ShootGalleryLinkUseCase;
+use Morefoto\Handoff\Presentation\Controller\ShootGalleryLinkController;
+use Rebit\Share\Contracts\Media\ShootGalleryLinkInterface;
+use Rebit\Share\Contracts\Organization\MediaScopeInterface;
 
 $services = [
     GroupLinkRepositoryInterface::class => ['constructor' => static fn(): GroupLinkRepositoryInterface => new BitrixGroupLinkRepository()],
@@ -62,6 +66,8 @@ $services = [
     OpeningResultMapper::class => ['className' => OpeningResultMapper::class],
 ];
 $dependencies = [
+    ShootGalleryLinkUseCase::class => [HandoffTransactionInterface::class, GroupLinkAccessInterface::class, MediaScopeInterface::class, LinkPermissionPolicy::class, GroupDirectoryInterface::class, GroupLinkReadiness::class, GroupLinkRepositoryInterface::class, LinkReadinessPolicy::class, ShootGalleryLinkInterface::class],
+    ShootGalleryLinkController::class => [ShootGalleryLinkUseCase::class],
     GroupLinkReadiness::class => [GroupMaterialsInterface::class, GroupSalesReadinessInterface::class, GroupAccessInterface::class, GroupLinkRepositoryInterface::class, LinkReadinessPolicy::class],
     GroupLinkCommandSession::class => [GroupLinkAccessInterface::class, GroupCalendarInterface::class, GroupDirectoryInterface::class, GroupLinkRepositoryInterface::class, GroupLinkReadiness::class, LinkPermissionPolicy::class],
     ListGroupLinksUseCase::class => [GroupLinkAccessInterface::class, GroupDirectoryInterface::class, GroupLinkReadiness::class, GroupLinkRepositoryInterface::class, LinkPermissionPolicy::class, LinkReadinessPolicy::class, GroupLinkOutputMapper::class, InstitutionAccessInterface::class, OpeningScheduleRepositoryInterface::class],

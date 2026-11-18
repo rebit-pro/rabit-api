@@ -152,6 +152,32 @@ export const png = Buffer.from(
   'base64'
 );
 
+/** A stored ZIP, as the shoot archives are packed: every entry is a plain slice of the file. */
+export function storedZip(files: Record<string, Buffer>): Buffer {
+  const u16 = (value: number) => Buffer.from([value & 0xff, value >>> 8]);
+  const u32 = (value: number) => {
+    const bytes = Buffer.alloc(4);
+    bytes.writeUInt32LE(value);
+    return bytes;
+  };
+  const locals: Buffer[] = [];
+  const centrals: Buffer[] = [];
+  let offset = 0;
+  for (const [path, data] of Object.entries(files)) {
+    const name = Buffer.from(path, 'utf8');
+    const crc = crc32(data);
+    const common = [u16(20), u16(0x800), u16(0), u32(0), u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0)];
+    const local = Buffer.concat([u32(0x04034b50), ...common, name, data]);
+    centrals.push(Buffer.concat([u32(0x02014b50), u16(20), ...common, u16(0), u16(0), u16(0), u32(0), u32(offset), name]));
+    locals.push(local);
+    offset += local.length;
+  }
+  const directory = Buffer.concat(centrals);
+  const count = u16(centrals.length);
+  const end = Buffer.concat([u32(0x06054b50), u16(0), u16(0), count, count, u32(directory.length), u32(offset), u16(0)]);
+  return Buffer.concat([...locals, directory, end]);
+}
+
 export function crc32(bytes: Buffer): number {
   let crc = 0xffffffff;
   for (const byte of bytes) {

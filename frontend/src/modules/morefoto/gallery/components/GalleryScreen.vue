@@ -20,6 +20,24 @@ const route = useRoute();
 const helpOpen = shallowRef(false);
 const questionOpen = shallowRef(false);
 const token = computed(() => String(route.params.token));
+const parentGallery = computed(() => {
+  const current = token.value;
+  const saved = window.history.state?.shootGallery;
+  const storageKey = 'morefoto:shoot-gallery:' + current;
+  try {
+    if (typeof saved === 'string' && /^\/g\/s\/[a-f0-9]{32}$/.test(saved)) {
+      sessionStorage.setItem(storageKey, saved);
+      return saved;
+    }
+    if (window.history.state?.back?.startsWith('/g/' + current + '/cart') || window.history.state?.back?.startsWith('/orders/')) {
+      const previous = sessionStorage.getItem(storageKey) ?? '';
+      if (/^\/g\/s\/[a-f0-9]{32}$/.test(previous)) return previous;
+    }
+  } catch {
+    return typeof saved === 'string' && /^\/g\/s\/[a-f0-9]{32}$/.test(saved) ? saved : '';
+  }
+  return '';
+});
 const questionToken = computed(() => gallery.value?.token ?? token.value);
 // Demo mode has no server conversation: the curator channel exists only against the real API.
 const questions = isMockApiEnabled ? null : useGalleryQuestion(questionToken, questionOpen, questionsApi);
@@ -74,6 +92,7 @@ function askCurator(): void {
     </header>
     <p v-if="isMockApiEnabled" class="gallery-demo">Тестовая галерея · Названия и даты условные</p>
     <main id="gallery-content" class="gallery-main">
+      <RouterLink v-if="parentGallery" :to="parentGallery" class="d-inline-block mb-4">К группам</RouterLink>
       <div v-if="loading" role="status" aria-label="Загрузка галереи" class="gallery-loading">
         <v-skeleton-loader type="heading, paragraph" />
         <div class="gallery-loading__grid">

@@ -234,16 +234,14 @@ test('#92 T11 T12: ссылки фильтруются плиткой «Приё
     await group(page, shoot.id, mark + ' Без кадров');
     await openGroup(page, shoot.id, first.id);
     await openGroup(page, second.id, other.id);
-    // F3-DEC-03: staff copy the short link.
-    const tokens = [(await link(page, first.id)).galleryAlias, (await link(page, other.id)).galleryAlias];
 
     await page.goto('/cabinet/links');
-    await page.getByRole('textbox', { name: 'Группа или съёмка', exact: true }).fill(mark);
-    await expect(rows(page)).toHaveCount(3);
+    await page.getByRole('textbox', { name: 'Съёмка, учреждение или группа', exact: true }).fill(mark);
+    await expect(rows(page)).toHaveCount(5);
     const tile = page.getByTestId('links-tiles').getByRole('button', { name: /^Приём открыт: / });
     await tile.click();
     await expect(tile).toHaveAttribute('aria-pressed', 'true');
-    await expect(rows(page)).toHaveCount(2);
+    await expect(rows(page)).toHaveCount(4);
     await expect(rowOf(page, mark + ' Без кадров')).toHaveCount(0);
 
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
@@ -252,7 +250,15 @@ test('#92 T11 T12: ссылки фильтруются плиткой «Приё
     await expect(page.getByRole('status').filter({ hasText: 'Скопировано ссылок: 2.' })).toBeVisible();
     const origin = new URL(page.url()).origin;
     const lines = (await page.evaluate(() => navigator.clipboard.readText())).split('\n').sort();
-    expect(lines).toEqual([mark + ' Васильки — ' + origin + '/g/' + tokens[1], mark + ' Ромашки — ' + origin + '/g/' + tokens[0]].sort());
+    const expected = [];
+    for (const [id, name] of [
+      [shoot.id, mark + ' съёмка'],
+      [second.id, mark + ' весна']
+    ]) {
+      const address = await body(await page.request.get('/api/v1/shoots/' + id + '/gallery-link', { headers: await auth(page) }));
+      expected.push(name + ' · ' + mark + ' — ' + origin + address.data.galleryPath);
+    }
+    expect(lines).toEqual(expected.sort());
   } finally {
     await remove(page, '/api/v1/institutions/' + parent.id);
     await remove(page, '/api/v1/catalog/products/' + productId);

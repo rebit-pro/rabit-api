@@ -10,8 +10,11 @@ use Morefoto\Media\Presentation\Controller\GroupMediaController;
 use Morefoto\Media\Presentation\Controller\PhotoDetailController;
 use Morefoto\Media\Presentation\Controller\PhotoListController;
 use Morefoto\Media\Presentation\Controller\PhotoUploadController;
+use Morefoto\Media\Presentation\Controller\ShootGalleryController;
 
 return static function(RoutingConfigurator $routes): void {
+    $routes->get('/api/v1/public/galleries/shoots/{shoot_key}', [ShootGalleryController::class, 'getAction']);
+    $routes->get('/api/v1/public/galleries/shoots/{shoot_key}/groups/{group_id}/cover', [ShootGalleryController::class, 'coverAction']);
     $routes->get('/api/v1/photos/{photo_id}/{variant}', [ManagedPreviewController::class, 'getAction']);
     $routes->get('/api/v1/public/galleries/{gallery_token}/photos/{assignment_id}/{variant}', [GalleryController::class, 'previewAction']);
     $routes->get('/api/v1/public/galleries/{gallery_token}', [GalleryController::class, 'getAction']);

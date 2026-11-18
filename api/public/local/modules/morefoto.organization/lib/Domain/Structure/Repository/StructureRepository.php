@@ -53,7 +53,7 @@ final readonly class StructureRepository
     /** One ShootRow per result. */
     public function shoot(StructureId $id): Result
     {
-        return $this->query("SELECT s.ID,s.UF_PUBLIC_ID,s.UF_INSTITUTION_ID,s.UF_NAME,DATE_FORMAT(s.UF_DATE,'%Y-%m-%d') AS UF_DATE,s.UF_REVISION,i.UF_PUBLIC_ID AS INSTITUTION_PUBLIC_ID FROM b_hlbd_mf_shoot s INNER JOIN b_hlbd_mf_institution i ON i.ID=s.UF_INSTITUTION_ID WHERE s.UF_PUBLIC_ID='{$id->value}'");
+        return $this->query("SELECT s.ID,s.UF_PUBLIC_ID,s.UF_INSTITUTION_ID,s.UF_NAME,DATE_FORMAT(s.UF_DATE,'%Y-%m-%d') AS UF_DATE,s.UF_REVISION,i.UF_PUBLIC_ID AS INSTITUTION_PUBLIC_ID,i.UF_NAME AS INSTITUTION_NAME FROM b_hlbd_mf_shoot s INNER JOIN b_hlbd_mf_institution i ON i.ID=s.UF_INSTITUTION_ID WHERE s.UF_PUBLIC_ID='{$id->value}'");
     }
 
     /** One GroupRow per result. */
@@ -108,6 +108,15 @@ final readonly class StructureRepository
     public function lockGroup(int $id): Result
     {
         return $this->query("SELECT ID,UF_PUBLIC_ID,UF_SHOOT_ID,UF_NAME,UF_KIND,UF_REVISION FROM b_hlbd_mf_group WHERE ID={$id} FOR UPDATE");
+    }
+
+    /** @param non-empty-list<string> $groupIds публичные ID из сохранённой квитанции импорта */
+    public function importedGroupsExist(int $shootId, array $groupIds): bool
+    {
+        $ids = implode(',', array_map($this->quote(...), $groupIds));
+        $row = $this->query("SELECT COUNT(*) AS GROUP_COUNT FROM b_hlbd_mf_group WHERE UF_SHOOT_ID={$shootId} AND UF_PUBLIC_ID IN ({$ids})")->fetch();
+
+        return false !== $row && count($groupIds) === (int)$row['GROUP_COUNT'];
     }
 
     /** @param null|list<int> $institutionIds */

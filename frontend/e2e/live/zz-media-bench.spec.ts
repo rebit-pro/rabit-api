@@ -1,6 +1,6 @@
 import { test, expect, type Request } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { login, peakOverlap, token, uploadSpans } from './helpers.js';
+import { login, peakOverlap, pngVariant, storedZip, token, uploadSpans } from './helpers.js';
 
 // Opt-in measurement for #33/#34: E2E_MEDIA_BENCH=1 (optionally E2E_MEDIA_BENCH_COUNT) on the isolated stand only.
 const count = Number(process.env.E2E_MEDIA_BENCH_COUNT ?? 50);
@@ -114,4 +114,59 @@ test('#33/#34: замер партии типичных фото на изоли
   expect(spans).toHaveLength(settled);
   expect(parallel).toBeLessThanOrEqual(2);
   expect(readiness).toHaveLength(count);
+});
+
+test('ZIP учреждения: 2005 кадров с продолжением после перезагрузки', async ({ page }, testInfo) => {
+  test.setTimeout(25 * 60 * 1000);
+  const run = crypto.randomUUID().slice(0, 8);
+  await login(page);
+  const headers = { Authorization: 'Bearer ' + (await token(page)) };
+  const create = async (path: string, data: Record<string, string>) => {
+    const response = await page.request.post('/api/v1/' + path, {
+      headers: { ...headers, 'Idempotency-Key': crypto.randomUUID().replace(/-/g, '') },
+      data
+    });
+    expect(response.status(), await response.text()).toBe(201);
+    return (await response.json()).data.id as string;
+  };
+  const institution = await create('institutions', { name: 'ZIP 2005 ' + run, address: 'Москва' });
+  const shoot = await create('institutions/' + institution + '/shoots', { name: 'Весна', date: '2026-04-02' });
+  const contents: Record<string, Buffer> = {};
+  for (let i = 0; i < 2005; i++)
+    contents[(i < 1000 ? '1А' : '1Б') + '/' + String.fromCharCode(65 + (i % 20)) + '/' + i + '.png'] = pngVariant(run + '-' + i);
+  const archive = { name: 'Весна.zip', mimeType: 'application/zip', buffer: storedZip(contents) };
+  const entryPoint = '/cabinet/institutions/' + institution;
+  const open = async () => {
+    await page.getByRole('button', { name: 'Загрузить ZIP по группам' }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.locator('input[type=file]').setInputFiles(archive);
+    await dialog.getByRole('button', { name: 'Подтвердить и загрузить' }).click();
+    return dialog;
+  };
+  await page.goto(entryPoint);
+  const first = await open();
+  await expect(first.getByRole('status').filter({ hasText: /Превью готовы: [1-9]/ })).toBeVisible({ timeout: 60000 });
+  await page.reload();
+  // Ускоряем ожидание между проверками статусов. PHP, MySQL, RabbitMQ, развёртывание превью и передача файлов используют реальные часы.
+  await page.clock.install();
+  const dialog = await open();
+  await expect
+    .poll(
+      async () => {
+        await page.clock.fastForward(1000);
+        const text = await dialog.getByRole('status').filter({ hasText: 'Превью готовы' }).textContent();
+        return text?.includes('Превью готовы: 2005 из 2005') ?? false;
+      },
+      { timeout: 22 * 60 * 1000, intervals: [150] }
+    )
+    .toBe(true);
+  const snapshot = await page.request.get('/api/v1/shoots/' + shoot, { headers });
+  const groups = (await snapshot.json()).data.groups.items as { name: string; id: string }[];
+  expect(groups).toHaveLength(2);
+  for (const g of groups) {
+    const photos = await page.request.get('/api/v1/shoots/' + shoot + '/photos?groupId=' + g.id + '&assigned=true&pageSize=1', { headers });
+    const body = await photos.json();
+    expect(body.data.meta.total).toBe(g.name === '1А' ? 1000 : 1005);
+  }
+  await testInfo.attach('institution-zip-2005', { body: await dialog.screenshot(), contentType: 'image/png' });
 });

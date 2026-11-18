@@ -27,6 +27,7 @@ import { archiveApi } from '../../production/live/archive-api';
 import { archiveBadge } from '../../production/live/archive-rules';
 import type { ArchiveState } from '../../production/live/archive-types';
 import CalendarExtensionDialog from './CalendarExtensionDialog.vue';
+import ShootTransmissionDialog from './ShootTransmissionDialog.vue';
 import OpeningScheduleDialog from './OpeningScheduleDialog.vue';
 /** Event titles of the link history: F2 delivery steps and the D4 markup correction that pauses the sales. */
 const linkEventTitles: Record<LinkEvent['kind'], string> = {
@@ -125,7 +126,7 @@ const tiles = [
 ] as const;
 type LinkState = (typeof tiles)[number]['text'];
 const columns: UiTableColumn[] = [
-  { key: 'name', label: 'Группа', sortable: true, primary: true, width: '28%' },
+  { key: 'name', label: 'Съёмка', sortable: true, primary: true, width: '24%' },
   {
     key: 'status',
     label: 'Состояние',
@@ -139,7 +140,7 @@ const columns: UiTableColumn[] = [
     type: 'date',
     sortable: true,
     mobile: true,
-    width: '11%'
+    width: '14%'
   },
   {
     key: 'closesAt',
@@ -154,7 +155,7 @@ const columns: UiTableColumn[] = [
     label: 'Доставка',
     type: 'date',
     sortable: true,
-    width: '11%'
+    width: '14%'
   }
 ];
 const stateFilter = shallowRef<LinkState | null>(null);
@@ -194,7 +195,7 @@ const rows = computed<UiTableRow[]>(() => {
       (g) =>
         (!stateFilter.value || linkStatus(g).text === stateFilter.value) &&
         (!institutionFilter.value || g.institutionId === institutionFilter.value) &&
-        (g.name + ' ' + g.shootName).toLocaleLowerCase('ru').includes(needle)
+        [g.name, g.shootName, institutionName.value.get(g.institutionId)].join(' ').toLocaleLowerCase('ru').includes(needle)
     )
     .map((g) => ({
       id: g.id,
@@ -205,16 +206,57 @@ const rows = computed<UiTableRow[]>(() => {
       deliveryAt: g.deliveryAt
     }));
 });
-const pageRows = computed(() =>
-  sortTableRows(rows.value, columns, sort.value).slice((page.value - 1) * pageSize.value, page.value * pageSize.value)
+const commonLinks = computed(() => live && ['organizer', 'curator', 'head'].includes(data.value?.role ?? ''));
+const byShoot = computed(() => {
+  const result = new Map<string, UiTableRow[]>();
+  for (const row of sortTableRows(rows.value, columns, sort.value)) {
+    const id = group(row.id).shootId;
+    const items = result.get(id) ?? [];
+    items.push(row);
+    result.set(id, items);
+  }
+  return result;
+});
+const shootRows = computed(() =>
+  sortTableRows(
+    Array.from(byShoot.value, ([id, list]) => {
+      const first = list[0]!;
+      const g = group(first.id);
+      return {
+        ...first,
+        id,
+        name: g.shootName,
+        institution: institutionName.value.get(g.institutionId) ?? '',
+        count: list.length
+      };
+    }),
+    columns,
+    sort.value
+  )
 );
+const collapsed = shallowRef(new Set<string>());
+function toggleShoot(id: string) {
+  const next = new Set(collapsed.value);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  collapsed.value = next;
+}
+const pageRows = computed(() =>
+  shootRows.value
+    .slice((page.value - 1) * pageSize.value, page.value * pageSize.value)
+    .flatMap((shoot) => (collapsed.value.has(shoot.id) ? [shoot] : [shoot, ...byShoot.value.get(shoot.id)!]))
+);
+const selectableIds = computed(() => new Set(commonLinks.value ? byShoot.value.keys() : rows.value.map((r) => r.id)));
+const transmission = shallowRef<{ id: string; name: string } | null>(null);
 watch([stateFilter, institutionFilter, query, pageSize, sort, routeGroup, routeShoot], () => {
   page.value = 1;
 });
-watch(rows, (list) => {
-  page.value = clampTablePage(page.value, list.length, pageSize.value);
-  const ids = new Set(list.map((row) => row.id));
+watch(selectableIds, (ids) => {
+  page.value = clampTablePage(page.value, shootRows.value.length, pageSize.value);
   selected.value = selected.value.filter((id) => ids.has(id));
+});
+watch([routeGroup, routeShoot, query], () => {
+  collapsed.value = new Set();
 });
 function group(id: string): LinkGroup {
   return byId.value.get(id)!;
@@ -301,11 +343,13 @@ function extensionSaved(): void {
 const archiveStates = shallowRef(new Map<string, ArchiveState>());
 /** PRD-01 for the visible page only; the badge is a hint, so a failed request just leaves the rows without it. */
 async function loadArchiveStates(): Promise<void> {
-  const ids = pageRows.value.map((row) => row.id).filter((id) => canSeeArchive(group(id)));
+  const ids = pageRows.value.map((row) => row.id).filter((id) => byId.value.has(id) && canSeeArchive(group(id)));
   if (!ids.length) return;
   try {
     const states = new Map(archiveStates.value);
-    for (const item of await archiveApi.statuses(ids)) states.set(item.groupId, item.state);
+    for (let start = 0; start < ids.length; start += 50) {
+      for (const item of await archiveApi.statuses(ids.slice(start, start + 50))) states.set(item.groupId, item.state);
+    }
     archiveStates.value = states;
   } catch {
     // The dialog shows the real state and its error when opened.
@@ -348,14 +392,24 @@ async function copy(group: LinkGroup) {
   }
 }
 const copying = shallowRef(false);
-/** Lines «Группа — ссылка» for a message to parents; a group without a link yet is named and skipped. */
-async function copySelected() {
+async function copySelected(ids: string[] = selected.value, single = false) {
   clearNotices();
   copying.value = true;
   const lines: string[] = [];
   const skipped: string[] = [];
   try {
-    for (const id of selected.value) {
+    for (const id of ids) {
+      if (commonLinks.value) {
+        const shoot = shootRows.value.find((s) => s.id === id);
+        if (!shoot) continue;
+        try {
+          const path = await linksApi.shootLink(id, data.value?.role === 'organizer');
+          lines.push((single ? '' : shoot.name + ' · ' + shoot.institution + ' — ') + window.location.origin + path);
+        } catch (cause) {
+          skipped.push(shoot.name + ' (' + linkError(cause) + ')');
+        }
+        continue;
+      }
       const g = byId.value.get(id);
       if (!g) continue;
       try {
@@ -368,7 +422,7 @@ async function copySelected() {
     }
     const tail = skipped.length ? ' Без ссылки: ' + skipped.join(', ') + '.' : '';
     if (!lines.length) {
-      failure.value = 'У выбранных групп ещё нет ссылок: они появятся после проверки.' + tail;
+      failure.value = 'Скопировать ссылку не удалось.' + tail;
       return;
     }
     try {
@@ -443,7 +497,7 @@ async function openHistory(group: LinkGroup) {
     <v-textarea
       v-if="manualCopy"
       :model-value="manualCopy"
-      label="Ссылки выбранных групп"
+      label="Ссылки для передачи"
       readonly
       auto-grow
       rows="2"
@@ -471,8 +525,8 @@ async function openHistory(group: LinkGroup) {
     <form class="links-filters mb-4 mf-filters" aria-label="Фильтры ссылок" @submit.prevent>
       <v-text-field
         :model-value="query"
-        label="Группа или съёмка"
-        aria-label="Группа или съёмка"
+        label="Съёмка, учреждение или группа"
+        aria-label="Съёмка, учреждение или группа"
         prepend-inner-icon="mdi-magnify"
         clearable
         hide-details
@@ -494,13 +548,14 @@ async function openHistory(group: LinkGroup) {
       <v-btn variant="text" density="compact" @click="showAll">Показать все группы</v-btn>
     </p>
     <UiDataTable
-      title="Ссылки групп"
+      title="Съёмки"
       label-key="name"
       density="compact"
-      actions-width="176px"
+      actions-width="216px"
       :columns="columns"
       :rows="pageRows"
-      :total="rows.length"
+      :total="shootRows.length"
+      :selectable-ids="selectableIds"
       :page="page"
       :page-size="pageSize"
       :sort="sort"
@@ -515,31 +570,42 @@ async function openHistory(group: LinkGroup) {
       <template #selection>
         <div class="links-bulk" data-testid="links-bulk">
           <p>Выбрано: {{ selected.length }}</p>
-          <v-btn variant="outlined" density="compact" prepend-icon="mdi-content-copy" :loading="copying" @click="copySelected"
+          <v-btn variant="outlined" density="compact" prepend-icon="mdi-content-copy" :loading="copying" @click="copySelected()"
             >Скопировать ссылки</v-btn
           >
           <v-btn variant="text" density="compact" @click="selected = []">Снять выбор</v-btn>
         </div>
       </template>
       <template #cell-name="{ row }">
-        <span class="links-group">
-          <strong>{{ row.name }}</strong>
-          <small :title="institutionName.get(group(row.id).institutionId) + ' · ' + group(row.id).shootName"
-            >{{ institutionName.get(group(row.id).institutionId) }} · {{ group(row.id).shootName }}</small
+        <button
+          v-if="byShoot.has(row.id)"
+          type="button"
+          class="links-shoot"
+          :aria-expanded="!collapsed.has(row.id)"
+          :aria-label="'Группы съёмки ' + row.name"
+          @click="toggleShoot(row.id)"
+        >
+          <v-icon :icon="collapsed.has(row.id) ? 'mdi-chevron-right' : 'mdi-chevron-down'" aria-hidden="true" />
+          <span class="links-group"
+            ><strong>{{ row.name }}</strong
+            ><small>{{ row.institution }}</small></span
           >
-        </span>
+        </button>
+        <span v-else class="links-child">{{ row.name }}</span>
       </template>
       <template #cell-status="{ row }">
-        <span class="links-state">
+        <span v-if="byShoot.has(row.id)">{{ row.count }} {{ plural(Number(row.count), ['группа', 'группы', 'групп']) }}</span>
+        <span v-else class="links-state">
           <MfStatus :tone="linkStatus(group(row.id)).tone">{{ row.status }}</MfStatus>
           <small v-if="stateNote(group(row.id))" :title="stateNote(group(row.id))!.hint || undefined">{{
             stateNote(group(row.id))!.text
           }}</small>
         </span>
       </template>
-      <template #cell-sentAt="{ row }">{{ day(group(row.id).sentAt) }}</template>
+      <template #cell-sentAt="{ row }">{{ byShoot.has(row.id) ? '—' : day(group(row.id).sentAt) }}</template>
       <template #cell-closesAt="{ row }">
-        <span class="links-state">
+        <span v-if="byShoot.has(row.id)">По группам</span>
+        <span v-else class="links-state">
           {{ day(group(row.id).closesAt) }}
           <small v-if="left(group(row.id))" class="links-left">{{ left(group(row.id)) }}</small>
           <!-- E7: digital photos stay on sale after the print close; a separate column would squeeze the dates (#156). -->
@@ -555,9 +621,27 @@ async function openHistory(group: LinkGroup) {
           >
         </span>
       </template>
-      <template #cell-deliveryAt="{ row }">{{ day(group(row.id).deliveryAt) }}</template>
+      <template #cell-deliveryAt="{ row }">{{ byShoot.has(row.id) ? '—' : day(group(row.id).deliveryAt) }}</template>
       <template #actions="{ row }">
-        <div class="links-actions">
+        <div v-if="byShoot.has(row.id)" class="links-shoot-actions">
+          <v-btn
+            v-if="commonLinks"
+            variant="tonal"
+            density="compact"
+            color="primary"
+            :disabled="copying"
+            @click="copySelected([row.id], true)"
+            >Скопировать общую ссылку</v-btn
+          >
+          <v-btn
+            v-if="commonLinks && data.role !== 'head'"
+            variant="text"
+            density="compact"
+            @click="transmission = { id: row.id, name: String(row.name) }"
+            >Отметить передачу</v-btn
+          >
+        </div>
+        <div v-else class="links-actions">
           <template v-if="group(row.id).sentAt || group(row.id).openingStatus === 'scheduled'">
             <v-btn
               v-tooltip="'Копировать ссылку'"
@@ -670,6 +754,15 @@ async function openHistory(group: LinkGroup) {
       не запускает срок.
     </p>
   </template>
+  <ShootTransmissionDialog
+    v-if="transmission && data"
+    :shoot-id="transmission.id"
+    :name="transmission.name"
+    :groups="data.groups"
+    :may-issue="data.role === 'organizer'"
+    @close="transmission = null"
+    @changed="reload"
+  />
   <CalendarExtensionDialog
     v-if="extensionGroup"
     :group-id="extensionGroup.id"
@@ -769,6 +862,22 @@ async function openHistory(group: LinkGroup) {
   color: var(--mf-color-text-secondary);
   font-size: var(--mf-text-sm);
 }
+.links-shoot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  text-align: start;
+}
+.links-shoot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.links-child {
+  display: inline-block;
+  padding-inline-start: 28px;
+}
 .links-group,
 .links-state {
   display: grid;
@@ -780,10 +889,7 @@ async function openHistory(group: LinkGroup) {
   font-weight: 600;
 }
 .links-group small {
-  overflow: hidden;
-  max-width: 100%;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .links-group small,
 .links-state small {
@@ -820,11 +926,11 @@ async function openHistory(group: LinkGroup) {
 .links-actions,
 .links-bulk {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 2px;
 }
 .links-bulk {
-  flex-wrap: wrap;
   gap: var(--mf-space-3);
 }
 .links-menu {

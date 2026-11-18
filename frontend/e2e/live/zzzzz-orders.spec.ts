@@ -5,7 +5,7 @@ import { acceptCheckoutDocuments, fillCheckoutChild, login, orderConsents, passw
 /** Visible rows of the orders table: the desktop row and the mobile card of one order share its ID. */
 const rows = (scope: Page) => scope.locator('[data-row-id]').filter({ visible: true });
 
-type Fixture = Record<'open' | 'preparing' | 'closed' | 'revoked', { token: string; groupId: string; photoId: string }>;
+type Fixture = Record<'open' | 'preparing' | 'closed' | 'revoked', { token: string; alias: string; groupId: string; photoId: string }>;
 type Line = { assignmentId: string; productId: string; quantity: number };
 const fixture = JSON.parse(readFileSync('var/e4-fixture.json', 'utf8')) as Fixture;
 const gallery = (kind: keyof Fixture = 'open') => '/api/v1/public/galleries/' + fixture[kind].token;
@@ -18,6 +18,7 @@ const secrets = { accessKeys: [] as string[], idempotencyKeys: [] as string[], g
 let printId = '';
 let assignment = '';
 let institutionId = '';
+let shootGalleryPath = '';
 
 async function body(response: APIResponse, status = 200) {
   expect(response.status(), await response.text()).toBe(status);
@@ -104,6 +105,12 @@ test.beforeAll(async ({ browser }) => {
     await login(page);
     const institutions = (await body(await page.request.get('/api/v1/institutions?q=E4', { headers: await auth(page) }))).data.items;
     institutionId = institutions.find((item: { name: string }) => item.name === 'E4 Тестовый детский сад').id;
+    const staffHeaders = await auth(page);
+    const groupLink = (await body(await page.request.get('/api/v1/groups/' + fixture.open.groupId + '/link', { headers: staffHeaders })))
+      .data;
+    shootGalleryPath = (
+      await body(await page.request.post('/api/v1/shoots/' + groupLink.shootId + '/gallery-link', { headers: staffHeaders }))
+    ).data.galleryPath;
     // Assign the regular curator to the E4 institution without dropping the curator's earlier scope.
     const users = (
       await body(await page.request.get('/api/v1/users?q=' + encodeURIComponent('curator@example.invalid'), { headers: await auth(page) }))
@@ -133,7 +140,13 @@ test.beforeAll(async ({ browser }) => {
 });
 
 test('E5: checkout is idempotent, keeps one order per quote and hides secrets', async ({ page }) => {
-  const lines = [{ assignmentId: assignment, productId: printId, quantity: 1 }];
+  await page.goto(shootGalleryPath);
+  await expect(page.locator('a[href="/g/' + fixture.closed.alias + '"]')).toBeVisible();
+  await expect(page.locator('a[href="/g/' + fixture.preparing.alias + '"], a[href="/g/' + fixture.revoked.alias + '"]')).toHaveCount(0);
+  await page.locator('a[href="/g/' + fixture.open.alias + '"]').click();
+  const selected = (await body(await page.request.get('/api/v1/public/galleries/' + fixture.open.alias))).data;
+  expect(selected.groupId).toBe(fixture.open.groupId);
+  const lines = [{ assignmentId: selected.children[0].photos[0].assignmentId, productId: printId, quantity: 1 }];
   const priced = await quote(page, lines);
   const data = { lines, buyer, child, quoteToken: priced.quoteToken, consents: await orderConsents(page) };
   await body(await page.request.post(gallery() + '/orders', { data }), 422);

@@ -16,6 +16,7 @@ if (!Loader::includeModule('morefoto.media')) {
     throw new RuntimeException('Cannot load isolated MoreFoto Media module.');
 }
 ServiceLocator::getInstance()->get(ConsumeMediaUseCase::class)->execute(
-    (int)(getenv('MEDIA_E2E_LIMIT') ?: 100),
+    // Большие ZIP обрабатываются до лимита времени стенда. Число сообщений можно ограничить отдельно.
+    (int)(getenv('MEDIA_E2E_LIMIT') ?: PHP_INT_MAX),
     (int)(getenv('MEDIA_E2E_TIME_LIMIT') ?: 900),
 );
