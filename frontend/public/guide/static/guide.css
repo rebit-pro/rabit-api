@@ -56,7 +56,8 @@
 }
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(env(safe-area-inset-top, 0px) + var(--guide-nav-height, 100px) + 8px); }
+html { -webkit-text-size-adjust: 100%; }
+html:has(.topnav) { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + var(--guide-nav-height, 100px) + 8px); }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--body); padding-inline: 16px; padding-block: 0 80px; }
 [hidden] { display: none !important; }
 img { max-width: 100%; height: auto; display: block; }
@@ -231,7 +232,9 @@ html.lb-lock { overflow: hidden; }
 .lb button { font: inherit; color: var(--lb-ink); background: rgb(255 255 255 / 12%); border: 0; border-radius: 50%; cursor: pointer; display: grid; place-items: center; line-height: 1; }
 .lb button:hover { background: rgb(255 255 255 / 24%); }
 .lb button:focus-visible { outline: 2px solid var(--lb-ink); outline-offset: 2px; }
+.lb-stage:focus-visible { outline: 2px solid var(--lb-ink); outline-offset: -2px; }
 .lb button:disabled { opacity: .25; cursor: default; background: rgb(255 255 255 / 12%); }
+.lb button.lb-zoom { min-height: 44px; margin-inline-start: auto; padding-inline: 14px; border-radius: 8px; }
 .lb-close { width: 44px; height: 44px; font-size: 30px; }
 .lb-nav { position: absolute; top: 50%; width: 48px; height: 48px; margin-top: -24px; font-size: 34px; padding-bottom: 4px; }
 .lb-prev { left: 8px; }
