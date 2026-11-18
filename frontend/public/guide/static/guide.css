@@ -57,6 +57,7 @@
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
+html:has(.topnav) { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + var(--guide-nav-height, 100px) + 8px); }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--body); padding-inline: 16px; padding-block: 0 80px; }
 [hidden] { display: none !important; }
 img { max-width: 100%; height: auto; display: block; }
@@ -125,7 +126,7 @@ section { display: grid; gap: 18px; }
 
 /* Шаги со скриншотами */
 ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 40px; counter-reset: step; }
-.step { counter-increment: step; display: grid; gap: 14px; scroll-margin-top: 70px; }
+.step { counter-increment: step; display: grid; gap: 14px; }
 .step-head { display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: start; }
 .step-head::before { content: counter(step); width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-variant-numeric: tabular-nums; background: var(--sea); color: var(--sea-ink); }
 .role-cur-page .step-head::before { background: var(--r-cur); }
@@ -223,15 +224,17 @@ html.lb-lock { overflow: hidden; }
 .lb::backdrop { background: transparent; }
 .lb-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: max(8px, env(safe-area-inset-top)) 12px 8px 16px; }
 .lb-count { font-size: 14px; font-variant-numeric: tabular-nums; opacity: .8; }
-.lb-stage { min-height: 0; display: grid; place-items: center; padding: 0 64px; }
+.lb-stage { min-width: 0; min-height: 0; overflow: hidden; display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); place-items: center; padding: 0 64px; }
 .lb-img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border-radius: 8px; background: #ffffff; box-shadow: 0 12px 40px rgb(0 0 0 / 45%); cursor: zoom-in; }
-.lb-zoomed .lb-stage { overflow: auto; place-items: start; overscroll-behavior: contain; }
-.lb-zoomed .lb-img { max-width: none; max-height: none; margin: auto; border-radius: 0; cursor: zoom-out; }
+.lb-zoomed .lb-stage { display: block; overflow: auto; overscroll-behavior: contain; }
+.lb-zoomed .lb-img { max-width: none; max-height: none; margin-inline: auto; border-radius: 0; cursor: zoom-out; }
 .lb-cap { text-align: center; font-size: 15px; line-height: 1.45; padding: 12px 16px max(14px, env(safe-area-inset-bottom)); max-width: 72ch; margin: 0 auto; }
 .lb button { font: inherit; color: var(--lb-ink); background: rgb(255 255 255 / 12%); border: 0; border-radius: 50%; cursor: pointer; display: grid; place-items: center; line-height: 1; }
 .lb button:hover { background: rgb(255 255 255 / 24%); }
 .lb button:focus-visible { outline: 2px solid var(--lb-ink); outline-offset: 2px; }
+.lb-stage:focus-visible { outline: 2px solid var(--lb-ink); outline-offset: -2px; }
 .lb button:disabled { opacity: .25; cursor: default; background: rgb(255 255 255 / 12%); }
+.lb button.lb-zoom { min-height: 44px; margin-inline-start: auto; padding-inline: 14px; border-radius: 8px; }
 .lb-close { width: 44px; height: 44px; font-size: 30px; }
 .lb-nav { position: absolute; top: 50%; width: 48px; height: 48px; margin-top: -24px; font-size: 34px; padding-bottom: 4px; }
 .lb-prev { left: 8px; }

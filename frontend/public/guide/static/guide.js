@@ -1,11 +1,26 @@
 /* База знаний «Море фото»: просмотр скриншотов и чек-лист прогона (поля и отметки хранятся только в этом браузере). */
 
-/* Скриншоты статьи открываются поверх страницы: листание, подпись, увеличение по нажатию,
+/* Высота закреплённой шапки меняется при переносе строк. */
+(function () {
+  var nav = document.querySelector('.topnav');
+  if (!nav) return;
+
+  function updateOffset() {
+    document.documentElement.style.setProperty('--guide-nav-height', Math.ceil(nav.getBoundingClientRect().height) + 'px');
+  }
+
+  updateOffset();
+  if (typeof ResizeObserver === 'function') {
+    new ResizeObserver(updateOffset).observe(nav);
+  }
+})();
+
+/* Скриншоты статьи открываются поверх страницы: листание, подпись, управление увеличением,
    закрытие крестиком, Esc, кнопкой «Назад» и кликом по фону. */
 (function () {
   var links = [].slice.call(document.querySelectorAll('.shot > a[href]'));
   if (!links.length || typeof HTMLDialogElement !== 'function') return;
-  var box, img, cap, count, prev, next;
+  var box, stage, img, cap, count, prev, next, zoom;
   var index = 0;
   var touchX = null;
 
@@ -24,6 +39,14 @@
     var pic = link.querySelector('img');
     return (text && text.textContent.trim()) || (pic && pic.alt) || '';
   }
+  function setZoom(enabled) {
+    box.classList.toggle('lb-zoomed', enabled);
+    zoom.textContent = enabled ? 'Уменьшить' : 'Увеличить';
+    stage.tabIndex = enabled ? 0 : -1;
+  }
+  function toggleZoom() {
+    setZoom(!box.classList.contains('lb-zoomed'));
+  }
   function build() {
     box = document.createElement('dialog');
     box.className = 'lb';
@@ -32,10 +55,15 @@
     bar.className = 'lb-bar';
     count = document.createElement('span');
     count.className = 'lb-count';
+    zoom = document.createElement('button');
+    zoom.type = 'button';
+    zoom.className = 'lb-zoom';
     var close = button('lb-close', 'Закрыть', '×');
-    bar.append(count, close);
-    var stage = document.createElement('div');
+    bar.append(count, zoom, close);
+    stage = document.createElement('div');
     stage.className = 'lb-stage';
+    stage.setAttribute('role', 'region');
+    stage.setAttribute('aria-label', 'Область снимка');
     img = document.createElement('img');
     img.className = 'lb-img';
     img.alt = '';
@@ -61,9 +89,8 @@
       if (e.target === box || e.target === stage || e.target === bar) hide();
     });
     // A tap on the picture shows it at full size; the enlarged picture scrolls inside the viewer.
-    img.addEventListener('click', function () {
-      box.classList.toggle('lb-zoomed');
-    });
+    img.addEventListener('click', toggleZoom);
+    zoom.addEventListener('click', toggleZoom);
     box.addEventListener('cancel', function (e) {
       e.preventDefault();
       hide();
@@ -92,7 +119,7 @@
   function show(i) {
     if (i < 0 || i >= links.length) return;
     index = i;
-    box.classList.remove('lb-zoomed');
+    setZoom(false);
     var link = links[i];
     var pic = link.querySelector('img');
     img.src = link.href;
@@ -116,10 +143,20 @@
   }
   function hide(fromHistory) {
     if (!box.open) return;
+    var link = links[index];
+    function restoreFocus() {
+      window.requestAnimationFrame(function () {
+        link.focus({ preventScroll: true });
+      });
+    }
     box.close();
     document.documentElement.classList.remove('lb-lock');
-    links[index].focus({ preventScroll: true });
-    if (!fromHistory && history.state && history.state.guideLightbox) history.back();
+    if (!fromHistory && history.state && history.state.guideLightbox) {
+      window.addEventListener('popstate', restoreFocus, { once: true });
+      history.back();
+    } else {
+      restoreFocus();
+    }
   }
 
   links.forEach(function (link, i) {
@@ -151,6 +188,9 @@
   function status(text) {
     if (saveEl) saveEl.textContent = text;
   }
+  function checkKey(box) {
+    return box.dataset.checkKey || box.id;
+  }
   function collect() {
     var f = {},
       c = {};
@@ -158,7 +198,7 @@
       f[el.id] = el.value;
     });
     boxes.forEach(function (b) {
-      c[b.id] = b.checked;
+      c[checkKey(b)] = b.checked;
     });
     return { fields: f, checks: c, updatedAt: new Date().toISOString() };
   }
@@ -169,26 +209,37 @@
       if (typeof f[el.id] === 'string') el.value = f[el.id];
     });
     boxes.forEach(function (b) {
-      b.checked = !!c[b.id];
+      b.checked = !!c[checkKey(b)];
     });
+  }
+  function standLink(value, prefix) {
+    try {
+      var url = new URL(value);
+      var validOrigin = /^https?:$/.test(url.protocol) && url.origin === window.location.origin;
+      var validPath = url.pathname.startsWith(prefix) && /^[\w-]+\/?$/.test(url.pathname.slice(prefix.length));
+      return validOrigin && validPath && !url.username && !url.password ? url.href : '';
+    } catch {
+      return '';
+    }
   }
   function linkState(input) {
     var prefix = input.getAttribute('data-link');
     var open = document.querySelector('[data-open="' + input.id + '"]');
     var hint = document.querySelector('[data-hint="' + input.id + '"]');
     var v = input.value.trim();
-    var ok = /^https:\/\/app\.morefoto36\.ru\//.test(v) && v.indexOf(prefix) > -1;
+    var url = v && standLink(v, prefix);
     if (open) {
-      open.setAttribute('aria-disabled', ok ? 'false' : 'true');
-      open.href = ok ? v : '#';
+      open.setAttribute('aria-disabled', url ? 'false' : 'true');
+      if (url) open.href = url;
+      else open.removeAttribute('href');
     }
     if (!hint) return;
     if (!hint.dataset.empty) hint.dataset.empty = hint.textContent;
     if (!v) {
       hint.textContent = hint.dataset.empty;
       hint.classList.remove('bad');
-    } else if (!ok) {
-      hint.textContent = 'Ожидается адрес вида https://app.morefoto36.ru' + prefix + '…';
+    } else if (!url) {
+      hint.textContent = 'Вставьте ссылку с этого стенда. Путь начинается с ' + prefix + '…';
       hint.classList.add('bad');
     } else {
       hint.textContent = 'Ссылка похожа на правильную.';
