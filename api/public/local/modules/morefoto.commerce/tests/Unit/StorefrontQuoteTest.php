@@ -20,6 +20,7 @@ use Rebit\Share\Contracts\Media\Dto\GalleryAssignmentOutputDto;
 use Rebit\Share\Contracts\Media\GalleryAccessInterface;
 use Rebit\Share\Contracts\Organization\Dto\GalleryGroupOutputDto;
 use Rebit\Share\Shared\Exception\HttpException;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 require_once __DIR__ . '/../bootstrap.php';
 
@@ -29,6 +30,8 @@ require_once __DIR__ . '/../bootstrap.php';
 final class StorefrontQuoteTest extends TestCase
 {
     private const string PRINT = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    private const string DIGITAL = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    private const string VARIABLE_DIGITAL = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
     private const string BUNDLE = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
     private const string A = '11111111-1111-4111-8111-111111111111';
     private const string B = '22222222-2222-4222-8222-222222222222';
@@ -38,7 +41,7 @@ final class StorefrontQuoteTest extends TestCase
     {
         $quote = $this->calculator(secondPhotoId: self::PHOTO_B)->calculate(str_repeat('a', 64), [
             new QuoteLineInputDto(self::A, self::PRINT, 1),
-            new QuoteLineInputDto(self::B, 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 1),
+            new QuoteLineInputDto(self::B, self::DIGITAL, 1),
         ])['quote'];
 
         self::assertSame([self::A, self::B], array_column($quote['lines'], 'assignmentId'));
@@ -50,7 +53,7 @@ final class StorefrontQuoteTest extends TestCase
     {
         $quote = $this->calculator()->calculate(str_repeat('a', 64), [
             new QuoteLineInputDto(self::A, self::PRINT, 1),
-            new QuoteLineInputDto(self::A, 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 1),
+            new QuoteLineInputDto(self::A, self::DIGITAL, 1),
         ])['quote'];
 
         self::assertSame(['photo-id', 'photo-id'], array_column($quote['lines'], 'photoId'));
@@ -122,7 +125,7 @@ final class StorefrontQuoteTest extends TestCase
     public function testDigitalWindowSellsDigitalAndBundleButNotPrint(): void
     {
         $result = $this->calculator(state: 'digital')->calculate(str_repeat('a', 64), [
-            new QuoteLineInputDto(self::A, 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 1),
+            new QuoteLineInputDto(self::A, self::DIGITAL, 1),
             new QuoteLineInputDto(self::B, self::BUNDLE, 1),
         ]);
         self::assertSame(60000, $result['quote']['total']);
@@ -130,7 +133,7 @@ final class StorefrontQuoteTest extends TestCase
         $this->expectException(HttpException::class);
         $this->expectExceptionMessage('PRINT_SALES_CLOSED');
         $this->calculator(state: 'digital')->calculate(str_repeat('a', 64), [
-            new QuoteLineInputDto(self::A, 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 1),
+            new QuoteLineInputDto(self::A, self::DIGITAL, 1),
             new QuoteLineInputDto(self::B, self::PRINT, 1),
         ]);
     }
@@ -199,9 +202,50 @@ final class StorefrontQuoteTest extends TestCase
         $this->expectException(HttpException::class);
         $this->expectExceptionMessage('DIGITAL_ALREADY_IN_BUNDLE');
         $this->calculator()->calculate(str_repeat('a', 64), [
-            new QuoteLineInputDto(self::A, 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 1),
+            new QuoteLineInputDto(self::A, self::DIGITAL, 1),
             new QuoteLineInputDto(self::A, self::BUNDLE, 1),
         ]);
+    }
+
+    public function testProtectedFileCannotBeBoughtTwiceByQuantity(): void
+    {
+        $this->expectExceptionMessage('INVALID_CART');
+        $this->expectException(HttpException::class);
+        $this->calculator()->calculate(str_repeat('a', 64), [new QuoteLineInputDto(self::A, self::DIGITAL, 2)]);
+    }
+
+    #[DataProvider('duplicateFileSelections')]
+    public function testProtectedFileCannotBeChargedTwiceAcrossRows(string $first, string $second, string $assignment): void
+    {
+        $this->expectException(HttpException::class);
+        $this->expectExceptionMessage('DUPLICATE_DIGITAL_FILE');
+        $this->calculator()->calculate(str_repeat('a', 64), [
+            new QuoteLineInputDto(self::A, $first, 1),
+            new QuoteLineInputDto($assignment, $second, 1),
+        ]);
+    }
+
+    /** @return iterable<string, array{string, string, string}> */
+    public static function duplicateFileSelections(): iterable
+    {
+        yield 'same original in another child gallery' => [self::DIGITAL, self::DIGITAL, self::B];
+        yield 'another offer for the same assignment' => [self::DIGITAL, self::VARIABLE_DIGITAL, self::A];
+        yield 'protected offer added second' => [self::VARIABLE_DIGITAL, self::DIGITAL, self::B];
+    }
+
+    public function testDifferentOriginalsAndAnExplicitlyAllowedQuantityArePricedIndependently(): void
+    {
+        $quote = $this->calculator(secondPhotoId: self::PHOTO_B)->calculate(str_repeat('a', 64), [
+            new QuoteLineInputDto(self::A, self::DIGITAL, 1),
+            new QuoteLineInputDto(self::B, self::DIGITAL, 1),
+        ])['quote'];
+        self::assertSame(20000, $quote['total']);
+        self::assertSame(2, $quote['count']);
+
+        $quote = $this->calculator()->calculate(str_repeat('a', 64), [new QuoteLineInputDto(self::B, self::VARIABLE_DIGITAL, 3)])['quote'];
+        self::assertSame(3, $quote['count']);
+        self::assertSame(36000, $quote['total']);
+        self::assertTrue($quote['lines'][0]['product']['allowDigitalQuantity']);
     }
 
     public function testDigitalQuantityIsStrict(): void
@@ -227,7 +271,8 @@ final class StorefrontQuoteTest extends TestCase
         ));
         $products = [
             new ProductOutputDto(self::PRINT, 'Print', '', ProductKind::PHYSICAL, $price, 1, '', '', true, true),
-            new ProductOutputDto('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'Digital', '', ProductKind::DIGITAL, 10000, 0, '', '', true, true),
+            new ProductOutputDto(self::VARIABLE_DIGITAL, 'Variable', '', ProductKind::DIGITAL, 12000, 0, '', '', false, true, allowDigitalQuantity: true),
+            new ProductOutputDto(self::DIGITAL, 'Digital', '', ProductKind::DIGITAL, 10000, 0, '', '', true, true),
             new ProductOutputDto(self::BUNDLE, 'Bundle', '', ProductKind::BUNDLE, 50000, 0, '', '', true, true),
         ];
         $prices = new PublishedPrices();

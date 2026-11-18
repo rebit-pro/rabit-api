@@ -1,12 +1,13 @@
 import { isMockApiEnabled } from '@/mocks/config';
 import { liveQuote, addLive, changeLive, clearLive } from './storefront';
-import { calculateQuote } from './pricing';
+import { allowsQuantity, conflictsWithFile, restoreFileQuantities } from '../product-quantity';
+import { calculateQuote, cartPhoto } from './pricing';
 import { resolveDemoGallery } from '../../gallery/services/gallery';
 import type { GallerySnapshot } from '../../gallery/types';
 import { simulateRequest } from '../../mocks/runtime';
 import { readDemo, writeDemo } from '../../mocks/storage';
 import { getCatalog } from '../mocks/catalog';
-import type { CartLine, CartQuote } from '../types';
+import type { CartLine, CartQuote, Product } from '../types';
 
 export function readCart(groupId: string): CartLine[] {
   const value = readDemo<unknown>('cart:' + groupId, []);
@@ -22,6 +23,10 @@ export function readCart(groupId: string): CartLine[] {
       line.quantity >= 1 &&
       line.quantity <= 99
   );
+}
+
+function editableLines(gallery: GallerySnapshot, products: Product[]): CartLine[] {
+  return restoreFileQuantities(readCart(gallery.groupId), products, (line) => cartPhoto(gallery, line)?.id);
 }
 export function quoteCart(gallery: GallerySnapshot, source?: CartLine[]): CartQuote {
   return isMockApiEnabled
@@ -47,23 +52,34 @@ export async function addToCart(token: string, photoId: string, productId: strin
   if (!isMockApiEnabled) return addLive(token, photoId, productId, quantity);
   await simulateRequest();
   const gallery = assertOpen(token);
-  const product = getCatalog(gallery.groupId).products.find((product) => product.id === productId && product.active);
+  const catalog = getCatalog(gallery.groupId);
+  const product = catalog.products.find((item) => item.id === productId && item.active);
   const child = gallery.children.find((child) => child.photos.some((photo) => photo.id === photoId));
   if (!product || !child) throw new Error('Кадр или продукция больше недоступны. Обновите галерею.');
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) throw new Error('Введите целое количество от 1 до 99.');
-  let lines = readCart(gallery.groupId);
-  if (product.kind === 'digital' && lines.some((line) => line.childCode === child.code && line.productId === 'bundle'))
+  let lines = editableLines(gallery, catalog.products);
+  const byId = new Map(catalog.products.map((item) => [item.id, item]));
+  if (
+    product.kind === 'digital' &&
+    lines.some((line) => {
+      const selected = byId.get(line.productId);
+      return line.photoId === photoId && selected?.active && conflictsWithFile(product, selected) && !!cartPhoto(gallery, line);
+    })
+  )
+    return 'Этот файл уже в корзине.';
+  const kindFor = (line: CartLine) => byId.get(line.productId)?.kind;
+  if (product.kind === 'digital' && lines.some((line) => line.childCode === child.code && kindFor(line) === 'bundle'))
     return 'Этот кадр уже входит в полный электронный комплект.';
   const targetPhoto = product.kind === 'bundle' ? null : photoId;
   const id = child.code + ':' + (targetPhoto ?? 'all') + ':' + productId;
   const existing = lines.find((line) => line.id === id);
-  if (product.kind !== 'physical' && existing) return 'Электронный файл или комплект уже в корзине.';
+  if (!allowsQuantity(product) && existing) return 'Электронный файл или комплект уже в корзине.';
   let replaced = false;
   if (product.kind === 'bundle') {
-    replaced = lines.some((line) => line.childCode === child.code && line.productId === 'digital');
-    lines = lines.filter((line) => !(line.childCode === child.code && line.productId === 'digital'));
+    replaced = lines.some((line) => line.childCode === child.code && kindFor(line) === 'digital');
+    lines = lines.filter((line) => !(line.childCode === child.code && kindFor(line) === 'digital'));
   }
-  const nextQuantity = product.kind === 'physical' ? (existing?.quantity ?? 0) + quantity : 1;
+  const nextQuantity = allowsQuantity(product) ? (existing?.quantity ?? 0) + quantity : 1;
   if (nextQuantity > 99) throw new Error('В одной позиции можно заказать не более 99 единиц.');
   const next = {
     id,
@@ -84,11 +100,12 @@ export async function changeCartLine(token: string, id: string, quantity: number
   await simulateRequest();
   const gallery = assertOpen(token);
   if (!Number.isInteger(quantity) || quantity < 0 || quantity > 99) throw new Error('Количество должно быть от 1 до 99.');
-  const lines = readCart(gallery.groupId);
+  const { products } = getCatalog(gallery.groupId);
+  const lines = editableLines(gallery, products);
   const line = lines.find((line) => line.id === id);
   if (!line) throw new Error('Позиция уже удалена. Обновите корзину.');
-  const product = getCatalog(gallery.groupId).products.find((product) => product.id === line.productId);
-  if (quantity > 1 && product?.kind !== 'physical') throw new Error('Для электронного файла достаточно одного экземпляра.');
+  const product = products.find((product) => product.id === line.productId);
+  if (quantity > 1 && (!product || !allowsQuantity(product))) throw new Error('Для электронного файла достаточно одного экземпляра.');
   return persist(
     gallery,
     quantity === 0 ? lines.filter((line) => line.id !== id) : lines.map((line) => (line.id === id ? { ...line, quantity } : line)),

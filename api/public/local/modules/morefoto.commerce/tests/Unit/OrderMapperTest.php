@@ -200,7 +200,7 @@ final class OrderMapperTest extends TestCase
             'CHILD_PUBLIC_ID' => 'child-id', 'CHILD_CODE' => 'A', 'PHOTO_PUBLIC_ID' => self::PHOTO, 'PHOTO_CODE' => 'A003', 'PHOTO_WIDTH' => '1200',
             'PHOTO_HEIGHT' => '800', 'PRODUCT_PUBLIC_ID' => 'product-id', 'PRODUCT_KIND' => 'physical', 'PRODUCT_NAME' => 'Фото',
             'PRODUCT_DESCRIPTION' => '', 'PRODUCT_FORMAT' => '10x15', 'PRODUCT_UNIT' => 'шт', 'PRODUCT_PRICE' => '25000', 'PRINT_COUNT' => '1',
-            'STAFF_DISCOUNT' => '1', 'QUANTITY' => '1', 'UNIT_PRICE' => '25000', 'DISCOUNT' => '0', 'TOTAL' => '25000', 'COVERED_BY_GIFT' => '0',
+            'STAFF_DISCOUNT' => '1', 'ALLOW_DIGITAL_QUANTITY' => '0', 'QUANTITY' => '1', 'UNIT_PRICE' => '25000', 'DISCOUNT' => '0', 'TOTAL' => '25000', 'COVERED_BY_GIFT' => '0',
         ];
     }
 
@@ -208,7 +208,7 @@ final class OrderMapperTest extends TestCase
     {
         $product = static fn(string $kind, int $price): array => [
             'id' => 'product-' . $kind, 'name' => $kind, 'description' => '', 'kind' => $kind, 'price' => $price, 'printCount' => 1,
-            'format' => '', 'unit' => '', 'staffDiscount' => false, 'active' => true,
+            'format' => '', 'unit' => '', 'staffDiscount' => false, 'active' => true, 'allowDigitalQuantity' => false,
         ];
         $quote = [
             'lines' => [

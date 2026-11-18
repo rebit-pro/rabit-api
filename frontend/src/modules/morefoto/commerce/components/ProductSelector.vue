@@ -6,6 +6,7 @@ import { useCart } from '../composables/useCart';
 import { addToCart, changeCartLine } from '../services/cart';
 import { money } from '../money';
 import { printIncludesCopy } from '../print-copy';
+import { allowsQuantity, fileAlreadySelected } from '../product-quantity';
 import { frameLine, frameSummary } from '../frame-lines';
 import { sellsKind } from '../sales-windows';
 import type { CartQuoteLine, Product } from '../types';
@@ -34,6 +35,7 @@ interface Row {
   note: string;
   /** A file or bundle already paid by the series bundle or the gift: nothing to add. */
   covered: boolean;
+  fileInCart: boolean;
   /** J4: a print of this frame in the cart brings its digital copy; the digital product keeps its price. */
   printCopy: boolean;
 }
@@ -61,6 +63,7 @@ const rows = computed<Row[]>(() =>
               : ''
             : kindLabels[product.kind] + (product.format ? ' · ' + product.format : ''),
         covered,
+        fileInCart: !line && fileAlreadySelected(quote.value, props.photo.id, product),
         printCopy: product.kind === 'digital' && !covered && printIncludesCopy(quote.value, props.photo.id)
       };
     })
@@ -127,7 +130,10 @@ function change(row: Row, quantity: number): void {
           <span v-if="row.covered" class="product-option__included" data-testid="product-included">
             <v-icon icon="mdi-check" size="18" aria-hidden="true" />{{ row.product.kind === 'bundle' ? 'В подарок' : 'В комплекте' }}
           </span>
-          <template v-else-if="row.line && row.product.kind === 'physical'">
+          <span v-else-if="row.fileInCart" class="product-option__included">
+            <v-icon icon="mdi-check" size="18" aria-hidden="true" />Файл в корзине
+          </span>
+          <template v-else-if="row.line && allowsQuantity(row.product)">
             <v-btn
               icon="mdi-minus"
               variant="outlined"

@@ -1,11 +1,25 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { test, expect, type APIResponse, type Browser, type Page } from '@playwright/test';
-import { acceptCheckoutDocuments, fillCheckoutChild, login, orderConsents, password, token } from './helpers.js';
+import {
+  acceptCheckoutDocuments,
+  fillCheckoutChild,
+  fillProduct,
+  login,
+  orderConsents,
+  password,
+  productAdd,
+  productRow,
+  saveProduct,
+  token
+} from './helpers.js';
 
 /** Visible rows of the orders table: the desktop row and the mobile card of one order share its ID. */
 const rows = (scope: Page) => scope.locator('[data-row-id]').filter({ visible: true });
 
-type Fixture = Record<'open' | 'preparing' | 'closed' | 'revoked', { token: string; alias: string; groupId: string; photoId: string }>;
+type Fixture = Record<
+  'open' | 'preparing' | 'closed' | 'revoked' | 'digital',
+  { token: string; alias: string; groupId: string; photoId: string }
+>;
 type Line = { assignmentId: string; productId: string; quantity: number };
 const fixture = JSON.parse(readFileSync('var/e4-fixture.json', 'utf8')) as Fixture;
 const gallery = (kind: keyof Fixture = 'open') => '/api/v1/public/galleries/' + fixture[kind].token;
@@ -20,7 +34,7 @@ let assignment = '';
 let institutionId = '';
 let shootGalleryPath = '';
 
-async function body(response: APIResponse, status = 200) {
+async function body(response: Pick<APIResponse, 'status' | 'text' | 'json'>, status = 200) {
   expect(response.status(), await response.text()).toBe(status);
   return response.json();
 }
@@ -708,5 +722,106 @@ test('E5: changed price at checkout asks the buyer to confirm the new total', as
   } finally {
     await setPrintPrice(organizer, 10000);
     await context.close();
+  }
+});
+
+test('электронный файл в заказе — защита по умолчанию и количество по выбору организатора', async ({ page, browser, baseURL }, info) => {
+  const name = 'Тест количества электронного кадра';
+  const admin = await browser.newContext({ baseURL });
+  try {
+    const editor = await admin.newPage();
+    await login(editor);
+    await fillProduct(editor, name, '100');
+    await editor.getByRole('combobox', { name: 'Тип продукции' }).press('Enter');
+    await editor.getByRole('option', { name: 'Электронный кадр', exact: true }).click();
+    const limit = editor.getByRole('checkbox', {
+      name: 'Один экземпляр файла в заказе'
+    });
+    await expect(limit).toBeChecked();
+    await saveProduct(editor);
+    const catalogue = (await body(await editor.request.get(gallery('digital') + '/catalog'))).data;
+    const product = catalogue.products.find((item: { name: string }) => item.name === name);
+    expect(product.allowDigitalQuantity).toBe(false);
+    const children = (await body(await page.request.get(gallery('digital')))).data.children;
+    const first = children[0].photos[0],
+      second = children[1].photos[0];
+    expect(first.id).toBe(second.id);
+    const lines = [first, second].map((photo) => ({
+      assignmentId: photo.assignmentId,
+      productId: product.id,
+      quantity: 1
+    }));
+    const duplicate = await body(
+      await page.request.post(gallery('digital') + '/quotes', {
+        data: { lines }
+      }),
+      422
+    );
+    expect(duplicate.error.code).toBe('DUPLICATE_DIGITAL_FILE');
+
+    const link = '/g/' + fixture.digital.token;
+    await page.goto(link);
+    await page.getByRole('button', { name: 'Открыть кадр ' + first.code, exact: true }).click();
+    await productAdd(page, name).click();
+    await expect(
+      page.getByRole('button', {
+        name: 'В корзине, убрать: ' + name,
+        exact: true
+      })
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Добавить ещё один: ' + name })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Закрыть просмотр', exact: true }).click();
+    await page.getByRole('button', { name: 'Открыть кадр ' + second.code, exact: true }).click();
+    await expect(
+      page.getByRole('button', {
+        name: 'В корзине, убрать: ' + name,
+        exact: true
+      })
+    ).toBeVisible();
+    await expect(productAdd(page, name)).toHaveCount(0);
+    // Selections saved before the file limit can contain both assignments.
+    await page.evaluate(({ group, lines }) => localStorage.setItem('morefoto:cart:v1:' + group, JSON.stringify(lines)), {
+      group: fixture.digital.groupId,
+      lines
+    });
+    await page.goto(link + '/cart');
+    const row = page.getByTestId('cart-line');
+    await expect(row).toHaveCount(1);
+    await expect(row.getByRole('spinbutton')).toHaveCount(0);
+    await expect(page.getByTestId('cart-total')).toContainText('100');
+
+    await (await productRow(editor, name)).getByRole('button', { name: 'Изменить ' + name, exact: true }).click();
+    await expect(limit).toBeChecked();
+    await limit.uncheck();
+    await saveProduct(editor, 'PATCH', 200);
+    await page.reload();
+    await row.getByRole('button', { name: /Увеличить количество/ }).click();
+    await expect(page.getByTestId('cart-total')).toContainText('200');
+    for (const width of [1280, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      await expect(row.getByRole('spinbutton')).toHaveValue('2');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await row.screenshot({
+        path: info.outputPath('digital-quantity-' + width + '.png')
+      });
+    }
+    await page.getByRole('textbox', { name: 'Email', exact: true }).fill('quantity@example.test');
+    await fillCheckoutChild(page);
+    await acceptCheckoutDocuments(page);
+    const created = page.waitForResponse((response) => response.url().endsWith('/orders') && response.request().method() === 'POST');
+    await page.getByTestId('create-order').click();
+    const order = (await body(await created, 201)).data;
+    remember(order);
+    expect(order.quote.lines).toHaveLength(1);
+    expect(order.quote.lines[0]).toMatchObject({
+      photoId: first.id,
+      productId: product.id,
+      quantity: 2,
+      total: 20000,
+      product: { allowDigitalQuantity: true }
+    });
+    await expect(page.getByTestId('order-total')).toContainText('200');
+  } finally {
+    await admin.close();
   }
 });

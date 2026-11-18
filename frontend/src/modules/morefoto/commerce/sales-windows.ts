@@ -57,6 +57,7 @@ export function mergeCartLines(current: SalesLine[], added: SalesLine[]): SalesL
 }
 
 const quoteErrors: Record<string, string> = {
+  DUPLICATE_DIGITAL_FILE: 'Этот файл уже в корзине. Обновите страницу, чтобы пересчитать заказ.',
   PRINT_SALES_CLOSED: 'Приём заказов на печать завершён. Обновите страницу: печатные позиции уберутся, электронные фото останутся.',
   GALLERY_CLOSED: 'Приём заказов завершён. Выбор сохранён; новые заказы сейчас не принимаются.',
   GALLERY_UPDATING: 'Фотографии группы обновляются, покупка временно приостановлена. Выбор сохранён — вернитесь немного позже.'

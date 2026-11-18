@@ -35,7 +35,7 @@ final readonly class ConditionsResultMapper
     /** @return array{
      *     revision: int,
      *     catalogRevision: int,
-     *     products: list<array{id: string, name: string, description: string, kind: string, price: int, salePrice: int, printCount: int, format: string, unit: string, staffDiscount: bool, active: bool}>,
+     *     products: list<array{id: string, name: string, description: string, kind: string, price: int, salePrice: int, printCount: int, format: string, unit: string, staffDiscount: bool, active: bool, allowDigitalQuantity: bool}>,
      *     giftThreshold: int,
      *     giftForStaff: bool,
      *     paymentCosts: array{enabled: bool, rateBps: int, roundingStep: int, maxRateBps: int},
@@ -56,6 +56,7 @@ final readonly class ConditionsResultMapper
                 'unit' => $product->unit,
                 'staffDiscount' => $product->staffDiscount,
                 'active' => $product->active,
+                'allowDigitalQuantity' => $product->allowDigitalQuantity,
             ];
         }
 

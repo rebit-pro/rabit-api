@@ -6,6 +6,7 @@ namespace Morefoto\Commerce\Tests\Unit;
 
 use Bitrix\Main\DB\Result;
 use Morefoto\Commerce\Application\Catalog\Contract\CatalogTransactionInterface;
+use Morefoto\Commerce\Application\Catalog\Dto\ProductInputDto;
 use Morefoto\Commerce\Application\Catalog\Service\AuthorizedCatalog;
 use Morefoto\Commerce\Application\Catalog\Service\CatalogPayloadHash;
 use Morefoto\Commerce\Application\Catalog\UseCase\CreateProductUseCase;
@@ -48,6 +49,8 @@ final class CatalogApiTest extends TestCase
         yield 'numeric string' => ['price', '12500'];
         yield 'float' => ['price', 12500.0];
         yield 'boolean string' => ['active', 'true'];
+        yield 'quantity flag is strictly boolean' => ['allowDigitalQuantity', 1];
+        yield 'print cannot opt into digital quantities' => ['allowDigitalQuantity', true];
         yield 'boolean integer' => ['staffDiscount', 1];
         yield 'null value' => ['description', null];
         yield 'name integer' => ['name', 123];
@@ -91,6 +94,21 @@ final class CatalogApiTest extends TestCase
         $first = $factory->create(json_encode(self::PRODUCT, JSON_THROW_ON_ERROR), 'application/json', self::KEY);
         $second = $factory->create(json_encode(array_reverse(self::PRODUCT, true), JSON_THROW_ON_ERROR), 'application/json; charset=UTF-8', self::KEY);
         self::assertSame($hashes->create($first->input), $hashes->create($second->input));
+    }
+
+    public function testDigitalQuantityDefaultsKeepLegacyCreateRetriesCompatible(): void
+    {
+        $factory = new CatalogRequestFactory();
+        $hashes = new CatalogPayloadHash();
+        $fields = array_replace(self::PRODUCT, ['kind' => 'digital']);
+        $create = static fn(array $data): ProductInputDto => $factory->create(json_encode($data, JSON_THROW_ON_ERROR), 'application/json', self::KEY)->input;
+        $default = $create($fields);
+        self::assertFalse($default->details->allowDigitalQuantity);
+        ksort($fields, SORT_STRING);
+        $oldHash = hash('sha256', json_encode($fields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+        self::assertSame($oldHash, $hashes->create($default));
+        self::assertSame($oldHash, $hashes->create($create($fields + ['allowDigitalQuantity' => false])));
+        self::assertNotSame($oldHash, $hashes->create($create($fields + ['allowDigitalQuantity' => true])));
     }
 
     public function testPatchExplicitFalseDiffersFromOmission(): void

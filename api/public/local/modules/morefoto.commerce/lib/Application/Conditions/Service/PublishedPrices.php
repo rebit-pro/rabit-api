@@ -58,6 +58,7 @@ final readonly class PublishedPrices
                 unit: $product->unit,
                 staffDiscount: $product->staffDiscount,
                 active: $product->active,
+                allowDigitalQuantity: $product->allowDigitalQuantity,
             );
         }
 

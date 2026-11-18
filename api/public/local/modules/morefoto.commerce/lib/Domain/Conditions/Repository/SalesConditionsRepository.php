@@ -12,7 +12,7 @@ use Morefoto\Commerce\Domain\Conditions\ValueObject\PaymentCostPolicy;
 
 final readonly class SalesConditionsRepository
 {
-    private const string PRODUCT_FIELDS = 'p.UF_UUID,p.UF_NAME,p.UF_DESCRIPTION,p.UF_KIND,p.UF_PRICE,p.UF_PRINT_COUNT,p.UF_FORMAT,p.UF_UNIT,p.UF_STAFF_DISCOUNT,p.UF_ACTIVE';
+    private const string PRODUCT_FIELDS = 'p.UF_UUID,p.UF_NAME,p.UF_DESCRIPTION,p.UF_KIND,p.UF_PRICE,p.UF_PRINT_COUNT,p.UF_FORMAT,p.UF_UNIT,p.UF_ALLOW_DIGITAL_QUANTITY,p.UF_STAFF_DISCOUNT,p.UF_ACTIVE';
 
     /** @return array{
      *     REVISION: int|string,
@@ -63,7 +63,7 @@ final readonly class SalesConditionsRepository
     public function groupProducts(int $groupId): Result
     {
         return $this->query('SELECT p.UF_UUID,p.UF_NAME,p.UF_DESCRIPTION,p.UF_KIND,'
-            . 'COALESCE(c.PRICE,p.UF_PRICE) AS UF_PRICE,p.UF_PRINT_COUNT,p.UF_FORMAT,p.UF_UNIT,'
+            . 'COALESCE(c.PRICE,p.UF_PRICE) AS UF_PRICE,p.UF_PRINT_COUNT,p.UF_FORMAT,p.UF_UNIT,p.UF_ALLOW_DIGITAL_QUANTITY,'
             . 'COALESCE(c.STAFF_DISCOUNT,p.UF_STAFF_DISCOUNT) AS UF_STAFF_DISCOUNT,'
             . 'CASE WHEN c.PRODUCT_UUID IS NULL THEN 0 ELSE p.UF_ACTIVE*c.ACTIVE END AS UF_ACTIVE '
             . 'FROM b_hlbd_mf_product p LEFT JOIN mf_group_product_condition c ON c.PRODUCT_UUID=p.UF_UUID AND c.GROUP_ID=' . $this->positive($groupId)

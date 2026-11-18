@@ -96,6 +96,7 @@ final readonly class OrderRowMapper
                 'unit' => (string)$line['PRODUCT_UNIT'],
                 'staffDiscount' => 1 === (int)$line['STAFF_DISCOUNT'],
                 'active' => true,
+                'allowDigitalQuantity' => 1 === (int)$line['ALLOW_DIGITAL_QUANTITY'],
             ],
             'photo' => null === $photoId ? null : [
                 'id' => $photoId,

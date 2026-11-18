@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Morefoto\Commerce\Domain\Conditions\Service;
 
 use Morefoto\Commerce\Domain\Catalog\Enum\ProductKind;
+use Morefoto\Commerce\Domain\Conditions\Exception\DuplicateDigitalFileException;
 use Morefoto\Commerce\Domain\Conditions\Exception\InvalidConditionsException;
 use Morefoto\Commerce\Domain\Conditions\ValueObject\PricedSaleItem;
 use Morefoto\Commerce\Domain\Conditions\ValueObject\SaleItem;
 use Morefoto\Commerce\Domain\Conditions\ValueObject\SalesProduct;
 use Morefoto\Commerce\Domain\Conditions\ValueObject\SalesQuote;
 
+/** Рассчитывает стоимость выбранных товаров с учётом количества, льгот сотрудника и подарков по каждому ребёнку. */
 final readonly class SalesPolicy
 {
     /** @var array<string, SalesProduct> */
@@ -53,6 +55,7 @@ final readonly class SalesPolicy
         $invalid = [];
         $printed = [];
         $bundleChildren = [];
+        $digitalFiles = [];
         foreach ($source as $item) {
             $product = $this->products[$item->productId->value] ?? null;
             if (!$product instanceof SalesProduct || !$product->active || !$this->hasValidPhoto($item, $product)
@@ -63,7 +66,13 @@ final readonly class SalesPolicy
             if (ProductKind::BUNDLE === $product->kind) {
                 $bundleChildren[$item->childId] = true;
             }
-            $quantity = ProductKind::PHYSICAL === $product->kind ? $item->quantity : 1;
+            if (ProductKind::DIGITAL === $product->kind) {
+                if (isset($digitalFiles[$item->photoId]) && (!$digitalFiles[$item->photoId] || !$product->allowDigitalQuantity)) {
+                    throw new DuplicateDigitalFileException('This digital file can only be purchased once per order.');
+                }
+                $digitalFiles[$item->photoId] = $product->allowDigitalQuantity;
+            }
+            $quantity = $product->kind->allowsQuantity($product->allowDigitalQuantity) ? $item->quantity : 1;
             $subtotal = $this->multiply($product->price, $quantity);
             $unitPrice = $confirmedStaff && $product->staffDiscount ? intdiv($product->price + 1, 2) : $product->price;
             $total = $this->multiply($unitPrice, $quantity);

@@ -130,6 +130,7 @@ export function useProductEditor(saved: () => Promise<unknown>) {
         kind: p.kind,
         price: moneyInputValue(p.price)!,
         printCount: p.kind === 'physical' ? Number(p.printCount) : 0,
+        allowDigitalQuantity: p.kind === 'digital' && p.allowDigitalQuantity === true,
         format: p.format,
         unit: p.unit,
         staffDiscount: p.staffDiscount,

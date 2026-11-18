@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { fileAlreadySelected, restoreFileQuantities } from '../../src/modules/morefoto/commerce/product-quantity.ts';
 import { calculateQuote } from '../../src/modules/morefoto/commerce/services/pricing.ts';
 const photo = (id) => ({ id, code: id, thumbSrc: '/preview.webp', previewSrc: '/preview.webp', width: 100, height: 150 });
 const gallery = {
@@ -90,8 +91,45 @@ test('unknown photos or unavailable products block checkout through invalid line
   assert.equal(quote.invalid.length, 2);
   assert.equal(quote.total, 0);
 });
+test('a stale assignment does not hide the same digital file in its current child gallery', () => {
+  const stale = line('B', 'a2', 'digital');
+  const current = line('A', 'a2', 'digital');
+  const quote = calculateQuote(gallery, [stale, current], catalog);
+  assert.deepEqual(quote.invalid, [stale.id]);
+  assert.deepEqual(
+    quote.lines.map((item) => item.id),
+    [current.id]
+  );
+  assert.equal(quote.total, 25000);
+});
 test('digital quantity remains one even with stale persisted data', () => {
   const quote = calculateQuote(gallery, [line('A', 'a1', 'digital', 7)], catalog);
   assert.equal(quote.total, 25000);
   assert.equal(quote.count, 1);
+});
+
+test('restoring a cart keeps the first offer for a protected original, even across products and children', () => {
+  const flexible = {
+    ...catalog.products[3],
+    id: 'flexible',
+    allowDigitalQuantity: true
+  };
+  const products = [...catalog.products, flexible];
+  const protectedLine = line('A', 'a1', 'digital', 2);
+  const flexibleLine = line('B', 'a1', flexible.id, 3);
+  const other = line('A', 'a2', 'digital');
+  const print = line('B', 'a1', 'print', 2);
+  const restore = (lines) => restoreFileQuantities(lines, products, (item) => item.photoId);
+  assert.deepEqual(restore([protectedLine, flexibleLine, other, print]), [{ ...protectedLine, quantity: 1 }, other, print]);
+  assert.deepEqual(restore([flexibleLine, protectedLine]), [flexibleLine]);
+  assert.equal(calculateQuote(gallery, [protectedLine, flexibleLine], { ...catalog, products }).count, 1);
+  const quote = calculateQuote(gallery, [flexibleLine], {
+    ...catalog,
+    products
+  });
+  assert.equal(quote.count, 3);
+  assert.equal(quote.total, flexible.price * 3);
+  assert.equal(fileAlreadySelected(quote, 'a1', catalog.products[3]), true);
+  assert.equal(fileAlreadySelected(quote, 'a2', catalog.products[3]), false);
+  assert.equal(fileAlreadySelected(quote, 'a1', flexible), false);
 });

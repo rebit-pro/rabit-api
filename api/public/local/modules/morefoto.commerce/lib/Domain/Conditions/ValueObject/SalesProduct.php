@@ -18,6 +18,7 @@ final readonly class SalesProduct
         public int $price,
         public bool $active,
         public bool $staffDiscount,
+        public bool $allowDigitalQuantity = false,
     ) {
         $this->id = new ProductId($id);
         if (0 > $price || 2147483647 < $price) {

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Morefoto\Commerce\Application\Order\Contract\OrderStaffAccessInterface;
@@ -255,6 +256,26 @@ try {
 }
 $proof[] = 'migration replay and protected down()';
 
+$multipleFile = $scalar("SELECT ID FROM mf_order_line WHERE PRODUCT_KIND='digital' AND QUANTITY>1 AND ALLOW_DIGITAL_QUANTITY=1 LIMIT 1");
+if (0 === $multipleFile) {
+    throw new RuntimeException('The browser order must retain the quantity selected for the digital file.');
+}
+$lifecycle(static function() use ($connection, $multipleFile): void {
+    foreach (['ALLOW_DIGITAL_QUANTITY=0', "PRODUCT_KIND='bundle',PHOTO_PUBLIC_ID=NULL,ALLOW_DIGITAL_QUANTITY=0"] as $change) {
+        try {
+            $connection->queryExecute("UPDATE mf_order_line SET {$change} WHERE ID={$multipleFile}");
+        } catch (SqlQueryException $error) {
+            if (!str_contains($error->getMessage(), 'ck_mf_order_line_values')) {
+                throw $error;
+            }
+            continue;
+        }
+        throw new RuntimeException('MySQL must reject multiple copies of a protected file or bundle.');
+    }
+    $connection->queryExecute("UPDATE mf_order_line SET ALLOW_DIGITAL_QUANTITY=0,QUANTITY=1 WHERE ID={$multipleFile}");
+});
+$proof[] = 'digital quantity snapshot and database constraints';
+
 // 7. Staff search on a realistic volume: scope and filters in SQL, a fixed number of queries per page.
 $organizer = (int)$connection->query("SELECT ID FROM b_user WHERE LOGIN='organizer@example.invalid' OR EMAIL='organizer@example.invalid' LIMIT 1")->fetch()['ID'];
 $source = $connection->query('SELECT * FROM mf_order ORDER BY ID LIMIT 1')->fetch();
@@ -273,10 +294,10 @@ try {
         PAYMENT_STATUS,PRODUCTION_STATUS,1,UTC_TIMESTAMP()-INTERVAL n MINUTE,UTC_TIMESTAMP() FROM seq JOIN mf_order WHERE mf_order.ID={$source['ID']}");
     $connection->queryExecute("INSERT INTO mf_order_line(PUBLIC_ID,ORDER_ID,LINE_NO,ASSIGNMENT_PUBLIC_ID,CHILD_ID,CHILD_PUBLIC_ID,CHILD_CODE,PHOTO_PUBLIC_ID,
         PHOTO_CODE,PHOTO_WIDTH,PHOTO_HEIGHT,PRODUCT_PUBLIC_ID,PRODUCT_KIND,PRODUCT_NAME,PRODUCT_DESCRIPTION,PRODUCT_FORMAT,PRODUCT_UNIT,PRODUCT_PRICE,
-        PRINT_COUNT,STAFF_DISCOUNT,QUANTITY,UNIT_PRICE,DISCOUNT,TOTAL,COVERED_BY_GIFT)
+        PRINT_COUNT,STAFF_DISCOUNT,ALLOW_DIGITAL_QUANTITY,QUANTITY,UNIT_PRICE,DISCOUNT,TOTAL,COVERED_BY_GIFT)
         SELECT UUID(),o.ID,1,l.ASSIGNMENT_PUBLIC_ID,l.CHILD_ID,l.CHILD_PUBLIC_ID,l.CHILD_CODE,l.PHOTO_PUBLIC_ID,l.PHOTO_CODE,l.PHOTO_WIDTH,l.PHOTO_HEIGHT,
         l.PRODUCT_PUBLIC_ID,l.PRODUCT_KIND,l.PRODUCT_NAME,l.PRODUCT_DESCRIPTION,l.PRODUCT_FORMAT,l.PRODUCT_UNIT,l.PRODUCT_PRICE,l.PRINT_COUNT,
-        l.STAFF_DISCOUNT,l.QUANTITY,l.UNIT_PRICE,l.DISCOUNT,l.TOTAL,l.COVERED_BY_GIFT
+        l.STAFF_DISCOUNT,l.ALLOW_DIGITAL_QUANTITY,l.QUANTITY,l.UNIT_PRICE,l.DISCOUNT,l.TOTAL,l.COVERED_BY_GIFT
         FROM mf_order o JOIN mf_order_line l ON l.ORDER_ID={$source['ID']} AND l.LINE_NO=1 WHERE o.NUMBER LIKE 'MF-V%'");
     $total = $scalar('SELECT COUNT(*) FROM mf_order');
     // G1 pays orders of the run: the unpaid filter counts only unpaid ones.

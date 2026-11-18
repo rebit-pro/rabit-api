@@ -20,7 +20,10 @@ use Morefoto\Commerce\Domain\Catalog\Exception\InvalidProductException;
 use Morefoto\Commerce\Domain\Catalog\Exception\ProductNotFoundException;
 use Morefoto\Commerce\Domain\Catalog\Repository\CatalogRepository;
 use Morefoto\Commerce\Domain\Catalog\ValueObject\ProductId;
+use Morefoto\Commerce\Domain\Catalog\ValueObject\ProductDetails;
+use Morefoto\Commerce\Domain\Catalog\ValueObject\ProductPatch;
 use Sprint\Migration\Version20260911220001;
+use Sprint\Migration\Version20261118213001;
 
 $checks = [];
 $stage = 'bootstrap';
@@ -82,6 +85,13 @@ try {
     });
     $assert(0 === (int)$sql->query('SELECT COUNT(*) AS C FROM b_hlbd_mf_product')->fetch_assoc()['C'], 'empty rollback and reinstall contain no seeded products');
 
+    require '/app/public/local/php_interface/migrations.foundation/Version20261118213001.php';
+    $quantityMigration = new Version20261118213001();
+    $quiet(static function() use ($quantityMigration): void {
+        $quantityMigration->up();
+        $quantityMigration->up();
+    });
+
     $stage = 'native-di';
     $services = ServiceLocator::getInstance();
     $create = $services->get(CreateProductUseCase::class);
@@ -93,11 +103,11 @@ try {
     $assert($create === $services->get(CreateProductUseCase::class), 'scenario service is singleton without request state');
     $empty = $list->execute(new ListProductsInputDto());
     $assert([] === $empty->items && 0 === $empty->total && 1 === $empty->revision, 'empty catalogue produces real zero and revision');
-    $product = new ProductInputDto(name: "Фото 'семья' 🖼", description: "Строка 1\nСтрока 2", kind: ProductKind::PHYSICAL, price: 12345, printCount: 2, format: '10×15', unit: 'шт.', staffDiscount: true, active: true);
+    $product = new ProductInputDto(new ProductDetails(name: "Фото 'семья' 🖼", description: "Строка 1\nСтрока 2", kind: ProductKind::PHYSICAL, price: 12345, printCount: 2, format: '10×15', unit: 'шт.', staffDiscount: true, active: true));
     $first = $create->execute($product);
     $assert(2 === $first->revision && $first->id === (new ProductId($first->id))->value, 'create returns UUID and advances global revision');
-    $second = $create->execute(new ProductInputDto('Digital', '', ProductKind::DIGITAL, 0, 0, '', '', false, false));
-    $third = $create->execute(new ProductInputDto('Bundle', '', ProductKind::BUNDLE, 2147483647, 2147483647, '', '', false, true));
+    $second = $create->execute(new ProductInputDto(new ProductDetails('Digital', '', ProductKind::DIGITAL, 0, 0, '', '', false, false)));
+    $third = $create->execute(new ProductInputDto(new ProductDetails('Bundle', '', ProductKind::BUNDLE, 2147483647, 2147483647, '', '', false, true)));
     $assert(3 === $second->revision && 4 === $third->revision, 'all kinds use integer prices and one global revision');
     $page = $list->execute(new ListProductsInputDto(1, 2));
     $assert(4 === $page->revision && 3 === $page->total && 2 === count($page->items), 'page items total and revision are consistent');
@@ -110,16 +120,16 @@ try {
     $assert(2147483647 === $last->items[0]->price && 2147483647 === $last->items[0]->printCount, 'integer storage boundaries round trip without float conversion');
     $beyond = $list->execute(new ListProductsInputDto(3, 2, 4));
     $assert([] === $beyond->items && 3 === $beyond->total, 'out-of-range page preserves total');
-    $changed = $update->execute(new UpdateProductInputDto($first->id, 4, description: '', price: 0, printCount: 0, format: '', unit: '', staffDiscount: false, active: false));
+    $changed = $update->execute(new UpdateProductInputDto(new ProductId($first->id), new ProductPatch(4, description: '', price: 0, printCount: 0, format: '', unit: '', staffDiscount: false, active: false)));
     $assert(5 === $changed->revision && $first->id === $changed->id, 'partial update increments global revision');
     $fresh = $list->execute(new ListProductsInputDto());
     $item = $fresh->items[0];
     $assert('' === $item->description && '' === $item->format && '' === $item->unit && 0 === $item->price && 0 === $item->printCount && !$item->staffDiscount && !$item->active, 'PATCH retains explicit false zero and empty strings');
     $assert($product->details->name === $item->name && ProductKind::PHYSICAL === $item->kind && 3 === $fresh->total, 'omitted fields and disabled record preserved');
-    $expect(static fn() => $update->execute(new UpdateProductInputDto($second->id, 4, name: 'Stale')), CatalogRevisionConflictException::class, 'change to another product still invalidates global revision');
+    $expect(static fn() => $update->execute(new UpdateProductInputDto(new ProductId($second->id), new ProductPatch(4, name: 'Stale'))), CatalogRevisionConflictException::class, 'change to another product still invalidates global revision');
     $expect(static fn() => $list->execute(new ListProductsInputDto(2, 2, 4)), CatalogRevisionConflictException::class, 'stale pagination revision rejected');
-    $expect(static fn() => $update->execute(new UpdateProductInputDto('11111111-1111-4111-8111-111111111111', 5, active: false)), ProductNotFoundException::class, 'missing UUID rejected');
-    $expect(static fn() => $update->execute(new UpdateProductInputDto($first->id, 5, price: -1)), InvalidProductException::class, 'invalid merged product rolls back');
+    $expect(static fn() => $update->execute(new UpdateProductInputDto(new ProductId('11111111-1111-4111-8111-111111111111'), new ProductPatch(5, active: false))), ProductNotFoundException::class, 'missing UUID rejected');
+    $expect(static fn() => $update->execute(new UpdateProductInputDto(new ProductId($first->id), new ProductPatch(5, price: -1))), InvalidProductException::class, 'invalid merged product rolls back');
     $assert(5 === $list->execute(new ListProductsInputDto())->revision, 'rejected mutations do not advance revision');
 
     $stage = 'atomic-rollback-and-constraints';

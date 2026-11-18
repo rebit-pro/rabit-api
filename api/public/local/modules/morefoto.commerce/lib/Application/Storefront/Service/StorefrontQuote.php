@@ -10,6 +10,7 @@ use Morefoto\Commerce\Application\Catalog\Dto\ProductOutputDto;
 use Morefoto\Commerce\Application\Storefront\Dto\QuoteLineInputDto;
 use Morefoto\Commerce\Application\Storefront\Dto\QuoteOutputDto;
 use Morefoto\Commerce\Domain\Catalog\Enum\ProductKind;
+use Morefoto\Commerce\Domain\Conditions\Exception\DuplicateDigitalFileException;
 use Morefoto\Commerce\Domain\Conditions\Service\SalesPolicy;
 use Morefoto\Commerce\Domain\Conditions\ValueObject\SalesProduct;
 use Morefoto\Commerce\Domain\Conditions\ValueObject\SaleItem;
@@ -57,7 +58,7 @@ final readonly class StorefrontQuote
         $pricing = [];
         foreach ($this->prices->publish($conditions) as $product) {
             $products[$product->id] = $product;
-            $pricing[] = new SalesProduct($product->id, $product->kind, $product->price, $product->active, $product->staffDiscount);
+            $pricing[] = new SalesProduct($product->id, $product->kind, $product->price, $product->active, $product->staffDiscount, $product->allowDigitalQuantity);
         }
         $items = [];
         $selected = [];
@@ -67,7 +68,7 @@ final readonly class StorefrontQuote
             $photo = $photos[$line->assignmentId] ?? null;
             $product = $products[$line->productId] ?? null;
             if (null === $photo || null === $product || !$product->active || 1 > $line->quantity || 99 < $line->quantity
-                || (ProductKind::PHYSICAL !== $product->kind && 1 !== $line->quantity)) {
+                || (1 !== $line->quantity && !$product->kind->allowsQuantity($product->allowDigitalQuantity))) {
                 throw new HttpException('INVALID_CART', 422);
             }
             $this->windows->assertSellable($gallery->state, $product->kind);
@@ -101,7 +102,11 @@ final readonly class StorefrontQuote
             }
         }
         $policy = new SalesPolicy($conditions->catalogRevision, $conditions->conditionsRevision, $pricing, $conditions->giftThreshold, $conditions->giftForStaff);
-        $priced = $policy->quote($items, $confirmedStaff);
+        try {
+            $priced = $policy->quote($items, $confirmedStaff);
+        } catch (DuplicateDigitalFileException) {
+            throw new HttpException('DUPLICATE_DIGITAL_FILE', 422);
+        }
         if ([] !== $priced->invalidItemIds) {
             throw new HttpException('INVALID_CART', 422);
         }
@@ -134,13 +139,13 @@ final readonly class StorefrontQuote
         ], 'fingerprint' => $fingerprint, 'gallery' => $gallery];
     }
 
-    /** @return array{id:string,name:string,description:string,kind:string,price:int,printCount:int,format:string,unit:string,staffDiscount:bool,active:bool} */
+    /** @return array{id:string,name:string,description:string,kind:string,price:int,printCount:int,format:string,unit:string,staffDiscount:bool,active:bool,allowDigitalQuantity:bool} */
     public function product(ProductOutputDto $product): array
     {
         return [
             'id' => $product->id, 'name' => $product->name, 'description' => $product->description, 'kind' => $product->kind->value,
             'price' => $product->price, 'printCount' => $product->printCount, 'format' => $product->format, 'unit' => $product->unit,
-            'staffDiscount' => $product->staffDiscount, 'active' => $product->active,
+            'staffDiscount' => $product->staffDiscount, 'active' => $product->active, 'allowDigitalQuantity' => $product->allowDigitalQuantity,
         ];
     }
 }

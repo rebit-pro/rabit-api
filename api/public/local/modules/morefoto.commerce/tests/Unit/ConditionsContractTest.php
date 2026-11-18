@@ -214,7 +214,7 @@ final class ConditionsContractTest extends TestCase
             'catalogRevision' => 5,
             'products' => [[
                 'id' => self::FIRST_ID, 'name' => 'Фото 10×15', 'description' => '', 'kind' => 'physical', 'price' => 25000, 'salePrice' => 30000,
-                'printCount' => 1, 'format' => '10x15', 'unit' => 'шт', 'staffDiscount' => true, 'active' => true,
+                'printCount' => 1, 'format' => '10x15', 'unit' => 'шт', 'staffDiscount' => true, 'active' => true, 'allowDigitalQuantity' => false,
             ]],
             'giftThreshold' => 0,
             'giftForStaff' => false,

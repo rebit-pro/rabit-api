@@ -9,7 +9,7 @@ use Morefoto\Commerce\Application\Catalog\Dto\ListProductsOutputDto;
 final readonly class CatalogResponseMapper
 {
     /** @return array{
-     *     items: list<array{id: string, name: string, description: string, kind: string, price: int, printCount: int, format: string, unit: string, staffDiscount: bool, active: bool}>,
+     *     items: list<array{id: string, name: string, description: string, kind: string, price: int, printCount: int, format: string, unit: string, staffDiscount: bool, active: bool, allowDigitalQuantity: bool}>,
      *     revision: int,
      * } */
     public function data(ListProductsOutputDto $output): array
@@ -19,7 +19,7 @@ final readonly class CatalogResponseMapper
             $items[] = [
                 'id' => $item->id, 'name' => $item->name, 'description' => $item->description, 'kind' => $item->kind->value,
                 'price' => $item->price, 'printCount' => $item->printCount, 'format' => $item->format, 'unit' => $item->unit,
-                'staffDiscount' => $item->staffDiscount, 'active' => $item->active,
+                'staffDiscount' => $item->staffDiscount, 'active' => $item->active, 'allowDigitalQuantity' => $item->allowDigitalQuantity,
             ];
         }
 

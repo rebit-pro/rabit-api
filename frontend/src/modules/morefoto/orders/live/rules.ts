@@ -36,6 +36,7 @@ const unusedKeyCodes = new Set([
   'QUOTE_ALREADY_USED',
   'INVALID_CART',
   'DUPLICATE_CART_LINE',
+  'DUPLICATE_DIGITAL_FILE',
   'DIGITAL_ALREADY_IN_BUNDLE',
   'STAFF_ELIGIBILITY_REQUIRED'
 ]);
@@ -84,6 +85,11 @@ export function checkoutOutcome(problem: ApiProblem, recovering: boolean): Check
       return { kind: 'message', message: 'Ссылка на группу недействительна или ещё не открыта.' };
     case 'PURCHASE_DISABLED':
       return { kind: 'message', message: 'Оформление заказов пока недоступно.' };
+    case 'DUPLICATE_DIGITAL_FILE':
+      return {
+        kind: 'message',
+        message: 'Этот файл выбран дважды. Обновите корзину и проверьте итог заказа.'
+      };
     case 'INVALID_CART':
     case 'DUPLICATE_CART_LINE':
     case 'DIGITAL_ALREADY_IN_BUNDLE':

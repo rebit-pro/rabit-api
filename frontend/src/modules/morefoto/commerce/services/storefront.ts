@@ -2,6 +2,7 @@ import { isAxiosError } from 'axios';
 import { shallowReactive } from 'vue';
 import api from '@/api/http';
 import type { GallerySnapshot } from '../../gallery/types';
+import { allowsQuantity, fileAlreadySelected, restoreFileQuantities } from '../product-quantity';
 import type { CartQuote, Catalog } from '../types';
 import { galleryBuys, mergeCartLines, quoteErrorMessage, sellableLines, type SalesLine } from '../sales-windows';
 
@@ -170,12 +171,19 @@ export async function loadStorefront(token: string, gallery: GallerySnapshot): P
     gallery.state === 'digital'
       ? sellableLines(stored, new Map(catalog.products.map((product) => [product.id, product.kind])), gallery.state)
       : { kept: stored, dropped: 0 };
-  if (dropped > 0) store(key(gallery.groupId), JSON.stringify(kept));
+  let lines = kept;
+  if (kept.length && galleryBuys(gallery)) {
+    const photoIds = new Map<string, string>();
+    for (const child of gallery.children) for (const photo of child.photos) photoIds.set(photo.assignmentId ?? photo.id, photo.id);
+    lines = restoreFileQuantities(kept, catalog.products, (line) => photoIds.get(line.assignmentId));
+  }
+  if (dropped > 0 || lines.length !== kept.length || lines.some((line, index) => line !== kept[index]))
+    store(key(gallery.groupId), JSON.stringify(lines));
   const state = shallowReactive<State>({
     gallery,
     token,
     catalog,
-    lines: kept,
+    lines,
     quote: null,
     quoteToken: null,
     busy: false,
@@ -228,7 +236,9 @@ export async function addLive(token: string, assignmentId: string, productId: st
   const state = forToken(token);
   const selectedChild = state.gallery.children.find((child) => child.photos.some((photo) => photo.assignmentId === assignmentId));
   const product = state.catalog.products.find((item) => item.id === productId);
-  if (!selectedChild || !product) throw new Error('Кадр или товар недоступен.');
+  const photo = selectedChild?.photos.find((item) => item.assignmentId === assignmentId);
+  if (!selectedChild || !photo || !product) throw new Error('Кадр или товар недоступен.');
+  if (state.quote && fileAlreadySelected(state.quote, photo.id, product)) return 'Этот файл уже в корзине.';
   const childAssignments = new Set(selectedChild.photos.map((photo) => photo.assignmentId));
   const productKinds = new Map(state.catalog.products.map((item) => [item.id, item.kind]));
   if (
@@ -250,7 +260,7 @@ export async function addLive(token: string, assignmentId: string, productId: st
   const next = {
     assignmentId: existing?.assignmentId ?? assignmentId,
     productId,
-    quantity: product.kind === 'physical' ? (existing?.quantity ?? 0) + quantity : 1
+    quantity: allowsQuantity(product) ? (existing?.quantity ?? 0) + quantity : 1
   };
   if (!Number.isInteger(next.quantity) || next.quantity < 1 || next.quantity > 99) throw new Error('Укажите количество от 1 до 99.');
   const lines = existing ? source.map((line) => (line === existing ? next : line)) : [...source, next];

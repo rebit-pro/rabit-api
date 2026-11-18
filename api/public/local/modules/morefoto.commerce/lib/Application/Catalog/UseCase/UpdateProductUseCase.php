@@ -6,12 +6,13 @@ namespace Morefoto\Commerce\Application\Catalog\UseCase;
 
 use Morefoto\Commerce\Application\Catalog\Contract\CatalogTransactionInterface;
 use Morefoto\Commerce\Application\Catalog\Dto\CatalogMutationOutputDto;
-use Morefoto\Commerce\Application\Catalog\Dto\ProductOutputDto;
+use Morefoto\Commerce\Application\Catalog\Mapper\ProductMapper;
 use Morefoto\Commerce\Application\Catalog\Dto\UpdateProductInputDto;
 use Morefoto\Commerce\Domain\Catalog\Exception\CatalogRevisionConflictException;
 use Morefoto\Commerce\Domain\Catalog\Exception\ProductNotFoundException;
 use Morefoto\Commerce\Domain\Catalog\Repository\CatalogRepository;
 
+/** Сохраняет изменения карточки по актуальной ревизии и обновляет версию каталога в той же транзакции. */
 final readonly class UpdateProductUseCase
 {
     public function __construct(private CatalogRepository $repository, private CatalogTransactionInterface $transaction) {}
@@ -25,14 +26,14 @@ final readonly class UpdateProductUseCase
     public function executeWithinTransaction(UpdateProductInputDto $input): CatalogMutationOutputDto
     {
         $revision = $this->repository->lockRevision(true);
-        if ($input->revision !== $revision) {
+        if ($input->patch->revision !== $revision) {
             throw new CatalogRevisionConflictException('Catalog changed; reload before updating.');
         }
         $row = $this->repository->find($input->id)->fetch();
         if (false === $row) {
             throw new ProductNotFoundException('Product not found.');
         }
-        $this->repository->update($input->id, $input->apply(ProductOutputDto::fromRow($row)));
+        $this->repository->update($input->id, ProductMapper::apply($input->patch, ProductMapper::fromRow($row)));
 
         return new CatalogMutationOutputDto($input->id->value, $this->repository->advanceRevision($revision));
     }

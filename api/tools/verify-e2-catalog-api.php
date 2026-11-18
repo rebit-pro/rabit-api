@@ -36,7 +36,7 @@ try {
         symlink('/app/public/local/modules/' . $module, $fixture['documentRoot'] . '/local/modules/' . $module);
     }
     $quiet(static function(): void {
-        foreach (['20260323120001', '20260326120008', '20260911120001', '20260911200001', '20260911220001', '20260912220001'] as $id) {
+        foreach (['20260323120001', '20260326120008', '20260911120001', '20260911200001', '20260911220001', '20260912220001', '20261118213001'] as $id) {
             require_once '/app/public/local/php_interface/migrations.foundation/Version' . $id . '.php';
             $class = 'Sprint\Migration\Version' . $id;
             (new $class())->up();

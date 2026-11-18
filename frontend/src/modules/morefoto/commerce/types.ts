@@ -7,6 +7,8 @@ export interface Product {
   kind: ProductKind;
   price: number;
   printCount: number;
+  /** Older catalogues and stored products default to one copy of a digital file. */
+  allowDigitalQuantity?: boolean;
   format?: string;
   unit?: string;
   staffDiscount: boolean;
