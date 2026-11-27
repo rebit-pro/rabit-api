@@ -9,8 +9,8 @@ use Morefoto\Commerce\Application\Sales\Dto\SalesReportInputDto;
 use Rebit\Share\Application\Contract\File\Dto\PdfFileOutputDto;
 
 /**
- * Выгружает сводку продаж в области сотрудника в компактный PDF с выбранным составом детских строк.
- * Общие итоги сохраняются независимо от показа строк без заказа; изображения для документа не загружаются.
+ * Выгружает сводку или ведомость продаж в области сотрудника в PDF.
+ * Для сводки по группе документ показывает общие итоги и заказы с ФИО.
  */
 final readonly class ExportSalesReportPdfUseCase
 {

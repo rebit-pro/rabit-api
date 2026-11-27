@@ -25,7 +25,13 @@ test.beforeAll(async ({ browser }) => {
   try {
     await login(page);
     const auth = { Authorization: 'Bearer ' + (await token(page)) };
+    // With E2E_STANDS=1, E3 can leave a gift policy that requires a single active bundle.
+    const global = (await body(await page.request.get('/api/v1/catalog/conditions', { headers: auth }))).data as {
+      products: { id: string; kind: string; active: boolean }[];
+    };
+    bundleId = global.products.find((product) => product.kind === 'bundle' && product.active)?.id ?? '';
     for (const kind of ['physical', 'bundle'] as const) {
+      if (kind === 'bundle' && bundleId) continue;
       const created = await body(
         await page.request.post('/api/v1/catalog/products', {
           headers: {

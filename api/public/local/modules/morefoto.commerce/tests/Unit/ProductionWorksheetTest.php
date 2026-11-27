@@ -82,7 +82,9 @@ final class ProductionWorksheetTest extends TestCase
         self::assertStringContainsString('Иванов Иван', $html);
         self::assertStringContainsString('Предварительная', $html);
         self::assertStringContainsString('IMG_0007.jpg', $html);
-        self::assertStringContainsString('Неоплаченные и поздние', $html);
+        self::assertStringNotContainsString('Неоплаченные и поздние', $html);
+        self::assertStringNotContainsString('MF-o3', $html);
+        self::assertStringNotContainsString('MF-o4', $html);
         self::assertStringNotContainsString('15x20', $html);
     }
 
@@ -176,7 +178,11 @@ final class ProductionWorksheetTest extends TestCase
         ]);
         $names = $this->createStub(PhotoFilenamesInterface::class);
         $names->method('filenames')->willReturn(['p1' => 'IMG_0007.JPG', 'p2' => 'IMG_0007.JPG']);
-        $purchases = [$this->purchase('bundle', 'o1', ['KIND' => 'bundle'])];
+        $purchases = [
+            $this->purchase('bundle', 'o1', ['KIND' => 'bundle']),
+            $this->purchase('frame-1', 'o2', ['KIND' => 'digital', 'ORDER_TOTAL' => 300]),
+            $this->purchase('frame-2', 'o2', ['KIND' => 'digital', 'PHOTO' => 'p2', 'QUANTITY' => 2, 'TOTAL' => 200, 'ORDER_TOTAL' => 300]),
+        ];
         $files = (new WorksheetFiles($children, $names))->resolve($purchases);
         $worksheet = (new WorksheetAssembler())->assemble(
             $purchases,
@@ -198,6 +204,12 @@ final class ProductionWorksheetTest extends TestCase
         $html = (new WorksheetHtml())->body($worksheet);
         self::assertStringContainsString('Кадр Z001', $html);
         self::assertStringContainsString('Кадр Z002', $html);
+        self::assertStringContainsString(
+            '<td>IMG_0007.JPG <span class="meta">(Z001 · A)</span>, IMG_0007.JPG <span class="meta">(Z002 · A)</span>&nbsp;×&nbsp;2</td>',
+            $html,
+        );
+        self::assertSame(1, substr_count($html, 'MF-o2'));
+        self::assertStringNotContainsString('Продолжение', $html);
     }
 
     public function testAuxiliaryPdfSectionsKeepPhysicalMultipliersAndBundleUnits(): void
@@ -207,11 +219,49 @@ final class ProductionWorksheetTest extends TestCase
             $this->purchase('l2', 'outside', ['QUANTITY' => 2, 'PRINT_COUNT' => 3]),
             $this->purchase('l3', 'deferred', ['QUANTITY' => 2, 'PRINT_COUNT' => 3, 'PAID' => false]),
             $this->purchase('l4', 'unpaid-bundle', ['KIND' => 'bundle', 'QUANTITY' => 2, 'PAID' => false]),
+            $this->purchase('l5', 'outside-bundle', ['KIND' => 'bundle', 'QUANTITY' => 2]),
         ];
         $worksheet = $this->assemble($purchases, new PrintCompositionOutputDto($this->version(), [$this->saved('l1', 'included', 1)]));
         $html = (new WorksheetHtml())->body($worksheet);
-        self::assertSame(2, substr_count($html, '6 отп. <span class="meta">(2 × 3)</span>'));
+        self::assertSame(1, substr_count($html, '6 отп. <span class="meta">(2 × 3)</span>'));
         self::assertStringContainsString('2 компл.', $html);
+        self::assertStringNotContainsString('MF-deferred', $html);
+        self::assertStringNotContainsString('MF-unpaid-bundle', $html);
+    }
+
+    public function testLongElectronicOrderKeepsItsNumberOnEveryContinuationRowInBothModes(): void
+    {
+        $saved = $this->saved('print', '040699', 1);
+        $purchases = [$this->purchase($saved->lineId, $saved->orderId)];
+        $files = [$saved->lineId => [new WorksheetFileOutputDto($saved->photoId, $saved->filename, $saved->path, $saved->printsInFile)]];
+        $frames = 102;
+        for ($index = 1; $index <= $frames; ++$index) {
+            $code = sprintf('D%03d', $index);
+            $purchases[] = $this->purchase($code, '040700', [
+                'KIND' => 'digital',
+                'ORDER_TOTAL' => $frames * 100,
+                'FIRST' => 'Мария',
+                'LAST' => 'Орлова',
+                'PHOTO' => $code,
+            ]);
+            $files[$code] = [new WorksheetFileOutputDto($code, $code . '_' . str_repeat('original_', 9) . 'IMG.JPG', null, null)];
+        }
+        $purchases[] = $this->purchase('next', '040701', ['KIND' => 'digital', 'PHOTO' => 'next']);
+        $files['next'] = [new WorksheetFileOutputDto('next', 'NEXT.JPG', null, null)];
+        $version = $this->version();
+        $versions = new PrintVersionsOutputDto(true, [$version]);
+        foreach (['preview' => null, 'final' => new PrintCompositionOutputDto($version, [$saved])] as $mode => $composition) {
+            $worksheet = (new WorksheetAssembler())->assemble($purchases, $files, [$this->group()], $composition, $versions, '2026-11-16T10:00:00+00:00');
+            $html = (new WorksheetHtml())->body($worksheet);
+            $reference = '<td><span class="meta">MF-040700</span></td>';
+            self::assertSame(16, substr_count($html, $reference));
+            self::assertStringContainsString($reference . '<td></td><td>D007_', $html);
+            self::assertStringContainsString($reference . '<td></td><td>D097_', $html);
+            self::assertSame(1, substr_count($html, '<strong>Орлова Мария</strong>'));
+            self::assertSame(1, substr_count($html, 'MF-040701'));
+            self::assertStringNotContainsString('Продолжение', $html);
+            $this->pdf($worksheet, 'long-electronic-' . $mode);
+        }
     }
 
     public function testFileReferenceLimitRejects50001InsteadOfTruncatingRepeatedBundles(): void
@@ -469,12 +519,12 @@ final class ProductionWorksheetTest extends TestCase
     /** @param array{
      *     TOTAL?: int, ORDER_TOTAL?: int, DISCOUNT?: int, KIND?: string, CHILD?: string, CODE?: string,
      *     PAID?: bool, STATUS?: string, LATE?: bool, FIRST?: null|string, LAST?: null|string,
-     *     QUANTITY?: int, PRINT_COUNT?: int, GIFT?: bool, GIFTS?: string,
+     *     QUANTITY?: int, PRINT_COUNT?: int, GIFT?: bool, GIFTS?: string, PHOTO?: string,
      * } $values */
     private function purchase(string $line, string $order, array $values = []): WorksheetPurchaseOutputDto
     {
         $v = $values + ['TOTAL' => 100, 'ORDER_TOTAL' => 100, 'DISCOUNT' => 0, 'KIND' => 'physical', 'CHILD' => 'c1', 'CODE' => 'A',
-            'PAID' => true, 'STATUS' => 'paid', 'LATE' => false, 'FIRST' => 'Иван', 'LAST' => 'Иванов', 'QUANTITY' => 1, 'PRINT_COUNT' => 1, 'GIFT' => false, 'GIFTS' => '[]'];
+            'PAID' => true, 'STATUS' => 'paid', 'LATE' => false, 'FIRST' => 'Иван', 'LAST' => 'Иванов', 'QUANTITY' => 1, 'PRINT_COUNT' => 1, 'GIFT' => false, 'GIFTS' => '[]', 'PHOTO' => 'p1'];
 
         return new WorksheetPurchaseOutputDto(
             orderId: $order,
@@ -499,7 +549,7 @@ final class ProductionWorksheetTest extends TestCase
             productId: 'physical' === $v['KIND'] ? 'product-print' : 'product-' . $v['KIND'],
             productName: 'physical' === $v['KIND'] ? 'Печать' : $v['KIND'],
             format: 'physical' === $v['KIND'] ? '15x21' : '',
-            photoId: 'bundle' === $v['KIND'] ? null : 'p1',
+            photoId: 'bundle' === $v['KIND'] ? null : $v['PHOTO'],
             quantity: $v['QUANTITY'],
             printCount: $v['PRINT_COUNT'],
             unitPrice: 100,

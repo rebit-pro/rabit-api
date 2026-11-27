@@ -15,6 +15,7 @@ final readonly class WorksheetHtml
 {
     private const int INLINE_FILES = 3;
     private const int COLUMNS_PER_BLOCK = 3;
+    private const int DIGITAL_FRAMES_PER_ROW = 6;
 
     public function css(): string
     {
@@ -49,7 +50,7 @@ final readonly class WorksheetHtml
         }
         $html .= '<div class="meta">Сформировано: ' . $this->moment($report->generatedAt) . ' (МСК). '
             . ($final ? 'Печатные строки и итог относятся только к выбранной версии. Электронные покупки показаны отдельно на момент формирования.'
-                : 'Оплаченный состав отделён от неоплаченных и поздних оплат; пути будущего ZIP не вычисляются.') . '</div></div>';
+                : 'Включены подтверждённые покупки. Пути будущего ZIP не вычисляются.') . '</div></div>';
         if ([] === $report->groups) {
             $html .= '<p>В выбранной области пока нет групп.</p>';
         }
@@ -69,8 +70,7 @@ final readonly class WorksheetHtml
             }
             $html .= '<p><strong>Итого по группе · ' . $group->prints . ' отп. · ' . $this->money($group->total) . '</strong></p>';
             $html .= $this->details($group->orders);
-            $html .= $this->otherOrders($group->outsideOrders, 'Текущие заказы вне выбранной печатной версии');
-            $html .= $this->otherOrders($group->deferredOrders, 'Неоплаченные и поздние заказы — не входят в итог и задание печати');
+            $html .= $this->outsideOrders($group->outsideOrders);
             if ($final) {
                 foreach ($group->orders as $order) {
                     $outside = [];
@@ -144,10 +144,13 @@ final readonly class WorksheetHtml
             foreach ($cells as $cell) {
                 $rows = max($rows, count($cell));
             }
-            // Each row contains at most one purchase per column, never an unbounded file list.
             for ($row = 0; $row < $rows; ++$row) {
-                $html .= '<tr><td>' . ($index + 1) . '</td><td>'
-                    . (0 === $row && $first ? $this->name($order) : $this->escape($order->number) . '<div class="meta">Продолжение</div>') . '</td>';
+                $html .= '<tr>';
+                if (0 === $row) {
+                    $html .= '<td>' . ($index + 1) . '</td><td>' . ($first ? $this->name($order) : $this->escape($order->number)) . '</td>';
+                } else {
+                    $html .= '<td></td><td>' . $this->orderReference($order) . '</td>';
+                }
                 foreach ($cells as $cell) {
                     $html .= '<td>' . ($cell[$row] ?? '') . '</td>';
                 }
@@ -194,17 +197,42 @@ final readonly class WorksheetHtml
     /** @return list<string> */
     private function electronic(WorksheetOrderOutputDto $order): array
     {
-        $cells = [];
-        foreach ($order->lines as $line) {
-            if (in_array($line->kind, ['digital', 'bundle'], true)) {
-                $cells[] = $this->item($line);
-            }
-        }
+        $cells = $this->items($order, includePhysical: false);
         if ([] !== $order->giftCodes) {
             $cells[] = '<div class="meta">Подарочные комплекты: ' . $this->wrap(implode(', ', $order->giftCodes)) . ' (не продажа).</div>';
         }
 
         return [] === $cells ? ['—'] : $cells;
+    }
+
+    /** @return list<string> */
+    private function items(WorksheetOrderOutputDto $order, bool $includePhysical): array
+    {
+        $frames = [];
+        $other = [];
+        foreach ($order->lines as $line) {
+            if ('digital' === $line->kind) {
+                $frames[] = $this->digital($line);
+            } elseif ($includePhysical || 'bundle' === $line->kind) {
+                $other[] = $this->item($line);
+            }
+        }
+        // mPDF переносит таблицу между строками, поэтому длинный перечень делится на несколько ячеек.
+        $cells = [];
+        foreach (array_chunk($frames, self::DIGITAL_FRAMES_PER_ROW) as $part) {
+            $cells[] = implode(', ', $part);
+        }
+
+        return array_merge($cells, $other);
+    }
+
+    private function digital(WorksheetLineOutputDto $line): string
+    {
+        $file = $line->files[0] ?? null;
+        $html = null === $file ? '<span class="warning">Кадр недоступен</span>' : $this->file($file, compact: true);
+
+        return $html . (1 === $line->quantity ? '' : '&nbsp;×&nbsp;' . $line->quantity)
+            . ($line->coveredByGift ? ' · подарок, не продажа' : '');
     }
 
     private function item(WorksheetLineOutputDto $line): string
@@ -221,12 +249,15 @@ final readonly class WorksheetHtml
         return $html . ([] === $line->files ? '<div class="warning">Состав файлов недоступен</div>' : '') . '</div>';
     }
 
-    private function file(WorksheetFileOutputDto $file): string
+    private function file(WorksheetFileOutputDto $file, bool $compact = false): string
     {
         $html = $this->wrap($file->filename ?? 'Исходное имя недоступно');
         if (null !== $file->code) {
-            $html .= '<span class="meta"> · Кадр ' . $this->wrap($file->code)
-                . (null === $file->childCode ? '' : ' · ребёнок ' . $this->wrap($file->childCode)) . '</span>';
+            $frame = $this->wrap($file->code);
+            $child = null === $file->childCode ? '' : $this->wrap($file->childCode);
+            $html .= $compact
+                ? ' <span class="meta">(' . $frame . ('' === $child ? '' : ' · ' . $child) . ')</span>'
+                : '<span class="meta"> · Кадр ' . $frame . ('' === $child ? '' : ' · ребёнок ' . $child) . '</span>';
         }
         if (null !== $file->path) {
             $html .= '<div class="path">' . $this->wrap($file->path) . '</div><div class="meta">В файле: ' . $file->printsInFile . ' отп.</div>';
@@ -257,23 +288,28 @@ final readonly class WorksheetHtml
     }
 
     /** @param list<WorksheetOrderOutputDto> $orders */
-    private function otherOrders(array $orders, string $title): string
+    private function outsideOrders(array $orders): string
     {
         if ([] === $orders) {
             return '';
         }
-        $html = '<h2>' . $this->escape($title) . '</h2><table class="rows" autosize="1"><thead><tr><th>Заказ / ФИО</th><th>Состояние оплаты</th><th>Состав снимка</th><th class="num">Сумма заказа</th></tr></thead><tbody>';
+        $html = '<h2>Текущие заказы вне выбранной печатной версии</h2><table class="rows" autosize="1"><thead><tr><th>Заказ / ФИО</th><th>Состояние оплаты</th><th>Состав снимка</th><th class="num">Сумма заказа</th></tr></thead><tbody>';
         foreach ($orders as $order) {
-            foreach ($order->lines as $index => $line) {
-                $html .= '<tr><td>' . (0 === $index ? $this->name($order) : $this->escape($order->number) . ' · продолжение') . '</td><td>'
+            foreach ($this->items($order, includePhysical: true) as $index => $item) {
+                $html .= '<tr><td>' . (0 === $index ? $this->name($order) : $this->orderReference($order)) . '</td><td>'
                     . (0 === $index ? $this->escape($order->latePayment ? 'Поздняя оплата' : match ($order->paymentStatus) {
                         'paid' => 'Оплачен', 'pending' => 'Ожидает оплаты', 'declined' => 'Оплата отклонена', default => 'Не оплачен',
-                    }) : '') . '</td><td>' . $this->item($line) . '</td><td class="num">'
+                    }) : '') . '</td><td>' . $item . '</td><td class="num">'
                     . (0 === $index ? $this->money($order->total) : '') . '</td></tr>';
             }
         }
 
         return $html . '</tbody></table>' . $this->details($orders);
+    }
+
+    private function orderReference(WorksheetOrderOutputDto $order): string
+    {
+        return '<span class="meta">' . $this->escape($order->number) . '</span>';
     }
 
     /** Zero-width break opportunities preserve every filename/path character in narrow PDF columns. */

@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace Morefoto\Commerce\Infrastructure\Sales\Pdf;
 
-use Morefoto\Commerce\Application\Sales\Dto\ChildSalesOutputDto;
 use Morefoto\Commerce\Application\Sales\Dto\SalesReportOutputDto;
 use Morefoto\Commerce\Application\Sales\Dto\SalesTotalsOutputDto;
 use Morefoto\Commerce\Application\Sales\Enum\SalesReportLevelEnum;
-use Morefoto\Commerce\Domain\Sales\Enum\ChildSalesStatusEnum;
 
 /** Разметка фирменного шаблона отчёта: шапка с логотипом, плитки итога, таблица уровня и печать по форматам. */
 final readonly class SalesReportHtml
@@ -34,12 +32,6 @@ final readonly class SalesReportHtml
             table.rows td { border-bottom: 0.2mm solid #DCE4EA; padding: 1.5mm 1.5mm; vertical-align: middle; }
             table.rows .num { text-align: right; white-space: nowrap; }
             table.rows tr.total td { font-weight: bold; border-bottom: 0; border-top: 0.4mm solid #24658A; }
-            .code { font-family: manrope; font-weight: bold; font-size: 11pt; }
-            .status { font-size: 8pt; font-weight: bold; padding: 0.6mm 1.6mm; border-radius: 1mm; }
-            .status-paid { background: #DCEBF4; color: #16405A; }
-            .status-late { background: #F3E7D3; color: #6B4E16; }
-            .status-unpaid { background: #F6D9D3; color: #8A3A2C; }
-            .status-none { background: #EDF1F4; color: #5E6872; }
             .muted { color: #66737F; }
             .note { font-size: 7.5pt; color: #66737F; margin-top: 6mm; }
             .header td { vertical-align: middle; }
@@ -72,7 +64,7 @@ final readonly class SalesReportHtml
             . '<td style="text-align: right">Стр. {PAGENO} из {nbpg}</td></tr></table>';
     }
 
-    public function body(SalesReportOutputDto $report, bool $includeUnordered = true): string
+    public function body(SalesReportOutputDto $report): string
     {
         if (null !== $report->worksheet) {
             return $this->worksheet->body($report->worksheet);
@@ -81,9 +73,7 @@ final readonly class SalesReportHtml
             . '<h1>' . $this->escape($this->title($report)) . '</h1>'
             . '<p class="area">' . $this->escape($this->area($report)) . '</p>'
             . $this->tiles($report->totals);
-        if (SalesReportLevelEnum::GROUP === $report->level) {
-            $html .= '<h2>Дети группы</h2>' . $this->children($report, $includeUnordered);
-        } else {
+        if (SalesReportLevelEnum::GROUP !== $report->level) {
             $html .= '<h2>' . $this->escape($this->rowsTitle($report->level)) . '</h2>' . $this->rows($report);
         }
         if ([] !== $report->products) {
@@ -94,7 +84,7 @@ final readonly class SalesReportHtml
             $html .= '</tbody></table>';
         }
         if (SalesReportLevelEnum::GROUP === $report->level) {
-            $html .= '<h2>Заказы с ФИО ребёнка</h2><p class="muted">ФИО указано покупателем для заказа целиком; в заказе могут быть фото нескольких детей.</p>'
+            $html .= '<h2>Заказы с ФИО ребёнка</h2><p class="muted">ФИО указано покупателем для заказа целиком.</p>'
                 . '<table class="rows"><thead><tr><th>Заказ</th><th>Имя и фамилия ребёнка</th><th>Оплата</th><th class="num">Сумма заказа</th></tr></thead><tbody>';
             if ([] === $report->orders) {
                 $html .= '<tr><td colspan="4" class="muted">Заказов пока нет.</td></tr>';
@@ -197,59 +187,6 @@ final readonly class SalesReportHtml
             . '<td class="num">' . $this->number($totals->prints) . '</td>'
             . '<td class="num">' . $this->number($totals->digitalFiles + $totals->bundles) . '</td>'
             . '<td class="num">' . $this->escape($this->money($totals->paidTotal)) . '</td></tr>';
-    }
-
-    private function children(SalesReportOutputDto $report, bool $includeUnordered): string
-    {
-        $withoutOrders = 0;
-        foreach ($report->children as $child) {
-            if (ChildSalesStatusEnum::NONE === $child->status) {
-                ++$withoutOrders;
-            }
-        }
-        $html = '<p class="muted">' . ($includeUnordered ? 'Полный список' : 'Строки с заказами')
-            . ' · Нет заказа: ' . $this->number($withoutOrders) . '. Итоги включают всю группу.</p>'
-            . '<table class="rows"><thead><tr><th>Код ребёнка</th><th>Статус</th><th class="num">Оплачено заказов</th>'
-            . '<th class="num">Печать</th><th class="num">Эл. кадры</th><th class="num">Комплекты</th><th class="num">Оплачено</th></tr></thead><tbody>';
-        if ([] === $report->children) {
-            return $html . '<tr><td colspan="7" class="muted">В группе пока нет детей</td></tr></tbody></table>';
-        }
-        foreach ($report->children as $child) {
-            if (!$includeUnordered && ChildSalesStatusEnum::NONE === $child->status) {
-                continue;
-            }
-            $html .= '<tr><td class="code">' . $this->escape($child->code) . '</td>'
-                . '<td><span class="status status-' . $child->status->value . '">' . $this->escape($this->status($child)) . '</span></td>'
-                . '<td class="num">' . $this->number($child->paidOrders) . ($child->orders > $child->paidOrders ? ' <span class="muted">из ' . $this->number($child->orders) . '</span>' : '') . '</td>'
-                . '<td class="num">' . $this->number($child->prints) . '</td>'
-                . '<td class="num">' . $this->number($child->digitalFiles) . '</td>'
-                . '<td class="num">' . $this->number($child->bundles) . '</td>'
-                . '<td class="num">' . $this->escape($this->money($child->paidTotal)) . '</td></tr>';
-        }
-        if (!$includeUnordered && count($report->children) === $withoutOrders) {
-            $html .= '<tr><td colspan="7" class="muted">Заказов пока нет. Строки без заказа доступны в полном списке.</td></tr>';
-        }
-
-        return $html . $this->childTotal($report->totals) . '</tbody></table>';
-    }
-
-    private function childTotal(SalesTotalsOutputDto $totals): string
-    {
-        return '<tr class="total"><td colspan="2">Итого</td><td class="num">' . $this->number($totals->paidOrders) . '</td>'
-            . '<td class="num">' . $this->number($totals->prints) . '</td>'
-            . '<td class="num">' . $this->number($totals->digitalFiles) . '</td>'
-            . '<td class="num">' . $this->number($totals->bundles) . '</td>'
-            . '<td class="num">' . $this->escape($this->money($totals->paidTotal)) . '</td></tr>';
-    }
-
-    private function status(ChildSalesOutputDto $child): string
-    {
-        return match ($child->status) {
-            ChildSalesStatusEnum::PAID => 'Оплатил',
-            ChildSalesStatusEnum::LATE => 'Поздняя оплата',
-            ChildSalesStatusEnum::UNPAID => 'Заказ без оплаты',
-            ChildSalesStatusEnum::NONE => 'Нет заказа',
-        };
     }
 
     private function money(int $kopecks): string

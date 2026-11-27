@@ -12,10 +12,7 @@ use Mpdf\Config\FontVariables;
 use Mpdf\HTMLParserMode;
 use Mpdf\Mpdf;
 
-/**
- * Собирает PDF отчёта mpdf: A4, фирменные Manrope и Golos Text из ресурсов модуля, временные файлы вне публичной части.
- * Состав детских строк задаётся явно; детские изображения в рабочий документ не включаются.
- */
+/** Собирает PDF отчёта в mPDF с фирменными шрифтами и временными файлами вне публичной части. */
 final readonly class MpdfSalesReportWriter implements SalesReportPdfWriterInterface
 {
     public function __construct(
@@ -50,7 +47,7 @@ final readonly class MpdfSalesReportWriter implements SalesReportPdfWriterInterf
             $mpdf->SetHTMLHeader($this->html->header());
             $mpdf->SetHTMLFooter($this->html->footer($report));
             $mpdf->WriteHTML($this->html->css(), HTMLParserMode::HEADER_CSS);
-            $mpdf->WriteHTML($this->html->body($report, $includeUnordered), HTMLParserMode::HTML_BODY);
+            $mpdf->WriteHTML($this->html->body($report), HTMLParserMode::HTML_BODY);
 
             return $mpdf->OutputBinaryData();
         } catch (\Throwable $error) {
