@@ -169,7 +169,7 @@ final class ProductionWorksheetTest extends TestCase
         self::assertSame(['0001.JPG', '0002.JPG'], array_map(static fn(WorksheetFileOutputDto $file): ?string => $file->filename, $files['bought']));
     }
 
-    public function testElectronicBasenameCollisionsKeepPublicFrameAndChildCodesInApiAndPdf(): void
+    public function testElectronicBasenameCollisionsKeepFrameCodesInPdfAndChildCodesInApi(): void
     {
         $children = $this->createStub(ChildPhotosInterface::class);
         $children->method('ready')->willReturn([
@@ -205,7 +205,7 @@ final class ProductionWorksheetTest extends TestCase
         self::assertStringContainsString('Кадр Z001', $html);
         self::assertStringContainsString('Кадр Z002', $html);
         self::assertStringContainsString(
-            '<td>IMG_0007.JPG <span class="meta">(Z001 · A)</span>, IMG_0007.JPG <span class="meta">(Z002 · A)</span>&nbsp;×&nbsp;2</td>',
+            '<td>IMG_0007.JPG <span class="meta">(Z001)</span>, IMG_0007.JPG <span class="meta">(Z002)</span>&nbsp;×&nbsp;2</td>',
             $html,
         );
         self::assertSame(1, substr_count($html, 'MF-o2'));
