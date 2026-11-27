@@ -27,7 +27,7 @@ require_once __DIR__ . '/../bootstrap.php';
  */
 final class SalesReportPdfTest extends TestCase
 {
-    public function testTheGroupPageShowsChildrenStatusesAndRoubles(): void
+    public function testTheGroupPageShowsOrdersAndTotalsWithoutTheChildCodeTable(): void
     {
         $html = new SalesReportHtml();
         $body = $html->body($this->groupReport());
@@ -35,13 +35,18 @@ final class SalesReportPdfTest extends TestCase
         self::assertStringContainsString('<h1>Солнышко &amp; Ко</h1>', $body);
         self::assertStringContainsString('Детский сад № 5 · съёмка «Осень»', $body);
         self::assertStringContainsString("1\u{00A0}234,50\u{00A0}₽", $body);
-        foreach (['>A<', '>AA<', 'Оплатил', 'Нет заказа', 'Поздняя оплата', 'Заказ без оплаты', 'Печать 10×15', 'Комплекты'] as $text) {
+        foreach (['MF-000001', 'MF-000002', 'MF-000003', 'Оплачен', 'Поздняя оплата', 'Не оплачен', 'Печать 10×15'] as $text) {
             self::assertStringContainsString($text, $body);
+        }
+        foreach (['Дети группы', 'Код ребёнка', 'Нет заказа:', '>A<', '>B<', '>C<', '>AA<', 'в заказе могут быть фото нескольких детей'] as $text) {
+            self::assertStringNotContainsString($text, $body);
         }
         self::assertStringNotContainsString('<img', $body);
         self::assertStringContainsString('2 / 1', $body);
         self::assertStringContainsString('из 4 детей', $body);
         self::assertStringContainsString('Заказы с ФИО ребёнка', $body);
+        self::assertStringContainsString('ФИО указано покупателем для заказа целиком.', $body);
+        self::assertSame(1, substr_count($body, 'MF-000001'));
         self::assertStringContainsString('Иванов Иван', $body);
         self::assertStringContainsString('Не указано', $body);
         self::assertStringContainsString('&lt;script&gt;', $body);
@@ -91,46 +96,43 @@ final class SalesReportPdfTest extends TestCase
         self::assertMatchesRegularExpression('/\/BaseFont\s*\/[A-Z]{6}\+GolosText/', $pdf);
     }
 
-    public function testOrderedViewHidesOnlyNoOrderRowsWithoutChangingTotalsOrNames(): void
-    {
-        $body = (new SalesReportHtml())->body($this->groupReport(), false);
-
-        self::assertStringNotContainsString('>B<', $body);
-        foreach (['>A<', '>C<', '>AA<', 'Поздняя оплата', 'Заказ без оплаты', 'Нет заказа: 1', 'Строки с заказами', 'MF-000001', 'MF-000002', 'MF-000003', 'Иванов Иван', 'Не указано', "1\u{00A0}234,50\u{00A0}₽"] as $text) {
-            self::assertStringContainsString($text, $body);
-        }
-        self::assertSame(1, substr_count($body, 'MF-000001'));
-    }
-
-    public function testAGroupWithOnlyNoOrderRowsHasAnExplicitEmptyStateAndFullView(): void
+    public function testAGroupWithoutOrdersHasAnExplicitEmptyState(): void
     {
         $report = $this->groupReport();
-        $onlyNone = new SalesReportOutputDto($report->level, $report->institution, $report->shoot, $report->group, $report->totals, [], [], [$report->children[1]], $report->generatedAt);
-        $html = new SalesReportHtml();
+        $noOrders = new SalesReportOutputDto(
+            level: $report->level,
+            institution: $report->institution,
+            shoot: $report->shoot,
+            group: $report->group,
+            totals: new SalesTotalsOutputDto(1, 0, 0, 0, 0, 0, 0, 0),
+            products: [],
+            rows: [],
+            children: [$report->children[1]],
+            generatedAt: $report->generatedAt,
+        );
+        $body = (new SalesReportHtml())->body($noOrders);
 
-        self::assertStringContainsString('Заказов пока нет', $html->body($onlyNone, false));
-        self::assertStringContainsString('Нет заказа: 1', $html->body($onlyNone, false));
-        self::assertStringContainsString('>B<', $html->body($onlyNone, true));
-        self::assertStringContainsString('Полный список', $html->body($onlyNone, true));
+        self::assertStringContainsString('Заказов пока нет.', $body);
+        self::assertStringNotContainsString('>B<', $body);
     }
 
     public function testALargeGroupProducesSeveralPagesWithoutChildImages(): void
     {
-        $children = [];
+        $orders = [];
         for ($index = 0; $index < 200; ++$index) {
-            $id = 'child-' . $index;
-            $children[] = new ChildSalesOutputDto($id, 'КОД-' . $index, ChildSalesStatusEnum::PAID, 1, 1, 2, 0, 0, 50_000, 'photo-' . $index);
+            $orders[] = new OrderNameSalesOutputDto('order-' . $index, sprintf('MF-%06d', $index + 1), 'Иван', 'Иванов', 'paid', false, 50_000);
         }
         $report = new SalesReportOutputDto(
             level: SalesReportLevelEnum::GROUP,
             institution: new SalesReportNodeOutputDto('i', 'Детский сад № 5'),
             shoot: new SalesReportNodeOutputDto('s', 'Осень'),
             group: new SalesReportNodeOutputDto('g', 'Солнышко'),
-            totals: new SalesTotalsOutputDto(200, 200, 200, 200, 400, 0, 0, 10_000_000),
+            totals: new SalesTotalsOutputDto(200, 200, 200, 200, 0, 400, 0, 10_000_000),
             products: [],
             rows: [],
-            children: $children,
+            children: [],
             generatedAt: new \DateTimeImmutable('2026-10-25T12:00:00+00:00'),
+            orders: $orders,
         );
 
         $pdf = $this->render($report);
@@ -140,8 +142,8 @@ final class SalesReportPdfTest extends TestCase
         self::assertSame(0, preg_match_all('/\/Subtype\s*\/Image/', $pdf));
         self::assertGreaterThan(2, preg_match_all('/\/Type\s*\/Page\b/', $pdf));
         $body = (new SalesReportHtml())->body($report);
-        self::assertSame(200, substr_count($body, 'class="code"'));
-        self::assertStringContainsString('КОД-199', $body);
+        self::assertSame(200, substr_count($body, 'MF-'));
+        self::assertStringContainsString('MF-000200', $body);
     }
 
     private function render(SalesReportOutputDto $report): string
@@ -179,7 +181,7 @@ final class SalesReportPdfTest extends TestCase
             generatedAt: new \DateTimeImmutable('2026-10-24T12:00:00+00:00'),
             orders: [
                 new OrderNameSalesOutputDto('order-1', 'MF-000001', 'Иван', 'Иванов', 'paid', false, 123_450),
-                new OrderNameSalesOutputDto('order-2', 'MF-000002', null, null, 'unpaid', false, 0),
+                new OrderNameSalesOutputDto('order-2', 'MF-000002', null, null, 'paid', true, 20_000),
                 new OrderNameSalesOutputDto('order-3', 'MF-000003', '<script>', 'Тест', 'unpaid', false, 0),
             ],
         );

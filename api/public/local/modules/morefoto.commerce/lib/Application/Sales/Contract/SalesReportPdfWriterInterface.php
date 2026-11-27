@@ -8,6 +8,6 @@ use Morefoto\Commerce\Application\Sales\Dto\SalesReportOutputDto;
 
 interface SalesReportPdfWriterInterface
 {
-    /** Документ по готовому отчёту; includeUnordered определяет показ строк без заказов, сохраняя общие итоги. */
+    /** Собирает документ по готовому отчёту. Параметр includeUnordered сохранён для совместимости вызовов. */
     public function pdf(SalesReportOutputDto $report, bool $includeUnordered = true): string;
 }
