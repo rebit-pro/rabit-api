@@ -149,7 +149,7 @@ final readonly class WorksheetHtml
                 if (0 === $row) {
                     $html .= '<td>' . ($index + 1) . '</td><td>' . ($first ? $this->name($order) : $this->escape($order->number)) . '</td>';
                 } else {
-                    $html .= '<td></td><td></td>';
+                    $html .= '<td></td><td>' . $this->orderReference($order) . '</td>';
                 }
                 foreach ($cells as $cell) {
                     $html .= '<td>' . ($cell[$row] ?? '') . '</td>';
@@ -296,7 +296,7 @@ final readonly class WorksheetHtml
         $html = '<h2>Текущие заказы вне выбранной печатной версии</h2><table class="rows" autosize="1"><thead><tr><th>Заказ / ФИО</th><th>Состояние оплаты</th><th>Состав снимка</th><th class="num">Сумма заказа</th></tr></thead><tbody>';
         foreach ($orders as $order) {
             foreach ($this->items($order, includePhysical: true) as $index => $item) {
-                $html .= '<tr><td>' . (0 === $index ? $this->name($order) : '') . '</td><td>'
+                $html .= '<tr><td>' . (0 === $index ? $this->name($order) : $this->orderReference($order)) . '</td><td>'
                     . (0 === $index ? $this->escape($order->latePayment ? 'Поздняя оплата' : match ($order->paymentStatus) {
                         'paid' => 'Оплачен', 'pending' => 'Ожидает оплаты', 'declined' => 'Оплата отклонена', default => 'Не оплачен',
                     }) : '') . '</td><td>' . $item . '</td><td class="num">'
@@ -305,6 +305,11 @@ final readonly class WorksheetHtml
         }
 
         return $html . '</tbody></table>' . $this->details($orders);
+    }
+
+    private function orderReference(WorksheetOrderOutputDto $order): string
+    {
+        return '<span class="meta">' . $this->escape($order->number) . '</span>';
     }
 
     /** Zero-width break opportunities preserve every filename/path character in narrow PDF columns. */

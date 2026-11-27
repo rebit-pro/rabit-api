@@ -229,6 +229,41 @@ final class ProductionWorksheetTest extends TestCase
         self::assertStringNotContainsString('MF-unpaid-bundle', $html);
     }
 
+    public function testLongElectronicOrderKeepsItsNumberOnEveryContinuationRowInBothModes(): void
+    {
+        $saved = $this->saved('print', '040699', 1);
+        $purchases = [$this->purchase($saved->lineId, $saved->orderId)];
+        $files = [$saved->lineId => [new WorksheetFileOutputDto($saved->photoId, $saved->filename, $saved->path, $saved->printsInFile)]];
+        $frames = 102;
+        for ($index = 1; $index <= $frames; ++$index) {
+            $code = sprintf('D%03d', $index);
+            $purchases[] = $this->purchase($code, '040700', [
+                'KIND' => 'digital',
+                'ORDER_TOTAL' => $frames * 100,
+                'FIRST' => 'Мария',
+                'LAST' => 'Орлова',
+                'PHOTO' => $code,
+            ]);
+            $files[$code] = [new WorksheetFileOutputDto($code, $code . '_' . str_repeat('original_', 9) . 'IMG.JPG', null, null)];
+        }
+        $purchases[] = $this->purchase('next', '040701', ['KIND' => 'digital', 'PHOTO' => 'next']);
+        $files['next'] = [new WorksheetFileOutputDto('next', 'NEXT.JPG', null, null)];
+        $version = $this->version();
+        $versions = new PrintVersionsOutputDto(true, [$version]);
+        foreach (['preview' => null, 'final' => new PrintCompositionOutputDto($version, [$saved])] as $mode => $composition) {
+            $worksheet = (new WorksheetAssembler())->assemble($purchases, $files, [$this->group()], $composition, $versions, '2026-11-16T10:00:00+00:00');
+            $html = (new WorksheetHtml())->body($worksheet);
+            $reference = '<td><span class="meta">MF-040700</span></td>';
+            self::assertSame(16, substr_count($html, $reference));
+            self::assertStringContainsString($reference . '<td></td><td>D007_', $html);
+            self::assertStringContainsString($reference . '<td></td><td>D097_', $html);
+            self::assertSame(1, substr_count($html, '<strong>Орлова Мария</strong>'));
+            self::assertSame(1, substr_count($html, 'MF-040701'));
+            self::assertStringNotContainsString('Продолжение', $html);
+            $this->pdf($worksheet, 'long-electronic-' . $mode);
+        }
+    }
+
     public function testFileReferenceLimitRejects50001InsteadOfTruncatingRepeatedBundles(): void
     {
         $children = $this->createStub(ChildPhotosInterface::class);

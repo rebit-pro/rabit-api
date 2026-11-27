@@ -3,7 +3,7 @@ import { test, expect, type APIResponse, type Page } from '@playwright/test';
 import { login, orderConsents, token } from './helpers.js';
 
 // E9: a teacher sees what the parents of the own group bought. The spec runs after J4/J2 paid the print order of the
-// print group and before L1 closes its print sales; it assigns «another-teacher» to that group, so no other spec changes.
+// print group and before L1 closes its print sales. E10 uses the same teacher to check opening the single group directly.
 type Fixture = { print: { token: string; groupId: string } };
 type Sales = {
   groupId: string;
@@ -66,7 +66,7 @@ async function expected(page: Page): Promise<Sales> {
   };
 }
 
-/** The organizer adds the print group to the teacher's assignments through the staff card API (B2). */
+/** The organizer sets the print group as the teacher's sole assignment through the staff card API (B2). */
 async function assignTeacher(page: Page, email: string) {
   const headers = { ...(await bearer(page)), 'Idempotency-Key': key() };
   const listing = await body(await page.request.get('/api/v1/users?q=' + encodeURIComponent(email), { headers }));
@@ -82,7 +82,7 @@ async function assignTeacher(page: Page, email: string) {
         role: 'teacher',
         active: true,
         institutionIds: [],
-        groupIds: [...new Set([...detail.groupIds, groupId])],
+        groupIds: [groupId],
         replaceAssignments: false,
         assignmentSignature: options.assignmentSignature,
         revision: detail.revision
