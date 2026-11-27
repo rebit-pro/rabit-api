@@ -35,6 +35,8 @@ final readonly class WorksheetHtml
     public function body(WorksheetOutputDto $report): string
     {
         $final = 'final' === $report->mode;
+        // Фиксированные ширины справа сохраняют позицию электронной колонки во всех группах.
+        $electronicWidth = 0 === $report->prints ? '60%' : '45%';
         $html = '<div class="worksheet"><h1>Ведомость по заказам и файлам печати</h1><div class="version">';
         $archive = $report->archive;
         if (null === $archive) {
@@ -66,7 +68,7 @@ final readonly class WorksheetHtml
             }
             $columns = array_values(array_filter($report->columns, static fn(WorksheetColumnOutputDto $column): bool => isset($used[$column->key])));
             foreach ([] === $columns ? [[]] : array_chunk($columns, self::COLUMNS_PER_BLOCK) as $block => $part) {
-                $html .= $this->table($group->orders, $part, $final, 0 === $block);
+                $html .= $this->table($group->orders, $part, $final, 0 === $block, $electronicWidth);
             }
             $html .= '<p><strong>Итого по группе · ' . $group->prints . ' отп. · ' . $this->money($group->total) . '</strong></p>';
             $html .= $this->details($group->orders);
@@ -112,14 +114,15 @@ final readonly class WorksheetHtml
      * @param list<WorksheetOrderOutputDto>  $orders
      * @param list<WorksheetColumnOutputDto> $columns
      */
-    private function table(array $orders, array $columns, bool $final, bool $first): string
+    private function table(array $orders, array $columns, bool $final, bool $first, string $electronicWidth): string
     {
-        $html = '<table class="rows" autosize="1"><thead><tr><th width="5%">№</th><th>Ф.И. ребёнка / заказ</th>';
+        $html = '<table class="rows" autosize="1" style="overflow: wrap"><thead><tr><th width="5%">№</th><th>Ф.И. ребёнка / заказ</th>';
         foreach ($columns as $column) {
             $html .= '<th>' . $this->wrap($column->name) . '<br><span class="meta">' . $this->wrap($column->format) . '</span></th>';
         }
         if ($first) {
-            $html .= '<th>Электронная версия' . ($final ? ' (текущие покупки)' : '') . '</th><th class="num">'
+            $html .= '<th width="' . $electronicWidth . '">Электронная версия' . ($final ? ' (текущие покупки)' : '')
+                . '</th><th class="num" width="12%">'
                 . ($final ? 'Итого, печать' : 'Итого') . '</th>';
         }
         $html .= '</tr></thead><tbody>';
@@ -256,7 +259,7 @@ final readonly class WorksheetHtml
             $frame = $this->wrap($file->code);
             $child = null === $file->childCode ? '' : $this->wrap($file->childCode);
             $html .= $compact
-                ? ' <span class="meta">(' . $frame . ('' === $child ? '' : ' · ' . $child) . ')</span>'
+                ? ' <span class="meta">(' . $frame . ')</span>'
                 : '<span class="meta"> · Кадр ' . $frame . ('' === $child ? '' : ' · ребёнок ' . $child) . '</span>';
         }
         if (null !== $file->path) {
