@@ -2,8 +2,8 @@
 
 ## Точка продолжения
 
-- Worktree `/home/user/rabit-api/.worktrees/ops-sales-report-pdf-alignment`, ветка `codex/ops-sales-report-pdf-alignment`, база `aff4b10540202062e09341cf4705169de967b8a4`. Связанный PR #246 слит. Полный E2E `rabit-e2e-c1dd90470f52` и проверка PDF прошли. Следующий шаг — коммит, push и новый PR в `main`.
-- Рабочие файлы — `WorksheetHtml.php`, `ProductionWorksheetTest.php`, руководство, план и журнал. Перед публикацией сверить `git diff --check` и хеш проверенного исходного diff.
+- Worktree `/home/user/rabit-api/.worktrees/ops-sales-report-pdf-alignment`, ветка `codex/ops-sales-report-pdf-alignment`, база `aff4b10540202062e09341cf4705169de967b8a4`. Проверенный исходный коммит `ae1b2998`, поверх него сохранена запись о публикации. Открыт [PR #247](https://github.com/rebit-pro/rabit-api/pull/247) в `main`.
+- Полный E2E `rabit-e2e-c1dd90470f52` и проверка PDF прошли. Образцы в `api/var/pdf-alignment/`, итоговый лог в `api/var/e2e/worksheet-alignment.log`. Команда сверки публикации — `gh pr view 247 --json state,baseRefOid,headRefOid`.
 
 ## 27.11.2026
 
@@ -15,6 +15,7 @@
 - Подготовка обоих стендов прошла. Встроенные этапы `npm run lint`, `lint:styles`, проверки типов, UI/Commerce, production build, `php-lint`, PHPStan и PHPUnit — PASS. Стартовали группы Chromium `a` и `b`.
 - Группа `b` завершилась: 81 сценарий и 19 MySQL-верификаторов прошли, включая E10, Stage 6 и `verify-production-worksheet.php`. `python3 api/var/pdf-alignment/check-archives.py api/var/e2e/rabit-e2e-c1dd90470f52/b/var` с PyMuPDF — PASS. В трёх окончательных PDF начальная координата электронной колонки 371,82 пункта у каждого заголовка, присутствуют все пути выбранных архивов. В PDF группы обе цифровые позиции имеют только код кадра. Ожидаем завершения `a`.
 - Полный E2E завершился кодом 0 за 700,2 с. Группа `a` — 85/85 и 3 MySQL-верификатора. В сумме 166/166 сценариев, 22 верификатора, пропуски, нестабильные и неожиданные результаты отсутствуют. Все 47 этапов runner прошли. Стенды остановлены, контейнеров, сетей и томов запуска не осталось. Diff источников совпадает с хешем запуска, `git diff --check` — PASS. Удалённый `main` совпадает с проверенной базой.
+- Коммит `ae1b2998`, сверка хеша проверенных исходников, `git push -u origin HEAD:refs/heads/codex/ops-sales-report-pdf-alignment` и `gh pr create --base main --head codex/ops-sales-report-pdf-alignment` — PASS. Открыт PR #247.
 
 ## Проверки
 
