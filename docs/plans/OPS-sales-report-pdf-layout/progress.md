@@ -2,9 +2,9 @@
 
 ## Точка продолжения
 
-- Worktree `/home/user/rabit-api/.worktrees/ops-sales-report-pdf-layout`, ветка `codex/ops-sales-report-pdf-layout`, base и HEAD `cfdc021694f7691f87d1d2efc0ef61eb1fde5c06`. Связанные PR #240 и #241 уже слиты. Текущий запрос и критерии описаны в [плане](plan.md).
-- Пользователь одобрил оба PDF и поручил коммит, push и PR в `main`. Проверки PDF-01–05 пройдены. Следующий шаг — сохранить согласованный diff в коммите.
-- Рабочие изменения — два шаблона, writer и комментарии к вызовам, два PDF-теста, описание в инструкции и файлы задачи. Образцы двух PDF лежат в `api/var/sales-report-preview/`.
+- Worktree `/home/user/rabit-api/.worktrees/ops-sales-report-pdf-layout`, ветка `codex/ops-sales-report-pdf-layout`, base `cfdc021694f7691f87d1d2efc0ef61eb1fde5c06`. Код и проверки в `adea7f88f0449e3aba5a3d002ed5f68a2a496671`, поверх него сохранена запись о PR. Связанные PR #240 и #241 уже слиты. Критерии описаны в [плане](plan.md).
+- Оба PDF одобрены, проверки PDF-01–05 пройдены, PR в `main` открыт. Следующий шаг перед merge — независимое ревью и браузерный E2E затронутого сценария через HTTP с изолированной БД. [PR #246](https://github.com/rebit-pro/rabit-api/pull/246)
+- Образцы и проверочные логи лежат в игнорируемом `api/var/sales-report-preview/`. Сверка ветки при продолжении — `git status --short --branch` и `gh pr view 246 --json state,baseRefName,headRefOid,reviewDecision,statusCheckRollup`.
 - При правках макета повторить рендер `php var/sales-report-preview/generate.php` в контейнере и `PYTHONPATH="$PWD/api/var/sales-report-preview/pdf-tools" python3 api/var/sales-report-preview/verify.py` из корня worktree.
 
 ## 27.11.2026
@@ -34,6 +34,9 @@
 - В образе `rabit-api-php-fpm:pdf-layout-webp-local` под PHP 8.4.25 с WebP команда `php vendor/bin/phpunit --colors=never --do-not-cache-result --display-skipped --testsuite=unit` — PASS, 1226 тестов / 52 990 проверок. `php vendor/bin/phpunit --colors=never --do-not-cache-result --testsuite=functional` — PASS, 219 тестов / 874 проверки. `php vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=768M --no-progress` — PASS.
 - Перед коммитом main через `gh api repos/rebit-pro/rabit-api/git/ref/heads/main --jq .object.sha` подтверждён на `cfdc021694f7691f87d1d2efc0ef61eb1fde5c06`. `git diff --check` и `ast-index update` — PASS. Авторские проверки закрыты, E2E через HTTP с изолированной БД и независимое ревью относятся к этапу перед merge.
 - При адресном `git add` Git вернул код 1 из-за шаблона `reports` в `frontend/.gitignore`. `git diff --cached --name-status` подтвердил, что отслеживаемая инструкция и девять остальных файлов уже в индексе. Список проверен целиком перед коммитом.
+- `git diff --cached --check` — PASS. Создан коммит `adea7f88f0449e3aba5a3d002ed5f68a2a496671` с утверждёнными шаблонами, тестами, инструкцией и файлами задачи.
+- `git push --set-upstream origin codex/ops-sales-report-pdf-layout` — PASS, отдельная ветка создана на origin и настроено отслеживание.
+- `gh pr create --base main --head codex/ops-sales-report-pdf-layout` — PASS, PR #246 открыт и привязан к диалогу. `gh pr view 246 --json state,baseRefName,headRefOid,mergeStateStatus` подтвердил `OPEN`, базу `main` и отсутствие конфликтов. Состав приложения совпадает с проверенным коммитом.
 
 ## Проверки по ID
 
